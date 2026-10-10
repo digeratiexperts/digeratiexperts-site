@@ -1,10 +1,19 @@
 import crypto from "crypto";
 import { isStagingReview } from "./stagingReviewGuard";
 import { createPaymentReadiness, type PaymentReadiness } from "./paymentReadiness";
+import {
+  createZohoProductAuth,
+  zohoConnectCovers,
+  zohoDefaultDc,
+  type ZohoAccess,
+  type ZohoDcUrls,
+  type ZohoProductAuth,
+  type ZohoProductHealth,
+} from "./zoho/oauth";
 
-const ZOHO_PAYMENTS_BASE_URL = "https://payments.zoho.com/api/v1";
-const ZOHO_ACCOUNTS_TOKEN_URL = "https://accounts.zoho.com/oauth/v2/token";
-const ZOHO_HOSTED_CHECKOUT_URL = "https://payments.zoho.com/hostedcheckout";
+/** Payments API and hosted checkout, from the account's data center (dc.ts). */
+const paymentsApiBase = (dc: ZohoDcUrls) => `${dc.payments}/api/v1`;
+const hostedCheckoutBase = (dc: ZohoDcUrls) => `${dc.payments}/hostedcheckout`;
 const ZOHO_METADATA_MAX_ITEMS = 5;
 const ZOHO_METADATA_KEY_MAX_LENGTH = 20;
 const ZOHO_METADATA_VALUE_MAX_LENGTH = 500;
@@ -21,12 +30,6 @@ interface ZohoLineItem {
   description?: string;
   amount: number;
   quantity: number;
-}
-
-interface ZohoTokenResponse {
-  access_token?: string;
-  expires_in?: number;
-  error?: string;
 }
 
 export interface ZohoPaymentWebhookEvent {
@@ -50,9 +53,15 @@ export class ZohoPaymentsService {
   private readonly clientSecret: string;
   private readonly refreshToken: string;
   private readonly signingKey: string;
-  private accessToken: string | null = null;
-  private accessTokenExpiresAt = 0;
-  private refreshPromise: Promise<string> | null = null;
+  /**
+   * Token manager (server/zoho/oauth): the Zoho Connect grant when it covers
+   * Payments, else ZOHO_PAYMENTS_REFRESH_TOKEN with the client resolved below.
+   * Cached and persisted access token, single-flight refresh, refresh budget,
+   * classified errors.
+   */
+  readonly auth: ZohoProductAuth;
+  /** The data center of the credential that created the last session (hosted checkout lives there too). */
+  private dc: ZohoDcUrls = zohoDefaultDc();
   /**
    * Cached live readiness (#263). `isConfigured()` only proves env vars exist;
    * this proves the OAuth client + refresh token still mint a token.
@@ -76,6 +85,19 @@ export class ZohoPaymentsService {
       "";
     this.refreshToken = process.env.ZOHO_PAYMENTS_REFRESH_TOKEN || "";
     this.signingKey = process.env.ZOHO_PAYMENTS_SIGNING_KEY || "";
+    this.auth = createZohoProductAuth({
+      product: "payments",
+      legacySources: () =>
+        this.legacyCredentialsSet()
+          ? [{ label: "ZOHO_PAYMENTS_REFRESH_TOKEN", refreshToken: this.refreshToken, client: { id: this.clientId, secret: this.clientSecret } }]
+          : [],
+      notConfiguredReason: () => "set ZOHO_PAYMENTS_REFRESH_TOKEN and its client, or connect Zoho",
+      notConfigured: (message) => new Error(message),
+    });
+  }
+
+  private legacyCredentialsSet(): boolean {
+    return [this.clientId, this.clientSecret, this.refreshToken].every((value) => this.looksConfigured(value));
   }
 
   private looksConfigured(value: string): boolean {
@@ -90,96 +112,60 @@ export class ZohoPaymentsService {
   isConfigured(): boolean {
     // Review instances never move money, regardless of credentials.
     if (isStagingReview()) return false;
-    return [
-      this.accountId,
-      this.clientId,
-      this.clientSecret,
-      this.refreshToken,
-      this.signingKey,
-    ].every((value) => this.looksConfigured(value));
+    const credentials = this.legacyCredentialsSet() || zohoConnectCovers("payments");
+    return credentials && [this.accountId, this.signingKey].every((value) => this.looksConfigured(value));
   }
 
-  private async refreshAccessToken(): Promise<string> {
+  /** Payments health from stored state (no Zoho call). */
+  async health(): Promise<ZohoProductHealth> {
+    if (!this.isConfigured()) return { configured: false, state: "not_configured", source: null };
+    return this.auth.status();
+  }
+
+  private async getAccess(): Promise<ZohoAccess> {
     if (!this.isConfigured()) {
       throw new Error(
         "Zoho Payments is not configured. Set account ID, OAuth client credentials, a Zoho Payments refresh token, and the webhook signing key.",
       );
     }
-
-    const body = new URLSearchParams({
-      grant_type: "refresh_token",
-      client_id: this.clientId,
-      client_secret: this.clientSecret,
-      refresh_token: this.refreshToken,
-    });
-
-    const response = await fetch(ZOHO_ACCOUNTS_TOKEN_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body,
-    });
-
-    const data = (await response.json().catch(() => ({}))) as ZohoTokenResponse;
-    if (!response.ok || !data.access_token) {
-      console.error("[ZOHO PAYMENTS] OAuth refresh failed", {
-        status: response.status,
-        error: data.error || "missing_access_token",
-      });
-      this.readiness.markFailed(`oauth_refresh_${response.status}`);
-      throw new Error(`Zoho Payments OAuth refresh failed: ${response.status}`);
+    try {
+      return await this.auth.getAccess();
+    } catch (error: any) {
+      // Name only: degraded (throttled/unreachable) or needs_reconnect.
+      this.readiness.markFailed(error?.name === "ZohoAuthUnavailableError" ? "oauth_degraded" : "oauth_needs_reconnect");
+      throw error;
     }
-
-    this.accessToken = data.access_token;
-    const expiresInSeconds = Number(data.expires_in || 3600);
-    this.accessTokenExpiresAt = Date.now() + Math.max(60, expiresInSeconds - 60) * 1000;
-    return this.accessToken;
   }
 
   /**
-   * Readiness probe without creating a charge: force a fresh OAuth refresh so
-   * an expired/revoked refresh token or a bad client ID/secret is detected.
-   * Does not prove the account ID is accepted; a checkout failure for that
-   * reason surfaces at session creation.
+   * Readiness probe without creating a charge: proves the credential mints
+   * (or recently minted) an access token. A cached token minted within the
+   * hour counts, so a probe never spends one of Zoho's token requests just to
+   * look. Does not prove the account ID is accepted; a checkout failure for
+   * that reason surfaces at session creation.
    */
   async probeCheckoutReadiness(): Promise<boolean> {
     if (!this.isConfigured()) return false;
-    this.accessTokenExpiresAt = 0;
-    const token = await this.getAccessToken();
-    return Boolean(token);
+    const access = await this.getAccess();
+    return Boolean(access.token);
   }
 
-  private async getAccessToken(): Promise<string> {
-    if (this.accessToken && Date.now() < this.accessTokenExpiresAt) {
-      return this.accessToken;
-    }
-    if (!this.refreshPromise) {
-      this.refreshPromise = this.refreshAccessToken().finally(() => {
-        this.refreshPromise = null;
-      });
-    }
-    return this.refreshPromise;
-  }
-
-  private async paymentsFetch(path: string, init: RequestInit = {}, retryAuth = true): Promise<Response> {
-    const token = await this.getAccessToken();
+  private async paymentsFetch(path: string, init: RequestInit = {}): Promise<Response> {
+    const access = await this.getAccess();
+    this.dc = access.dc;
     const separator = path.includes("?") ? "&" : "?";
-    const url = `${ZOHO_PAYMENTS_BASE_URL}${path}${separator}account_id=${encodeURIComponent(this.accountId)}`;
-    const response = await fetch(url, {
-      ...init,
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Zoho-oauthtoken ${token}`,
-        ...(init.headers || {}),
-      },
-    });
-
-    if (response.status === 401 && retryAuth) {
-      this.accessToken = null;
-      this.accessTokenExpiresAt = 0;
-      return this.paymentsFetch(path, init, false);
-    }
-
-    return response;
+    const url = `${paymentsApiBase(access.dc)}${path}${separator}account_id=${encodeURIComponent(this.accountId)}`;
+    // A 401 drops the token and retries once with a new one (fetchWithAuth).
+    return this.auth.fetchWithAuth((current) =>
+      fetch(url, {
+        ...init,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Zoho-oauthtoken ${current.token}`,
+          ...(init.headers || {}),
+        },
+      }),
+    );
   }
 
   async createPaymentSession(params: {
@@ -264,7 +250,7 @@ export class ZohoPaymentsService {
     return {
       payment_session_id: String(sessionId),
       access_key: String(accessKey),
-      url: `${ZOHO_HOSTED_CHECKOUT_URL}/${encodeURIComponent(String(accessKey))}`,
+      url: `${hostedCheckoutBase(this.dc)}/${encodeURIComponent(String(accessKey))}`,
       status: String(session?.status || "created"),
     };
   }

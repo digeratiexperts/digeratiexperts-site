@@ -3278,3 +3278,40 @@ claims:
       only claim listing zohoClient.ts (de-desk-reliability-followup) is
       verified-live; open PRs 542, 550, 553 and 554 touch none of these files.
       Not merged or deployed: Joe asked for the PR and validation first.
+  - id: zoho-oauth-manager
+    owner: claude
+    subsystem: zoho-oauth
+    branch: claude/zoho-oauth-manager
+    base_sha: 61eeade7
+    files:
+      - server/zoho/oauth/** (new: dc, scopes, store, db-store, token-endpoint, manager, connect, index, manager.test)
+      - migrations/0017_zoho_oauth_tokens.sql (new, additive table)
+      - server/zoho/zohoAuth.ts (new), server/zoho/zohoHealth.ts (new)
+      - server/zoho/zohoClient.ts (token handling and hosts; resolveDeskOAuthConfig from PR 555 moved to zohoAuth.ts and re-exported)
+      - server/zoho/zohoClient.desk.test.ts (ported to the token manager, PR 555 cases kept), server/zoho/zohoClient.retry.test.ts (new)
+      - server/zoho/zohoOAuthErrors.ts (one error code)
+      - server/zohoPayments.ts (token handling and hosts only; signing key and webhook verification untouched)
+      - server/services/zohoBooksTax.ts (token handling and hosts only; public signatures unchanged for thread T7), zohoBooksTax.test.ts
+      - server/portalZohoAuth.ts (accounts host only; ZOHO_OIDC_ISSUER still wins)
+      - server/widgetTicketRoute.ts, server/widgetTicketRoute.test.ts (Desk status state field)
+      - server/zohoConnectRoutes.ts, server/zohoConnectRoutes.test.ts (new)
+      - server/routes.ts (/api/zoho/status and the four Zoho Connect routes only)
+      - server/index.ts (/api/health zoho map and the Connect snapshot at boot only)
+      - server/paymentReadiness.test.ts (reset between cases)
+      - server/deskTicketFallback.ts (the restore sentence only)
+      - .github/workflows/production-health.yml (the desk state in the issue text only)
+      - deploy/vps/env.production.example, docs/ZOHO-OAUTH-INVENTORY.md (new), docs/STORE-WAREHOUSE.md (one step)
+    status: active
+    started: 2026-10-10
+    note: >-
+      Thread T1 (DE backlog, taken over from Cursor): port Intelligence Hub
+      lib/zoho-oauth into server/zoho/oauth and move CRM, Desk, Payments and
+      Books token handling onto it: cached and persisted access tokens,
+      single-flight refresh, 5 refreshes per 10 minutes, classified errors,
+      client pinning, data-center hosts, four-state health (throttling and
+      5xx are degraded, never auth_failed: issue 418), and an owner-only,
+      flag-gated (ZOHO_CONNECT_ENABLED) Zoho Connect flow that revokes the
+      grant it replaces. Migration numbered 0017 because PR 553 claims 0016. Stacked on PR 555 (desk-oauth-client, another
+      session), whose Desk client rule is kept unchanged; merge 555 first.
+      Thread T7 adds a Books tax readiness check: zohoBooksTax.ts signatures
+      are unchanged. Not merged or deployed; nothing registered in Zoho.
