@@ -184,6 +184,7 @@ const HomepageV6 = lazy(() => import("@/pages/versions/v6/HomepageV6"));
 const HomepageV7 = lazy(() => import("@/pages/versions/v7/HomepageV7"));
 const HomepageV8 = lazy(() => import("@/pages/versions/v8/HomepageV8"));
 const HomepageV9 = lazy(() => import("@/pages/versions/v9/HomepageV9"));
+const HomepageV10 = lazy(() => import("@/pages/versions/v10/HomepageV10"));
 
 const WarehouseGate = lazy(() => import("@/pages/store/WarehouseGate"));
 const PublicStoreCheckout = lazy(() => import("@/pages/store/PublicStoreCheckout"));
@@ -279,6 +280,14 @@ function Router() {
         <Suspense fallback={<PageLoadingSkeleton />}>
           <VersionFrame n={9}>
             <HomepageV9 />
+          </VersionFrame>
+        </Suspense>
+      )} />
+      {/* Version 10: Version 8 with the scene story (one evolving scene behind the opening chapters). Preview only. */}
+      <Route path="/version-10" component={() => (
+        <Suspense fallback={<PageLoadingSkeleton />}>
+          <VersionFrame n={10}>
+            <HomepageV10 />
           </VersionFrame>
         </Suspense>
       )} />
@@ -1126,8 +1135,8 @@ function AppContent() {
   useStoreChromeGestures(location);
   const isPortal = location.startsWith("/portal");
   const isHome = location === "/";
-  // / (Version 8), /version-0 (the previous homepage), /version-7 and /version-9 mount their own bottom bar.
-  const ownsBottomBar = isHome || location === "/version-0" || location === "/version-7" || location === "/version-9";
+  // / (Version 8), /version-0 (the previous homepage), /version-7, /version-9 and /version-10 mount their own bottom bar.
+  const ownsBottomBar = isHome || location === "/version-0" || location === "/version-7" || location === "/version-9" || location === "/version-10";
   const hideDoor2HelpDock = isDoor2Path(location) && location.split("?")[0] !== "/store";
   const hideWarehouseChrome = isWarehousePath(location);
   const accent = isPortal ? undefined : accentFor(location);

@@ -7,7 +7,7 @@ import { CTA } from "@/lib/ctaCopy";
 import { formatThreatDate, THREAT_ATTRIBUTION, type ThreatItem } from "@shared/threatFeed";
 import { TipTag } from "./TipTag";
 import "./12-threats-insights.css";
-import { StoryBackdrop } from "../story/StoryBackdrop";
+import { ChapterPattern } from "@/components/site/Atmosphere";
 // The previous homepage's Arizona office photo, restored beside the hand-off steps (Joe, 2026-10-07).
 import officeEveningImg from "@assets/de-arizona-office-evening-960.webp";
 
@@ -79,7 +79,7 @@ const monitorChecks = [
   "Documented response paths when something needs escalation",
 ];
 
-export function V9ThreatsInsights(): JSX.Element {
+export function V10ThreatsInsights(): JSX.Element {
   const reduceMotion = useReducedMotion();
   const reveal = (delay = 0) =>
     reduceMotion
@@ -99,53 +99,53 @@ export function V9ThreatsInsights(): JSX.Element {
     <>
       {/* Nothing to show once loaded: drop the whole chapter rather than a "no items" box; Security Updates keeps the full stream. */}
       {loading || items.length > 0 ? (
-        <section className="f-well v9-section feed" aria-labelledby="insights-heading" data-testid="v9-insights">
-          <StoryBackdrop chapter="intel" />
-          <div className="v9-canvas">
+        <section className="f-well v10-section feed" aria-labelledby="insights-heading" data-testid="v10-insights">
+          <ChapterPattern variant="lattice" />
+          <div className="v10-canvas">
             <motion.div className="feed-head" {...reveal()}>
-              <div className="v9-head">
-                <p className="v9-eyebrow">Security Updates</p>
-                <h2 className="v9-h2" id="insights-heading">
-                  Recent Threats &amp; Insights<span className="v9-colon" aria-hidden="true">:</span>
+              <div className="v10-head">
+                <p className="v10-eyebrow">Security Updates</p>
+                <h2 className="v10-h2" id="insights-heading">
+                  Recent Threats &amp; Insights<span className="v10-colon" aria-hidden="true">:</span>
                 </h2>
-                <p className="v9-lede">
+                <p className="v10-lede">
                   Current items prioritized by active exploitation, exploit probability, and SMB relevance. Full stream,
                   dates, and sources live on{" "}
-                  <Link className="v9-link--quiet" href="/resources/security-updates">
+                  <Link className="v10-link--quiet" href="/resources/security-updates">
                     Security Updates
                   </Link>
                   .
                 </p>
               </div>
               <div className="feed-actions">
-                <Link className="v9-btn v9-btn--outline" href="/resources/security-updates" data-testid="view-all-updates">
+                <Link className="v10-btn v10-btn--outline" href="/resources/security-updates" data-testid="view-all-updates">
                   View All Security Updates <ArrowIcon />
                 </Link>
-                <Link className="v9-link" href="/resources/blog" data-testid="view-digerati-journal">
+                <Link className="v10-link" href="/resources/blog" data-testid="view-digerati-journal">
                   Read the Digerati Journal <ArrowIcon />
                 </Link>
               </div>
             </motion.div>
 
             {loading ? (
-              <div className="v9-card feed-state" data-testid="insights-loading" role="status">
-                <p className="v9-h4">Loading current threats…</p>
-                <p className="v9-body">Checking CISA, FIRST, NVD, and Microsoft MSRC. Nothing is invented while this loads.</p>
+              <div className="v10-card feed-state" data-testid="insights-loading" role="status">
+                <p className="v10-h4">Loading current threats…</p>
+                <p className="v10-body">Checking CISA, FIRST, NVD, and Microsoft MSRC. Nothing is invented while this loads.</p>
               </div>
             ) : (
               <>
                 <p className="feed-caption" id="feed-caption">
-                  <span className="v9-tag v9-tag--live">
+                  <span className="v10-tag v10-tag--live">
                     {captured ? `Live feed · Captured ${captured}` : "Live feed"}
                   </span>
                 </p>
-                <ul className="v9-grid v9-grid--2 feed-grid" aria-describedby="feed-caption">
+                <ul className="v10-grid v10-grid--2 feed-grid" aria-describedby="feed-caption">
                   {items.map((item, index) => (
                     <motion.li key={item.id} {...reveal(index * 0.04)}>
-                      <article className="v9-card--paper feed-card" data-testid={`insight-card-${index}`}>
+                      <article className="v10-card--paper feed-card" data-testid={`insight-card-${index}`}>
                         <div className="feed-card__row">
                           <span
-                            className={`v9-tag v9-tag--paper${item.severity === "critical" ? " feed-tag--critical" : ""}`}
+                            className={`v10-tag v10-tag--paper${item.severity === "critical" ? " feed-tag--critical" : ""}`}
                           >
                             {item.kicker}
                           </span>
@@ -153,11 +153,11 @@ export function V9ThreatsInsights(): JSX.Element {
                             {formatThreatDate(item.publishedAt)}
                           </time>
                         </div>
-                        <h3 className="v9-h3">{item.title}</h3>
+                        <h3 className="v10-h3">{item.title}</h3>
                         <p className="feed-card__excerpt">{item.excerpt}</p>
                         <div className="feed-card__foot">
                           <span className="feed-card__src">{sourceLine(item)}</span>
-                          <a className="v9-link" href={item.sourceUrl} target="_blank" rel="noopener noreferrer">
+                          <a className="v10-link" href={item.sourceUrl} target="_blank" rel="noopener noreferrer">
                             Read source
                             <span className="sr-only">
                               {" "}
@@ -173,50 +173,50 @@ export function V9ThreatsInsights(): JSX.Element {
               </>
             )}
 
-            <p className="v9-small feed-sources">{payload.attribution || THREAT_ATTRIBUTION}</p>
+            <p className="v10-small feed-sources">{payload.attribution || THREAT_ATTRIBUTION}</p>
           </div>
         </section>
       ) : null}
 
-      <section className="f-well v9-section monitor" aria-labelledby="monitor-heading">
-        <StoryBackdrop chapter="watch" />
-        <div className="v9-canvas monitor-grid">
+      <section className="f-well v10-section monitor" aria-labelledby="monitor-heading">
+        <ChapterPattern variant="lattice" />
+        <div className="v10-canvas monitor-grid">
           <motion.div className="monitor-copy" {...reveal()}>
-            <p className="v9-eyebrow">Detection &amp; Response</p>
-            <h2 className="v9-h2" id="monitor-heading">
+            <p className="v10-eyebrow">Detection &amp; Response</p>
+            <h2 className="v10-h2" id="monitor-heading">
               Monitoring that ends with a person who owns the outcome
             </h2>
-            <p className="v9-lede">
+            <p className="v10-lede">
               We leverage modern threat detection tooling so signals surface immediately — then our team investigates,
               prioritizes, and acts. Technology scales coverage; accountability remains human.
             </p>
 
             <ul className="monitor-checks">
               {monitorChecks.map((text) => (
-                <li className="v9-check" key={text}>
+                <li className="v10-check" key={text}>
                   <CheckIcon />
                   <span>{text}</span>
                 </li>
               ))}
             </ul>
 
-            <ul className="v9-cells monitor-cells">
+            <ul className="v10-cells monitor-cells">
               <li>
-                <span className="v9-iconwell">
+                <span className="v10-iconwell">
                   <ShieldIcon />
                 </span>
-                <h3 className="v9-h4">Coverage with Context</h3>
-                <p className="v9-body">
+                <h3 className="v10-h4">Coverage with Context</h3>
+                <p className="v10-body">
                   Alerts are interpreted against your specific environment — never dumped into an unmonitored ticket
                   queue.
                 </p>
               </li>
               <li>
-                <span className="v9-iconwell">
+                <span className="v10-iconwell">
                   <LayersIcon />
                 </span>
-                <h3 className="v9-h4">Documented Next Steps</h3>
-                <p className="v9-body">
+                <h3 className="v10-h4">Documented Next Steps</h3>
+                <p className="v10-body">
                   Findings translate into actionable steps your executive and IT teams can execute without decoding
                   cryptic jargon.
                 </p>
@@ -225,7 +225,7 @@ export function V9ThreatsInsights(): JSX.Element {
 
             <p className="monitor-cta">
               <a
-                className="v9-btn v9-btn--primary"
+                className="v10-btn v10-btn--primary"
                 href="/book"
                 onClick={(event) => {
                   event.preventDefault();
@@ -238,7 +238,7 @@ export function V9ThreatsInsights(): JSX.Element {
             </p>
           </motion.div>
 
-          <motion.figure className="v9-card v9-card--inset monitor-figure" {...reveal(0.04)}>
+          <motion.figure className="v10-card v10-card--inset monitor-figure" {...reveal(0.04)}>
             <div className="monitor-photo">
               <img
                 src={officeEveningImg}
@@ -255,30 +255,30 @@ export function V9ThreatsInsights(): JSX.Element {
             </TipTag>
             <ol className="dg" aria-label="Signal, then human triage, then a named owner">
               <li className="dg-step">
-                <span className="v9-seq">01</span>
+                <span className="v10-seq">01</span>
                 <div>
                   <span className="dg-label">Signal</span>
-                  <p className="v9-small">Signals surface immediately</p>
+                  <p className="v10-small">Signals surface immediately</p>
                 </div>
               </li>
               <li className="dg-step dg-step--hot">
-                <span className="v9-seq">02</span>
+                <span className="v10-seq">02</span>
                 <div>
                   <span className="dg-label">Human triage</span>
-                  <p className="v9-small">Our team investigates, prioritizes</p>
+                  <p className="v10-small">Our team investigates, prioritizes</p>
                 </div>
               </li>
               <li className="dg-step">
-                <span className="v9-seq">03</span>
+                <span className="v10-seq">03</span>
                 <div>
                   <span className="dg-label">Named owner</span>
-                  <p className="v9-small">A person who owns the outcome · documented next steps</p>
+                  <p className="v10-small">A person who owns the outcome · documented next steps</p>
                 </div>
               </li>
             </ol>
             <figcaption className="monitor-figure__cap">
               <span className="dg-label">Local Operations · Human Judgment</span>
-              <span className="v9-small">Arizona-Based · Principal-Led</span>
+              <span className="v10-small">Arizona-Based · Principal-Led</span>
             </figcaption>
           </motion.figure>
         </div>

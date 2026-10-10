@@ -1,5 +1,4 @@
 import { useState, type FormEvent } from "react";
-import { StoryBackdrop } from "../story/StoryBackdrop";
 import { motion, useReducedMotion } from "framer-motion";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -139,7 +138,7 @@ function FootLink({ href, name, testId }: { href: string; name: string; testId: 
 function FieldError({ id, message }: { id: string; message?: string }) {
   if (!message) return null;
   return (
-    <p className="v9-field-error" id={id} role="alert">
+    <p className="v10-field-error" id={id} role="alert">
       {message}
     </p>
   );
@@ -206,22 +205,22 @@ function ContactForm(): JSX.Element {
 
   return (
     <form
-      className="v9-card--paper contact__card"
+      className="v10-card--paper contact__card"
       noValidate
       aria-labelledby="contact-form-title"
       onSubmit={form.handleSubmit(handleSubmit)}
     >
-      <h3 className="v9-h3" id="contact-form-title">
+      <h3 className="v10-h3" id="contact-form-title">
         Get in Touch
       </h3>
-      <p className="v9-body">Tell us about the environment. We'll follow up on a Cyber Risk Assessment — no hard sell.</p>
+      <p className="v10-body">Tell us about the environment. We'll follow up on a Cyber Risk Assessment — no hard sell.</p>
       <div className="fields">
-        <div className="is-full v9-float">
-          <label className="v9-label" htmlFor="c-name">
+        <div className="is-full v10-float">
+          <label className="v10-label" htmlFor="c-name">
             Your Name *
           </label>
           <input
-            className="v9-input"
+            className="v10-input"
             id="c-name"
             type="text"
             placeholder=" "
@@ -235,12 +234,12 @@ function ContactForm(): JSX.Element {
           <FieldOk />
           <FieldError id="c-name-error" message={errors.name?.message} />
         </div>
-        <div className="v9-float">
-          <label className="v9-label" htmlFor="c-email">
+        <div className="v10-float">
+          <label className="v10-label" htmlFor="c-email">
             Business Email *
           </label>
           <input
-            className="v9-input"
+            className="v10-input"
             id="c-email"
             type="email"
             placeholder=" "
@@ -254,12 +253,12 @@ function ContactForm(): JSX.Element {
           <FieldOk />
           <FieldError id="c-email-error" message={errors.email?.message} />
         </div>
-        <div className="v9-float">
-          <label className="v9-label" htmlFor="c-phone">
+        <div className="v10-float">
+          <label className="v10-label" htmlFor="c-phone">
             Phone Number *
           </label>
           <input
-            className="v9-input"
+            className="v10-input"
             id="c-phone"
             type="tel"
             placeholder=" "
@@ -273,12 +272,12 @@ function ContactForm(): JSX.Element {
           <FieldOk />
           <FieldError id="c-phone-error" message={errors.phone?.message} />
         </div>
-        <div className="v9-float">
-          <label className="v9-label" htmlFor="c-company">
+        <div className="v10-float">
+          <label className="v10-label" htmlFor="c-company">
             Company Name
           </label>
           <input
-            className="v9-input"
+            className="v10-input"
             id="c-company"
             type="text"
             placeholder=" "
@@ -288,13 +287,13 @@ function ContactForm(): JSX.Element {
             {...form.register("company")}
           />
         </div>
-        <div className="v9-float">
-          <label className="v9-label" htmlFor="c-service">
+        <div className="v10-float">
+          <label className="v10-label" htmlFor="c-service">
             Service Interested In
           </label>
           <div className="select">
             <select
-              className="v9-input"
+              className="v10-input"
               id="c-service"
               data-testid="select-contact-service"
               disabled={isSubmitting}
@@ -312,12 +311,12 @@ function ContactForm(): JSX.Element {
             </svg>
           </div>
         </div>
-        <div className="is-full v9-float">
-          <label className="v9-label" htmlFor="c-message">
+        <div className="is-full v10-float">
+          <label className="v10-label" htmlFor="c-message">
             Message
           </label>
           <textarea
-            className="v9-input"
+            className="v10-input"
             id="c-message"
             rows={4}
             placeholder=" "
@@ -330,7 +329,7 @@ function ContactForm(): JSX.Element {
         </div>
       </div>
       <button
-        className="v9-btn v9-btn--dark contact__submit v9-submit"
+        className="v10-btn v10-btn--dark contact__submit v10-submit"
         type="submit"
         disabled={isSubmitting}
         data-state={phase}
@@ -386,7 +385,7 @@ function FooterNewsletter(): JSX.Element {
   return (
     <div className="foot__news">
       <div>
-        <h2 className="v9-meta foot__head" id="fn-head">
+        <h2 className="v10-meta foot__head" id="fn-head">
           Stay Updated
         </h2>
         <p>Get the latest cybersecurity insights and IT tips delivered to your inbox.</p>
@@ -401,11 +400,11 @@ function FooterNewsletter(): JSX.Element {
         </p>
       ) : (
         <form className="foot__form" onSubmit={handleNewsletterSubmit} aria-labelledby="fn-head">
-          <label className="v9-sr" htmlFor="footer-newsletter-email">
+          <label className="v10-sr" htmlFor="footer-newsletter-email">
             Enter your email
           </label>
           <input
-            className="v9-input"
+            className="v10-input"
             id="footer-newsletter-email"
             type="email"
             placeholder="Enter your email"
@@ -417,7 +416,7 @@ function FooterNewsletter(): JSX.Element {
             data-testid="footer-newsletter-input"
           />
           <button
-            className="v9-btn v9-btn--outline"
+            className="v10-btn v10-btn--outline"
             type="submit"
             disabled={isSubmitting}
             data-testid="footer-newsletter-submit"
@@ -434,7 +433,7 @@ function FooterNewsletter(): JSX.Element {
   );
 }
 
-export function V9ContactFooter(): JSX.Element {
+export function V10ContactFooter(): JSX.Element {
   const reduceMotion = useReducedMotion();
   const reveal = (delay = 0) =>
     reduceMotion
@@ -450,7 +449,7 @@ export function V9ContactFooter(): JSX.Element {
   return (
     <>
       <section
-        className="f-well v9-section contact"
+        className="f-well v10-section contact"
         aria-labelledby="contact-title"
         data-testid="homepage-contact-chapter"
       >
@@ -465,39 +464,38 @@ export function V9ContactFooter(): JSX.Element {
           aria-hidden="true"
         />
         <div className="contact__drift" aria-hidden="true" />
-        <StoryBackdrop chapter="arrive" />
-        <div className="v9-canvas contact__grid">
+        <div className="v10-canvas contact__grid">
           <motion.div className="contact__copy" {...reveal()}>
-            <p className="v9-eyebrow">Contact</p>
-            <h2 className="v9-h2" id="contact-title">
+            <p className="v10-eyebrow">Contact</p>
+            <h2 className="v10-h2" id="contact-title">
               Ready to Secure Your Business?
             </h2>
-            <p className="v9-lede">
+            <p className="v10-lede">
               Located in the heart of Chandler, we&apos;re your local cybersecurity experts. Whether you need immediate
               help or want to explore our services, we&apos;re here for you.
             </p>
             <div className="contact__actions">
-              <a className="v9-link" href="/book" data-testid="contact-cta-assessment">
+              <a className="v10-link" href="/book" data-testid="contact-cta-assessment">
                 {CTA.primary}{" "}
                 <svg {...svgProps}>
                   <path d="M5 12h14" />
                   <path d="m12 5 7 7-7 7" />
                 </svg>
               </a>
-              <a className="v9-btn v9-btn--outline" href={PRIMARY_PHONE.telHref} data-testid="contact-cta-call">
+              <a className="v10-btn v10-btn--outline" href={PRIMARY_PHONE.telHref} data-testid="contact-cta-call">
                 Call {PRIMARY_PHONE.display}
               </a>
             </div>
 
             <ul className="dir">
               <li>
-                <span className="v9-iconwell">
+                <span className="v10-iconwell">
                   <svg {...svgProps}>
                     <rect width="20" height="16" x="2" y="4" rx="2" />
                     <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
                   </svg>
                 </span>
-                <span className="v9-meta">Email</span>
+                <span className="v10-meta">Email</span>
                 <span className="dir__copyrow">
                   <a className="dir__value" href={`mailto:${COMPANY.email}`} data-testid="contact-email">
                     {COMPANY.email}
@@ -506,12 +504,12 @@ export function V9ContactFooter(): JSX.Element {
                 </span>
               </li>
               <li>
-                <span className="v9-iconwell">
+                <span className="v10-iconwell">
                   <svg {...svgProps}>
                     <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
                   </svg>
                 </span>
-                <span className="v9-meta">Phone</span>
+                <span className="v10-meta">Phone</span>
                 <span className="dir__copyrow">
                   <a className="dir__value" href={PRIMARY_PHONE.telHref} data-testid="contact-phone">
                     {PRIMARY_PHONE.display}
@@ -520,13 +518,13 @@ export function V9ContactFooter(): JSX.Element {
                 </span>
               </li>
               <li>
-                <span className="v9-iconwell">
+                <span className="v10-iconwell">
                   <svg {...svgProps}>
                     <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0" />
                     <circle cx="12" cy="10" r="3" />
                   </svg>
                 </span>
-                <span className="v9-meta">Office</span>
+                <span className="v10-meta">Office</span>
                 <a
                   className="dir__value"
                   href={COMPANY.mapsUrl}
@@ -538,13 +536,13 @@ export function V9ContactFooter(): JSX.Element {
                 </a>
               </li>
               <li className="dir__top" data-testid="contact-office-hours">
-                <span className="v9-iconwell">
+                <span className="v10-iconwell">
                   <svg {...svgProps}>
                     <circle cx="12" cy="12" r="10" />
                     <polyline points="12 6 12 12 16 14" />
                   </svg>
                 </span>
-                <span className="v9-meta">Office Hours</span>
+                <span className="v10-meta">Office Hours</span>
                 <div className="hours__wrap">
                   <dl className="hours">
                     <dt>Monday - Friday</dt>
@@ -570,7 +568,7 @@ export function V9ContactFooter(): JSX.Element {
       </section>
 
       <footer className="f-chrome foot">
-        <div className="v9-canvas">
+        <div className="v10-canvas">
           <div className="foot__grid">
             <div className="foot__brand">
               <img className="foot__logo" src={DE_LOGO_REVERSE} alt="Digerati Experts Logo" data-testid="logo-footer" />
@@ -585,7 +583,7 @@ export function V9ContactFooter(): JSX.Element {
             </div>
 
             <nav className="foot__col" aria-labelledby="fc-client">
-              <h2 className="v9-meta foot__head" id="fc-client">
+              <h2 className="v10-meta foot__head" id="fc-client">
                 Client
               </h2>
               <ul>
@@ -595,7 +593,7 @@ export function V9ContactFooter(): JSX.Element {
               </ul>
             </nav>
             <nav className="foot__col" aria-labelledby="fc-services">
-              <h2 className="v9-meta foot__head" id="fc-services">
+              <h2 className="v10-meta foot__head" id="fc-services">
                 Services
               </h2>
               <ul>
@@ -605,7 +603,7 @@ export function V9ContactFooter(): JSX.Element {
               </ul>
             </nav>
             <nav className="foot__col" aria-labelledby="fc-resources">
-              <h2 className="v9-meta foot__head" id="fc-resources">
+              <h2 className="v10-meta foot__head" id="fc-resources">
                 Resources
               </h2>
               <ul>
@@ -615,7 +613,7 @@ export function V9ContactFooter(): JSX.Element {
               </ul>
             </nav>
             <nav className="foot__col foot__col--trust" aria-labelledby="fc-trust">
-              <h2 className="v9-meta foot__head" id="fc-trust">
+              <h2 className="v10-meta foot__head" id="fc-trust">
                 Trust &amp; Legal
               </h2>
               <div className="foot__split">
