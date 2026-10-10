@@ -16,6 +16,19 @@
 #
 # Example:
 # claims:
+  - id: concept-ai-background-check
+    issue: 573
+    owner: claude
+    subsystem: campaign-landing-concepts
+    branch: concept/ai-background-check
+    base_sha: b29e613f
+    files:
+      - artifacts/design-concepts/ai-background-check/** (new, standalone HTML, no client/ changes)
+    status: active
+    started: 2026-10-10
+    note: >-
+      Exploration Mode per Joe 2026-10-09/10. Three concepts for /go/ai-background-check.
+      Concept draft PR only; never merge as-is. Integration is a separate PR after Joe picks.
 #   - id: ask-de-launcher-svg
 #     issue: 123
 #     owner: claude
