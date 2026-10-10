@@ -1,13 +1,20 @@
 /**
  * Typed Zoho OAuth failures so ticket/create paths can fail closed with a
  * distinct status instead of a generic "couldn't open the ticket" 502.
+ *
+ * Since the token manager (server/zoho/oauth) a ZohoOAuthError always means
+ * Zoho refused the credential or there is none: it maps to needs_reconnect /
+ * not_configured. Throttling and outages are ZohoAuthUnavailableError
+ * (degraded), never this class (issue #418).
  */
 
 export type ZohoOAuthErrorCode =
   | "invalid_refresh_token"
   | "invalid_client"
   | "token_response_incomplete"
-  | "refresh_failed";
+  | "refresh_failed"
+  /** No credential at all for this product (server/zoho/oauth). */
+  | "not_configured";
 
 export class ZohoOAuthError extends Error {
   readonly code: ZohoOAuthErrorCode;
