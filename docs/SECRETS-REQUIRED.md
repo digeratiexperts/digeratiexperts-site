@@ -38,12 +38,14 @@ Optional per feature. Thread T1 is refactoring the Zoho token code; check `serve
 |---|---|---|---|
 | `ZOHO_CLIENT_ID` | config | `server/production.config.ts`, `server/zohoPayments.ts` | Zoho OAuth client (portal sign-in with Zoho, legacy shared client). |
 | `ZOHO_CLIENT_SECRET` | secret | `server/production.config.ts`, `server/zohoPayments.ts` | Secret for the above. |
-| `ZOHO_CLIENT_ID_API` | config | `server/services/zohoBooksTax.ts`, `server/zohoPayments.ts` | Zoho API client used for CRM (and Desk until PR #555 lands). |
+| `ZOHO_CLIENT_ID_API` | config | `server/services/zohoBooksTax.ts`, `server/zohoPayments.ts` | Zoho API client used for CRM, and for the Desk when no dedicated Desk client is set. |
 | `ZOHO_CLIENT_SECRET_API` | secret | `server/services/zohoBooksTax.ts`, `server/zohoPayments.ts` | Secret for the above. |
 | `ZOHO_REFRESH_TOKEN` | secret | `server/integrations/zohoAgentsReadiness.ts`, `server/zoho/zohoClient.ts` | CRM refresh token. |
-| `ZOHO_DESK_REFRESH_TOKEN` | secret | `server/deskTicketFallback.ts`, `server/zoho/zohoClient.ts` | Desk refresh token. Without a working one, Get Support tickets go to the failover spool. |
+| `ZOHO_DESK_REFRESH_TOKEN` | secret | `server/deskTicketFallback.ts`, `server/zoho/zohoClient.ts` | Desk refresh token. Without a working one, Get Support tickets go to the failover spool. With a dedicated Desk client it must come from that client. |
+| `ZOHO_DESK_CLIENT_ID` | config | `server/zoho/zohoClient.ts` | Optional dedicated Desk OAuth client. When this or the secret is set, all three Desk values are required and nothing is borrowed from CRM (`resolveDeskOAuthConfig`). |
+| `ZOHO_DESK_CLIENT_SECRET` | secret | `server/zoho/zohoClient.ts` | Secret for the above. |
 | `ZOHO_DESK_SOURCE_FIELD` | config | `server/zoho/zohoDesk.ts`, `shared/deskTicketSource.ts` | Optional Desk custom-field name for the ticket source. |
-| `ZOHO_FORM_OAUTH` | secret | `server/zoho/zohoClient.ts` | Fallback Desk refresh token when `ZOHO_DESK_REFRESH_TOKEN` is unset (`server/zoho/zohoClient.ts`). |
+| `ZOHO_FORM_OAUTH` | secret | `server/zoho/zohoClient.ts` | Fallback Desk refresh token when `ZOHO_DESK_REFRESH_TOKEN` is unset and no dedicated Desk client is set (`server/zoho/zohoClient.ts`). |
 | `ZOHO_OAUTH_STATE_SECRET` | secret | `server/portalZohoAuth.ts` | Signs the portal Zoho OAuth state; falls back to `SESSION_SECRET`. |
 | `ZOHO_OAUTH_PORTAL_REDIRECT_URI` | config | `server/portalZohoAuth.ts` | Override for the portal OAuth callback URL. |
 | `ZOHO_PORTAL_OIDC_REDIRECT_URI` | config | `server/routes.ts`, `server/portalZohoAuth.ts` | Override for the portal OIDC callback URL. |
@@ -248,7 +250,3 @@ Read by QA, smoke and capture scripts or the test runner, never by the productio
 ## Listed in the env template but not read by any code
 
 `CORO_CLIENT_ID`, `CORO_CLIENT_SECRET`, `WEBSITE_BASE_URL` and `PORTAL_BASE_URL` appear in `deploy/vps/env.production.example` but nothing in the repository reads them. They are harmless; DE can keep them for a planned integration or drop them from the template.
-
-## Pending in open PRs
-
-- PR #555 (draft) adds `ZOHO_DESK_CLIENT_ID` and `ZOHO_DESK_CLIENT_SECRET`, a dedicated Zoho Desk OAuth client. Add them here when it merges.
