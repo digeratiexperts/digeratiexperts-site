@@ -77,12 +77,9 @@ describe("sticky CTA visibility", () => {
     expect(shouldShowStickyCta({ ...base, dismissed: true })).toBe(false);
   });
 
-  it("on phones waits for the cookie banner to be answered", () => {
-    expect(isCookieFirst(390, true)).toBe(true);
-    expect(isCookieFirst(390, false)).toBe(false);
-    expect(isCookieFirst(767, true)).toBe(true);
-    expect(isCookieFirst(768, true)).toBe(false);
-    expect(isCookieFirst(1440, true)).toBe(false);
+  it("waits for the cookie banner to be answered at every width", () => {
+    expect(isCookieFirst(true)).toBe(true);
+    expect(isCookieFirst(false)).toBe(false);
     const ready = {
       dismissed: false,
       routeAllowed: true,
