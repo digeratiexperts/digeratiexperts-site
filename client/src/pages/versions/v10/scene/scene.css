@@ -29,7 +29,26 @@
 .v10 section.f-paper:has(> .scene) :is(.why__statement, .why__ask, .tackle__head, .v10-head) :is(.v10-lede, .v10-body) { color: rgba(255, 255, 255, 0.8); }
 .v10 section.f-paper:has(> .scene) :is(.why__statement, .why__ask, .tackle__head, .v10-head) .v10-link { color: var(--v10-magenta-ink); }
 .v10 section.f-paper:has(> .scene) .why__ask { border-top-color: rgba(255, 255, 255, 0.14); }
-.v10 section.f-paper:has(> .scene) :is(.claims > *, .problems > .problem, .tackle__ask) { color: var(--v10-ink); }
+/* Their cards turn to dark glass so the scene reads between and through them. */
+.v10 section.f-paper:has(> .scene) {
+  --spot-bg: rgba(18, 18, 20, 0.66);
+  --spot-line: rgba(255, 255, 255, 0.13);
+  --spot-tint: rgba(232, 121, 249, 0.14);
+  --spot-edge: rgba(232, 121, 249, 0.75);
+}
+.v10 section.f-paper:has(> .scene) :is(.claims > *, .problems > .problem, .tackle__ask) {
+  color: #fff;
+  box-shadow: none;
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+.v10 section.f-paper:has(> .scene) .tackle__ask { background: rgba(18, 18, 20, 0.66); border-color: rgba(255, 255, 255, 0.13); }
+.v10 section.f-paper:has(> .scene) :is(.claims > *, .problems > .problem, .tackle__ask) :is(.v10-body, .v10-small, p) { color: rgba(255, 255, 255, 0.74); }
+.v10 section.f-paper:has(> .scene) :is(.claim__title a, .problem__link) { color: #fff; }
+.v10 section.f-paper:has(> .scene) :is(.claim:hover .claim__title a, .claim__title a:focus-visible, .problem:hover .problem__link, .problem__link:focus-visible) { color: var(--v10-magenta-ink); }
+.v10 section.f-paper:has(> .scene) :is(.claim__chev) { color: rgba(255, 255, 255, 0.6); }
+.v10 section.f-paper:has(> .scene) .problem__arrow { background: rgba(255, 255, 255, 0.06); border-color: rgba(255, 255, 255, 0.16); color: rgba(255, 255, 255, 0.75); box-shadow: none; }
+.v10 section.f-paper:has(> .scene) .v10-seq { background: rgba(232, 121, 249, 0.14); color: #f5b8e0; }
 
 /* Boxed chapter: let the scene read through the panel's right side. */
 .v10 .v10s-03 .stats-box {
@@ -67,4 +86,13 @@
 }
 @media (max-width: 639px) {
   .v10 .scene__img { width: 190%; right: -62%; opacity: 0.45; }
+}
+
+/* Head links can land on the lit part of the scene: give them a dark backing so they hold contrast. */
+.v10 .v10s-03 .stats-box .v10-link,
+.v10 .v10s-04 .tackle__more {
+  background-color: rgba(0, 0, 0, 0.62);
+  border-radius: 8px;
+  padding: 6px 10px;
+  margin: -6px -10px;
 }
