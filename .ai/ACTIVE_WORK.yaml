@@ -3251,3 +3251,30 @@ claims:
       than 17rem the steps drop under the number. No markup, copy or token
       change. Overlap check 2026-10-08: no open PR or active claim touches
       these files.
+  - id: desk-oauth-client
+    owner: claude
+    subsystem: de-desk
+    branch: claude/awesome-bardeen-4pbl2m
+    base_sha: 7b1b4197
+    files:
+      - server/zoho/zohoClient.ts (resolveDeskOAuthConfig and the Desk readiness and refresh paths only; the CRM refresh is unchanged)
+      - server/zoho/zohoClient.desk.test.ts (one describe block appended)
+      - deploy/vps/env.production.example (the website Desk and CRM block only)
+      - server/deskTicketFallback.ts (the staff alert's restore sentence only)
+      - server/integrations/zohoAgentsReadiness.ts (one comment)
+    status: active
+    started: 2026-10-10
+    note: >-
+      Joe, 2026-10-10: the new Desk refresh token came from its own Zoho Self
+      Client, but the website refreshed Desk with the CRM client
+      (ZOHO_CLIENT_ID_API / ZOHO_CLIENT_SECRET_API), so Zoho kept answering
+      auth_failed after the 00:49Z restart. Fix: ZOHO_DESK_CLIENT_ID and
+      ZOHO_DESK_CLIENT_SECRET for the Desk only. When either is set, all three
+      Desk values (with ZOHO_DESK_REFRESH_TOKEN) are required and nothing is
+      borrowed from CRM; a half-set pair keeps the Desk API off (tickets use
+      the failover) and the log names the missing variable, never a value.
+      With neither set, the legacy shared client and token fallbacks are
+      unchanged. CRM keeps its client and token. Overlap check 2026-10-10: the
+      only claim listing zohoClient.ts (de-desk-reliability-followup) is
+      verified-live; open PRs 542, 550, 553 and 554 touch none of these files.
+      Not merged or deployed: Joe asked for the PR and validation first.
