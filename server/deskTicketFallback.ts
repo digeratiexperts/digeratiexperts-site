@@ -152,7 +152,7 @@ export const defaultDeskFallbackDeps: DeskFallbackDeps = {
       htmlBody: baseEmailTemplate(
         `<h2>The website's Zoho Desk connection is failing (${escapeHtml(ticket.reason)})</h2>
          <p>Client tickets are still arriving: each one goes into the Desk inbox by email and is kept on the server until the API works again.</p>
-         <p>To restore the API: generate a new Zoho Desk refresh token (scopes in deploy/vps/env.production.example), set ZOHO_DESK_REFRESH_TOKEN on the server, restart, and check /api/zoho/desk/status reads connected.</p>`,
+         <p>To restore the API: generate a new Zoho Desk refresh token (scopes in deploy/vps/env.production.example), set ZOHO_DESK_REFRESH_TOKEN on the server (with ZOHO_DESK_CLIENT_ID and ZOHO_DESK_CLIENT_SECRET when it came from the Desk's own client), restart, and check /api/zoho/desk/status reads connected.</p>`,
         "DE Desk API failing",
       ),
     });

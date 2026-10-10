@@ -19,6 +19,58 @@ export type DeskAuthStatus =
   | 'ok'
   | 'auth_failed';
 
+/**
+ * The OAuth client and refresh token the Desk refreshes with.
+ *
+ * - ZOHO_DESK_CLIENT_ID / ZOHO_DESK_CLIENT_SECRET set: the Desk has its own
+ *   Zoho client (a Self Client of its own). Then all three Desk values must be
+ *   set, ZOHO_DESK_REFRESH_TOKEN included, and none is borrowed from CRM: a
+ *   refresh token only works with the client that issued it.
+ * - Neither set: the legacy shared client (ZOHO_CLIENT_ID_API /
+ *   ZOHO_CLIENT_SECRET_API) with ZOHO_DESK_REFRESH_TOKEN, then
+ *   ZOHO_FORM_OAUTH, then ZOHO_REFRESH_TOKEN.
+ *
+ * "incomplete" names the missing variables only, never a value.
+ */
+export type DeskOAuthConfig =
+  | {
+      state: 'ready';
+      clientId: string;
+      clientSecret: string;
+      refreshToken: string;
+      dedicatedClient: boolean;
+    }
+  | { state: 'incomplete'; missing: string[] }
+  | { state: 'missing' };
+
+export function resolveDeskOAuthConfig(env: NodeJS.ProcessEnv = process.env): DeskOAuthConfig {
+  const deskClientId = env.ZOHO_DESK_CLIENT_ID?.trim() || '';
+  const deskClientSecret = env.ZOHO_DESK_CLIENT_SECRET?.trim() || '';
+  if (deskClientId || deskClientSecret) {
+    const deskRefreshToken = env.ZOHO_DESK_REFRESH_TOKEN?.trim() || '';
+    const missing = [
+      ['ZOHO_DESK_CLIENT_ID', deskClientId],
+      ['ZOHO_DESK_CLIENT_SECRET', deskClientSecret],
+      ['ZOHO_DESK_REFRESH_TOKEN', deskRefreshToken],
+    ]
+      .filter(([, value]) => !value)
+      .map(([name]) => name);
+    if (missing.length) return { state: 'incomplete', missing };
+    return {
+      state: 'ready',
+      clientId: deskClientId,
+      clientSecret: deskClientSecret,
+      refreshToken: deskRefreshToken,
+      dedicatedClient: true,
+    };
+  }
+  const clientId = env.ZOHO_CLIENT_ID_API || '';
+  const clientSecret = env.ZOHO_CLIENT_SECRET_API || '';
+  const refreshToken = env.ZOHO_DESK_REFRESH_TOKEN || env.ZOHO_FORM_OAUTH || env.ZOHO_REFRESH_TOKEN || '';
+  if (!(clientId && clientSecret && refreshToken)) return { state: 'missing' };
+  return { state: 'ready', clientId, clientSecret, refreshToken, dedicatedClient: false };
+}
+
 export class ZohoClient {
   private accessToken: string | null = null;
   private tokenExpiry: number = 0;
@@ -38,20 +90,23 @@ export class ZohoClient {
     if (!this.clientId || !this.clientSecret || !this.refreshToken) {
       console.warn('⚠️ Zoho API credentials not fully configured');
     }
-    if (this.clientId && this.clientSecret && this.getDeskRefreshToken()) {
+    const desk = resolveDeskOAuthConfig();
+    if (desk.state === 'ready') {
       this.deskAuthStatus = 'credentials_present';
-      console.log('✅ Zoho Desk OAuth credentials present (refresh validity not probed at boot)');
+      console.log(
+        `✅ Zoho Desk OAuth credentials present (${desk.dedicatedClient ? 'own Desk client' : 'shared CRM client'}; refresh validity not probed at boot)`,
+      );
+    } else if (desk.state === 'incomplete') {
+      console.warn(
+        `⚠️ Zoho Desk has its own OAuth client configured but is missing ${desk.missing.join(', ')}; the Desk API stays off until all three are set`,
+      );
     }
-  }
-
-  private getDeskRefreshToken(): string {
-    return process.env.ZOHO_DESK_REFRESH_TOKEN || process.env.ZOHO_FORM_OAUTH || this.refreshToken;
   }
 
   /** Last known Desk OAuth state — presence only until a refresh is attempted. */
   getDeskAuthStatus(): DeskAuthStatus {
     if (isStagingReview()) return 'not_configured';
-    if (!(this.clientId && this.clientSecret && this.getDeskRefreshToken())) {
+    if (resolveDeskOAuthConfig().state !== 'ready') {
       return 'not_configured';
     }
     return this.deskAuthStatus === 'not_configured' ||
@@ -151,15 +206,19 @@ export class ZohoClient {
   }
 
   private async _doRefreshDeskToken(): Promise<string> {
-    const token = this.getDeskRefreshToken();
+    const desk = resolveDeskOAuthConfig();
+    if (desk.state !== 'ready') {
+      // Callers check isDeskConfigured() first; never send a half-set pair to Zoho.
+      throw new Error('Zoho Desk OAuth is not configured');
+    }
     try {
       const response = await axios.post<ZohoTokenResponse>(
         'https://accounts.zoho.com/oauth/v2/token',
         new URLSearchParams({
           grant_type: 'refresh_token',
-          client_id: this.clientId,
-          client_secret: this.clientSecret,
-          refresh_token: token,
+          client_id: desk.clientId,
+          client_secret: desk.clientSecret,
+          refresh_token: desk.refreshToken,
         }).toString(),
         { headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, timeout: 10000 }
       );
@@ -278,7 +337,7 @@ export class ZohoClient {
 
   isDeskConfigured(): boolean {
     if (isStagingReview()) return false;
-    return !!(this.clientId && this.clientSecret && this.getDeskRefreshToken());
+    return resolveDeskOAuthConfig().state === 'ready';
   }
 }
 
