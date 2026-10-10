@@ -685,8 +685,8 @@ END:VEVENT
 BEGIN:VEVENT
 UID:dated-qbr-2027-01@digeratiexperts.com
 DTSTAMP:20261010T000000Z
-DTSTART;VALUE=DATE:20270105
-DTEND;VALUE=DATE:20270124
+DTSTART;VALUE=DATE:20270111
+DTEND;VALUE=DATE:20270130
 SUMMARY:[clients] QBR season (Q1 business reviews)
 DESCRIPTION:Book every managed client's review\; prep the pack two weeks ah
  ead (tickets\, risk\, restore-test evidence\, roadmap).\nOwner: Account ma
@@ -753,8 +753,8 @@ UID:dated-healthcare-webinar-2027@digeratiexperts.com
 DTSTAMP:20261010T000000Z
 DTSTART;TZID=America/Phoenix:20270422T110000
 DTEND;TZID=America/Phoenix:20270422T120000
-SUMMARY:[prospects] Webinar (proposed): HIPAA security risk analysis for Ar
- izona practices
+SUMMARY:[prospects] Webinar: HIPAA security risk analysis for Arizona pract
+ ices
 DESCRIPTION:Topic proposal\; add to deEvents.ts once confirmed.\nCampaign: 
  /go/healthcare-it\nOwner: Marketing
 CATEGORIES:prospects
@@ -762,8 +762,8 @@ END:VEVENT
 BEGIN:VEVENT
 UID:dated-nsbw-2027@digeratiexperts.com
 DTSTAMP:20261010T000000Z
-DTSTART;VALUE=DATE:20270502
-DTEND;VALUE=DATE:20270509
+DTSTART;VALUE=DATE:20270503
+DTEND;VALUE=DATE:20270508
 SUMMARY:[prospects] National Small Business Week
 DESCRIPTION:SBA sets the dates each year (usually late April or early May)\
  ; confirm. Assessment push to owners.\nCampaign: /go/cyber-risk-assessment
@@ -775,8 +775,7 @@ UID:dated-assessment-webinar-2027@digeratiexperts.com
 DTSTAMP:20261010T000000Z
 DTSTART;TZID=America/Phoenix:20270520T110000
 DTEND;TZID=America/Phoenix:20270520T114500
-SUMMARY:[prospects] Webinar (proposed): What a Cyber Risk Assessment actual
- ly looks at
+SUMMARY:[prospects] Webinar: What a Cyber Risk Assessment actually looks at
 DESCRIPTION:Topic proposal\; ties to National Small Business Week follow-up
  .\nCampaign: /go/cyber-risk-assessment\nOwner: Marketing
 CATEGORIES:prospects
@@ -795,8 +794,8 @@ UID:dated-managed-it-webinar-2027@digeratiexperts.com
 DTSTAMP:20261010T000000Z
 DTSTART;TZID=America/Phoenix:20270624T110000
 DTEND;TZID=America/Phoenix:20270624T114500
-SUMMARY:[prospects] Webinar (proposed): Managed IT without the mystery — 
- what ProActive covers
+SUMMARY:[prospects] Webinar: Managed IT without the mystery — what ProAct
+ ive covers
 DESCRIPTION:Topic proposal.\nCampaign: /go/managed-it\nOwner: Marketing
 CATEGORIES:prospects
 END:VEVENT
@@ -826,8 +825,8 @@ UID:dated-mfa-webinar-2027@digeratiexperts.com
 DTSTAMP:20261010T000000Z
 DTSTART;TZID=America/Phoenix:20270826T110000
 DTEND;TZID=America/Phoenix:20270826T114500
-SUMMARY:[prospects] Webinar (proposed): MFA everywhere — closing the logi
- ns attackers try first
+SUMMARY:[prospects] Webinar: MFA everywhere — closing the logins attacker
+ s try first
 DESCRIPTION:Topic proposal\; back-to-school timing for password and MFA ref
  reshes.\nCampaign: /go/cyber-risk-assessment\nOwner: Marketing
 CATEGORIES:prospects
@@ -847,8 +846,8 @@ UID:dated-insurance-webinar-2027@digeratiexperts.com
 DTSTAMP:20261010T000000Z
 DTSTART;TZID=America/Phoenix:20270923T110000
 DTEND;TZID=America/Phoenix:20270923T120000
-SUMMARY:[prospects-and-clients] Webinar (proposed): Q4 cyber insurance rene
- wal readiness
+SUMMARY:[prospects-and-clients] Webinar: Q4 cyber insurance renewal readine
+ ss
 DESCRIPTION:Repeat of the October 2026 session\, updated with what renewals
   asked this year.\nCampaign: /go/cyber-insurance\nOwner: Marketing
 CATEGORIES:prospects-and-clients
@@ -866,8 +865,8 @@ END:VEVENT
 BEGIN:VEVENT
 UID:dated-qbr-2027-10@digeratiexperts.com
 DTSTAMP:20261010T000000Z
-DTSTART;VALUE=DATE:20271005
-DTEND;VALUE=DATE:20271024
+DTSTART;VALUE=DATE:20271011
+DTEND;VALUE=DATE:20271030
 SUMMARY:[clients] QBR season (Q4 business reviews)
 DESCRIPTION:Book every managed client's review\; prep the pack two weeks ah
  ead (tickets\, risk\, restore-test evidence\, roadmap).\nOwner: Account ma
@@ -880,8 +879,7 @@ UID:dated-halloween-webinar-2027@digeratiexperts.com
 DTSTAMP:20261010T000000Z
 DTSTART;TZID=America/Phoenix:20271028T110000
 DTEND;TZID=America/Phoenix:20271028T114500
-SUMMARY:[prospects-and-clients] Webinar (proposed): Halloween cyber horror 
- stories
+SUMMARY:[prospects-and-clients] Webinar: Halloween cyber horror stories
 DESCRIPTION:Reuse the 2023 Halloween campaign kit (email invites\, call scr
  ipt\, postcard).\nCampaign: /go/email-security\nOwner: Marketing\nStart fr
  om: WorkDrive: Halloween Cybersecurity Webinar campaign kit (2023)
@@ -910,8 +908,8 @@ UID:dated-holiday-fraud-webinar-2027@digeratiexperts.com
 DTSTAMP:20261010T000000Z
 DTSTART;TZID=America/Phoenix:20271118T110000
 DTEND;TZID=America/Phoenix:20271118T114500
-SUMMARY:[prospects-and-clients] Webinar (proposed): Holiday invoice fraud\,
-  2027 edition
+SUMMARY:[prospects-and-clients] Webinar: Holiday invoice fraud\, 2027 editi
+ on
 DESCRIPTION:Campaign: /go/email-security\nOwner: Marketing
 CATEGORIES:prospects-and-clients
 END:VEVENT

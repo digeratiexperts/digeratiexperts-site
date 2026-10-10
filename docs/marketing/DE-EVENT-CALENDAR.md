@@ -40,14 +40,14 @@
 | January 2027 | [Ransomware readiness](https://digeratiexperts.com/go/ransomware-readiness) | Thu, Jan 21: Can You Actually Restore? A Ransomware Readiness Working Session *(planned)* |
 | February 2027 | [Co-Managed IT](https://digeratiexperts.com/go/co-managed-it) | Thu, Feb 18: Co-Managed IT: Backup for the Internal IT Team, Not a Replacement *(planned)* |
 | March 2027 | [Ransomware readiness](https://digeratiexperts.com/go/ransomware-readiness) | Wed, Mar 31: World Backup Day: A Live Restore Drill *(planned)* |
-| April 2027 | [Email security](https://digeratiexperts.com/go/email-security), [Healthcare IT](https://digeratiexperts.com/go/healthcare-it) | Thu, Apr 22: Webinar (proposed): HIPAA security risk analysis for Arizona practices *(proposed)* |
-| May 2027 | [Cyber Risk Assessment](https://digeratiexperts.com/go/cyber-risk-assessment) | Thu, May 20: Webinar (proposed): What a Cyber Risk Assessment actually looks at *(proposed)* |
-| June 2027 | [Managed IT](https://digeratiexperts.com/go/managed-it) | Thu, Jun 24: Webinar (proposed): Managed IT without the mystery — what ProActive covers *(proposed)* |
+| April 2027 | [Email security](https://digeratiexperts.com/go/email-security), [Healthcare IT](https://digeratiexperts.com/go/healthcare-it) | Thu, Apr 22: Webinar: HIPAA security risk analysis for Arizona practices *(proposed)* |
+| May 2027 | [Cyber Risk Assessment](https://digeratiexperts.com/go/cyber-risk-assessment) | Thu, May 20: Webinar: What a Cyber Risk Assessment actually looks at *(proposed)* |
+| June 2027 | [Managed IT](https://digeratiexperts.com/go/managed-it) | Thu, Jun 24: Webinar: Managed IT without the mystery — what ProActive covers *(proposed)* |
 | July 2027 | — | — |
-| August 2027 | [Cyber Risk Assessment](https://digeratiexperts.com/go/cyber-risk-assessment) | Thu, Aug 26: Webinar (proposed): MFA everywhere — closing the logins attackers try first *(proposed)* |
-| September 2027 | [Ransomware readiness](https://digeratiexperts.com/go/ransomware-readiness), [Cyber insurance readiness](https://digeratiexperts.com/go/cyber-insurance) | Thu, Sep 23: Webinar (proposed): Q4 cyber insurance renewal readiness *(proposed)* |
-| October 2027 | [Cyber insurance readiness](https://digeratiexperts.com/go/cyber-insurance), [Email security](https://digeratiexperts.com/go/email-security) | Thu, Oct 28: Webinar (proposed): Halloween cyber horror stories *(proposed)* |
-| November 2027 | [Email security](https://digeratiexperts.com/go/email-security) | Thu, Nov 18: Webinar (proposed): Holiday invoice fraud, 2027 edition *(proposed)* |
+| August 2027 | [Cyber Risk Assessment](https://digeratiexperts.com/go/cyber-risk-assessment) | Thu, Aug 26: Webinar: MFA everywhere — closing the logins attackers try first *(proposed)* |
+| September 2027 | [Ransomware readiness](https://digeratiexperts.com/go/ransomware-readiness), [Cyber insurance readiness](https://digeratiexperts.com/go/cyber-insurance) | Thu, Sep 23: Webinar: Q4 cyber insurance renewal readiness *(proposed)* |
+| October 2027 | [Cyber insurance readiness](https://digeratiexperts.com/go/cyber-insurance), [Email security](https://digeratiexperts.com/go/email-security) | Thu, Oct 28: Webinar: Halloween cyber horror stories *(proposed)* |
+| November 2027 | [Email security](https://digeratiexperts.com/go/email-security) | Thu, Nov 18: Webinar: Holiday invoice fraud, 2027 edition *(proposed)* |
 | December 2027 | [ProActive Business](https://digeratiexperts.com/go/proactive-business) | — |
 
 ## October 2026
@@ -112,14 +112,14 @@
 
 ## January 2027
 
-- **Tue, Jan 5 → Sat, Jan 23** · Clients · QBR season (Q1 business reviews)  
-  Book every managed client's review; prep the pack two weeks ahead (tickets, risk, restore-test evidence, roadmap). Start from: Portal /portal/qbr; WorkDrive: QBR Campaign E-mails, QBR Campaign Blueprint, S9 QBR Agenda Template
 - **Tue, Jan 5, 9:00 AM** · Internal · Annual planning kickoff  
   Set the year's goals; confirm Q1 sessions and owners; review survey results. Start from: WorkDrive: Company Strategy & Frameworks; 2024 Business Planning; Digerati_Experts_Marketing_Calendar.docx
 - **Thu, Jan 7** · Internal · Prep T-14d: Can You Actually Restore? A Ransomware Readiness Working Session  
   Second invite; dry run at the lunch & learn
 - **Mon, Jan 11 → Fri, Jan 22** · Internal · Annual staff security awareness training and policy acknowledgment  
   Every DE employee completes training and signs the acceptable-use and security policies. Offer the same to clients on awareness plans.
+- **Mon, Jan 11 → Fri, Jan 29** · Clients · QBR season (Q1 business reviews)  
+  Book every managed client's review; prep the pack two weeks ahead (tickets, risk, restore-test evidence, roadmap). Start from: Portal /portal/qbr; WorkDrive: QBR Campaign E-mails, QBR Campaign Blueprint, S9 QBR Agenda Template
 - **Thu, Jan 14** · Internal · Prep T-7d: Can You Actually Restore? A Ransomware Readiness Working Session  
   Reminder to registrants; final slides
 - **Thu, Jan 14** · Internal · Prep T-35d: Co-Managed IT  
@@ -175,21 +175,21 @@
   Follow-up: recording, slides, assessment offer; log attendance in CRM
 - **Mon, Apr 5 → Fri, Apr 23** · Clients · QBR season (Q2 business reviews)  
   Book every managed client's review; prep the pack two weeks ahead (tickets, risk, restore-test evidence, roadmap). Start from: Portal /portal/qbr; WorkDrive: QBR Campaign E-mails, QBR Campaign Blueprint, S9 QBR Agenda Template
-- **Thu, Apr 22, 11:00 AM** · Prospects · Webinar (proposed): HIPAA security risk analysis for Arizona practices — _proposed_ · campaign: [Healthcare IT](/go/healthcare-it)  
+- **Thu, Apr 22, 11:00 AM** · Prospects · Webinar: HIPAA security risk analysis for Arizona practices — _proposed_ · campaign: [Healthcare IT](/go/healthcare-it)  
   Topic proposal; add to deEvents.ts once confirmed.
 
 ## May 2027
 
-- **Sun, May 2 → Sat, May 8** · Prospects · National Small Business Week — _confirm dates_ · campaign: [Cyber Risk Assessment](/go/cyber-risk-assessment)  
+- **Mon, May 3 → Fri, May 7** · Prospects · National Small Business Week — _confirm dates_ · campaign: [Cyber Risk Assessment](/go/cyber-risk-assessment)  
   SBA sets the dates each year (usually late April or early May); confirm. Assessment push to owners.
 - **Mon, May 3 → Fri, May 28** · Clients · Mid-year client referral push  
   A newsletter feature and a QBR-follow-up ask.
-- **Thu, May 20, 11:00 AM** · Prospects · Webinar (proposed): What a Cyber Risk Assessment actually looks at — _proposed_ · campaign: [Cyber Risk Assessment](/go/cyber-risk-assessment)  
+- **Thu, May 20, 11:00 AM** · Prospects · Webinar: What a Cyber Risk Assessment actually looks at — _proposed_ · campaign: [Cyber Risk Assessment](/go/cyber-risk-assessment)  
   Topic proposal; ties to National Small Business Week follow-up.
 
 ## June 2027
 
-- **Thu, Jun 24, 11:00 AM** · Prospects · Webinar (proposed): Managed IT without the mystery — what ProActive covers — _proposed_ · campaign: [Managed IT](/go/managed-it)  
+- **Thu, Jun 24, 11:00 AM** · Prospects · Webinar: Managed IT without the mystery — what ProActive covers — _proposed_ · campaign: [Managed IT](/go/managed-it)  
   Topic proposal.
 - **Mon, Jun 28, 9:00 AM** · Internal · Mid-year review  
   Goals against plan; reset H2 campaigns.
@@ -201,23 +201,23 @@
 
 ## August 2027
 
-- **Thu, Aug 26, 11:00 AM** · Prospects · Webinar (proposed): MFA everywhere — closing the logins attackers try first — _proposed_ · campaign: [Cyber Risk Assessment](/go/cyber-risk-assessment)  
+- **Thu, Aug 26, 11:00 AM** · Prospects · Webinar: MFA everywhere — closing the logins attackers try first — _proposed_ · campaign: [Cyber Risk Assessment](/go/cyber-risk-assessment)  
   Topic proposal; back-to-school timing for password and MFA refreshes.
 
 ## September 2027
 
 - **Wed, Sep 1 → Thu, Sep 30** · Prospects + clients · National Preparedness Month · campaign: [Ransomware readiness](/go/ransomware-readiness)  
   September every year (FEMA / Ready.gov). Business-continuity and backup messaging.
-- **Thu, Sep 23, 11:00 AM** · Prospects + clients · Webinar (proposed): Q4 cyber insurance renewal readiness — _proposed_ · campaign: [Cyber insurance readiness](/go/cyber-insurance)  
+- **Thu, Sep 23, 11:00 AM** · Prospects + clients · Webinar: Q4 cyber insurance renewal readiness — _proposed_ · campaign: [Cyber insurance readiness](/go/cyber-insurance)  
   Repeat of the October 2026 session, updated with what renewals asked this year.
 
 ## October 2027
 
 - **Fri, Oct 1 → Sun, Oct 31** · Prospects + clients · Cybersecurity Awareness Month · campaign: [Cyber insurance readiness](/go/cyber-insurance)  
   October, every year.
-- **Tue, Oct 5 → Sat, Oct 23** · Clients · QBR season (Q4 business reviews)  
+- **Mon, Oct 11 → Fri, Oct 29** · Clients · QBR season (Q4 business reviews)  
   Book every managed client's review; prep the pack two weeks ahead (tickets, risk, restore-test evidence, roadmap). Start from: Portal /portal/qbr; WorkDrive: QBR Campaign E-mails, QBR Campaign Blueprint, S9 QBR Agenda Template
-- **Thu, Oct 28, 11:00 AM** · Prospects + clients · Webinar (proposed): Halloween cyber horror stories — _proposed_ · campaign: [Email security](/go/email-security)  
+- **Thu, Oct 28, 11:00 AM** · Prospects + clients · Webinar: Halloween cyber horror stories — _proposed_ · campaign: [Email security](/go/email-security)  
   Reuse the 2023 Halloween campaign kit (email invites, call script, postcard). Start from: WorkDrive: Halloween Cybersecurity Webinar campaign kit (2023)
 
 ## November 2027
@@ -225,7 +225,7 @@
 - **Mon, Nov 1** · Clients · Annual client satisfaction survey sent
 - **Mon, Nov 8 → Fri, Nov 12** · Clients · Annual license and renewal audit
 - **Mon, Nov 15** · Clients · Client appreciation: Thanksgiving thank-you cards mailed
-- **Thu, Nov 18, 11:00 AM** · Prospects + clients · Webinar (proposed): Holiday invoice fraud, 2027 edition — _proposed_ · campaign: [Email security](/go/email-security)
+- **Thu, Nov 18, 11:00 AM** · Prospects + clients · Webinar: Holiday invoice fraud, 2027 edition — _proposed_ · campaign: [Email security](/go/email-security)
 
 ## December 2027
 

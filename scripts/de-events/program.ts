@@ -240,13 +240,16 @@ export const SERIES: Series[] = [
   },
 ];
 
+/** Three working weeks starting the first Monday on or after the 5th. */
 function qbrSeason(year: number, month: number): Dated {
   const mm = String(month).padStart(2, "0");
+  const fifth = new Date(Date.UTC(year, month - 1, 5));
+  const start = 5 + ((8 - fifth.getUTCDay()) % 7);
   return {
     id: `qbr-${year}-${mm}`,
     title: `QBR season (Q${QUARTER_STARTS.indexOf(month) + 1} business reviews)`,
     audience: "clients",
-    date: `${year}-${mm}-05`,
+    date: `${year}-${mm}-${String(start).padStart(2, "0")}`,
     days: 19,
     owner: "Account management",
     note: "Book every managed client's review; prep the pack two weeks ahead (tickets, risk, restore-test evidence, roadmap).",
@@ -410,7 +413,7 @@ export const DATED: Dated[] = [
   qbrSeason(2027, 4),
   {
     id: "healthcare-webinar-2027",
-    title: "Webinar (proposed): HIPAA security risk analysis for Arizona practices",
+    title: "Webinar: HIPAA security risk analysis for Arizona practices",
     audience: "prospects",
     date: "2027-04-22T11:00",
     durationMinutes: 60,
@@ -423,8 +426,8 @@ export const DATED: Dated[] = [
     id: "nsbw-2027",
     title: "National Small Business Week",
     audience: "prospects",
-    date: "2027-05-02",
-    days: 7,
+    date: "2027-05-03",
+    days: 5,
     owner: "Marketing",
     note: "SBA sets the dates each year (usually late April or early May); confirm. Assessment push to owners.",
     campaign: "cyber-risk-assessment",
@@ -432,7 +435,7 @@ export const DATED: Dated[] = [
   },
   {
     id: "assessment-webinar-2027",
-    title: "Webinar (proposed): What a Cyber Risk Assessment actually looks at",
+    title: "Webinar: What a Cyber Risk Assessment actually looks at",
     audience: "prospects",
     date: "2027-05-20T11:00",
     durationMinutes: 45,
@@ -452,7 +455,7 @@ export const DATED: Dated[] = [
   },
   {
     id: "managed-it-webinar-2027",
-    title: "Webinar (proposed): Managed IT without the mystery — what ProActive covers",
+    title: "Webinar: Managed IT without the mystery — what ProActive covers",
     audience: "prospects",
     date: "2027-06-24T11:00",
     durationMinutes: 45,
@@ -475,7 +478,7 @@ export const DATED: Dated[] = [
   qbrSeason(2027, 7),
   {
     id: "mfa-webinar-2027",
-    title: "Webinar (proposed): MFA everywhere — closing the logins attackers try first",
+    title: "Webinar: MFA everywhere — closing the logins attackers try first",
     audience: "prospects",
     date: "2027-08-26T11:00",
     durationMinutes: 45,
@@ -496,7 +499,7 @@ export const DATED: Dated[] = [
   },
   {
     id: "insurance-webinar-2027",
-    title: "Webinar (proposed): Q4 cyber insurance renewal readiness",
+    title: "Webinar: Q4 cyber insurance renewal readiness",
     audience: "prospects-and-clients",
     date: "2027-09-23T11:00",
     durationMinutes: 60,
@@ -520,7 +523,7 @@ export const DATED: Dated[] = [
   qbrSeason(2027, 10),
   {
     id: "halloween-webinar-2027",
-    title: "Webinar (proposed): Halloween cyber horror stories",
+    title: "Webinar: Halloween cyber horror stories",
     audience: "prospects-and-clients",
     date: "2027-10-28T11:00",
     durationMinutes: 45,
@@ -549,7 +552,7 @@ export const DATED: Dated[] = [
   },
   {
     id: "holiday-fraud-webinar-2027",
-    title: "Webinar (proposed): Holiday invoice fraud, 2027 edition",
+    title: "Webinar: Holiday invoice fraud, 2027 edition",
     audience: "prospects-and-clients",
     date: "2027-11-18T11:00",
     durationMinutes: 45,
