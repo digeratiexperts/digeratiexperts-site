@@ -267,3 +267,32 @@ jobs:
             if (!healthy) failures.push(`services.database is "${DB}", expected "connected"`);
             if (!deskHealthy) failures.push(`desk connected is "${DESK}" (${DESK_REASON}/${DESK_ERROR}), expected "true"`);
             if (failures.length) core.setFailed(failures.join('; '));
+
+      # The two canonical hosts people actually open (AGENTS.md "Hosts"). The
+      # probes above read API endpoints on the apex; this checks the site root
+      # and the portal login through Cloudflare, each answering 200 directly
+      # (no redirect followed, so a redirect loop or a moved login shows up).
+      # Same two-probe rule before failing. Runs even when the step above
+      # failed, so one broken signal never hides another.
+      - name: Probe canonical hosts
+        if: always()
+        shell: bash
+        run: |
+          set -uo pipefail
+          failed=0
+          for url in "https://digeratiexperts.com/" "https://portal.digeratiexperts.com/portal/login"; do
+            code="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 20 "$url" 2>/dev/null || true)"
+            if [ "$code" != "200" ]; then
+              echo "First probe of $url answered '$code'; re-checking in 30s."
+              sleep 30
+              code="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 20 "$url" 2>/dev/null || true)"
+            fi
+            code="$(printf '%s' "$code" | tr -cd '0-9' | head -c 3)"
+            if [ "$code" = "200" ]; then
+              echo "$url -> 200"
+            else
+              echo "::error::$url answered '${code:-no response}', expected 200 (confirmed by a second probe)."
+              failed=1
+            fi
+          done
+          exit "$failed"
