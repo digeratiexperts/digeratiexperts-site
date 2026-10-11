@@ -12,6 +12,7 @@
     responsive, shows progress and can be cancelled between steps.
 
 .PARAMETER Page      Start page: Dashboard, Workflow, Discovery, Identity, Security, Apps, Browser, Baseline, Branding, Network, Vendors, AiToolkit, Evidence, Settings.
+.PARAMETER Appearance Operations (red/graphite), Precision (blue/slate), or original Brand. High contrast overrides appearance.
 .PARAMETER Resume    Reopen after a restart and continue at the queued step.
 .PARAMETER Headless  No window; requires -Client (profile id) and -Mode.
 .PARAMETER Mode      audit | new | takeover | replacement | repair | co-managed | deprovision.
@@ -28,6 +29,7 @@
 param(
     [ValidateSet('Scan', 'Dashboard', 'Workflow', 'Discovery', 'Identity', 'Security', 'Apps', 'Browser', 'Baseline', 'Branding', 'Network', 'Toolbox', 'Storage', 'CommandLine', 'Migration', 'Vendors', 'AiToolkit', 'Evidence', 'Settings')]
     [string]$Page = 'Scan',
+    [ValidateSet('Brand','Operations','Precision')][string]$Appearance = 'Operations',
     [switch]$Resume,
     [switch]$Headless,
     [string]$Client,
@@ -442,6 +444,32 @@ if ($highContrast) {
     $XamlText = $XamlText -replace '<Setter Property="FocusVisualStyle" Value="\{x:Null\}"/>', ''   # keep the system focus rectangle
     $XamlText = $XamlText -replace 'Background="#40F7F5F2"', 'Background="{x:Static SystemColors.ControlDarkBrush}"' -replace 'Value="#80F7F5F2"', 'Value="{x:Static SystemColors.ControlDarkDarkBrush}"'
 }
+# Appearance concepts share the existing functional shell. System high contrast wins.
+# Keep palettes centralized and controls/evidence/confirmation behavior unchanged.
+if (-not $highContrast -and $Appearance -ne 'Brand') {
+    $appearancePalette = @{
+        Well = '#FF090C12'; Surface = '#FF10151E'; Raised = '#FF151C27'; RaisedHover = '#FF202B3A'
+        Hairline = '#FF3B4759'; Paper = '#FFF4F6FA'; Muted = '#FFB0BAC8'
+        Magenta = '#FFBF1737'; MagentaHover = '#FFD92345'; Violet = '#FF33465F'; Lavender = '#FF9AB4D6'
+        Pass = '#FF55DCA5'; Warn = '#FFFFC766'
+    }
+    if ($Appearance -eq 'Precision') {
+        $appearancePalette.Well = '#FF0C1520'; $appearancePalette.Surface = '#FF101E2D'
+        $appearancePalette.Raised = '#FF17283B'; $appearancePalette.RaisedHover = '#FF22384D'
+        $appearancePalette.Magenta = '#FF146186'; $appearancePalette.MagentaHover = '#FF1977A3'
+        $appearancePalette.Violet = '#FF235778'; $appearancePalette.Lavender = '#FF79CAE8'
+    }
+    foreach ($appearanceKey in $appearancePalette.Keys) {
+        $appearancePattern = '(<SolidColorBrush x:Key="' + $appearanceKey + '" Color=")#[0-9A-Fa-f]{6,8}("/>)'
+        $XamlText = [regex]::Replace($XamlText, $appearancePattern, ('$1' + $appearancePalette[$appearanceKey] + '$2'))
+    }
+    $XamlText = $XamlText.Replace('Background="#FF050312" Foreground="#FFF7F5F2"', ('Background="' + $appearancePalette.Well + '" Foreground="' + $appearancePalette.Paper + '" FontFamily="Segoe UI"'))
+    $XamlText = $XamlText.Replace('Background="#FF08061A"', ('Background="' + $appearancePalette.Surface + '"'))
+    $XamlText = $XamlText.Replace('Value="#337C3AED"', 'Value="#5533465F"')
+    $XamlText = $XamlText.Replace('<Setter Property="CornerRadius" Value="12"/>', '<Setter Property="CornerRadius" Value="4"/>')
+    $XamlText = $XamlText.Replace('CornerRadius="8"', 'CornerRadius="4"')
+}
+
 [xml]$Xaml = $XamlText
 $Win = [Windows.Markup.XamlReader]::Load((New-Object System.Xml.XmlNodeReader $Xaml))
 # Fit the screen: at 1366x768 with 125-150 % scaling the work area is ~1093x582 or smaller (device-independent units).
