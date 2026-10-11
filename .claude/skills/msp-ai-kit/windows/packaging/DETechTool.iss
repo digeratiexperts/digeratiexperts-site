@@ -36,6 +36,7 @@ Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
 UninstallDisplayName=DE Tech Tool
+UninstallDisplayIcon={app}\msp-ai-kit\windows\DE-TechTool.exe
 CloseApplications=yes
 RestartApplications=no
 SetupLogging=yes
@@ -47,13 +48,13 @@ Name: "desktopicon"; Description: "Create a desktop shortcut"; GroupDescription:
 Source: "{#PayloadDir}\*"; DestDir: "{app}\msp-ai-kit"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
-Name: "{group}\DE Tech Tool"; Filename: "{app}\msp-ai-kit\windows\Start-DETechTool.cmd"; WorkingDir: "{app}\msp-ai-kit\windows"; Comment: "Open the DE technician console"
-Name: "{group}\Storage and cleanup"; Filename: "{app}\msp-ai-kit\windows\Start-DETechTool.cmd"; Parameters: "-Page Storage"; WorkingDir: "{app}\msp-ai-kit\windows"
-Name: "{autodesktop}\DE Tech Tool"; Filename: "{app}\msp-ai-kit\windows\Start-DETechTool.cmd"; WorkingDir: "{app}\msp-ai-kit\windows"; Tasks: desktopicon
+Name: "{group}\DE Tech Tool"; Filename: "{app}\msp-ai-kit\windows\DE-TechTool.exe"; WorkingDir: "{app}\msp-ai-kit\windows"; Comment: "Open the DE technician console"
+Name: "{group}\Storage and cleanup"; Filename: "{app}\msp-ai-kit\windows\DE-TechTool.exe"; Parameters: "--storage"; WorkingDir: "{app}\msp-ai-kit\windows"
+Name: "{autodesktop}\DE Tech Tool"; Filename: "{app}\msp-ai-kit\windows\DE-TechTool.exe"; WorkingDir: "{app}\msp-ai-kit\windows"; Tasks: desktopicon
 
 ; Launch via the existing elevation-aware entry point only after an explicit choice.
 [Run]
-Filename: "{app}\msp-ai-kit\windows\Start-DETechTool.cmd"; Description: "Open DE Tech Tool"; WorkingDir: "{app}\msp-ai-kit\windows"; Flags: postinstall shellexec skipifsilent unchecked
+Filename: "{app}\msp-ai-kit\windows\DE-TechTool.exe"; Description: "Open DE Tech Tool"; WorkingDir: "{app}\msp-ai-kit\windows"; Flags: postinstall shellexec skipifsilent unchecked
 
 ; Deliberately no UninstallDelete of ProgramData: preserve evidence and client configuration.
 
