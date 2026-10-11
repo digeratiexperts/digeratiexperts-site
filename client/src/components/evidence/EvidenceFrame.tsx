@@ -95,7 +95,7 @@ export const EvidenceFrame: React.FC<EvidenceFrameProps> = ({
       >
         <div className="flex flex-wrap items-center gap-2.5">
           <span
-            className={`inline-flex items-center gap-1.5 rounded border px-2.5 py-0.5 text-[11px] font-semibold ${classMeta.badgeClass}`}
+            className={`inline-flex items-center gap-1.5 rounded border px-2.5 py-0.5 text-xs font-semibold ${classMeta.badgeClass}`}
             data-testid="evidence-classification-badge"
             data-classification={classification}
           >
@@ -105,7 +105,7 @@ export const EvidenceFrame: React.FC<EvidenceFrameProps> = ({
           {status && <StatusToken status={status} label={statusLabel} />}
         </div>
         {timestamp && (
-          <span className={`font-mono text-[11px] ${isDark ? "text-white/55" : "text-[#5A5368]"}`}>
+          <span className={`font-mono text-[13px] ${isDark ? "text-white/75" : "text-[#4A4458]"}`}>
             {timestamp}
           </span>
         )}
@@ -115,13 +115,13 @@ export const EvidenceFrame: React.FC<EvidenceFrameProps> = ({
         <TitleTag className={`font-heading text-lg font-bold tracking-tight md:text-xl ${isDark ? "text-white" : "text-[#1A1228]"}`}>
           {title}
         </TitleTag>
-        {subtitle && <p className={`mt-1 text-sm leading-relaxed ${isDark ? "text-white/70" : "text-[#3A3448]"}`}>{subtitle}</p>}
+        {subtitle && <p className={`mt-1.5 text-base leading-relaxed md:text-lg ${isDark ? "text-white/85" : "text-[#2A2438]"}`}>{subtitle}</p>}
       </div>
 
       <div className="relative z-10 px-5 py-3 md:px-6 md:py-4">{children}</div>
 
       {sourceNote && (
-        <div className={`border-t px-5 py-2.5 font-mono text-[11px] ${isDark ? "border-de-hairline bg-de-bg/45 text-white/50" : "border-[var(--de-paper-hairline)] bg-[var(--de-paper)]/45 text-[#5A5368]"}`}>
+        <div className={`border-t px-5 py-2.5 font-mono text-[13px] ${isDark ? "border-de-hairline bg-de-bg/45 text-white/70" : "border-[var(--de-paper-hairline)] bg-[var(--de-paper)]/45 text-[#5A5368]"}`}>
           <span>Source: {sourceNote}</span>
         </div>
       )}
