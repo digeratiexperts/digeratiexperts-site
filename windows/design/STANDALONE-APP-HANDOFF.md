@@ -28,3 +28,33 @@ Read MAIN-WINDOW-REFERENCE.md and BRANDING-ASSET-REFERENCES.md. Original image b
 ## Current checkpoint
 
 Draft PR #580, branch chatgpt/tech-tool-storage-20261011. Previous storage head 53983f1 passed general CI and MSP AI Kit CI, including 409 Windows tests and initial WPF Storage render inspection. Later design/installer commits need their own validation. Workspace is offline, so this continuation cannot compile or install the app locally. No complete installer EXE, full redesign, install validation or signed release is claimed.
+
+## Verified checkpoint — 2026-10-11 (supersedes earlier checkpoint)
+
+Code commit: e07d0b8d22f3d84fa5303e4a2c7d00fb7e7cbbf4. Branch: chatgpt/tech-tool-storage-20261011. Draft PR: https://github.com/digeratiexperts/digeratiexperts-site/pull/580.
+
+An actual unsigned installer now exists:
+https://github.com/digeratiexperts/digeratiexperts-site/actions/runs/38180845851/artifacts/11718365333
+Download the artifact ZIP, extract DE-TechTool-Setup-1.11.0-x64.exe and its SHA256 file. Repository access may be required. This is a test build, omits community tools, and is not a signed production release. Artifact expires 2027-01-09.
+
+Implemented after the initial recipe:
+- Original native x64 DE-TechTool.exe entry point, compiled with Windows .NET Framework before signing/hashing; installed shortcuts target it. Existing PowerShell/WPF application remains the functional engine.
+- Launcher supports default console, --storage and --check; unknown options return 2. --check checks host/script availability and architecture only. It does not prove GUI readiness, integrity or licensing. Interactive launch requests elevation; UAC decline falls back to the existing engine's restricted controls. Interactive accepted/declined UAC paths still require manual verification.
+- EXE signing support and manifest coverage for original C# source and executable.
+- Installer refuses a registered newer version before modification, permits same-version reinstall, and retains evidence on uninstall.
+- Operations and Precision WPF appearances with shared tokens, corrected appearance forwarding and Storage input styling. Existing Brand and high-contrast behavior retained. This is an appearance foundation, not the full supplied fleet dashboard.
+
+GitHub Actions run 38180845851: Linux checks and standalone installer lifecycle job passed. Installer compiled; install/reinstall, launcher diagnostic/invalid-option probes, installed headless audit, registered-version downgrade-refusal fixture, unchanged-file/version assertions and uninstall/evidence preservation passed. Both appearances rendered all 18 pages with zero smoke failures. The intentional handler-error smoke fixture is expected. Full Windows job was still running when this checkpoint was written. Earlier code 2a24b23773b60b7130a690fcc846bf8466767908 passed 409 Windows tests; do not attribute that result to later code without checking the current run.
+
+Native storage functions already implemented: capacity/topology inventory; iterative file metadata scan with partial/error reporting; explainable drive-role and directed transfer estimates; guarded selected old temporary-file/crash-dump cleanup; copy-first relocation with verification and separate explicit source removal; supported DISM actions with elevation, license, integrity and reboot gates. Transfer rankings are estimates, not measured benchmark speeds. Read STORAGE.md and tests for detailed boundaries.
+
+Next work:
+1. Check current full Windows job 114592900968 and general CI at the code SHA above. Resolve failures before merging.
+2. Test genuine older-to-newer payload upgrade, obsolete executable removal, missing/partial payload rejection, default Program Files permissions, manual UAC/interactive startup, scaling/keyboard/high contrast and real-device storage behavior. The registry fixture is not a genuine version upgrade test.
+3. Build the broader operations dashboard only with real connected data; preserve all existing routes and PLAN ONLY/LIVE distinctions. Add an appearance selector if useful.
+4. Import original supplied image binaries when accessible. Text catalogs exist; original images have not been committed. GitHub can write binary blobs; attachment byte access is the limitation.
+5. Continue native disk analysis/visualization and benchmark work, upstream source/license review and cleanup-rule coverage. The requested utility-equivalent feature set is not complete.
+6. Verify offline diagnostics/evidence and prebuilt AI packs separately; existing AI-pack building still needs Node. Cloud/vendor features must show unavailable states truthfully.
+7. Complete approved production signing, installer/toolchain licensing review and release gates. Do not self-merge or claim production deployment. Lead-integrator review remains required.
+
+Local workspace is disconnected, but GitHub edits and Windows Actions builds work. Preserve this distinction for the next AI.
