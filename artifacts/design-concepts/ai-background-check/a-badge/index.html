@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>AI Background Check, Concept A Badge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Oxanium:wght@500;600&family=Space+Grotesk:wght@500;600;700&display=swap">
+<style>
+:root{--bg:#050312;--surface:#0a0a0a;--raised:#151217;--hair:rgba(255,255,255,.1);--paper:#F7F5F2;--paper-w:#fff;--paper-hair:rgba(26,18,16,.12);--ink:#1a1210;--fg:#fff;--muted:rgba(255,255,255,.85);--soft:rgba(255,255,255,.72);--mag:#D3126A;--mag-d:#a80e55;--violet:#8B5CF6;--focus:#ec4899;--ok:#3fa37a;--warn:#e0a13a;
+--f-head:"Space Grotesk",system-ui,sans-serif;--f-body:Inter,system-ui,sans-serif;--f-label:Oxanium,"Space Grotesk",system-ui,sans-serif}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font:400 17px/1.6 var(--f-body);overflow-x:hidden}
+h1,h2,h3{font-family:var(--f-head);font-weight:700;margin:0;letter-spacing:-.03em;line-height:1.08}
+p{margin:0}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.skip{position:absolute;left:-999px;top:8px;background:#fff;color:#000;padding:10px 14px;z-index:99;border-radius:8px}
+.skip:focus{left:8px}
+.wrap{width:min(1160px,100% - 32px);margin-inline:auto}
+.label{font:600 12px/1.2 var(--f-label);letter-spacing:.14em;text-transform:uppercase}
+.btn{display:inline-flex;align-items:center;gap:10px;min-height:48px;padding:12px 22px;border-radius:12px;background:var(--mag);color:#fff;font:600 16px/1.2 var(--f-head);text-decoration:none;border:0;cursor:pointer;transition:background .2s ease-out,transform .2s ease-out}
+.btn:hover{background:var(--mag-d)}.btn:active{transform:scale(.98)}
+.btn.line{background:transparent;border:1px solid currentColor}
+.btn.line:hover{background:rgba(127,127,127,.15)}
+.pend{display:inline-block;font:600 10.5px/1 var(--f-label);letter-spacing:.12em;text-transform:uppercase;padding:4px 7px;border:1px dashed currentColor;border-radius:4px;opacity:.85;vertical-align:middle;white-space:nowrap}
+[hidden]{display:none!important}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.concept-note{background:#000;border-bottom:1px solid var(--hair);color:var(--soft);font:500 12px/1.4 var(--f-label);letter-spacing:.06em;text-align:center;padding:8px 16px}
+footer{padding:40px 0 56px;color:var(--soft);font-size:14px}
+footer .wrap{display:grid;gap:8px}
+.opt{display:flex;gap:6px}
+.opt label{position:relative;display:inline-flex}
+.opt input{position:absolute;opacity:0;inset:0;cursor:pointer;margin:0}
+.opt span{display:inline-flex;align-items:center;justify-content:center;min-width:64px;min-height:44px;padding:0 16px;border-radius:10px;border:1px solid currentColor;font:600 15px/1 var(--f-head);opacity:.8}
+.opt input:checked+span{background:var(--mag);border-color:var(--mag);color:#fff;opacity:1}
+.opt input:focus-visible+span{outline:2px solid var(--focus);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
+
+body{background:var(--bg)}
+.hero{padding:56px 0 72px;display:grid;grid-template-columns:1.1fr .9fr;gap:48px;align-items:center}
+.hero h1{font-size:clamp(38px,5.6vw,72px)}
+.hero h1 em{font-style:normal;color:var(--mag)}
+.lede{margin-top:22px;color:var(--muted);font-size:clamp(17px,1.5vw,20px);max-width:56ch}
+.cta-row{display:flex;flex-wrap:wrap;gap:12px;margin-top:30px;align-items:center}
+.hero .label{color:var(--soft);margin-bottom:18px;display:block}
+.stage{display:flex;justify-content:center;perspective:1000px;padding:8px}
+.lanyard{position:relative;width:min(320px,100%)}
+.lanyard::before{content:"";position:absolute;left:50%;top:-60px;width:2px;height:60px;background:linear-gradient(var(--hair),rgba(255,255,255,.35))}
+.badge{--rx:0deg;--ry:0deg;background:var(--paper);color:var(--ink);border-radius:20px;padding:26px 24px 22px;transform:rotateX(var(--rx)) rotateY(var(--ry));transition:transform .25s ease-out;position:relative;box-shadow:0 30px 60px -20px rgba(0,0,0,.7),0 0 0 1px rgba(255,255,255,.08),0 -40px 80px -40px rgba(139,92,246,.35)}
+.slot{width:64px;height:10px;border-radius:6px;background:var(--bg);margin:0 auto 20px}
+.b-head{display:flex;gap:14px;align-items:center;padding-bottom:16px;border-bottom:1px solid var(--paper-hair)}
+.avatar{width:56px;height:56px;border-radius:12px;background:var(--bg);display:grid;place-items:center;color:#fff;font:600 20px/1 var(--f-label)}
+.b-name{font:700 28px/1 var(--f-head);letter-spacing:-.02em}
+.b-role{font:500 12px/1.3 var(--f-label);letter-spacing:.1em;text-transform:uppercase;color:#5c504b;margin-top:4px}
+.b-rows{margin:6px 0 0;padding:0;list-style:none}
+.b-rows li{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--paper-hair);font-size:15px}
+.b-rows b{font-weight:600}
+.flag{font:600 12px/1 var(--f-label);letter-spacing:.08em;text-transform:uppercase;color:var(--mag)}
+.b-foot{margin-top:16px;font:500 11px/1.4 var(--f-label);letter-spacing:.12em;color:#5c504b}
+.stamp{position:absolute;right:14px;bottom:44px;transform:rotate(-9deg);border:2px solid var(--mag);color:var(--mag);font:700 18px/1 var(--f-label);letter-spacing:.16em;padding:6px 10px;border-radius:4px;background:rgba(247,245,242,.9)}
+section{padding:72px 0}
+section>.wrap>.label{color:var(--mag);display:block;margin-bottom:14px}
+h2{font-size:clamp(30px,4vw,52px);max-width:22ch}
+.compare{background:var(--raised);border-top:1px solid var(--hair);border-bottom:1px solid var(--hair)}
+.tog{display:inline-flex;gap:0;margin:28px 0 24px;border:1px solid var(--hair);border-radius:12px;padding:4px}
+.tog button{min-height:44px;padding:0 18px;border-radius:9px;border:0;background:transparent;color:var(--muted);font:600 15px/1 var(--f-head);cursor:pointer}
+.tog button[aria-pressed=true]{background:#fff;color:var(--ink)}
+.cmp{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--hair);border-radius:16px}
+.cmp>div{padding:22px;border-right:1px solid var(--hair)}.cmp>div:last-child{border:0}
+.cmp b{display:block;font:600 12px/1 var(--f-label);letter-spacing:.12em;text-transform:uppercase;color:var(--soft);margin-bottom:10px}
+.cmp p{font:600 19px/1.3 var(--f-head)}
+.cmp[data-mode=personal] p{color:#fff}.cmp[data-mode=business] p{color:#fff}
+.cmp[data-mode=business]{border-color:var(--mag)}
+.steps{list-style:none;margin:40px 0 0;padding:0;border-top:1px solid var(--hair)}
+.steps li{display:grid;grid-template-columns:100px 220px 1fr;gap:24px;padding:28px 0;border-bottom:1px solid var(--hair);align-items:baseline}
+.steps .n{font:600 14px/1 var(--f-label);letter-spacing:.14em;color:var(--mag)}
+.steps h3{font-size:clamp(28px,3vw,40px)}
+.steps p{color:var(--muted);max-width:60ch}
+.hint{margin-top:28px;color:var(--soft);font-style:italic;max-width:60ch}
+.paper{background:var(--paper);color:var(--ink)}
+.paper section>.wrap>.label{color:var(--mag-d)}
+.quiz{display:grid;grid-template-columns:1.2fr .8fr;gap:48px;margin-top:32px}
+.q{border:0;border-top:1px solid var(--paper-hair);margin:0;padding:18px 0;display:flex;justify-content:space-between;gap:16px;align-items:center;flex-wrap:wrap}
+.q legend{float:left;width:calc(100% - 180px);padding:0;font:500 18px/1.35 var(--f-head)}
+.paper .opt{color:var(--ink)}
+.q .opt{margin-left:auto}
+.res{background:var(--bg);color:#fff;border-radius:20px;padding:28px;align-self:start}
+.res .big{font:700 56px/1 var(--f-head);letter-spacing:-.03em}
+.res[data-level="3"] .big{color:var(--warn)}.res[data-level="2"] .big{color:#e8c46a}.res[data-level="1"] .big{color:var(--ok)}
+.res .meter{display:flex;gap:6px;margin:14px 0}
+.res .meter i{flex:1;height:6px;border-radius:3px;background:var(--hair)}
+.res[data-level="1"] .meter i:nth-child(-n+1),.res[data-level="2"] .meter i:nth-child(-n+2),.res[data-level="3"] .meter i{background:var(--mag)}
+.res p{color:var(--muted);margin-bottom:18px}
+.empty{color:var(--ink);opacity:.7;align-self:start;padding-top:18px}
+.reg{list-style:none;margin:36px 0 0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:0;border-top:1px solid var(--hair)}
+.reg li{padding:24px 24px 0 0}.reg h3{font-size:24px;margin-bottom:10px}.reg p{color:var(--muted)}
+.final{background:var(--raised);border-top:1px solid var(--hair)}
+.final .box{display:grid;grid-template-columns:1.2fr .8fr;gap:48px;align-items:center}
+.final ul{margin:22px 0 28px;padding:0;list-style:none;display:grid;gap:10px}
+.final li{padding-left:28px;position:relative;font:500 19px/1.4 var(--f-head)}
+.final li::before{content:"";position:absolute;left:0;top:.5em;width:14px;height:2px;background:var(--mag)}
+.final .meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px;color:var(--soft);font-size:14px;align-items:center}
+@media (max-width:900px){.hero,.quiz,.final .box{grid-template-columns:1fr;gap:36px}.cmp{grid-template-columns:1fr 1fr}.cmp>div{border-bottom:1px solid var(--hair)}.steps li{grid-template-columns:60px 1fr;gap:6px 16px}.steps p{grid-column:2}.reg{grid-template-columns:1fr}.reg li{padding:20px 0}.stage{order:-1}.lanyard::before{display:none}}
+@media (max-width:520px){.cmp{grid-template-columns:1fr}.q legend{width:100%}.q .opt{margin-left:0}section{padding:52px 0}.hero{padding:32px 0 48px}}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="concept-note">EXPLORATION CONCEPT A: BADGE for DE review. Not for production. Illustrative copy pending DE confirmation.</div>
+
+<header class="wrap hero" id="top">
+<div><span class="label">Digerati Experts &middot; AI Background Check</span>
+<h1>Your newest employee is AI. <em>Did anyone check its references?</em></h1>
+<p class="lede">Your team is already using AI to write emails, summarize contracts and crunch numbers. The question isn't whether to use AI. It's whose AI, and what it can see.</p>
+<div class="cta-row"><a class="btn" href="#book">Get your free AI Background Check <span aria-hidden="true">&rarr;</span></a><a class="btn line" href="#score">Check your exposure in 20 seconds</a></div>
+<p style="margin-top:16px;color:var(--soft);font-size:14px">Free <span class="pend">Pending DE confirmation</span></p></div>
+<div class="stage"><div class="lanyard"><div class="badge" id="badge" role="img" aria-label="Employee ID badge for A.I., new hire in every department. References: unchecked. Access: everything? Account: personal? Exit plan: none. Stamped pending.">
+<div class="slot"></div>
+<div class="b-head"><div class="avatar" aria-hidden="true">AI</div><div><div class="b-name">A.I.</div><div class="b-role">New hire &middot; Every department</div></div></div>
+<ul class="b-rows" aria-hidden="true"><li><b>References</b><span class="flag">Unchecked</span></li><li><b>Access</b><span class="flag">Everything?</span></li><li><b>Account</b><span class="flag">Personal?</span></li><li><b>Exit plan</b><span class="flag">None</span></li></ul>
+<div class="b-foot" aria-hidden="true">ID 0000-AI &middot; CLEARANCE: UNKNOWN</div>
+<div class="stamp" aria-hidden="true">PENDING</div></div></div></div>
+</header>
+<main id="main">
+<section class="compare" id="compare"><div class="wrap"><span class="label">Same tool. Different owner.</span>
+<h2>Personal AI works for the person. Business AI works for the business.</h2>
+<p class="lede" style="max-width:68ch">When someone uses AI on a personal account, the chats, the files and the history belong to that person, not your company. When they leave, it stays in their personal account, where your company can't reach it. Business AI is set up under your company: your company controls the data, decides who uses it, and can switch off access the day someone leaves.</p>
+<div class="tog" role="group" aria-label="Compare account types"><button type="button" aria-pressed="true" data-mode="personal">Personal account</button><button type="button" aria-pressed="false" data-mode="business">Business AI</button></div>
+<div class="cmp" id="cmp" data-mode="personal" aria-live="polite">
+<div><b>Who owns the chats</b><p data-p="The employee" data-b="Your company">The employee</p></div>
+<div><b>Model training</b><p data-p="May be used unless someone changes the settings" data-b="Kept out by default, under business terms">May be used unless someone changes the settings</p></div>
+<div><b>When they leave</b><p data-p="Your company can't reach it" data-b="Access can end that day">Your company can't reach it</p></div>
+<div><b>Audit trail</b><p data-p="None for your company" data-b="On plans that include it">None for your company</p></div></div>
+</div></section>
+<section id="how"><div class="wrap"><span class="label">Hire it like anyone else</span>
+<h2>Interview. Paperwork. Keys. Exit.</h2>
+<ol class="steps">
+<li><span class="n">01</span><h3>Interview</h3><p>We help you pick the AI that fits your work and your budget. Sometimes that's the one that came with your software. Sometimes it isn't.</p></li><li><span class="n">02</span><h3>Paperwork</h3><p>Business accounts, business terms that keep your data out of model training by default, and a one-page policy your team will actually read.</p></li><li><span class="n">03</span><h3>Keys</h3><p>AI built into your work apps can reach anything the person using it can open. We clean up who can see what before AI gets access, and stop sensitive data from being pasted where it shouldn't go.</p></li><li><span class="n">04</span><h3>Exit</h3><p>When someone leaves, their AI access goes too. You keep the history and, on plans that include it, the audit trail.</p></li>
+</ol>
+<p class="hint">Some AI shows up already hired, because it came bundled with your software. It still needs an interview.</p></div></section>
+<div class="paper"><section id="score"><div class="wrap"><span class="label">20-second self-check</span>
+<h2>What's your AI exposure?</h2>
+<div class="quiz"><form id="quiz" aria-label="AI exposure self-check"><fieldset class="q " data-risk="yes"><legend>Do people use AI on personal accounts for work?</legend>
+<div class="opt"><label><input type="radio" name="q0" value="yes"><span>Yes</span></label><label><input type="radio" name="q0" value="no"><span>No</span></label></div></fieldset><fieldset class="q " data-risk="yes"><legend>Is AI switched on inside your email or documents?</legend>
+<div class="opt"><label><input type="radio" name="q1" value="yes"><span>Yes</span></label><label><input type="radio" name="q1" value="no"><span>No</span></label></div></fieldset><fieldset class="q " data-risk="no"><legend>Could you cut off a leaver's AI access today?</legend>
+<div class="opt"><label><input type="radio" name="q2" value="yes"><span>Yes</span></label><label><input type="radio" name="q2" value="no"><span>No</span></label></div></fieldset><fieldset class="q " data-risk="yes"><legend>Do you handle patient, financial or defense data?</legend>
+<div class="opt"><label><input type="radio" name="q3" value="yes"><span>Yes</span></label><label><input type="radio" name="q3" value="no"><span>No</span></label></div></fieldset></form>
+<div><p class="empty" id="empty">Answer the four questions to see an illustrative exposure level. It is a conversation starter, not an assessment.</p>
+<div class="res" id="result" hidden aria-live="polite"><div class="label" style="color:var(--soft)">Illustrative exposure</div><div class="big" data-level></div><div class="meter" aria-hidden="true"><i></i><i></i><i></i></div><p data-msg></p><a class="btn" href="#book">Get your free AI Background Check <span aria-hidden="true">&rarr;</span></a></div></div></div>
+</div></section></div>
+<section id="regulated"><div class="wrap"><span class="label">Already regulated?</span><h2>This matters more.</h2><ul class="reg">
+<li><h3>Healthcare</h3><p>Patient information in the wrong AI tool can be a HIPAA problem. Any AI tool that handles patient information needs a signed business associate agreement (BAA), and only some business plans offer one.</p></li>
+<li><h3>Finance and insurance</h3><p>GLBA and the FTC Safeguards Rule set how you protect client financial data and oversee the vendors who handle it, AI included.</p></li>
+<li><h3>Defense contractors</h3><p>Controlled unclassified information (CUI) has no place in consumer AI. CMMC assessors will ask.</p></li>
+</ul></div></section>
+<section class="final" id="book"><div class="wrap box"><div><span class="label" style="color:var(--mag)">The AI Background Check</span>
+<h2 style="margin:14px 0 18px">Get your free AI Background Check.</h2>
+<p class="lede">In 30 minutes, we'll show you which AI tools are connected to your company data, what they can reach, and the top 3 fixes.</p>
+<ul><li>Which AI tools are connected to your company data</li><li>What they can reach</li><li>Your top 3 fixes</li></ul>
+<a class="btn" href="#book">Book my AI Background Check <span aria-hidden="true">&rarr;</span></a>
+<div class="meta"><span>Free <span class="pend">Pending DE confirmation</span></span><span>30 minutes <span class="pend">Pending DE confirmation</span></span><span>Short survey plus a read-only look at your M365 or Google admin console <span class="pend">Pending DE confirmation</span></span></div></div>
+<div class="badge" style="--rx:0;--ry:0;transform:none" role="img" aria-label="Sample result card: the top 3 fixes, one page"><div class="b-head"><div class="avatar" aria-hidden="true">3</div><div><div class="b-name">Top 3 fixes</div><div class="b-role">One-page result &middot; sample layout</div></div></div>
+<ul class="b-rows" aria-hidden="true"><li><b>1</b><span class="flag">Placeholder</span></li><li><b>2</b><span class="flag">Placeholder</span></li><li><b>3</b><span class="flag">Placeholder</span></li></ul><div class="b-foot" aria-hidden="true">LAYOUT ONLY &middot; NO REAL RESULT</div></div></div></section>
+</main>
+<footer><div class="wrap"><div>Digerati Experts. Security-first managed IT and cybersecurity.</div>
+<div>Concept notes: the self-check is a quick illustration, not an assessment. No prices, statistics or testimonials are shown. Calls to action link to #book as a placeholder; booking (Zoho Bookings or CRM) is a decision for DE.</div></div></footer>
+<script>
+(function(){
+var reduce=matchMedia('(prefers-reduced-motion: reduce)').matches, fine=matchMedia('(pointer:fine)').matches;
+var b=document.getElementById('badge'), st=b&&b.parentElement.parentElement;
+if(b&&fine&&!reduce){st.addEventListener('pointermove',function(e){var r=b.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;b.style.setProperty('--ry',(x*14)+'deg');b.style.setProperty('--rx',(-y*10)+'deg');});st.addEventListener('pointerleave',function(){b.style.setProperty('--rx','0deg');b.style.setProperty('--ry','0deg');});}
+var box=document.getElementById('cmp');
+document.querySelectorAll('.tog button').forEach(function(btn){btn.addEventListener('click',function(){
+ document.querySelectorAll('.tog button').forEach(function(x){x.setAttribute('aria-pressed',x===btn);});
+ var m=btn.dataset.mode; box.dataset.mode=m; box.querySelectorAll('p').forEach(function(p){p.textContent=m==='business'?p.dataset.b:p.dataset.p;});});});
+var q=document.getElementById('quiz'),e=document.getElementById('empty');
+q.addEventListener('change',function(){if(!document.getElementById('result').hidden)e.hidden=true;});
+})();
+</script>
+
+<script>
+(function(){
+document.documentElement.classList.add('js');
+var reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+var form=document.getElementById('quiz'); if(!form) return;
+var qs=[].slice.call(form.querySelectorAll('fieldset[data-risk]'));
+var out=document.getElementById('result'), ring=document.getElementById('ring');
+var stepper=form.hasAttribute('data-stepper'), cur=0;
+function show(i){ if(!stepper) return; cur=i; qs.forEach(function(q,k){q.hidden=k!==i;});
+  var b=document.getElementById('back'); if(b) b.hidden=i===0;
+  var c=document.getElementById('count'); if(c) c.textContent='Question '+(i+1)+' of '+qs.length; }
+function done(){ return qs.every(function(q){return q.querySelector('input:checked');}); }
+function update(){
+  var n=0; qs.forEach(function(q){var c=q.querySelector('input:checked'); if(c && c.value===q.dataset.risk) n++;});
+  if(!done()){ return; }
+  var r=n>=3?['High','The Background Check can show where AI may reach company data that nobody has reviewed.',3]
+    :n===2?['Medium','A few gaps may be worth closing. The Background Check puts the top 3 fixes on one page.',2]
+    :['Low','A good start. A quick check confirms nothing slipped through.',1];
+  out.querySelector('[data-level]').textContent=r[0];
+  out.querySelector('[data-msg]').textContent=r[1];
+  out.dataset.level=r[2]; out.hidden=false;
+  if(stepper){ qs.forEach(function(q){q.hidden=true;}); var s=document.getElementById('stepbar'); if(s) s.hidden=true; }
+}
+form.addEventListener('change',function(e){
+  if(stepper && e.target.type==='radio'){ var i=qs.indexOf(e.target.closest('fieldset')); if(i<qs.length-1){ setTimeout(function(){show(i+1); var f=qs[i+1].querySelector('input'); if(f) f.focus({preventScroll:true});},reduce?0:150);} }
+  update(); });
+var b=document.getElementById('back'); if(b) b.addEventListener('click',function(){show(Math.max(0,cur-1));});
+var rs=document.getElementById('restart'); if(rs) rs.addEventListener('click',function(){form.reset(); out.hidden=true; var s=document.getElementById('stepbar'); if(s) s.hidden=false; show(0);});
+show(0);
+})();
+</script>
+</body></html>
