@@ -246,6 +246,35 @@ jobs:
           if (-not (Test-Path -LiteralPath $data)) { throw 'uninstall deleted evidence' }
           Write-Host 'Setup lifecycle passed.'
           exit 0
+      - name: Render appearance concepts from staged release
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $console = Join-Path $env:RUNNER_TEMP 'de-installer-payload\msp-ai-kit\windows\console\DETechConsole.ps1'
+          $out = Join-Path $env:RUNNER_TEMP 'de-installer-build'
+          foreach ($appearance in @('Operations','Precision')) {
+            & $console -SmokeTest -Appearance $appearance -SmokeClient alamo -SmokeOut "$out/appearance-$appearance" -DataDir "$env:RUNNER_TEMP/de-appearance-$appearance"
+            if ($LASTEXITCODE -ne 0) { throw "$appearance render smoke exit $LASTEXITCODE" }
+          }
+          Add-Type -AssemblyName System.Drawing
+          foreach ($appearance in @('Operations','Precision')) {
+            foreach ($page in @('Storage','Dashboard','Scan')) {
+              $png = Join-Path $out "appearance-$appearance/$page-96dpi.png"
+              if (-not (Test-Path -LiteralPath $png)) { throw "missing appearance render $png" }
+              $img = [Drawing.Image]::FromFile($png)
+              try {
+                $bmp = New-Object Drawing.Bitmap 1000, ([int]($img.Height * 1000 / $img.Width))
+                $g = [Drawing.Graphics]::FromImage($bmp)
+                $g.DrawImage($img, 0, 0, $bmp.Width, $bmp.Height); $g.Dispose()
+                $ms = New-Object IO.MemoryStream
+                try { $bmp.Save($ms, [Drawing.Imaging.ImageFormat]::Jpeg); $b64 = [Convert]::ToBase64String($ms.ToArray()) }
+                finally { $ms.Dispose(); $bmp.Dispose() }
+                Write-Host "===RENDER-BEGIN $appearance-$page==="
+                for ($i=0; $i -lt $b64.Length; $i+=3000) { Write-Host ('RENDER:' + $b64.Substring($i,[Math]::Min(3000,$b64.Length-$i))) }
+                Write-Host "===RENDER-END $appearance-$page==="
+              } finally { $img.Dispose() }
+            }
+          }
       - name: Upload unsigned test setup and lifecycle logs
         uses: actions/upload-artifact@v4
         with:
