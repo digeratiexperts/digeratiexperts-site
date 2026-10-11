@@ -234,6 +234,20 @@ jobs:
           $console = Join-Path $install 'msp-ai-kit\windows\console\DETechConsole.ps1'
           if (-not (Test-Path -LiteralPath $console)) { throw 'installed console missing' }
           if (-not (Test-Path "$install/msp-ai-kit/scripts/build.mjs")) { throw 'parent kit dependency missing' }
+          # Exercise version refusal on a disposable runner; restore registration even on failure.
+          $registration = 'HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\{EB058878-62D7-4AD0-B4E1-61F731EB7003}_is1'
+          $installedVersion = (Get-ItemProperty -LiteralPath $registration).DisplayVersion
+          $originalHash = (Get-FileHash -LiteralPath $console -Algorithm SHA256).Hash
+          try {
+            Set-ItemProperty -LiteralPath $registration -Name DisplayVersion -Value '99.0.0'
+            $p = Start-Process -FilePath $setup.FullName -ArgumentList @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART',('/DIR="' + $install + '"'),('/LOG="' + $out + '\downgrade-refusal.log"')) -Wait -PassThru
+            if ($p.ExitCode -eq 0) { throw 'older installer accepted a newer registered version' }
+            if ((Get-FileHash -LiteralPath $console -Algorithm SHA256).Hash -ne $originalHash) { throw 'refused downgrade changed installed console' }
+            if ((Get-ItemProperty -LiteralPath $registration).DisplayVersion -ne '99.0.0') { throw 'refused downgrade changed version registration' }
+            if (-not (Select-String -LiteralPath "$out/downgrade-refusal.log" -SimpleMatch 'REFUSED: newer DE Tech Tool version already installed' -Quiet)) { throw 'downgrade did not refuse for the expected reason' }
+          } finally {
+            Set-ItemProperty -LiteralPath $registration -Name DisplayVersion -Value $installedVersion
+          }
           $data = Join-Path $env:RUNNER_TEMP 'de-installed-evidence'
           $result = Join-Path $out 'installed-audit.json'
           & $console -Headless -Client alamo -Mode audit -DataDir $data -ResultFile $result
