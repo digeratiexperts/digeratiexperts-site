@@ -1,0 +1,67 @@
+.v9 .v9s-12 .feed-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 32px; }
+.v9 .v9s-12 .feed-actions { display: flex; align-items: center; gap: 24px; flex-shrink: 0; }
+.v9 .v9s-12 .feed-actions .v9-link { min-height: 44px; }
+.v9 .v9s-12 .v9-lede .v9-link--quiet { padding-block: 11px; }
+.v9 .v9s-12 .feed-caption { margin-top: 40px; display: flex; align-items: center; }
+.v9 .v9s-12 .feed-grid { margin-top: 16px; }
+.v9 .v9s-12 .feed-grid > li { display: flex; min-width: 0; }
+.v9 .v9s-12 .feed-card { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.v9 .v9s-12 .feed-card__row { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+.v9 .v9s-12 .feed-card .v9-tag { font-size: 12px; }
+.v9 .v9s-12 .feed-tag--critical { color: var(--v9-magenta-paper-ink); }
+.v9 .v9s-12 .feed-date { font-family: var(--v9-font-mono); font-size: 13px; font-weight: 600; letter-spacing: 0.02em; font-variant-numeric: tabular-nums; color: var(--v9-ink-muted); white-space: nowrap; }
+.v9 .v9s-12 .feed-card .v9-h3 { margin-top: 16px; font-size: 18px; line-height: 1.35; color: var(--v9-ink); }
+.v9 .v9s-12 .feed-card__excerpt { margin-top: 8px; font-size: 15px; line-height: 1.6; color: var(--v9-ink-muted); flex: 1; }
+.v9 .v9s-12 .feed-card__foot { margin-top: 24px; padding-top: 8px; border-top: 1px solid var(--v9-paper-hairline); display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+.v9 .v9s-12 .feed-card__src { font-family: var(--v9-font-mono); font-size: 12px; font-weight: 600; letter-spacing: 0.06em; color: var(--v9-ink-muted); white-space: nowrap; }
+.v9 .v9s-12 .feed-card__foot .v9-link { display: inline-flex; align-items: center; min-height: 44px; color: var(--v9-magenta-paper-ink); font-size: 14px; flex-shrink: 0; }
+.v9 .v9s-12 .feed-sources { margin-top: 24px; max-width: 720px; }
+.v9 .v9s-12 .feed { border-top: 1px solid var(--v9-hairline); }
+.v9 .v9s-12 .monitor { border-top: 1px solid var(--v9-hairline); }
+.v9 .v9s-12 .monitor-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr); grid-template-areas: "copy fig"; column-gap: 48px; align-items: start; }
+.v9 .v9s-12 .monitor-copy { grid-area: copy; }
+.v9 .v9s-12 .monitor-copy .v9-h2 { max-width: 720px; }
+.v9 .v9s-12 .monitor-checks { margin-top: 24px; display: grid; gap: 12px; }
+.v9 .v9s-12 .monitor-checks .v9-check { display: flex; gap: 10px; align-items: flex-start; font-size: 16px; line-height: 1.6; }
+.v9 .v9s-12 .monitor-checks .v9-check svg { flex-shrink: 0; margin-top: 5px; }
+.v9 .v9s-12 .monitor-cells { margin-top: 32px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.v9 .v9s-12 .monitor-cells .v9-h4 { margin-top: 16px; }
+.v9 .v9s-12 .monitor-cells .v9-body { margin-top: 8px; font-size: 15px; }
+.v9 .v9s-12 .monitor-cta { margin-top: 32px; }
+.v9 .v9s-12 .monitor-figure { grid-area: fig; display: flex; flex-direction: column; margin: 0; }
+.v9 .v9s-12 .monitor-figure__cap { margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--v9-hairline); display: grid; gap: 4px; }
+.v9 .v9s-12 .monitor-figure__cap .dg-label { font-size: 12px; }
+.v9 .v9s-12 .monitor-figure__cap .v9-small { color: var(--v9-muted-soft); }
+.v9 .v9s-12 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.v9 .v9s-12 .dg { margin: 24px 0 0; padding: 0; list-style: none; }
+.v9 .v9s-12 .dg-step { position: relative; display: grid; grid-template-columns: 40px minmax(0, 1fr); column-gap: 16px; }
+.v9 .v9s-12 .dg-step + .dg-step { margin-top: 40px; }
+.v9 .v9s-12 .dg-step:not(:last-child)::after { content: ""; position: absolute; left: 12px; top: 28px; bottom: -32px; width: 1px; background: var(--v9-hairline); }
+.v9 .v9s-12 .dg-step--hot:not(:last-child)::after { background: var(--v9-magenta-ink); }
+.v9 .v9s-12 .dg-step .v9-seq { line-height: 20px; }
+.v9 .v9s-12 .dg-label { display: block; font-family: var(--v9-font-mono); font-size: 13px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255, 255, 255, 0.88); line-height: 20px; }
+.v9 .v9s-12 .dg-step .v9-small { margin-top: 8px; color: var(--v9-muted-soft); font-size: 15px; }
+@media (max-width: 1023px) {
+  .v9 .v9s-12 .monitor-grid { grid-template-columns: 1fr; grid-template-areas: "copy" "fig"; }
+  .v9 .v9s-12 .monitor-figure { margin-top: 32px; }
+  .v9 .v9s-12 .feed-head { flex-direction: column; align-items: flex-start; gap: 24px; }
+}
+@media (max-width: 639px) {
+  .v9 .v9s-12 .feed-actions { flex-direction: column; align-items: stretch; gap: 8px; width: 100%; }
+  .v9 .v9s-12 .feed-actions .v9-btn { width: 100%; }
+  .v9 .v9s-12 .feed-caption { margin-top: 32px; }
+  .v9 .v9s-12 .feed-card__row { align-items: flex-start; flex-wrap: wrap; gap: 8px; }
+  .v9 .v9s-12 .feed-card__foot { flex-direction: column; align-items: flex-start; gap: 0; }
+  .v9 .v9s-12 .feed-card__src { white-space: normal; padding-top: 8px; }
+  .v9 .v9s-12 .monitor-cells { grid-template-columns: 1fr; }
+  .v9 .v9s-12 .monitor-cells > * { border-left: 0; border-top: 1px solid var(--v9-hairline); }
+  .v9 .v9s-12 .monitor-cells > *:first-child { border-top: 0; }
+  .v9 .v9s-12 .monitor-cta .v9-btn { width: 100%; }
+}
+/* Port: the live loading / empty shells (DigeratiThreatsInsightsSection) on the v9 card. */
+.v9 .v9s-12 .feed-state { margin-top: 40px; max-width: 720px; }
+.v9 .v9s-12 .feed-state .v9-body { margin-top: 8px; }
+/* Restored photo (previous homepage) heading the hand-off steps. */
+.v9 .v9s-12 .monitor-photo { position: relative; aspect-ratio: 3 / 2; margin: -8px -8px 24px; overflow: hidden; border-radius: calc(var(--v9-radius-lg) - 4px); background: #0c0a12; }
+.v9 .v9s-12 .monitor-photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.v9 .v9s-12 .monitor-photo__tag { position: absolute; top: 14px; left: 14px; padding: 4px 10px; border-radius: 999px; background: rgba(5,3,18,0.72); border: 1px solid rgba(255,255,255,0.14); font-size: 12px; font-weight: 600; color: #fff; }

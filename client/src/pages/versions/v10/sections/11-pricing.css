@@ -1,0 +1,42 @@
+.v10 #pricing { border-top: 1px solid var(--v10-hairline); }
+.v10 .v10s-11 .pricing-box { padding: 48px; }
+.v10 .v10s-11 .pricing-h2 .pricing-h2__line { display: block; }
+.v10 .v10s-11 .pricing-box .v10-lede, .v10 .v10s-11 .pricing-fit, .v10 .v10s-11 .pricing-fitnote, .v10 .v10s-11 .pricing-close .v10-body, .v10 .v10s-11 .pricing-close .v10-small { text-wrap: pretty; }
+.v10 .v10s-11 .pricing-grid { margin-top: 40px; align-items: stretch; }
+.v10 .v10s-11 .pricing-card { display: flex; flex-direction: column; min-width: 0; }
+.v10 .v10s-11 .pricing-card--flagship { border-color: var(--v10-hairline-strong); box-shadow: inset 0 2px 0 var(--v10-magenta); }
+.v10 .v10s-11 .pricing-card__meta { display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 24px; }
+.v10 .v10s-11 .pricing-flag { font-family: var(--v10-font-mono); font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--v10-magenta-ink); }
+.v10 .v10s-11 .pricing-card .v10-h3 { margin-top: 12px; color: #fbfaf8; }
+.v10 .v10s-11 .pricing-price { display: flex; align-items: baseline; gap: 5px; margin-top: 12px; }
+.v10 .v10s-11 .pricing-amount { font-size: 34px; font-weight: 700; line-height: 1; color: #fbfaf8; letter-spacing: -0.02em; }
+.v10 .v10s-11 .pricing-per { font-size: 15px; color: var(--v10-muted-soft); }
+.v10 .v10s-11 .pricing-min { margin-top: 6px; font-size: 15px; line-height: 1.5; color: var(--v10-muted-soft); }
+.v10 .v10s-11 .pricing-min .v10-num { color: var(--v10-muted-soft); font-weight: 500; }
+.v10 .v10s-11 .pricing-fit { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--v10-hairline); flex: 1; font-size: 15px; line-height: 1.55; }
+.v10 .v10s-11 .pricing-list { margin-top: 18px; display: grid; gap: 8px; font-size: 15px; line-height: 1.5; color: var(--v10-muted); }
+.v10 .v10s-11 .pricing-list li { display: flex; align-items: baseline; }
+.v10 .v10s-11 .pricing-list .v10-dash { flex-shrink: 0; position: relative; top: -4px; }
+.v10 .v10s-11 .pricing-card .v10-link { margin-top: 10px; margin-bottom: -10px; min-height: 44px; align-items: center; align-self: flex-start; }
+.v10 .v10s-11 .pricing-close { margin-top: 40px; padding-top: 36px; border-top: 1px solid var(--v10-hairline); display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 24px 64px; align-items: end; }
+.v10 .v10s-11 .pricing-fitnote { grid-column: 1 / -1; max-width: 900px; color: var(--v10-muted); }
+.v10 .v10s-11 .pricing-close__copy { max-width: 720px; }
+.v10 .v10s-11 .pricing-close .v10-h3 { color: #fbfaf8; }
+.v10 .v10s-11 .pricing-close .v10-body { margin-top: 10px; }
+.v10 .v10s-11 .pricing-close .pricing-fitnote { margin-top: 0; }
+.v10 .v10s-11 .pricing-close .v10-small { margin-top: 14px; max-width: 720px; }
+.v10 .v10s-11 .pricing-close__actions { display: flex; flex-wrap: wrap; gap: 12px; justify-self: end; }
+@media (max-width: 1023px) {
+  .v10 .v10s-11 .pricing-box { padding: 40px 32px; }
+  .v10 .v10s-11 .pricing-h2 .pricing-h2__line { display: inline; }
+  .v10 .v10s-11 .pricing-close { grid-template-columns: 1fr; }
+  .v10 .v10s-11 .pricing-close__actions { justify-self: start; }
+}
+@media (max-width: 639px) {
+  .v10 .v10s-11 .pricing-box { background: none; border: 0; padding: 0; border-radius: 0; }
+  .v10 .v10s-11 .pricing-box::after { content: none; }
+  .v10 .v10s-11 .pricing-grid { margin-top: 28px; gap: 12px; }
+  .v10 .v10s-11 .pricing-close { margin-top: 28px; padding-top: 28px; }
+  .v10 .v10s-11 .pricing-close__actions { width: 100%; }
+  .v10 .v10s-11 .pricing-close__actions .v10-btn { width: 100%; }
+}

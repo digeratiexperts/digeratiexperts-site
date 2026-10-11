@@ -3432,3 +3432,36 @@ claims:
       ?exit_variant=navy|paper forces a version for review. Lead source sent to
       the server is unchanged. Overlap check 2026-10-10: open PR 542 edits the
       print block of index.css; this adds a rule elsewhere in the file.
+  - id: homepage-v9-signal-thread
+    owner: claude
+    subsystem: homepage-versions
+    branch: claude/loving-edison-epagrb
+    base_sha: 37dc7630
+    files:
+      - client/src/pages/versions/v9/** (new; Version 8 copied, then the Signal Thread backdrops)
+      - client/src/pages/versions/registry.ts (the Version 9 entry only)
+      - client/src/App.tsx (the /version-9 route and its ownsBottomBar check only)
+      - server/spaKnownPaths.ts (/version-9 only)
+      - client/public/images/visual-system/signal-thread/** (new)
+      - artifacts/kie-ai/nano-banana/{prompts,images}/site/2026-10-10-signal-* (new)
+      - artifacts/design-concepts/homepage-signal-thread/** (new)
+      - artifacts/design-concepts/homepage-story-backgrounds/** (new; three mockups and Version 10 evidence)
+      - client/src/pages/versions/v10/** (new; Version 8 copied, then the scene story)
+      - client/public/images/visual-system/scene-story/** (new)
+      - .claude/kie-budget/ledger.jsonl (the jobs' open, spend and close lines)
+    status: active
+    started: 2026-10-10
+    note: >-
+      Joe, 2026-10-10: section backgrounds that "tell a story or prep the user
+      for the next section", sections that connect visually, "less plain
+      background and more of a constant infographic type of design", using
+      kie.ai. Built as Version 9 at /version-9 (noindex, preview only); the
+      live homepage (Version 8) and its files are untouched. kie.ai job
+      homepage-signal-thread-plates-2026-10-10 closed at $0.24 (projected
+      $0.24). Joe then asked for "a much better approach" and to mock up all
+      three directions; Version 10 (/version-10) builds the recommended one,
+      a single scene that changes state behind the opening chapters (jobs
+      homepage-story-concepts-2026-10-10 $0.24, homepage-scene-story-2026-10-10
+      $0.12). Overlap check 2026-10-10: open PRs 542, 550, 553, 554, 557, 559,
+      560, 562, 563 and 564 touch none of these files.
+

@@ -1,0 +1,19 @@
+{
+  "provider": "kie.ai",
+  "taskId": "6cdd91e469e089b69df1cf0588aace8b",
+  "model": "nano-banana-2",
+  "promptFile": "/home/user/digeratiexperts-site/artifacts/kie-ai/nano-banana/prompts/site/2026-10-10-signal-proof.json",
+  "input": {
+    "prompt": "{\"prompt\": \"The record you can verify: precisely aligned layers. Wide studio photograph, side three-quarter view, 85mm lens, f/8. In the right third, a neat stack of thin smoked-glass sheets, perfectly aligned edge to edge with even gaps, each edge catching a hairline of cool white rim light, a faint violet glow passing through the glass from behind. Calm, orderly, documentary. Pure black studio environment, physically based materials, realistic contact shadows, deep falloff to black at every frame edge. The left two thirds of the frame stay almost black and empty for overlaid text. Violet is light only, never paint. Restrained, premium, quiet; very low overall brightness.\", \"negative_prompt\": \"text, letters, numbers, logos, icons, symbols, watermark, people, hands, faces, padlock, shield, laptop, server rack, circuit board, binary code, hologram, neon grid, cyberpunk, matrix, rainbow gradient, lens flare, bokeh balls, plastic toy look, cartoon, CGI sheen, oversaturated, busy composition, blurry, distorted geometry\", \"settings\": {\"style\": \"premium dark studio photography, physically based materials\", \"quality\": \"tack sharp, true material texture, controlled highlights\"}}",
+    "aspect_ratio": "16:9",
+    "resolution": "2K",
+    "output_format": "jpg"
+  },
+  "resultUrls": [
+    "https://tempfile.aiquickdraw.com/workers/images/image_58edc2dbc5eb8996b94bdb6434ed7a1b.jpg"
+  ],
+  "creditsConsumed": 12.0,
+  "generatedAt": "2026-10-10T02:04:43.559754+00:00",
+  "classification": "ILLUSTRATIVE",
+  "approvalStatus": "candidate"
+}

@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Concept C: pinned scroll story</title>
+<link rel="stylesheet" href="../shared.css">
+<style>
+  /* Concept C: one diagram stays pinned while the story scrolls past it. Every step
+     changes the same picture of the visitor's business, so the sections are
+     literally one image in four states. Light field, ink line work, magenta accents. */
+  body { background: #f7f5f2; color: var(--ink); }
+  .eyebrow { color: var(--mag-paper); }
+  .lede { color: var(--ink-2); }
+  .src { color: var(--ink-2); }
+  .story { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 56px; }
+  .steps { padding: 10vh 0 30vh; }
+  .stepbox { min-height: 90vh; display: flex; flex-direction: column; justify-content: center; opacity: .28; transition: opacity 400ms ease; }
+  .stepbox.on { opacity: 1; }
+  .num { font: 600 11px/1 Oxanium, monospace; letter-spacing: .18em; color: var(--ink-2); margin-bottom: 16px; }
+  .num b { color: var(--mag-paper); }
+  .pin { position: sticky; top: 6vh; height: 88vh; display: flex; align-items: center; }
+  .card { width: 100%; background: #fff; border: 1px solid rgba(20,16,40,.08); border-radius: 28px; box-shadow: 0 30px 60px -30px rgba(18,12,40,.25); padding: 24px; position: relative; }
+  .card .hud { display: flex; justify-content: space-between; font: 600 10px/1 Oxanium, monospace; letter-spacing: .18em; color: var(--ink-2); }
+  .card svg { display: block; width: 100%; height: auto; }
+  .card svg text { font-family: Inter, sans-serif; }
+  .layer { opacity: 0; transition: opacity 600ms ease; }
+  [data-state="2"] .l-exposure, [data-state="3"] .l-gaps, [data-state="4"] .l-layers { opacity: 1; }
+  [data-state="1"] .l-ring, [data-state="2"] .l-ring { opacity: 1; }
+  .stats { display: grid; grid-template-columns: 1fr 1fr; margin-top: 28px; border-top: 1px solid rgba(20,16,40,.1); }
+  .stats div { padding: 14px 12px 14px 0; border-bottom: 1px solid rgba(20,16,40,.1); }
+  .stats .stat { font-size: 32px; }
+  .stats p { margin: 4px 0; font-size: 14px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; padding: 0; list-style: none; }
+  .chips li { border: 1px solid rgba(20,16,40,.12); background: #fff; border-radius: 999px; padding: 8px 14px; font-size: 14px; }
+  .chips i { font: 600 11px Oxanium; color: var(--mag-paper); font-style: normal; margin-right: 6px; }
+  @media (max-width: 1023px) {
+    .story { grid-template-columns: 1fr; }
+    .pin { order: -1; top: 0; height: 46vh; z-index: 2; background: #f7f5f2; padding: 8px 0; }
+    .stepbox { min-height: 70vh; }
+  }
+</style>
+</head>
+<body>
+<div class="tag">Concept C · Pinned scroll story</div>
+<div class="canvas story">
+  <div class="steps">
+    <div class="stepbox on" data-step="1">
+      <p class="num"><b>01</b> / 04 · YOUR BUSINESS</p>
+      <p class="eyebrow">Why we exist</p>
+      <h2>We Exist to Protect and Enable Your Business</h2>
+      <p class="lede">If you're like most business leaders, you don't want another vendor — you want a security-first partner who proactively reduces risk, improves uptime, and keeps your team moving.</p>
+    </div>
+    <div class="stepbox" data-step="2">
+      <p class="num"><b>02</b> / 04 · THE PRESSURE</p>
+      <p class="eyebrow">Why Digerati Experts</p>
+      <h2>The Threats Are Real</h2>
+      <p class="lede">Don't become a statistic. These numbers show why proactive security matters.</p>
+      <div class="stats">
+        <div><span class="stat">48%</span><p>of breaches involve ransomware</p><span class="src">— Verizon DBIR 2026</span></div>
+        <div><span class="stat">$11.5M</span><p>average cost of a data breach in the United States</p><span class="src">— IBM 2026</span></div>
+        <div><span class="stat">99%+</span><p>of unauthorized access attempts are blocked by MFA</p><span class="src">— Microsoft DDR 2025</span></div>
+        <div><span class="stat">$392M</span><p>Arizona internet crime losses, 2024</p><span class="src">— FBI IC3 2024</span></div>
+      </div>
+    </div>
+    <div class="stepbox" data-step="3">
+      <p class="num"><b>03</b> / 04 · THE GAPS</p>
+      <p class="eyebrow">Problems we solve</p>
+      <h2>What We Tackle</h2>
+      <p class="lede">Six problems we own with you. Each one is a gap in the perimeter around your business.</p>
+      <ul class="chips"><li><i>01</i>Ransomware &amp; Malware</li><li><i>02</i>Data Loss</li><li><i>03</i>Compliance Gaps</li><li><i>04</i>Phishing &amp; Social Engineering</li><li><i>05</i>Zero-Day Vulnerabilities</li><li><i>06</i>Insider Threats</li></ul>
+    </div>
+    <div class="stepbox" data-step="4">
+      <p class="num"><b>04</b> / 04 · THE LAYERS</p>
+      <p class="eyebrow">What we protect</p>
+      <h2>Eight blocks. One accountable operating model.</h2>
+      <p class="lede">Protection is layered around the business, and each block answers a specific class of threat. Risk and exposure runs continuously beneath the other seven.</p>
+    </div>
+  </div>
+
+  <div class="pin" aria-hidden="true">
+    <div class="card" id="diagram" data-state="1">
+      <div class="hud"><span>YOUR BUSINESS · ILLUSTRATIVE</span><span id="hudstep">01 / 04</span></div>
+      <svg viewBox="0 0 600 560">
+        <defs><marker id="ar" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" fill="#d3126a"/></marker></defs>
+        <g transform="translate(300 290)">
+          <!-- the business: building + devices + links (always on) -->
+          <g stroke="#1a1228" stroke-width="1.4" fill="none">
+            <path d="M0 0L-120-60M0 0L120-60M0 0L-130 50M0 0L130 50M0 0L-40 120M0 0L50 120M0 0L0-130" stroke="rgba(26,18,40,.35)"/>
+            <g fill="#fff"><rect x="-136" y="-72" width="32" height="24" rx="6"/><rect x="104" y="-72" width="32" height="24" rx="6"/><rect x="-146" y="38" width="32" height="24" rx="6"/><rect x="114" y="38" width="32" height="24" rx="6"/><rect x="-56" y="108" width="32" height="24" rx="6"/><rect x="34" y="108" width="32" height="24" rx="6"/><rect x="-16" y="-142" width="32" height="24" rx="6"/></g>
+            <rect x="-32" y="-40" width="64" height="72" rx="6" fill="#fff"/><path d="M-32-16H32M-32 8H32M-6 32V16H6V32"/>
+          </g>
+          <!-- perimeter (states 1-2) -->
+          <circle class="layer l-ring" r="200" fill="none" stroke="#1a1228" stroke-width="10"/>
+          <!-- state 2: pressure arriving -->
+          <g class="layer l-exposure" stroke="#d3126a" stroke-width="2" fill="none" marker-end="url(#ar)" stroke-dasharray="5 6">
+            <path d="M-290-250L-150-136"/><path d="M290-240L150-138"/><path d="M-300 160L-180 90"/><path d="M290 200L170 108"/><path d="M0-280V-206"/>
+          </g>
+          <!-- state 3: six gaps -->
+          <g class="layer l-gaps">
+            <g fill="none" stroke="#1a1228" stroke-width="10" stroke-linecap="round">
+              <path d="M0-200A200 200 0 0 1 173.2-100" transform="rotate(8)"/><path d="M0-200A200 200 0 0 1 173.2-100" transform="rotate(68)"/><path d="M0-200A200 200 0 0 1 173.2-100" transform="rotate(128)"/><path d="M0-200A200 200 0 0 1 173.2-100" transform="rotate(188)"/><path d="M0-200A200 200 0 0 1 173.2-100" transform="rotate(248)"/><path d="M0-200A200 200 0 0 1 173.2-100" transform="rotate(308)"/>
+            </g>
+            <g fill="#d3126a"><circle cy="-200" r="11" transform="rotate(4)"/><circle cy="-200" r="11" transform="rotate(64)"/><circle cy="-200" r="11" transform="rotate(124)"/><circle cy="-200" r="11" transform="rotate(184)"/><circle cy="-200" r="11" transform="rotate(244)"/><circle cy="-200" r="11" transform="rotate(304)"/></g>
+            <g style="font:600 12px Oxanium" fill="#a30e52"><text x="18" y="-216">01</text><text x="186" y="-92">02</text><text x="186" y="118">03</text><text x="-20" y="232">04</text><text x="-206" y="118">05</text><text x="-206" y="-92">06</text></g>
+          </g>
+          <!-- state 4: eight layers -->
+          <g class="layer l-layers" fill="none">
+            <circle r="170" stroke="#d3126a" stroke-width="5"/><circle r="182" stroke="#bb1a80" stroke-width="5"/><circle r="194" stroke="#a32494" stroke-width="5"/><circle r="206" stroke="#8b2ea8" stroke-width="5"/><circle r="218" stroke="#7438bc" stroke-width="5"/><circle r="230" stroke="#6640cc" stroke-width="5"/><circle r="242" stroke="#5b45e0" stroke-width="5"/><circle r="258" stroke="#5b45e0" stroke-width="1.5" stroke-dasharray="4 7"/>
+            <text x="0" y="-266" text-anchor="middle" fill="#5a5368" style="font:600 10px Oxanium;letter-spacing:.16em">RISK &amp; EXPOSURE · CONTINUOUS</text>
+          </g>
+        </g>
+      </svg>
+    </div>
+  </div>
+</div>
+<script>
+  const card = document.getElementById("diagram"), hud = document.getElementById("hudstep");
+  const steps = [...document.querySelectorAll(".stepbox")];
+  const io = new IntersectionObserver((es) => es.forEach((e) => {
+    if (!e.isIntersecting) return;
+    steps.forEach((s) => s.classList.toggle("on", s === e.target));
+    card.dataset.state = e.target.dataset.step; hud.textContent = `0${e.target.dataset.step} / 04`;
+  }), { rootMargin: "-45% 0px -45% 0px" });
+  steps.forEach((s) => io.observe(s));
+</script>
+</body>
+</html>

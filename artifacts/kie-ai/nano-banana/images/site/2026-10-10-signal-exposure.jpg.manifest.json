@@ -1,0 +1,19 @@
+{
+  "provider": "kie.ai",
+  "taskId": "da7c024396c9c6d0f37f1c67b8c6e66b",
+  "model": "nano-banana-2",
+  "promptFile": "/home/user/digeratiexperts-site/artifacts/kie-ai/nano-banana/prompts/site/2026-10-10-signal-exposure.json",
+  "input": {
+    "prompt": "{\"prompt\": \"The exposure: a perimeter under pressure. Wide studio photograph, low three-quarter view, 50mm lens, f/5.6. A long, flat graphite-anodized slab lies across the right third of the frame like a quiet environment seen from its edge; along its far right rim a few thin, faint streaks of magenta-violet light arrive from outside the frame at shallow angles and touch the slab's bevel, leaving small soft hot spots where they land. The rest of the slab stays dark and calm. Pure black studio environment, physically based materials, realistic contact shadows, deep falloff to black at every frame edge. The left two thirds of the frame stay almost black and empty for overlaid text. Violet is light only, never paint. Restrained, premium, quiet; very low overall brightness.\", \"negative_prompt\": \"text, letters, numbers, logos, icons, symbols, watermark, people, hands, faces, padlock, shield, laptop, server rack, circuit board, binary code, hologram, neon grid, cyberpunk, matrix, rainbow gradient, lens flare, bokeh balls, plastic toy look, cartoon, CGI sheen, oversaturated, busy composition, blurry, distorted geometry\", \"settings\": {\"style\": \"premium dark studio photography, physically based materials\", \"quality\": \"tack sharp, true material texture, controlled highlights\"}}",
+    "aspect_ratio": "16:9",
+    "resolution": "2K",
+    "output_format": "jpg"
+  },
+  "resultUrls": [
+    "https://tempfile.aiquickdraw.com/workers/images/image_cfaa5b80766f7234a94aa0b97135c669.jpg"
+  ],
+  "creditsConsumed": 12.0,
+  "generatedAt": "2026-10-10T02:04:44.071097+00:00",
+  "classification": "ILLUSTRATIVE",
+  "approvalStatus": "candidate"
+}

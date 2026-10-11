@@ -123,6 +123,28 @@ export const HOMEPAGE_VERSIONS: HomepageVersion[] = [
     kind: "build",
     source: "claude/sleepy-archimedes-mccoav",
   },
+  {
+    n: 9,
+    path: "/version-9",
+    title: "Version 8 with the Signal Thread",
+    date: "2026-10-10",
+    status: "Concept (draft PR). Preview only; does not replace /. Joe decides whether it does.",
+    summary:
+      "The live homepage (Version 8) with section backgrounds that tell one story: a single thread runs down the page, each chapter picks it up where the last one left it, a numbered node names the step (your business, the exposure, the gaps, the paths, the layers, the proof, the place, the people, your fit, the watch, the start), and a faint line-art motif behind each section previews what it explains. Dark chapters carry kie.ai environment plates (ILLUSTRATIVE). Content, copy, forms and links are Version 8's, unchanged.",
+    kind: "build",
+    source: "claude/loving-edison-epagrb",
+  },
+  {
+    n: 10,
+    path: "/version-10",
+    title: "Version 8 with the scene story",
+    date: "2026-10-10",
+    status: "Concept (draft PR #565). Preview only; does not replace /. Joe decides whether it does.",
+    summary:
+      "The live homepage (Version 8) whose opening chapters share one scene: the same 'your business' diorama, shot from the same camera, changes state from section to section (a calm network, pressure arriving, six gaps in the perimeter, layered protection) and returns at the close. Concept A of the story-background mockups, with concept B's labelled diagram on the layers frame. kie.ai frames are ILLUSTRATIVE. Copy, forms and links are Version 8's.",
+    kind: "build",
+    source: "claude/loving-edison-epagrb",
+  },
 ];
 
 export function versionByNumber(n: number): HomepageVersion | undefined {

@@ -1,0 +1,144 @@
+/* The Signal Thread (Version 9): chapter backdrops that tell one story.
+   StoryBackdrop.tsx renders .st as the first child of an isolated section. */
+
+.v9 .st {
+  --st-ink: 26, 18, 40;
+  --st-accent: #d3126a;
+  --st-base: rgba(var(--st-ink), 0.2);
+  --st-motif: rgba(var(--st-ink), 0.15);
+  --st-motif-accent: rgba(211, 18, 106, 0.42);
+  --st-label: rgba(var(--st-ink), 0.6);
+  --st-knock: #ffffff;
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+.v9 .st--dark {
+  --st-ink: 255, 255, 255;
+  --st-accent: #f04c97;
+  --st-base: rgba(255, 255, 255, 0.16);
+  --st-motif: rgba(255, 255, 255, 0.13);
+  --st-motif-accent: rgba(240, 76, 151, 0.5);
+  --st-label: rgba(255, 255, 255, 0.62);
+  --st-knock: #141416;
+}
+
+/* Plate: a dark environment still, right-anchored, fading into the field. */
+.v9 .st-plate {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: min(76%, 1180px);
+  height: 100%;
+  object-fit: cover;
+  object-position: right center;
+  opacity: 0.62;
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 42%), linear-gradient(to bottom, transparent, #000 14%, #000 82%, transparent);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(to right, transparent 0%, #000 42%), linear-gradient(to bottom, transparent, #000 14%, #000 82%, transparent);
+  mask-composite: intersect;
+}
+
+/* Motif: faint line-art at the chapter's top right. */
+.v9 .st-motif {
+  position: absolute;
+  top: 0;
+  right: max(28px, calc((100% - 1400px) / 2 + 28px));
+  width: min(56%, 780px);
+  aspect-ratio: 3 / 2;
+  color: var(--st-motif);
+  -webkit-mask-image: radial-gradient(ellipse 70% 72% at 62% 46%, #000 38%, transparent 80%);
+  mask-image: radial-gradient(ellipse 70% 72% at 62% 46%, #000 38%, transparent 80%);
+}
+.v9 .st--converge .st-motif { right: auto; left: 50%; transform: translateX(-50%); width: min(70%, 820px); }
+.v9 .st--arrive .st-motif { top: auto; bottom: 8%; }
+
+.v9 .st-motif__svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.v9 .st-motif__svg :is(path, circle, rect) { fill: none; stroke: currentColor; stroke-width: 1.25; vector-effect: non-scaling-stroke; }
+.v9 .st-motif__svg .m-d { stroke-dasharray: 3 7; }
+.v9 .st-motif__svg .m-a { stroke: var(--st-motif-accent); stroke-width: 1.5; }
+.v9 .st-motif__svg .m-halo { stroke-width: 1; }
+.v9 .st-motif__svg .m-f { fill: currentColor; stroke: none; }
+.v9 .st-motif__svg .m-fa { fill: var(--st-motif-accent); }
+.v9 .st-motif__svg .m-t {
+  fill: currentColor;
+  stroke: none;
+  font: 600 11px/1 var(--v9-font-mono, "Oxanium", monospace);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+/* Thread: base line, the magenta copy that draws itself, the node, the label. */
+.v9 .st-thread { position: absolute; inset: 0; overflow: visible; }
+.v9 .st-thread__base,
+.v9 .st-thread__draw { fill: none; stroke-width: 1.25; stroke-linecap: round; stroke-linejoin: round; }
+.v9 .st-thread__base { stroke: var(--st-base); }
+.v9 .st-thread__draw { stroke: var(--st-accent); stroke-width: 1.5; stroke-dasharray: 1 1; stroke-dashoffset: 0; opacity: 0.85; }
+.v9 .st-node { fill: var(--st-knock); stroke: var(--st-accent); stroke-width: 1.5; }
+.v9 .st-node--end { fill: var(--st-accent); }
+.v9 .st-node__halo { fill: none; stroke: var(--st-accent); stroke-opacity: 0.28; stroke-width: 1; }
+.v9 .st-label {
+  fill: var(--st-label);
+  stroke: var(--st-knock);
+  stroke-width: 6px;
+  paint-order: stroke;
+  font: 600 10px/1 var(--v9-font-mono, "Oxanium", monospace);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+/* Boxed chapters: let the plate read through the panel. */
+.v9 .v9s-03 .stats-box,
+.v9 .v9s-11 .pricing-box {
+  background: linear-gradient(105deg, rgba(30, 30, 33, 0.94) 0%, rgba(30, 30, 33, 0.86) 45%, rgba(30, 30, 33, 0.58) 100%);
+  -webkit-backdrop-filter: blur(1.5px);
+  backdrop-filter: blur(1.5px);
+}
+
+
+@media (max-width: 1023px) {
+  /* Heads run wider than half the page here: keep the motif small, in the corner, and quiet. */
+  .v9 .st-motif { width: min(46%, 420px); right: 20px; opacity: 0.6; }
+  .v9 .st-plate { width: 100%; opacity: 0.4; }
+}
+@media (max-width: 639px) {
+  .v9 .st-motif { right: 12px; width: 70%; opacity: 0.5; }
+  .v9 .st-label { font-size: 9px; letter-spacing: 0.16em; stroke-width: 5px; }
+  .v9 .st-plate { opacity: 0.32; }
+}
+
+/* Scroll-driven draw-on: the magenta thread draws and the motif rises in as the
+   chapter crosses the viewport. Decorative, so progressive enhancement only:
+   without support (or with reduced motion) the finished state above shows. */
+@media (prefers-reduced-motion: no-preference) {
+  @supports ((animation-timeline: view()) and (animation-range: entry)) {
+    @keyframes st-draw { from { stroke-dashoffset: 1; } }
+    @keyframes st-rise { from { opacity: 0; translate: 0 14px; } }
+    .v9 .st { view-timeline: --st block; }
+    .v9 .st-thread__draw {
+      animation: st-draw linear both;
+      animation-timeline: --st;
+      animation-range: entry 20% cover 70%;
+    }
+    .v9 .st-motif {
+      animation: st-rise linear both;
+      animation-timeline: --st;
+      animation-range: entry 10% entry 60%;
+    }
+  }
+}
+
+
+/* Contact keeps its office photo and drift at z-index 0; the thread sits above them, under the copy. */
+.v9 .v9s-16 .contact > .st { z-index: 0; }
+
+/* Next step is centred copy: the converging lines show only at the sides. */
+.v9 .st--converge .st-motif {
+  -webkit-mask-image: radial-gradient(ellipse 34% 62% at 50% 50%, transparent 70%, #000 100%);
+  mask-image: radial-gradient(ellipse 34% 62% at 50% 50%, transparent 70%, #000 100%);
+}
+
+/* The paths plate is the brightest still; keep it behind the service copy, not under it. */
+.v9 .st--paths .st-plate { opacity: 0.42; }
