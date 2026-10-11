@@ -53,6 +53,7 @@ It owns:
 - checkout
 - post-order state
 
+<<<<<<< Updated upstream
 Money movement remains on the existing payment authority. Portal authentication remains the identity path.
 
 ## 3. Internal warehouse object
@@ -137,3 +138,47 @@ Draft ids, references and session ids are redacted from the request log (`server
 5. Add technician scheduling eligibility and calendar handoff after scope determines on-site work is needed.
 6. Add shareable authenticated/read-only solution links only after authorization rules are defined.
 7. Keep client marketplace checkout and public builder regression suites separate so one door cannot accidentally re-enable another door's behavior.
+8. Shareable read-only solution links
+9. Provisioning state machine after paid Zoho orders
+10. Lifecycle-aware upgrade cart and plan comparison
+
+## Approved future direction: lifecycle-aware upgrade cart
+
+**Goal:** Make the cart a clear upgrade surface as well as a purchase surface. It should help an authenticated customer understand their current relationship with DE, compare eligible next steps, see the financial effect before committing, and continue through the correct payment, quote, or consultation path.
+
+**Primary users:** Existing ProActive Ecosystem clients, standalone buyers, and co-managed clients.
+
+### Upgrade paths
+
+- ProActive Ecosystem clients: show the eligible progression between the canonical managed tiers and clearly distinguish the current tier, recommended next tier, added coverage, recurring-price change, effective date, and any prorated adjustment.
+- Standalone buyers: allow an eligible standalone purchase or saved Solution to become the starting point for either a scoped Co-Managed relationship or a Fully Managed ProActive Ecosystem conversation.
+- Co-Managed clients: allow a scoped service relationship or accumulated Solution to become the starting point for Fully Managed qualification and proposal creation.
+- Never imply that adding an item automatically transfers broad operational or security responsibility to DE. Only a completed ProActive Ecosystem agreement establishes the Fully Managed relationship.
+
+### Checkout experience to emulate
+
+- Use a calm two-column desktop layout: selectable plan/relationship cards and payment method on the left; a persistent order or upgrade summary on the right.
+- Give the selected option an unmistakable border, background, and radio state. A recommendation label such as `Recommended` or `Best fit` must be explainable from known account and Solution data, never invented urgency.
+- Keep order math visible before confirmation: current plan credit, one-time charges, monthly change, tax, subtotal, total due today, renewal/effective date, and the amount charged on the next billing cycle.
+- Preserve the same hierarchy on mobile as one column: options first, summary second, confirmation last. Keep the total and primary action available without obscuring terms.
+- Require explicit recurring-charge consent immediately before the final action. Do not preselect consent.
+- For contract-only or qualification-dependent transitions, replace `Buy now` with the truthful next action: `Review upgrade`, `Request proposal`, or `Schedule transition review`.
+
+### Required states
+
+- Happy: eligible upgrade options, current state, price delta, and next action are all available.
+- Loading/pending: keep the summary shell visible, disable confirmation, and label the calculation or request in progress.
+- Error/failure: preserve the customer's selection and explain whether pricing, payment, eligibility, or proposal creation failed and how to recover.
+- Edge/constraint: explain ineligible paths, contract timing, minimums, site/user-count requirements, or required assessment without presenting a dead-end checkout button.
+
+### Acceptance criteria
+
+- The cart derives the customer's current relationship and entitlements from the authenticated portal/account source of truth rather than browser state.
+- Each user sees only valid next-step paths: ProActive tier progression, Standalone to Co-Managed or Fully Managed, and Co-Managed to Fully Managed.
+- The summary separates due-today, recurring, annual, tax, credits/proration, and renewal/effective-date amounts.
+- Changing an option recalculates the summary without discarding the existing Solution.
+- Contract-only transitions create a traceable proposal/consultation request; they do not simulate a completed managed-services purchase.
+- Desktop and mobile implementations meet keyboard, focus, contrast, and screen-reader requirements, including announced selection and price changes.
+- Analytics distinguish upgrade option viewed, option selected, proposal requested, checkout started, checkout completed, and upgrade abandoned without recording sensitive payment data.
+
+**Recommended next step:** Product planning and implementation discovery should map the canonical tier/relationship state machine, eligibility rules, price/proration authority, and Zoho handoff before UI implementation begins.

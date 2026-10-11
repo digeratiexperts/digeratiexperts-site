@@ -3446,7 +3446,7 @@ claims:
       - client/src/components/evidence/EvidenceFrame.tsx (badge, status, subtitle, source sizes and ink only; 8 users)
       - client/src/components/EcosystemProgression.tsx (text sizes and ink only; also on the pricing section)
       - artifacts/visual-qa/proactive-readability/** (new)
-    status: active
+    status: merged
     started: 2026-10-10
     note: >-
       Joe, 2026-10-10, on /solutions/proactive-ecosystem: all the text "more in
