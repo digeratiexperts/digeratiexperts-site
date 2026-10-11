@@ -267,6 +267,10 @@ function Invoke-DEStorageCleanup {
     if ($Plan.schema -ne 'de.storage.cleanup-plan/v1' -or $Plan.machine -ne $env:COMPUTERNAME -or [math]::Abs(([DateTime]::UtcNow - [DateTime]::Parse($Plan.at).ToUniversalTime()).TotalHours) -gt 24) { throw 'Cleanup plan is invalid, stale or belongs to another machine.' }
     $rows = @($Plan.entries | Where-Object { $_.id -in $SelectedId })
     if (-not $rows.Count -or @($SelectedId | Where-Object { $_ -notin @($rows.id) }).Count) { throw 'Select valid planned file IDs.' }
+    $space = @{}
+    foreach ($f in $rows) {
+        try { $drive = New-Object IO.DriveInfo ([IO.Path]::GetPathRoot($f.path)); if (-not $space.ContainsKey($drive.Name)) { $space[$drive.Name] = [pscustomobject]@{ volume = $drive.Name; beforeFreeBytes = $drive.AvailableFreeSpace; afterFreeBytes = $null; observedDeltaBytes = $null } } } catch { }
+    }
     $out = New-Object 'System.Collections.Generic.List[object]'; $removed = [long]0; $done = 0
     foreach ($f in $rows) {
         $state = 'SKIPPED'; $reason = ''; $stream = $null
@@ -296,7 +300,8 @@ function Invoke-DEStorageCleanup {
     }
     $failed = @($out | Where-Object state -eq 'SKIPPED').Count
     $planned = @($out | Where-Object state -eq 'PLANNED').Count
-    $r = [pscustomobject]@{ schema = 'de.storage.cleanup-result/v1'; kind = 'cleanup'; at = [DateTime]::UtcNow.ToString('o'); result = $(if ($WhatIfPreference -or $planned -eq $rows.Count) { 'PLANNED' } elseif ($failed) { 'WARN' } else { 'PASS' }); fileCount = @($out | Where-Object state -eq 'DELETED').Count; bytes = $removed; files = @($out.ToArray()); summary = "$removed logical bytes deleted; $failed skipped. Actual volume free-space delta may differ." }
+    foreach ($key in @($space.Keys)) { try { $drive = New-Object IO.DriveInfo $key; $space[$key].afterFreeBytes = $drive.AvailableFreeSpace; $space[$key].observedDeltaBytes = $space[$key].afterFreeBytes - $space[$key].beforeFreeBytes } catch { } }
+    $r = [pscustomobject]@{ volumeObservations = @($space.Values); schema = 'de.storage.cleanup-result/v1'; kind = 'cleanup'; at = [DateTime]::UtcNow.ToString('o'); result = $(if ($WhatIfPreference -or $planned -eq $rows.Count) { 'PLANNED' } elseif ($failed) { 'WARN' } else { 'PASS' }); fileCount = @($out | Where-Object state -eq 'DELETED').Count; bytes = $removed; files = @($out.ToArray()); summary = "$removed logical bytes deleted; $failed skipped. Actual volume free-space delta may differ." }
     $r = Save-DEStorageReceipt $r; Add-DEStorageEvidence storage.cleanup $r; return $r
 }
 function Assert-DEStorageRelocationRoot {
@@ -366,8 +371,16 @@ function Invoke-DEStorageRelocation {
     [CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact = 'High')]
     param([Parameter(Mandatory = $true)]$Plan)
     if ($Plan.schema -ne 'de.storage.relocation-plan/v1' -or $Plan.machine -ne $env:COMPUTERNAME) { throw 'Invalid relocation plan.' }
-    # Regenerate the plan: never trust arbitrary paths or file lists from JSON or stale scans.
+    if ([math]::Abs(([DateTime]::UtcNow - [DateTime]::Parse($Plan.at).ToUniversalTime()).TotalHours) -gt 24) { throw 'Relocation plan expired; preview again.' }
+    # Regenerate and compare the complete reviewed file set; new/changed data requires a fresh preview.
     $fresh = New-DEStorageRelocationPlan -Source $Plan.source -Destination $Plan.destination
+    if ($fresh.fileCount -ne $Plan.fileCount -or @($Plan.files).Count -ne $Plan.fileCount) { throw 'Source file set changed after preview; preview again.' }
+    $reviewed = @{}
+    foreach ($f in $Plan.files) { if ($reviewed.ContainsKey($f.relative)) { throw 'Duplicate reviewed file path.' }; $reviewed[$f.relative] = $f }
+    foreach ($f in $fresh.files) {
+        $old = $reviewed[$f.relative]
+        if (-not $old -or $old.length -ne $f.length -or $old.modifiedTicks -ne $f.modifiedTicks -or $old.createdTicks -ne $f.createdTicks) { throw 'Source changed after preview; preview again.' }
+    }
     if (-not $PSCmdlet.ShouldProcess($fresh.destination, "Copy and hash-verify $($fresh.fileCount) files; retain source")) { return $fresh }
     Assert-DEStorageWrite
     $dst = $fresh.destination; $src = $fresh.source

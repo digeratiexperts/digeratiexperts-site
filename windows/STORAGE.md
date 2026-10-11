@@ -35,7 +35,7 @@ An outbound DE Tech Agent with mTLS and allowlisted signed jobs is a **roadmap i
 | Drive capacity | Ready fixed volumes, free bytes/percentage and low/critical-space status |
 | Native folder analysis | Iterative metadata traversal, largest files and folder totals, logical byte counts, bounded retained results, 250,000-file default safety limit, explicit partial/unreadable/skipped results |
 | Drive intelligence | Windows Storage/CIM facts, drive-to-disk mapping, serial-based physical-media match, model/bus/media/health facts, OS detection, explainable role suggestions, directed pair ranking and same-disk warnings |
-| Selected cleanup | Exact local Windows Temp / current user's Temp / current user's `.dmp` CrashDumps targets; 7/30-day age gates, reviewed rows, no automatic selection, stale-plan rejection and per-file result receipt |
+| Selected cleanup | Exact local Windows Temp / current user's Temp / current user's `.dmp` CrashDumps targets; 7/30-day age gates, reviewed rows, no automatic selection, stale-plan rejection, per-file result receipt and sampled before/after free space |
 | Native deletion guard | Windows handle-based metadata/hash verification, denies concurrent file writes/renames/deletes, refuses links/cloud/system/read-only/hardlinked files, records skipped/locked failures |
 | Native relocation | Complete non-cloud/link scan, capacity reserve, copy retained source, SHA-256 verification of both sides, completed-file resume, no differing-file overwrite, unrelated destination refused; source removal is separately confirmed and reverified |
 | Windows servicing | AnalyzeComponentStore, CheckHealth, ScanHealth, RestoreHealth, StartComponentCleanup, separately acknowledged ResetBase; supported native DISM, elevation/reboot gates, exit/restart results and local receipt |
@@ -73,7 +73,7 @@ Headless returns a result line plus optional `-ResultFile`, uses existing 0/1/2 
 - Incomplete files are staged as sibling `.DE-transfer-<guid>.partial` files outside the destination tree; interruption can leave them for technician review. Completed destination files can be resumed. No automatic orphan-stage deletion.
 - Same-device partitions are not independent backups. Backups need independent recoverable copies and an offsite/offline strategy.
 - Drive ranking is a **technology-based estimate**, not benchmark data. Unknown/RAID/Storage Spaces/virtual backing is not given an unsupported speed ranking. Negotiated USB/PCIe speed, controllers, encryption, thermal state, competing IO and workload affect performance.
-- DISM servicing has no GUI Cancel control; Windows may require a restart. ResetBase removes the ability to uninstall existing update packages. Do not claim a restore point undoes it.
+- DISM servicing has no GUI Cancel control and the window refuses closing while it runs; Windows may require a restart. ResetBase removes the ability to uninstall existing update packages. Do not claim a restore point undoes it.
 - The engine guards normal managed-endpoint concurrency. It is not a security boundary against an administrator deliberately swapping directory ancestors or modifying trusted receipts. Keep signed builds and protected receipt ACLs; strengthen handle-relative directory traversal before treating it as a privileged untrusted-input agent.
 
 ## Native upstream integration roadmap (mandatory minimum requested by Joe)
