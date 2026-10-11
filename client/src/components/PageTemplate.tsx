@@ -28,6 +28,13 @@ interface PageTemplateProps {
    * own full-bleed chapters (`Chapter` from components/site/chapters).
    */
   layout?: "contained" | "chapters";
+  /**
+   * Larger, higher-contrast body text across <main> (hero and chapters; nav
+   * and footer untouched). Joe, 2026-10-10, on /solutions/proactive-ecosystem:
+   * "way more readable so you can read all letters and words". See
+   * `.de-readable` in index.css.
+   */
+  readable?: boolean;
 }
 
 function StatementTitle({ text }: { text: string }) {
@@ -54,6 +61,7 @@ export const PageTemplate = ({
   eyebrow,
   heroAside,
   layout = "contained",
+  readable = false,
 }: PageTemplateProps): JSX.Element => {
   const isLight = variant === "light";
 
@@ -71,7 +79,7 @@ export const PageTemplate = ({
 
       {/* One <main> landmark per templated page: hero + content, chrome outside
           (a11y sweep 2026-09-12 — 41 pages had no main landmark). */}
-      <main id="main-content" tabIndex={-1}>
+      <main id="main-content" tabIndex={-1} className={readable ? "de-readable" : undefined}>
         <PageHero
           eyebrow={eyebrow}
           title={<StatementTitle text={title} />}

@@ -22,36 +22,36 @@ export const AssessmentReportSample: React.FC = () => {
             { label: "Network", state: "Baseline review", note: "EXAMPLE" },
           ].map((item) => (
             <div key={item.label} className="rounded-xl border border-de-hairline bg-de-bg p-4">
-              <p className="font-mono text-[10px] uppercase tracking-wider text-white/55">{item.label}</p>
+              <p className="font-mono text-[13px] uppercase tracking-wider text-white/80">{item.label}</p>
               <div className="mt-2 flex flex-wrap items-baseline gap-2">
                 <span className="font-heading text-lg font-semibold text-white">{item.state}</span>
-                <span className="font-mono text-[10px] text-[#F04C97]">{item.note}</span>
+                <span className="font-mono text-xs text-[#F04C97]">{item.note}</span>
               </div>
             </div>
           ))}
         </div>
 
         <div className="rounded-xl border border-de-hairline bg-de-raised p-4">
-          <p className="mb-3 flex items-center gap-1.5 font-mono text-[11px] font-bold uppercase tracking-wider text-[#F04C97]">
+          <p className="mb-3 flex items-center gap-1.5 font-mono text-[13px] font-bold uppercase tracking-wider text-[#F04C97]">
             <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" />
             Example priority findings
           </p>
           <div className="space-y-2.5">
             <div className="rounded-lg border border-de-hairline bg-de-bg p-3">
-              <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-bold text-white">
+              <div className="flex flex-wrap items-center justify-between gap-2 text-lg font-bold text-white">
                 <span>1. Identity control requires validation</span>
-                <span className="rounded border border-amber-500/25 bg-amber-500/10 px-2 py-0.5 font-mono text-[10px] text-amber-300">EXAMPLE</span>
+                <span className="rounded border border-amber-500/25 bg-amber-500/10 px-2 py-0.5 font-mono text-xs text-amber-300">EXAMPLE</span>
               </div>
-              <p className="mt-1 text-[11px] leading-relaxed text-white/65">
+              <p className="mt-1.5 text-[15px] leading-relaxed text-white/85 md:text-base">
                 A real assessment would document the exact control, evidence observed, affected scope, risk rationale, and recommended next action.
               </p>
             </div>
             <div className="rounded-lg border border-de-hairline bg-de-bg p-3">
-              <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-bold text-white">
+              <div className="flex flex-wrap items-center justify-between gap-2 text-lg font-bold text-white">
                 <span>2. Recovery architecture requires validation</span>
-                <span className="rounded border border-amber-500/25 bg-amber-500/10 px-2 py-0.5 font-mono text-[10px] text-amber-300">EXAMPLE</span>
+                <span className="rounded border border-amber-500/25 bg-amber-500/10 px-2 py-0.5 font-mono text-xs text-amber-300">EXAMPLE</span>
               </div>
-              <p className="mt-1 text-[11px] leading-relaxed text-white/65">
+              <p className="mt-1.5 text-[15px] leading-relaxed text-white/85 md:text-base">
                 A real finding would describe backup scope, separation, restore evidence, retention, ownership, and the remediation decision appropriate to that environment.
               </p>
             </div>
@@ -59,7 +59,7 @@ export const AssessmentReportSample: React.FC = () => {
         </div>
 
         <div className="rounded-xl border border-de-hairline bg-de-bg p-4">
-          <p className="mb-3 font-mono text-[11px] uppercase tracking-wider text-white/55">Illustrative roadmap structure</p>
+          <p className="mb-3 font-mono text-[13px] uppercase tracking-wider text-white/80">Illustrative roadmap structure</p>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
             {[
               { phase: "01 / VALIDATE", body: "Confirm evidence, ownership, scope, and business impact." },
@@ -67,19 +67,19 @@ export const AssessmentReportSample: React.FC = () => {
               { phase: "03 / VERIFY", body: "Confirm the intended state, document evidence, and carry remaining work into the roadmap." },
             ].map((item) => (
               <div key={item.phase} className="rounded border border-de-hairline bg-de-raised p-3">
-                <span className="font-mono text-[10px] font-bold text-[#F04C97]">{item.phase}</span>
-                <p className="mt-1 text-[11px] leading-relaxed text-white/70">{item.body}</p>
+                <span className="font-mono text-[13px] font-bold text-[#F04C97]">{item.phase}</span>
+                <p className="mt-1.5 text-[15px] leading-relaxed text-white/85 md:text-base">{item.body}</p>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="flex items-start gap-2 rounded-lg border border-de-hairline bg-white/[0.02] p-3 text-xs leading-relaxed text-white/55">
+        <div className="flex items-start gap-2 rounded-lg border border-de-hairline bg-white/[0.02] p-3 text-sm leading-relaxed text-white/80">
           <FileText className="mt-0.5 h-4 w-4 shrink-0 text-[#F04C97]" aria-hidden="true" />
           <p>When an approved sanitized real report is available, it can replace this example using the SANITIZED REAL classification and documented redaction review.</p>
         </div>
 
-        <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-wider text-white/60">
+        <div className="flex items-center gap-2 font-mono text-[13px] uppercase tracking-wider text-white/80">
           <CheckCircle2 className="h-3.5 w-3.5 text-[#F04C97]" aria-hidden="true" />
           Structure first; real evidence only after verification and approval.
         </div>
