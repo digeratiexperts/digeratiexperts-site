@@ -55,6 +55,7 @@ param(
     [ValidateSet('windows-temp','user-temp','crash-dumps')][string[]]$StorageCategory = @('user-temp'),
     [string[]]$StorageSelectedId = @(),
     [string]$StorageConfirmSource,
+    [string]$StorageCustomUse, # optional JSON mapping of drive paths to preferred roles (read-only advice)
     [ValidateSet('AnalyzeComponentStore','CheckHealth','ScanHealth','RestoreHealth','StartComponentCleanup','ResetBase')]
     [string]$StorageServicing = 'AnalyzeComponentStore',
     [switch]$AcknowledgeResetBase,
@@ -147,7 +148,7 @@ if ($Headless) { & {
         if ($StorageRecord) { $record = Get-Content -LiteralPath $StorageRecord -Raw -Encoding UTF8 | ConvertFrom-Json }
         $dryStorage = -not $Apply -or $WhatIfPreference
         switch ($StorageAction) {
-            'RecommendDrives' { $r = Save-DEStorageReceipt (Get-DEStorageRecommendations -Topology (Get-DEStorageTopology)); Add-DEStorageEvidence storage.recommendations $r }
+            'RecommendDrives' { $preferences = @{}; if ($StorageCustomUse) { $preferences = ConvertTo-DEHashtable ($StorageCustomUse | ConvertFrom-Json) }; $r = Save-DEStorageReceipt (Get-DEStorageRecommendations -Topology (Get-DEStorageTopology) -CustomUse $preferences); Add-DEStorageEvidence storage.recommendations $r }
             'Scan' { $r = Get-DEStorageInventory -Path $StoragePath; $r = Save-DEStorageReceipt $r; Add-DEStorageEvidence storage.scan $r }
             'PlanCleanup' { $r = Save-DEStorageReceipt (New-DEStorageCleanupPlan -Category $StorageCategory) }
             'Cleanup' { if (-not $record) { throw '-StorageRecord must name a reviewed cleanup plan.' }; $r = Invoke-DEStorageCleanup -Plan $record -SelectedId $StorageSelectedId -WhatIf:$dryStorage -Confirm:$false }
@@ -540,7 +541,7 @@ function Start-DEJob {
     $de = Get-DEConsole
     $plan = $null; if ($S.Profile -and $S.Profile.plan) { $plan = @{ bundle = "$($S.Profile.plan.bundle)"; addOns = @($S.Profile.plan.addOns | Where-Object { $_ }); solutions = @($S.Profile.plan.solutions | Where-Object { $_ }) } }
     $core = Start-DEBackgroundJob -Work $Work -Params $Params -ProfileId $(if ($S.Profile) { $S.Profile.id } else { $null }) -Mode $S.Mode -Plan $plan
-    $S.Job = @{ core = $core; handle = $core.handle; label = $Label; started = $core.started; onDone = $OnDone }
+    $S.Job = @{ core = $core; handle = $core.handle; label = $Label; started = $core.started; onDone = $OnDone; noCancel = [bool]$NoCancel }
     $UI.NavPanel.IsEnabled = $false; $UI.PageHost.IsEnabled = $false
     $UI.ProgressPanel.Visibility = 'Visible'; $UI.Progress.IsIndeterminate = $true; $UI.Progress.Value = 0
     $UI.TxtProgress.Text = 'Starting'; $UI.TxtEta.Text = 'ETA calculating'; $UI.BtnCancel.Visibility = $(if ($NoCancel) { 'Collapsed' } else { 'Visible' })
@@ -1230,9 +1231,19 @@ function Build-Storage {
         if ($v.status -ne 'OK') { $line.Foreground = Get-Brush 'Warn' }
         [void]$root.Children.Add((New-Card @($line)))
     }
+    $customBoxes = @{}
+    if (-not $S.StorageCustomUse) { $S.StorageCustomUse = @{} }
+    foreach ($v in $volumes) {
+        $box = New-El TextBox @{ Text = "$($S.StorageCustomUse[$v.path])"; Style = 'Field'; Name = "Preferred use for $($v.path)" }
+        $customBoxes[$v.path] = $box
+        [void]$root.Children.Add((New-Card @((New-Label "$($v.path) preferred use (optional)"), $box)))
+    }
     $assess = New-Button 'Assess drive technology & recommend roles' {
-        Start-DEJob -Label 'Drive technology assessment' -Work { $r = Save-DEStorageReceipt (Get-DEStorageRecommendations -Topology (Get-DEStorageTopology)); Add-DEStorageEvidence storage.recommendations $r; $r } -OnDone { param($r) $S.StorageRecommendations = Get-StorageResult $r; Show-Page 'Storage' }
-    } -Primary
+        $preferences = @{}
+        foreach ($key in $customBoxes.Keys) { if ($customBoxes[$key].Text.Trim()) { $preferences[$key] = $customBoxes[$key].Text.Trim() } }
+        $S.StorageCustomUse = $preferences
+        Start-DEJob -Label 'Drive technology assessment' -Params @{ custom = $preferences } -Work { $r = Save-DEStorageReceipt (Get-DEStorageRecommendations -Topology (Get-DEStorageTopology) -CustomUse $JobParams.custom); Add-DEStorageEvidence storage.recommendations $r; $r } -OnDone { param($r) $S.StorageRecommendations = Get-StorageResult $r; Show-Page 'Storage' }
+    }.GetNewClosure() -Primary
     [void]$root.Children.Add((New-Card @((New-Label 'Drive intelligence'), (New-Text 'Read Windows hardware facts, map volumes to disks, suggest OS/workspace/storage/backup roles and compare transfer candidates. These are explainable estimates; speed is not benchmarked and no drive is reformatted.' -Muted -Wrap), $assess)))
     if ($S.StorageRecommendations) {
         $rec = $S.StorageRecommendations
@@ -1843,6 +1854,11 @@ if ($SmokeTest) {
 
 # ============================================================== start
 if ($Settings.dryRun) { Set-DEMode -Mode Audit -DryRun } else { Set-DEMode -Mode Apply }
+$Win.Add_Closing({ param($sender, $e)
+    if ($S.Job -and $S.Job.noCancel -and -not $S.Job.handle.IsCompleted) {
+        $e.Cancel = $true; Set-Status 'Windows servicing is running. Wait for its result before closing DE Tech Tool.'
+    }
+})
 $Win.Add_Closed({ Clear-DESecrets; Save-GuiSettings })
 # Last line of defence: anything that still escapes a handler is reported, never allowed to close the console.
 $Win.Dispatcher.Add_UnhandledException({

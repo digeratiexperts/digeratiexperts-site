@@ -6,7 +6,9 @@ $ErrorActionPreference = 'Stop'
 $console = Split-Path -Parent $PSScriptRoot
 Import-Module (Join-Path $console 'modules/DE.Core/DE.Core.psm1') -Force -DisableNameChecking
 Import-Module (Join-Path $console 'modules/DE.Storage/DE.Storage.psm1') -Force -DisableNameChecking
-$root = Join-Path ([IO.Path]::GetTempPath()) ('de-storage-regression-' + [guid]::NewGuid().ToString('N'))
+$fixtureBase = [IO.Path]::GetTempPath()
+if ($env:OS -eq 'Windows_NT') { $fixtureBase = $(if ($env:RUNNER_TEMP) { $env:RUNNER_TEMP } else { $env:PUBLIC }) }
+$root = Join-Path $fixtureBase ('de-storage-regression-' + [guid]::NewGuid().ToString('N'))
 [void][IO.Directory]::CreateDirectory($root)
 $null = Initialize-DEConsole -Root $console -Mode Apply -DataDir (Join-Path $root 'evidence')
 $script:passed = 0
@@ -46,6 +48,7 @@ try {
     Assert-StorageThrows { Remove-DEStorageRelocationSource $copy -ConfirmSource 'wrong' -Confirm:$false } 'source removal requires exact source confirmation'
     [IO.File]::WriteAllText((Join-Path $src 'new.txt'), 'new content after copy')
     Assert-StorageThrows { Remove-DEStorageRelocationSource $copy -ConfirmSource $copy.source -Confirm:$false } 'new source content prevents removal'
+    Assert-StorageThrows { Invoke-DEStorageRelocation $plan -Confirm:$false } 'changed source file set requires a fresh preview'
     [IO.File]::Delete((Join-Path $src 'new.txt'))
     Remove-DEStorageRelocationSource $copy -ConfirmSource $copy.source -WhatIf -Confirm:$false
     Assert-Storage ([IO.File]::Exists((Join-Path $src 'one[1].txt'))) 'source removal WhatIf retains source'
@@ -58,6 +61,26 @@ try {
     $bad = Invoke-DEStorageCleanup $fake -SelectedId bad -Confirm:$false
     Assert-Storage ($bad.fileCount -eq 0 -and [IO.File]::Exists((Join-Path $src 'one[1].txt'))) 'forged cleanup target outside allowed roots not deleted'
     if ($env:OS -eq 'Windows_NT') {
+        # Override the narrow category provider ONLY inside this test module, using an isolated fixture root.
+        $cleanupFixture = Join-Path $root 'cleanup'; [void][IO.Directory]::CreateDirectory($cleanupFixture)
+        & (Get-Module DE.Storage) { param($path)
+            $script:StorageFixtureRoot = $path
+            function script:Get-DEStorageCleanupRoots { @([pscustomobject]@{ id = 'user-temp'; path = $script:StorageFixtureRoot; days = 7 }) }
+        } $cleanupFixture
+        $oldTemp = Join-Path $cleanupFixture 'old[1].tmp'; [IO.File]::WriteAllText($oldTemp, 'old disposable content')
+        [IO.File]::SetCreationTimeUtc($oldTemp,[DateTime]::UtcNow.AddDays(-10)); [IO.File]::SetLastWriteTimeUtc($oldTemp,[DateTime]::UtcNow.AddDays(-10))
+        $oldPlan = New-DEStorageCleanupPlan -Category user-temp
+        Assert-Storage ($oldPlan.fileCount -eq 1) 'old temporary fixture appears in exact cleanup plan'
+        $cleanDry = Invoke-DEStorageCleanup $oldPlan -SelectedId $oldPlan.entries[0].id -WhatIf -Confirm:$false
+        Assert-Storage ([IO.File]::Exists($oldTemp) -and $cleanDry.result -eq 'PLANNED') 'cleanup WhatIf never deletes'
+        $clean = Invoke-DEStorageCleanup $oldPlan -SelectedId $oldPlan.entries[0].id -Confirm:$false
+        Assert-Storage ($clean.fileCount -eq 1 -and -not [IO.File]::Exists($oldTemp)) 'native cleanup deletes only approved old temporary fixture'
+        [IO.File]::WriteAllText($oldTemp, 'changed fixture')
+        [IO.File]::SetCreationTimeUtc($oldTemp,[DateTime]::UtcNow.AddDays(-10)); [IO.File]::SetLastWriteTimeUtc($oldTemp,[DateTime]::UtcNow.AddDays(-10))
+        $changedPlan = New-DEStorageCleanupPlan -Category user-temp
+        [IO.File]::WriteAllText($oldTemp, 'updated fixture content')
+        $changed = Invoke-DEStorageCleanup $changedPlan -SelectedId $changedPlan.entries[0].id -Confirm:$false
+        Assert-Storage ($changed.fileCount -eq 0 -and [IO.File]::Exists($oldTemp)) 'changed cleanup file remains intact'
         # Verified native deletion: destination stays intact, source files removed only after hashes pass.
         $removed = Remove-DEStorageRelocationSource $copy -ConfirmSource $copy.source -Confirm:$false
         Assert-Storage ($removed.fileCount -eq 2 -and -not [IO.File]::Exists((Join-Path $src 'one[1].txt')) -and [IO.File]::Exists((Join-Path $dst 'one[1].txt'))) 'Windows handle deletion removes only verified source files'
@@ -96,4 +119,5 @@ try {
     # Fixtures only. Link directory is removed non-recursively before the remaining fixture tree.
     if ([IO.Directory]::Exists((Join-Path $root 'links/linked'))) { try { [IO.Directory]::Delete((Join-Path $root 'links/linked')) } catch {} }
     Remove-Item -LiteralPath $root -Recurse -Force -ErrorAction SilentlyContinue
+    Remove-Module DE.Storage -Force -ErrorAction SilentlyContinue
 }
