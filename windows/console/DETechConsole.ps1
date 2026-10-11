@@ -280,11 +280,11 @@ if ([Threading.Thread]::CurrentThread.GetApartmentState() -ne 'STA' -or -not $at
     # Start-Process joins -ArgumentList without quoting: quote every value that may hold a space (C:\Program Files\...)
     $q = { param($v) if ("$v" -match '\s' -and "$v" -notmatch '^".*"$') { '"' + $v + [regex]::Match("$v", '\\*$').Value + '"' } else { "$v" } }
     if ($SmokeTest) {
-        $smokeArgs = @('-NoProfile', '-Sta', '-ExecutionPolicy', 'Bypass', '-File', $PSCommandPath, '-SmokeTest', '-SmokeClient', $SmokeClient, '-DataDir', $DataDir); if ($SmokeOut) { $smokeArgs += @('-SmokeOut', $SmokeOut) }
+        $smokeArgs = @('-NoProfile', '-Sta', '-ExecutionPolicy', 'Bypass', '-File', $PSCommandPath, '-SmokeTest', '-Appearance', $Appearance, '-SmokeClient', $SmokeClient, '-DataDir', $DataDir); if ($SmokeOut) { $smokeArgs += @('-SmokeOut', $SmokeOut) }
         $smokeArgs = @($smokeArgs | ForEach-Object { & $q $_ })
         $p = Start-Process -FilePath $exe -ArgumentList $smokeArgs -Wait -PassThru -NoNewWindow; exit $p.ExitCode
     }
-    $argsList = @('-NoProfile', '-Sta', '-ExecutionPolicy', 'Bypass', '-File', $PSCommandPath, '-Page', $Page); if ($Technician) { $argsList += @('-Technician', $Technician) }; if ($Resume) { $argsList += '-Resume' }; if ($DataDir) { $argsList += @('-DataDir', $DataDir) }
+    $argsList = @('-NoProfile', '-Sta', '-ExecutionPolicy', 'Bypass', '-File', $PSCommandPath, '-Appearance', $Appearance, '-Page', $Page); if ($Technician) { $argsList += @('-Technician', $Technician) }; if ($Resume) { $argsList += '-Resume' }; if ($DataDir) { $argsList += @('-DataDir', $DataDir) }
     $argsList = @($argsList | ForEach-Object { & $q $_ })
     Start-Process -FilePath $exe -ArgumentList $argsList | Out-Null; exit 0
 }
@@ -1262,7 +1262,7 @@ function Build-Storage {
     $customBoxes = @{}
     if (-not $S.StorageCustomUse) { $S.StorageCustomUse = @{} }
     foreach ($v in $volumes) {
-        $box = New-El TextBox @{ Text = "$($S.StorageCustomUse[$v.path])"; Style = 'Field'; Name = "Preferred use for $($v.path)" }
+        $box = New-El TextBox @{ Text = "$($S.StorageCustomUse[$v.path])"; Name = "Preferred use for $($v.path)" }
         $customBoxes[$v.path] = $box
         [void]$root.Children.Add((New-Card @((New-Label "$($v.path) preferred use (optional)"), $box)))
     }
@@ -1281,7 +1281,7 @@ function Build-Storage {
         Add-DEGridColumns $pairs @(@{ h = 'From'; b = 'source'; w = 70 }, @{ h = 'To'; b = 'destination'; w = 70 }, @{ h = 'Candidate rank'; b = 'candidateRank'; w = 100 }, @{ h = 'Reason (not measured speed)'; b = 'assessment'; w = '1*' })
         [void]$root.Children.Add((New-Card @((New-Text $rec.summary 14 -Bold -Wrap), $roles, (New-Label 'Transfer candidates'), $pairs, (New-Text $rec.limits -Muted -Wrap), (New-Text $rec.backupRule -Muted -Wrap))))
     }
-    $scanPath = New-El TextBox @{ Text = $(if ($S.StorageScanPath) { $S.StorageScanPath } elseif ($env:SystemDrive) { "$($env:SystemDrive)\" } else { [IO.Path]::GetTempPath() }); Style = 'Field'; Name = 'Folder to analyze' }
+    $scanPath = New-El TextBox @{ Text = $(if ($S.StorageScanPath) { $S.StorageScanPath } elseif ($env:SystemDrive) { "$($env:SystemDrive)\" } else { [IO.Path]::GetTempPath() }); Name = 'Folder to analyze' }
     $scan = New-Button 'Analyze folder' {
         $S.StorageScanPath = $scanPath.Text
         Start-DEJob -Label 'Storage analysis' -Params @{ path = $scanPath.Text } -Work { $r = Get-DEStorageInventory -Path $JobParams.path; $r = Save-DEStorageReceipt $r; Add-DEStorageEvidence storage.scan $r; $r } -OnDone { param($r) $S.StorageScan = Get-StorageResult $r; Show-Page 'Storage' }
@@ -1295,7 +1295,7 @@ function Build-Storage {
         [void]$root.Children.Add((New-Card @((New-Label 'Largest folders (overlapping totals)'), $grid)))
         if ($r.issues.Count) { [void]$root.Children.Add((New-Card @((New-Text (($r.issues | Select-Object -First 8 | ForEach-Object { "$($_.path): $($_.reason)" }) -join "`n") -Muted -Wrap)))) }
     }
-    $category = New-El ComboBox @{ ItemsSource = @('user-temp','windows-temp','crash-dumps'); SelectedIndex = 0; Style = 'Field'; Name = 'Temporary-file category' }
+    $category = New-El ComboBox @{ ItemsSource = @('user-temp','windows-temp','crash-dumps'); SelectedIndex = 0; Name = 'Temporary-file category' }
     $planCleanup = New-Button 'Preview old temporary files' {
         Start-DEJob -Label 'Cleanup preview' -Params @{ category = "$($category.SelectedItem)" } -Work { Save-DEStorageReceipt (New-DEStorageCleanupPlan -Category @($JobParams.category)) } -OnDone { param($r) $S.StorageCleanup = Get-StorageResult $r; Show-Page 'Storage' }
     }.GetNewClosure()
@@ -1313,8 +1313,8 @@ function Build-Storage {
         }.GetNewClosure() -Primary
         [void]$root.Children.Add((New-Card @((New-Text $p.summary 14 -Bold -Wrap), (New-Text ($p.warnings -join '; ') -Muted -Wrap), $grid, (New-Text 'Select exact rows with Ctrl/Shift. Nothing is selected automatically.' -Muted -Wrap), $apply)))
     }
-    $srcBox = New-El TextBox @{ Text = "$($S.StorageSource)"; Style = 'Field'; Name = 'Relocation source folder' }
-    $dstBox = New-El TextBox @{ Text = "$($S.StorageDestination)"; Style = 'Field'; Name = 'Relocation destination folder' }
+    $srcBox = New-El TextBox @{ Text = "$($S.StorageSource)"; Name = 'Relocation source folder' }
+    $dstBox = New-El TextBox @{ Text = "$($S.StorageDestination)"; Name = 'Relocation destination folder' }
     $planCopy = New-Button 'Preview relocation' {
         $S.StorageSource = $srcBox.Text; $S.StorageDestination = $dstBox.Text
         Start-DEJob -Label 'Relocation preview' -Params @{ source = $srcBox.Text; destination = $dstBox.Text } -Work { Save-DEStorageReceipt (New-DEStorageRelocationPlan -Source $JobParams.source -Destination $JobParams.destination) } -OnDone { param($r) $S.StorageCopyPlan = Get-StorageResult $r; Show-Page 'Storage' }
@@ -1340,7 +1340,7 @@ function Build-Storage {
         }.GetNewClosure()
         [void]$root.Children.Add((New-Card @((New-Text $receipt.summary 14 -Bold -Wrap), (New-Text "Saved receipt: $($receipt.receiptPath)" -Muted -Wrap), (New-Wrap @($verify,$remove)))))
     }
-    $service = New-El ComboBox @{ ItemsSource = @('AnalyzeComponentStore','CheckHealth','ScanHealth','RestoreHealth','StartComponentCleanup','ResetBase'); SelectedIndex = 0; Style = 'Field'; Name = 'Windows servicing operation' }
+    $service = New-El ComboBox @{ ItemsSource = @('AnalyzeComponentStore','CheckHealth','ScanHealth','RestoreHealth','StartComponentCleanup','ResetBase'); SelectedIndex = 0; Name = 'Windows servicing operation' }
     $runService = New-Button 'Run selected DISM operation...' {
         $action = "$($service.SelectedItem)"; $dry = [bool](Get-DEConsole).DryRun; $ack = $false
         if ($action -eq 'ResetBase') { $ack = Confirm-Gui 'Irreversible servicing' 'ResetBase prevents uninstalling ALL existing update packages. A restore point is not an undo for this operation. Continue?'; if (-not $ack) { return } }
