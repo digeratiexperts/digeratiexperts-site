@@ -53,7 +53,6 @@ It owns:
 - checkout
 - post-order state
 
-<<<<<<< Updated upstream
 Money movement remains on the existing payment authority. Portal authentication remains the identity path.
 
 ## 3. Internal warehouse object
