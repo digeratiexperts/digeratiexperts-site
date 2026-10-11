@@ -11,7 +11,7 @@
   #error OutputPath is required
 #endif
 #if !FileExists(PayloadDir + "\windows\Start-DETechTool.cmd")
-  #error Staging folder must contain Start-DETechTool.cmd at its root
+  #error Staging folder must contain windows\Start-DETechTool.cmd
 #endif
 #if !FileExists(PayloadDir + "\windows\console\DETechConsole.ps1")
   #error Staging folder must contain the complete Windows console
@@ -27,8 +27,8 @@ DefaultGroupName=DE Tech Tool
 DisableDirPage=yes
 DisableProgramGroupPage=yes
 PrivilegesRequired=admin
-ArchitecturesAllowed=x64
-ArchitecturesInstallIn64BitMode=x64
+ArchitecturesAllowed=x64os
+ArchitecturesInstallIn64BitMode=x64os
 MinVersion=10.0
 OutputDir={#OutputPath}
 OutputBaseFilename=DE-TechTool-Setup-{#ProductVersion}-x64
@@ -56,3 +56,36 @@ Name: "{autodesktop}\DE Tech Tool"; Filename: "{app}\msp-ai-kit\windows\Start-DE
 Filename: "{app}\msp-ai-kit\windows\Start-DETechTool.cmd"; Description: "Open DE Tech Tool"; WorkingDir: "{app}\msp-ai-kit\windows"; Flags: postinstall shellexec skipifsilent unchecked
 
 ; Deliberately no UninstallDelete of ProgramData: preserve evidence and client configuration.
+
+
+[Code]
+function InitializeSetup(): Boolean;
+var
+  InstalledVersion: String;
+  ExistingPacked, IncomingPacked: Int64;
+begin
+  Result := False;
+  if not StrToVersion('{#ProductVersion}', IncomingPacked) then
+  begin
+    Log('REFUSED: invalid incoming product version');
+    Exit;
+  end;
+  if RegQueryStringValue(HKLM64,
+    'Software\Microsoft\Windows\CurrentVersion\Uninstall\{EB058878-62D7-4AD0-B4E1-61F731EB7003}_is1',
+    'DisplayVersion', InstalledVersion) then
+  begin
+    if not StrToVersion(InstalledVersion, ExistingPacked) then
+    begin
+      Log('REFUSED: installed version is invalid; repair the existing installation first');
+      SuppressibleMsgBox('The existing DE Tech Tool version could not be verified. Contact DE before replacing it.', mbError, MB_OK, IDOK);
+      Exit;
+    end;
+    if ComparePackedVersion(ExistingPacked, IncomingPacked) > 0 then
+    begin
+      Log('REFUSED: newer DE Tech Tool version already installed (' + InstalledVersion + ')');
+      SuppressibleMsgBox('A newer DE Tech Tool version is installed. This installer cannot downgrade it.', mbError, MB_OK, IDOK);
+      Exit;
+    end;
+  end;
+  Result := True;
+end;
