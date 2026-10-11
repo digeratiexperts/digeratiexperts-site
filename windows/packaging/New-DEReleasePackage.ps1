@@ -92,6 +92,9 @@ if (-not $NoCommunity) {
     Remove-Item -LiteralPath (Join-Path $stage 'data') -Recurse -Force -ErrorAction SilentlyContinue
 }
 
+# Compile the native entry before signing/hashing; runtime engine stays unchanged.
+& (Join-Path $sw 'packaging\New-DEAppLauncher.ps1') -WindowsRoot $sw | Out-Null
+
 $signArgs = @{ Root = $sw }; if ($SkipSigning) { $signArgs.SkipSigning = $true } else { $signArgs.Thumbprint = $Thumbprint }
 & (Join-Path $sw 'packaging\Sign-DETechConsole.ps1') @signArgs | Out-Null
 if ($LASTEXITCODE) { throw "signing failed (exit $LASTEXITCODE)" }
