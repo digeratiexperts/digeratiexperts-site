@@ -10,10 +10,10 @@
 #ifndef OutputPath
   #error OutputPath is required
 #endif
-#if !FileExists(PayloadDir + "\Start-DETechTool.cmd")
+#if !FileExists(PayloadDir + "\windows\Start-DETechTool.cmd")
   #error Staging folder must contain Start-DETechTool.cmd at its root
 #endif
-#if !FileExists(PayloadDir + "\console\DETechConsole.ps1")
+#if !FileExists(PayloadDir + "\windows\console\DETechConsole.ps1")
   #error Staging folder must contain the complete Windows console
 #endif
 
@@ -44,15 +44,15 @@ SetupLogging=yes
 Name: "desktopicon"; Description: "Create a desktop shortcut"; GroupDescription: "Shortcuts:"; Flags: unchecked
 
 [Files]
-Source: "{#PayloadDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "{#PayloadDir}\*"; DestDir: "{app}\msp-ai-kit"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
-Name: "{group}\DE Tech Tool"; Filename: "{app}\Start-DETechTool.cmd"; WorkingDir: "{app}"; Comment: "Open the DE technician console"
-Name: "{group}\Storage and cleanup"; Filename: "{app}\Start-DETechTool.cmd"; Parameters: "-Page Storage"; WorkingDir: "{app}"
-Name: "{autodesktop}\DE Tech Tool"; Filename: "{app}\Start-DETechTool.cmd"; WorkingDir: "{app}"; Tasks: desktopicon
+Name: "{group}\DE Tech Tool"; Filename: "{app}\msp-ai-kit\windows\Start-DETechTool.cmd"; WorkingDir: "{app}\msp-ai-kit\windows"; Comment: "Open the DE technician console"
+Name: "{group}\Storage and cleanup"; Filename: "{app}\msp-ai-kit\windows\Start-DETechTool.cmd"; Parameters: "-Page Storage"; WorkingDir: "{app}\msp-ai-kit\windows"
+Name: "{autodesktop}\DE Tech Tool"; Filename: "{app}\msp-ai-kit\windows\Start-DETechTool.cmd"; WorkingDir: "{app}\msp-ai-kit\windows"; Tasks: desktopicon
 
 ; Launch via the existing elevation-aware entry point only after an explicit choice.
 [Run]
-Filename: "{app}\Start-DETechTool.cmd"; Description: "Open DE Tech Tool"; WorkingDir: "{app}"; Flags: postinstall shellexec skipifsilent unchecked
+Filename: "{app}\msp-ai-kit\windows\Start-DETechTool.cmd"; Description: "Open DE Tech Tool"; WorkingDir: "{app}\msp-ai-kit\windows"; Flags: postinstall shellexec skipifsilent unchecked
 
 ; Deliberately no UninstallDelete of ProgramData: preserve evidence and client configuration.
