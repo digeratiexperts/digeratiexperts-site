@@ -3319,7 +3319,7 @@ claims:
       - deploy/vps/env.production.example (the website Desk and CRM block only)
       - server/deskTicketFallback.ts (the staff alert's restore sentence only)
       - server/integrations/zohoAgentsReadiness.ts (one comment)
-    status: merged
+    status: verified-live
     started: 2026-10-10
     note: >-
       Joe, 2026-10-10: the new Desk refresh token came from its own Zoho Self
@@ -3334,7 +3334,16 @@ claims:
       unchanged. CRM keeps its client and token. Overlap check 2026-10-10: the
       only claim listing zohoClient.ts (de-desk-reliability-followup) is
       verified-live; open PRs 542, 550, 553 and 554 touch none of these files.
-      Not merged or deployed: Joe asked for the PR and validation first.
+      RELEASED 2026-10-10: Joe, "Merge #555" (merged by another session as
+      37dc7630 after CI passed). PR 562 (one Zoho token manager) later moved
+      resolveDeskOAuthConfig into server/zoho/zohoAuth.ts and kept its Desk
+      client rule. Production runs 660a4dbf, which contains both. At 18:51Z
+      /api/zoho/desk/status read connected true and /api/health read
+      zohoDesk ok (zoho.desk connected, zoho.crm connected); deskTicketSpool
+      pending 0, so nothing is waiting to replay. A ticket created through the
+      Desk API after the fix is still to be seen (Joe to send one through Get
+      Support; the newest Desk ticket at 18:55Z was #132 of 10/03). VERIFIED
+      LIVE. Files released.
   - id: t7-desk-alamo-link
     owner: claude
     subsystem: de-desk-admin-scripts
@@ -3432,3 +3441,25 @@ claims:
       ?exit_variant=navy|paper forces a version for review. Lead source sent to
       the server is unchanged. Overlap check 2026-10-10: open PR 542 edits the
       print block of index.css; this adds a rule elsewhere in the file.
+  - id: store-greeting-plain
+    owner: claude
+    subsystem: de-desk
+    branch: claude/awesome-bardeen-4pbl2m
+    base_sha: 660a4dbf
+    files:
+      - client/src/lib/deskAskDeMotion.ts (the Store-draft greeting sentence only)
+      - client/src/lib/deskAskDeMotion.test.ts (one assertion)
+      - artifacts/visual-qa/store-greeting-plain/**
+    status: active
+    started: 2026-10-10
+    note: >-
+      Joe's 2026-10-08 phone screenshots showed Ask DE greeting a device with
+      a Store draft as "This device already has a Store situation. I don't
+      have a name or email from that — ask about that environment or a
+      different path." Offered a plain rewrite; Joe: "continue everything".
+      Now: "You started a solution in the Store on this device. We can pick
+      it up here, or ask me anything else." Same trigger (a Store draft on
+      this device), still names no one and shows no draft details; the
+      starter chips are unchanged. Overlap check 2026-10-10: no claim lists
+      deskAskDeMotion.ts; open PRs do not touch it.
+

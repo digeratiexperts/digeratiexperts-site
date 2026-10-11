@@ -138,7 +138,8 @@ function deskSituationClause(): string {
   const situation = readAnonymousSituation();
   if (!situation) return "";
   // Keep this short: Ask DE typewrites the greeting before starter chips appear.
-  return "This device already has a Store situation. I don't have a name or email from that — ask about that environment or a different path.";
+  // The Store draft holds no name or email, so the greeting names no one.
+  return "You started a solution in the Store on this device. We can pick it up here, or ask me anything else.";
 }
 
 export function startersForPage(page: DeskMotionPage): DeskMotionChip[] {
