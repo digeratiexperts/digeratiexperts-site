@@ -5,8 +5,8 @@ import { describe, expect, it } from "vitest";
 // Joe, 2026-10-06: the portal's light mode is "Light steps" (grey-ladder concept C), replacing the
 // 2026-10-03 orchid "Ambient" field: a grey field, white cards one step up, the rail stays graphite.
 const root = path.resolve(import.meta.dirname, "../../..");
-const css = readFileSync(path.join(root, "client/src/styles/portal.css"), "utf8");
-const layout = readFileSync(path.join(root, "client/src/pages/portal/PortalLayout.tsx"), "utf8");
+const css = readFileSync(path.join(root, "client/src/styles/portal.css"), "utf8").replace(/\r\n/g, "\n");
+const layout = readFileSync(path.join(root, "client/src/pages/portal/PortalLayout.tsx"), "utf8").replace(/\r\n/g, "\n");
 
 function lightBlock(): string {
   const start = css.indexOf('.de-portal[data-theme="light"],\nbody.de-portal-scope[data-portal-theme="light"] {');
