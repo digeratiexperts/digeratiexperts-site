@@ -58,6 +58,8 @@ const EXACT = new Set([
   "/industries/nonprofits",
   "/industries/animal-hospitals",
   "/the-box",
+  // Client Portal agreement gate alias; redirects to /portal/agreement-gate.
+  "/agreement-gate",
   "/resources",
   "/resources/case-studies",
   "/resources/blog",

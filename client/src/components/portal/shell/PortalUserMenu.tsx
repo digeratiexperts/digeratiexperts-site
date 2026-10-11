@@ -1,5 +1,6 @@
 import { Link } from "wouter";
-import { ChevronDown, LogOut, Monitor, Moon, Settings, Sun } from "lucide-react";
+import { ChevronDown, LogOut, Monitor, Moon, Settings, Sparkles, Sun } from "lucide-react";
+import { startPortalTour } from "./PortalTour";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -92,6 +93,10 @@ export function PortalUserMenu({ user, themePreference, onTheme, onSignOut, comp
             <Settings className="mr-2 h-4 w-4" aria-hidden="true" />
             Settings
           </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => window.setTimeout(startPortalTour, 150)} data-testid="menu-portal-tour">
+          <Sparkles className="mr-2 h-4 w-4" aria-hidden="true" />
+          Take the portal tour
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={onSignOut} data-testid="menu-sign-out">

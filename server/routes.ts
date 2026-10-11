@@ -129,6 +129,7 @@ import { registerHubServiceRequestStatusRoute, registerServiceRequestRoutes, sta
 import { requireDeSyncAuth } from "./integrations/deSyncAuth";
 import { registerPortalAssistRoutes } from "./portalAssistRoutes";
 import { registerLicensingRoutes } from "./licensingRoutes";
+import { registerPortalAgreementRoutes } from "./portalAgreementRoutes";
 import { registerLicenseBoardRoutes } from "./licenseBoardRoutes";
 import { registerKbRoutes } from "./kbRoutes";
 import { registerOrgDirectoryRoutes } from "./orgDirectoryRoutes";
@@ -1283,6 +1284,14 @@ export async function registerRoutes(app: Express) {
     findUser: serviceRequestDeps.findUser,
     listClientUsers: serviceRequestDeps.listClientUsers,
     canManagePeople: (user: any) => Boolean(user) && (user.role === "admin" || canManageOrg(user as OrgUserFields)),
+  });
+
+  // Client Portal agreement gate: company + personal agreements, welcome videos (server/portalAgreementRoutes.ts).
+  registerPortalAgreementRoutes(app, {
+    guards: [authMiddleware, validateInput],
+    adminGuards: [authMiddleware, requireAdmin, validateInput],
+    getClient: serviceRequestDeps.getClient,
+    isCompanySigner: (user: any) => Boolean(user) && user.role !== "admin" && canManageOrg(user as OrgUserFields),
   });
 
   // License patch bay: DE's vendor licence pool, company seats, assignments (server/licenseBoardRoutes.ts).

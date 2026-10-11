@@ -115,6 +115,7 @@ const PortalLearning = lazy(() => import("@/pages/portal/PortalLearning"));
 const PortalChat = lazy(() => import("@/pages/portal/PortalChat"));
 const PortalAgent = lazy(() => import("@/pages/portal/PortalAgent"));
 const PortalSettings = lazy(() => import("@/pages/portal/PortalSettings"));
+const PortalAgreementGate = lazy(() => import("@/pages/portal/PortalAgreementGate"));
 const PortalShipCenter = lazy(() => import("@/pages/portal/PortalShipCenter"));
 const PortalProcurementStore = lazy(() => import("@/pages/portal/PortalProcurementStore"));
 const PortalAdvancedForms = lazy(() => import("@/pages/portal/PortalAdvancedForms").then(m => ({ default: m.PortalAdvancedForms })));
@@ -801,6 +802,12 @@ function Router() {
           <PortalAgent />
         </Suspense>
       )} />
+      <Route path="/portal/agreement-gate" component={() => (
+        <Suspense fallback={<PageLoadingSkeleton />}>
+          <PortalAgreementGate />
+        </Suspense>
+      )} />
+      <Route path="/agreement-gate">{() => <Redirect to="/portal/agreement-gate" replace />}</Route>
       <Route path="/portal/settings" component={() => (
         <Suspense fallback={<PageLoadingSkeleton />}>
           <PortalSettings />

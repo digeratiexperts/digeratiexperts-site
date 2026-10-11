@@ -4,6 +4,7 @@ import { storeProducts } from "@/data/storeProducts";
 import { listVendorsForProducts } from "@/data/storeMerchandising";
 import { StorePageAtmosphere } from "@/components/store/StorePageAtmosphere";
 import { VENDOR_LOGO_BASE } from "@/data/vendorLogos";
+import { OFFERING_STATUS_LABEL, VENDOR_PROFILES, type OfferingDeStatus } from "@/data/vendorOfferings";
 import { useSalesTaxReadiness } from "@/hooks/useSalesTaxReadiness";
 
 const TAX_CHECK_ROWS = [
@@ -12,6 +13,12 @@ const TAX_CHECK_ROWS = [
   ["serviceItem", "Service tax item"],
   ["taxContact", "Tax-check contact"],
 ] as const;
+
+const STATUS_CLASS: Record<OfferingDeStatus, string> = {
+  in_use: "border-emerald-400/40 text-emerald-200",
+  alternate: "border-sky-300/40 text-sky-200",
+  available: "border-white/20 text-white/60",
+};
 
 type ConnectorHealth = {
   connector: string;
@@ -146,6 +153,63 @@ export default function WarehouseVendors() {
               ) : null}
             </li>
           </ul>
+        </section>
+
+        <section className="mb-12" aria-label="Vendor profiles">
+          <h3 className="mb-3 text-lg font-semibold text-white">Vendor profiles</h3>
+          <p className="mb-4 max-w-3xl text-sm text-white/50">
+            What each partner offers DE and where every product stands for us. Reference only: nothing here is quoteable, and
+            partner prices live in Hub, never in this repository. Mirrors the Hub vendor row.
+          </p>
+          <div className="grid gap-4" data-testid="warehouse-vendor-profiles">
+            {VENDOR_PROFILES.map((p) => (
+              <article
+                key={p.slug}
+                className="rounded-2xl border border-de-hairline bg-de-raised p-4 sm:p-5"
+                aria-labelledby={`vendor-profile-${p.slug}`}
+                data-testid={`vendor-profile-${p.slug}`}
+              >
+                <div className="flex flex-wrap items-center gap-3">
+                  <img src={`${VENDOR_LOGO_BASE}/${p.slug}.png`} alt="" width={40} height={40} className="h-10 w-10 rounded-md bg-white/5 object-contain" loading="lazy" />
+                  <h4 id={`vendor-profile-${p.slug}`} className="text-lg font-semibold text-white">
+                    {p.name}
+                  </h4>
+                  <a href={p.partnerPortal} target="_blank" rel="noopener noreferrer" className="ml-auto text-sm text-de-accent-ink underline-offset-2 hover:underline">
+                    Partner portal<span className="sr-only"> (opens in a new tab)</span>
+                  </a>
+                </div>
+                <ul className="mt-4 grid gap-3 md:grid-cols-2">
+                  {p.offerings.map((o) => (
+                    <li key={o.product} className="rounded-xl border border-de-hairline px-3 py-3" data-testid={`offering-${p.slug}-${o.product.toLowerCase().replace(/\s+/g, "-")}`}>
+                      <div className="flex flex-wrap items-baseline justify-between gap-2">
+                        <p className="font-semibold text-white">{o.product}</p>
+                        <span className={`rounded-full border px-2 py-0.5 font-mono text-[11px] ${STATUS_CLASS[o.deStatus]}`}>{OFFERING_STATUS_LABEL[o.deStatus]}</span>
+                      </div>
+                      <p className="mt-0.5 font-mono text-[11px] text-white/40">
+                        {o.vendorCategory} · DE: {o.deCapability}
+                      </p>
+                      <p className="mt-2 text-sm text-white/70">{o.summary}</p>
+                      <p className="mt-2 text-xs text-white/45">{o.deNote}</p>
+                    </li>
+                  ))}
+                </ul>
+                <div className="mt-4 border-t border-de-hairline pt-3 text-sm">
+                  <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-white/40">Agreements</p>
+                  <ul className="mt-2 space-y-1">
+                    {p.agreements.map((a) => (
+                      <li key={a.url}>
+                        <a href={a.url} target="_blank" rel="noopener noreferrer" className="text-white/80 underline-offset-2 hover:underline">
+                          {a.title}
+                        </a>{" "}
+                        <span className="font-mono text-[11px] text-white/40">last modified {a.lastModified}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="mt-3 text-xs text-white/40">{p.source}</p>
+                </div>
+              </article>
+            ))}
+          </div>
         </section>
 
         <section aria-label="Workshop vendor marks">
