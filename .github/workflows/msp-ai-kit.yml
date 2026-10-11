@@ -191,3 +191,64 @@ jobs:
           name: msp-ai-kit-windows-logs
           path: ci-artifacts
           if-no-files-found: ignore
+
+  standalone-installer:
+    name: Standalone setup build and lifecycle (unsigned test)
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build isolated test release and setup
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $iscc = Join-Path ([Environment]::GetFolderPath('ProgramFilesX86')) 'Inno Setup 6\ISCC.exe'
+          if (-not (Test-Path -LiteralPath $iscc)) { throw 'Inno Setup 6 compiler missing on runner; configure approved build toolchain' }
+          $out = Join-Path $env:RUNNER_TEMP 'de-installer-build'
+          & "$env:KIT/windows/packaging/New-DEReleasePackage.ps1" -IssuedTo ci-installer -SkipSigning -NoCommunity -Channel test -OutDir $out
+          if ($LASTEXITCODE) { throw "release build exit $LASTEXITCODE" }
+          $zip = @(Get-ChildItem $out -Filter 'DE-TechTool*.zip')
+          if ($zip.Count -ne 1) { throw 'expected exactly one release zip' }
+          $extract = Join-Path $env:RUNNER_TEMP 'de-installer-payload'
+          Expand-Archive -LiteralPath $zip[0].FullName -DestinationPath $extract
+          $payload = Join-Path $extract 'msp-ai-kit'
+          $version = (Get-Content "$payload/windows/console/VERSION" -Raw).Trim()
+          & $iscc "/DPayloadDir=$payload" "/DProductVersion=$version" "/DOutputPath=$out" "$env:KIT/windows/packaging/DETechTool.iss"
+          if ($LASTEXITCODE) { throw "installer compile exit $LASTEXITCODE" }
+          $setup = @(Get-ChildItem $out -Filter '*.exe')
+          if ($setup.Count -ne 1) { throw 'expected exactly one setup exe' }
+          $hash = (Get-FileHash -LiteralPath $setup[0].FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash  $($setup[0].Name)" | Set-Content "$($setup[0].FullName).sha256" -Encoding ASCII
+          "UNSIGNED TEST BUILD. Not a production release. Community tools omitted." | Set-Content "$out/TEST-BUILD.txt"
+      - name: Install, reinstall, installed audit and uninstall
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $out = Join-Path $env:RUNNER_TEMP 'de-installer-build'
+          $setup = @(Get-ChildItem $out -Filter '*.exe')[0]
+          $install = Join-Path $env:RUNNER_TEMP 'de-installed-tool'
+          foreach ($attempt in 1..2) {
+            $p = Start-Process -FilePath $setup.FullName -ArgumentList @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART',('/DIR="' + $install + '"'),('/LOG="' + $out + '\install-' + $attempt + '.log"')) -Wait -PassThru
+            if ($p.ExitCode -ne 0) { throw "install $attempt exit $($p.ExitCode)" }
+          }
+          $console = Join-Path $install 'msp-ai-kit\windows\console\DETechConsole.ps1'
+          if (-not (Test-Path -LiteralPath $console)) { throw 'installed console missing' }
+          if (-not (Test-Path "$install/msp-ai-kit/scripts/build.mjs")) { throw 'parent kit dependency missing' }
+          $data = Join-Path $env:RUNNER_TEMP 'de-installed-evidence'
+          $result = Join-Path $out 'installed-audit.json'
+          & $console -Headless -Client alamo -Mode audit -DataDir $data -ResultFile $result
+          if ($LASTEXITCODE -notin @(0,1,2)) { throw "installed audit exit $LASTEXITCODE" }
+          if (-not (Test-Path -LiteralPath $result)) { throw 'installed audit result missing' }
+          if (-not @(Get-ChildItem "$data/evidence" -Recurse -Filter '*.zip').Count) { throw 'installed evidence missing' }
+          $p = Start-Process -FilePath "$install/unins000.exe" -ArgumentList @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART') -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw "uninstall exit $($p.ExitCode)" }
+          if (Test-Path -LiteralPath $console) { throw 'uninstall left console code behind' }
+          if (-not (Test-Path -LiteralPath $data)) { throw 'uninstall deleted evidence' }
+          Write-Host 'Setup lifecycle passed.'
+          exit 0
+      - name: Upload unsigned test setup and lifecycle logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: DE-TechTool-unsigned-test-setup
+          path: ${{ runner.temp }}/de-installer-build
+          if-no-files-found: error
