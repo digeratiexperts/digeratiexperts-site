@@ -1480,10 +1480,12 @@ input.de-paper-field:-webkit-autofill:active {
 
 /* Print styles */
 @media print {
-  .no-print {
+  /* The scroll bar is position: fixed, so print repeats it on every page. */
+  .no-print,
+  .scroll-progress {
     display: none !important;
   }
-  
+
   body {
     background: white !important;
     color: black !important;
