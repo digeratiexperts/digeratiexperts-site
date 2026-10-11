@@ -402,14 +402,14 @@ function Invoke-DEStorageRelocation {
         } else {
             $stage = Join-Path ([IO.Path]::GetDirectoryName($dst)) ('.DE-transfer-' + [guid]::NewGuid().ToString('N') + '.partial')
             $null = Resolve-DEStoragePath $stage -AllowMissing
-            $input = [IO.File]::Open($sourcePath, 'Open', 'Read', 'Read'); $output = $null
+            $sourceStream = [IO.File]::Open($sourcePath, 'Open', 'Read', 'Read'); $output = $null
             try {
                 $output = [IO.File]::Open($stage, 'CreateNew', 'Write', 'None')
                 $buffer = New-Object byte[] (1MB)
-                while (($read = $input.Read($buffer, 0, $buffer.Length)) -gt 0) { $output.Write($buffer, 0, $read) }
+                while (($read = $sourceStream.Read($buffer, 0, $buffer.Length)) -gt 0) { $output.Write($buffer, 0, $read) }
                 $output.Flush()
             } catch { throw }
-            finally { if ($output) { $output.Dispose() }; $input.Dispose() }
+            finally { if ($output) { $output.Dispose() }; $sourceStream.Dispose() }
             if ((Get-DEStorageFileHash $stage) -ne $hash) { throw 'Staged copy failed SHA-256 verification; source retained.' }
             $null = Resolve-DEStoragePath $target -AllowMissing
             [IO.File]::Move($stage, $target)
@@ -455,10 +455,10 @@ function Invoke-DEStorageServicing {
     $identity = [Security.Principal.WindowsIdentity]::GetCurrent(); $principal = New-Object Security.Principal.WindowsPrincipal $identity
     if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) { throw 'Run elevated for DISM.' }
     if ($Action -in @('RestoreHealth','StartComponentCleanup','ResetBase') -and (Test-Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Component Based Servicing\RebootPending')) { throw 'Restart pending; restart Windows before servicing.' }
-    $args = @('/Online','/Cleanup-Image',"/$Action")
-    if ($Action -eq 'ResetBase') { $args = @('/Online','/Cleanup-Image','/StartComponentCleanup','/ResetBase') }
+    $dismArgs = @('/Online','/Cleanup-Image',"/$Action")
+    if ($Action -eq 'ResetBase') { $dismArgs = @('/Online','/Cleanup-Image','/StartComponentCleanup','/ResetBase') }
     # No user-controlled executable or arbitrary command arguments; never stop servicing mid-operation.
-    $output = @(& (Join-Path $env:WINDIR 'System32\dism.exe') @args 2>&1); $code = $LASTEXITCODE
+    $output = @(& (Join-Path $env:WINDIR 'System32\dism.exe') @dismArgs 2>&1); $code = $LASTEXITCODE
     $r = [pscustomobject]@{ kind = 'servicing'; result = $(if ($code -in @(0,3010)) { 'PASS' } else { 'FAIL' }); at = [DateTime]::UtcNow.ToString('o'); exitCode = $code; restartRequired = ($code -eq 3010); action = $Action; fileCount = 0; bytes = 0; output = @($output | ForEach-Object { "$_" }); summary = "DISM $Action exit $code" }
     $r = Save-DEStorageReceipt $r; Add-DEStorageEvidence storage.servicing $r; return $r
 }
