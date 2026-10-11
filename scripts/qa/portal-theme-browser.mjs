@@ -100,9 +100,9 @@ try {
         assert(ratio(colors.button.color, colors.button.background) >= 4.5, `Button contrast ${theme}/${contrast}`);
         observations.push({ width, theme, contrast, colors });
         if (width === 1440) {
-          const audit = await new AxeBuilder({ page: page2 }).include("#settings-appearance").include("#settings-profile").withTags(["wcag2a", "wcag2aa", "wcag21aa"]).analyze();
+          const audit = await new AxeBuilder({ page: page2 }).include("#settings-appearance").include("#settings-profile").include('[data-sidebar="sidebar"]').withTags(["wcag2a", "wcag2aa", "wcag21aa"]).analyze();
           accessibility.push({ theme, contrast, violations: audit.violations.map((v) => ({ id: v.id, nodes: v.nodes.map((n) => n.target) })) });
-          assert.deepEqual(audit.violations, [], `Appearance/profile accessibility ${theme}/${contrast}`);
+          assert.deepEqual(audit.violations, [], `Appearance/profile/sidebar accessibility ${theme}/${contrast}`);
         }
         if (contrast === "none" || width === 1440 && contrast === "max") await page2.screenshot({ path: path.join(output, `${theme}-${contrast}-settings-${width}.png`), fullPage: false });
       }

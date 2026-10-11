@@ -57,7 +57,7 @@ body.de-portal-scope {
 
   /* The brand rail stays dark in Light. Black uses a genuinely black rail. */
   --sidebar-background: 0 0% 0%;
-  --sidebar-foreground: 236.8421 7.7551% 76.6667%;
+  --sidebar-foreground: 240 9.6154% 79.6078%; /* #c6c6d0; group labels at /60 clear 4.5:1 */
   --sidebar-primary: var(--primary);
   --sidebar-primary-foreground: var(--primary-foreground);
   --sidebar-accent: var(--accent);
@@ -307,6 +307,10 @@ html.de-portal-root[data-theme="light"][data-contrast="max"] [data-sidebar="side
 }
 
 /* ===== Base component layer: actual portal/shadcn selectors ===== */
+:is(.de-portal, body.de-portal-scope) [data-sidebar="sidebar"] {
+  /* Resolve ink inside the rail; inherited color was computed on its wrapper. */
+  color: hsl(var(--sidebar-foreground));
+}
 html.de-portal-root ::selection { background: var(--pt-action); color: var(--accent-fg); }
 :is(.de-portal, body.de-portal-scope) *:focus-visible {
   outline: none;

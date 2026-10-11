@@ -18,7 +18,7 @@ These are **EXAMPLE** screenshots of the actual production frontend build with m
 
 Additional browser checks cover account-menu/Settings synchronization, persistence after reload, live Match device changes, cross-tab updates, mobile navigation, portalled account and command menus, visible keyboard focus, sign-in preferences and cleanup of portal root/body attributes on a public route.
 
-Axe WCAG 2 A/AA + 2.1 AA: 11 scans, 0 violations in the Appearance/Profile panels across all nine theme/contrast combinations and the Black/Light mobile sign-in pages. This is scoped UI verification, not a site-wide accessibility certification.
+Axe WCAG 2 A/AA + 2.1 AA: 11 scans, 0 violations in the Appearance/Profile panels and sidebar across all nine theme/contrast combinations and the Black/Light mobile sign-in pages. This is scoped UI verification, not a site-wide accessibility certification.
 
 - `npm run check`: passed.
 - Theme/light-palette tests: 9 passed.
@@ -37,7 +37,7 @@ For an existing Chromium executable, set `PORTAL_QA_CHROMIUM_PATH`. This run use
 
 ## Critique and concurrency
 
-Reviewed mobile and desktop Black/Light settings, Black Maximum, account/command menus and mobile sign-in in context. Cards, controls and selected swatches remain distinct against the pure-black canvas; mobile controls fit without clipping. Keyboard focus is visible. Light sign-in uses the primary logo. No layout/content/auth-flow rewrite was required.
+Reviewed mobile and desktop Black/Light settings, Black Maximum, account/command menus and mobile sign-in in context. Cards, controls and selected swatches remain distinct against the pure-black canvas; mobile controls fit without clipping. Standard sidebar ink was brightened so its small group labels at 60% opacity also clear 4.5:1. Light contrast modes now resolve navigation ink inside the dark rail instead of inheriting the wrapper's dark text. Keyboard focus is visible. Light sign-in uses the primary logo. No layout/content/auth-flow rewrite was required.
 
 Before PR, `origin/main` remained at the base SHA. All 14 open PR head SHAs were unchanged from the pre-edit audit. PR #553 overlaps `PortalLayout.tsx` and `PortalUserMenu.tsx`: preserve its agreement-gate logic, tour entry/mounts and sign-out work when integrating these focused appearance changes. This branch does not modify those behaviors. Issue #544 retains the broader visual audit; #577 owns this explicitly assigned appearance slice. The YAML mirror is left untouched because open governance/coordination PRs also edit it; #577 is the authoritative claim.
 
