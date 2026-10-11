@@ -26,7 +26,7 @@
 #>
 [CmdletBinding(SupportsShouldProcess = $true)]
 param(
-    [ValidateSet('Scan', 'Dashboard', 'Workflow', 'Discovery', 'Identity', 'Security', 'Apps', 'Browser', 'Baseline', 'Branding', 'Network', 'Toolbox', 'CommandLine', 'Migration', 'Vendors', 'AiToolkit', 'Evidence', 'Settings')]
+    [ValidateSet('Scan', 'Dashboard', 'Workflow', 'Discovery', 'Identity', 'Security', 'Apps', 'Browser', 'Baseline', 'Branding', 'Network', 'Toolbox', 'Storage', 'CommandLine', 'Migration', 'Vendors', 'AiToolkit', 'Evidence', 'Settings')]
     [string]$Page = 'Scan',
     [switch]$Resume,
     [switch]$Headless,
@@ -47,6 +47,17 @@ param(
     [string]$SmokeClient = 'alamo',
     [string]$SmokeOut,
     [string]$Toolbox,      # headless: run one Toolbox script by key (see the Command line page); -Apply to run it for real
+    [ValidateSet('Scan','PlanCleanup','Cleanup','PlanRelocation','Copy','Verify','RemoveSource','Servicing','RecommendDrives')]
+    [string]$StorageAction,
+    [string]$StoragePath,
+    [string]$StorageDestination,
+    [string]$StorageRecord,
+    [ValidateSet('windows-temp','user-temp','crash-dumps')][string[]]$StorageCategory = @('user-temp'),
+    [string[]]$StorageSelectedId = @(),
+    [string]$StorageConfirmSource,
+    [ValidateSet('AnalyzeComponentStore','CheckHealth','ScanHealth','RestoreHealth','StartComponentCleanup','ResetBase')]
+    [string]$StorageServicing = 'AnalyzeComponentStore',
+    [switch]$AcknowledgeResetBase,
     [string]$License       # install a DE licence token on this device (checked, never stored unless it verifies)
 )
 # StrictMode 1.0: undefined variables still throw, but a property that real Windows data omits
@@ -125,6 +136,30 @@ if ($Headless) { & {
     if ($License) { try { $ls = Set-DELicense -Token $License; Write-Host "LICENCE: $($ls.reason)" } catch { Exit-DEHeadless -Code 2 -Overall 'REFUSED' -Message "REFUSED: $($_.Exception.Message)" } }
     $lic = Get-DELicenseStatus
     Write-Host ("LICENCE: {0} (policy {1}; build {2})" -f $(if ($lic.valid) { "$($lic.technician) until $($lic.expires)" } else { "none: $($lic.reason)" }), $lic.enforce, $lic.build)
+    if ($StorageAction) {
+        if ($Apply -and $integrity.status -eq 'tampered') { Exit-DEHeadless -Code 2 -Overall 'REFUSED' -Message 'REFUSED: tool integrity failed.' }
+        if ($Apply) {
+            if (-not $Client) { Exit-DEHeadless -Code 2 -Overall 'REFUSED' -Message 'Storage apply needs -Client <profile id> for licence and evidence scope.' }
+            $storageProfile = Get-DEClientProfile -Id $Client
+            Set-DEContext -Values @{ client = $storageProfile.id; technician = $Technician }
+        }
+        $record = $null
+        if ($StorageRecord) { $record = Get-Content -LiteralPath $StorageRecord -Raw -Encoding UTF8 | ConvertFrom-Json }
+        $dryStorage = -not $Apply -or $WhatIfPreference
+        switch ($StorageAction) {
+            'RecommendDrives' { $r = Save-DEStorageReceipt (Get-DEStorageRecommendations -Topology (Get-DEStorageTopology)); Add-DEStorageEvidence storage.recommendations $r }
+            'Scan' { $r = Get-DEStorageInventory -Path $StoragePath; $r = Save-DEStorageReceipt $r; Add-DEStorageEvidence storage.scan $r }
+            'PlanCleanup' { $r = Save-DEStorageReceipt (New-DEStorageCleanupPlan -Category $StorageCategory) }
+            'Cleanup' { if (-not $record) { throw '-StorageRecord must name a reviewed cleanup plan.' }; $r = Invoke-DEStorageCleanup -Plan $record -SelectedId $StorageSelectedId -WhatIf:$dryStorage -Confirm:$false }
+            'PlanRelocation' { $r = Save-DEStorageReceipt (New-DEStorageRelocationPlan -Source $StoragePath -Destination $StorageDestination) }
+            'Copy' { if (-not $record) { throw '-StorageRecord must name a relocation plan.' }; $r = Invoke-DEStorageRelocation -Plan $record -WhatIf:$dryStorage -Confirm:$false; if ($dryStorage) { $r = Save-DEStorageReceipt $r } }
+            'Verify' { if (-not $record) { throw '-StorageRecord must name a successful copy receipt.' }; $ok = Test-DEStorageRelocation $record; $r = [pscustomobject]@{ result = 'PASS'; summary = 'Source and destination SHA-256 verification passed.' } }
+            'RemoveSource' { if (-not $record) { throw '-StorageRecord must name a successful copy receipt.' }; $r = Remove-DEStorageRelocationSource -Receipt $record -ConfirmSource $StorageConfirmSource -WhatIf:$dryStorage -Confirm:$false; if (-not $r) { $r = [pscustomobject]@{ result = 'PLANNED'; summary = 'Source removal planned; nothing deleted.' } } }
+            'Servicing' { $r = Invoke-DEStorageServicing -Action $StorageServicing -AcknowledgeResetBase:$AcknowledgeResetBase -WhatIf:$dryStorage -Confirm:$false }
+        }
+        $code = $(if ($r.result -eq 'FAIL') { 1 } elseif ($r.result -in @('WARN','BLOCKED')) { 2 } else { 0 })
+        Exit-DEHeadless -Code $code -Overall $r.result -Message $r.summary -Bundle "$($r.receiptPath)"
+    }
     if ($Toolbox) {
         # one Toolbox script, then out: plan-only unless -Apply; scripts marked 'asks first' run only with -Apply (RMM means it)
         $r = $(if ($Apply) { Invoke-DECommunityScript -Key $Toolbox -Force -Confirm:$false } else { Invoke-DECommunityScript -Key $Toolbox -WhatIf })
@@ -500,7 +535,7 @@ function Start-DEJob {
     SecureString, never plaintext), the client profile and mode, then runs $Work. Evidence comes back and
     is merged; state and exceptions are file-backed and shared. The UI tails the log for live progress.
     #>
-    param([Parameter(Mandatory = $true)][string]$Label, [Parameter(Mandatory = $true)][scriptblock]$Work, [hashtable]$Params = @{}, [scriptblock]$OnDone)
+    param([Parameter(Mandatory = $true)][string]$Label, [Parameter(Mandatory = $true)][scriptblock]$Work, [hashtable]$Params = @{}, [scriptblock]$OnDone, [switch]$NoCancel)
     if ($S.Job) { Set-Status 'A job is already running.'; return }
     $de = Get-DEConsole
     $plan = $null; if ($S.Profile -and $S.Profile.plan) { $plan = @{ bundle = "$($S.Profile.plan.bundle)"; addOns = @($S.Profile.plan.addOns | Where-Object { $_ }); solutions = @($S.Profile.plan.solutions | Where-Object { $_ }) } }
@@ -508,7 +543,7 @@ function Start-DEJob {
     $S.Job = @{ core = $core; handle = $core.handle; label = $Label; started = $core.started; onDone = $OnDone }
     $UI.NavPanel.IsEnabled = $false; $UI.PageHost.IsEnabled = $false
     $UI.ProgressPanel.Visibility = 'Visible'; $UI.Progress.IsIndeterminate = $true; $UI.Progress.Value = 0
-    $UI.TxtProgress.Text = 'Starting'; $UI.TxtEta.Text = 'ETA calculating'; $UI.BtnCancel.Visibility = 'Visible'
+    $UI.TxtProgress.Text = 'Starting'; $UI.TxtEta.Text = 'ETA calculating'; $UI.BtnCancel.Visibility = $(if ($NoCancel) { 'Collapsed' } else { 'Visible' })
     Set-Status "Running: $Label"
     try { $S.LogPos = (Get-Item -LiteralPath $de.LogFile).Length } catch { $S.LogPos = 0 }
     if (-not $S.Timer) {
@@ -894,7 +929,7 @@ function Build-Scan {
 # ============================================================== pages
 $Pages = [ordered]@{
     Scan = 'Scan & fix'; Dashboard = 'Session & readiness'; Discovery = 'Discovery'; Identity = 'Identity & migration'; Migration = 'Email migration'; Security = 'Security'; Apps = 'Applications'
-    Browser = 'Browser configurator'; Baseline = 'OS baseline'; Branding = 'Branding'; Network = 'Network & site'; Toolbox = 'Toolbox (fix-it scripts)'; CommandLine = 'Command line'; Vendors = 'Vendor Admin Center'; AiToolkit = 'AI Toolkit'; Evidence = 'Evidence & Hub'; Settings = 'Settings & secrets'
+    Browser = 'Browser configurator'; Baseline = 'OS baseline'; Branding = 'Branding'; Network = 'Network & site'; Storage = 'Storage & cleanup'; Toolbox = 'Toolbox (fix-it scripts)'; CommandLine = 'Command line'; Vendors = 'Vendor Admin Center'; AiToolkit = 'AI Toolkit'; Evidence = 'Evidence & Hub'; Settings = 'Settings & secrets'
 }
 $NavButtons = @{}
 foreach ($k in $Pages.Keys) {
@@ -915,7 +950,7 @@ function Show-Page {
     $S.DetailHost = $null
     $sv = New-Object System.Windows.Controls.ScrollViewer; $sv.VerticalScrollBarVisibility = 'Auto'
     $root = New-El StackPanel
-    $needsProfile = $Name -notin @('Dashboard', 'Discovery', 'Toolbox', 'CommandLine', 'Migration', 'Vendors', 'AiToolkit', 'Settings')
+    $needsProfile = $Name -notin @('Dashboard', 'Discovery', 'Toolbox', 'Storage', 'CommandLine', 'Migration', 'Vendors', 'AiToolkit', 'Settings')
     if ($needsProfile -and -not $S.Profile) { [void]$root.Children.Add((New-Card @((New-Text 'Choose a client profile first' 15 -Bold), (New-Text 'Open Dashboard, run discovery, and confirm or pick the client. Actions are built from the client profile.' -Muted -Wrap), (New-Button 'Go to Dashboard' { Show-Page 'Dashboard' } -Primary)))) }
     else {
         switch ($Name) {
@@ -929,6 +964,7 @@ function Show-Page {
             'Baseline' { [void]$root.Children.Add((New-ActionGrid -Modules @('baseline') -Title 'DE Windows baseline')) }
             'Branding' { Build-Branding $root }
             'Network' { [void]$root.Children.Add((New-ActionGrid -Modules @('network', 'maintenance', 'operations') -Title 'Network, maintenance and operations')) ; Build-OpsConfirm $root }
+            'Storage' { Build-Storage $root }
             'Toolbox' { Build-Toolbox $root }
             'CommandLine' { Build-CommandLine $root }
             'Migration' { Build-Migration $root }
@@ -1180,6 +1216,102 @@ function Build-OpsConfirm {
     $mk = { param($label, $check) New-Button $label { if (Confirm-Gui 'Confirm' "$label now?") { Confirm-DEOperationalCheck -Check $check; Show-Page 'Network' } }.GetNewClosure() }
     [void]$root.Children.Add((New-Card @((New-Text 'Technician confirmations' 15 -Bold), (New-Text 'Recorded with time and technician; no credentials are stored.' -Muted), (New-Wrap @((& $mk 'Confirm first backup succeeded' 'operations.backup.firstBackupConfirmedAt'), (& $mk 'Confirm remote support session tested' 'operations.remoteSupport.testedAt'), (& $mk 'Confirm email security in place' 'operations.emailSecurity.confirmedAt'), (& $mk 'Confirm JumpCloud Protect enrolled' 'operations.mfa.jumpcloudProtectAt'), (& $mk 'Confirm Microsoft MFA registered' 'operations.mfa.microsoftAt'))))))
 }
+# ============================================================== native storage
+function Get-StorageResult {
+    param($Results)
+    return @($Results | Where-Object { $_ -and $_.PSObject.Properties['kind'] }) | Select-Object -Last 1
+}
+function Build-Storage {
+    param($root)
+    [void]$root.Children.Add((New-Card @((New-Label 'Storage & cleanup'), (New-Text 'Find the space. Review the plan. Verify the result.' 21 -Bold -Wrap), (New-Text 'Native DE analysis, old temporary-file cleanup, Windows servicing and verified folder relocation. Protected and unreadable entries are reported. Logical size is not allocated or reclaimable space.' -Muted -Wrap))))
+    $volumes = @(Get-DEStorageVolumes)
+    foreach ($v in $volumes) {
+        $line = New-Text ("{0}  {1}  |  {2:N2} GB free  ({3}% free)  |  {4}" -f $v.path, $v.label, $v.freeGB, $v.freePercent, $v.status) 15 -Bold -Wrap
+        if ($v.status -ne 'OK') { $line.Foreground = Get-Brush 'Warn' }
+        [void]$root.Children.Add((New-Card @($line)))
+    }
+    $assess = New-Button 'Assess drive technology & recommend roles' {
+        Start-DEJob -Label 'Drive technology assessment' -Work { $r = Save-DEStorageReceipt (Get-DEStorageRecommendations -Topology (Get-DEStorageTopology)); Add-DEStorageEvidence storage.recommendations $r; $r } -OnDone { param($r) $S.StorageRecommendations = Get-StorageResult $r; Show-Page 'Storage' }
+    } -Primary
+    [void]$root.Children.Add((New-Card @((New-Label 'Drive intelligence'), (New-Text 'Read Windows hardware facts, map volumes to disks, suggest OS/workspace/storage/backup roles and compare transfer candidates. These are explainable estimates; speed is not benchmarked and no drive is reformatted.' -Muted -Wrap), $assess)))
+    if ($S.StorageRecommendations) {
+        $rec = $S.StorageRecommendations
+        $roles = New-El DataGrid @{ IsReadOnly = $true; AutoGenerateColumns = $false; MaxHeight = 300; ItemsSource = @($rec.roles); Name = 'Drive role recommendations' }
+        Add-DEGridColumns $roles @(@{ h = 'Drive / disk'; b = 'path'; w = 80 }, @{ h = 'Technology'; b = 'technology'; w = 120 }, @{ h = 'Recommended role'; b = 'role'; w = '2*' }, @{ h = 'Evidence / limits'; b = 'reasons'; w = '3*' }, @{ h = 'State'; b = 'state'; w = 100 })
+        $pairs = New-El DataGrid @{ IsReadOnly = $true; AutoGenerateColumns = $false; MaxHeight = 250; ItemsSource = @($rec.transfers | Select-Object -First 30); Name = 'Estimated transfer pair suitability' }
+        Add-DEGridColumns $pairs @(@{ h = 'From'; b = 'source'; w = 70 }, @{ h = 'To'; b = 'destination'; w = 70 }, @{ h = 'Candidate rank'; b = 'candidateRank'; w = 100 }, @{ h = 'Reason (not measured speed)'; b = 'assessment'; w = '1*' })
+        [void]$root.Children.Add((New-Card @((New-Text $rec.summary 14 -Bold -Wrap), $roles, (New-Label 'Transfer candidates'), $pairs, (New-Text $rec.limits -Muted -Wrap), (New-Text $rec.backupRule -Muted -Wrap))))
+    }
+    $scanPath = New-El TextBox @{ Text = $(if ($S.StorageScanPath) { $S.StorageScanPath } elseif ($env:SystemDrive) { "$($env:SystemDrive)\" } else { [IO.Path]::GetTempPath() }); Style = 'Field'; Name = 'Folder to analyze' }
+    $scan = New-Button 'Analyze folder' {
+        $S.StorageScanPath = $scanPath.Text
+        Start-DEJob -Label 'Storage analysis' -Params @{ path = $scanPath.Text } -Work { $r = Get-DEStorageInventory -Path $JobParams.path; $r = Save-DEStorageReceipt $r; Add-DEStorageEvidence storage.scan $r; $r } -OnDone { param($r) $S.StorageScan = Get-StorageResult $r; Show-Page 'Storage' }
+    }.GetNewClosure() -Primary
+    [void]$root.Children.Add((New-Card @((New-Label 'Analyze'), $scanPath, $scan)))
+    if ($S.StorageScan) {
+        $r = $S.StorageScan
+        [void]$root.Children.Add((New-Card @((New-Text "$($r.result): $($r.summary)" 14 -Bold -Wrap), (New-Text "Receipt: $($r.receiptPath)" -Muted -Wrap))))
+        $grid = New-El DataGrid @{ IsReadOnly = $true; AutoGenerateColumns = $false; MaxHeight = 300; ItemsSource = @($r.folders | Select-Object -First 30); Name = 'Largest folders by logical bytes' }
+        Add-DEGridColumns $grid @(@{ h = 'Folder'; b = 'path'; w = '4*' }, @{ h = 'Logical bytes'; b = 'bytes'; w = '1*' })
+        [void]$root.Children.Add((New-Card @((New-Label 'Largest folders (overlapping totals)'), $grid)))
+        if ($r.issues.Count) { [void]$root.Children.Add((New-Card @((New-Text (($r.issues | Select-Object -First 8 | ForEach-Object { "$($_.path): $($_.reason)" }) -join "`n") -Muted -Wrap)))) }
+    }
+    $category = New-El ComboBox @{ ItemsSource = @('user-temp','windows-temp','crash-dumps'); SelectedIndex = 0; Style = 'Field'; Name = 'Temporary-file category' }
+    $planCleanup = New-Button 'Preview old temporary files' {
+        Start-DEJob -Label 'Cleanup preview' -Params @{ category = "$($category.SelectedItem)" } -Work { Save-DEStorageReceipt (New-DEStorageCleanupPlan -Category @($JobParams.category)) } -OnDone { param($r) $S.StorageCleanup = Get-StorageResult $r; Show-Page 'Storage' }
+    }.GetNewClosure()
+    [void]$root.Children.Add((New-Card @((New-Label 'Selected cleanup'), (New-Text 'Only files older than 7 days (30 days for crash dumps). Projects, configuration, linked/cloud files and locked files stay protected. Permanent deletion has no undo.' -Muted -Wrap), $category, $planCleanup)))
+    if ($S.StorageCleanup) {
+        $p = $S.StorageCleanup
+        $grid = New-El DataGrid @{ IsReadOnly = $true; AutoGenerateColumns = $false; MaxHeight = 300; SelectionMode = 'Extended'; ItemsSource = @($p.entries); Name = 'Select temporary files to remove' }
+        Add-DEGridColumns $grid @(@{ h = 'Exact file'; b = 'path'; w = '4*' }, @{ h = 'Bytes'; b = 'length'; w = '1*' })
+        $apply = New-Button 'Delete selected files...' {
+            $ids = @($grid.SelectedItems | ForEach-Object { $_.id })
+            if (-not $ids.Count) { Set-Status 'Select files in the preview first (Ctrl/Shift for multiple).'; return }
+            $dry = [bool](Get-DEConsole).DryRun
+            if (-not $dry -and -not (Confirm-Gui 'Permanently delete selected files?' "Delete $($ids.Count) reviewed files? This cannot be undone. Changed, locked or protected files will be skipped.")) { return }
+            Start-DEJob -Label 'Selected cleanup' -Params @{ plan = $p; ids = $ids; dry = $dry } -Work { Invoke-DEStorageCleanup -Plan $JobParams.plan -SelectedId $JobParams.ids -WhatIf:$JobParams.dry -Confirm:$false } -OnDone { param($r) $S.StorageLast = Get-StorageResult $r; $S.StorageCleanup = $null; Show-Page 'Storage' }
+        }.GetNewClosure() -Primary
+        [void]$root.Children.Add((New-Card @((New-Text $p.summary 14 -Bold -Wrap), (New-Text ($p.warnings -join '; ') -Muted -Wrap), $grid, (New-Text 'Select exact rows with Ctrl/Shift. Nothing is selected automatically.' -Muted -Wrap), $apply)))
+    }
+    $srcBox = New-El TextBox @{ Text = "$($S.StorageSource)"; Style = 'Field'; Name = 'Relocation source folder' }
+    $dstBox = New-El TextBox @{ Text = "$($S.StorageDestination)"; Style = 'Field'; Name = 'Relocation destination folder' }
+    $planCopy = New-Button 'Preview relocation' {
+        $S.StorageSource = $srcBox.Text; $S.StorageDestination = $dstBox.Text
+        Start-DEJob -Label 'Relocation preview' -Params @{ source = $srcBox.Text; destination = $dstBox.Text } -Work { Save-DEStorageReceipt (New-DEStorageRelocationPlan -Source $JobParams.source -Destination $JobParams.destination) } -OnDone { param($r) $S.StorageCopyPlan = Get-StorageResult $r; Show-Page 'Storage' }
+    }.GetNewClosure()
+    [void]$root.Children.Add((New-Card @((New-Label 'Relocate a folder'), (New-Text 'Stop Explorer transfers and close apps using these folders first. Entire Windows profiles and application settings cannot be moved here. File contents are preserved; ACLs and hardlink relationships are not. Paths used by apps may need updating.' -Muted -Wrap), (New-Label 'Source'), $srcBox, (New-Label 'Destination'), $dstBox, $planCopy)))
+    if ($S.StorageCopyPlan) {
+        $p = $S.StorageCopyPlan
+        $copy = New-Button 'Copy and SHA-256 verify...' {
+            $dry = [bool](Get-DEConsole).DryRun
+            if (-not $dry -and -not (Confirm-Gui 'Copy reviewed folder?' "$($p.source)`nTO $($p.destination)`n`n$($p.summary)")) { return }
+            Start-DEJob -Label 'Verified folder copy' -Params @{ plan = $p; dry = $dry } -Work { Invoke-DEStorageRelocation -Plan $JobParams.plan -WhatIf:$JobParams.dry -Confirm:$false } -OnDone { param($r) $x = Get-StorageResult $r; $S.StorageLast = $x; if ($x.schema -eq 'de.storage.relocation-result/v1' -and $x.result -eq 'PASS') { $S.StorageCopyReceipt = $x; $S.StorageCopyPlan = $null }; Show-Page 'Storage' }
+        }.GetNewClosure() -Primary
+        [void]$root.Children.Add((New-Card @((New-Text $p.summary -Wrap), (New-Text "$($p.source) -> $($p.destination)" -Muted -Wrap), $copy)))
+    }
+    if ($S.StorageCopyReceipt) {
+        $receipt = $S.StorageCopyReceipt
+        $verify = New-Button 'Verify both copies again' { Start-DEJob -Label 'Verify relocation' -Params @{ receipt = $receipt } -Work { $null = Test-DEStorageRelocation $JobParams.receipt; 'Both copies verified.' } }.GetNewClosure()
+        $remove = New-Button 'Remove verified source files...' {
+            if ((Get-DEConsole).DryRun) { Set-Status 'Switch to LIVE in Settings or Scan & fix before source removal.'; return }
+            $typed = Read-GuiText 'Separate source-removal approval' "Type this exact source path to permanently delete its verified files:`n$($receipt.source)`n`nThe destination will be reverified. This cannot be undone."
+            if ($typed -cne $receipt.source) { Set-Status 'Source removal was not approved.'; return }
+            Start-DEJob -Label 'Remove verified source' -Params @{ receipt = $receipt; typed = $typed } -Work { Remove-DEStorageRelocationSource -Receipt $JobParams.receipt -ConfirmSource $JobParams.typed -Confirm:$false } -OnDone { param($r) $S.StorageLast = Get-StorageResult $r; $S.StorageCopyReceipt = $null; Show-Page 'Storage' }
+        }.GetNewClosure()
+        [void]$root.Children.Add((New-Card @((New-Text $receipt.summary 14 -Bold -Wrap), (New-Text "Saved receipt: $($receipt.receiptPath)" -Muted -Wrap), (New-Wrap @($verify,$remove)))))
+    }
+    $service = New-El ComboBox @{ ItemsSource = @('AnalyzeComponentStore','CheckHealth','ScanHealth','RestoreHealth','StartComponentCleanup','ResetBase'); SelectedIndex = 0; Style = 'Field'; Name = 'Windows servicing operation' }
+    $runService = New-Button 'Run selected DISM operation...' {
+        $action = "$($service.SelectedItem)"; $dry = [bool](Get-DEConsole).DryRun; $ack = $false
+        if ($action -eq 'ResetBase') { $ack = Confirm-Gui 'Irreversible servicing' 'ResetBase prevents uninstalling ALL existing update packages. A restore point is not an undo for this operation. Continue?'; if (-not $ack) { return } }
+        if (-not $dry -and -not (Confirm-Gui 'Windows servicing' "Run DISM $action? Servicing may take time and cannot be cancelled through this window.")) { return }
+        Start-DEJob -Label "DISM $action" -NoCancel -Params @{ action = $action; dry = $dry; ack = $ack } -Work { Invoke-DEStorageServicing -Action $JobParams.action -AcknowledgeResetBase:$JobParams.ack -WhatIf:$JobParams.dry -Confirm:$false } -OnDone { param($r) $S.StorageLast = Get-StorageResult $r; Show-Page 'Storage' }
+    }.GetNewClosure()
+    [void]$root.Children.Add((New-Card @((New-Label 'Windows component store & repair'), (New-Text 'Use supported Windows servicing. StartComponentCleanup is the ordinary cleanup; ResetBase is separately acknowledged and removes existing update rollback capability. No direct WinSxS or installer-cache deletion.' -Muted -Wrap), $service, $runService)))
+    if ($S.StorageLast) { [void]$root.Children.Add((New-Card @((New-Label 'Last operation'), (New-Text "$($S.StorageLast.result): $($S.StorageLast.summary)" 15 -Bold -Wrap), (New-Text "Receipt: $($S.StorageLast.receiptPath)" -Muted -Wrap)))) }
+}
+
 function Build-Toolbox {
     <# Proven MSP scripts (catalog\community.json), each pinned to a reviewed commit and hash-checked, run unmodified in their own 64-bit Windows PowerShell with the output kept as evidence. #>
     param($root)
