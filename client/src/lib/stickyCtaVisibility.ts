@@ -35,6 +35,9 @@ const BLOCKING_OVERLAY_SELECTORS = [
   "[data-testid='store-trust-strip']",
   "[data-testid^='product-']",
   "[data-testid='pdp-related-products']",
+  // The photographic plate between chapters (PlateBand): the bar would sit
+  // across the bottom of the picture, so it steps aside while a plate passes.
+  ".de-plate-band",
 ];
 
 export function isStickyCtaRouteAllowed(path: string): boolean {

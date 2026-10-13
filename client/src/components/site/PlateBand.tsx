@@ -46,6 +46,42 @@ import resourcesJpg from "@/assets/flagship/resources-library-fan.jpg?w=1400&for
 import comanagedAvif from "@/assets/flagship/solutions-co-managed.jpg?w=800;1400;2200&format=avif&as=srcset";
 import comanagedWebp from "@/assets/flagship/solutions-co-managed.jpg?w=800;1400;2200&format=webp&as=srcset";
 import comanagedJpg from "@/assets/flagship/solutions-co-managed.jpg?w=1400&format=jpg";
+import cloudbackupAvif from "@/assets/flagship/cloud-backup-mirrored-stack.jpg?w=800;1400;2200&format=avif&as=srcset";
+import cloudbackupWebp from "@/assets/flagship/cloud-backup-mirrored-stack.jpg?w=800;1400;2200&format=webp&as=srcset";
+import cloudbackupJpg from "@/assets/flagship/cloud-backup-mirrored-stack.jpg?w=1400&format=jpg";
+import healthcareAvif from "@/assets/flagship/healthcare-sheltered-cluster.jpg?w=800;1400;2200&format=avif&as=srcset";
+import healthcareWebp from "@/assets/flagship/healthcare-sheltered-cluster.jpg?w=800;1400;2200&format=webp&as=srcset";
+import healthcareJpg from "@/assets/flagship/healthcare-sheltered-cluster.jpg?w=1400&format=jpg";
+import vcioAvif from "@/assets/flagship/vcio-rising-path.jpg?w=800;1400;2200&format=avif&as=srcset";
+import vcioWebp from "@/assets/flagship/vcio-rising-path.jpg?w=800;1400;2200&format=webp&as=srcset";
+import vcioJpg from "@/assets/flagship/vcio-rising-path.jpg?w=1400&format=jpg";
+import secopsAvif from "@/assets/flagship/secops-watch-ring.jpg?w=800;1400;2200&format=avif&as=srcset";
+import secopsWebp from "@/assets/flagship/secops-watch-ring.jpg?w=800;1400;2200&format=webp&as=srcset";
+import secopsJpg from "@/assets/flagship/secops-watch-ring.jpg?w=1400&format=jpg";
+import unifiedAvif from "@/assets/flagship/unified-security-one-slab.jpg?w=800;1400;2200&format=avif&as=srcset";
+import unifiedWebp from "@/assets/flagship/unified-security-one-slab.jpg?w=800;1400;2200&format=webp&as=srcset";
+import unifiedJpg from "@/assets/flagship/unified-security-one-slab.jpg?w=1400&format=jpg";
+import encryptionAvif from "@/assets/flagship/encryption-sealed-layers.jpg?w=800;1400;2200&format=avif&as=srcset";
+import encryptionWebp from "@/assets/flagship/encryption-sealed-layers.jpg?w=800;1400;2200&format=webp&as=srcset";
+import encryptionJpg from "@/assets/flagship/encryption-sealed-layers.jpg?w=1400&format=jpg";
+import realestateAvif from "@/assets/flagship/realestate-street-row.jpg?w=800;1400;2200&format=avif&as=srcset";
+import realestateWebp from "@/assets/flagship/realestate-street-row.jpg?w=800;1400;2200&format=webp&as=srcset";
+import realestateJpg from "@/assets/flagship/realestate-street-row.jpg?w=1400&format=jpg";
+import professionalAvif from "@/assets/flagship/professional-ledger-stack.jpg?w=800;1400;2200&format=avif&as=srcset";
+import professionalWebp from "@/assets/flagship/professional-ledger-stack.jpg?w=800;1400;2200&format=webp&as=srcset";
+import professionalJpg from "@/assets/flagship/professional-ledger-stack.jpg?w=1400&format=jpg";
+import awarenessAvif from "@/assets/flagship/awareness-one-noticed.jpg?w=800;1400;2200&format=avif&as=srcset";
+import awarenessWebp from "@/assets/flagship/awareness-one-noticed.jpg?w=800;1400;2200&format=webp&as=srcset";
+import awarenessJpg from "@/assets/flagship/awareness-one-noticed.jpg?w=1400&format=jpg";
+import accountingAvif from "@/assets/flagship/accounting-ledger-grid.jpg?w=800;1400;2200&format=avif&as=srcset";
+import accountingWebp from "@/assets/flagship/accounting-ledger-grid.jpg?w=800;1400;2200&format=webp&as=srcset";
+import accountingJpg from "@/assets/flagship/accounting-ledger-grid.jpg?w=1400&format=jpg";
+import nonprofitsAvif from "@/assets/flagship/nonprofit-open-circle.jpg?w=800;1400;2200&format=avif&as=srcset";
+import nonprofitsWebp from "@/assets/flagship/nonprofit-open-circle.jpg?w=800;1400;2200&format=webp&as=srcset";
+import nonprofitsJpg from "@/assets/flagship/nonprofit-open-circle.jpg?w=1400&format=jpg";
+import animalsAvif from "@/assets/flagship/animal-hospital-nested.jpg?w=800;1400;2200&format=avif&as=srcset";
+import animalsWebp from "@/assets/flagship/animal-hospital-nested.jpg?w=800;1400;2200&format=webp&as=srcset";
+import animalsJpg from "@/assets/flagship/animal-hospital-nested.jpg?w=1400&format=jpg";
 
 /*
  * A photographic interlude between chapters on long pages: one plate from the
@@ -55,11 +91,12 @@ import comanagedJpg from "@/assets/flagship/solutions-co-managed.jpg?w=1400&form
  *
  * row, ring, field and white are the first series. The page plates (about,
  * assessment, backup, contact, identity, industries, locations, monitoring,
- * pricing, resources, comanaged) were each written for one page or service;
+ * pricing, resources, comanaged) were each written for one page or service,
+ * and the 2026-10-10 set gives every page that still shared a plate its own;
  * see artifacts/kie-ai/nano-banana/prompts/site/. A "whole" plate is a tall
  * subject that a wide band would crop to one slab, so it is fitted, not cropped.
  */
-export type PlateName = "row" | "ring" | "field" | "white" | "about" | "assessment" | "backup" | "contact" | "identity" | "industries" | "locations" | "monitoring" | "pricing" | "resources" | "comanaged";
+export type PlateName = "row" | "ring" | "field" | "white" | "about" | "assessment" | "backup" | "contact" | "identity" | "industries" | "locations" | "monitoring" | "pricing" | "resources" | "comanaged" | "cloudbackup" | "healthcare" | "vcio" | "secops" | "unified" | "encryption" | "realestate" | "professional" | "awareness" | "accounting" | "nonprofits" | "animals";
 
 const PLATES: Record<PlateName, { avif: string; webp: string; jpg: string; position: string; light?: boolean; whole?: boolean }> = {
   row: { avif: rowAvif, webp: rowWebp, jpg: rowJpg, position: "50% 30%" },
@@ -77,26 +114,42 @@ const PLATES: Record<PlateName, { avif: string; webp: string; jpg: string; posit
   pricing: { avif: pricingAvif, webp: pricingWebp, jpg: pricingJpg, position: "55% 55%", light: true },
   resources: { avif: resourcesAvif, webp: resourcesWebp, jpg: resourcesJpg, position: "50% 55%", light: true },
   comanaged: { avif: comanagedAvif, webp: comanagedWebp, jpg: comanagedJpg, position: "55% 50%" },
+  cloudbackup: { avif: cloudbackupAvif, webp: cloudbackupWebp, jpg: cloudbackupJpg, position: "35% 55%" },
+  healthcare: { avif: healthcareAvif, webp: healthcareWebp, jpg: healthcareJpg, position: "60% 50%", light: true },
+  vcio: { avif: vcioAvif, webp: vcioWebp, jpg: vcioJpg, position: "62% 55%" },
+  secops: { avif: secopsAvif, webp: secopsWebp, jpg: secopsJpg, position: "55% 55%" },
+  unified: { avif: unifiedAvif, webp: unifiedWebp, jpg: unifiedJpg, position: "60% 55%" },
+  encryption: { avif: encryptionAvif, webp: encryptionWebp, jpg: encryptionJpg, position: "62% 55%" },
+  realestate: { avif: realestateAvif, webp: realestateWebp, jpg: realestateJpg, position: "50% 45%", light: true },
+  professional: { avif: professionalAvif, webp: professionalWebp, jpg: professionalJpg, position: "62% 50%" },
+  awareness: { avif: awarenessAvif, webp: awarenessWebp, jpg: awarenessJpg, position: "55% 45%" },
+  accounting: { avif: accountingAvif, webp: accountingWebp, jpg: accountingJpg, position: "58% 55%", light: true },
+  nonprofits: { avif: nonprofitsAvif, webp: nonprofitsWebp, jpg: nonprofitsJpg, position: "45% 55%" },
+  animals: { avif: animalsAvif, webp: animalsWebp, jpg: animalsJpg, position: "62% 55%", light: true },
 };
 
 /** The plate a data-driven service or industry page shows, by its route key. */
 export function plateForServiceKey(key: string | undefined): PlateName {
   switch (key) {
     case "cloud-backup":
-      return "backup";
+      return "cloudbackup";
     case "threat-detection":
-    case "security-operations":
     case "managed-it-support":
       return "monitoring";
+    case "security-operations":
+      return "secops";
     case "unified-security":
+      return "unified";
     case "data-encryption":
-      return "identity";
+      return "encryption";
     case "compliance-reports":
       return "assessment";
     case "vcio-strategy":
-      return "about";
+      return "vcio";
     case "professional-services":
-      return "industries";
+      return "professional";
+    case "security-awareness":
+      return "awareness";
     default:
       return "row";
   }
