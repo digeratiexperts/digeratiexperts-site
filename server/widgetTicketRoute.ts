@@ -5,6 +5,7 @@ import { getUser as portalAuthGetUser } from "./portalAuthStore";
 import { storage } from "./storage";
 import { splitVisitorName, zohoClient, zohoDeskService } from "./zoho";
 import { isZohoOAuthError } from "./zoho/zohoOAuthErrors";
+import { isZohoAuthUnavailableError, type ZohoConnectionState } from "./zoho/oauth";
 import { PRIMARY_PHONE } from "@shared/companyContact";
 import { deskTicketSchema } from "@shared/deskTicket";
 import { fallbackTicket, saveTicketOutsideDesk, type DeskFallbackOutcome, type FallbackTicket } from "./deskTicketFallback";
@@ -48,6 +49,15 @@ export interface DeskFailure {
   authFailure: boolean;
 }
 
+/**
+ * The four-state health for a Desk failure (docs/ZOHO-OAUTH-INVENTORY.md).
+ * Only a refused credential or scope is needs_reconnect; throttling, 5xx and
+ * network failures are degraded (issue #418).
+ */
+export function deskFailureState(failure: DeskFailure): Exclude<ZohoConnectionState, "connected" | "unknown" | "not_configured"> {
+  return failure.authFailure ? "needs_reconnect" : "degraded";
+}
+
 const AUTH_ERROR_CODES = new Set([
   "INVALID_OAUTH",
   "INVALID_TOKEN",
@@ -65,6 +75,10 @@ const AUTH_ERROR_CODES = new Set([
  * Reads only the shape of the error. Nothing here touches a token.
  */
 export function classifyDeskFailure(error: unknown): DeskFailure {
+  // The token manager is throttled or Zoho is unreachable: the credential is fine.
+  if (isZohoAuthUnavailableError(error)) {
+    return { kind: "unavailable", authFailure: false, message: "Zoho Desk is temporarily unavailable" };
+  }
   if (isZohoOAuthError(error) && error.product === "desk") {
     return {
       kind: "unavailable",
@@ -127,6 +141,12 @@ let deskStatusInFlight: Promise<DeskStatus> | null = null;
 export interface DeskStatus {
   configured: boolean;
   connected: boolean;
+  /**
+   * connected · degraded (throttled, 5xx or unreachable; retrying, no new
+   * token needed) · needs_reconnect (Zoho refused the credential or scope) ·
+   * not_configured.
+   */
+  state: Exclude<ZohoConnectionState, "unknown">;
   /** Present only when not connected. */
   /**
    * "auth_failed" when Zoho refused the Desk credential (revoked or expired
@@ -147,7 +167,7 @@ export function resetDeskStatusCacheForTests(): void {
 async function probeDesk(): Promise<DeskStatus> {
   const checkedAt = new Date().toISOString();
   if (!zohoClient.isDeskConfigured()) {
-    return { configured: false, connected: false, reason: "not_configured", checkedAt };
+    return { configured: false, connected: false, state: "not_configured", reason: "not_configured", checkedAt };
   }
   try {
     // The cheapest authenticated read Desk offers. If the refresh token, its
@@ -155,9 +175,9 @@ async function probeDesk(): Promise<DeskStatus> {
     const client = await zohoClient.getDeskClient();
     const response = await client.get("/organizations");
     if (!Array.isArray(response.data?.data) || !response.data.data.some((org: { id?: unknown }) => org?.id)) {
-      return { configured: true, connected: false, reason: "unavailable", checkedAt };
+      return { configured: true, connected: false, state: "degraded", reason: "unavailable", checkedAt };
     }
-    return { configured: true, connected: true, checkedAt };
+    return { configured: true, connected: true, state: "connected", checkedAt };
   } catch (error) {
     const failure = classifyDeskFailure(error);
     console.error("[DESK STATUS] Zoho Desk unreachable:", {
@@ -168,6 +188,7 @@ async function probeDesk(): Promise<DeskStatus> {
     return {
       configured: true,
       connected: false,
+      state: deskFailureState(failure),
       reason: failure.authFailure ? "auth_failed" : failure.kind,
       checkedAt,
     };

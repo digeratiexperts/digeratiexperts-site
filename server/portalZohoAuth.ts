@@ -15,8 +15,12 @@
 import { createHash, createHmac, randomBytes, timingSafeEqual } from "crypto";
 import type { Request, Response } from "express";
 import { resolveJwtSecret } from "./config/authSecrets";
+import { zohoDefaultDc } from "./zoho/oauth/dc";
 
-const ACCOUNTS_BASE = (process.env.ZOHO_OIDC_ISSUER || "https://accounts.zoho.com").replace(
+// ZOHO_OIDC_ISSUER wins (the portal sign-in client's issuer); otherwise the
+// accounts host of the server's Zoho data center (ZOHO_ACCOUNTS_SERVER, US by
+// default). Sign-in is a separate client from the API token manager.
+const ACCOUNTS_BASE = (process.env.ZOHO_OIDC_ISSUER || zohoDefaultDc().accounts).replace(
   /\/$/,
   "",
 );

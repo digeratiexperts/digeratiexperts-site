@@ -25,6 +25,8 @@ import jwt from "jsonwebtoken";
 import { registerObjectStorageRoutes, ObjectStorageService } from "./replit_integrations/object_storage";
 import { zohoClient, zohoDeskService, zohoCRMService, zohoBillingService } from "./zoho";
 import { websiteLeadTaxonomy } from "./zoho/leadTaxonomy";
+import { zohoProductHealth } from "./zoho/zohoHealth";
+import { createZohoConnectHandlers, requireZohoConnectEnabled } from "./zohoConnectRoutes";
 import { describeQuoteContext, quoteLeadDescription, sanitizeQuoteContext } from "@shared/quoteContext";
 import { followUpHeadline, planLeadFollowUp } from "@shared/leadFollowUp";
 import { createQuoteLeadWithCall, normalizeLeadPhone, zohoLeadUrl } from "./quoteLeadCrm";
@@ -6032,20 +6034,43 @@ export async function registerRoutes(app: Express) {
 
   // ========== ZOHO API ROUTES ==========
 
-  // Check Zoho connection status
-  app.get("/api/zoho/status", async (req: Request, res: Response) => {
+  // Zoho CRM connection status (public). One cheap CRM read at most every 10
+  // minutes through the token manager, never a token request per hit; a
+  // throttle or outage reads "degraded", never a reconnect (#418). Our own
+  // wording only: no upstream text leaves the server.
+  const ZOHO_STATUS_MESSAGES: Record<string, string> = {
+    connected: "Zoho API connected",
+    degraded: "Zoho is busy or unreachable; retrying automatically",
+    needs_reconnect: "Zoho refused the CRM credential; reconnect Zoho",
+    not_configured: "Zoho API not configured",
+    unknown: "Zoho API status unknown",
+  };
+  app.get("/api/zoho/status", async (_req: Request, res: Response) => {
+    res.set("Cache-Control", "no-store");
     try {
-      const isConfigured = zohoClient.isConfigured();
-      if (!isConfigured) {
-        return res.json({ connected: false, message: "Zoho API not configured" });
+      if (!zohoClient.isConfigured()) {
+        return res.json({ connected: false, state: "not_configured", message: ZOHO_STATUS_MESSAGES.not_configured });
       }
-      
-      await zohoClient.getAccessToken();
-      res.json({ connected: true, message: "Zoho API connected" });
-    } catch (error: any) {
-      res.json({ connected: false, message: error.message });
+      const health = await zohoClient.crmAuth.check((access) =>
+        fetch(`${access.apiDomain}/crm/v6/users?type=CurrentUser`, {
+          headers: { Authorization: `Zoho-oauthtoken ${access.token}` },
+          signal: AbortSignal.timeout(10_000),
+        }),
+      );
+      res.json({ connected: health.state === "connected", state: health.state, message: ZOHO_STATUS_MESSAGES[health.state] });
+    } catch {
+      res.json({ connected: false, state: "unknown", message: ZOHO_STATUS_MESSAGES.unknown });
     }
   });
+
+  // Zoho Connect (owner only, ZOHO_CONNECT_ENABLED): one consent for CRM,
+  // Desk, Books and Payments. docs/ZOHO-OAUTH-INVENTORY.md.
+  const zohoConnect = createZohoConnectHandlers({ productHealth: zohoProductHealth });
+  app.get("/api/zoho/connect", [requireZohoConnectEnabled, authMiddleware, requireAdmin], zohoConnect.start);
+  app.get("/api/zoho/connect/callback", [requireZohoConnectEnabled, authMiddleware, requireAdmin], zohoConnect.callback);
+  // Readable with the flag off too (enabled: false), so admins always see each product's health.
+  app.get("/api/zoho/connection", [authMiddleware, requireAdmin], zohoConnect.connection);
+  app.post("/api/zoho/disconnect", [requireZohoConnectEnabled, authMiddleware, requireAdmin], zohoConnect.disconnect);
 
   // ========== ZOHO DESK ROUTES ==========
 
