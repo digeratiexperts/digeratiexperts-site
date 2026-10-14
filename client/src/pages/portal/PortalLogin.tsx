@@ -4,10 +4,11 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { AlertCircle, Mail, Lock, ArrowRight, ShieldCheck, ArrowLeft, KeyRound } from "lucide-react";
 import { useLocation } from "wouter";
-import { DE_LOGO_REVERSE } from '@/lib/brandAssets';
+import { DE_LOGO_PRIMARY, DE_LOGO_REVERSE } from '@/lib/brandAssets';
 import TurnstileWidget from "@/components/TurnstileWidget";
 import { useSEO } from "@/hooks/useSEO";
 import "@/styles/portal.css";
+import { usePortalAppearance } from "@/components/portal/shell/portalTheme";
 import { portalReturnLabel } from "@/lib/portalUrls";
 import { marketplaceReturnTo } from "@shared/portalReturnTo";
 import { getPasskey, passkeyErrorMessage, passkeysSupported } from "@/lib/webauthn";
@@ -20,6 +21,7 @@ function readQueryParam(name: string): string {
 }
 
 export default function PortalLogin() {
+  const { theme } = usePortalAppearance();
   useSEO({
     title: "Client Portal Login",
     description: "Sign in to the Digerati Experts Client Portal. For existing clients only.",
@@ -285,12 +287,12 @@ export default function PortalLogin() {
   const showZoho = zohoConfigured !== false;
 
   return (
-    <main id="main-content" tabIndex={-1} className="de-portal dark relative flex min-h-dvh items-center justify-center overflow-hidden p-4" data-theme="dark">
+    <main id="main-content" tabIndex={-1} className={`de-portal ${theme !== "light" ? "dark" : ""} relative flex min-h-dvh items-center justify-center overflow-hidden p-4`} data-theme={theme}>
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 pt-login-glow" />
       <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-px pt-login-line" />
       <div className="relative w-full max-w-md">
         <div className="mb-8 flex flex-col items-center gap-3">
-          <img src={DE_LOGO_REVERSE} alt="Digerati Experts" className="h-10 w-auto" />
+          <img src={theme === "light" ? DE_LOGO_PRIMARY : DE_LOGO_REVERSE} alt="Digerati Experts" className="h-10 w-auto" />
           <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">Client portal</p>
         </div>
 
@@ -346,7 +348,7 @@ export default function PortalLogin() {
                   <div className="space-y-2">
                     <label htmlFor="login-email" className="text-sm font-medium">Email</label>
                     <div className="relative">
-                      <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                      <Mail className="absolute left-3 top-4 h-4 w-4 text-muted-foreground" aria-hidden="true" />
                       <Input
                         id="login-email"
                         type="email"
@@ -364,7 +366,7 @@ export default function PortalLogin() {
                   <div className="space-y-2">
                     <label htmlFor="login-password" className="text-sm font-medium">Password</label>
                     <div className="relative">
-                      <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                      <Lock className="absolute left-3 top-4 h-4 w-4 text-muted-foreground" aria-hidden="true" />
                       <Input
                         id="login-password"
                         type="password"

@@ -10,6 +10,13 @@ const SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || "";
 
 const isTestKey = !SITE_KEY || SITE_KEY === "1x00000000000000000000AA";
 
+/**
+ * True when this build carries a real site key and the widget shows a check.
+ * False: it renders nothing and hands back "dev-bypass-token" at once, so a
+ * form that waits for a token never waits (Joe, 2026-10-14).
+ */
+export const turnstileActive = !isTestKey;
+
 export default function TurnstileWidget({ onVerify, onError, theme = "dark" }: TurnstileWidgetProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetIdRef = useRef<string | null>(null);
@@ -42,19 +49,36 @@ export default function TurnstileWidget({ onVerify, onError, theme = "dark" }: T
       return;
     }
 
+    let loadTimer: ReturnType<typeof setTimeout> | undefined;
     if ((window as any).turnstile) {
       renderWidget();
     } else {
       const script = document.createElement("script");
       script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
       script.async = true;
-      script.onload = () => renderWidget();
+      script.onload = () => {
+        clearTimeout(loadTimer);
+        renderWidget();
+      };
+      // A blocked or unreachable Cloudflare script never calls back otherwise, which
+      // left forms waiting for a token with no way forward (Joe, 2026-10-14). A
+      // blackholed connection neither loads nor errors, so a script still missing
+      // after 15s counts as an error too.
+      script.onerror = () => {
+        clearTimeout(loadTimer);
+        script.remove(); // a retry adds a fresh tag; don't leave failed ones behind
+        onErrorRef.current?.();
+      };
+      loadTimer = setTimeout(() => {
+        if (!(window as any).turnstile) onErrorRef.current?.();
+      }, 15_000);
       document.head.appendChild(script);
     }
 
     // Cleanup on both paths — the already-loaded branch previously returned
     // without one, leaking a widget on every re-mount after the first.
     return () => {
+      clearTimeout(loadTimer);
       if (widgetIdRef.current !== null && (window as any).turnstile) {
         (window as any).turnstile.remove(widgetIdRef.current);
         widgetIdRef.current = null;

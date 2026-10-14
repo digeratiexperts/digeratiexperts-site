@@ -8,6 +8,7 @@ import { eventBus, EventTypes } from "./eventBus";
 import { syncPublicSolutionRequestToCrm } from "./publicSolutionRequestCrm";
 import { writeSpoolEntry } from "./publicSolutionSpool";
 import { notificationService } from "./services/notificationService";
+import { recordLoginKnock } from "./portalLoginKnocksStore";
 
 vi.mock("./publicSolutionRequestCrm", async (importOriginal) => {
   const actual = await importOriginal<typeof import("./publicSolutionRequestCrm")>();
@@ -30,6 +31,12 @@ vi.mock("./services/notificationService", () => {
   };
   return { notificationService, default: notificationService };
 });
+
+// verifyTurnstile logs a refused token as a "turnstile_failed" knock; keep that off the database here.
+vi.mock("./portalLoginKnocksStore", () => ({
+  recordLoginKnock: vi.fn(async () => undefined),
+  clientIpFromReq: () => "127.0.0.1",
+}));
 
 const prohibited = [
   "coro",
@@ -504,5 +511,76 @@ describe("public solution Door 2 API", () => {
     const body = await response.json();
     expect(body.durable).toBe("memory");
     expect(body.replayed).toBe(false);
+  });
+
+  // The contact step's Turnstile check (Joe, 2026-10-14): the same verifyTurnstile
+  // as portal sign-in. The tests above run with no TURNSTILE_SECRET_KEY, which is
+  // the fail-open path local dev uses; these set one, as production does.
+  describe("with Turnstile configured", () => {
+    const SECRET = "test-turnstile-secret";
+    const GOOD_TOKEN = "valid-turnstile-token";
+    const realFetch = globalThis.fetch;
+    let originalSecret: string | undefined;
+    let fetchSpy: ReturnType<typeof vi.spyOn>;
+    let emitSpy: ReturnType<typeof vi.spyOn>;
+    let siteverify: URLSearchParams[];
+
+    beforeEach(() => {
+      originalSecret = process.env.TURNSTILE_SECRET_KEY;
+      process.env.TURNSTILE_SECRET_KEY = SECRET;
+      siteverify = [];
+      // The server and this test share one fetch: Cloudflare's siteverify is answered here, the test's own requests pass through.
+      fetchSpy = vi.spyOn(globalThis, "fetch").mockImplementation(async (input: string | URL | Request, init?: RequestInit) => {
+        const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
+        if (url !== "https://challenges.cloudflare.com/turnstile/v0/siteverify") return realFetch(input, init);
+        const form = new URLSearchParams(String(init?.body ?? ""));
+        siteverify.push(form);
+        const success = form.get("secret") === SECRET && form.get("response") === GOOD_TOKEN;
+        return new Response(JSON.stringify(success ? { success: true } : { success: false, "error-codes": ["invalid-input-response"] }), {
+          headers: { "Content-Type": "application/json" },
+        });
+      });
+      emitSpy = vi.spyOn(eventBus, "emit").mockImplementation(async () => undefined as any);
+      vi.mocked(recordLoginKnock).mockClear();
+      vi.mocked(notificationService.sendSolutionRequestAcknowledgement).mockClear();
+    });
+
+    afterEach(() => {
+      fetchSpy.mockRestore();
+      emitSpy.mockRestore();
+      if (originalSecret === undefined) delete process.env.TURNSTILE_SECRET_KEY;
+      else process.env.TURNSTILE_SECRET_KEY = originalSecret;
+    });
+
+    it("refuses a submit with no token before Cloudflare is asked or a lead exists", async () => {
+      const response = await fourFieldSubmit({ idempotencyKey: "turnstile-missing" });
+      expect(response.status).toBe(400);
+      expect((await response.json()).error).toBe("Bot verification required");
+      expect(siteverify).toHaveLength(0);
+      expect(recordLoginKnock).toHaveBeenCalledWith(
+        expect.objectContaining({ kind: "turnstile_failed", path: "/api/public/solutions/request" }),
+      );
+      expect(emitSpy).not.toHaveBeenCalledWith(EventTypes.LEAD_CREATED, expect.anything());
+      expect(notificationService.sendSolutionRequestAcknowledgement).not.toHaveBeenCalled();
+    });
+
+    it("refuses a token Cloudflare does not verify", async () => {
+      const response = await fourFieldSubmit({ idempotencyKey: "turnstile-bad", turnstileToken: "spent-or-forged" });
+      expect(response.status).toBe(400);
+      expect((await response.json()).error).toBe("Bot verification failed");
+      expect(siteverify).toHaveLength(1);
+      expect(emitSpy).not.toHaveBeenCalledWith(EventTypes.LEAD_CREATED, expect.anything());
+    });
+
+    it("accepts a submit whose token Cloudflare verifies", async () => {
+      const response = await fourFieldSubmit({ idempotencyKey: "turnstile-good", turnstileToken: GOOD_TOKEN });
+      expect(response.status).toBe(200);
+      const body = await response.json();
+      expect(body.request.status).toBe("submitted");
+      expect(body.reference).toMatch(/^DE-/);
+      expect(siteverify).toHaveLength(1);
+      expect(siteverify[0].get("response")).toBe(GOOD_TOKEN);
+      expect(emitSpy).toHaveBeenCalledWith(EventTypes.LEAD_CREATED, expect.anything());
+    });
   });
 });

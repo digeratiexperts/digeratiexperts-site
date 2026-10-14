@@ -81,18 +81,21 @@ function PhoneHeroMeta(): JSX.Element {
           </a>
         </li>
       </ul>
-      <p className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-sm text-white/55">
-        {POSITIONING.map((item, index) => (
-          <span key={item} className="inline-flex items-center gap-2.5">
-            {index > 0 && (
-              <span aria-hidden="true" className="text-white/30">
+      {/* Every item carries its leading dot; the row is pulled left by one dot slot and
+          clipped, so whichever item starts a wrapped row hides its dot (no stray "·" at
+          the left margin on phones). */}
+      <div className="mt-2 overflow-hidden">
+        <p className="-ml-7 flex flex-wrap gap-y-1 text-sm text-white/55" data-testid="hero-positioning">
+          {POSITIONING.map((item) => (
+            <span key={item} className="inline-flex items-center">
+              <span aria-hidden="true" className="inline-block w-7 text-center text-white/30">
                 ·
               </span>
-            )}
-            {item}
-          </span>
-        ))}
-      </p>
+              {item}
+            </span>
+          ))}
+        </p>
+      </div>
       <div className="mt-7 max-w-[600px]">
         <PronunciationCard variant="compact" />
       </div>

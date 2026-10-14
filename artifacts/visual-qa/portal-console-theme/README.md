@@ -2,7 +2,7 @@
 
 **Ask:** Joe, 2026-10-14: "a dark theme that is like Entra and IT dashboards ... build it then for the Client portal".
 
-**What it is:** a third, opt-in theme in the portal user menu (Appearance → **Admin console**). Graphite dark stays the default, Light and "Match device" are unchanged, and "Match device" never picks the console theme. The change is portal-scoped CSS tokens plus one menu option. No layout, route, API or data change.
+**What it is:** a third, opt-in theme in the portal user menu (Appearance → **Admin console**). Black (PR 578) stays the default, Dark, Light and "Match device" are unchanged, and "Match device" never picks the console theme. The change is portal-scoped CSS tokens plus one menu option. No layout, route, API or data change.
 
 | Layer | Graphite dark (default, unchanged) | Admin console |
 |---|---|---|
@@ -19,13 +19,13 @@ Category colours on card tops stay as they are. Inside the console theme the bra
 
 ## Files
 
-`{console,dark}-{dashboard,tickets}-{390,768,1440}.png`: full-page captures (12). `console-menu-1440.png`: the Appearance menu with the option. Captured 2026-10-14 by `capture.mjs` on the dev server with the local dev admin; the ticket rows are the dev seed's EXAMPLE data.
+`{console,black}-{dashboard,tickets}-{390,768,1440}.png` (re-captured on top of PR 578's black theme): full-page captures (12). `console-menu-1440.png`: the Appearance menu with the option. Captured 2026-10-14 by `capture.mjs` on the dev server with the local dev admin; the ticket rows are the dev seed's EXAMPLE data.
 
 ## Checks
 
 - **axe-core** (WCAG 2.0/2.1/2.2 A + AA, reduced motion), all 12 views: 0 violations.
 - **Horizontal overflow:** none at 390 / 768 / 1440.
-- **Computed field colour:** console `rgb(31, 31, 31)`, dark `rgb(5, 3, 17)` (unchanged).
+- **Computed field colour:** console `rgb(31, 31, 31)`, black `rgb(0, 0, 0)`.
 - **Unit test:** `client/src/styles/portalConsoleTheme.test.ts` checks text, state inks (on 7–12% tints), button fills, focus ring and field edges for contrast.
 
 Already like this before the change, not touched here: at 390px the admin-only "Administer a client…" picker is cut off at the right edge in every theme.

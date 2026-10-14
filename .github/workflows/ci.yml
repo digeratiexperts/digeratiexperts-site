@@ -25,6 +25,34 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # A PR checks out its merge commit; depth 2 brings its first parent
+          # (the base tip), so the step below can list exactly what the PR changes.
+          fetch-depth: 2
+
+      # A PR that only touches docs, the claim register, evidence or design
+      # notes cannot change what typecheck, tests, the build or the smoke run
+      # see (none of them read these paths), so it runs the claim-register
+      # check and skips the rest: about 1 billed minute instead of 8. Pushes
+      # to main always run everything, because the deploy job needs them.
+      - name: Classify changed files
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          set -euo pipefail
+          CHANGED="$(git diff --name-only HEAD^1 HEAD)"
+          printf '%s\n' "$CHANGED"
+          # Markdown under code or skill folders is excluded: skill modules are
+          # .md files that the MSP AI Kit tests build from.
+          HEAVY="$(printf '%s\n' "$CHANGED" | grep -vE '^(docs|\.ai|artifacts|design)/' \
+            | grep -vE '^[^/]+\.md$|^[^/]+/.*\.md$' || true)"
+          HEAVY_MD="$(printf '%s\n' "$CHANGED" | grep -E '^(client|server|shared|scripts|\.claude|\.agents|\.github)/.*\.md$' || true)"
+          if [ -z "$CHANGED" ] || [ -n "$HEAVY" ] || [ -n "$HEAVY_MD" ]; then
+            echo "DE_LIGHT=false" >> "$GITHUB_ENV"
+          else
+            echo "DE_LIGHT=true" >> "$GITHUB_ENV"
+            echo "::notice::Docs/registry/evidence-only change: running the claim-register check only."
+          fi
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -36,23 +64,28 @@ jobs:
         run: npm ci --no-audit --no-fund
 
       - name: Install Playwright Chromium
+        if: env.DE_LIGHT != 'true'
         run: npx playwright install --with-deps chromium
 
       - name: Production dependency audit
+        if: env.DE_LIGHT != 'true'
         run: npm audit --omit=dev --audit-level=high
 
       - name: Validate agent claim register
         run: npm run check:active-work
 
       - name: Typecheck
+        if: env.DE_LIGHT != 'true'
         run: npm run check
 
       - name: Unit tests
+        if: env.DE_LIGHT != 'true'
         run: npm test
 
       # msp-advisor uses the node:test runner, so it is excluded from Vitest
       # collection and needs its own step to stay covered.
       - name: MSP advisor tests
+        if: env.DE_LIGHT != 'true'
         run: npm run test:advisor
 
       # The MSP AI Kit skill (.claude/skills/msp-ai-kit) is outside Vitest's
@@ -60,16 +93,19 @@ jobs:
       # module edit without a rebuilt example cannot merge green. The Windows
       # loader has its own workflow (msp-ai-kit.yml).
       - name: MSP AI Kit tests
+        if: env.DE_LIGHT != 'true'
         run: npm run test:msp-ai-kit
 
       # The Recraft icon skill's cleaner and request builder, offline (stubbed API, no key).
       - name: Recraft icon skill tests
+        if: env.DE_LIGHT != 'true'
         run: npm run test:recraft-icons
 
       # Store PDFs (quote, order, receipt, solution packet): renders every sample
       # in scripts/qa/storePdfCases.ts with the production pipeline and checks
       # layout, content, metadata, fonts, tagging and veraPDF PDF/UA-1.
       - name: Install Store PDF check tools
+        if: env.DE_LIGHT != 'true'
         run: |
           sudo apt-get update -q
           sudo apt-get install -y -q --no-install-recommends poppler-utils python3-pikepdf
@@ -77,12 +113,13 @@ jobs:
           echo "VERAPDF=$cli" >> "$GITHUB_ENV"
 
       - name: Store PDF check
+        if: env.DE_LIGHT != 'true'
         env:
           PYTHON: /usr/bin/python3
         run: npm run check:store-pdfs -- --require-verapdf "$RUNNER_TEMP/store-pdfs"
 
       - name: Upload Store PDF samples
-        if: always()
+        if: always() && env.DE_LIGHT != 'true'
         uses: actions/upload-artifact@v4
         with:
           name: store-pdfs
@@ -91,12 +128,15 @@ jobs:
           retention-days: 14
 
       - name: Production build
+        if: env.DE_LIGHT != 'true'
         run: npm run build
 
       - name: Browser bundle budget
+        if: env.DE_LIGHT != 'true'
         run: node scripts/check-bundle-budget.mjs
 
       - name: Local production smoke
+        if: env.DE_LIGHT != 'true'
         shell: bash
         run: |
           set -euo pipefail

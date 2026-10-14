@@ -55,6 +55,44 @@ claims:
       presenter and platform. The internal operating calendar (prospects, clients,
       internal; weekly to annual) is generated into docs/marketing/ and never
       bundled into the site. Copies go to WorkDrive 4. Event & Strategic Planning.
+  - id: t2-ops-hardening
+    owner: claude
+    subsystem: ci-and-ops
+    branch: claude/t2-ops-hardening
+    base_sha: 7b1b4197
+    files:
+      - .github/workflows/ci.yml (check-test-build: checkout depth, change classifier, step guards only)
+      - .github/workflows/production-health.yml (new canonical-host probe step only)
+      - .github/workflows/portal-prod-check.yml (default base URL only)
+      - scripts/qa/portal-prod-check.mjs (default base URL only)
+      - docs/runbooks/PORTAL-QA-LOGIN.md (portal host URLs only)
+      - server/middleware/security.ts (setSecurityHeaders: X-XSS-Protection, /api/portal no-store)
+      - server/middleware/securityHeaders.test.ts (new)
+      - docs/SECRETS-REQUIRED.md (new)
+      - docs/proposals/downloads-cache.md (new)
+      - docs/proposals/portal-security-headers.md (new)
+    status: active
+    started: 2026-10-10
+    note: >-
+      Thread T2 of the DE backlog (tasks 13-20), taken over from Cursor. 13, 14
+      and 16 were already on main and are skipped with evidence in the PR. Does
+      not touch server/zoho/* (thread T1). Draft PR only; Joe merges.
+  - id: t2-npm-audit
+    owner: claude
+    subsystem: dependencies
+    branch: claude/t2-npm-audit
+    base_sha: 7b1b4197
+    files:
+      - package.json (overrides block only)
+      - package-lock.json
+    status: active
+    started: 2026-10-10
+    note: >-
+      Backlog task 11: npm audit fix plus four scoped overrides (uuid under
+      gaxios and teeny-request, tinypool under vitest, sharp under
+      vite-imagetools). Removes both criticals; the rest need major upgrades
+      and are listed for DE in the PR. Claimed here because the audit PR does
+      not edit this file.
   - id: portal-console-theme
     owner: claude
     subsystem: client-portal
@@ -3488,7 +3526,7 @@ claims:
     owner: claude
     subsystem: licensing
     branch: claude/exciting-cannon-ttx8m8
-    base_sha: 660a4db
+    base_sha: 9ba5e21
     files:
       - shared/starterKits.ts (new), shared/jumpcloudPlan.ts (new) and their tests
       - migrations/0018_license_jumpcloud_links.sql (new)
@@ -3500,6 +3538,11 @@ claims:
     status: active
     started: 2026-10-10
     note: >-
+      PR 574 verified live 2026-10-14 (deploy of 55b0492 applied migration
+      0018). Follow-up on the same branch, Joe 2026-10-14 ("it should look
+      like azure or entra or cytracom"): company page as a console with
+      breadcrumb, status chips and tabs (Patch bay, Starter kit, JumpCloud
+      installs); fixes the squashed Device name box on phones.
       Joe, 2026-10-08/10 ("continue everything"): JumpCloud / Chocolatey
       installs from the License Patch Bay and starter kits by business type
       (regular, regulated, GCC High). PR 540 (desk-chat-archive-swipe,
@@ -3622,7 +3665,7 @@ claims:
       - client/src/components/evidence/EvidenceFrame.tsx (badge, status, subtitle, source sizes and ink only; 8 users)
       - client/src/components/EcosystemProgression.tsx (text sizes and ink only; also on the pricing section)
       - artifacts/visual-qa/proactive-readability/** (new)
-    status: active
+    status: merged
     started: 2026-10-10
     note: >-
       Joe, 2026-10-10, on /solutions/proactive-ecosystem: all the text "more in
@@ -3633,3 +3676,76 @@ claims:
       page can turn on. Overlap check 2026-10-10: open PR 566 adds an unrelated
       rule to index.css; no other open PR touches these files.
 
+  - id: site-findings-2026-10-14
+    owner: claude
+    subsystem: marketing-site
+    branch: claude/sleepy-archimedes-mccoav
+    base_sha: 4505f0c0
+    files:
+      - client/src/pages/versions/v8/sections/01-hero.tsx (PhoneHeroMeta positioning line only)
+      - client/src/pages/versions/v8/sections/07-client-proof.tsx, 07-client-proof.css (empty review feed and its claim)
+      - client/src/pages/versions/v8/sections/16-contact-footer.tsx, 16-contact-footer.css (phone and email)
+      - client/src/pages/sections/DigeratiEnhancedFooterSection.tsx, footerContact.test.ts (phone and email)
+      - client/src/pages/solutions/SolutionRequest.tsx, door2Leakage.test.ts (Turnstile on the contact step)
+      - client/src/components/TurnstileWidget.tsx (exported turnstileActive flag; onError when the script fails to load)
+      - client/src/components/store/door2/OfflinePanel.tsx ("check" kind: the bot check could not load)
+      - server/publicSolutionRoutes.ts, publicSolutionRoutes.test.ts (verifyTurnstile on POST /api/public/solutions/request)
+      - client/src/data/teamProfile.ts, teamProfile.test.ts (owner title only)
+      - client/src/components/PageTemplate.tsx (heroAsideOnMobile prop, passed to PageHero asideOnMobile)
+      - client/src/pages/about/Team.tsx (heroAsideOnMobile on, so phones show the founder card)
+      - docs/contact-details-audit.md, docs/STORE-EXPERIENCE-SOURCE-OF-TRUTH.md (notes for the above)
+    status: verified-live
+    started: 2026-10-14
+    released: 2026-10-14
+    pr: 591
+    merge_sha: 14d71c4d5372613a6f95f26596fc809fd7bab429
+    verification: >-
+      Merged as 14d71c4d on Joe's "Approved, continue." after green CI on
+      0818b4d. Production release.txt and /api/health release.commit read
+      14d71c4d (built 23:05:40Z). Read-only check against
+      https://digeratiexperts.com (no submissions): phone hero at 320 and 390
+      shows no dot at the start of any row and no sideways scroll; the homepage
+      at 320, 390 and 1440 has no "backed by real client reviews" claim and no
+      review build note, keeps the "Worked with us?" card, and its footer links
+      tel:+13254809870 and mailto:info@digeratiexperts.com; /about/team at 390
+      and 1440 shows Joseph Petro, Chief Technology Strategist (the card is now
+      visible on phones); /solutions/request at 390 renders the check group and
+      widget, and with Cloudflare blocked shows "The security check couldn't
+      load." with retry and email, and "Try the check again" keeps focus on the
+      check. No page errors. A real Turnstile pass was not exercised (this
+      sandbox cannot reach challenges.cloudflare.com); Joe to confirm on a
+      device. VERIFIED LIVE. Files released.
+    note: >-
+      Joe, 2026-10-14: "work on fixing all outstanding items even my items for
+      me. then merge or push this", then "Approved, continue." Fixes the four
+      findings from the 2026-10-13 read-only live check, each reproduced by two
+      independent checkers: stray dot at the start of the wrapped phone-hero
+      positioning line; the V8 Client Proof card showing an internal build note
+      while the intro claimed reviews from Google, Yelp and Thumbtack; no phone or
+      email in the footer; no Turnstile on /solutions/request. Plus the Team page
+      owner title, taken from the title the live homepage already publishes
+      ("Chief Technology Strategist"); no certifications added (no issuer
+      evidence found). Overlap check 2026-10-14: t7-copy-overlays-pdfs and
+      t7-contact-audit-team-config still read active but their branches are fully
+      merged (PRs 558 and 561); no open PR touches these files.
+  - id: site-unique-plates
+    owner: claude
+    subsystem: public-marketing-visual-layer
+    branch: claude/lucid-dijkstra-s3v2s3
+    base_sha: 0285ef6d
+    files:
+      - client/src/components/site/PlateBand.tsx (twelve more plates; plateForServiceKey routes each service to its own)
+      - client/src/assets/flagship/** (twelve new resized plates)
+      - client/src/pages/industries/{Healthcare,RealEstate,Accounting,Nonprofits,AnimalHospitals}.tsx (one plate attribute each)
+      - client/src/pages/GenericServicePage.tsx (a page without a process chapter carries its plate on the included chapter)
+      - client/src/lib/stickyCtaVisibility.ts and its test (the assessment bar steps aside over a plate)
+      - artifacts/kie-ai/nano-banana/**/2026-10-10-*, .claude/kie-budget/ledger.jsonl
+    status: in-review
+    started: 2026-10-10
+    note: >-
+      Joe, 2026-10-10: "continue everything", after the visual check showed
+      pages sharing plates and the sticky assessment bar covering plates on
+      desktop. Twelve plates generated in budget job
+      site-unique-plates-2026-10-10 (projected $0.72; closed). Three light plates
+      had the studio softbox in frame and were cropped. Generated images stay
+      ILLUSTRATIVE until Joe approves them on this PR.

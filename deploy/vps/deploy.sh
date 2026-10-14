@@ -85,8 +85,9 @@ fail() { log "ERROR: $*"; exit 1; }
 command -v git  >/dev/null || fail "git not found on PATH"
 command -v node >/dev/null || fail "node not found on PATH"
 command -v npm  >/dev/null || fail "npm not found on PATH"
-NODE_MAJOR="$(node -p 'process.versions.node.split(".")[0]')"
-[ "$NODE_MAJOR" -ge 20 ] || fail "Node 20+ required, found $(node --version)"
+# sharp 0.35 (image derivatives at build time) needs Node >= 20.9.
+node -e 'const [a,b]=process.versions.node.split(".").map(Number);process.exit(a>20||(a===20&&b>=9)?0:1)' \
+  || fail "Node 20.9+ required, found $(node --version)"
 
 [ -f "$SHARED_ENV" ] || fail "$SHARED_ENV missing — create it before deploying (see deploy/vps/env.production.example)"
 mkdir -p "$RELEASES_DIR" "$LOG_DIR"

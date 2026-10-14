@@ -1,7 +1,7 @@
 import { PRIMARY_PHONE } from "@shared/companyContact";
 import { StoreAction } from "./primitives";
 
-export type OfflineKind = "durable" | "network" | "rate";
+export type OfflineKind = "durable" | "network" | "rate" | "check";
 
 const COPY: Record<OfflineKind, { title: string; detail: string }> = {
   durable: {
@@ -15,6 +15,12 @@ const COPY: Record<OfflineKind, { title: string; detail: string }> = {
   rate: {
     title: "Too many attempts from this connection.",
     detail: `Try again in a while, or call ${PRIMARY_PHONE.display}.`,
+  },
+  // The bot check could not load or run (Cloudflare blocked or unreachable), so the
+  // form cannot be sent; email and call still reach DE (Joe, 2026-10-14).
+  check: {
+    title: "The security check couldn't load.",
+    detail: "Nothing was lost; your solution is still here on this device. Try the check again, or email the summary to DE.",
   },
 };
 
@@ -39,7 +45,7 @@ export function OfflinePanel({
         {/* Try again is busy, never disabled: a disabled control drops focus in Chromium and WebKit; onRetry ignores a second press while sending. */}
         {kind !== "rate" ? (
           <StoreAction variant="primary" onClick={onRetry} ariaBusy={retrying} testId="offline-retry">
-            {retrying ? "Sending…" : "Try again"}
+            {retrying ? "Sending…" : kind === "check" ? "Try the check again" : "Try again"}
           </StoreAction>
         ) : null}
         <a href={mailto} className="d2-action d2-action--quiet" data-testid="offline-mailto">

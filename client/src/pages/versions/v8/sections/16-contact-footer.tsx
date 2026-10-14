@@ -580,6 +580,18 @@ export function V8ContactFooter(): JSX.Element {
                 <br />
                 Chandler, Arizona
               </p>
+              {/* Phone and email in the footer too, not only in the contact chapter above it
+                  (Joe, 2026-10-14). Read from the one NAP source; city only, no street (PR 532). */}
+              <address className="foot__reach">
+                <a href={PRIMARY_PHONE.telHref} data-testid="footer-phone">
+                  <span className="v8-sr">Call </span>
+                  {PRIMARY_PHONE.display}
+                </a>
+                <a href={`mailto:${COMPANY.email}`} data-testid="footer-email">
+                  <span className="v8-sr">Email </span>
+                  {COMPANY.email}
+                </a>
+              </address>
             </div>
 
             <nav className="foot__col" aria-labelledby="fc-client">

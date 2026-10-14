@@ -27,6 +27,7 @@ import fs from "fs";
 import cookieParser from "cookie-parser";
 import compression from "compression";
 import { resolveWarehouseStaff } from "./warehouseAccess";
+import { publicHealthView } from "./publicHealth";
 import { zohoPayments } from "./zohoPayments";
 import { zohoClient } from "./zoho/zohoClient";
 import { zohoHealthStates } from "./zoho/zohoHealth";
@@ -99,7 +100,9 @@ import { setSecurityHeaders } from "./middleware/security";
 import { registerVersionPreviewRobots } from "./versionPreviewRobots";
 app.use(setSecurityHeaders);
 
-app.all("/api/health", async (_req, res) => {
+// cookieParser runs app-wide only further down; parse here so a signed-in
+// admin cookie (not just a Bearer token) unlocks the full map.
+app.all("/api/health", cookieParser(), async (req, res) => {
   const port = process.env.REPLIT_SERVER_PORT || process.env.PORT || "unknown";
   const { databaseAcceptsConnections } = await import("./healthProbe");
   const dbAvailable = await databaseAcceptsConnections();
@@ -151,8 +154,17 @@ app.all("/api/health", async (_req, res) => {
     stagingReview: stagingReviewStatus(),
     uptime: process.uptime(),
   };
-  
-  res.status(200).json(health);
+
+  // Anonymous callers get what uptime monitors read (status, the database and
+  // the Zoho token states, which are states only): no release, env, port,
+  // integration configuration, spool counts or staging state. Signed-in DE
+  // staff get the full map. The deployed commit stays public at /release.txt.
+  res.set("Cache-Control", "no-store");
+  if (resolveWarehouseStaff(req)) {
+    res.status(200).json(health);
+    return;
+  }
+  res.status(200).json(publicHealthView(health));
 });
 
 /**
