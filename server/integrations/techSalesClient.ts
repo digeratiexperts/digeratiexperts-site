@@ -9,6 +9,7 @@ import { assertMutationAllowed } from "../stagingReviewGuard";
 import { buildSignedHeaders, newEventId, resolveScopedSecret } from "./deSyncAuth";
 import type { DeSyncEnvelope, DeSyncEventType } from "./deSyncContract";
 import { SERVICE_REQUEST_HUB_EVENT, SERVICE_REQUEST_HUB_PATH } from "@shared/serviceRequests";
+import { representationProjectionSchema, type RepresentationProjection } from "@shared/representation";
 
 export type HubCompanyDocumentsResponse = {
   success?: boolean;
@@ -270,6 +271,50 @@ export async function fetchHubCompanyDocuments(
     logger.error("TechSales company-documents error", { message: err?.message, companyName });
     return null;
   }
+}
+
+const representationCache = new Map<string, { at: number; value: RepresentationProjection | null }>();
+/** Hub representation is re-read at most once a minute per company; a change in the Hub shows within that window. */
+export const REPRESENTATION_CACHE_MS = 60_000;
+
+export function _clearRepresentationCache(): void {
+  representationCache.clear();
+}
+
+/**
+ * Client-safe representation projection for one company (contract
+ * client-org-representation/v1). Signed portal_to_hub; the signature covers
+ * the query so it cannot be replayed for another tenant. Requires the
+ * canonical Hub accountId: there is no company-name fallback. Returns null
+ * (fail closed: nobody is a representative) when the Hub is unreachable,
+ * not configured, or answers with anything that does not match the contract.
+ */
+export async function fetchHubRepresentation(accountId: string, portalClientId?: string | null): Promise<RepresentationProjection | null> {
+  const key = `${accountId}|${portalClientId ?? ""}`;
+  const cached = representationCache.get(key);
+  if (cached && Date.now() - cached.at < REPRESENTATION_CACHE_MS) return cached.value;
+  const base = hubApiBase();
+  const token = syncToken();
+  if (!base || !token || !/^\d+$/.test(accountId)) return null;
+  const params = new URLSearchParams({ accountId });
+  if (portalClientId) params.set("portalClientId", portalClientId);
+  const url = `${base}/webhooks/portal/representation?${params.toString()}`;
+  let value: RepresentationProjection | null = null;
+  try {
+    const res = await fetch(url, { method: "GET", headers: { ...portalBridgeHeaders(url, token), Accept: "application/json" } });
+    const body = await res.json().catch(() => null);
+    if (!res.ok) {
+      logger.error("TechSales representation failed", { status: res.status, accountId });
+    } else {
+      const parsed = representationProjectionSchema.safeParse(body);
+      if (parsed.success && String(parsed.data.accountId) === accountId) value = parsed.data;
+      else logger.error("TechSales representation did not match contract", { accountId });
+    }
+  } catch (err: any) {
+    logger.error("TechSales representation error", { message: err?.message, accountId });
+  }
+  representationCache.set(key, { at: Date.now(), value });
+  return value;
 }
 
 export async function fetchHubCompanyOrders(

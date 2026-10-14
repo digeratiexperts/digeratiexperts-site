@@ -126,6 +126,7 @@ import { createDbVaultMetaStore, createConfiguredVaultBlobStore, registerClientV
 import { registerPortalIntegrationStatusRoute } from "./portalIntegrations";
 import { registerManualRecordAdminRoutes } from "./portalManualRecords";
 import { registerHubServiceRequestStatusRoute, registerServiceRequestRoutes, startHoldSweeper, type ServiceRequestRouteDeps } from "./serviceRequestRoutes";
+import { registerRepresentationRoutes } from "./representationRoutes";
 import { requireDeSyncAuth } from "./integrations/deSyncAuth";
 import { registerPortalAssistRoutes } from "./portalAssistRoutes";
 import { registerLicensingRoutes } from "./licensingRoutes";
@@ -188,6 +189,7 @@ import {
   fetchHubCompanyDocuments,
   fetchHubCompanyOrders,
   fetchHubContractDownload,
+  fetchHubRepresentation,
   mayPersistHubAccount,
   persistHubAccountId,
   resolvePortalCompanyName,
@@ -1275,6 +1277,18 @@ export async function registerRoutes(app: Express) {
   // Requests on hold resume on their end date, even if nobody opens them.
   if (process.env.NODE_ENV !== "test") startHoldSweeper(serviceRequestDeps);
   registerHubServiceRequestStatusRoute(app, serviceRequestDeps, requireDeSyncAuth("hub_to_portal"));
+  // Hub-defined representatives: the groups I represent and group-level requests
+  // (server/representationRoutes.ts; docs/PORTAL-REPRESENTATION-CONTRACT.md).
+  registerRepresentationRoutes(app, {
+    guards: [authMiddleware, validateInput],
+    getClient: (id) => portalClients.get(id) as any,
+    findUser: (id) => {
+      const u: any = findUserById(id);
+      return u ? { id: u.id, email: u.email, fullName: u.fullName, isActive: u.isActive } : undefined;
+    },
+    fetchProjection: (hubAccountId, portalClientId) => fetchHubRepresentation(hubAccountId, portalClientId),
+    createDeskTicket: serviceRequestDeps.createDeskTicket,
+  });
   // Licensing: account types and the company licence policy (server/licensingRoutes.ts).
   registerLicensingRoutes(app, {
     guards: [authMiddleware, validateInput],
