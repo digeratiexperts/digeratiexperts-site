@@ -644,7 +644,7 @@ function CompanyLevel({ clientId, onBack }: { clientId: string; onBack: () => vo
         <ArrowLeft className="h-4 w-4" aria-hidden /> All companies
       </button>
       <h2 className="mb-4 text-xl font-bold text-white">{data.company.name}</h2>
-      <div className="mb-6 grid gap-3 xl:grid-cols-2">
+      <div className="mb-6 grid gap-3 lg:grid-cols-2">
         <StarterKitPanel clientId={clientId} companyName={data.company.name} onApplied={refresh} />
         <JumpCloudPanel clientId={clientId} refreshKey={q.dataUpdatedAt} />
       </div>

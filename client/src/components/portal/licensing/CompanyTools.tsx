@@ -78,7 +78,7 @@ export function StarterKitPanel({ clientId, companyName, onApplied }: { clientId
               <button
                 type="button"
                 onClick={() => setConfirm(kit.key)}
-                className="min-h-9 rounded-md border border-[#F04C97]/50 px-2 text-xs font-semibold text-white hover:bg-[#D3126A]/15"
+                className="min-h-9 rounded-md border border-white/15 px-2 text-xs font-semibold text-white hover:bg-white/10"
               >
                 Use this kit
               </button>
@@ -87,7 +87,7 @@ export function StarterKitPanel({ clientId, companyName, onApplied }: { clientId
         ))}
       </div>
       {result ? (
-        <div className="mt-3 rounded-xl border border-[#34D399]/30 bg-[#34D399]/[0.06] p-3 text-xs text-white/80">
+        <div className="mt-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-white/80">
           <p className="font-semibold text-white">{result.kit} applied</p>
           <p className="mt-0.5">
             {result.appsOn} apps turned on · {result.onEveryMachine} on Every machine · {result.addedToPool} new parts in DE's pool
@@ -115,7 +115,7 @@ export function JumpCloudPanel({ clientId, refreshKey }: { clientId: string; ref
   const [busy, setBusy] = useState(false);
   const data = q.data;
   const ready = (data?.plan ?? []).filter((s) => s.status === "ready");
-  const field = "h-10 w-full rounded-md border border-white/15 bg-black/30 px-3 font-mono text-sm text-white placeholder:font-sans placeholder:text-white/35";
+  const field = "h-10 w-full rounded-md border border-white/15 bg-black/30 px-3 font-mono text-sm text-white placeholder:text-white/35";
 
   const save = async () => {
     try {
@@ -153,14 +153,14 @@ export function JumpCloudPanel({ clientId, refreshKey }: { clientId: string; ref
   return (
     <section className={panel} aria-label="JumpCloud installs">
       <h3 className={heading}>
-        <Cloud className="h-4 w-4 text-[#38BDF8]" aria-hidden /> JumpCloud installs
+        <Cloud className="h-4 w-4 text-[#C4B5FD]" aria-hidden /> JumpCloud installs
       </h3>
       {q.isLoading || !data ? (
         <p className="mt-2 text-xs text-white/50">Loading…</p>
       ) : (
         <>
           {!data.configured ? (
-            <p className="mt-2 flex gap-1.5 rounded-lg border border-[#FBBF24]/30 bg-[#FBBF24]/[0.06] p-2 text-xs text-[#FDE68A]">
+            <p className="mt-2 flex gap-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 p-2 text-xs text-amber-200">
               <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
               JumpCloud is not connected on this server (JUMPCLOUD_API_KEY). You can link and preview; sending needs the key.
             </p>
@@ -169,7 +169,7 @@ export function JumpCloudPanel({ clientId, refreshKey }: { clientId: string; ref
             Fill in the organization id if this client has its own JumpCloud org, the device group id for the group that holds its
             machines, or both. Every machine installs go to that group.
           </p>
-          <div className="mt-2 grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
+          <div className="mt-2 grid gap-2 sm:grid-cols-3">
             <input
               value={orgId ?? data.link?.orgId ?? ""}
               onChange={(e) => setOrgId(e.target.value)}
@@ -201,7 +201,7 @@ export function JumpCloudPanel({ clientId, refreshKey }: { clientId: string; ref
               data.plan.map((step, i) => (
                 <li key={`${step.itemId}:${step.target.label}:${i}`} className="flex items-start gap-2 text-xs">
                   {step.status === "ready" ? (
-                    <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#34D399]" aria-hidden />
+                    <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-400" aria-hidden />
                   ) : (
                     <XCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-white/35" aria-hidden />
                   )}
@@ -226,7 +226,7 @@ export function JumpCloudPanel({ clientId, refreshKey }: { clientId: string; ref
                   type="button"
                   disabled={busy}
                   onClick={() => void push()}
-                  className="inline-flex min-h-9 items-center gap-1.5 rounded-md bg-[#0EA5E9] px-3 text-xs font-semibold text-white hover:bg-[#0284C7] disabled:opacity-50"
+                  className="inline-flex min-h-9 items-center gap-1.5 rounded-md bg-[#D3126A] px-3 text-xs font-semibold text-white hover:bg-[#A30E52] disabled:opacity-50"
                 >
                   {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden /> : <Send className="h-3.5 w-3.5" aria-hidden />}
                   Send now
@@ -240,7 +240,7 @@ export function JumpCloudPanel({ clientId, refreshKey }: { clientId: string; ref
                 type="button"
                 disabled={!data.configured || ready.length === 0}
                 onClick={() => setConfirming(true)}
-                className="inline-flex min-h-9 items-center gap-1.5 rounded-md border border-[#38BDF8]/50 px-3 text-xs font-semibold text-white hover:bg-[#38BDF8]/10 disabled:opacity-40"
+                className="inline-flex min-h-9 items-center gap-1.5 rounded-md border border-white/15 px-3 text-xs font-semibold text-white hover:bg-white/10 disabled:opacity-40"
               >
                 <Send className="h-3.5 w-3.5" aria-hidden /> Send {ready.length} to JumpCloud
               </button>
@@ -252,7 +252,7 @@ export function JumpCloudPanel({ clientId, refreshKey }: { clientId: string; ref
               <summary className="cursor-pointer select-none text-white/70">Send log ({data.pushes.length})</summary>
               <ul className="mt-2 space-y-1">
                 {data.pushes.map((p) => (
-                  <li key={p.id} className={p.ok ? "text-white/70" : "text-[#FDA4AF]"}>
+                  <li key={p.id} className={p.ok ? "text-white/70" : "text-rose-300"}>
                     {new Date(p.createdAt).toLocaleString()} · {p.product} → {p.targetLabel}: {p.detail}
                   </li>
                 ))}
