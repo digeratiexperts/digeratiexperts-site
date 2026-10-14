@@ -397,8 +397,19 @@ export default function SolutionRequest() {
     void send(key);
   };
 
+  // The check could not load or run: show the email fallback instead of a Submit that can never enable.
+  const onCheckError = () => {
+    setTurnstileToken("");
+    setOffline("check");
+  };
+
   const onRetry = () => {
     if (sending) return;
+    if (offline === "check") {
+      setOffline(null);
+      resetTurnstile();
+      return;
+    }
     // Try again stays enabled (see OfflinePanel); until the fresh check passes it points there rather than send a spent token.
     if (awaitingCheck) {
       focusCheck();
@@ -503,7 +514,7 @@ export default function SolutionRequest() {
 
                     {/* Empty, and so hidden, when the build has no site key. Focusable so a failed attempt can hand focus to the check it now needs. */}
                     <div ref={checkRef} tabIndex={-1} role="group" aria-label={CHECK_LABEL} className="mt-6 empty:hidden" data-testid="request-check">
-                      <TurnstileWidget key={turnstileKey} onVerify={setTurnstileToken} theme="light" />
+                      <TurnstileWidget key={turnstileKey} onVerify={setTurnstileToken} onError={onCheckError} theme="light" />
                     </div>
 
                     <div className="mt-6">

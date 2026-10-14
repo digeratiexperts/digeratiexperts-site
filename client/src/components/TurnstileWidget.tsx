@@ -56,6 +56,9 @@ export default function TurnstileWidget({ onVerify, onError, theme = "dark" }: T
       script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
       script.async = true;
       script.onload = () => renderWidget();
+      // A blocked or unreachable Cloudflare script never calls back otherwise, which
+      // left forms waiting for a token with no way forward (Joe, 2026-10-14).
+      script.onerror = () => onErrorRef.current?.();
       document.head.appendChild(script);
     }
 
