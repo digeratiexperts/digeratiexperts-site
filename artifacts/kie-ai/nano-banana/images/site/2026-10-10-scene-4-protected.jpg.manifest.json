@@ -1,0 +1,22 @@
+{
+  "provider": "kie.ai",
+  "taskId": "41f9b082c36f8ae51374b3a024a4fa9f",
+  "model": "nano-banana-2",
+  "promptFile": "/home/user/digeratiexperts-site/artifacts/kie-ai/nano-banana/prompts/site/2026-10-10-scene-4-protected.json",
+  "input": {
+    "prompt": "{\"prompt\": \"Same diorama, same camera, same composition, same materials and lighting as the reference image. Now the whole network is calm and enclosed: the rim is continuous and unbroken, and several thin concentric bands of smoked glass rise around the office block and its tiles like layered rings, lit from within by a soft violet glow, the outermost band faint and dashed. The etched network lines glow steady cool white. Everything else unchanged. The left 40% of the frame is plain empty black with nothing in it. Absolutely no text, letters or writing anywhere in the image.\", \"negative_prompt\": \"text, letters, numbers, logos, icons, symbols, watermark, people, hands, faces, padlock, shield, laptop, server rack, circuit board, binary code, hologram, neon grid, cyberpunk, matrix, rainbow gradient, lens flare, bokeh balls, plastic toy look, cartoon, busy composition, blurry, distorted geometry, any writing, captions, headlines, typography\"}",
+    "aspect_ratio": "16:9",
+    "resolution": "2K",
+    "output_format": "jpg",
+    "image_input": [
+      "https://tempfile.aiquickdraw.com/workers/images/image_b158d4a180adbf86b8d0120914f197d1.jpg"
+    ]
+  },
+  "resultUrls": [
+    "https://tempfile.aiquickdraw.com/workers/images/image_45a3c57c202f59609126a97948a1a2f5.jpg"
+  ],
+  "creditsConsumed": 12.0,
+  "generatedAt": "2026-10-10T03:55:02.661398+00:00",
+  "classification": "ILLUSTRATIVE",
+  "approvalStatus": "candidate"
+}
