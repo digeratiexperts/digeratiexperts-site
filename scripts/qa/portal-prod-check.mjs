@@ -8,7 +8,7 @@
  *   PORTAL_QA_TOKEN                        optional fallback: the `portalAuth`
  *                                          cookie value from a browser signed
  *                                          in as the test account
- *   PORTAL_QA_BASE                         default https://digeratiexperts.com
+ *   PORTAL_QA_BASE                         default https://portal.digeratiexperts.com
  *   AXE_PATH                               optional path to axe-core's axe.min.js
  *
  * Signs in through the real login page (Cloudflare Turnstile stays on; this
@@ -24,7 +24,11 @@ import { chromium } from "playwright";
 import fs from "node:fs";
 import path from "node:path";
 
-const BASE = (process.env.PORTAL_QA_BASE || "https://digeratiexperts.com").replace(/\/$/, "");
+// The canonical portal host. The apex 301s every /portal/* path here
+// (server/index.ts), so an apex base would leave the HTTP-error filter below
+// (responses under BASE) blind to every portal response, and a host-only
+// PORTAL_QA_TOKEN cookie on the apex would not follow the redirect.
+const BASE = (process.env.PORTAL_QA_BASE || "https://portal.digeratiexperts.com").replace(/\/$/, "");
 const EMAIL = process.env.PORTAL_QA_EMAIL || "";
 const PASSWORD = process.env.PORTAL_QA_PASSWORD || "";
 const TOKEN = process.env.PORTAL_QA_TOKEN || "";
