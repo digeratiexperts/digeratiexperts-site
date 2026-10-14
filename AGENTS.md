@@ -1,6 +1,6 @@
-﻿# Agent workflow (Digerati Experts)
+# Agent workflow (Digerati Experts)
 
-## AI engineering governance â€” mandatory
+## AI engineering governance — mandatory
 
 Authoritative multi-agent policy: **`docs/AI-ENGINEERING-GOVERNANCE.md`**. GitHub-visible active issues + open PRs are the authoritative concurrency locks; **`.ai/ACTIVE_WORK.yaml`** is a mirror only. Required procedure: **`docs/ACTIVE-WORK-COORDINATION.md`**. This policy is mandatory for Claude Code, Cursor, Antigravity/Gemini, ChatGPT-assisted repository work, and other agents.
 
@@ -12,19 +12,19 @@ For visual work, rendered quality is an acceptance gate separate from code corre
 
 Authoritative policy: **`.cursorrules`** (sections 0-42, including section 9A Visual System v2), read through the tier model in **`design/DESIGN-AUTHORITY.md`**. Always-applied pointers: `.cursor/rules/00-follow-cursorrules.mdc`, `.cursor/rules/de-ecosystem.mdc`, `.cursor/rules/agent-governance.mdc`, `.cursor/rules/account-lifecycle.mdc`.
 
-## Design authority â€” tiers and modes
+## Design authority — tiers and modes
 
 `design/DESIGN-AUTHORITY.md` decides how much weight every design rule carries. **Tier 0** (security, truth, accessibility, responsive operability, performance, business/data correctness, functional preservation, engineering governance) and **Tier 1** (brand identity as meaning) hold in every task. **Tier 2** (the current palette, type stack, field ladder, archetypes, primitives, HUD/imagery/motion recipes) is the mandatory default in **Maintenance Mode** and a challengeable starting point in **Exploration Mode**. **Tier 3** (approved/rejected notes, asset inventories, old handoffs, ledgers) is evidence, never authority. Every UI task states its mode. Exploration Mode is entered when Joe asks to redesign, rethink, reimagine, modernize, explore, propose concepts, make it materially better or make it feel different; it requires materially distinct concepts before convergence, keeps Tier 0/1 intact, flags any challenge to a Joe-decided item, and hands integration back to the Product Preservation Law once Joe picks.
 
-## Account Lifecycle Status â€” internal only
+## Account Lifecycle Status — internal only
 
-`docs/ACCOUNT-LIFECYCLE-STATUS.md` (mirror; authority is Hub `.agents/memory/account-lifecycle-status-source-of-truth.md`) defines the 13 canonical account lifecycle values. The field is **governed everywhere and displayed nowhere client-facing**: never on the public website or in client-visible portal UI, client-delivered artifacts, or client-scoped API responses â€” but still fully enforced server-side for authorization, entitlement, gating, automation, and internal/admin UI. Omit it at the serialization boundary; hiding it in the UI is not compliance. Always-applied rule: `.cursor/rules/account-lifecycle.mdc`. Note the naming collision: `/portal/admin/lifecycle` is the **JumpCloud employee identity** lifecycle, a different domain.
+`docs/ACCOUNT-LIFECYCLE-STATUS.md` (mirror; authority is Hub `.agents/memory/account-lifecycle-status-source-of-truth.md`) defines the 13 canonical account lifecycle values. The field is **governed everywhere and displayed nowhere client-facing**: never on the public website or in client-visible portal UI, client-delivered artifacts, or client-scoped API responses — but still fully enforced server-side for authorization, entitlement, gating, automation, and internal/admin UI. Omit it at the serialization boundary; hiding it in the UI is not compliance. Always-applied rule: `.cursor/rules/account-lifecycle.mdc`. Note the naming collision: `/portal/admin/lifecycle` is the **JumpCloud employee identity** lifecycle, a different domain.
 
 Design OS (Tier 2 execution layer, does not replace `.cursorrules`): in Maintenance Mode start with **`design/UI-STYLE-RULES.md`** (current theme/surface/archetype/layout reference), then `.cursor/rules/ui-ux.mdc`, `brand.mdc`, `frontend.mdc`, `visual-system-v2.mdc` + `design/DESIGN_SYSTEM.md` + `design/VISUAL_SYSTEM_V2.md`. In Exploration Mode read the same files as evidence of what exists, not as the boundary. Never judge UI from source code alone. Blog/Journal and Store colors are a Joe-decided Tier 2 direction: `.cursor/rules/blog-store-color-lock.mdc` (Maintenance: keep; Exploration: may propose, Joe ships).
 
 Task ledger: `docs/SITE-VISUAL-TASKS.md` (Tier 3 for design decisions; its ownership rows still coordinate work). Do not start a visual task marked IN PROGRESS by another owner. In Maintenance Mode do not invent HUD/evidence primitives ad hoc.
 
-## Repository authority â€” check this before starting work
+## Repository authority — check this before starting work
 
 - This repository, `digeratiexperts/digeratiexperts-site`, is the **canonical public website repository**.
 - Website work branches from and opens PRs back to this repository's current `main`.
@@ -35,7 +35,7 @@ Task ledger: `docs/SITE-VISUAL-TASKS.md` (Tier 3 for design decisions; its owner
 - Website source-of-truth details: `docs/SOURCE-OF-TRUTH.md`.
 - Ecosystem rule (always apply): `.cursor/rules/de-ecosystem.mdc`. This website is a GitHub-owned **content/application projection**. Intelligence Hub is the **operational control plane**.
 - Canonical identity/location/network rule: Intelligence Hub `docs/de-canonical/08_DE_IDENTITY_LOCATION_NETWORK_STANDARD.md` is authoritative. This repo projects it through `shared/canonicalIdentityLocationNetwork.ts`; DE Tech Tool projects it through `windows/CANONICAL-IDENTITY-LOCATION-NETWORK.md` + `DE.Naming`. Do not invent a different username suffix, privilege-account class, hostname/location code, VLAN convention, or client CIDR rule in website/Store/Portal/Tech Tool code.
-- Ecosystem **scoreboard** is Hub Issue [#122](https://github.com/digeratiexperts/Intelligence-Hub/issues/122) (charter `docs/DE-ECOSYSTEM-CHARTER.md`, ratified PR #123 / `5354a8b`). Do **not** copy ECO-001â€“030 into this repo. Do **not** call the ecosystem finished until #122â€™s completion gate passes.
+- Ecosystem **scoreboard** is Hub Issue [#122](https://github.com/digeratiexperts/Intelligence-Hub/issues/122) (charter `docs/DE-ECOSYSTEM-CHARTER.md`, ratified PR #123 / `5354a8b`). Do **not** copy ECO-001–030 into this repo. Do **not** call the ecosystem finished until #122’s completion gate passes.
 
 If an old Cursor task, chat, PR description, screenshot, or migration note conflicts with current GitHub state and the authority files above, treat the old instruction as stale and re-check before acting.
 
@@ -51,7 +51,7 @@ You are working in a multi-agent repository. Other agents may be modifying the s
 
 1. Fetch the latest `origin/main`.
 2. Read `docs/AI-ENGINEERING-GOVERNANCE.md` and `docs/ACTIVE-WORK-COORDINATION.md`; inspect open ACTIVE/P0/IN PROGRESS GitHub issues, all current open PRs, and relevant remote branches; then inspect `.ai/ACTIVE_WORK.yaml` as a mirror.
-3. Read `design/DESIGN-AUTHORITY.md` and state the task mode (Maintenance or Exploration). Then read `design/BRAND.md`, `DESIGN_SYSTEM.md`, `UX_PRINCIPLES.md`, `IMAGERY.md`, and the Visual System v2 documents â€” as the mandatory system in Maintenance Mode, as evidence of the current system in Exploration Mode.
+3. Read `design/DESIGN-AUTHORITY.md` and state the task mode (Maintenance or Exploration). Then read `design/BRAND.md`, `DESIGN_SYSTEM.md`, `UX_PRINCIPLES.md`, `IMAGERY.md`, and the Visual System v2 documents — as the mandatory system in Maintenance Mode, as evidence of the current system in Exploration Mode.
 4. Read `docs/SITE-VISUAL-TASKS.md`.
 5. Confirm your task has one assigned owner and is not already IN PROGRESS elsewhere.
 6. Work on an isolated branch/worktree.
@@ -68,13 +68,13 @@ A task is not finished until reviewed, merged, production-verified, and marked L
 
 ## Closed loop (UI work)
 
-0. **Visual audit first** â€” read `.cursor/skills/visual-audit/SKILL.md` (and premium-saas-ui / responsive-review / image-art-direction as needed) before changing UI.
-1. **Inspect** â€” existing components, tokens, routes, content (preserve â†’ elevate â†’ consolidate).
-2. **Implement** â€” Maintenance: reuse before inventing. Exploration: diverge into materially distinct concepts first, built as reusable primitives, isolated from production paths until Joe picks. In both: no content or functionality destruction without DE approval.
-3. **Browser verify** â€” Playwright/browser tooling; desktop + tablet + mobile as required (390 / 768 / 1440 minimum).
-4. **Critique** â€” separate UI/UX pass against `.cursorrules` Tier 0/1, the mode's Tier 2 expectations, and `design/approved|rejected` as evidence.
-5. **Repair** â€” fix issues found; re-verify.
-6. **Report done** â€” only after verification + critique + fixes (completion report per sections 40-41).
+0. **Visual audit first** — read `.cursor/skills/visual-audit/SKILL.md` (and premium-saas-ui / responsive-review / image-art-direction as needed) before changing UI.
+1. **Inspect** — existing components, tokens, routes, content (preserve → elevate → consolidate).
+2. **Implement** — Maintenance: reuse before inventing. Exploration: diverge into materially distinct concepts first, built as reusable primitives, isolated from production paths until Joe picks. In both: no content or functionality destruction without DE approval.
+3. **Browser verify** — Playwright/browser tooling; desktop + tablet + mobile as required (390 / 768 / 1440 minimum).
+4. **Critique** — separate UI/UX pass against `.cursorrules` Tier 0/1, the mode's Tier 2 expectations, and `design/approved|rejected` as evidence.
+5. **Repair** — fix issues found; re-verify.
+6. **Report done** — only after verification + critique + fixes (completion report per sections 40-41).
 
 ## Role separation (same agent, distinct passes)
 
@@ -89,6 +89,14 @@ A task is not finished until reviewed, merged, production-verified, and marked L
 
 - Site: `https://digeratiexperts.com`
 - Portal login: `https://portal.digeratiexperts.com/portal/login` (never `//login`)
+
+## Zoho tokens: rules for every agent (mandatory)
+
+The website's Zoho CRM, Desk, Books and Payments run on **one Zoho Connect grant** (`ZOHO_CONNECT_CLIENT_ID`, a Server-based client), approved by Joe on 2026-10-10. Read **`docs/ZOHO-OAUTH-INVENTORY.md` → "Rules for every agent and person"** before any Zoho work. The short version:
+
+- **Never generate grant codes** on the Connect client or on the legacy Self Clients, and never reuse the website's clients in the Hub, scripts or MCP servers. Zoho keeps 20 refresh tokens per client, and the 21st revokes a live one.
+- **All Zoho calls go through `server/zoho/oauth`.** No direct `/oauth/v2/token` calls, no per-request tokens, no hardcoded Zoho hosts, and health checks never request a token.
+- **`degraded` means do nothing**: it is throttling or an outage and recovers by itself. **`needs_reconnect` means Joe clicks `https://digeratiexperts.com/api/zoho/connect`.** Agents never ask for or paste grant codes, tokens or secrets; env var names only.
 
 ## Next steps (out of scope here)
 
@@ -114,7 +122,7 @@ Reusable skill packs live in `.claude/skills/<name>/SKILL.md` (Claude Code disco
 | `trigger-dev`, `trigger-ref` | Trigger.dev automations (in a dedicated Trigger.dev project, never deployed via this repo's CI) | Trigger.dev usage |
 | `msp-ai-kit` | MSP/MSSP operating prompts and instruction packs from `kit.config.json` (ChatGPT, Custom GPT, Claude, Cursor, Copilot); optional clone of external MSP kits into `artifacts/msp-ai-kit/vendor/` | No |
 
-Key handling: `KIE_AI_API_KEY` (and `KIE_API_KEY` for `scripts/kie-assets.mjs`) and `RECRAFT_API_KEY` (paid plan only) come from the environment or the gitignored `.env`; `.env.example` is the template. Never commit, print or paste a key. Generated images are ILLUSTRATIVE candidates under `artifacts/kie-ai/` until they pass `design/IMAGERY.md` review.
+Key handling: `KIE_AI_API_KEY` (`KIE_API_KEY` is accepted as an alias) and `RECRAFT_API_KEY` (paid plan only) come from the environment or the gitignored `.env`; `.env.example` is the template. Never commit, print or paste a key. Generated images are ILLUSTRATIVE candidates under `artifacts/kie-ai/` until they pass `design/IMAGERY.md` review.
 
 ## Content and webmaster tooling (all agents)
 
@@ -123,13 +131,13 @@ Key handling: `KIE_AI_API_KEY` (and `KIE_API_KEY` for `scripts/kie-assets.mjs`) 
 <!-- >>> DE token-discipline (managed; edit in DE\Governance\repo-kit) >>> -->
 ## Token discipline (DE operating standard)
 
-Execution rules for every agent in this repo (Claude / Claude Code, Cursor, ChatGPT / Codex). Company-wide AI spend and routing policy is NOT here â€” it lives in `C:\Users\Joe\DE\Governance\AI-STACK.md`. These rules never override this repo's own instructions above, Completion Program lane ownership, or stop gates.
+Execution rules for every agent in this repo (Claude / Claude Code, Cursor, ChatGPT / Codex). Company-wide AI spend and routing policy is NOT here — it lives in `C:\Users\Joe\DE\Governance\AI-STACK.md`. These rules never override this repo's own instructions above, Completion Program lane ownership, or stop gates.
 
 **Session**
 - One slice = one fresh agent session. Don't let unrelated slices pile into one long conversation.
 - Start from the latest handoff (format: `C:\Users\Joe\DE\Governance\AI-HANDOFF-STANDARD.md`), not from old chat history.
 
-**Declare the slice before significant coding** (a few lines): objective Â· files likely involved Â· acceptance criteria Â· verification/test commands Â· known boundaries.
+**Declare the slice before significant coding** (a few lines): objective · files likely involved · acceptance criteria · verification/test commands · known boundaries.
 
 **Reading**
 - Search first (symbols, routes, functions, tests, docs, references). Open only files the slice needs; read ranges of large files.
@@ -138,7 +146,7 @@ Execution rules for every agent in this repo (Claude / Claude Code, Cursor, Chat
 - Don't open generated output, `node_modules`, media, or evidence/screenshot folders unless the slice is about them. Lockfiles, migrations, schemas and config ARE readable when the slice needs them.
 
 **Two-failure stop rule**
-After two materially failed attempts at the same issue: STOP. No speculative patch cycling. Write a checkpoint with: observed behavior Â· each attempt and why it failed Â· evidence (logs/errors) Â· suspected root cause Â· exact next investigation. Escalate per lane.
+After two materially failed attempts at the same issue: STOP. No speculative patch cycling. Write a checkpoint with: observed behavior · each attempt and why it failed · evidence (logs/errors) · suspected root cause · exact next investigation. Escalate per lane.
 
 **Model economics**
 - Economy/fast models: inventory, repetitive edits, routine refactors, doc formatting, simple test updates, lint cleanup, search/classification.

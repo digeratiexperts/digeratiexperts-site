@@ -22,6 +22,7 @@ import { useSEO } from "@/hooks/useSEO";
 import { photography } from "@/lib/visualAssets";
 import { CTA } from "@/lib/ctaCopy";
 import { PRIMARY_PHONE } from "@/data/companyContact";
+import { TEAM_OWNER } from "@/data/teamProfile";
 
 // What each discipline does. Credentials are not typed here: they come from
 // client/src/data/credentials.ts with the issuer's verification link.
@@ -56,7 +57,7 @@ export default function Team() {
   useSEO({
     title: "Our Team - IT & Security Experts in Chandler, AZ",
     description:
-      "Meet the people behind Digerati Experts: cybersecurity, systems and service-desk work led by founder Joseph Petro, serving Arizona businesses from Chandler.",
+      `Meet the people behind Digerati Experts: cybersecurity, systems and service-desk work led by founder ${TEAM_OWNER.name}, serving Arizona businesses from Chandler.`,
     canonical: "/about/team",
   });
 
@@ -102,11 +103,16 @@ export default function Team() {
           )}
           <div>
             <p className="mb-2 font-mono text-xs font-semibold uppercase tracking-[0.18em] text-de-magenta-ink">
-              Founder
+              {TEAM_OWNER.role}
             </p>
             <h2 className="mb-2 font-heading text-2xl font-semibold text-white">
-              Joseph Petro
+              {TEAM_OWNER.name}
             </h2>
+            {TEAM_OWNER.title && (
+              <p className="mb-2 text-base font-medium text-white/85" data-testid="text-owner-title">
+                {TEAM_OWNER.title}
+              </p>
+            )}
             <p className="text-sm leading-relaxed text-white/70">
               Principal-led cybersecurity and managed IT for Arizona businesses
               — accountable recommendations from the people who stand behind the

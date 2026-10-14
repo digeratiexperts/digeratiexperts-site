@@ -29,10 +29,13 @@ import compression from "compression";
 import { resolveWarehouseStaff } from "./warehouseAccess";
 import { zohoPayments } from "./zohoPayments";
 import { zohoClient } from "./zoho/zohoClient";
+import { zohoHealthStates } from "./zoho/zohoHealth";
 import { evaluatePaymentSucceeded } from "./zohoPaymentWebhook";
 import { setupCrossServiceHandlers } from "./crossServiceHandler";
 import { eventBus, EventTypes } from "./eventBus";
 import { revocationLoadState } from "./portalSessionRevocation";
+import { requestTelemetry } from "./requestTelemetry";
+import { releaseIdentity } from "./releaseIdentity";
 
 process.on('unhandledRejection', (reason, promise) => {
   const errorStr = String(reason);
@@ -40,10 +43,10 @@ process.on('unhandledRejection', (reason, promise) => {
       errorStr.includes('Connection terminated') ||
       errorStr.includes('connection to server')) {
     // Tolerated (transient DB connection drops) but never silent.
-    console.warn('⚠️ Unhandled rejection (database connection, tolerated):', errorStr.slice(0, 200));
+    console.warn('⚠️ Unhandled rejection (database connection, tolerated)');
     return;
   }
-  console.error('Unhandled Rejection:', reason);
+  console.error('Unhandled Rejection');
 });
 
 process.on('uncaughtException', (error) => {
@@ -54,7 +57,7 @@ process.on('uncaughtException', (error) => {
     console.log('⚠️ Database error caught and handled (non-fatal)');
     return;
   }
-  console.error('Uncaught Exception:', error);
+  console.error('Uncaught Exception');
   process.exit(1);
 });
 
@@ -64,6 +67,17 @@ const server = createServer(app);
 // One reverse-proxy hop (OpenLiteSpeed/CyberPanel) in front of the app:
 // required so express-rate-limit and req.ip see the real client address.
 app.set("trust proxy", 1);
+
+// Mount before handlers and parsers so redirects, static files and malformed
+// JSON receive the same private, bounded completion event and response ID.
+app.use(requestTelemetry({
+  info: (event, message) => console.info(JSON.stringify({ level: "info", message, ...event })),
+  warn: (event, message) => console.warn(JSON.stringify({ level: "warn", message, ...event })),
+  error: (event, message) => console.error(JSON.stringify({ level: "error", message, ...event })),
+}, {
+  environment: process.env.NODE_ENV ?? "development",
+  release: releaseIdentity().commit,
+}));
 
 app.use(compression({
   level: 6,
@@ -85,18 +99,10 @@ import { setSecurityHeaders } from "./middleware/security";
 import { registerVersionPreviewRobots } from "./versionPreviewRobots";
 app.use(setSecurityHeaders);
 
-app.use((req, _res, next) => {
-  // Draft ids and references are possession-keyed; they do not belong in plaintext logs.
-  const shown = req.originalUrl.replace(/([?&](?:draftId|reference|sessionId)=)[^&]*/gi, "$1[redacted]");
-  log(`→ ${req.method} ${shown}`);
-  next();
-});
-
 app.all("/api/health", async (_req, res) => {
   const port = process.env.REPLIT_SERVER_PORT || process.env.PORT || "unknown";
   const { databaseAcceptsConnections } = await import("./healthProbe");
   const dbAvailable = await databaseAcceptsConnections();
-  const { releaseIdentity } = await import("./releaseIdentity");
   const openaiConfigured = !!(
     process.env.OPENAI_API_KEY ||
     process.env.OPENAI_API ||
@@ -126,8 +132,13 @@ app.all("/api/health", async (_req, res) => {
         };
       })(),
       // Presence ≠ valid refresh token. auth_failed is set after a live Desk
-      // OAuth refresh rejects the configured refresh token (e.g. invalid_code).
+      // OAuth refresh rejects the configured refresh token (e.g. invalid_code);
+      // degraded when Zoho throttled us or was unreachable (#418). Kept for
+      // existing monitors; `zoho` below is the four-state map.
       zohoDesk: zohoClient.getDeskAuthStatus(),
+      // Token health per product from stored state (no Zoho call): connected,
+      // degraded, needs_reconnect, not_configured, or unknown before first use.
+      zoho: await zohoHealthStates().catch(() => null),
       openai: openaiConfigured ? "configured" : "not_configured",
       // Solution requests waiting on disk for the database (#243). A count, and whether the folder takes writes.
       solutionSpool: { pending: spoolPendingCount(), writable: spoolWritable(spoolDir()) },
@@ -615,7 +626,9 @@ function listEndpoints(): Array<{ method: string; path: string }> {
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
-    log(`✖ ${status} ${err.message || "Internal Server Error"}`);
+    // Error messages can include request bodies, URLs or provider credentials.
+    // The completion event carries the status, route template and request ID.
+    log("✖ Request failed");
     res.status(status).json({ message: err.message || "Internal Server Error" });
   });
 
@@ -692,6 +705,16 @@ function listEndpoints(): Array<{ method: string; path: string }> {
       .then(({ startQuoteReplayWorker }) => startQuoteReplayWorker())
       .catch((error) => {
         log(`⚠️ quote replay worker not started: ${error?.message || error}`);
+      });
+    // Zoho Connect grant presence for the synchronous isConfigured() checks
+    // (server/zoho/oauth). After the database is up; never throws.
+    void Promise.all([import("./db"), import("./zoho/oauth")])
+      .then(async ([{ initPromise }, { refreshZohoConnectSnapshot }]) => {
+        await initPromise;
+        await refreshZohoConnectSnapshot();
+      })
+      .catch((error) => {
+        log(`⚠️ Zoho Connect snapshot not loaded: ${error?.message || error}`);
       });
     // DE Desk tickets the Desk API did not take go in by API once it works (desk-ticket-failover).
     void import("./deskTicketReplayWorker")

@@ -1,6 +1,6 @@
 import { LegalDocumentLayout } from "@/components/LegalDocumentLayout";
 import { FileText, Shield, AlertTriangle, Scale, Clock, DollarSign } from "lucide-react";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PRIMARY_PHONE, formatAddressOneLine } from "@/data/companyContact";
 
 export default function TermsOfUse() {
   const lastUpdated = "November 6, 2025";
@@ -433,7 +433,7 @@ export default function TermsOfUse() {
                 <p className="text-[#1A1228] font-semibold mb-2">Digerati Experts - Legal Department</p>
                 <p className="text-[#3A3448]"><strong className="text-[#1A1228]">Email:</strong> legal@digeratiexperts.com</p>
                 <p className="text-[#3A3448]"><strong className="text-[#1A1228]">Phone:</strong> {PRIMARY_PHONE.display}</p>
-                <p className="text-[#3A3448]"><strong className="text-[#1A1228]">Address:</strong> Chandler, AZ</p>
+                <p className="text-[#3A3448]"><strong className="text-[#1A1228]">Address:</strong> {formatAddressOneLine()}</p>
               </div>
             </div>
 

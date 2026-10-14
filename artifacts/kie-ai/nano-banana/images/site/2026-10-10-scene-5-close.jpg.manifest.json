@@ -1,0 +1,22 @@
+{
+  "provider": "kie.ai",
+  "taskId": "22ed34af02351bf9ec3902287e5c035b",
+  "model": "nano-banana-2",
+  "promptFile": "/home/user/digeratiexperts-site/artifacts/kie-ai/nano-banana/prompts/site/2026-10-10-scene-5-close.json",
+  "input": {
+    "prompt": "{\"prompt\": \"Same diorama as the reference image, later in the evening. The rim is continuous and unbroken; the etched network lines glow a steady, calm cool white; the office block's windows are softly lit warm from inside. A single thin magenta line of light runs across the dark ground from the left edge of the frame to the front of the plinth, like a path leading to the building. Quiet, resolved, welcoming. Everything else unchanged: same diorama, same camera, same composition, same materials and lighting as the reference image. The left 40% of the frame is plain empty black with nothing in it. Absolutely no text, letters or writing anywhere in the image.\", \"negative_prompt\": \"text, letters, numbers, logos, icons, symbols, watermark, any writing, captions, typography, people, hands, faces, padlock, shield, laptop, server rack, circuit board, binary code, hologram, neon grid, cyberpunk, rainbow gradient, lens flare, cartoon, busy composition, blurry, distorted geometry\"}",
+    "aspect_ratio": "16:9",
+    "resolution": "2K",
+    "output_format": "jpg",
+    "image_input": [
+      "https://tempfile.aiquickdraw.com/workers/images/image_b158d4a180adbf86b8d0120914f197d1.jpg"
+    ]
+  },
+  "resultUrls": [
+    "https://tempfile.aiquickdraw.com/workers/images/image_34421b2f472604233dac8656921e0955.jpg"
+  ],
+  "creditsConsumed": 12.0,
+  "generatedAt": "2026-10-10T18:56:52.024964+00:00",
+  "classification": "ILLUSTRATIVE",
+  "approvalStatus": "candidate"
+}

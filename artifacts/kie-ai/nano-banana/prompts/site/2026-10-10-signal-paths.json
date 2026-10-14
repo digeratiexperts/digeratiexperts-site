@@ -1,0 +1,13 @@
+{
+  "prompt": "Three paths from one point. Wide studio photograph, high three-quarter view looking down at a dark floor, 50mm lens, f/8. A smooth graphite floor with three slim grooves cut cleanly into it; all three begin at a single small point at the lower right and diverge in three directions toward the upper right, softly lit from inside by a faint violet glow, one groove very slightly brighter with a magenta edge. Fine brushed metal grain on the floor. Pure black studio environment, physically based materials, realistic contact shadows, deep falloff to black at every frame edge. The left two thirds of the frame stay almost black and empty for overlaid text. Violet is light only, never paint. Restrained, premium, quiet; very low overall brightness.",
+  "negative_prompt": "text, letters, numbers, logos, icons, symbols, watermark, people, hands, faces, padlock, shield, laptop, server rack, circuit board, binary code, hologram, neon grid, cyberpunk, matrix, rainbow gradient, lens flare, bokeh balls, plastic toy look, cartoon, CGI sheen, oversaturated, busy composition, blurry, distorted geometry",
+  "api_parameters": {
+    "resolution": "2K",
+    "output_format": "jpg",
+    "aspect_ratio": "16:9"
+  },
+  "settings": {
+    "style": "premium dark studio photography, physically based materials",
+    "quality": "tack sharp, true material texture, controlled highlights"
+  }
+}
