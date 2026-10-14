@@ -68,7 +68,7 @@ Timus is the secure-access platform. Ask Timus for partner API docs, the auth me
 Use Cytracom’s UCaaS API for this page. Ask them for the base URL, auth method, a sandbox tenant, the extension list, and whether call history and voicemail are in the API. When they send a key, store it as an environment variable taken from their docs. Do not commit the value. ControlOne is the migration item above, not this page.
 
 ### Ship Center (`/portal/ship-center`) — staff-entered tracking
-DE staff enter tracking numbers on a real shipment. ShipStation, EasyPost, and Shippo are not selected. Live rates, labels, and carrier tracking wait on USPS, FedEx, and UPS API keys and account numbers (`SHIPPING_SETUP.md`). Ask those carriers for that access before any live call.
+DE staff enter tracking numbers on a real shipment. ShipStation, EasyPost, and Shippo are not selected. Live rates, labels, and carrier tracking wait on USPS, FedEx, and UPS API keys and account numbers (`server/integrations/shipping/README.md`, "Carrier tracking"). Ask those carriers for that access before any live call.
 
 ### Test login
 Set `PORTAL_QA_EMAIL` and `PORTAL_QA_PASSWORD` as GitHub repository secrets (Settings > Secrets and variables > Actions). Only the manual "Portal production check" workflow (`scripts/qa/portal-prod-check.mjs`) reads them; the portal server does not, and setting them creates no account. The account is for QA. It is not a client company. The values stay out of git. Steps: `docs/runbooks/PORTAL-QA-LOGIN.md`.
