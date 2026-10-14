@@ -19,14 +19,26 @@ import {
   type PublicReviewItem,
   type ReviewSourceId,
 } from "@/data/reviewsCatalog";
+import { publishedCaseStudies } from "@/data/caseStudies";
 import "./07-client-proof.css";
 
 /**
  * 07 · Client proof + Built for accountability (mock: sections/07-client-proof.html).
  * Reviews panel keeps the live honest behaviour of DigeratiTestimonialsSection: the
- * /api/public/reviews fetch with an 8s timeout and catalog fallback; real reviews only,
- * otherwise the verbatim empty state. Never invent reviews.
+ * /api/public/reviews fetch with an 8s timeout and catalog fallback; real reviews only.
+ * Never invent reviews.
+ *
+ * With no entries the feed card, its placeholder note and the intro's review claim are
+ * left out; the leave-a-review QR and a compact case-studies card take the row instead.
+ * Joe dropped the paid review integrations on 2026-10-03, so the feed can stay empty for
+ * a long time and an empty "Client reviews" box read as missing proof (Joe, 2026-10-14).
  */
+
+/** "Google", "Google and Yelp", "Google, Yelp, and Thumbtack". */
+function joinNames(names: string[]): string {
+  if (names.length <= 2) return names.join(" and ");
+  return `${names.slice(0, -1).join(", ")}, and ${names[names.length - 1]}`;
+}
 
 type PublicReviewsResponse = {
   status: "ok" | "empty" | "partial";
@@ -148,6 +160,17 @@ export function V8ClientProof(): JSX.Element {
     [allReviews, activeSource],
   );
   const hasReviews = !loading && displayedReviews.length > 0;
+  // The feed card and the intro's review line need entries to show; while loading and when
+  // empty the section renders the compact row (Joe, 2026-10-14). Keyed on all entries, not
+  // the filtered list, so a source chip with nothing in it keeps the chips on screen.
+  const showFeed = !loading && allReviews.length > 0;
+  const reviewSourceNames = useMemo(
+    () =>
+      Array.from(new Set(allReviews.map((r) => r.source)))
+        .filter((id) => id !== "other")
+        .map((id) => REVIEW_SOURCE_LABELS[id]),
+    [allReviews],
+  );
   const googleMeta = payload?.google;
   const showGoogleAverage =
     hasReviews &&
@@ -223,8 +246,10 @@ export function V8ClientProof(): JSX.Element {
             <span className="v8-accent">Outcomes</span> Arizona businesses hire us for
           </h2>
           <p className="v8-lede">
-            Fewer vendors, clearer security visibility, and accountable support when something breaks — backed by
-            real client reviews from Google, Yelp, and Thumbtack.
+            Fewer vendors, clearer security visibility, and accountable support when something breaks
+            {showFeed
+              ? ` — backed by real client reviews${reviewSourceNames.length ? ` from ${joinNames(reviewSourceNames)}` : ""}.`
+              : "."}
           </p>
         </motion.header>
 
@@ -244,71 +269,65 @@ export function V8ClientProof(): JSX.Element {
           </ul>
         </motion.div>
 
-        {/* (2) Honest reviews panel + case studies */}
-        <motion.div className="proof-pair" {...reveal}>
-          <article
-            className="v8-card v8-card--inset proof-panel"
-            id="google-reviews"
-            aria-labelledby="reviews-title"
-            aria-busy={loading || undefined}
-            data-testid="proof-reviews-slot"
-          >
-            <h3 className="v8-h3" id="reviews-title">
-              Client reviews
-            </h3>
-            {hasReviews ? (
-              <>
-                {showGoogleAverage ? (
+        {/* (2) Honest reviews panel + case studies; without entries, the QR + compact case studies */}
+        <motion.div className={showFeed ? "proof-pair proof-pair--feed" : "proof-pair"} {...reveal}>
+          {showFeed ? (
+            <article
+              className="v8-card v8-card--inset proof-panel"
+              id="google-reviews"
+              aria-labelledby="reviews-title"
+              data-testid="proof-reviews-slot"
+            >
+              <h3 className="v8-h3" id="reviews-title">
+                Client reviews
+              </h3>
+              {showGoogleAverage ? (
+                <p className="proof-sources">
+                  {googleMeta!.rating!.toFixed(1)}
+                  {googleMeta!.userRatingsTotal != null
+                    ? ` · ${googleMeta!.userRatingsTotal} on Google`
+                    : " avg on Google"}
+                </p>
+              ) : (
+                sourceFilters.length === 1 && (
                   <p className="proof-sources">
-                    {googleMeta!.rating!.toFixed(1)}
-                    {googleMeta!.userRatingsTotal != null
-                      ? ` · ${googleMeta!.userRatingsTotal} on Google`
-                      : " avg on Google"}
+                    From {REVIEW_SOURCE_LABELS[sourceFilters[0]!]}
+                    {allReviews.every((r) => r.origin === "catalog") ? " (published with permission)" : ""}
                   </p>
-                ) : (
-                  sourceFilters.length === 1 && (
-                    <p className="proof-sources">
-                      From {REVIEW_SOURCE_LABELS[sourceFilters[0]!]}
-                      {allReviews.every((r) => r.origin === "catalog") ? " (published with permission)" : ""}
-                    </p>
-                  )
-                )}
-                <div className="mt-4">
-                  <ReviewSourceChips sources={sourceFilters} active={activeSource} onChange={setActiveSource} />
-                </div>
-                <div className="mt-4">
-                  <ReviewsCarousel reviews={displayedReviews} prefersReducedMotion={prefersReducedMotion} />
-                </div>
-                {leaveReview}
-                <div className="proof-panel__actions">{listingLinks.map(readUsLink)}</div>
-              </>
-            ) : (
-              <>
-                <p className="proof-sources">Google · Yelp · Thumbtack</p>
-                {loading ? (
-                  <p className="v8-body" role="status">
-                    Loading reviews…
-                  </p>
-                ) : (
-                  <p className="v8-body">
-                    We publish only real client reviews — never placeholders. Highlights from Google, Yelp, and
-                    Thumbtack appear here as a single feed when live API or approved catalog entries are available.
-                  </p>
-                )}
-                {leaveReview}
-                <div className="proof-panel__actions">
-                  {readUsLink({ id: "google", href: mapsHref, label: REVIEW_SOURCE_LABELS.google })}
-                </div>
-              </>
-            )}
-          </article>
+                )
+              )}
+              <div className="mt-4">
+                <ReviewSourceChips sources={sourceFilters} active={activeSource} onChange={setActiveSource} />
+              </div>
+              <div className="mt-4">
+                <ReviewsCarousel reviews={displayedReviews} prefersReducedMotion={prefersReducedMotion} />
+              </div>
+              {leaveReview}
+              <div className="proof-panel__actions">{listingLinks.map(readUsLink)}</div>
+            </article>
+          ) : (
+            <div
+              className="v8-card v8-card--inset proof-panel proof-panel--qr"
+              id="google-reviews"
+              data-testid="proof-reviews-slot"
+            >
+              {leaveReview}
+              <div className="proof-panel__actions">
+                {readUsLink({ id: "google", href: mapsHref, label: REVIEW_SOURCE_LABELS.google })}
+              </div>
+            </div>
+          )}
 
-          <article className="v8-card v8-card--inset proof-panel" aria-labelledby="cases-title">
+          <article className="v8-card v8-card--inset proof-panel proof-panel--cases" aria-labelledby="cases-title">
             <h3 className="v8-h3" id="cases-title">
               Case studies
             </h3>
+            {/* One line. No client story is approved yet (publishedCaseStudies is empty) and the page lists
+                industry frameworks, so the line claims "real engagements" only once one is (Joe, 2026-10-14). */}
             <p className="v8-body">
-              See how we approach real Arizona engagements — challenge, approach, and outcome.
+              {publishedCaseStudies.length
+                ? "See how we approach real Arizona engagements — challenge, approach, and outcome."
+                : "How we approach each industry — challenge, approach, and outcome."}
             </p>
             <div className="proof-panel__actions">
               <Link
