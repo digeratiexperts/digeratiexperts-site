@@ -102,6 +102,9 @@ jobs:
             DESK="$(desk_field '.connected | tostring' 'unreachable')"
           fi
           DESK_REASON="$(desk_field '.reason' 'none')"
+          # connected / degraded (throttled or unreachable, retrying, no new
+          # token) / needs_reconnect (Zoho refused the credential) / not_configured.
+          DESK_STATE="$(desk_field '.state' 'none')"
           DESK_ERROR="$(desk_field '.errorCode' 'none')"
 
           # Everything below treats the response as untrusted, because a workflow
@@ -118,6 +121,7 @@ jobs:
           UPTIME="$(scalar "$UPTIME")"
           DESK="$(scalar "$DESK")"
           DESK_REASON="$(scalar "$DESK_REASON")"
+          DESK_STATE="$(scalar "$DESK_STATE")"
           DESK_ERROR="$(scalar "$DESK_ERROR")"
 
           # Body: capped, then base64 on one line, so there is no delimiter to
@@ -134,9 +138,10 @@ jobs:
           echo "body_b64=$(printf '%s' "$BODY_CAPPED" | base64 -w0)" >> "$GITHUB_OUTPUT"
           echo "desk=$DESK"               >> "$GITHUB_OUTPUT"
           echo "desk_reason=$DESK_REASON" >> "$GITHUB_OUTPUT"
+          echo "desk_state=$DESK_STATE"   >> "$GITHUB_OUTPUT"
           echo "desk_error=$DESK_ERROR"   >> "$GITHUB_OUTPUT"
 
-          echo "database=$DB status=$STATUS uptime=$UPTIME truncated=$TRUNCATED desk=$DESK reason=$DESK_REASON error=$DESK_ERROR"
+          echo "database=$DB status=$STATUS uptime=$UPTIME truncated=$TRUNCATED desk=$DESK reason=$DESK_REASON state=$DESK_STATE error=$DESK_ERROR"
 
       - name: File or clear the health issue
         uses: actions/github-script@v7
@@ -148,12 +153,13 @@ jobs:
           TRUNCATED: ${{ steps.probe.outputs.truncated }}
           DESK: ${{ steps.probe.outputs.desk }}
           DESK_REASON: ${{ steps.probe.outputs.desk_reason }}
+          DESK_STATE: ${{ steps.probe.outputs.desk_state }}
           DESK_ERROR: ${{ steps.probe.outputs.desk_error }}
         with:
           script: |
             const MARKER = 'Production database is not connected';
             const DESK_MARKER = 'Production support desk is unreachable';
-            const { DB, STATUS, UPTIME, BODY_B64, TRUNCATED, DESK, DESK_REASON, DESK_ERROR } = process.env;
+            const { DB, STATUS, UPTIME, BODY_B64, TRUNCATED, DESK, DESK_REASON, DESK_STATE, DESK_ERROR } = process.env;
 
             // Decoded here rather than passed raw: see the probe step's note on
             // why the body never travels through a delimiter.
@@ -191,9 +197,11 @@ jobs:
               }
             } else {
               const deskBody = [
-                `\`GET /api/zoho/desk/status\` reads **\`connected: ${DESK}\`** (reason \`${DESK_REASON}\`, Zoho errorCode \`${DESK_ERROR}\`). Confirmed by a second probe 75s after the first.`,
+                `\`GET /api/zoho/desk/status\` reads **\`connected: ${DESK}\`** (state \`${DESK_STATE}\`, reason \`${DESK_REASON}\`, Zoho errorCode \`${DESK_ERROR}\`). Confirmed by a second probe 75s after the first.`,
                 '',
-                'The site keeps serving pages. What breaks is the DE Desk **Get Support** tab: every ticket submission answers 503 "temporarily unavailable" until the desk credential works again. The usual cause is the Zoho Desk refresh token in `/home/digeratiexperts.com/shared/.env` (expired, revoked, or without Desk scopes: `invalid_code`). Rotating it is an operator action, never a code change.',
+                DESK_STATE === 'degraded'
+                  ? 'State `degraded`: Zoho is throttling the server or is unreachable. The credential is fine and the server retries on its own with a backoff; do not generate a new token. This issue closes itself when Zoho answers again.'
+                  : 'The site keeps serving pages. The DE Desk **Get Support** tab sends tickets through the fallback (email into the Desk, replayed later) until the Desk API works again. State `needs_reconnect` (reason `auth_failed`) means Zoho refused the credential: follow the reconnect runbook in `docs/ZOHO-OAUTH-INVENTORY.md`. Rotating it is an operator action, never a code change.',
                 '',
                 `Run: ${runUrl}`,
               ].join('\n');

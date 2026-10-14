@@ -314,7 +314,7 @@ export const notificationService = {
     const content = `
       <h2>Quote Request Received</h2>
       <p>Hi ${escapeEmailHtml(data.name)},</p>
-      <p>Thank you for your quote request. We've received it and will get back to you within 24 hours.</p>
+      <p>Thank you for your quote request. We've received it and will get back to you within one business day.</p>
       <p><strong>Quote ID:</strong> <span class="highlight">${escapeEmailHtml(data.quoteId)}</span></p>
       <table style="width: 100%; margin: 20px 0; border-collapse: collapse;">
         <tr style="background: #1a1a2e;"><th style="padding: 12px; text-align: left;">Item</th><th style="padding: 12px; text-align: right;">Price</th></tr>

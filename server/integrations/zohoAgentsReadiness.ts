@@ -20,7 +20,9 @@ export type ZohoAgentEventName = (typeof ZOHO_AGENT_EVENT_NAMES)[number];
 
 /**
  * Scopes already implied by existing DE OAuth clients. Do not rotate tokens.
- * Website Desk/CRM use ZOHO_CLIENT_ID_API + ZOHO_REFRESH_TOKEN / DESK refresh.
+ * Website CRM uses ZOHO_CLIENT_ID_API + ZOHO_REFRESH_TOKEN; website Desk uses
+ * ZOHO_DESK_CLIENT_ID/_SECRET + ZOHO_DESK_REFRESH_TOKEN, or the CRM client when
+ * no Desk client is set (server/zoho/zohoClient.ts resolveDeskOAuthConfig).
  * Hub CRM/Desk use integration_tokens / ZOHO_CRM_* / ZOHO_DESK_*.
  */
 export const ZOHO_EXISTING_SCOPES = {
