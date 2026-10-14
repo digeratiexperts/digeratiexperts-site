@@ -136,6 +136,87 @@ body.de-portal-scope[data-portal-theme="light"] [data-sidebar="sidebar"] {
   --accent-foreground: 270 20% 96%;
 }
 
+/*
+ * Admin console theme (Joe, 2026-10-14: "a dark theme that is like Entra and IT
+ * dashboards"). Opt-in from the user menu; graphite dark stays the default. The
+ * admin-centre grammar: true neutral greys with no violet cast (rail one step
+ * below the page, cards one step above), a single blue accent for actions,
+ * links, focus and the selected nav bar, 4px corners, the system UI face, and
+ * a selected nav item marked by a left bar instead of the near-white pill.
+ * Category colours keep their dark-field values.
+ */
+.de-portal[data-theme="console"],
+body.de-portal-scope[data-portal-theme="console"] {
+  --background: 0 0% 12%;            /* #1f1f1f page */
+  --foreground: 0 0% 96%;            /* #f5f5f5 */
+  --card: 0 0% 16%;                  /* #292929 one step up */
+  --card-foreground: 0 0% 96%;
+  --popover: 0 0% 18%;               /* #2e2e2e */
+  --popover-foreground: 0 0% 96%;
+  --muted: 0 0% 20%;                 /* #333333 */
+  --muted-foreground: 0 0% 70%;      /* #b3b3b3 ~5.9:1 on the well */
+  --border: 0 0% 24%;                /* #3d3d3d */
+  --input: 0 0% 43%;                 /* #6e6e6e field edge, 3:1 on the page */
+  --ring: 210 90% 62%;               /* #479ef5 */
+  --primary: 207 85% 40%;            /* #0f6cbd action blue, white text 5.4:1 */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 0 0% 20%;
+  --secondary-foreground: 0 0% 96%;
+  --accent: 0 0% 21%;                /* #363636 hover */
+  --accent-foreground: 0 0% 96%;
+  --destructive: 357 72% 47%;        /* #c42b31 */
+  --destructive-foreground: 0 0% 100%;
+  --radius: 0.25rem;
+
+  --sidebar-background: 0 0% 8%;    /* #141414 rail, one step below the page */
+  --sidebar-foreground: 0 0% 84%;
+  --sidebar-primary: 207 85% 40%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 0 0% 15%;        /* rail hover */
+  --sidebar-accent-foreground: 0 0% 100%;
+  --sidebar-border: 0 0% 18%;
+  --sidebar-ring: 210 90% 62%;
+
+  --pt-ok: 84 214 140;               /* #54d68c */
+  --pt-warn: 252 200 74;             /* #fcc84a */
+  --pt-bad: 255 145 145;             /* #ff9191 */
+  --pt-info: 125 199 255;            /* #7dc7ff */
+  --pt-brand: 117 184 247;           /* #75b8f7 blue ink */
+
+  --pt-topbar: 0 0% 12% / 0.9;
+  /* Buttons, toggles and inks that use the brand magenta tokens directly turn blue here. */
+  --de-magenta: #0f6cbd;             /* white text 5.4:1 */
+  --de-magenta-hover: #115ea3;
+  --de-magenta-ink: #75b8f7;
+  --pt-console-face: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, "Inter", sans-serif;
+  font-family: var(--pt-console-face);
+}
+/* Console headings drop the display face and its tight tracking for the same UI face, semibold. */
+:is(.de-portal[data-theme="console"], body.de-portal-scope[data-portal-theme="console"]) :is(h1, h2, h3, h4, h5, h6, .font-heading) {
+  font-family: var(--pt-console-face);
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+/* Console corners: cards and wells sit at 6px and 4px instead of the 12px / 8px Tailwind steps. */
+.de-portal[data-theme="console"] .rounded-xl,
+body.de-portal-scope[data-portal-theme="console"] .rounded-xl { border-radius: 6px; }
+.de-portal[data-theme="console"] .rounded-lg,
+body.de-portal-scope[data-portal-theme="console"] .rounded-lg { border-radius: 4px; }
+
+/* Console: the selected nav item is a lighter row with a blue bar on its left edge. */
+:is(.de-portal[data-theme="console"], body.de-portal-scope[data-portal-theme="console"]) .pt-active-nav[data-active="true"],
+:is(.de-portal[data-theme="console"], body.de-portal-scope[data-portal-theme="console"]) .pt-active-nav[data-active="true"]:hover {
+  background: hsl(0 0% 18%);
+  color: hsl(0 0% 100%);
+  box-shadow: inset 3px 0 0 hsl(210 90% 62%);
+  --pt-ok: 84 214 140;
+  --pt-warn: 252 200 74;
+  --pt-bad: 255 145 145;
+  --pt-info: 125 199 255;
+  --pt-brand: 117 184 247;
+}
+
 /* The marketing scale lifts text-sm to 16px for long-form pages. A working
    portal needs the standard scale back: 14px UI text, 12px captions. */
 :is(.de-portal, .de-portal-scope) .text-sm { font-size: 0.875rem; line-height: 1.25rem; }

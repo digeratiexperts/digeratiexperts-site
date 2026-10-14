@@ -8,6 +8,7 @@ import { useMinWidth, useSolutionDraft } from "@/hooks/useSolutionDraft";
 import { Door2Frame } from "@/components/store/door2/Door2Frame";
 import { HelpRow, StoreAction, StoreChapter } from "@/components/store/door2/primitives";
 import { OfflinePanel, type OfflineKind } from "@/components/store/door2/OfflinePanel";
+import TurnstileWidget, { turnstileActive } from "@/components/TurnstileWidget";
 import { getFamilyBySlug, SOLUTION_WORKSPACE_PATH, STORE_STEPS, submittedPath } from "@/lib/businessNeeds";
 import {
   addDraftNeed,
@@ -52,6 +53,9 @@ const PRIMARY_SENDING = "Sending…";
 const OPEN_RELATIONSHIP = "Left with DE to recommend";
 const REASON_NO_NEEDS = "Add at least one need first";
 const BACK_LABEL = "Back to Your Solution";
+const CHECK_LABEL = "Security check";
+const REASON_CHECK = "Complete the security check above first";
+const CHECK_FAILED = "The security check didn't go through. Complete it again, then submit.";
 
 type FieldSpec = {
   key: PublicContactField;
@@ -172,6 +176,15 @@ export default function SolutionRequest() {
   const [problems, setProblems] = useState<Problems>({});
   const [formError, setFormError] = useState("");
   const [honeypot, setHoneypot] = useState("");
+  // Cloudflare Turnstile (Joe, 2026-10-14): the POST runs verifyTurnstile, like
+  // portal sign-in. A token is single-use, so any attempt that does not end on
+  // the confirmation remounts the widget for a fresh one.
+  const [turnstileToken, setTurnstileToken] = useState("");
+  const [turnstileKey, setTurnstileKey] = useState(0);
+  const resetTurnstile = () => {
+    setTurnstileToken("");
+    setTurnstileKey((k) => k + 1);
+  };
   const [requestId, setRequestId] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [offline, setOffline] = useState<OfflineKind | null>(null);
@@ -182,6 +195,7 @@ export default function SolutionRequest() {
   }, [draft.updatedAt]);
   const inputs = useRef<Partial<Record<PublicContactField, HTMLInputElement | null>>>({});
   const lastKey = useRef<string | null>(null);
+  const checkRef = useRef<HTMLDivElement>(null);
 
   /* A `?family=` link seeds an EMPTY draft only, then lands on the workspace so the buyer sees the package before signing. */
   useEffect(() => {
@@ -226,6 +240,8 @@ export default function SolutionRequest() {
           ? "Finish Your Solution: relationship"
           : serverBlock;
   const blocked = blockedReason !== null;
+  // Only a real widget is waited for: without a site key the token arrives on mount.
+  const awaitingCheck = turnstileActive && !turnstileToken;
   const primaryLabel = sending ? PRIMARY_SENDING : relationship === "unsure" ? PRIMARY_RECOMMEND : PRIMARY_SUBMIT;
   const packageCount = packages.length;
   const disclosureLabel = `What you're sending (${packageCount} ${packageCount === 1 ? "package" : "packages"})`;
@@ -239,6 +255,11 @@ export default function SolutionRequest() {
       delete next[key];
       return next;
     });
+  };
+
+  /* Submit is disabled while a fresh check is pending, and a disabled control drops focus: hand it to the check instead. */
+  const focusCheck = () => {
+    if (turnstileActive) checkRef.current?.focus();
   };
 
   const placeProblems = (next: Problems) => {
@@ -261,6 +282,7 @@ export default function SolutionRequest() {
     setSending(true);
     // The OfflinePanel stays mounted through a retry (its Try again shows "Sending…"); it clears on an answer.
     setFormError("");
+    let accepted = false;
     try {
       const response = await fetch(REQUEST_ENDPOINT, {
         method: "POST",
@@ -283,6 +305,7 @@ export default function SolutionRequest() {
           contactPhone: contact.contactPhone,
           idempotencyKey: key,
           company_website: honeypot,
+          turnstileToken,
         }),
       });
       const data: Record<string, unknown> = await response.json().catch(() => ({}));
@@ -301,6 +324,7 @@ export default function SolutionRequest() {
           replayed: data.replayed === true,
         });
         archiveSubmittedDraft(archive);
+        accepted = true;
         navigate(submittedPath(reference));
         return;
       }
@@ -327,6 +351,12 @@ export default function SolutionRequest() {
           );
           return;
         }
+        // verifyTurnstile's two answers: the check expired, was spent, or never ran.
+        if (/^Bot verification/.test(message)) {
+          setFormError(CHECK_FAILED);
+          focusCheck();
+          return;
+        }
         const local = publicContactProblems(contact);
         if (Object.keys(local).length) {
           placeProblems(local);
@@ -338,19 +368,22 @@ export default function SolutionRequest() {
           return;
         }
         setFormError(message || "DE couldn't take this yet. Check the four fields and try again.");
+        focusCheck();
         return;
       }
       setFormError(message || "DE couldn't take this yet. Try again in a moment.");
+      focusCheck();
     } catch {
       setOffline("network");
     } finally {
       setSending(false);
+      if (!accepted) resetTurnstile();
     }
   };
 
   const onSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (sending || blocked) return;
+    if (sending || blocked || awaitingCheck) return;
     const contact = trimFields(fields);
     const local = publicContactProblems(contact);
     if (Object.keys(local).length) {
@@ -364,8 +397,31 @@ export default function SolutionRequest() {
     void send(key);
   };
 
+  // The check could not load or run: show the email fallback instead of a Submit that can never enable.
+  const onCheckError = () => {
+    setTurnstileToken("");
+    setOffline("check");
+  };
+  // Turnstile retries some errors on its own; a token that arrives later clears the "couldn't load" panel.
+  const onCheckVerify = (token: string) => {
+    setTurnstileToken(token);
+    setOffline((current) => (current === "check" ? null : current));
+  };
+
   const onRetry = () => {
     if (sending) return;
+    if (offline === "check") {
+      setOffline(null);
+      resetTurnstile();
+      // The panel (and its focused button) unmounts; keep focus on the check that replaces it.
+      focusCheck();
+      return;
+    }
+    // Try again stays enabled (see OfflinePanel); until the fresh check passes it points there rather than send a spent token.
+    if (awaitingCheck) {
+      focusCheck();
+      return;
+    }
     void send(lastKey.current ?? `${ensureSubmitAttemptId()}|${fields.contactEmail.trim().toLowerCase()}`);
   };
 
@@ -463,12 +519,17 @@ export default function SolutionRequest() {
                       </p>
                     ) : null}
 
+                    {/* Empty, and so hidden, when the build has no site key. Focusable so a failed attempt can hand focus to the check it now needs. */}
+                    <div ref={checkRef} tabIndex={-1} role="group" aria-label={CHECK_LABEL} className="mt-6 empty:hidden" data-testid="request-check">
+                      <TurnstileWidget key={turnstileKey} onVerify={onCheckVerify} onError={onCheckError} theme="light" />
+                    </div>
+
                     <div className="mt-6">
                       {offline ? (
                         <OfflinePanel kind={offline} onRetry={onRetry} mailto={buildMailto(rows, fields)} retrying={sending} />
                       ) : (
                         <>
-                          <StoreAction type="submit" variant="primary" block disabled={blocked} reason={blockedReason ?? undefined} ariaBusy={sending} testId="submit-solution">
+                          <StoreAction type="submit" variant="primary" block disabled={blocked || awaitingCheck} reason={blockedReason ?? (awaitingCheck ? REASON_CHECK : undefined)} ariaBusy={sending} testId="submit-solution">
                             {primaryLabel}
                           </StoreAction>
                           {blocked ? (

@@ -18,6 +18,8 @@ const clients = [
   { id: "c1", companyName: "Acme" },
   { id: "c2", companyName: "Bluebird Dental" },
 ];
+const jc = { configured: true, calls: [] as string[] };
+
 const people = [
   { id: "u1", clientId: "c1", fullName: "Dana Ruiz", email: "dana@acme.test", departmentId: "d1" },
   { id: "u2", clientId: "c1", fullName: "Lee Park", email: "lee@acme.test", departmentId: null },
@@ -45,6 +47,18 @@ describe("license patch bay routes", () => {
       listClientUsers: (clientId) => people.filter((p) => p.clientId === clientId),
       listDepartments: async (clientId) => (clientId === "c1" ? [{ id: "d1", name: "Sales" }] : []),
       fetchHubCatalog: async () => ({ status: "CONNECTED", skus: [{ sku: "DE-MIT-PRO", name: "Managed IT Pro", category: "Managed IT" }] }),
+      jumpcloud: {
+        configured: () => jc.configured,
+        ensureChocoApp: async (name, pkg, orgId) => {
+          jc.calls.push(`app:${pkg}:${orgId ?? "-"}`);
+          return { ok: true, id: `app-${pkg}` };
+        },
+        associate: async (appId, target, orgId) => {
+          jc.calls.push(`bind:${appId}:${target.type}:${target.id}:${orgId ?? "-"}`);
+          return { ok: true };
+        },
+        findSystem: async (name) => (name === "FRONT-01" ? { ok: true, id: "sys-front" } : { ok: false, error: `No JumpCloud machine named ${name}` }),
+      },
     });
     server = createServer(app);
     await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
@@ -59,6 +73,8 @@ describe("license patch bay routes", () => {
 
   beforeEach(async () => {
     (await import("./licenseBoardStore"))._resetLicenseBoardMemory();
+    jc.configured = true;
+    jc.calls.length = 0;
   });
 
   const call = async (method: string, path: string, body?: object, user: object | null = ADMIN) => {
@@ -173,5 +189,53 @@ describe("license patch bay routes", () => {
     const itemId = (await call("POST", "/items", { vendor: "Huntress", product: "Managed EDR", quantity: 5 })).body.item.id;
     await call("POST", "/allocate", { itemId, clientId: "c1", quantity: 1 });
     expect((await call("POST", "/clients/c1/assign", { itemId, targetType: "device", targetId: "device:*" })).status).toBe(400);
+  });
+
+  it("previews JumpCloud installs, sends only on request, and logs what JumpCloud answered", async () => {
+    const zip = (await call("POST", "/items", { kind: "app", vendor: "Igor Pavlov", product: "7-Zip", category: "Baseline apps", chocoPackage: "7zip" })).body.item.id;
+    await call("POST", "/allocate", { itemId: zip, clientId: "c1" });
+    await call("POST", "/clients/c1/assign", { itemId: zip, targetType: "device", targetId: "device:*" });
+    await call("POST", "/clients/c1/assign", { itemId: zip, targetType: "device", label: "FRONT-01" });
+    await call("POST", "/clients/c1/assign", { itemId: zip, targetType: "device", label: "GHOST-99" });
+
+    let view = (await call("GET", "/clients/c1/jumpcloud")).body;
+    expect(view.configured).toBe(true);
+    expect(view.plan.find((st: any) => st.target.kind === "group").reason).toMatch(/device group/);
+    expect(jc.calls).toHaveLength(0);
+
+    expect((await call("PUT", "/clients/c1/jumpcloud", { orgId: "not an id!" })).status).toBe(400);
+    expect((await call("PUT", "/clients/c1/jumpcloud", { orgId: "org5f1e2d3c4b", systemGroupId: "grp9a8b7c6d" })).status).toBe(200);
+    view = (await call("GET", "/clients/c1/jumpcloud")).body;
+    expect(view.plan.filter((st: any) => st.status === "ready")).toHaveLength(3);
+
+    const push = (await call("POST", "/clients/c1/jumpcloud/push")).body;
+    expect(push).toMatchObject({ sent: 2, failed: 1 });
+    expect(jc.calls).toContain("bind:app-7zip:system_group:grp9a8b7c6d:org5f1e2d3c4b");
+    expect(jc.calls).toContain("bind:app-7zip:system:sys-front:org5f1e2d3c4b");
+    const log = (await call("GET", "/clients/c1/jumpcloud")).body.pushes;
+    expect(log.find((p: any) => p.targetLabel === "GHOST-99")).toMatchObject({ ok: false, detail: expect.stringMatching(/No JumpCloud machine/) });
+
+    jc.configured = false;
+    expect((await call("POST", "/clients/c1/jumpcloud/push")).status).toBe(409);
+    expect((await call("POST", "/clients/c1/jumpcloud/push", undefined, CLIENT_ADMIN)).status).toBe(403);
+  });
+
+  it("applies a starter kit once: parts into the pool, apps on and on every machine, licences only recommended", async () => {
+    const kits = (await call("GET", "/kits")).body.kits;
+    expect(kits.map((k: any) => k.key)).toEqual(["regular", "regulated", "gcc-high"]);
+
+    const first = (await call("POST", "/clients/c1/kit", { kit: "regular" })).body;
+    expect(first.appsOn).toBeGreaterThan(3);
+    expect(first.onEveryMachine).toBe(first.appsOn);
+    expect(first.recommended.map((r: any) => r.product)).toContain("Microsoft 365 Business Premium");
+
+    const again = (await call("POST", "/clients/c1/kit", { kit: "regular" })).body;
+    expect(again).toMatchObject({ addedToPool: 0, appsOn: 0, onEveryMachine: 0 });
+
+    const board = (await call("GET", "")).body;
+    const bp = board.items.find((i: any) => i.product === "Microsoft 365 Business Premium");
+    expect(bp).toMatchObject({ quantity: 0, allocated: 0 });
+    expect(board.clients.find((c: any) => c.id === "c1").seats.some((s: any) => s.itemId === bp.id)).toBe(false);
+    expect((await call("POST", "/clients/c1/kit", { kit: "nope" })).status).toBe(400);
   });
 });

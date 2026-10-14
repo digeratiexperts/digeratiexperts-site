@@ -49,11 +49,13 @@
 .v8 .v8s-16 .foot__name { margin-top: 18px; font-family: var(--v8-font-heading); font-weight: 600; font-size: 17px; color: #fff; }
 .v8 .v8s-16 .foot__line { margin-top: 2px; font-size: 15px; line-height: 1.5; color: var(--v8-muted-soft); }
 .v8 .v8s-16 .foot__head { margin: 0 0 2px; line-height: 1.4; }
-.v8 .v8s-16 .foot__col a { display: inline-flex; align-items: center; min-height: 44px; line-height: 1.4; font-size: 15px; color: var(--v8-muted-soft); }
-.v8 .v8s-16 .foot__col a { text-decoration: underline; text-decoration-color: transparent; text-decoration-thickness: 1px; text-underline-offset: 4px;
+/* Footer phone + email (Joe, 2026-10-14): the column links' look and 44px tap rows. */
+.v8 .v8s-16 .foot__reach { display: flex; flex-direction: column; align-items: flex-start; margin-top: 6px; font-style: normal; }
+.v8 .v8s-16 .foot__col a, .v8 .v8s-16 .foot__reach a { display: inline-flex; align-items: center; min-height: 44px; line-height: 1.4; font-size: 15px; color: var(--v8-muted-soft); }
+.v8 .v8s-16 .foot__col a, .v8 .v8s-16 .foot__reach a { text-decoration: underline; text-decoration-color: transparent; text-decoration-thickness: 1px; text-underline-offset: 4px;
     transition: color 150ms cubic-bezier(0.4, 0, 0.2, 1), text-decoration-color 150ms cubic-bezier(0.4, 0, 0.2, 1); }
-.v8 .v8s-16 .foot__col a:hover { color: #fff; text-decoration-color: var(--v8-magenta); }
-.v8 .v8s-16 .foot__col a:focus-visible { outline: 2px solid var(--v8-magenta); outline-offset: 2px; }
+.v8 .v8s-16 .foot__col a:hover, .v8 .v8s-16 .foot__reach a:hover { color: #fff; text-decoration-color: var(--v8-magenta); }
+.v8 .v8s-16 .foot__col a:focus-visible, .v8 .v8s-16 .foot__reach a:focus-visible { outline: 2px solid var(--v8-magenta); outline-offset: 2px; }
 .v8 .v8s-16 .foot__news { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 460px); column-gap: 32px; align-items: center; margin-top: 28px; padding: 20px 0; border-top: 1px solid var(--v8-hairline); }
 .v8 .v8s-16 .foot__news p { margin-top: 4px; font-size: 15px; color: var(--v8-muted-soft); }
 .v8 .v8s-16 .foot__form { display: flex; gap: 8px; }

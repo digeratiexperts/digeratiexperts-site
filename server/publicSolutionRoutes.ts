@@ -9,6 +9,7 @@ import {
 } from "../client/src/lib/businessNeeds";
 import { eventBus, EventTypes } from "./eventBus";
 import { apiGeneralRateLimiter } from "./middleware/rateLimiter";
+import { verifyTurnstile } from "./middleware/security";
 import { syncPublicSolutionRequestToCrm } from "./publicSolutionRequestCrm";
 import { durablePersistenceAvailable } from "./publicSolutionRequestPersistence";
 import { saveOutsideDatabase, solutionLeadEvent } from "./publicSolutionFallback";
@@ -202,7 +203,12 @@ export function registerPublicSolutionRoutes(app: Express): void {
     });
   });
 
-  app.post("/api/public/solutions/request", submitRateLimiter, async (req, res) => {
+  // The Store's contact step carries a Cloudflare Turnstile token (Joe, 2026-10-14).
+  // Same middleware, and so the same policy, as portal sign-in and sign-up: once
+  // TURNSTILE_SECRET_KEY is set a missing or failed token is refused with a 400
+  // before anything is stored; without the secret it lets the submit through
+  // (TURNSTILE_ENFORCE=1 refuses instead), so local dev and tests still work.
+  app.post("/api/public/solutions/request", submitRateLimiter, verifyTurnstile, async (req, res) => {
     const sessionId = ensureSession(req, res);
     if (honeypotTripped(req.body)) {
       return res.status(400).json({ code: "CONTACT_REQUIRED", error: "Company, name, email, and phone are required." });
