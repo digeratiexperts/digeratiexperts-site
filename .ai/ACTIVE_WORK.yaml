@@ -3340,10 +3340,11 @@ claims:
       client rule. Production runs 660a4dbf, which contains both. At 18:51Z
       /api/zoho/desk/status read connected true and /api/health read
       zohoDesk ok (zoho.desk connected, zoho.crm connected); deskTicketSpool
-      pending 0, so nothing is waiting to replay. A ticket created through the
-      Desk API after the fix is still to be seen (Joe to send one through Get
-      Support; the newest Desk ticket at 18:55Z was #132 of 10/03). VERIFIED
-      LIVE. Files released.
+      pending 0, so nothing is waiting to replay. Tickets created by the
+      website after the fix reached Desk: #133 to #136, channel Web, created
+      2026-10-12, seen read-only in Zoho Desk (org 641745124) on 2026-10-13;
+      the newest before the fix was #132 of 10/03. VERIFIED LIVE. Files
+      released.
   - id: t7-desk-alamo-link
     owner: claude
     subsystem: de-desk-admin-scripts
