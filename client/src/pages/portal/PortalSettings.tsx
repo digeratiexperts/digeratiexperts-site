@@ -8,6 +8,7 @@ import { portalFetch, portalGet } from "@/lib/portalApi";
 import { useToast } from "@/hooks/use-toast";
 import { Field, Panel } from "@/components/portal/ui";
 import { ProvisioningStatusPanel } from "@/components/portal/ProvisioningStatus";
+import { PortalAppearanceSettings } from "@/components/portal/shell/PortalAppearanceSettings";
 
 type ProfileManager = { id: string; email: string; fullName: string };
 
@@ -133,8 +134,9 @@ export default function PortalSettings() {
   };
 
   return (
-    <PortalLayout title="Settings" description="Your profile, sign-in security and notification preferences." width="default">
+    <PortalLayout title="Settings" description="Your appearance, profile, sign-in security and notification preferences." width="default">
       <div className="max-w-2xl space-y-4">
+        <PortalAppearanceSettings />
         <Panel id="settings-profile" title="Profile information" description="Update your personal details">
           <form onSubmit={handleSaveProfile} className="space-y-5">
             <Field label="Full name" htmlFor="settings-fullname">

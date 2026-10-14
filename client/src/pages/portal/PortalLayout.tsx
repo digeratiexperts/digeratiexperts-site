@@ -1,4 +1,4 @@
-import { type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
+import { type ReactNode, useCallback, useMemo, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { LogOut, Search } from "lucide-react";
 import "@/styles/portal.css";
@@ -29,7 +29,7 @@ import { findNavItem, isNavItemActive, navGroupsFor } from "@/components/portal/
 import { usePortalIntegrations } from "@/lib/portalIntegrations";
 import { resetPortalSession, usePortalSession } from "@/components/portal/shell/portalSession";
 import { AdminModeSwitch } from "@/components/portal/AdminModeSwitch";
-import { isDarkPortalTheme, usePortalTheme } from "@/components/portal/shell/portalTheme";
+import { isDarkPortalTheme, usePortalAppearance } from "@/components/portal/shell/portalTheme";
 import { PortalCommandPalette } from "@/components/portal/shell/PortalCommandPalette";
 import { PortalActivityPopover } from "@/components/portal/shell/PortalActivityPopover";
 import { PortalUserMenu, initialsOf, roleLabel } from "@/components/portal/shell/PortalUserMenu";
@@ -78,18 +78,7 @@ export function PortalLayout({
 }: PortalLayoutProps) {
   const [location] = useLocation();
   const { ready, user } = usePortalSession();
-  const [theme, themePreference, setThemePreference] = usePortalTheme();
-  // Portalled overlays (dialogs, menus, popovers) render into <body>; give
-  // <body> the portal token scope while a portal page is mounted.
-  useEffect(() => {
-    const body = document.body;
-    body.classList.add("de-portal-scope");
-    body.dataset.portalTheme = theme;
-    return () => {
-      body.classList.remove("de-portal-scope");
-      delete body.dataset.portalTheme;
-    };
-  }, [theme]);
+  const { theme, themePreference, setThemePreference } = usePortalAppearance();
   const [paletteOpen, setPaletteOpen] = useState(false);
   const impersonatingCompany = readImpersonatingCompany();
   usePortalHubEvents();

@@ -4,10 +4,12 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { AlertCircle, Lock, CheckCircle2, Eye, EyeOff } from "lucide-react";
 import { Link, useLocation } from "wouter";
-import { DE_LOGO_REVERSE } from '@/lib/brandAssets';
+import { DE_LOGO_PRIMARY, DE_LOGO_REVERSE } from '@/lib/brandAssets';
 import "@/styles/portal.css";
+import { usePortalAppearance } from "@/components/portal/shell/portalTheme";
 
 export default function PortalResetPassword() {
+  const { theme } = usePortalAppearance();
   const [location] = useLocation();
   const token = new URLSearchParams(window.location.search).get("token") || "";
 
@@ -52,12 +54,12 @@ export default function PortalResetPassword() {
 
   if (!token) {
     return (
-      <main id="main-content" tabIndex={-1} className="de-portal dark relative flex min-h-dvh items-center justify-center overflow-hidden p-4" data-theme="dark">
+      <main id="main-content" tabIndex={-1} className={`de-portal ${theme !== "light" ? "dark" : ""} relative flex min-h-dvh items-center justify-center overflow-hidden p-4`} data-theme={theme}>
       <div aria-hidden="true" className="pt-login-glow pointer-events-none absolute inset-0" />
       <div aria-hidden="true" className="pt-login-line pointer-events-none absolute inset-x-0 top-0 h-px" />
         <div className="w-full max-w-md">
           <div className="flex justify-center mb-8">
-            <img src={DE_LOGO_REVERSE} alt="Digerati Experts" className="h-10 w-auto" />
+            <img src={theme === "light" ? DE_LOGO_PRIMARY : DE_LOGO_REVERSE} alt="Digerati Experts" className="h-10 w-auto" />
           </div>
           <Card className="pt-still relative border-border bg-card shadow-none">
             <CardHeader className="space-y-2">
@@ -81,12 +83,12 @@ export default function PortalResetPassword() {
   }
 
   return (
-    <main id="main-content" tabIndex={-1} className="de-portal dark relative flex min-h-dvh items-center justify-center overflow-hidden p-4" data-theme="dark">
+    <main id="main-content" tabIndex={-1} className={`de-portal ${theme !== "light" ? "dark" : ""} relative flex min-h-dvh items-center justify-center overflow-hidden p-4`} data-theme={theme}>
       <div aria-hidden="true" className="pt-login-glow pointer-events-none absolute inset-0" />
       <div aria-hidden="true" className="pt-login-line pointer-events-none absolute inset-x-0 top-0 h-px" />
       <div className="w-full max-w-md">
         <div className="flex justify-center mb-8">
-          <img src={DE_LOGO_REVERSE} alt="Digerati Experts" className="h-10 w-auto" />
+          <img src={theme === "light" ? DE_LOGO_PRIMARY : DE_LOGO_REVERSE} alt="Digerati Experts" className="h-10 w-auto" />
         </div>
 
         <Card className="pt-still relative border-border bg-card shadow-none">
@@ -122,7 +124,7 @@ export default function PortalResetPassword() {
                 <div className="space-y-2">
                   <label className="text-sm font-medium">New Password</label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Lock className="absolute left-3 top-4 h-4 w-4 text-muted-foreground" />
                     <Input
                       type={showPw ? "text" : "password"}
                       placeholder="Min 8 chars, 1 uppercase, 1 number"
@@ -148,7 +150,7 @@ export default function PortalResetPassword() {
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Confirm Password</label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Lock className="absolute left-3 top-4 h-4 w-4 text-muted-foreground" />
                     <Input
                       type={showPw ? "text" : "password"}
                       placeholder="Re-enter your new password"

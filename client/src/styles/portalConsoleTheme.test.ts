@@ -8,7 +8,7 @@ const root = path.resolve(import.meta.dirname, "../../..");
 const css = readFileSync(path.join(root, "client/src/styles/portal.css"), "utf8");
 
 function consoleBlock(): string {
-  const start = css.indexOf('.de-portal[data-theme="console"],\nbody.de-portal-scope[data-portal-theme="console"] {');
+  const start = css.indexOf('html.de-portal-root[data-theme="console"],\n.de-portal[data-theme="console"],\nbody.de-portal-scope[data-portal-theme="console"] {');
   expect(start, "console theme block").toBeGreaterThan(-1);
   return css.slice(start, css.indexOf("}", start));
 }

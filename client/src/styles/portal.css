@@ -1,152 +1,244 @@
-/*
- * Client portal theme layer (Tier 2, portal scope only).
- *
- * Everything under `.de-portal` reads the shadcn tokens below instead of the
- * marketing values in index.css, so every existing portal page (Card, Input,
- * Select, Dialog, Table …) picks up the graphite system without a rewrite.
- *
- * Default is the dark graphite field from design/BRAND.md. `data-theme="light"`
- * swaps the content field to a light grey; the sidebar stays graphite in both so
- * the brand rail is constant.
- *
- * Grey ladder (Joe, 2026-10-06, concepts B + C in
- * artifacts/design-concepts/portal-grey-ladder/): page, rail and card sit one even
- * step apart; fields and action wells use the page token so they step back down
- * inside a card; the selected nav item is the only near-white shape; magenta is
- * the one accent (primary action, urgent counts). Values are HSL triplets because shadcn wraps them
- * in hsl(var(--x)); the `--pt-*` state colours are RGB triplets for rgb(var()/a).
- *
- * Dialogs, dropdowns and popovers render through Radix portals into <body>,
- * outside `.de-portal`. While a portal page is mounted, PortalLayout puts
- * `de-portal-scope` (and `data-portal-theme`) on <body> so that portalled
- * content reads these tokens too instead of the marketing values (where
- * --card is transparent).
+/* ===== DE Client Portal themes (Joe, 2026-10-11) =====
+ * One portal-scoped layer, including Radix content mounted in <body>.
+ * The supplied hex palette is preserved below. Brand --accent is named
+ * --pt-action here because shadcn reserves --accent for an HSL hover surface.
+ * PortalAppearance owns data-theme/data-contrast on <html> while mounted;
+ * marketing pages keep their own tokens when the portal unmounts.
  */
 
+html.de-portal-root,
 .de-portal,
 body.de-portal-scope {
-  /* field */
-  --background: 248 71% 4%;          /* #050312 graphite well */
-  --foreground: 270 20% 96%;         /* #f5f3f7 */
+  --bg: #000000;
+  --surface: #08080b;
+  --raised: #101015;
+  --sunken: #000000;
+  --hover: #15151b;
+  --line: #1c1c23;
+  --line-strong: #2b2b35;
+  --fg: #f5f5f8;
+  --fg-muted: #9b9ba8;
+  --fg-faint: #64646f;
+  --pt-action: #e11d7a;
+  --pt-action-hover: #f2358f;
+  --accent-fg: #ffffff;
+  --accent-soft: rgba(225, 29, 122, 0.14);
+  --warn-fg: #f5b84a;
+  --warn-bg: #0e0a03;
+  --warn-line: #4a3510;
+  --ok: #2ecc71;
+  --pop-bg: #0b0b0f;
+  --pop-line: #2a2a35;
+  --pt-action-hover-fg: #000000;
+  --focus: 0 0 0 2px #000000, 0 0 0 4px #e11d7a;
 
-  --card: 256 24% 9%;                /* #14111c raised, one step above the rail */
-  --card-foreground: 270 20% 96%;
-  --popover: 257 22% 13%;            /* #1d1927 one step above the card */
-  --popover-foreground: 270 20% 96%;
-
-  --muted: 257 22% 13%;
-  --muted-foreground: 270 6% 68%;    /* ~7:1 on raised */
-
-  --border: 270 12% 17%;             /* visible hairline on graphite */
-  --input: 270 12% 20%;
-  --ring: 333 84% 45%;               /* magenta */
-
-  --primary: 333 84% 45%;            /* #D3126A action colour */
+  /* shadcn uses HSL channels; its --accent means a hover surface. */
+  --background: 0 0% 0%;
+  --foreground: 240 17.6471% 96.6667%;
+  --card: 240 15.7895% 3.7255%;
+  --card-foreground: 240 17.6471% 96.6667%;
+  --popover: 240 15.3846% 5.098%;
+  --popover-foreground: 240 17.6471% 96.6667%;
+  --muted: 0 0% 0%;
+  --muted-foreground: 240 6.9519% 63.3333%;
+  --border: 240 11.1111% 12.3529%;
+  --input: 240 10.4167% 18.8235%;
+  --ring: 331.5306 77.1654% 49.8039%;
+  --primary: 331.5306 77.1654% 49.8039%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 257 22% 13%;
-  --secondary-foreground: 270 20% 96%;
-  --accent: 257 22% 13%;             /* hover: the next step up */
-  --accent-foreground: 270 20% 96%;
+  --secondary: 240 13.5135% 7.2549%;
+  --secondary-foreground: 240 17.6471% 96.6667%;
+  --accent: 240 12.5% 9.4118%;
+  --accent-foreground: 240 17.6471% 96.6667%;
+  --pt-topbar: 0 0% 0%;
   --destructive: 350 80% 55%;
   --destructive-foreground: 0 0% 100%;
-  --radius: 0.625rem;
+  --radius: 0.875rem;
 
-  /* shell */
-  --sidebar-background: 250 40% 6%;  /* #0b0915 one step above the page */
-  --sidebar-foreground: 270 14% 82%; /* group labels at /60 clear 4.5:1 on the #0b0915 rail */
-  --sidebar-primary: 333 84% 45%;
-  --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 255 24% 10%;     /* rail hover */
-  --sidebar-accent-foreground: 0 0% 100%;
-  --sidebar-border: 270 12% 14%;
-  --sidebar-ring: 333 84% 45%;
+  /* The brand rail stays dark in Light. Black uses a genuinely black rail. */
+  --sidebar-background: 0 0% 0%;
+  --sidebar-foreground: 240 9.6154% 79.6078%; /* #c6c6d0; group labels at /60 clear 4.5:1 */
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
 
-  /* state (rgb triplets) */
-  --pt-ok: 52 211 153;
-  --pt-warn: 251 191 36;
-  --pt-bad: 251 113 133;
-  --pt-info: 125 211 252;
-  --pt-brand: 244 94 163;            /* magenta ink on dark; 4.5:1 on tinted accent */
-
-  --pt-topbar: 248 71% 4% / 0.82;
-
-  color-scheme: dark;
-  background-color: hsl(var(--background));
-  color: hsl(var(--foreground));
-  min-height: 100dvh;
-}
-
-/*
- * Light theme: "Light steps" (Joe, 2026-10-06, concept C). Replaces the 2026-10-03 orchid
- * "Ambient" field and its glows: a light grey field, white cards one step up, wells and fields
- * back on the field grey; the rail stays graphite.
- */
-.de-portal[data-theme="light"],
-body.de-portal-scope[data-portal-theme="light"] {
-  --background: 255 11% 93%;         /* #ecebef grey field */
-  --foreground: 12 24% 8%;           /* #1a1210 */
-  --card: 0 0% 100%;
-  --card-foreground: 12 24% 8%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 12 24% 8%;
-  --muted: 260 13% 95%;              /* #f3f2f5 */
-  --muted-foreground: 260 8% 32%;
-  --border: 257 11% 87%;             /* #dddbe2 */
-  --input: 260 8% 72%;
-  --ring: 333 84% 35%;
-  --primary: 333 84% 35%;            /* #A30E52 magenta paper ink */
-  --primary-foreground: 0 0% 100%;
-  --secondary: 260 13% 95%;
-  --secondary-foreground: 12 24% 8%;
-  --accent: 252 11% 91%;             /* #e7e6eb hover */
-  --accent-foreground: 12 24% 8%;
-  --destructive: 0 84% 45%;
-  --destructive-foreground: 0 0% 100%;
-
-  /* Inks clear 4.5:1 on their own 7-10% tint over the grey field, wells and cards
-     (portalLightTheme.test.ts checks every pair). */
-  --pt-ok: 4 106 77;                 /* #046a4d */
-  --pt-warn: 146 64 14;              /* #92400e */
-  --pt-bad: 182 17 58;               /* #b6113a */
-  --pt-info: 21 94 117;              /* #155e75 */
-  --pt-brand: 163 14 82;
-
-  --pt-topbar: 255 11% 93% / 0.82;
-  color-scheme: light;
-}
-
-/* The sidebar stays graphite in both themes, so its state colours stay the
-   dark-field values even when the content field is paper. */
-.de-portal[data-theme="light"] [data-sidebar="sidebar"],
-body.de-portal-scope[data-portal-theme="light"] [data-sidebar="sidebar"] {
-  --pt-ok: 52 211 153;
-  --pt-warn: 251 191 36;
+  /* Semantic inks remain readable on status tints (RGB channels). */
+  --pt-ok: 46 204 113;
+  --pt-warn: 245 184 74;
   --pt-bad: 251 113 133;
   --pt-info: 125 211 252;
   --pt-brand: 244 94 163;
-  /* Surfaces placed inside the rail (e.g. the admin company switcher) match it. */
-  --background: 248 71% 4%;
-  --foreground: 270 20% 96%;
-  --card: 256 24% 9%;
-  --card-foreground: 270 20% 96%;
-  --muted-foreground: 270 6% 68%;
-  --border: 270 12% 17%;
-  --input: 270 12% 20%;
-  --accent: 257 22% 13%;
-  --accent-foreground: 270 20% 96%;
+
+  color-scheme: dark;
+  background-color: var(--bg);
+  color: var(--fg);
+  min-height: 100dvh;
+}
+
+html.de-portal-root[data-theme="dark"],
+.de-portal[data-theme="dark"],
+body.de-portal-scope[data-portal-theme="dark"] {
+  --bg: #05050e;
+  --surface: #0d0d1a;
+  --raised: #151524;
+  --sunken: #05050e;
+  --hover: #1a1a2c;
+  --line: #1f1f33;
+  --line-strong: #2f2f4a;
+  --fg: #f1f1f8;
+  --fg-muted: #9a9ab5;
+  --fg-faint: #61617d;
+  --pt-action: #e11d7a;
+  --pt-action-hover: #f2358f;
+  --accent-fg: #ffffff;
+  --accent-soft: rgba(225, 29, 122, 0.16);
+  --warn-fg: #f5b84a;
+  --warn-bg: #14100a;
+  --warn-line: #55401a;
+  --ok: #2ecc71;
+  --pop-bg: #12121f;
+  --pop-line: #2f2f4a;
+  --pt-action-hover-fg: #000000;
+  --focus: 0 0 0 2px #05050e, 0 0 0 4px #e11d7a;
+
+  /* shadcn uses HSL channels; its --accent means a hover surface. */
+  --background: 240 47.3684% 3.7255%;
+  --foreground: 240 33.3333% 95.8824%;
+  --card: 240 33.3333% 7.6471%;
+  --card-foreground: 240 33.3333% 95.8824%;
+  --popover: 240 26.5306% 9.6078%;
+  --popover-foreground: 240 33.3333% 95.8824%;
+  --muted: 240 47.3684% 3.7255%;
+  --muted-foreground: 240 15.4286% 65.6863%;
+  --border: 240 24.3902% 16.0784%;
+  --input: 240 22.314% 23.7255%;
+  --ring: 331.5306 77.1654% 49.8039%;
+  --primary: 331.5306 77.1654% 49.8039%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 240 26.3158% 11.1765%;
+  --secondary-foreground: 240 33.3333% 95.8824%;
+  --accent: 240 25.7143% 13.7255%;
+  --accent-foreground: 240 33.3333% 95.8824%;
+  --pt-topbar: 240 47.3684% 3.7255%;
+  --sidebar-background: 240 47.3684% 3.7255%;
+}
+
+html.de-portal-root[data-theme="light"],
+.de-portal[data-theme="light"],
+body.de-portal-scope[data-portal-theme="light"] {
+  --bg: #f5f5f9;
+  --surface: #ffffff;
+  --raised: #ffffff;
+  --sunken: #f0f0f5;
+  --hover: #eeeef4;
+  --line: #e3e3ec;
+  --line-strong: #cfcfdc;
+  --fg: #0d0d14;
+  --fg-muted: #5b5b6b;
+  --fg-faint: #8a8a99;
+  --pt-action: #c8126b;
+  --pt-action-hover: #a90e59;
+  --accent-fg: #ffffff;
+  --accent-soft: rgba(200, 18, 107, 0.1);
+  --warn-fg: #7a5200;
+  --warn-bg: #fff7e6;
+  --warn-line: #f0cf8a;
+  --ok: #17803d;
+  --pop-bg: #ffffff;
+  --pop-line: #d9d9e6;
+  --pt-action-hover-fg: #ffffff;
+  --focus: 0 0 0 2px #ffffff, 0 0 0 4px #c8126b;
+
+  /* shadcn uses HSL channels; its --accent means a hover surface. */
+  --background: 240 25% 96.8627%;
+  --foreground: 240 21.2121% 6.4706%;
+  --card: 0 0% 100%;
+  --card-foreground: 240 21.2121% 6.4706%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 240 21.2121% 6.4706%;
+  --muted: 240 20% 95.098%;
+  --muted-foreground: 240 8.0808% 38.8235%;
+  --border: 240 19.1489% 90.7843%;
+  --input: 240 15.6627% 83.7255%;
+  --ring: 330.6593 83.4862% 42.7451%;
+  --primary: 330.6593 83.4862% 42.7451%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 0 0% 100%;
+  --secondary-foreground: 240 21.2121% 6.4706%;
+  --accent: 240 21.4286% 94.5098%;
+  --accent-foreground: 240 21.2121% 6.4706%;
+  --pt-topbar: 240 25% 96.8627%;
+  --destructive: 0 84% 45%;
+  --sidebar-background: 240 47.3684% 3.7255%;
+  --sidebar-accent: 240 25.7143% 13.7255%;
+  --sidebar-accent-foreground: 240 33.3333% 95.8824%;
+  --sidebar-border: 240 24.3902% 16.0784%;
+  --pt-ok: 4 106 77;
+  --pt-warn: 122 82 0;
+  --pt-bad: 182 17 58;
+  --pt-info: 21 94 117;
+  --pt-brand: 163 14 82;
+  color-scheme: light;
+}
+
+/* Light keeps the existing dark brand rail and its readable semantic inks. */
+.de-portal[data-theme="light"] [data-sidebar="sidebar"],
+body.de-portal-scope[data-portal-theme="light"] [data-sidebar="sidebar"] {
+  --background: 240 47.3684% 3.7255%;
+  --foreground: 240 33.3333% 95.8824%;
+  --card: 240 33.3333% 7.6471%;
+  --card-foreground: 240 33.3333% 95.8824%;
+  --muted-foreground: 240 15.4286% 65.6863%;
+  --border: 240 24.3902% 16.0784%;
+  --input: 240 22.314% 23.7255%;
+  --accent: 240 25.7143% 13.7255%;
+  --accent-foreground: 240 33.3333% 95.8824%;
+  --pt-ok: 46 204 113;
+  --pt-warn: 245 184 74;
+  --pt-bad: 251 113 133;
+  --pt-info: 125 211 252;
+  --pt-brand: 244 94 163;
+  color-scheme: dark;
 }
 
 /*
  * Admin console theme (Joe, 2026-10-14: "a dark theme that is like Entra and IT
- * dashboards"). Opt-in from the user menu; graphite dark stays the default. The
- * admin-centre grammar: true neutral greys with no violet cast (rail one step
+ * dashboards"). Opt-in only; never the default and never what Match device picks.
+ * The admin-centre grammar: true neutral greys with no violet cast (rail one step
  * below the page, cards one step above), a single blue accent for actions,
- * links, focus and the selected nav bar, 4px corners, the system UI face, and
+ * links, focus and the selected nav bar, 4-6px corners, the system UI face, and
  * a selected nav item marked by a left bar instead of the near-white pill.
  * Category colours keep their dark-field values.
  */
+html.de-portal-root[data-theme="console"],
 .de-portal[data-theme="console"],
 body.de-portal-scope[data-portal-theme="console"] {
+  --bg: #1f1f1f;
+  --surface: #292929;
+  --raised: #2e2e2e;
+  --sunken: #1a1a1a;
+  --hover: #363636;
+  --line: #3d3d3d;
+  --line-strong: #6e6e6e;
+  --fg: #f5f5f5;
+  --fg-muted: #b3b3b3;
+  --fg-faint: #8f8f8f;
+  --pt-action: #0f6cbd;
+  --pt-action-hover: #115ea3;
+  --accent-fg: #ffffff;
+  --pt-action-hover-fg: #ffffff;
+  --accent-soft: rgba(71, 158, 245, 0.14);
+  --warn-fg: #fcc84a;
+  --warn-bg: #2a2310;
+  --warn-line: #5c4a1a;
+  --ok: #54d68c;
+  --pop-bg: #2e2e2e;
+  --pop-line: #4a4a4a;
+  --focus: 0 0 0 2px #1f1f1f, 0 0 0 4px #479ef5;
+
   --background: 0 0% 12%;            /* #1f1f1f page */
   --foreground: 0 0% 96%;            /* #f5f5f5 */
   --card: 0 0% 16%;                  /* #292929 one step up */
@@ -189,44 +281,211 @@ body.de-portal-scope[data-portal-theme="console"] {
   --de-magenta-hover: #115ea3;
   --de-magenta-ink: #75b8f7;
   --pt-console-face: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, "Inter", sans-serif;
+  color-scheme: dark;
   font-family: var(--pt-console-face);
 }
-/* Console headings drop the display face and its tight tracking for the same UI face, semibold. */
-:is(.de-portal[data-theme="console"], body.de-portal-scope[data-portal-theme="console"]) :is(h1, h2, h3, h4, h5, h6, .font-heading) {
+
+/* ===== High contrast layer ===== */
+html.de-portal-root[data-theme="black"][data-contrast="boost"],
+html.de-portal-root[data-theme="black"][data-contrast="boost"] .de-portal,
+html.de-portal-root[data-theme="black"][data-contrast="boost"] body.de-portal-scope,
+html.de-portal-root[data-theme="dark"][data-contrast="boost"],
+html.de-portal-root[data-theme="dark"][data-contrast="boost"] .de-portal,
+html.de-portal-root[data-theme="dark"][data-contrast="boost"] body.de-portal-scope,
+html.de-portal-root[data-theme="console"][data-contrast="boost"],
+html.de-portal-root[data-theme="console"][data-contrast="boost"] .de-portal,
+html.de-portal-root[data-theme="console"][data-contrast="boost"] body.de-portal-scope {
+  --line: #3a3a46;
+  --line-strong: #5e5e6c;
+  --fg-muted: #c6c6d0;
+  --fg-faint: #a4a4b0;
+  --border: 240 9.375% 25.098%;
+  --input: 240 6.9307% 39.6078%;
+  --muted-foreground: 240 9.6154% 79.6078%;
+  --pop-line: var(--line-strong);
+  --sidebar-border: var(--border);
+  --sidebar-foreground: var(--muted-foreground);
+}
+
+html.de-portal-root[data-theme="light"][data-contrast="boost"],
+html.de-portal-root[data-theme="light"][data-contrast="boost"] .de-portal,
+html.de-portal-root[data-theme="light"][data-contrast="boost"] body.de-portal-scope {
+  --line: #9a9aaa;
+  --line-strong: #5a5a6a;
+  --fg-muted: #2c2c38;
+  --fg-faint: #4a4a58;
+  --border: 240 8.6022% 63.5294%;
+  --input: 240 8.1633% 38.4314%;
+  --muted-foreground: 240 12% 19.6078%;
+  --pop-line: var(--line-strong);
+  --sidebar-border: var(--border);
+  --sidebar-foreground: var(--muted-foreground);
+}
+
+html.de-portal-root[data-theme="black"][data-contrast="max"],
+html.de-portal-root[data-theme="black"][data-contrast="max"] .de-portal,
+html.de-portal-root[data-theme="black"][data-contrast="max"] body.de-portal-scope,
+html.de-portal-root[data-theme="dark"][data-contrast="max"],
+html.de-portal-root[data-theme="dark"][data-contrast="max"] .de-portal,
+html.de-portal-root[data-theme="dark"][data-contrast="max"] body.de-portal-scope,
+html.de-portal-root[data-theme="console"][data-contrast="max"],
+html.de-portal-root[data-theme="console"][data-contrast="max"] .de-portal,
+html.de-portal-root[data-theme="console"][data-contrast="max"] body.de-portal-scope {
+  --line: #ffffff;
+  --line-strong: #ffffff;
+  --fg-muted: #ffffff;
+  --fg-faint: #e6e6e6;
+  --pt-action: #ffd400;
+  --pt-action-hover: #ffe45c;
+  --accent-fg: #000000;
+  --pt-action-hover-fg: #000000;
+  --accent-soft: rgba(255, 212, 0, 0.16);
+  --focus: 0 0 0 2px #000, 0 0 0 4px #ffd400;
+  --border: 0 0% 100%;
+  --input: 0 0% 100%;
+  --muted-foreground: 0 0% 100%;
+  --primary: 49.8824 100% 50%;
+  --primary-foreground: 0 0% 0%;
+  --ring: 49.8824 100% 50%;
+  --pt-brand: 255 212 0;
+  --pop-line: var(--line-strong);
+  --sidebar-border: var(--border);
+  --sidebar-foreground: var(--muted-foreground);
+}
+
+html.de-portal-root[data-theme="light"][data-contrast="max"],
+html.de-portal-root[data-theme="light"][data-contrast="max"] .de-portal,
+html.de-portal-root[data-theme="light"][data-contrast="max"] body.de-portal-scope {
+  --line: #000000;
+  --line-strong: #000000;
+  --fg-muted: #000000;
+  --fg-faint: #1a1a1a;
+  --pt-action: #0b2bd6;
+  --pt-action-hover: #0820a8;
+  --accent-fg: #ffffff;
+  --pt-action-hover-fg: #ffffff;
+  --accent-soft: rgba(11, 43, 214, 0.12);
+  --focus: 0 0 0 2px #fff, 0 0 0 4px #0b2bd6;
+  --border: 0 0% 0%;
+  --input: 0 0% 0%;
+  --muted-foreground: 0 0% 0%;
+  --primary: 230.5419 90.2222% 44.1176%;
+  --primary-foreground: 0 0% 100%;
+  --ring: 230.5419 90.2222% 44.1176%;
+  --pt-brand: 11 43 214;
+  --pop-line: var(--line-strong);
+  --sidebar-border: var(--border);
+  --sidebar-foreground: var(--muted-foreground);
+}
+
+/* The dark rail needs bright text/outlines even in Light's contrast modes. */
+html.de-portal-root[data-theme="light"][data-contrast="boost"] [data-sidebar="sidebar"],
+html.de-portal-root[data-theme="light"][data-contrast="max"] [data-sidebar="sidebar"] {
+  --muted-foreground: 240 9.6154% 79.6078%;
+  --sidebar-foreground: 240 9.6154% 79.6078%;
+  --border: 240 9.4118% 40%;
+  --sidebar-border: 240 9.4118% 40%;
+}
+html.de-portal-root[data-theme="light"][data-contrast="max"] [data-sidebar="sidebar"] {
+  --muted-foreground: 0 0% 100%;
+  --sidebar-foreground: 0 0% 100%;
+  --border: 0 0% 100%;
+  --sidebar-border: 0 0% 100%;
+}
+
+/* ===== Base component layer: actual portal/shadcn selectors ===== */
+:is(.de-portal, body.de-portal-scope) [data-sidebar="sidebar"] {
+  /* Resolve ink inside the rail; inherited color was computed on its wrapper. */
+  color: hsl(var(--sidebar-foreground));
+}
+html.de-portal-root ::selection { background: var(--pt-action); color: var(--accent-fg); }
+:is(.de-portal, body.de-portal-scope) *:focus-visible {
+  outline: none;
+  box-shadow: var(--focus);
+}
+:is(.de-portal, body.de-portal-scope) .bg-card.border { border-radius: 20px; }
+:is(.de-portal, body.de-portal-scope) .bg-card.border:not(.pt-cat-edge) {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+html.de-portal-root[data-theme="light"] .bg-card.border:not(.pt-cat-edge) {
+  box-shadow: 0 1px 2px rgba(13, 13, 20, 0.05);
+}
+:is(.de-portal, body.de-portal-scope) :is(input:not([type="radio"]):not([type="checkbox"]):not([type="file"]), select, textarea) {
+  min-height: 48px;
+  background: var(--sunken);
+  color: var(--fg);
+  border: 1px solid var(--line-strong);
+  border-radius: 14px;
+}
+:is(.de-portal, body.de-portal-scope) textarea { padding-block: 12px; }
+/* Placeholder text is still instruction text; use the readable muted ink. */
+:is(.de-portal, body.de-portal-scope) ::placeholder { color: var(--fg-muted); }
+:is(.de-portal, body.de-portal-scope) :is(input, select, textarea):focus-visible { border-color: var(--pt-action); }
+:is(.de-portal, body.de-portal-scope) :is(input[type="radio"], input[type="checkbox"]) { accent-color: var(--pt-action); }
+:is(.de-portal, body.de-portal-scope) :is(button, a):is(.bg-de-magenta, .bg-primary) {
+  background: var(--pt-action);
+  color: var(--accent-fg);
+  min-height: 44px;
+  border-radius: 999px;
+  font-weight: 700;
+}
+:is(.de-portal, body.de-portal-scope) :is(button, a):is(.bg-de-magenta, .bg-primary):hover {
+  background: var(--pt-action-hover);
+  /* Bright pink hover needs dark ink to keep small button text readable. */
+  color: var(--pt-action-hover-fg);
+  transform: none;
+}
+:is(.de-portal, body.de-portal-scope) :is(button, a).border.border-input:hover { border-color: var(--pt-action); background: var(--accent-soft); color: var(--fg); }
+:is(.de-portal, body.de-portal-scope) .text-de-magenta-ink { color: rgb(var(--pt-brand)); }
+:is(.de-portal, body.de-portal-scope) :is(.bg-popover, [role="dialog"].bg-background) {
+  background: var(--pop-bg);
+  border-color: var(--pop-line);
+  border-radius: 20px;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.02), 0 24px 48px rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(16px);
+}
+:is(.de-portal, body.de-portal-scope) [role="menu"].bg-popover { padding: 8px; }
+html.de-portal-root[data-theme="light"] :is(.bg-popover, [role="dialog"].bg-background) {
+  box-shadow: 0 16px 40px rgba(13, 13, 20, 0.16);
+}
+:is(.de-portal, body.de-portal-scope) :is([role="menuitem"], [role="menuitemradio"], [role="menuitemcheckbox"]) {
+  min-height: 44px;
+  border-radius: 12px;
+}
+:is(.de-portal, body.de-portal-scope) :is([role="menuitem"], [role="menuitemradio"], [role="menuitemcheckbox"]):is(:hover, [data-highlighted]) {
+  background: var(--hover);
+  color: var(--fg);
+}
+:is(.de-portal, body.de-portal-scope) [role="menuitemradio"][aria-checked="true"] { background: var(--raised); }
+/* Console: square-ish admin-centre shapes and the UI face for headings (sizes and targets unchanged). */
+html.de-portal-root[data-theme="console"] :is(h1, h2, h3, h4, h5, h6, .font-heading) {
   font-family: var(--pt-console-face);
   font-weight: 600;
   letter-spacing: 0;
 }
-
-/* Console corners: cards and wells sit at 6px and 4px instead of the 12px / 8px Tailwind steps. */
-.de-portal[data-theme="console"] .rounded-xl,
-body.de-portal-scope[data-portal-theme="console"] .rounded-xl { border-radius: 6px; }
-.de-portal[data-theme="console"] .rounded-lg,
-body.de-portal-scope[data-portal-theme="console"] .rounded-lg { border-radius: 4px; }
-
-/* Console: the selected nav item is a lighter row with a blue bar on its left edge. */
-:is(.de-portal[data-theme="console"], body.de-portal-scope[data-portal-theme="console"]) .pt-active-nav[data-active="true"],
-:is(.de-portal[data-theme="console"], body.de-portal-scope[data-portal-theme="console"]) .pt-active-nav[data-active="true"]:hover {
-  background: hsl(0 0% 18%);
-  color: hsl(0 0% 100%);
-  box-shadow: inset 3px 0 0 hsl(210 90% 62%);
-  --pt-ok: 84 214 140;
-  --pt-warn: 252 200 74;
-  --pt-bad: 255 145 145;
-  --pt-info: 125 199 255;
-  --pt-brand: 117 184 247;
-}
+html.de-portal-root[data-theme="console"] :is(.bg-card.border, .bg-popover, [role="dialog"].bg-background, .rounded-xl) { border-radius: 6px; }
+html.de-portal-root[data-theme="console"] :is(input:not([type="radio"]):not([type="checkbox"]):not([type="file"]), select, textarea, .rounded-lg, [role="menuitem"], [role="menuitemradio"], [role="menuitemcheckbox"]) { border-radius: 4px; }
+html.de-portal-root[data-theme="console"] :is(button, a):is(.bg-de-magenta, .bg-primary) { border-radius: 4px; font-weight: 600; }
+html.de-portal-root[data-theme="console"] :is(.bg-popover, [role="dialog"].bg-background) { backdrop-filter: none; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45); }
+.pt-role-badge { width: fit-content; padding: 4px 8px; background: var(--accent-soft); color: rgb(var(--pt-brand)); border-radius: 999px; font-weight: 700; }
+.pt-tone-warn.pt-callout { background: var(--warn-bg); border-color: var(--warn-line); color: var(--warn-fg); border-radius: 18px; }
+.pt-theme-swatch { width: 52px; height: 52px; border: 1px solid var(--line-strong); border-radius: 50%; }
+.pt-theme-swatch[data-theme-opt="system"] { background: linear-gradient(135deg, #f5f5f9 50%, #05050e 50%); color: #e11d7a; }
+.pt-theme-swatch[data-theme-opt="dark"] { background: #05050e; color: #ffffff; }
+.pt-theme-swatch[data-theme-opt="black"] { background: #000000; color: #ffffff; }
+.pt-theme-swatch[data-theme-opt="console"] { background: linear-gradient(90deg, #141414 34%, #1f1f1f 34%); color: #479ef5; }
+.pt-theme-swatch[data-theme-opt="light"] { background: #f5f5f9; color: #0d0d14; }
+.pt-theme-option input:checked + .pt-theme-swatch { border-color: var(--pt-action); box-shadow: 0 0 0 3px var(--surface), 0 0 0 5px var(--pt-action); }
+.pt-theme-option input:focus-visible + .pt-theme-swatch { outline: 2px solid var(--pt-action); outline-offset: 6px; }
+.pt-segmented { display: flex; gap: 4px; padding: 4px; background: var(--sunken); border: 1px solid var(--line-strong); border-radius: 14px; }
+.pt-contrast-label { border-radius: 10px; color: var(--fg-muted); }
+.pt-segmented input:checked + .pt-contrast-label { background: var(--pt-action); color: var(--accent-fg); }
+.pt-segmented input:focus-visible + .pt-contrast-label { box-shadow: var(--focus); }
 
 /* The marketing scale lifts text-sm to 16px for long-form pages. A working
    portal needs the standard scale back: 14px UI text, 12px captions. */
 :is(.de-portal, .de-portal-scope) .text-sm { font-size: 0.875rem; line-height: 1.25rem; }
 :is(.de-portal, .de-portal-scope) .text-xs { font-size: 0.75rem; line-height: 1rem; }
-
-/* Global focus ring is violet for marketing; the portal uses its ring token. */
-:is(.de-portal, .de-portal-scope) *:focus-visible {
-  outline: 2px solid hsl(var(--ring));
-  outline-offset: 2px;
-}
 
 /* Numbers align in tables and tiles. */
 :is(.de-portal, .de-portal-scope) .pt-num {
@@ -276,6 +535,18 @@ body.de-portal-scope[data-portal-theme="console"] .rounded-lg { border-radius: 4
   --pt-info: 21 94 117;
   --pt-brand: 163 14 82;
 }
+/* Console: the selected nav item is a lighter row with a blue bar on its left edge. */
+:is(.de-portal[data-theme="console"], body.de-portal-scope[data-portal-theme="console"]) .pt-active-nav[data-active="true"],
+:is(.de-portal[data-theme="console"], body.de-portal-scope[data-portal-theme="console"]) .pt-active-nav[data-active="true"]:hover {
+  background: hsl(0 0% 18%);
+  color: hsl(0 0% 100%);
+  box-shadow: inset 3px 0 0 hsl(210 90% 62%);
+  --pt-ok: 84 214 140;
+  --pt-warn: 252 200 74;
+  --pt-bad: 255 145 145;
+  --pt-info: 125 199 255;
+  --pt-brand: 117 184 247;
+}
 /* Category colours (Joe, 2026-10-06): one vivid hex per kind of card, used only on the card's top
    edge and its icon well, never for text or status. Status keeps --pt-ok/warn/bad/info.
    Dark values sit on the #14111c card; light values are deeper inks that clear 3:1 on white. */
@@ -293,6 +564,7 @@ body.de-portal-scope[data-portal-theme="console"] .rounded-lg { border-radius: 4
 .pt-cat-well { background: rgb(var(--pt-cat) / 0.14); color: rgb(var(--pt-cat)); }
 .pt-cat-ink  { color: rgb(var(--pt-cat)); }
 .pt-login-glow { background: radial-gradient(60% 50% at 50% 0%, rgb(var(--pt-brand) / 0.14), transparent 70%); }
+html.de-portal-root[data-theme="black"] .pt-login-glow { display: none; }
 .pt-login-line { background: linear-gradient(90deg, transparent, rgb(var(--pt-brand) / 0.6), transparent); }
 
 /* Verdict band: the one loud band per page (design/UI-STYLE-RULES.md §3). */
