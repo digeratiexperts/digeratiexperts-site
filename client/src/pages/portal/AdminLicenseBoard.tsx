@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { AppWindow, ArrowLeft, Building2, Cpu, KeyRound, Minus, Monitor, Package, Plus, Search, Trash2, Users, X } from "lucide-react";
+import { AppWindow, Building2, ChevronRight, Cpu, KeyRound, Minus, Monitor, Package, Plus, Search, Trash2, Users, X } from "lucide-react";
 import { PortalLayout } from "./PortalLayout";
 import { Callout } from "@/components/portal/ui";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -16,7 +16,8 @@ import {
 } from "@/components/portal/licensing/PatchBay";
 import { licenseBoardApi, type Board, type CompanyBoard } from "@/lib/licenseBoardApi";
 import { PartsBin } from "@/components/portal/licensing/PartsBin";
-import { JumpCloudPanel, StarterKitPanel } from "@/components/portal/licensing/CompanyTools";
+import { JumpCloudTab, StarterKitTab, jumpcloudKey, jumpcloudState, useJumpCloud } from "@/components/portal/licensing/CompanyTools";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EVERY_MACHINE_ID, deviceTargetId } from "@shared/licenseBoard";
 
 /**
@@ -44,7 +45,7 @@ function ColumnHeading({ icon: Icon, title, hint }: { icon: typeof Users; title:
     <div className="mb-3 flex items-start gap-2">
       <Icon className="mt-0.5 h-4 w-4 shrink-0 text-[#C4B5FD]" aria-hidden />
       <div className="min-w-0">
-        <h2 className="font-[Oxanium] text-xs font-semibold uppercase tracking-[0.18em] text-white/80">{title}</h2>
+        <h2 className="text-sm font-semibold text-white">{title}</h2>
         {hint ? <p className="mt-0.5 text-xs text-white/50">{hint}</p> : null}
       </div>
     </div>
@@ -381,12 +382,15 @@ function CompanyLevel({ clientId, onBack }: { clientId: string; onBack: () => vo
   const { toast } = useToast();
   const fail = useErrorToast();
   const q = useQuery({ queryKey: companyKey(clientId), queryFn: () => licenseBoardApi.company(clientId) });
+  const jc = useJumpCloud(clientId);
+  const [tab, setTab] = useState("patch");
   const [newDevices, setNewDevices] = useState<string[]>([]);
   const [deviceName, setDeviceName] = useState("");
   const [personFilter, setPersonFilter] = useState("");
   const refresh = () => {
     void qc.invalidateQueries({ queryKey: companyKey(clientId) });
     void qc.invalidateQueries({ queryKey: BOARD_KEY });
+    void qc.invalidateQueries({ queryKey: jumpcloudKey(clientId) });
   };
   const data = q.data;
 
@@ -627,7 +631,7 @@ function CompanyLevel({ clientId, onBack }: { clientId: string; onBack: () => vo
               onChange={(e) => setDeviceName(e.target.value)}
               placeholder="Device name"
               aria-label="Device name"
-              className="h-10 min-w-0 flex-1 rounded-md border border-white/15 bg-black/30 px-3 text-sm text-white placeholder:text-white/35"
+              className="h-10 w-full min-w-0 rounded-md border border-white/15 bg-black/30 px-3 text-sm text-white placeholder:text-white/35 sm:flex-1"
             />
             <button type="submit" className="inline-flex min-h-10 items-center justify-center gap-1 rounded-md border border-white/15 px-3 text-sm font-semibold text-white hover:bg-white/10">
               <Plus className="h-4 w-4" aria-hidden /> Add
@@ -638,34 +642,91 @@ function CompanyLevel({ clientId, onBack }: { clientId: string; onBack: () => vo
     </section>
   );
 
+  const held = data.pool.filter((p) => !p.unlimited).reduce((n, p) => n + p.held, 0);
+  const free = data.pool.filter((p) => !p.unlimited).reduce((n, p) => n + p.free, 0);
+  const appsOn = data.pool.filter((p) => p.unlimited).length;
+  const jcState = jumpcloudState(jc.data);
+  const chip = "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs";
+  const chipTone = {
+    good: "border-emerald-500/30 bg-emerald-500/10 text-emerald-300",
+    warn: "border-amber-500/30 bg-amber-500/10 text-amber-200",
+    muted: "border-white/15 bg-white/5 text-white/70",
+  } as const;
+  const tabTrigger =
+    "rounded-none border-b-2 border-transparent bg-transparent px-3 pb-2.5 pt-1 text-sm text-white/60 hover:text-white data-[state=active]:border-[#F04C97] data-[state=active]:bg-transparent data-[state=active]:text-white data-[state=active]:shadow-none";
+
   return (
     <div>
-      <button type="button" onClick={onBack} className="mb-4 inline-flex min-h-10 items-center gap-1.5 rounded-md px-1 text-sm text-white/65 hover:text-white">
-        <ArrowLeft className="h-4 w-4" aria-hidden /> All companies
-      </button>
-      <h2 className="mb-4 text-xl font-bold text-white">{data.company.name}</h2>
-      <div className="mb-6 grid gap-3 lg:grid-cols-2">
-        <StarterKitPanel clientId={clientId} companyName={data.company.name} onApplied={refresh} />
-        <JumpCloudPanel clientId={clientId} refreshKey={q.dataUpdatedAt} />
-      </div>
-      <PatchBay
-        cables={cables}
-        canPatch={canPatch}
-        onPatch={onPatch}
-        layoutKey={`${personFilter}:${devices.length}:${data.people.length}`}
-      >
-        {/* Phones: pool and departments share the left column, people and devices the right. */}
-        <div className="grid grid-cols-[minmax(0,1fr)_32px_minmax(0,1fr)] sm:grid-cols-[minmax(0,1fr)_72px_minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_88px_minmax(0,1fr)_88px_minmax(0,1fr)]">
-          <div className="space-y-6 lg:contents">
-            {poolColumn}
-            <div className="hidden lg:block" aria-hidden />
-            {deptColumn}
-          </div>
-          <div aria-hidden className="lg:hidden" />
-          <div className="hidden lg:block" aria-hidden />
-          {peopleColumn}
+      <nav aria-label="Breadcrumb" className="mb-3 flex items-center gap-1 text-sm text-white/55">
+        <button type="button" onClick={onBack} className="rounded hover:text-white hover:underline">
+          License Patch Bay
+        </button>
+        <ChevronRight className="h-3.5 w-3.5" aria-hidden />
+        <span className="truncate text-white/85">{data.company.name}</span>
+      </nav>
+      <header className="flex items-start gap-3">
+        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-md bg-white/10">
+          <Building2 className="h-5 w-5 text-[#C4B5FD]" aria-hidden />
+        </span>
+        <div className="min-w-0">
+          <h2 className="truncate text-xl font-semibold text-white">{data.company.name}</h2>
+          <p className="text-sm text-white/55">
+            Company · {data.people.length} {data.people.length === 1 ? "person" : "people"} · {data.departments.length}{" "}
+            {data.departments.length === 1 ? "department" : "departments"}
+          </p>
         </div>
-      </PatchBay>
+      </header>
+      <div className="mt-3 flex flex-wrap gap-2">
+        <span className={`${chip} ${chipTone.muted}`}>
+          <KeyRound className="h-3.5 w-3.5" aria-hidden /> {held} seats · {free} free
+        </span>
+        <span className={`${chip} ${chipTone.muted}`}>
+          <AppWindow className="h-3.5 w-3.5" aria-hidden /> {appsOn} apps on
+        </span>
+        <button type="button" onClick={() => setTab("jumpcloud")} className={`${chip} ${chipTone[jcState.tone]} hover:bg-white/10`}>
+          {jcState.label}
+        </button>
+      </div>
+
+      <Tabs value={tab} onValueChange={setTab} className="mt-5">
+        <TabsList className="h-auto w-full justify-start gap-1 overflow-x-auto rounded-none border-b border-white/10 bg-transparent p-0">
+          <TabsTrigger value="patch" className={tabTrigger}>
+            Patch bay
+          </TabsTrigger>
+          <TabsTrigger value="kit" className={tabTrigger}>
+            Starter kit
+          </TabsTrigger>
+          <TabsTrigger value="jumpcloud" className={tabTrigger}>
+            JumpCloud installs
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="patch" className="mt-5">
+          <PatchBay
+            cables={cables}
+            canPatch={canPatch}
+            onPatch={onPatch}
+            layoutKey={`${personFilter}:${devices.length}:${data.people.length}`}
+          >
+            {/* Phones: pool and departments share the left column, people and devices the right. */}
+            <div className="grid grid-cols-[minmax(0,1fr)_32px_minmax(0,1fr)] sm:grid-cols-[minmax(0,1fr)_72px_minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_88px_minmax(0,1fr)_88px_minmax(0,1fr)]">
+              <div className="space-y-6 lg:contents">
+                {poolColumn}
+                <div className="hidden lg:block" aria-hidden />
+                {deptColumn}
+              </div>
+              <div aria-hidden className="lg:hidden" />
+              <div className="hidden lg:block" aria-hidden />
+              {peopleColumn}
+            </div>
+          </PatchBay>
+        </TabsContent>
+        <TabsContent value="kit" className="mt-5">
+          <StarterKitTab clientId={clientId} companyName={data.company.name} onApplied={refresh} />
+        </TabsContent>
+        <TabsContent value="jumpcloud" className="mt-5">
+          <JumpCloudTab clientId={clientId} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
@@ -696,7 +757,7 @@ export default function AdminLicenseBoard() {
       description="Patch vendor licences from DE's pool into companies, then into departments, people and devices. A record of where seats go: it does not assign licences in Microsoft, Google or other vendor consoles."
       width="full"
     >
-      <div className="rounded-2xl border border-[#D3126A]/30 bg-[#0a0714] p-3 text-white shadow-[0_0_0_1px_rgba(211,18,106,0.15),0_24px_60px_rgba(30,8,55,0.45)] sm:p-5">
+      <div className="rounded-lg border border-white/10 bg-[#0a0714] p-3 text-white sm:p-5">
         {q.isLoading ? (
           <Skeleton className="h-96 rounded-xl" />
         ) : q.isError || !q.data ? (
