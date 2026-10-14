@@ -3626,8 +3626,27 @@ claims:
       - client/src/components/PageTemplate.tsx (heroAsideOnMobile prop, passed to PageHero asideOnMobile)
       - client/src/pages/about/Team.tsx (heroAsideOnMobile on, so phones show the founder card)
       - docs/contact-details-audit.md, docs/STORE-EXPERIENCE-SOURCE-OF-TRUTH.md (notes for the above)
-    status: active
+    status: verified-live
     started: 2026-10-14
+    released: 2026-10-14
+    pr: 591
+    merge_sha: 14d71c4d5372613a6f95f26596fc809fd7bab429
+    verification: >-
+      Merged as 14d71c4d on Joe's "Approved, continue." after green CI on
+      0818b4d. Production release.txt and /api/health release.commit read
+      14d71c4d (built 23:05:40Z). Read-only check against
+      https://digeratiexperts.com (no submissions): phone hero at 320 and 390
+      shows no dot at the start of any row and no sideways scroll; the homepage
+      at 320, 390 and 1440 has no "backed by real client reviews" claim and no
+      review build note, keeps the "Worked with us?" card, and its footer links
+      tel:+13254809870 and mailto:info@digeratiexperts.com; /about/team at 390
+      and 1440 shows Joseph Petro, Chief Technology Strategist (the card is now
+      visible on phones); /solutions/request at 390 renders the check group and
+      widget, and with Cloudflare blocked shows "The security check couldn't
+      load." with retry and email, and "Try the check again" keeps focus on the
+      check. No page errors. A real Turnstile pass was not exercised (this
+      sandbox cannot reach challenges.cloudflare.com); Joe to confirm on a
+      device. VERIFIED LIVE. Files released.
     note: >-
       Joe, 2026-10-14: "work on fixing all outstanding items even my items for
       me. then merge or push this", then "Approved, continue." Fixes the four
