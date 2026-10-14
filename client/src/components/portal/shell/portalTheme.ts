@@ -1,7 +1,12 @@
 import { useCallback, useEffect, useLayoutEffect, useState } from "react";
 
-/** The theme actually painted. */
-export type PortalTheme = "black" | "dark" | "light";
+/**
+ * The theme actually painted. "console" is the opt-in admin-console dark theme
+ * (Joe, 2026-10-14: "a dark theme that is like Entra and IT dashboards"): neutral
+ * greys, blue accent, square corners. It is never the default and never what
+ * "Match device" picks.
+ */
+export type PortalTheme = "black" | "dark" | "light" | "console";
 /** What the viewer chose. "system" follows the device's light/dark setting. */
 export type PortalThemePreference = PortalTheme | "system";
 export type PortalContrast = "none" | "boost" | "max";
@@ -20,7 +25,12 @@ const CONTRAST_EVENT = "de-portal-contrast-change";
 export const DEFAULT_PORTAL_THEME_PREFERENCE: PortalThemePreference = "black";
 
 function isThemePreference(value: unknown): value is PortalThemePreference {
-  return value === "black" || value === "light" || value === "dark" || value === "system";
+  return value === "black" || value === "light" || value === "dark" || value === "console" || value === "system";
+}
+
+/** Themes painted on a dark field, which also take Tailwind's `dark` class. */
+export function isDarkPortalTheme(theme: PortalTheme): boolean {
+  return theme !== "light";
 }
 
 function isContrast(value: unknown): value is PortalContrast {
@@ -169,7 +179,7 @@ export function usePortalAppearance() {
       dark: root.classList.contains("dark"),
     };
     root.classList.add("de-portal-root");
-    root.classList.toggle("dark", theme !== "light");
+    root.classList.toggle("dark", isDarkPortalTheme(theme));
     root.dataset.theme = theme;
     root.dataset.contrast = contrast;
     body.classList.add("de-portal-scope");

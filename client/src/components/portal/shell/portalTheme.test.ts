@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { DEFAULT_PORTAL_THEME_PREFERENCE, readPortalContrast, readPortalThemePreference, resolvePortalTheme, writePortalContrast, writePortalThemePreference } from "./portalTheme";
+import { DEFAULT_PORTAL_THEME_PREFERENCE, isDarkPortalTheme, readPortalContrast, readPortalThemePreference, resolvePortalTheme, writePortalContrast, writePortalThemePreference } from "./portalTheme";
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -50,5 +50,16 @@ describe("portal theme", () => {
     vi.stubGlobal("localStorage", { getItem: () => { throw new Error("Storage unavailable"); } });
     expect(readPortalThemePreference()).toBe("black");
     expect(readPortalContrast()).toBe("none");
+  });
+
+  it("the admin console theme is opt-in only, is saved, and paints dark", () => {
+    expect(resolvePortalTheme("console", true)).toBe("console");
+    expect(resolvePortalTheme("console", false)).toBe("console");
+    expect(resolvePortalTheme("system", false)).not.toBe("console");
+    vi.stubGlobal("localStorage", { getItem: () => "console" });
+    expect(readPortalThemePreference()).toBe("console");
+    expect(isDarkPortalTheme("console")).toBe(true);
+    expect(isDarkPortalTheme("black")).toBe(true);
+    expect(isDarkPortalTheme("light")).toBe(false);
   });
 });

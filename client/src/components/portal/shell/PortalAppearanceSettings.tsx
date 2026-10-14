@@ -7,6 +7,7 @@ const THEMES: { value: PortalThemePreference; label: string }[] = [
   { value: "dark", label: "Dark" },
   { value: "black", label: "Black" },
   { value: "light", label: "Light" },
+  { value: "console", label: "Admin console" },
 ];
 const CONTRASTS: { value: PortalContrast; label: string }[] = [
   { value: "none", label: "Standard" },
@@ -21,7 +22,7 @@ export function PortalAppearanceSettings() {
     <Panel id="settings-appearance" title="Appearance" description="Saved on this device and applied immediately.">
       <fieldset>
         <legend className="mb-3 text-sm font-medium">Theme</legend>
-        <div className="grid grid-cols-4 gap-2">
+        <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
           {THEMES.map(({ value, label }) => (
             <label key={value} className="pt-theme-option flex cursor-pointer flex-col items-center gap-2 text-center text-xs">
               <input type="radio" name="portal-theme" value={value} checked={preference === value} onChange={() => setPreference(value)} className="sr-only" data-testid={`settings-theme-${value}`} />

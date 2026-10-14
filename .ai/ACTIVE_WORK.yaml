@@ -30,6 +30,29 @@
 
 version: 2
 claims:
+  - id: portal-console-theme
+    owner: claude
+    subsystem: client-portal
+    branch: claude/youthful-babbage-va5j5a
+    base_sha: 5da3faf
+    files:
+      - client/src/styles/portal.css (new console theme block only; dark and light untouched)
+      - client/src/styles/portalConsoleTheme.test.ts (new)
+      - client/src/components/portal/shell/portalTheme.ts
+      - client/src/components/portal/shell/portalTheme.test.ts
+      - client/src/components/portal/shell/PortalUserMenu.tsx (one Appearance option)
+      - client/src/pages/portal/PortalLayout.tsx (dark class for the console theme only)
+      - artifacts/visual-qa/portal-console-theme/** (new)
+    status: active
+    started: 2026-10-14
+    note: >-
+      Joe, 2026-10-14: "a dark theme that is like entra and IT dashboards ...
+      build it then for the Client portal". Opt-in "Admin console" theme in
+      the portal user menu: neutral greys, one blue accent, 6px/4px corners,
+      system UI face, left-bar selected nav. Graphite dark stays the default;
+      Match device never picks it. Open PRs could not be checked from this
+      session (GitHub unauthorized); the mirror showed no active claim on
+      these files. Joe confirms the screenshots before merge.
   - id: quote-match-include-it
     issue: 417
     owner: cursor

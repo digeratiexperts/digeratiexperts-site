@@ -204,13 +204,97 @@ body.de-portal-scope[data-portal-theme="light"] [data-sidebar="sidebar"] {
   color-scheme: dark;
 }
 
+/*
+ * Admin console theme (Joe, 2026-10-14: "a dark theme that is like Entra and IT
+ * dashboards"). Opt-in only; never the default and never what Match device picks.
+ * The admin-centre grammar: true neutral greys with no violet cast (rail one step
+ * below the page, cards one step above), a single blue accent for actions,
+ * links, focus and the selected nav bar, 4-6px corners, the system UI face, and
+ * a selected nav item marked by a left bar instead of the near-white pill.
+ * Category colours keep their dark-field values.
+ */
+html.de-portal-root[data-theme="console"],
+.de-portal[data-theme="console"],
+body.de-portal-scope[data-portal-theme="console"] {
+  --bg: #1f1f1f;
+  --surface: #292929;
+  --raised: #2e2e2e;
+  --sunken: #1a1a1a;
+  --hover: #363636;
+  --line: #3d3d3d;
+  --line-strong: #6e6e6e;
+  --fg: #f5f5f5;
+  --fg-muted: #b3b3b3;
+  --fg-faint: #8f8f8f;
+  --pt-action: #0f6cbd;
+  --pt-action-hover: #115ea3;
+  --accent-fg: #ffffff;
+  --pt-action-hover-fg: #ffffff;
+  --accent-soft: rgba(71, 158, 245, 0.14);
+  --warn-fg: #fcc84a;
+  --warn-bg: #2a2310;
+  --warn-line: #5c4a1a;
+  --ok: #54d68c;
+  --pop-bg: #2e2e2e;
+  --pop-line: #4a4a4a;
+  --focus: 0 0 0 2px #1f1f1f, 0 0 0 4px #479ef5;
+
+  --background: 0 0% 12%;            /* #1f1f1f page */
+  --foreground: 0 0% 96%;            /* #f5f5f5 */
+  --card: 0 0% 16%;                  /* #292929 one step up */
+  --card-foreground: 0 0% 96%;
+  --popover: 0 0% 18%;               /* #2e2e2e */
+  --popover-foreground: 0 0% 96%;
+  --muted: 0 0% 20%;                 /* #333333 */
+  --muted-foreground: 0 0% 70%;      /* #b3b3b3 ~5.9:1 on the well */
+  --border: 0 0% 24%;                /* #3d3d3d */
+  --input: 0 0% 43%;                 /* #6e6e6e field edge, 3:1 on the page */
+  --ring: 210 90% 62%;               /* #479ef5 */
+  --primary: 207 85% 40%;            /* #0f6cbd action blue, white text 5.4:1 */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 0 0% 20%;
+  --secondary-foreground: 0 0% 96%;
+  --accent: 0 0% 21%;                /* #363636 hover */
+  --accent-foreground: 0 0% 96%;
+  --destructive: 357 72% 47%;        /* #c42b31 */
+  --destructive-foreground: 0 0% 100%;
+  --radius: 0.25rem;
+
+  --sidebar-background: 0 0% 8%;    /* #141414 rail, one step below the page */
+  --sidebar-foreground: 0 0% 84%;
+  --sidebar-primary: 207 85% 40%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 0 0% 15%;        /* rail hover */
+  --sidebar-accent-foreground: 0 0% 100%;
+  --sidebar-border: 0 0% 18%;
+  --sidebar-ring: 210 90% 62%;
+
+  --pt-ok: 84 214 140;               /* #54d68c */
+  --pt-warn: 252 200 74;             /* #fcc84a */
+  --pt-bad: 255 145 145;             /* #ff9191 */
+  --pt-info: 125 199 255;            /* #7dc7ff */
+  --pt-brand: 117 184 247;           /* #75b8f7 blue ink */
+
+  --pt-topbar: 0 0% 12% / 0.9;
+  /* Buttons, toggles and inks that use the brand magenta tokens directly turn blue here. */
+  --de-magenta: #0f6cbd;             /* white text 5.4:1 */
+  --de-magenta-hover: #115ea3;
+  --de-magenta-ink: #75b8f7;
+  --pt-console-face: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, "Inter", sans-serif;
+  color-scheme: dark;
+  font-family: var(--pt-console-face);
+}
+
 /* ===== High contrast layer ===== */
 html.de-portal-root[data-theme="black"][data-contrast="boost"],
 html.de-portal-root[data-theme="black"][data-contrast="boost"] .de-portal,
 html.de-portal-root[data-theme="black"][data-contrast="boost"] body.de-portal-scope,
 html.de-portal-root[data-theme="dark"][data-contrast="boost"],
 html.de-portal-root[data-theme="dark"][data-contrast="boost"] .de-portal,
-html.de-portal-root[data-theme="dark"][data-contrast="boost"] body.de-portal-scope {
+html.de-portal-root[data-theme="dark"][data-contrast="boost"] body.de-portal-scope,
+html.de-portal-root[data-theme="console"][data-contrast="boost"],
+html.de-portal-root[data-theme="console"][data-contrast="boost"] .de-portal,
+html.de-portal-root[data-theme="console"][data-contrast="boost"] body.de-portal-scope {
   --line: #3a3a46;
   --line-strong: #5e5e6c;
   --fg-muted: #c6c6d0;
@@ -243,7 +327,10 @@ html.de-portal-root[data-theme="black"][data-contrast="max"] .de-portal,
 html.de-portal-root[data-theme="black"][data-contrast="max"] body.de-portal-scope,
 html.de-portal-root[data-theme="dark"][data-contrast="max"],
 html.de-portal-root[data-theme="dark"][data-contrast="max"] .de-portal,
-html.de-portal-root[data-theme="dark"][data-contrast="max"] body.de-portal-scope {
+html.de-portal-root[data-theme="dark"][data-contrast="max"] body.de-portal-scope,
+html.de-portal-root[data-theme="console"][data-contrast="max"],
+html.de-portal-root[data-theme="console"][data-contrast="max"] .de-portal,
+html.de-portal-root[data-theme="console"][data-contrast="max"] body.de-portal-scope {
   --line: #ffffff;
   --line-strong: #ffffff;
   --fg-muted: #ffffff;
@@ -370,12 +457,23 @@ html.de-portal-root[data-theme="light"] :is(.bg-popover, [role="dialog"].bg-back
   color: var(--fg);
 }
 :is(.de-portal, body.de-portal-scope) [role="menuitemradio"][aria-checked="true"] { background: var(--raised); }
+/* Console: square-ish admin-centre shapes and the UI face for headings (sizes and targets unchanged). */
+html.de-portal-root[data-theme="console"] :is(h1, h2, h3, h4, h5, h6, .font-heading) {
+  font-family: var(--pt-console-face);
+  font-weight: 600;
+  letter-spacing: 0;
+}
+html.de-portal-root[data-theme="console"] :is(.bg-card.border, .bg-popover, [role="dialog"].bg-background, .rounded-xl) { border-radius: 6px; }
+html.de-portal-root[data-theme="console"] :is(input:not([type="radio"]):not([type="checkbox"]):not([type="file"]), select, textarea, .rounded-lg, [role="menuitem"], [role="menuitemradio"], [role="menuitemcheckbox"]) { border-radius: 4px; }
+html.de-portal-root[data-theme="console"] :is(button, a):is(.bg-de-magenta, .bg-primary) { border-radius: 4px; font-weight: 600; }
+html.de-portal-root[data-theme="console"] :is(.bg-popover, [role="dialog"].bg-background) { backdrop-filter: none; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45); }
 .pt-role-badge { width: fit-content; padding: 4px 8px; background: var(--accent-soft); color: rgb(var(--pt-brand)); border-radius: 999px; font-weight: 700; }
 .pt-tone-warn.pt-callout { background: var(--warn-bg); border-color: var(--warn-line); color: var(--warn-fg); border-radius: 18px; }
 .pt-theme-swatch { width: 52px; height: 52px; border: 1px solid var(--line-strong); border-radius: 50%; }
 .pt-theme-swatch[data-theme-opt="system"] { background: linear-gradient(135deg, #f5f5f9 50%, #05050e 50%); color: #e11d7a; }
 .pt-theme-swatch[data-theme-opt="dark"] { background: #05050e; color: #ffffff; }
 .pt-theme-swatch[data-theme-opt="black"] { background: #000000; color: #ffffff; }
+.pt-theme-swatch[data-theme-opt="console"] { background: linear-gradient(90deg, #141414 34%, #1f1f1f 34%); color: #479ef5; }
 .pt-theme-swatch[data-theme-opt="light"] { background: #f5f5f9; color: #0d0d14; }
 .pt-theme-option input:checked + .pt-theme-swatch { border-color: var(--pt-action); box-shadow: 0 0 0 3px var(--surface), 0 0 0 5px var(--pt-action); }
 .pt-theme-option input:focus-visible + .pt-theme-swatch { outline: 2px solid var(--pt-action); outline-offset: 6px; }
@@ -436,6 +534,18 @@ html.de-portal-root[data-theme="light"] :is(.bg-popover, [role="dialog"].bg-back
   --pt-bad: 182 17 58;
   --pt-info: 21 94 117;
   --pt-brand: 163 14 82;
+}
+/* Console: the selected nav item is a lighter row with a blue bar on its left edge. */
+:is(.de-portal[data-theme="console"], body.de-portal-scope[data-portal-theme="console"]) .pt-active-nav[data-active="true"],
+:is(.de-portal[data-theme="console"], body.de-portal-scope[data-portal-theme="console"]) .pt-active-nav[data-active="true"]:hover {
+  background: hsl(0 0% 18%);
+  color: hsl(0 0% 100%);
+  box-shadow: inset 3px 0 0 hsl(210 90% 62%);
+  --pt-ok: 84 214 140;
+  --pt-warn: 252 200 74;
+  --pt-bad: 255 145 145;
+  --pt-info: 125 199 255;
+  --pt-brand: 117 184 247;
 }
 /* Category colours (Joe, 2026-10-06): one vivid hex per kind of card, used only on the card's top
    edge and its icon well, never for text or status. Status keeps --pt-ok/warn/bad/info.

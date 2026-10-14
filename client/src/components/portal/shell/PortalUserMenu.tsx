@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { ChevronDown, LogOut, Monitor, Moon, Settings, Sun } from "lucide-react";
+import { ChevronDown, LogOut, Monitor, Moon, PanelsTopLeft, Settings, Sun } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -39,6 +39,7 @@ const THEME_OPTIONS: { value: PortalThemePreference; label: string; Icon: typeof
   { value: "dark", label: "Dark", Icon: Moon },
   { value: "black", label: "Black", Icon: Moon },
   { value: "light", label: "Light", Icon: Sun },
+  { value: "console", label: "Admin console", Icon: PanelsTopLeft },
 ];
 
 interface Props {
