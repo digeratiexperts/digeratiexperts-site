@@ -3463,7 +3463,7 @@ claims:
     owner: claude
     subsystem: licensing
     branch: claude/exciting-cannon-ttx8m8
-    base_sha: 660a4db
+    base_sha: 9ba5e21
     files:
       - shared/starterKits.ts (new), shared/jumpcloudPlan.ts (new) and their tests
       - migrations/0018_license_jumpcloud_links.sql (new)
@@ -3475,6 +3475,11 @@ claims:
     status: active
     started: 2026-10-10
     note: >-
+      PR 574 verified live 2026-10-14 (deploy of 55b0492 applied migration
+      0018). Follow-up on the same branch, Joe 2026-10-14 ("it should look
+      like azure or entra or cytracom"): company page as a console with
+      breadcrumb, status chips and tabs (Patch bay, Starter kit, JumpCloud
+      installs); fixes the squashed Device name box on phones.
       Joe, 2026-10-08/10 ("continue everything"): JumpCloud / Chocolatey
       installs from the License Patch Bay and starter kits by business type
       (regular, regulated, GCC High). PR 540 (desk-chat-archive-swipe,
