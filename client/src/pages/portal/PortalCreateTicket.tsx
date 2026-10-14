@@ -16,6 +16,7 @@ import {
 } from "@/lib/portalTicketAttach";
 import { PRIMARY_PHONE } from "@/data/companyContact";
 import { isDeAdmin, readImpersonatingCompany, readPortalUser } from "@/lib/portalRoles";
+import { RESPONSE_TARGETS, formatResponseTargets } from "@shared/responseTargets";
 import { INTERNAL_COMPANY_NAME, NO_CLIENT_TICKET_ERROR, ticketCompanyName } from "@shared/portalTicketOrg";
 import { Callout, Field, Panel } from "@/components/portal/ui";
 
@@ -33,9 +34,9 @@ const CATEGORIES = [
 ];
 
 const PRIORITIES: { value: string; label: string; hint: string }[] = [
-  { value: "low", label: "Low", hint: "Can wait a few days" },
-  { value: "medium", label: "Medium", hint: "Soon; response within 24 hours" },
-  { value: "high", label: "High", hint: "Urgent; response within 4 hours" },
+  { value: "low", label: "Low", hint: `Can wait; response by ${RESPONSE_TARGETS.low.toLowerCase()}` },
+  { value: "medium", label: "Medium", hint: `Soon; response within ${RESPONSE_TARGETS.medium}` },
+  { value: "high", label: "High", hint: `Urgent; response within ${RESPONSE_TARGETS.high}` },
   { value: "critical", label: "Critical", hint: "Something is down; call us as well" },
 ];
 
@@ -192,7 +193,7 @@ export default function PortalCreateTicket() {
         <Callout tone="warn" title={`Something down right now? Call ${PRIMARY_PHONE.display}.`}>
           <span className="inline-flex items-center gap-1.5">
             <Phone className="h-3.5 w-3.5" aria-hidden="true" />
-            Response targets: Critical 1 hour · High 4 hours · Medium 24 hours.
+            Response targets: {formatResponseTargets()}.
           </span>
         </Callout>
 
