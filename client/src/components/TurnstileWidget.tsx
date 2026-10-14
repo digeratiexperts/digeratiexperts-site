@@ -10,6 +10,13 @@ const SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || "";
 
 const isTestKey = !SITE_KEY || SITE_KEY === "1x00000000000000000000AA";
 
+/**
+ * True when this build carries a real site key and the widget shows a check.
+ * False: it renders nothing and hands back "dev-bypass-token" at once, so a
+ * form that waits for a token never waits (Joe, 2026-10-14).
+ */
+export const turnstileActive = !isTestKey;
+
 export default function TurnstileWidget({ onVerify, onError, theme = "dark" }: TurnstileWidgetProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetIdRef = useRef<string | null>(null);
