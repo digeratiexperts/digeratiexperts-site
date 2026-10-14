@@ -31,7 +31,7 @@ import { resetPortalSession, signOutOfPortal, usePortalSession } from "@/compone
 import { PortalTour } from "@/components/portal/shell/PortalTour";
 import { AGREEMENT_GATE_PATH, mustVisitGate, useAgreementGate } from "@/lib/portalAgreementGate";
 import { AdminModeSwitch } from "@/components/portal/AdminModeSwitch";
-import { usePortalTheme } from "@/components/portal/shell/portalTheme";
+import { isDarkPortalTheme, usePortalTheme } from "@/components/portal/shell/portalTheme";
 import { PortalCommandPalette } from "@/components/portal/shell/PortalCommandPalette";
 import { PortalActivityPopover } from "@/components/portal/shell/PortalActivityPopover";
 import { PortalUserMenu, initialsOf, roleLabel } from "@/components/portal/shell/PortalUserMenu";
@@ -149,7 +149,7 @@ export function PortalLayout({
   const companyName = impersonatingCompany?.companyName || user?.client?.companyName || null;
 
   return (
-    <div className={cn("de-portal", theme === "dark" && "dark")} data-theme={theme}>
+    <div className={cn("de-portal", isDarkPortalTheme(theme) && "dark")} data-theme={theme}>
       <SidebarProvider defaultOpen={typeof window === "undefined" ? true : window.innerWidth >= 1024}>
         <Sidebar collapsible="icon" className="border-sidebar-border">
           <nav aria-label="Client portal" className="flex h-full min-h-0 flex-col">

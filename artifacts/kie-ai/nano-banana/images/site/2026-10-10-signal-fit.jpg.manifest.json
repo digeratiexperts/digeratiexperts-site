@@ -1,0 +1,19 @@
+{
+  "provider": "kie.ai",
+  "taskId": "1d721a31f2412a2fd23ce62c3518d6e4",
+  "model": "nano-banana-2",
+  "promptFile": "/home/user/digeratiexperts-site/artifacts/kie-ai/nano-banana/prompts/site/2026-10-10-signal-fit.json",
+  "input": {
+    "prompt": "{\"prompt\": \"Four operating models, one fit: four rising terraces. Wide studio photograph, low three-quarter view, 70mm lens, f/8. In the right half, four solid graphite-anodized blocks stepping up from left to right like broad terraces, each a little taller than the last, their top faces softly lit by violet rim light; the third terrace's front edge carries a thin magenta highlight. Crisp chamfers, fine brushed grain. Pure black studio environment, physically based materials, realistic contact shadows, deep falloff to black at every frame edge. The left two thirds of the frame stay almost black and empty for overlaid text. Violet is light only, never paint. Restrained, premium, quiet; very low overall brightness.\", \"negative_prompt\": \"text, letters, numbers, logos, icons, symbols, watermark, people, hands, faces, padlock, shield, laptop, server rack, circuit board, binary code, hologram, neon grid, cyberpunk, matrix, rainbow gradient, lens flare, bokeh balls, plastic toy look, cartoon, CGI sheen, oversaturated, busy composition, blurry, distorted geometry\", \"settings\": {\"style\": \"premium dark studio photography, physically based materials\", \"quality\": \"tack sharp, true material texture, controlled highlights\"}}",
+    "aspect_ratio": "16:9",
+    "resolution": "2K",
+    "output_format": "jpg"
+  },
+  "resultUrls": [
+    "https://tempfile.aiquickdraw.com/workers/images/image_6701053f720828b952c7322626676675.jpg"
+  ],
+  "creditsConsumed": 12.0,
+  "generatedAt": "2026-10-10T02:04:43.468137+00:00",
+  "classification": "ILLUSTRATIVE",
+  "approvalStatus": "candidate"
+}

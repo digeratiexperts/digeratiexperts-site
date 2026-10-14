@@ -17,6 +17,8 @@
  * as each record is confirmed.
  */
 
+import { OWNER_CERTIFICATIONS } from "./teamProfile";
+
 export type CredentialKind = "certification" | "partner" | "rating" | "registration";
 
 export type VerifiedCredential = {
@@ -33,7 +35,8 @@ export type VerifiedCredential = {
   checkedOn: string;
 };
 
-export const VERIFIED_CREDENTIALS: VerifiedCredential[] = [];
+/** The owner's certifications are entered in teamProfile.ts, beside the owner's title. */
+export const VERIFIED_CREDENTIALS: VerifiedCredential[] = [...OWNER_CERTIFICATIONS];
 
 export const CREDENTIAL_KIND_LABEL: Record<CredentialKind, string> = {
   certification: "Certification",

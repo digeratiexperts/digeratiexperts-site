@@ -50,7 +50,7 @@ export function EcosystemProgression({
           <h2 className="mt-2 font-heading text-2xl font-semibold tracking-[-0.03em] text-white md:text-3xl lg:text-4xl">
             Four operating models. One matched to your environment.
           </h2>
-          <p className="mt-3 max-w-3xl text-base leading-relaxed text-white/55 md:text-lg">
+          <p className="mt-3 max-w-3xl text-base leading-relaxed text-white/85 md:text-lg">
             We do not start with a package and pile on add-ons. If Office would need heavy modification,
             Business is the correct fit for that environment — not universally “better.” User count is a
             signal, never the sole criterion.
@@ -71,27 +71,27 @@ export function EcosystemProgression({
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <p className="font-mono text-base font-semibold tracking-[0.16em] text-white/50">
+                  <p className="font-mono text-base font-semibold tracking-[0.16em] text-white/75">
                     {String(index + 1).padStart(2, "0")}
                   </p>
                   {isFlagship && (
-                    <span className="rounded-full border border-[#D3126A]/60 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-de-magenta-ink">
+                    <span className="rounded-full border border-[#D3126A]/60 px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-de-magenta-ink">
                       Flagship Cyber
                     </span>
                   )}
                 </div>
                 <p className="mt-2 font-heading text-xl font-semibold text-white">{tier.name}</p>
-                <p className="mt-1 text-base font-medium text-white/70">{formatUserPrice(tier.id)}</p>
+                <p className="mt-1 text-lg font-semibold text-white/90">{formatUserPrice(tier.id)}</p>
                 {detailed && (
-                  <p className="mt-1 text-sm text-white/50">
+                  <p className="mt-1 text-sm text-white/75">
                     {formatPrice(tier.monthlyMin)} monthly minimum
                   </p>
                 )}
-                <p className="mt-3 flex-1 text-sm leading-relaxed text-white/65">{fit[tier.id]}</p>
+                <p className="mt-3 flex-1 text-base leading-relaxed text-white/85 md:text-[17px]">{fit[tier.id]}</p>
                 {detailed && (
                   <ul className="mt-4 space-y-1.5 border-t border-white/10 pt-3">
                     {highlights[tier.id].map((item) => (
-                      <li key={item} className="flex items-center text-sm text-white/75">
+                      <li key={item} className="flex items-center text-sm text-white/85">
                         <span className="mr-2 text-[#D3126A]" aria-hidden="true">
                           ·
                         </span>
@@ -113,7 +113,7 @@ export function EcosystemProgression({
         })}
       </ol>
 
-      <p className="mt-6 text-base leading-relaxed text-white/55">
+      <p className="mt-6 text-base leading-relaxed text-white/80 md:text-lg">
         Not sure which package fits? We assess your environment — users, devices, locations,
         infrastructure, security, compliance, recovery, and whether you need fully managed or
         co-managed operations — then match the model.

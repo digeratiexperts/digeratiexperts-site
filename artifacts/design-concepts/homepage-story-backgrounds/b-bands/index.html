@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Concept B: infographic bands</title>
+<link rel="stylesheet" href="../shared.css">
+<style>
+  /* Concept B: the section's own facts are the background, drawn large and legible.
+     One perimeter runs through all three: threats arrive at it, it shows six gaps,
+     then it becomes eight layers. Same centre line in every section. */
+  section { position: relative; padding: 96px 0; }
+  .grid { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 48px; align-items: start; }
+  .viz { position: relative; z-index: 2; }
+  .viz svg { display: block; width: 100%; height: auto; overflow: visible; }
+  svg text { font-family: Inter, sans-serif; }
+  .s1 { background: radial-gradient(ellipse 60% 70% at 75% 45%, #1d1530 0%, var(--bg) 70%); }
+  .s3 { background: radial-gradient(ellipse 60% 70% at 75% 50%, #1a1430 0%, var(--bg) 70%); }
+  .ledger { margin-top: 40px; display: grid; gap: 0; border-top: 1px solid var(--hair); }
+  .ledger div { display: grid; grid-template-columns: 150px 1fr; gap: 16px; padding: 18px 0; border-bottom: 1px solid var(--hair); align-items: baseline; }
+  .ledger .stat { font-size: 36px; }
+  .list { margin: 32px 0 0; padding: 0; list-style: none; display: grid; gap: 10px; }
+  .list li { display: grid; grid-template-columns: 40px 1fr; gap: 12px; padding: 14px 16px; border: 1px solid rgba(20,16,40,.1); border-radius: 14px; background: #fff; box-shadow: 0 1px 2px rgba(18,12,40,.05); }
+  .list b { display: block; font: 600 16px/1.3 "Space Grotesk", sans-serif; }
+  .list span { font-size: 14px; color: var(--ink-2); }
+  .list i { font: 600 12px/1 Oxanium, monospace; color: var(--mag-paper); background: rgba(211,18,106,.08); border-radius: 6px; padding: 6px; height: 24px; text-align: center; font-style: normal; }
+  .note { margin-top: 28px; font-size: 14px; color: rgba(255,255,255,.7); max-width: 460px; }
+  .btn { display: inline-flex; margin-top: 28px; background: var(--mag); color: #fff; font: 600 15px/1 Inter; padding: 14px 20px; border-radius: 12px; text-decoration: none; }
+  @media (max-width: 1023px) { .grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="tag">Concept B · Infographic bands</div>
+
+<!-- 1. The threats: the numbers are the picture. Pressure arrives at one perimeter. -->
+<section class="s1">
+  <div class="canvas grid">
+    <div>
+      <p class="eyebrow">Why Digerati Experts</p>
+      <h2>The Threats Are Real</h2>
+      <p class="lede">Don't become a statistic. These numbers show why proactive security matters — and why endpoint, identity, and recovery discipline have to be owned, not assumed.</p>
+      <div class="ledger">
+        <div><span class="stat">$11.5M</span><span>average cost of a data breach in the United States<br><span class="src">— IBM Cost of a Data Breach 2026</span></span></div>
+        <div><span class="stat">$392M</span><span>in internet crime losses reported from Arizona in 2024 (IC3 state ranking by loss)<br><span class="src">— FBI IC3 Annual Report 2024</span></span></div>
+      </div>
+    </div>
+    <div class="viz">
+      <svg viewBox="0 0 640 700" aria-hidden="true">
+        <defs>
+          <linearGradient id="g1" x1="0" x2="1"><stop offset="0" stop-color="#d3126a"/><stop offset="1" stop-color="#8b3dff"/></linearGradient>
+          <marker id="ar" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" fill="#f04c97"/></marker>
+        </defs>
+        <!-- 48% donut, drawn to scale -->
+        <g transform="translate(180 190)">
+          <circle r="140" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="30"/>
+          <circle r="140" fill="none" stroke="url(#g1)" stroke-width="30" stroke-dasharray="422.2 879.6" transform="rotate(-90)" stroke-linecap="butt"/>
+          <text y="4" text-anchor="middle" fill="#fff" style="font:600 64px 'Space Grotesk'">48%</text>
+          <text y="36" text-anchor="middle" fill="rgba(255,255,255,.75)" style="font-size:14px">of breaches involve</text><text y="54" text-anchor="middle" fill="rgba(255,255,255,.75)" style="font-size:14px">ransomware</text>
+          <text y="196" text-anchor="middle" fill="rgba(255,255,255,.55)" style="font-size:13px">— Verizon DBIR 2026</text>
+        </g>
+        <!-- 99%+ donut, drawn to scale -->
+        <g transform="translate(480 250)">
+          <circle r="110" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="22"/>
+          <circle r="110" fill="none" stroke="#a78bfa" stroke-width="22" stroke-dasharray="684.3 691.2" transform="rotate(-90)"/>
+          <text y="2" text-anchor="middle" fill="#fff" style="font:600 50px 'Space Grotesk'">99%+</text>
+          <text y="30" text-anchor="middle" fill="rgba(255,255,255,.75)" style="font-size:13px">of unauthorized access</text>
+          <text y="48" text-anchor="middle" fill="rgba(255,255,255,.75)" style="font-size:13px">attempts blocked by MFA</text>
+          <text y="160" text-anchor="middle" fill="rgba(255,255,255,.55)" style="font-size:13px">— Microsoft Digital Defense Report 2025</text>
+        </g>
+        <!-- pressure arriving at the perimeter below (it continues into the next section) -->
+        <g stroke="#f04c97" stroke-width="2" fill="none" marker-end="url(#ar)" opacity=".9">
+          <path d="M120 470 C 170 560 240 620 300 690" stroke-dasharray="5 6"/>
+          <path d="M330 470 L 330 700" stroke-dasharray="5 6"/>
+          <path d="M560 440 C 520 560 440 620 380 690" stroke-dasharray="5 6"/>
+        </g>
+        <text x="345" y="600" fill="#f04c97" class="mono" style="font-size:11px">PRESSURE ON YOUR PERIMETER ↓</text>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- 2. The gaps: the same perimeter, six breaks, one per problem. -->
+<section class="paper s2">
+  <div class="canvas grid">
+    <div>
+      <p class="eyebrow">Problems we solve</p>
+      <h2>What We Tackle</h2>
+      <p class="lede">Compact view of the problems we own with you. Sourced industry statistics live on Cyber Facts; capability detail lives on Solutions.</p>
+      <ol class="list">
+        <li><i>01</i><div><b>Ransomware &amp; Malware</b><span>Advanced threat detection and rapid response to eliminate malicious attacks before damage occurs</span></div></li>
+        <li><i>02</i><div><b>Data Loss Prevention</b><span>Comprehensive backup strategies with tested disaster recovery ensuring business continuity</span></div></li>
+        <li><i>03</i><div><b>Compliance Gaps</b><span>Navigate HIPAA, PCI DSS, and SOC 2 requirements with continuous monitoring and reporting</span></div></li>
+        <li><i>04</i><div><b>Phishing &amp; Social Engineering</b><span>Multi-layered email security combined with ongoing employee security awareness training</span></div></li>
+        <li><i>05</i><div><b>Zero-Day Vulnerabilities</b><span>Proactive patch management and security assessments to close gaps before exploitation</span></div></li>
+        <li><i>06</i><div><b>Insider Threats</b><span>User behavior analytics and access controls to prevent internal security breaches</span></div></li>
+      </ol>
+    </div>
+    <div class="viz">
+      <svg viewBox="0 0 640 760" aria-hidden="true">
+        <g transform="translate(330 340)">
+          <!-- six arcs with six gaps -->
+          <g fill="none" stroke="#1a1228" stroke-width="18" stroke-linecap="round">
+            <path d="M0-260A260 260 0 0 1 225.2-130" transform="rotate(8)"/>
+            <path d="M0-260A260 260 0 0 1 225.2-130" transform="rotate(68)"/>
+            <path d="M0-260A260 260 0 0 1 225.2-130" transform="rotate(128)"/>
+            <path d="M0-260A260 260 0 0 1 225.2-130" transform="rotate(188)"/>
+            <path d="M0-260A260 260 0 0 1 225.2-130" transform="rotate(248)"/>
+            <path d="M0-260A260 260 0 0 1 225.2-130" transform="rotate(308)"/>
+          </g>
+          <!-- gap markers and labels -->
+          <g style="font:600 13px Inter" fill="#1a1228">
+            <g transform="rotate(4)"><circle cy="-260" r="13" fill="#d3126a"/></g><text x="30" y="-282">01 Ransomware</text>
+            <g transform="rotate(64)"><circle cy="-260" r="13" fill="#d3126a"/></g><text x="250" y="-110">02 Data loss</text>
+            <g transform="rotate(124)"><circle cy="-260" r="13" fill="#d3126a"/></g><text x="230" y="168">03 Compliance</text>
+            <g transform="rotate(184)"><circle cy="-260" r="13" fill="#d3126a"/></g><text x="-40" y="298">04 Phishing</text>
+            <g transform="rotate(244)"><circle cy="-260" r="13" fill="#d3126a"/></g><text x="-330" y="150">05 Zero-day</text>
+            <g transform="rotate(304)"><circle cy="-260" r="13" fill="#d3126a"/></g><text x="-310" y="-130">06 Insider</text>
+          </g>
+          <!-- the business at the centre -->
+          <circle r="150" fill="none" stroke="rgba(26,18,40,.12)" stroke-dasharray="3 8"/>
+          <g fill="none" stroke="#1a1228" stroke-width="1.5">
+            <rect x="-34" y="-46" width="68" height="78" rx="6"/><path d="M-34-20H34M-34 6H34M-6 32V14H6V32"/>
+          </g>
+          <text y="70" text-anchor="middle" fill="#5a5368" class="mono" style="font-size:11px">YOUR BUSINESS</text>
+          <!-- hand-off to the next section: each gap becomes a block -->
+          <path d="M0 274V430" stroke="#d3126a" stroke-width="2" stroke-dasharray="5 6"/>
+          <text x="14" y="390" fill="#a30e52" class="mono" style="font-size:11px">EACH GAP → A BLOCK ↓</text>
+        </g>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- 3. The layers: the perimeter closes into eight blocks around the business. -->
+<section class="s3">
+  <div class="canvas grid">
+    <div>
+      <p class="eyebrow">What we protect</p>
+      <h2>Eight blocks. One accountable operating model.</h2>
+      <p class="lede">Protection is layered around the business, and each block answers a specific class of threat. Risk and exposure runs continuously beneath the other seven.</p>
+      <p class="note">Seven blocks answer a threat class each. Risk &amp; exposure runs continuously beneath all seven as the visibility and intelligence layer.</p>
+      <a class="btn" href="#">Explore the eight-block model →</a>
+    </div>
+    <div class="viz">
+      <svg viewBox="0 0 640 700" aria-hidden="true">
+        <g transform="translate(205 350)">
+          <g fill="none" stroke-width="10">
+            <circle r="60" stroke="#d3126a"/>
+            <circle r="84" stroke="#c0187a"/>
+            <circle r="108" stroke="#a8228a"/>
+            <circle r="132" stroke="#912c9a"/>
+            <circle r="156" stroke="#7b37aa"/>
+            <circle r="180" stroke="#6a40c0"/>
+            <circle r="204" stroke="#5b45e0"/>
+            <circle r="236" stroke="#a78bfa" stroke-width="2" stroke-dasharray="4 8"/>
+          </g>
+          <g fill="none" stroke="rgba(255,255,255,.4)" stroke-width="1"><path d="M26 -54L262 -175H276 M31 -78L262 -125H276 M90 -60L262 -75H276 M130 -20L262 -25H276 M155 20L262 25H276 M170 60L262 75H276 M178 100L262 125H276 M190 140L262 175H276"/></g>
+          <g style="font:600 14px Inter">
+            <text x="284" y="-170" fill="#fff">Identity &amp; access<tspan x="284" dy="16" fill="rgba(255,255,255,.6)" style="font-weight:400;font-size:12px">answers credential theft</tspan></text>
+            <text x="284" y="-120" fill="#fff">Endpoint<tspan x="284" dy="16" fill="rgba(255,255,255,.6)" style="font-weight:400;font-size:12px">answers malware</tspan></text>
+            <text x="284" y="-70" fill="#fff">Email &amp; collaboration<tspan x="284" dy="16" fill="rgba(255,255,255,.6)" style="font-weight:400;font-size:12px">answers phishing</tspan></text>
+            <text x="284" y="-20" fill="#fff">Browser &amp; web<tspan x="284" dy="16" fill="rgba(255,255,255,.6)" style="font-weight:400;font-size:12px">answers web-borne</tspan></text>
+            <text x="284" y="30" fill="#fff">Network<tspan x="284" dy="16" fill="rgba(255,255,255,.6)" style="font-weight:400;font-size:12px">answers lateral movement</tspan></text>
+            <text x="284" y="80" fill="#fff">Detection &amp; response<tspan x="284" dy="16" fill="rgba(255,255,255,.6)" style="font-weight:400;font-size:12px">answers persistence</tspan></text>
+            <text x="284" y="130" fill="#fff">Human risk<tspan x="284" dy="16" fill="rgba(255,255,255,.6)" style="font-weight:400;font-size:12px">answers social engineering</tspan></text>
+            <text x="284" y="180" fill="#c4b5fd">Risk &amp; exposure<tspan x="284" dy="16" fill="rgba(255,255,255,.6)" style="font-weight:400;font-size:12px">runs beneath all seven</tspan></text>
+          </g>
+          <g fill="none" stroke="#fff" stroke-width="1.5"><rect x="-22" y="-30" width="44" height="52" rx="5"/><path d="M-22-12H22M-22 6H22"/></g>
+        </g>
+      </svg>
+    </div>
+  </div>
+</section>
+</body>
+</html>

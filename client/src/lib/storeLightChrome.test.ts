@@ -33,7 +33,7 @@ describe("store checkout light chrome", () => {
     expect(src).toMatch(/isStorePath\(location\)/);
     expect(src).toMatch(/background: "#ffffff"/);
     expect(src).toMatch(/background: "#0a0a0a"/);
-    expect(src).toMatch(/light \? "hidden" : "hidden lg:block"/);
+    expect(src).toMatch(/light \? "hidden" : "hidden xl:block"/);
     expect(src).toMatch(/useReducedMotion/);
     expect(src).toMatch(/bg-\[#D3126A\]/);
   });

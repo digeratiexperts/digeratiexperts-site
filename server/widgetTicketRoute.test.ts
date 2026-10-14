@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { PRIMARY_PHONE } from "@shared/companyContact";
 import { ZohoOAuthError } from "./zoho/zohoOAuthErrors";
+import { ZohoAuthUnavailableError } from "./zoho/oauth";
 
 /**
  * The production failure this guards, seen 2026-09-30 in the DE Desk "Get
@@ -285,6 +286,28 @@ describe("DE Desk widget ticket route", () => {
       expect(body.reason).toBe("auth_failed");
       // Diagnostic, not a credential.
       expect(JSON.stringify(body)).not.toMatch(/token|secret/i);
+    });
+
+    it("reads a throttled or backing-off token manager as degraded, never auth_failed (#418)", async () => {
+      getDeskClient.mockRejectedValueOnce(
+        new ZohoAuthUnavailableError("Zoho Desk is temporarily unavailable: Zoho token endpoint: Access Denied", new Date()),
+      );
+
+      const response = await fetch(`${baseUrl}/api/zoho/desk/status`);
+      const body = (await response.json()) as Record<string, unknown>;
+
+      expect(response.status).toBe(503);
+      expect(body).toMatchObject({ configured: true, connected: false, state: "degraded", reason: "unavailable" });
+      expect(JSON.stringify(body)).not.toMatch(/Access Denied/);
+    });
+
+    it("reads a refused Desk credential as needs_reconnect", async () => {
+      getDeskClient.mockRejectedValueOnce(
+        new ZohoOAuthError({ message: "Zoho Desk needs to be reconnected", code: "invalid_refresh_token", product: "desk" }),
+      );
+
+      const body = (await (await fetch(`${baseUrl}/api/zoho/desk/status`)).json()) as Record<string, unknown>;
+      expect(body).toMatchObject({ connected: false, state: "needs_reconnect", reason: "auth_failed" });
     });
 
     it("keeps a network failure as unavailable, distinct from a refused credential", async () => {

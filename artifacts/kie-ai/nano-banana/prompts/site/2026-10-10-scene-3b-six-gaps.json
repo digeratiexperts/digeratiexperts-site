@@ -1,0 +1,12 @@
+{
+  "prompt": "Same diorama as the reference image. Now the low continuous rim around the edge of the plinth has exactly six short breaks, evenly spaced around the whole perimeter: two on the front-left edge, two on the front-right edge, one on the back-left edge and one on the back-right edge. Each break glows softly from inside with magenta light. No light streaks. Everything else unchanged: same diorama, same camera, same composition, same materials and lighting as the reference image. The left 40% of the frame is plain empty black with nothing in it. Absolutely no text, letters or writing anywhere in the image.",
+  "negative_prompt": "text, letters, numbers, logos, icons, symbols, watermark, any writing, captions, typography, people, hands, faces, padlock, shield, laptop, server rack, circuit board, binary code, hologram, neon grid, cyberpunk, rainbow gradient, lens flare, cartoon, busy composition, blurry, distorted geometry",
+  "image_input": [
+    "https://tempfile.aiquickdraw.com/workers/images/image_b158d4a180adbf86b8d0120914f197d1.jpg"
+  ],
+  "api_parameters": {
+    "resolution": "2K",
+    "output_format": "jpg",
+    "aspect_ratio": "16:9"
+  }
+}

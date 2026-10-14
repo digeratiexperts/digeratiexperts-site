@@ -53,6 +53,29 @@ claims:
       Portal Guide (each user), and a first-login guided tour. Enforcement ships
       off (PORTAL_AGREEMENT_GATE=enforce turns it on) until Joe approves the
       AI-drafted legal text.
+  - id: portal-console-theme
+    owner: claude
+    subsystem: client-portal
+    branch: claude/youthful-babbage-va5j5a
+    base_sha: 5da3faf
+    files:
+      - client/src/styles/portal.css (new console theme block only; dark and light untouched)
+      - client/src/styles/portalConsoleTheme.test.ts (new)
+      - client/src/components/portal/shell/portalTheme.ts
+      - client/src/components/portal/shell/portalTheme.test.ts
+      - client/src/components/portal/shell/PortalUserMenu.tsx (one Appearance option)
+      - client/src/pages/portal/PortalLayout.tsx (dark class for the console theme only)
+      - artifacts/visual-qa/portal-console-theme/** (new)
+    status: active
+    started: 2026-10-14
+    note: >-
+      Joe, 2026-10-14: "a dark theme that is like entra and IT dashboards ...
+      build it then for the Client portal". Opt-in "Admin console" theme in
+      the portal user menu: neutral greys, one blue accent, 6px/4px corners,
+      system UI face, left-bar selected nav. Graphite dark stays the default;
+      Match device never picks it. Open PRs could not be checked from this
+      session (GitHub unauthorized); the mirror showed no active claim on
+      these files. Joe confirms the screenshots before merge.
   - id: quote-match-include-it
     issue: 417
     owner: cursor
@@ -3146,7 +3169,7 @@ claims:
       - server/portalDeskAgentRoutes.ts, server/portalDeskAgentRoutes.test.ts (archive/unarchive/delete routes)
       - server/routes.ts (the desk-chats list ?archived=1 only)
       - artifacts/visual-qa/desk-archive-swipe/**
-    status: merged-pr-540-not-live
+    status: verified-live
     started: 2026-10-08
     note: >-
       Joe, 2026-10-08, with a screenshot of the Chats / DE Desk right-click
@@ -3169,7 +3192,7 @@ claims:
       - client/src/App.tsx (one route), client/src/components/portal/shell/portalNav.ts (one admin nav item)
       - client/src/pages/portal/PortalLicensing.tsx (admin link to the patch bay only)
       - artifacts/visual-qa/license-patch-bay/**
-    status: merged-pr-540-not-live
+    status: verified-live
     started: 2026-10-08
     note: >-
       Joe, 2026-10-08, from the Licenses page ("Open a company (impersonate)
@@ -3274,3 +3297,337 @@ claims:
       than 17rem the steps drop under the number. No markup, copy or token
       change. Overlap check 2026-10-08: no open PR or active claim touches
       these files.
+  - id: t7-copy-overlays-pdfs
+    owner: claude
+    subsystem: marketing-copy, site-overlays, store-pdfs
+    branch: claude/t7-copy-overlays-pdfs
+    base_sha: 7b1b4197
+    files:
+      - client/src/pages/versions/v1/sections/DigeratiLeadFormSection.tsx, DigeratiContactSection.tsx (the success toast only)
+      - client/src/pages/versions/v3/sections/DigeratiLeadFormSection.tsx, DigeratiContactSection.tsx (the success toast only)
+      - client/src/pages/versions/v7/sections/13-lead-form.tsx, 16-contact-footer.tsx (the success toast only)
+      - server/services/notificationService.ts (the quote-request acknowledgement sentence only)
+      - client/src/lib/stickyCtaVisibility.ts, stickyCtaVisibility.test.ts (isCookieFirst only)
+      - client/src/components/StickyCTABar.tsx (the isCookieFirst call only)
+      - client/src/components/CookieConsentBanner.tsx (the two disclosure breakpoints only)
+      - client/src/lib/storeLightChrome.test.ts (the cookie breakpoint assertion only)
+      - server/pdf/dePdfBrand.ts (vertical spacing values only)
+      - scripts/qa/storePdfCases.ts (two page expectations only)
+      - client/src/pages/versions/v8/sections/01-hero.phone.test.ts (new)
+      - artifacts/visual-qa/t7-cookie-and-bar/**, artifacts/visual-qa/t7-pdf-one-page/** (new)
+    status: verified-live
+    started: 2026-10-10
+    note: >-
+      DE backlog thread T7 (taken over from Cursor), items 61, 62, 64 and 65.
+      61 (3a): the last "within 24 hours" reply promises (quote-request email,
+      the /version-1, /version-3 and /version-7 toasts) now say "within one
+      business day"; PRs 456 and 461 did the rest. 62 (3b): PR 538 made the
+      Risk Assessment bar wait for the cookie banner on phones only; it now
+      waits at every width, and 1024-1279px get the short cookie line
+      (the full disclosure there was 311-319px tall). 64: the 5-item quote and
+      3-package solution PDFs fit one page (vertical spacing only) and the
+      regression cases now expect exactly one page. 65: a source test guards
+      the phone hero rules from PR 499 that PR 505 kept. Item 63 (3c, Add user)
+      was already live via PR 538. Overlap check 2026-10-10: open PRs 542,
+      550, 553, 554 and 555 touch none of these files.
+    verification: >-
+      PR 558, merged as 067d2b2e on Joe's "yes all and each are approved". VERIFIED LIVE 2026-10-10: the deploy job recorded DE_DEPLOYED_RELEASE 067d2b2e and "Verify production runtime" passed; CI's Store PDF check passed on the merge.
+
+  - id: t7-contact-audit-team-config
+    owner: claude
+    subsystem: docs, about-team
+    branch: claude/t7-contact-audit-team-config
+    base_sha: 7b1b4197
+    files:
+      - docs/contact-details-audit.md (new)
+      - client/src/data/teamProfile.ts, teamProfile.test.ts (new)
+      - client/src/data/credentials.ts (VERIFIED_CREDENTIALS now includes OWNER_CERTIFICATIONS)
+      - client/src/pages/about/Team.tsx (owner name, role, title and SEO description read from teamProfile.ts)
+      - artifacts/visual-qa/t7-team-config/** (new)
+    status: verified-live
+    started: 2026-10-10
+    note: >-
+      DE backlog thread T7, items 66 and 67. 66: every place the business
+      phone and address appear, with no value changed (DE supplies them);
+      found a street address in public/llms.txt despite the city-only rule and
+      the retired (480) 519-5892 in every document_templates contract. 67: the
+      Team page reads the owner's name, role, title and certifications from
+      client/src/data/teamProfile.ts; title and certifications are empty
+      placeholders for DE, and certifications keep the verify-link rule by
+      flowing through credentials.ts. Nothing invented. Overlap check
+      2026-10-10: open PRs 542, 550, 553, 554, 555 and 558 touch none of
+      these files.
+    verification: >-
+      PR 561, merged as deb59f32 (Joe, "yes all and each are approved"). Its own deploy was coalesced into the next main commit 37dc7630 (PR 555), whose "Deploy and verify production VPS" job passed 2026-10-10.
+
+  - id: desk-oauth-client
+    owner: claude
+    subsystem: de-desk
+    branch: claude/awesome-bardeen-4pbl2m
+    base_sha: 7b1b4197
+    files:
+      - server/zoho/zohoClient.ts (resolveDeskOAuthConfig and the Desk readiness and refresh paths only; the CRM refresh is unchanged)
+      - server/zoho/zohoClient.desk.test.ts (one describe block appended)
+      - deploy/vps/env.production.example (the website Desk and CRM block only)
+      - server/deskTicketFallback.ts (the staff alert's restore sentence only)
+      - server/integrations/zohoAgentsReadiness.ts (one comment)
+    status: verified-live
+    started: 2026-10-10
+    note: >-
+      Joe, 2026-10-10: the new Desk refresh token came from its own Zoho Self
+      Client, but the website refreshed Desk with the CRM client
+      (ZOHO_CLIENT_ID_API / ZOHO_CLIENT_SECRET_API), so Zoho kept answering
+      auth_failed after the 00:49Z restart. Fix: ZOHO_DESK_CLIENT_ID and
+      ZOHO_DESK_CLIENT_SECRET for the Desk only. When either is set, all three
+      Desk values (with ZOHO_DESK_REFRESH_TOKEN) are required and nothing is
+      borrowed from CRM; a half-set pair keeps the Desk API off (tickets use
+      the failover) and the log names the missing variable, never a value.
+      With neither set, the legacy shared client and token fallbacks are
+      unchanged. CRM keeps its client and token. Overlap check 2026-10-10: the
+      only claim listing zohoClient.ts (de-desk-reliability-followup) is
+      verified-live; open PRs 542, 550, 553 and 554 touch none of these files.
+      RELEASED 2026-10-10: Joe, "Merge #555" (merged by another session as
+      37dc7630 after CI passed). PR 562 (one Zoho token manager) later moved
+      resolveDeskOAuthConfig into server/zoho/zohoAuth.ts and kept its Desk
+      client rule. Production runs 660a4dbf, which contains both. At 18:51Z
+      /api/zoho/desk/status read connected true and /api/health read
+      zohoDesk ok (zoho.desk connected, zoho.crm connected); deskTicketSpool
+      pending 0, so nothing is waiting to replay. Tickets created by the
+      website after the fix reached Desk: #133 to #136, channel Web, created
+      2026-10-12, seen read-only in Zoho Desk (org 641745124) on 2026-10-13;
+      the newest before the fix was #132 of 10/03. VERIFIED LIVE. Files
+      released.
+  - id: t7-desk-alamo-link
+    owner: claude
+    subsystem: de-desk-admin-scripts
+    branch: claude/t7-desk-alamo-link
+    base_sha: 7b1b4197
+    files:
+      - server/deskContactAccountLink.ts, deskContactAccountLink.test.ts (new)
+      - scripts/desk-link-alamo-contacts.mts (new)
+    status: verified-live
+    started: 2026-10-10
+    note: >-
+      DE backlog thread T7, item 70: a script that files the three Alamo
+      contacts under the "Alamo Industries" Desk account once DE creates it.
+      Dry run by default and offline (no Zoho Desk call); --apply reads Desk
+      live and writes, and writes nothing when the account is missing or
+      ambiguous; a contact under another account is reported, never moved.
+      Calls only exported zohoClient methods (getDeskClient, isDeskConfigured)
+      and pickDeskAccount; server/zoho/** is untouched (thread T1 and PR 555).
+      Not run with --apply. Items 68 and 69 skipped with evidence in the PR:
+      68 is the existing salesTaxReadiness check (Warehouse Vendors card); 69's
+      Stripe Tax path was retired by Joe on 2026-10-05 (commit e125b0a).
+    verification: >-
+      PR 563, merged as 97e49043 (Joe, "merge if its safe for everyone else and yourself"). VERIFIED LIVE 2026-10-10 02:16Z: deploy and runtime verification passed. Script not run with --apply; waits on DE for the three emails and the Desk account.
+
+  - id: t7-outstanding-fixes
+    owner: claude
+    subsystem: public-site-contact-and-chrome
+    branch: claude/t7-outstanding
+    base_sha: 4505f0c0
+    files:
+      - shared/responseTargets.ts, responseTargets.test.ts (new)
+      - client/src/pages/portal/PortalCreateTicket.tsx, PortalStatus.tsx
+      - shared/companyContact.ts (adds COMPANY.geo; no value changed)
+      - client/src/components/JsonLd.tsx, client/src/pages/locations/LocationServicePage.tsx
+      - client/src/pages/about/Press.tsx, client/src/pages/legal/{PrivacyPolicy,TermsOfUse,MSA}.tsx
+      - public/llms.txt
+      - client/src/components/MegaMenu.tsx (desktop nav item size, logo height lg-xl)
+      - client/src/components/CookieConsentBanner.tsx (compact Preferences link md:hidden)
+    status: in-review
+    started: 2026-10-14
+    note: >-
+      Joe, 2026-10-14: "work on fixing all outstanding items even my items for me. then
+      merge or push this." Portal response targets now read the public SLA page's times;
+      NAP literals read companyContact; llms.txt drops the street address (city-only rule,
+      2026-10-07); header CTA no longer runs past the viewport at 1024-1279; cookie banner
+      shows one Preferences control from md. No phone/address value changed. Homepage
+      hero (PR 505) untouched.
+
+  - id: zoho-oauth-manager
+    owner: claude
+    subsystem: zoho-oauth
+    branch: claude/zoho-oauth-manager
+    base_sha: 61eeade7
+    files:
+      - server/zoho/oauth/** (new: dc, scopes, store, db-store, token-endpoint, manager, connect, index, manager.test)
+      - migrations/0017_zoho_oauth_tokens.sql (new, additive table)
+      - server/zoho/zohoAuth.ts (new), server/zoho/zohoHealth.ts (new)
+      - server/zoho/zohoClient.ts (token handling and hosts; resolveDeskOAuthConfig from PR 555 moved to zohoAuth.ts and re-exported)
+      - server/zoho/zohoClient.desk.test.ts (ported to the token manager, PR 555 cases kept), server/zoho/zohoClient.retry.test.ts (new)
+      - server/zoho/zohoOAuthErrors.ts (one error code)
+      - server/zohoPayments.ts (token handling and hosts only; signing key and webhook verification untouched)
+      - server/services/zohoBooksTax.ts (token handling and hosts only; public signatures unchanged for thread T7), zohoBooksTax.test.ts
+      - server/portalZohoAuth.ts (accounts host only; ZOHO_OIDC_ISSUER still wins)
+      - server/widgetTicketRoute.ts, server/widgetTicketRoute.test.ts (Desk status state field)
+      - server/zohoConnectRoutes.ts, server/zohoConnectRoutes.test.ts (new)
+      - server/routes.ts (/api/zoho/status and the four Zoho Connect routes only)
+      - server/index.ts (/api/health zoho map and the Connect snapshot at boot only)
+      - server/paymentReadiness.test.ts (reset between cases)
+      - server/deskTicketFallback.ts (the restore sentence only)
+      - .github/workflows/production-health.yml (the desk state in the issue text only)
+      - deploy/vps/env.production.example, docs/ZOHO-OAUTH-INVENTORY.md (new), docs/STORE-WAREHOUSE.md (one step)
+    status: merged
+    started: 2026-10-10
+    note: >-
+      Thread T1 (DE backlog, taken over from Cursor): port Intelligence Hub
+      lib/zoho-oauth into server/zoho/oauth and move CRM, Desk, Payments and
+      Books token handling onto it: cached and persisted access tokens,
+      single-flight refresh, 5 refreshes per 10 minutes, classified errors,
+      client pinning, data-center hosts, four-state health (throttling and
+      5xx are degraded, never auth_failed: issue 418), and an owner-only,
+      flag-gated (ZOHO_CONNECT_ENABLED) Zoho Connect flow that revokes the
+      grant it replaces. Migration numbered 0017 because PR 553 claims 0016. Stacked on PR 555 (desk-oauth-client, another
+      session), whose Desk client rule is kept unchanged; merge 555 first.
+      Thread T7 adds a Books tax readiness check: zohoBooksTax.ts signatures
+      are unchanged. Not merged or deployed; nothing registered in Zoho.
+  - id: license-jumpcloud-kits
+    owner: claude
+    subsystem: licensing
+    branch: claude/exciting-cannon-ttx8m8
+    base_sha: 660a4db
+    files:
+      - shared/starterKits.ts (new), shared/jumpcloudPlan.ts (new) and their tests
+      - migrations/0018_license_jumpcloud_links.sql (new)
+      - server/licenseBoardStore.ts, server/licenseBoardRoutes.ts, server/licenseBoardRoutes.test.ts
+      - server/integrations/jumpcloud.ts (software-app helpers appended; onboard/offboard untouched)
+      - server/routes.ts (registerLicenseBoardRoutes deps only)
+      - client/src/pages/portal/AdminLicenseBoard.tsx, client/src/components/portal/licensing/* , client/src/lib/licenseBoardApi.ts
+      - artifacts/visual-qa/license-patch-bay/**
+    status: active
+    started: 2026-10-10
+    note: >-
+      Joe, 2026-10-08/10 ("continue everything"): JumpCloud / Chocolatey
+      installs from the License Patch Bay and starter kits by business type
+      (regular, regulated, GCC High). PR 540 (desk-chat-archive-swipe,
+      license-patch-bay) verified live 2026-10-08: deploy of c4a0c24 created
+      the vault key and applied migration 0015.
+  - id: zoho-agent-rules
+    owner: claude
+    subsystem: agent-docs
+    branch: claude/zoho-agent-rules
+    base_sha: b24a7dab
+    files:
+      - AGENTS.md (one new section after Hosts only)
+      - CLAUDE.md (one pointer line only)
+      - docs/ZOHO-OAUTH-INVENTORY.md (the rules section and the status line)
+    status: active
+    started: 2026-10-10
+    note: >-
+      Joe, 2026-10-10: "write these rules to other agents that might not
+      know". Zoho Connect is live (PR 562, approved by Joe at 03:58Z); the
+      rules stop agents from spending refresh-token slots, calling the token
+      endpoint directly, or rotating tokens on degraded. Placed away from PR
+      557's AGENTS.md insertion point to avoid a conflict. Docs only.
+  - id: exit-popup-navy-split
+    owner: claude
+    subsystem: site-overlays
+    branch: claude/exit-popup-navy-split
+    base_sha: 97e49043
+    files:
+      - client/src/components/ExitIntentPopup.tsx (colour theme table and variant only; copy, form and behaviour unchanged)
+      - client/src/lib/exitPopupVariant.ts, exitPopupVariant.test.ts (new)
+      - client/src/lib/analytics.ts (exitIntentShown / exitIntentConverted take a variant)
+      - client/src/index.css (the .de-exit-navy background only)
+      - artifacts/design-concepts/exit-popup-background/**, artifacts/visual-qa/exit-popup-split/** (new)
+    status: active
+    started: 2026-10-10
+    note: >-
+      Joe, 2026-10-10: the exit popup's warm paper background is "an ugly bg
+      color"; three concepts shown (A navy grid, B graphite aurora, C brand
+      gradient); Joe chose "A, split-tested vs current". Each browser draws
+      paper or navy 50/50 and keeps it; exit_intent_shown and generate_lead
+      (exit_intent) carry the variant so conversion can be compared.
+      ?exit_variant=navy|paper forces a version for review. Lead source sent to
+      the server is unchanged. Overlap check 2026-10-10: open PR 542 edits the
+      print block of index.css; this adds a rule elsewhere in the file.
+  - id: homepage-v9-signal-thread
+    owner: claude
+    subsystem: homepage-versions
+    branch: claude/loving-edison-epagrb
+    base_sha: 37dc7630
+    files:
+      - client/src/pages/versions/v9/** (new; Version 8 copied, then the Signal Thread backdrops)
+      - client/src/pages/versions/registry.ts (the Version 9 entry only)
+      - client/src/App.tsx (the /version-9 route and its ownsBottomBar check only)
+      - server/spaKnownPaths.ts (/version-9 only)
+      - client/public/images/visual-system/signal-thread/** (new)
+      - artifacts/kie-ai/nano-banana/{prompts,images}/site/2026-10-10-signal-* (new)
+      - artifacts/design-concepts/homepage-signal-thread/** (new)
+      - artifacts/design-concepts/homepage-story-backgrounds/** (new; three mockups and Version 10 evidence)
+      - client/src/pages/versions/v10/** (new; Version 8 copied, then the scene story)
+      - client/public/images/visual-system/scene-story/** (new)
+      - .claude/kie-budget/ledger.jsonl (the jobs' open, spend and close lines)
+    status: active
+    started: 2026-10-10
+    note: >-
+      Joe, 2026-10-10: section backgrounds that "tell a story or prep the user
+      for the next section", sections that connect visually, "less plain
+      background and more of a constant infographic type of design", using
+      kie.ai. Built as Version 9 at /version-9 (noindex, preview only); the
+      live homepage (Version 8) and its files are untouched. kie.ai job
+      homepage-signal-thread-plates-2026-10-10 closed at $0.24 (projected
+      $0.24). Joe then asked for "a much better approach" and to mock up all
+      three directions; Version 10 (/version-10) builds the recommended one,
+      a single scene that changes state behind the opening chapters (jobs
+      homepage-story-concepts-2026-10-10 $0.24, homepage-scene-story-2026-10-10
+      $0.12). Overlap check 2026-10-10: open PRs 542, 550, 553, 554, 557, 559,
+      560, 562, 563 and 564 touch none of these files.
+  - id: store-greeting-plain
+    owner: claude
+    subsystem: de-desk
+    branch: claude/awesome-bardeen-4pbl2m
+    base_sha: 660a4dbf
+    files:
+      - client/src/lib/deskAskDeMotion.ts (the Store-draft greeting sentence only)
+      - client/src/lib/deskAskDeMotion.test.ts (one assertion)
+      - artifacts/visual-qa/store-greeting-plain/** (live/ added with the release record)
+    status: verified-live
+    started: 2026-10-10
+    note: >-
+      Joe's 2026-10-08 phone screenshots showed Ask DE greeting a device with
+      a Store draft as "This device already has a Store situation. I don't
+      have a name or email from that — ask about that environment or a
+      different path." Offered a plain rewrite; Joe: "continue everything".
+      Now: "You started a solution in the Store on this device. We can pick
+      it up here, or ask me anything else." Same trigger (a Store draft on
+      this device), still names no one and shows no draft details; the
+      starter chips are unchanged. Overlap check 2026-10-10: no claim lists
+      deskAskDeMotion.ts; open PRs do not touch it.
+      RELEASED 2026-10-14: Joe, "merge 571". Merged as 92f2ba6d (PR 571)
+      after CI passed on 7785f419; production runs 7d7b1af5 (/api/health
+      release, built 21:11Z), which contains 92f2ba6d. The live entry bundle
+      has "You started a solution in the Store on this device."; none of the
+      338 live scripts has "already has a Store situation". Checked on
+      digeratiexperts.com at 390 and 1440 with a Store draft on the device:
+      the greeting shows the new sentence, the old wording is gone, the
+      starter chips (Store chip first) and the incident chip render below
+      it; no horizontal overflow, no page errors
+      (artifacts/visual-qa/store-greeting-plain/live/). VERIFIED LIVE. Files
+      released.
+  - id: proactive-readability
+    owner: claude
+    subsystem: marketing-pages
+    branch: claude/proactive-readability
+    base_sha: 97e49043
+    files:
+      - client/src/components/PageTemplate.tsx (readable prop, one class on <main>)
+      - client/src/components/PageTemplate.readable.test.ts (new)
+      - client/src/index.css (the .de-readable block only)
+      - client/src/pages/solutions/ProActiveEcosystemPage.tsx (readable on)
+      - client/src/components/visual/ProActiveEcosystemDiagram.tsx, evidence/AssessmentReportSample.tsx (text sizes and ink only)
+      - client/src/components/evidence/EvidenceFrame.tsx (badge, status, subtitle, source sizes and ink only; 8 users)
+      - client/src/components/EcosystemProgression.tsx (text sizes and ink only; also on the pricing section)
+      - artifacts/visual-qa/proactive-readability/** (new)
+    status: active
+    started: 2026-10-10
+    note: >-
+      Joe, 2026-10-10, on /solutions/proactive-ecosystem: all the text "more in
+      your face but not crazy ... way more readable". Maintenance Mode: no copy,
+      layout, colour token or font change. Body copy 16 -> 17/18px, muted ink to
+      85% white (>= 7:1), 10-11px labels to 13px. Shared chapter primitives are
+      untouched; the page opts in with PageTemplate `readable`, which any similar
+      page can turn on. Overlap check 2026-10-10: open PR 566 adds an unrelated
+      rule to index.css; no other open PR touches these files.
+

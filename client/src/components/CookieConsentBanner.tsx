@@ -286,7 +286,10 @@ export function CookieConsentBanner() {
                 <p
                   className={cn(
                     "min-w-0 flex-1 text-base leading-relaxed",
-                    light ? "hidden" : "hidden lg:block",
+                    // Full disclosure from 1280px. Between 1024 and 1279 it shared the row
+                    // with the buttons, wrapped to eleven lines and covered 311px of a
+                    // 768px-tall screen; those widths get the short line tablets use.
+                    light ? "hidden" : "hidden xl:block",
                     light ? "text-slate-700" : "text-gray-200",
                   )}
                 >
@@ -306,7 +309,7 @@ export function CookieConsentBanner() {
                 <p
                   className={cn(
                     "min-w-0 flex-1 text-sm font-medium leading-snug",
-                    light ? "" : "lg:hidden",
+                    light ? "" : "xl:hidden",
                     light ? "text-slate-800" : "text-gray-200",
                   )}
                 >
@@ -321,12 +324,13 @@ export function CookieConsentBanner() {
                   >
                     Privacy
                   </Link>
-                  {" · "}
+                  {/* From md the full "Manage Cookie Preferences" button shows, so this one would double it. */}
+                  <span className="md:hidden">{" · "}</span>
                   <button
                     type="button"
                     onClick={() => setShowPreferences(v => !v)}
                     className={cn(
-                      "font-semibold underline underline-offset-2",
+                      "font-semibold underline underline-offset-2 md:hidden",
                       light ? "text-[#D3126A] hover:text-slate-900" : "text-[#D3126A] hover:text-white",
                     )}
                     data-testid="button-manage-cookie-preferences-mobile"

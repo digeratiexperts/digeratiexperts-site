@@ -3,14 +3,14 @@ import { PageTemplate } from "@/components/PageTemplate";
 import { JsonLd } from "@/components/JsonLd";
 import { Link } from "wouter";
 import { useSEO } from "@/hooks/useSEO";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { COMPANY, PRIMARY_PHONE } from "@/data/companyContact";
 
 const NAP = {
-  name: "Digerati Experts",
-  city: "Chandler",
-  region: "AZ",
+  name: COMPANY.legalName,
+  city: COMPANY.addressLocality,
+  region: COMPANY.addressRegion,
   phone: PRIMARY_PHONE.display,
-  email: "info@digeratiexperts.com",
+  email: COMPANY.email,
 };
 
 export default function Press() {
