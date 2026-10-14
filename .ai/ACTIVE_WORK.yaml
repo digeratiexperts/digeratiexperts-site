@@ -3483,8 +3483,8 @@ claims:
     files:
       - client/src/lib/deskAskDeMotion.ts (the Store-draft greeting sentence only)
       - client/src/lib/deskAskDeMotion.test.ts (one assertion)
-      - artifacts/visual-qa/store-greeting-plain/**
-    status: active
+      - artifacts/visual-qa/store-greeting-plain/** (live/ added with the release record)
+    status: verified-live
     started: 2026-10-10
     note: >-
       Joe's 2026-10-08 phone screenshots showed Ask DE greeting a device with
@@ -3496,6 +3496,17 @@ claims:
       this device), still names no one and shows no draft details; the
       starter chips are unchanged. Overlap check 2026-10-10: no claim lists
       deskAskDeMotion.ts; open PRs do not touch it.
+      RELEASED 2026-10-14: Joe, "merge 571". Merged as 92f2ba6d (PR 571)
+      after CI passed on 7785f419; production runs 7d7b1af5 (/api/health
+      release, built 21:11Z), which contains 92f2ba6d. The live entry bundle
+      has "You started a solution in the Store on this device."; none of the
+      338 live scripts has "already has a Store situation". Checked on
+      digeratiexperts.com at 390 and 1440 with a Store draft on the device:
+      the greeting shows the new sentence, the old wording is gone, the
+      starter chips (Store chip first) and the incident chip render below
+      it; no horizontal overflow, no page errors
+      (artifacts/visual-qa/store-greeting-plain/live/). VERIFIED LIVE. Files
+      released.
   - id: proactive-readability
     owner: claude
     subsystem: marketing-pages
