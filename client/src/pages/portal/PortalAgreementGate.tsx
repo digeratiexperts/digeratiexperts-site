@@ -233,7 +233,7 @@ function WelcomeVideos({ videos, preferCompany }: { videos: AgreementGateRespons
         </div>
       </div>
       <div id={`${tabsId}-panel`} role="tabpanel" aria-labelledby={`${tabsId}-${tab}`}>
-        <div className="relative aspect-video w-full bg-[hsl(var(--background))]">
+        <div className="relative aspect-video w-full bg-background">
           {current.url && current.kind === "embed" ? (
             <iframe
               key={current.url}
@@ -285,7 +285,7 @@ function AgreementCard({ item, index, total, company }: { item: AgreementGateIte
       initial={reduce ? false : { opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25, delay: reduce ? 0 : index * 0.05 }}
-      className={cn("rounded-xl border bg-card p-4 md:p-5", waiting ? "border-border" : "pt-hover-brand border-[rgb(var(--pt-brand)/0.35)]")}
+      className={cn("rounded-xl border bg-card p-4 md:p-5", waiting ? "border-border" : "pt-hover-brand pt-border-brand-soft")}
       aria-labelledby={`agreement-${item.key}`}
       data-testid={`gate-agreement-${item.key}`}
     >
@@ -437,7 +437,7 @@ function AllSet({ onTour, onSkip }: { onTour: () => void; onSkip: () => void }) 
       initial={reduce ? false : { opacity: 0, scale: 0.98 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.3 }}
-      className="rounded-xl border border-[rgb(var(--pt-ok)/0.4)] bg-card p-5 text-center md:p-8"
+      className="rounded-xl border pt-border-ok-soft bg-card p-5 text-center md:p-8"
       aria-labelledby="gate-done"
       data-testid="gate-all-set"
       role="status"

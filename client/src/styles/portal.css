@@ -260,6 +260,14 @@ body.de-portal-scope[data-portal-theme="console"] .rounded-lg { border-radius: 4
 .pt-link    { color: rgb(var(--pt-brand)); }
 .pt-dot-ok  { background: rgb(var(--pt-ok)); }
 .pt-hover-brand:hover { border-color: rgb(var(--pt-brand) / 0.5); }
+/* Agreement gate and portal tour. Plain rules here rather than arbitrary Tailwind values: this
+   sheet loads with the portal only, and the site entry stylesheet is at its bundle budget. */
+.pt-border-brand-soft { border-color: rgb(var(--pt-brand) / 0.35); }
+.pt-border-ok-soft { border-color: rgb(var(--pt-ok) / 0.4); }
+.pt-bg-brand { background-color: rgb(var(--pt-brand)); }
+.pt-ring-brand { --tw-ring-color: rgb(var(--pt-brand)); }
+.pt-dot-idle { background-color: hsl(var(--muted-foreground) / 0.3); }
+.pt-tour-dim { background-color: rgb(5 3 18 / 0.62); }
 .pt-avatar-de { border-color: rgb(var(--pt-brand) / 0.45); background: rgb(var(--pt-brand) / 0.12); color: rgb(var(--pt-brand)); }
 .pt-note-internal { background: rgb(var(--pt-warn) / 0.05); }
 .pt-warn-strip { border-color: rgb(var(--pt-warn) / 0.35); background: rgb(var(--pt-warn) / 0.08); }

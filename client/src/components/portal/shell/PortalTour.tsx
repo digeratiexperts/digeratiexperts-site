@@ -193,15 +193,15 @@ export function PortalTour({ user, enabled }: { user: PortalUserSession | null; 
           >
             {!reduce && (
               <motion.span
-                className="absolute inset-0 rounded-lg ring-2 ring-[rgb(var(--pt-brand))]"
+                className="absolute inset-0 rounded-lg ring-2 pt-ring-brand"
                 animate={{ opacity: [0.9, 0.25, 0.9], scale: [1, 1.06, 1] }}
                 transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
               />
             )}
-            {reduce && <span className="absolute inset-0 rounded-lg ring-2 ring-[rgb(var(--pt-brand))]" />}
+            {reduce && <span className="absolute inset-0 rounded-lg ring-2 pt-ring-brand" />}
           </motion.div>
         ) : (
-          <motion.div key="dim" className="pointer-events-none absolute inset-0 bg-[rgb(5_3_18/0.62)]" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} aria-hidden="true" />
+          <motion.div key="dim" className="pointer-events-none absolute inset-0 pt-tour-dim" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} aria-hidden="true" />
         )}
       </AnimatePresence>
 
@@ -243,7 +243,7 @@ export function PortalTour({ user, enabled }: { user: PortalUserSession | null; 
         </AnimatePresence>
         <div className="mt-3 flex items-center gap-1" aria-hidden="true">
           {STEPS.map((_, i) => (
-            <span key={i} className={i === step ? "h-1.5 w-4 rounded-full bg-[rgb(var(--pt-brand))]" : "h-1.5 w-1.5 rounded-full bg-muted-foreground/30"} />
+            <span key={i} className={i === step ? "h-1.5 w-4 rounded-full pt-bg-brand" : "h-1.5 w-1.5 rounded-full pt-dot-idle"} />
           ))}
         </div>
         <div className="mt-4 flex items-center gap-2">
