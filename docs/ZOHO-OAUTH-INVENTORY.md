@@ -1,9 +1,39 @@
 # Zoho OAuth inventory and reconnect runbook (website)
 
-**Status:** adopted with the token manager in `server/zoho/oauth/` (thread T1, 2026-10-10).
+**Status:** live in production since 2026-10-10 (PR #562); Zoho Connect enabled and approved the same day.
 **Standard:** Intelligence Hub `docs/ZOHO-OAUTH-STANDARD.md`. That repo's `lib/zoho-oauth` is the reference implementation, ported here. This page covers what the website does and where it differs from the Hub.
 
 Env vars are listed **by name only**. Values live in `/home/digeratiexperts.com/shared/.env` on the VPS, never in this repository.
+
+## Rules for every agent and person (read before touching Zoho)
+
+**Production state, 2026-10-10:** Zoho Connect is **on**. One Zoho API Console **Server-based Application** (`ZOHO_CONNECT_CLIENT_ID`) holds one grant that serves the website's CRM, Billing, Desk, Books and Payments. Joe approved it once at `/api/zoho/connect`. The old Self Client tokens in `.env` are kept only as fallbacks.
+
+Two Zoho limits drive these rules:
+- Each client holds at most **20 refresh tokens per user**. The 21st silently revokes the oldest, which may be another product's live token.
+- Each refresh token allows **10 access-token requests per 10 minutes**. Going over looks like a dead token, but it is throttling.
+
+Before 2026-10-10, ignoring them took the Desk down again and again (issue #418).
+
+1. **Never generate a grant code on the Connect client.** Don't use the Connect client from the Intelligence Hub, scripts, MCP servers or any other repo. It belongs to the website alone. Another system needs its own client.
+2. **Never generate grant codes on the legacy Self Clients for other purposes** (the ones behind `ZOHO_REFRESH_TOKEN`, `ZOHO_DESK_*`, `ZOHO_BOOKS_*`, `ZOHO_PAYMENTS_*`). Every code spends one of that client's 20 slots and can revoke a live fallback token.
+3. **Website code never calls `/oauth/v2/token` itself.** Every Zoho call goes through `server/zoho/oauth`: `createZohoProductAuth` → `getAccess()` / `fetchWithAuth()`, and `check()` / `status()` for health. No hand-rolled refresh, no per-request token, and no env fallback chains outside a product's `legacySources`.
+4. **Health checks and status pages never request a token.** They read `status()`, or `check()`, which makes at most one cheap probe every 10 minutes. Never poll Zoho in a loop.
+5. **Never hardcode a Zoho host** (`accounts.zoho.com`, `www.zohoapis.com`, `desk.zoho.com`, `payments.zoho.com`). Take it from `server/zoho/oauth/dc.ts` or the access's `dc`.
+6. **Read the state before acting:**
+   - `degraded`: Zoho is throttling or down. **Do nothing.** It retries with a backoff. Never rotate a token, generate a code or restart to "fix" it.
+   - `needs_reconnect`: tell Joe to sign in as `admin@digeratiexperts.com` and open `https://digeratiexperts.com/api/zoho/connect`: one click, and the old grant is revoked automatically. Agents never ask for grant codes, refresh tokens or client secrets, and never paste them anywhere.
+   - `not_configured`: a setting is missing. Name the env var. Never invent a value.
+7. **Secrets:**
+   - Env var **names** only, in code, commits, PRs, issues and chat.
+   - `.env` lives in `/home/digeratiexperts.com/shared/`, owned by `diger7051:diger7051`, mode `600`. Restore both after editing it.
+   - Tokens in the database are encrypted (`zoho_oauth_tokens`). Never print or log a token.
+8. **A new Zoho product or scope:**
+   - Add its scopes to `server/zoho/oauth/scopes.ts` and a `createZohoProductAuth` for it.
+   - Tell Joe that **one reconnect** at `/api/zoho/connect` is needed after deploy, so the grant covers the new scopes.
+   - Don't create a new Self Client for it.
+9. **Kill switch:** `ZOHO_CONNECT_ENABLED=false` in `.env`, then `sudo systemctl restart digeratiexperts-site`, sends every product back to the legacy Self Client tokens. Use it only on Joe's call.
+10. **The Intelligence Hub has its own Zoho Connect client and grant** (Hub `docs/ZOHO-OAUTH-STANDARD.md`). Never share a client between the Hub and the website.
 
 ## Why
 
