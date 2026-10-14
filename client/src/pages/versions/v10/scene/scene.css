@@ -96,3 +96,22 @@
   padding: 6px 10px;
   margin: -6px -10px;
 }
+
+/* Why we exist: the claims stack sits right over the network, so its glass is thinner
+   and blurred harder; the building reads through while the copy keeps its contrast. */
+.v10 .v10s-02 section.f-paper:has(> .scene) { --spot-bg: rgba(14, 14, 16, 0.46); }
+.v10 .v10s-02 section.f-paper:has(> .scene) .claims > * {
+  -webkit-backdrop-filter: blur(12px) saturate(1.2);
+  backdrop-filter: blur(12px) saturate(1.2);
+}
+
+/* Phones: the contact column is long and the form covers its foot, so the closing
+   frame moves up behind the heading, where it can be seen. */
+@media (max-width: 639px) {
+  .v10 .v10s-16 .contact > .scene .scene__img {
+    top: 0;
+    bottom: auto;
+    -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent 100%);
+    mask-image: linear-gradient(to bottom, #000 55%, transparent 100%);
+  }
+}
