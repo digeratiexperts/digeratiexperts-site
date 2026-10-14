@@ -42,6 +42,8 @@ export const COMPANY = {
   areaServed: "Arizona and Greater Phoenix (Chandler, Phoenix, Scottsdale, Tempe, Mesa, Gilbert)",
   /** Verified Google Business Profile listing (CID — not a Place ID). */
   mapsUrl: "https://maps.google.com/?cid=1710856351091471339",
+  /** Map pin for schema.org GeoCoordinates (city level, as already published). */
+  geo: { latitude: 33.3062, longitude: -111.8413 },
 } as const;
 
 /**
