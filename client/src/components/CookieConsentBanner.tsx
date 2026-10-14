@@ -324,12 +324,13 @@ export function CookieConsentBanner() {
                   >
                     Privacy
                   </Link>
-                  {" · "}
+                  {/* From md the full "Manage Cookie Preferences" button shows, so this one would double it. */}
+                  <span className="md:hidden">{" · "}</span>
                   <button
                     type="button"
                     onClick={() => setShowPreferences(v => !v)}
                     className={cn(
-                      "font-semibold underline underline-offset-2",
+                      "font-semibold underline underline-offset-2 md:hidden",
                       light ? "text-[#D3126A] hover:text-slate-900" : "text-[#D3126A] hover:text-white",
                     )}
                     data-testid="button-manage-cookie-preferences-mobile"
