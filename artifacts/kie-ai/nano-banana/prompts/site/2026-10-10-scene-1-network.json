@@ -1,0 +1,9 @@
+{
+  "prompt": "Isometric architectural model photograph of a small business as a dark diorama, 100mm lens, f/8, high three-quarter view from the front left. On a large graphite plinth in the right 60% of the frame: a compact two-storey office block of graphite metal and smoked glass at the centre, surrounded by about a dozen small rounded graphite tiles (the company's devices and services) laid out on the plinth, each joined to the building by thin cool-white light lines etched into the plinth surface, like a calm network map. A low continuous rim runs around the edge of the plinth. Pure black studio environment, physically based materials, soft top light, deep falloff to black. The left 40% of the frame is empty black for overlaid text. Violet is light only, never paint. Restrained, premium, very low overall brightness.",
+  "negative_prompt": "text, letters, numbers, logos, icons, symbols, watermark, people, hands, faces, padlock, shield, laptop, server rack, circuit board, binary code, hologram, neon grid, cyberpunk, matrix, rainbow gradient, lens flare, bokeh balls, plastic toy look, cartoon, busy composition, blurry, distorted geometry",
+  "api_parameters": {
+    "resolution": "2K",
+    "output_format": "jpg",
+    "aspect_ratio": "16:9"
+  }
+}

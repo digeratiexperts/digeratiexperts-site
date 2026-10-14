@@ -1,0 +1,12 @@
+{
+  "prompt": "Same diorama as the reference image, later in the evening. The rim is continuous and unbroken; the etched network lines glow a steady, calm cool white; the office block's windows are softly lit warm from inside. A single thin magenta line of light runs across the dark ground from the left edge of the frame to the front of the plinth, like a path leading to the building. Quiet, resolved, welcoming. Everything else unchanged: same diorama, same camera, same composition, same materials and lighting as the reference image. The left 40% of the frame is plain empty black with nothing in it. Absolutely no text, letters or writing anywhere in the image.",
+  "negative_prompt": "text, letters, numbers, logos, icons, symbols, watermark, any writing, captions, typography, people, hands, faces, padlock, shield, laptop, server rack, circuit board, binary code, hologram, neon grid, cyberpunk, rainbow gradient, lens flare, cartoon, busy composition, blurry, distorted geometry",
+  "image_input": [
+    "https://tempfile.aiquickdraw.com/workers/images/image_b158d4a180adbf86b8d0120914f197d1.jpg"
+  ],
+  "api_parameters": {
+    "resolution": "2K",
+    "output_format": "jpg",
+    "aspect_ratio": "16:9"
+  }
+}

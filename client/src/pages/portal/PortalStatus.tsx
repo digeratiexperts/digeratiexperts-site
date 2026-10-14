@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { formatResponseTargets } from "@shared/responseTargets";
 import { Link } from "wouter";
 import { PortalLayout } from "./PortalLayout";
 import { CheckCircle2, CalendarClock } from "lucide-react";
@@ -216,7 +217,7 @@ export default function PortalStatus() {
             <dl className="grid gap-4 sm:grid-cols-2">
               <div>
                 <dt className="text-sm font-medium">Response Time SLA</dt>
-                <dd className="mt-0.5 text-xs text-muted-foreground">Critical: 1 hour | High: 4 hours | Medium: 24 hours</dd>
+                <dd className="mt-0.5 text-xs text-muted-foreground">{formatResponseTargets(" | ")}</dd>
               </div>
               <div>
                 <dt className="text-sm font-medium">Uptime SLA</dt>

@@ -292,6 +292,10 @@ jobs:
       # and CLOUDFLARE_ZONE_ID; without them it warns and skips.
       - name: Purge Cloudflare cache for changed public files
         if: env.DE_DEPLOY_STALE != 'true'
+        # A failed purge stays red on this step, but the release is already live,
+        # so it must not fail the job and open a "production deploy failed" issue
+        # (issue 395).
+        continue-on-error: true
         uses: actions/github-script@v7
         env:
           CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
