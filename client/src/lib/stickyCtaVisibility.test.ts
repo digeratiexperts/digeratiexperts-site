@@ -22,6 +22,11 @@ describe("sticky CTA visibility", () => {
     expect(isStickyCtaRouteAllowed("/solutions/request")).toBe(false);
   });
 
+  it("keeps the bar off /contact, where it covered the email and phone", () => {
+    expect(isStickyCtaRouteAllowed("/contact")).toBe(false);
+    expect(isStickyCtaRouteAllowed("/contact?topic=support")).toBe(false);
+  });
+
   it("keeps the bar off the quiz room, which carries its own next step", () => {
     expect(isStickyCtaRouteAllowed("/quote-wizard")).toBe(false);
     expect(isStickyCtaRouteAllowed("/quote-wizard?utm_source=x")).toBe(false);
