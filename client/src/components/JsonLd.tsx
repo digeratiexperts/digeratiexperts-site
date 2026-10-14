@@ -58,14 +58,14 @@ const LOCAL_BUSINESS = {
   "priceRange": "$$",
   "address": {
     "@type": "PostalAddress",
-    "addressLocality": "Chandler",
-    "addressRegion": "AZ",
-    "addressCountry": "US"
+    "addressLocality": COMPANY.addressLocality,
+    "addressRegion": COMPANY.addressRegion,
+    "addressCountry": COMPANY.addressCountry
   },
   "geo": {
     "@type": "GeoCoordinates",
-    "latitude": 33.3062,
-    "longitude": -111.8413
+    "latitude": COMPANY.geo.latitude,
+    "longitude": COMPANY.geo.longitude
   },
   "areaServed": [
     { "@type": "State", "name": "Arizona" },

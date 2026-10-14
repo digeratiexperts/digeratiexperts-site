@@ -123,8 +123,8 @@ export function LocationServicePage(props: LocationPageProps) {
       },
       geo: {
         "@type": "GeoCoordinates",
-        latitude: 33.3062,
-        longitude: -111.8413,
+        latitude: COMPANY.geo.latitude,
+        longitude: COMPANY.geo.longitude,
       },
       areaServed: {
         "@type": "City",
