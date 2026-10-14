@@ -271,7 +271,13 @@ class ZohoCRMService {
     try {
       const client = await zohoClient.getClient();
       const response = await client.post('/crm/v6/Calls', { data: [data] });
-      return response.data?.data?.[0]?.details;
+      const row = response.data?.data?.[0];
+      // Zoho reports a refused record inside a 2xx body; surface it instead of
+      // returning its error details as if they were the new call.
+      if (row?.status === 'error') {
+        throw new Error(`Zoho refused the call: ${row.code} ${row.details?.api_name ?? ''}`.trim());
+      }
+      return row?.details;
     } catch (error: any) {
       console.error('Error creating call:', error.response?.data || error.message);
       throw error;
