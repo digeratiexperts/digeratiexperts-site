@@ -136,7 +136,8 @@ describe("deskAskDeMotion", () => {
     const motion = await import("./deskAskDeMotion");
     const greet = motion.greetingForPage("home");
     expect(greet.startsWith(motion.DESK_PAGE_COPY.home.greet)).toBe(true);
-    expect(greet).toMatch(/Store situation/);
+    expect(greet).toMatch(/You started a solution in the Store on this device\./);
+    expect(greet).not.toMatch(/Store situation|name or email/);
     expect(greet).not.toContain("jo@acme.test");
     expect(greet).not.toContain("Jo Example");
     expect(greet).not.toMatch(/25 users|Identity & Access/);

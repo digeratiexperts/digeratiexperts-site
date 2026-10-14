@@ -806,7 +806,7 @@ export function MegaMenu() {
                 width={300}
                 height={72}
                 className={`transition-all duration-300 ${
-                  isScrolled ? 'h-10' : 'h-[3.25rem]'
+                  isScrolled ? 'h-10' : 'h-[3.25rem] lg:max-xl:h-10'
                 }`}
                 style={{ width: 'auto', maxWidth: '220px' }}
                 data-testid="logo-header"
@@ -825,7 +825,7 @@ export function MegaMenu() {
                   {item.isSimple ? (
                     <a
                       href={item.href}
-                      className="group relative inline-flex items-center px-3 xl:px-4 py-2 text-lg xl:text-xl leading-normal text-white/90 hover:text-white font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-de-accent focus:ring-offset-2 focus:ring-offset-black rounded whitespace-nowrap overflow-visible"
+                      className="group relative inline-flex items-center px-2 xl:px-3 2xl:px-4 py-2 text-base xl:text-lg 2xl:text-xl leading-normal text-white/90 hover:text-white font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-de-accent focus:ring-offset-2 focus:ring-offset-black rounded whitespace-nowrap overflow-visible"
                       data-testid={`nav-${item.name.toLowerCase()}`}
                       onClick={handleLinkClick}
                       aria-label={`Go to ${item.name}`}
@@ -839,7 +839,7 @@ export function MegaMenu() {
                       ref={(el) => {
                         if (el) navButtonsRef.current.set(item.name, el);
                       }}
-                      className={`group relative inline-flex items-center px-3 xl:px-4 py-2 text-lg xl:text-xl leading-normal text-white/90 hover:text-white font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-de-accent focus:ring-offset-2 focus:ring-offset-black rounded whitespace-nowrap overflow-visible ${
+                      className={`group relative inline-flex items-center px-2 xl:px-3 2xl:px-4 py-2 text-base xl:text-lg 2xl:text-xl leading-normal text-white/90 hover:text-white font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-de-accent focus:ring-offset-2 focus:ring-offset-black rounded whitespace-nowrap overflow-visible ${
                         activeMenu === item.name ? 'text-white' : ''
                       }`}
                       data-testid={`nav-${item.name.toLowerCase()}`}

@@ -256,12 +256,13 @@ export const analytics = {
     track("select_item", { item_name: tier, item_category: "pricing", action, event_category: "conversion" });
   },
 
-  exitIntentShown() {
-    track("exit_intent_shown", { event_category: "engagement" });
+  /** `variant` is the exit popup split-test version (lib/exitPopupVariant.ts). */
+  exitIntentShown(variant?: string) {
+    track("exit_intent_shown", { event_category: "engagement", ...(variant ? { variant } : {}) });
   },
 
-  exitIntentConverted() {
-    trackMarketing("generate_lead", "Lead", { source: "exit_intent", method: "popup", event_category: "conversion" });
+  exitIntentConverted(variant?: string) {
+    trackMarketing("generate_lead", "Lead", { source: "exit_intent", method: "popup", event_category: "conversion", ...(variant ? { variant } : {}) });
   },
 
   quoteWizardStarted() {
