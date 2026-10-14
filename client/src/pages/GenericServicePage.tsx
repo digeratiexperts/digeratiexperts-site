@@ -183,9 +183,8 @@ export default function GenericServicePage({
         </Chapter>
       )}
 
-      {/* The plate rides on the process chapter; a page without one carries it here. */}
       {(features.length > 0 || benefits.length > 0) && (
-        <Chapter plate={process.length > 0 ? undefined : plateForServiceKey(serviceKey)} tone="paper" id="included" className="scroll-mt-28">
+        <Chapter tone="paper" id="included" className="scroll-mt-28">
           <Container>
             {features.length > 0 && (
               <>
