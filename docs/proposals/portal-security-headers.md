@@ -1,6 +1,6 @@
 # Review: security headers and CSP on portal pages
 
-Status: **one small fix in this PR, the rest for DE review.** Backlog task 19 (T2), 2026-10-10.
+Status: **four items fixed in this PR (2026-10-14, DE asked for the outstanding items to be fixed), the rest for DE review.** Backlog task 19 (T2), 2026-10-10.
 
 Scope: the headers `setSecurityHeaders` (`server/middleware/security.ts`) puts on
 every response, read for the client portal (`/portal/*` pages on
@@ -15,6 +15,27 @@ header; the legacy auditors it switches on in old ones could be abused to
 blank or probe page content. OWASP's secure-headers guidance is `0` (or omit)
 with a CSP doing the work, which this site has. Covered by
 `server/middleware/securityHeaders.test.ts`.
+
+## Fixed on 2026-10-14 (DE: "fix all outstanding items")
+
+- **Item 1, analytics on portal pages:** `initAnalytics()` now returns early on
+  the portal host and on `/portal` paths (`isPortalContext` in
+  `client/src/lib/analytics.ts`, tested), so GA, Meta, LinkedIn, Bing and
+  Clarity never load on signed-in portal pages. The shared CSP still lists
+  their origins (item 7); with the loader gated that is now unused allowance.
+- **Item 3, anonymous `/api/health`:** anonymous callers get `status`,
+  `timestamp`, `uptime` and `services.database` / `zohoDesk` / `zoho` (the
+  states production-health.yml and existing Zoho monitors read). Release, env,
+  port, integration configuration, spool counts and staging state are only in
+  the signed-in DE staff view (`server/publicHealth.ts`, tested). The deployed
+  commit stays public at `/release.txt`, which the deploy job relies on.
+- **Year-long cache on plain-named `assets/` files** (from
+  `downloads-cache.md`): only Vite's `<name>-<8-char hash>.<ext>` output is
+  cached forever now (`server/staticCacheControl.ts`, tested).
+
+Still open: items 2, 5, 6, 7, 9, 10 and 11 below. Item 11 needs the portal's
+fetches that leave response bodies unread fixed first, and a signed-in portal
+QA run to prove it; neither could be done from this session.
 
 ## Tried and backed out
 

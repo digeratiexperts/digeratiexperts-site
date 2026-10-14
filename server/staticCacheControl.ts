@@ -22,7 +22,10 @@ const REVALIDATE_DAILY = "public, max-age=86400, must-revalidate";
 export function cacheControlFor(relativePath: string): string {
   const p = relativePath.replace(/\\/g, "/").replace(/^\/+/, "");
   if (p === "release.txt" || p.endsWith(".html")) return NO_STORE;
-  if (/^assets\/[^/]+$/.test(p)) return HASHED;
+  // Vite names its output `<name>-<8-character hash>.<ext>`. A file dropped
+  // straight into client/public/assets/ under a plain name lands in the same
+  // folder, so the name pattern, not the folder, decides "forever".
+  if (/^assets\/[^/]+-[A-Za-z0-9_-]{8}\.[A-Za-z0-9]+$/.test(p)) return HASHED;
   if (/\.(png|jpe?g|gif|svg|webp|avif|ico)$/i.test(p)) return IMAGE;
   return REVALIDATE_DAILY;
 }

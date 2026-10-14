@@ -78,11 +78,11 @@ bookmark revalidates. If installers or security tooling are ever served from
 `/downloads`, do not leave option **E** in place: a year-long, same-name cache
 is exactly how a patched installer fails to reach the people who need it.
 
-## Related risk found in the same audit (no change made)
+## Related risk found in the same audit (fixed 2026-10-14)
 
 `server/staticCacheControl.ts` gives `public, max-age=31536000, immutable` to
 **any** file directly in `assets/`. Vite only writes hashed names there today,
 but a hand-placed `client/public/assets/<file>` would land there too under an
 unchanging name and be pinned for a year. A guard (a test that fails when
 `client/public/assets/` contains files at its top level, or tightening the rule
-to Vite's `-<hash>.` name pattern) would close it. Proposed, not done.
+to Vite's `-<hash>.` name pattern) would close it. Done on 2026-10-14: the rule now matches Vite's `<name>-<8-char hash>.<ext>` names only, with a test.

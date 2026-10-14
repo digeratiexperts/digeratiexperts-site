@@ -103,8 +103,20 @@ export function saveConsent(config: ConsentConfig) {
   }
 }
 
+/**
+ * Signed-in client portal pages carry tickets, invoices and people. Marketing
+ * analytics (GA, Meta, LinkedIn, Bing and Clarity session recording) never
+ * load there, whatever the visitor accepted on the public site.
+ */
+export function isPortalContext(hostname: string, pathname: string): boolean {
+  const host = hostname.toLowerCase();
+  if (host === "portal.digeratiexperts.com" || host.startsWith("portal.")) return true;
+  return pathname === "/portal" || pathname.startsWith("/portal/");
+}
+
 export function initAnalytics() {
   injectSearchVerificationTags();
+  if (typeof window !== "undefined" && isPortalContext(window.location.hostname, window.location.pathname)) return;
   const consent = getConsent();
   updateGtagConsent(consent);
 

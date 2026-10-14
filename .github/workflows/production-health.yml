@@ -15,15 +15,17 @@
 #
 # Cost note: every scheduled run bills at least one Actions minute, and the
 # account's Actions budget has "stop usage" enabled — an over-run would block
-# production deploys, so the interval is deliberately conservative. Every 30
-# minutes is ~1,440 billed minutes a month. Halve the interval and you double
-# that; change the cron below if the trade-off should be different.
+# production deploys, so the interval is deliberately conservative. Hourly is
+# ~720 billed minutes a month (it was every 30 minutes, ~1,440, until
+# 2026-10-14). Halve the interval and you double that; change the cron below
+# if the trade-off should be different.
 name: Production health
 
 on:
   schedule:
-    # Every 30 minutes. See the cost note above before making this tighter.
-    - cron: "*/30 * * * *"
+    # Hourly, at minute 17 (off the top of the hour, when scheduled runs queue).
+    # See the cost note above before making this tighter.
+    - cron: "17 * * * *"
   workflow_dispatch:
 
 permissions:
