@@ -14,6 +14,7 @@
 
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Link, useRoute } from "wouter";
+import { useReducedMotion } from "framer-motion";
 import { ArrowRight, CalendarPlus, CheckCircle2, Clock, Globe2, Users } from "lucide-react";
 import { MegaMenu } from "@/components/MegaMenu";
 import { DigeratiEnhancedFooterSection } from "@/pages/sections/DigeratiEnhancedFooterSection";
@@ -91,6 +92,9 @@ function Ring({ value, max, label }: { value: number; max: number; label: string
   const r = 34;
   const circumference = 2 * Math.PI * r;
   const share = Math.min(1, value / max);
+  // Inline rather than motion-safe:transition-[stroke-dashoffset]: the entry
+  // stylesheet sits at its bundle budget (scripts/check-bundle-budget.mjs).
+  const reduceMotion = useReducedMotion();
   return (
     <div className="flex flex-col items-center" role="group" aria-label={`${value} ${label}`}>
       <div className="relative h-[76px] w-[76px] sm:h-[88px] sm:w-[88px]">
@@ -106,7 +110,7 @@ function Ring({ value, max, label }: { value: number; max: number; label: string
             strokeLinecap="round"
             strokeDasharray={circumference}
             strokeDashoffset={circumference * (1 - share)}
-            className="motion-safe:transition-[stroke-dashoffset] motion-safe:duration-700"
+            style={reduceMotion ? undefined : { transition: "stroke-dashoffset 700ms cubic-bezier(0.4, 0, 0.2, 1)" }}
           />
         </svg>
         <span className="absolute inset-0 flex items-center justify-center font-mono text-2xl font-semibold tabular-nums text-white sm:text-[28px]">

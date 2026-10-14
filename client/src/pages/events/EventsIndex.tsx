@@ -33,7 +33,7 @@ function SessionCard({ session }: { session: DeEventSession }) {
     <li>
       <Link
         href={`/events/${session.slug}`}
-        className="group flex gap-4 rounded-2xl border border-de-hairline bg-de-raised p-4 transition duration-200 ease-out hover:border-[#D3126A]/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ec4899] sm:p-5"
+        className="group flex gap-4 rounded-2xl border border-de-hairline bg-de-raised p-4 transition duration-200 ease-out hover:border-[#D3126A]/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ec4899] sm:p-5"
       >
         <div className="flex h-20 w-20 shrink-0 flex-col items-center justify-center rounded-xl bg-[#D3126A] text-white">
           <span className="font-mono text-2xl font-bold leading-none tabular-nums">
