@@ -716,6 +716,13 @@ function listEndpoints(): Array<{ method: string; path: string }> {
       .catch((error) => {
         log(`⚠️ Zoho Connect snapshot not loaded: ${error?.message || error}`);
       });
+    // Card checkout readiness re-probed every 9 minutes, so /api/health and the
+    // public availability flag read a recent probe, not "unknown" (#263).
+    void import("./paymentReadiness")
+      .then(({ keepPaymentReadinessWarm }) => keepPaymentReadinessWarm(zohoPayments.readiness))
+      .catch((error) => {
+        log(`⚠️ payment readiness keep-warm not started: ${error?.message || error}`);
+      });
     // DE Desk tickets the Desk API did not take go in by API once it works (desk-ticket-failover).
     void import("./deskTicketReplayWorker")
       .then(({ startDeskTicketReplayWorker }) => startDeskTicketReplayWorker())

@@ -1,5 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createPaymentReadiness } from "./paymentReadiness";
+import {
+  createPaymentReadiness,
+  DEFAULT_KEEP_WARM_MS,
+  DEFAULT_OK_TTL_MS,
+  keepPaymentReadinessWarm,
+} from "./paymentReadiness";
 
 function clock(start = 1_000_000) {
   let t = start;
@@ -136,5 +141,58 @@ describe("ZohoPaymentsService readiness (#263)", () => {
     expect(await svc.readiness.isReady()).toBe(true);
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(String(fetchMock.mock.calls[0][0])).toContain("/oauth/v2/token");
+  });
+});
+
+describe("payment readiness keep-warm", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("refresh() probes even while a good answer is fresh, and shares a probe in flight", async () => {
+    const probe = vi.fn(async () => true);
+    const r = createPaymentReadiness({ isConfigured: () => true, probe });
+    expect(await r.isReady()).toBe(true);
+    expect(await r.isReady()).toBe(true);
+    expect(probe).toHaveBeenCalledTimes(1);
+    await Promise.all([r.refresh(), r.refresh()]);
+    expect(probe).toHaveBeenCalledTimes(2);
+  });
+
+  it("refresh() never probes when not configured", async () => {
+    const probe = vi.fn(async () => true);
+    const r = createPaymentReadiness({ isConfigured: () => false, probe });
+    expect(await r.refresh()).toBe(false);
+    expect(probe).not.toHaveBeenCalled();
+  });
+
+  it("probes after the first delay, then every interval, until stopped", async () => {
+    vi.useFakeTimers();
+    const refresh = vi.fn(async () => true);
+    const stop = keepPaymentReadinessWarm({ refresh }, { firstDelayMs: 1000, intervalMs: 5000 });
+    await vi.advanceTimersByTimeAsync(999);
+    expect(refresh).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(1);
+    expect(refresh).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(10_000);
+    expect(refresh).toHaveBeenCalledTimes(3);
+    stop();
+    await vi.advanceTimersByTimeAsync(20_000);
+    expect(refresh).toHaveBeenCalledTimes(3);
+  });
+
+  it("a failed probe does not stop the timer", async () => {
+    vi.useFakeTimers();
+    const refresh = vi.fn(async () => {
+      throw new Error("zoho unreachable");
+    });
+    const stop = keepPaymentReadinessWarm({ refresh }, { firstDelayMs: 0, intervalMs: 1000 });
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(refresh).toHaveBeenCalledTimes(3);
+    stop();
+  });
+
+  it("re-probes before a good answer goes stale", () => {
+    expect(DEFAULT_KEEP_WARM_MS).toBeLessThan(DEFAULT_OK_TTL_MS);
   });
 });
