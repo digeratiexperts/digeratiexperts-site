@@ -3365,6 +3365,30 @@ claims:
     verification: >-
       PR 563, merged as 97e49043 (Joe, "merge if its safe for everyone else and yourself"). VERIFIED LIVE 2026-10-10 02:16Z: deploy and runtime verification passed. Script not run with --apply; waits on DE for the three emails and the Desk account.
 
+  - id: t7-outstanding-fixes
+    owner: claude
+    subsystem: public-site-contact-and-chrome
+    branch: claude/t7-outstanding
+    base_sha: 4505f0c0
+    files:
+      - shared/responseTargets.ts, responseTargets.test.ts (new)
+      - client/src/pages/portal/PortalCreateTicket.tsx, PortalStatus.tsx
+      - shared/companyContact.ts (adds COMPANY.geo; no value changed)
+      - client/src/components/JsonLd.tsx, client/src/pages/locations/LocationServicePage.tsx
+      - client/src/pages/about/Press.tsx, client/src/pages/legal/{PrivacyPolicy,TermsOfUse,MSA}.tsx
+      - public/llms.txt
+      - client/src/components/MegaMenu.tsx (desktop nav item size, logo height lg-xl)
+      - client/src/components/CookieConsentBanner.tsx (compact Preferences link md:hidden)
+    status: in-review
+    started: 2026-10-14
+    note: >-
+      Joe, 2026-10-14: "work on fixing all outstanding items even my items for me. then
+      merge or push this." Portal response targets now read the public SLA page's times;
+      NAP literals read companyContact; llms.txt drops the street address (city-only rule,
+      2026-10-07); header CTA no longer runs past the viewport at 1024-1279; cookie banner
+      shows one Preferences control from md. No phone/address value changed. Homepage
+      hero (PR 505) untouched.
+
   - id: zoho-oauth-manager
     owner: claude
     subsystem: zoho-oauth
