@@ -402,12 +402,19 @@ export default function SolutionRequest() {
     setTurnstileToken("");
     setOffline("check");
   };
+  // Turnstile retries some errors on its own; a token that arrives later clears the "couldn't load" panel.
+  const onCheckVerify = (token: string) => {
+    setTurnstileToken(token);
+    setOffline((current) => (current === "check" ? null : current));
+  };
 
   const onRetry = () => {
     if (sending) return;
     if (offline === "check") {
       setOffline(null);
       resetTurnstile();
+      // The panel (and its focused button) unmounts; keep focus on the check that replaces it.
+      focusCheck();
       return;
     }
     // Try again stays enabled (see OfflinePanel); until the fresh check passes it points there rather than send a spent token.
@@ -514,7 +521,7 @@ export default function SolutionRequest() {
 
                     {/* Empty, and so hidden, when the build has no site key. Focusable so a failed attempt can hand focus to the check it now needs. */}
                     <div ref={checkRef} tabIndex={-1} role="group" aria-label={CHECK_LABEL} className="mt-6 empty:hidden" data-testid="request-check">
-                      <TurnstileWidget key={turnstileKey} onVerify={setTurnstileToken} onError={onCheckError} theme="light" />
+                      <TurnstileWidget key={turnstileKey} onVerify={onCheckVerify} onError={onCheckError} theme="light" />
                     </div>
 
                     <div className="mt-6">

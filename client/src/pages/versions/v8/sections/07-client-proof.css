@@ -47,7 +47,8 @@
   .v8 .v8s-07 .proof-cells { grid-template-columns: 1fr; }
   .v8 .v8s-07 .proof-cells > li { border-left: 0; padding-left: 0; padding-right: 0; }
   .v8 .v8s-07 .proof-cells > li + li { border-top: 1px solid var(--v8-hairline); }
-  .v8 .v8s-07 .proof-pair { grid-template-columns: 1fr; }
+  /* minmax(0, …): a review carousel must not set the column's minimum width on phones. */
+  .v8 .v8s-07 .proof-pair { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 639px) {
   .v8 .v8s-07 .proof-outcomes { margin-top: 36px; }

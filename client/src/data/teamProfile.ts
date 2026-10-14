@@ -17,7 +17,7 @@ export const TEAM_OWNER = {
   role: "Founder",
   /**
    * Joe, 2026-10-14 ("do my items for me"): the title the live homepage
-   * already publishes under the same photograph, "Founder & Chief Technology
+   * already publishes in its team section, "Founder & Chief Technology
    * Strategist" (client/src/pages/versions/v8/sections/09-team.tsx; Published
    * in docs/CLAIMS-REGISTER.md), so the Team page stops showing less than `/`.
    * "Founder" is `role` above; change both places together.
