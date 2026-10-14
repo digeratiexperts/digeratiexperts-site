@@ -1,7 +1,7 @@
 import { LegalDocumentLayout } from "@/components/LegalDocumentLayout";
 import { FileText, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PRIMARY_PHONE, formatAddressOneLine } from "@/data/companyContact";
 
 export default function MSA() {
   return (
@@ -72,7 +72,7 @@ export default function MSA() {
           <strong className="text-[#1A1228]">Phone:</strong> {PRIMARY_PHONE.display}
         </p>
         <p className="text-[#3A3448]">
-          <strong className="text-[#1A1228]">Address:</strong> Chandler, AZ
+          <strong className="text-[#1A1228]">Address:</strong> {formatAddressOneLine()}
         </p>
       </div>
     </LegalDocumentLayout>

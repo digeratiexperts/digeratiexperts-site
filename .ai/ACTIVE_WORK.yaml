@@ -3269,7 +3269,7 @@ claims:
       - scripts/qa/storePdfCases.ts (two page expectations only)
       - client/src/pages/versions/v8/sections/01-hero.phone.test.ts (new)
       - artifacts/visual-qa/t7-cookie-and-bar/**, artifacts/visual-qa/t7-pdf-one-page/** (new)
-    status: active
+    status: verified-live
     started: 2026-10-10
     note: >-
       DE backlog thread T7 (taken over from Cursor), items 61, 62, 64 and 65.
@@ -3284,6 +3284,9 @@ claims:
       the phone hero rules from PR 499 that PR 505 kept. Item 63 (3c, Add user)
       was already live via PR 538. Overlap check 2026-10-10: open PRs 542,
       550, 553, 554 and 555 touch none of these files.
+    verification: >-
+      PR 558, merged as 067d2b2e on Joe's "yes all and each are approved". VERIFIED LIVE 2026-10-10: the deploy job recorded DE_DEPLOYED_RELEASE 067d2b2e and "Verify production runtime" passed; CI's Store PDF check passed on the merge.
+
   - id: t7-contact-audit-team-config
     owner: claude
     subsystem: docs, about-team
@@ -3295,7 +3298,7 @@ claims:
       - client/src/data/credentials.ts (VERIFIED_CREDENTIALS now includes OWNER_CERTIFICATIONS)
       - client/src/pages/about/Team.tsx (owner name, role, title and SEO description read from teamProfile.ts)
       - artifacts/visual-qa/t7-team-config/** (new)
-    status: active
+    status: verified-live
     started: 2026-10-10
     note: >-
       DE backlog thread T7, items 66 and 67. 66: every place the business
@@ -3308,6 +3311,9 @@ claims:
       flowing through credentials.ts. Nothing invented. Overlap check
       2026-10-10: open PRs 542, 550, 553, 554, 555 and 558 touch none of
       these files.
+    verification: >-
+      PR 561, merged as deb59f32 (Joe, "yes all and each are approved"). Its own deploy was coalesced into the next main commit 37dc7630 (PR 555), whose "Deploy and verify production VPS" job passed 2026-10-10.
+
   - id: desk-oauth-client
     owner: claude
     subsystem: de-desk
@@ -3353,7 +3359,7 @@ claims:
     files:
       - server/deskContactAccountLink.ts, deskContactAccountLink.test.ts (new)
       - scripts/desk-link-alamo-contacts.mts (new)
-    status: active
+    status: verified-live
     started: 2026-10-10
     note: >-
       DE backlog thread T7, item 70: a script that files the three Alamo
@@ -3366,6 +3372,33 @@ claims:
       Not run with --apply. Items 68 and 69 skipped with evidence in the PR:
       68 is the existing salesTaxReadiness check (Warehouse Vendors card); 69's
       Stripe Tax path was retired by Joe on 2026-10-05 (commit e125b0a).
+    verification: >-
+      PR 563, merged as 97e49043 (Joe, "merge if its safe for everyone else and yourself"). VERIFIED LIVE 2026-10-10 02:16Z: deploy and runtime verification passed. Script not run with --apply; waits on DE for the three emails and the Desk account.
+
+  - id: t7-outstanding-fixes
+    owner: claude
+    subsystem: public-site-contact-and-chrome
+    branch: claude/t7-outstanding
+    base_sha: 4505f0c0
+    files:
+      - shared/responseTargets.ts, responseTargets.test.ts (new)
+      - client/src/pages/portal/PortalCreateTicket.tsx, PortalStatus.tsx
+      - shared/companyContact.ts (adds COMPANY.geo; no value changed)
+      - client/src/components/JsonLd.tsx, client/src/pages/locations/LocationServicePage.tsx
+      - client/src/pages/about/Press.tsx, client/src/pages/legal/{PrivacyPolicy,TermsOfUse,MSA}.tsx
+      - public/llms.txt
+      - client/src/components/MegaMenu.tsx (desktop nav item size, logo height lg-xl)
+      - client/src/components/CookieConsentBanner.tsx (compact Preferences link md:hidden)
+    status: in-review
+    started: 2026-10-14
+    note: >-
+      Joe, 2026-10-14: "work on fixing all outstanding items even my items for me. then
+      merge or push this." Portal response targets now read the public SLA page's times;
+      NAP literals read companyContact; llms.txt drops the street address (city-only rule,
+      2026-10-07); header CTA no longer runs past the viewport at 1024-1279; cookie banner
+      shows one Preferences control from md. No phone/address value changed. Homepage
+      hero (PR 505) untouched.
+
   - id: zoho-oauth-manager
     owner: claude
     subsystem: zoho-oauth
