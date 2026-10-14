@@ -75,21 +75,32 @@ Close the active GitHub issue/claim only when the state above is explicit and no
 
 ## Current open PRs and owners (snapshot)
 
-**Refreshed:** 2026-10-10 from GitHub, `origin/main` at `7b1b4197` (merge of #551). This table is a
-snapshot for orientation; the live PR list is still the lock. Each PR is owned by the session that
-opened it (session link at the bottom of its body). Do not push to, rebase, close or merge it.
+**Refreshed:** 2026-10-14 from GitHub, `origin/main` at `4505f0c` (merge of #570). This table is a
+snapshot for orientation; the live PR list is still the lock. Each PR is owned by the session or
+person that opened it (a Claude Code PR has its session link at the bottom of its body). Do not
+push to, rebase, close or merge it.
 
-| PR | Draft | Branch | What it changes | Owner session |
+| PR | Draft | Branch | What it changes | Owner |
 | --- | --- | --- | --- | --- |
-| #555 | yes | `claude/awesome-bardeen-4pbl2m` | Zoho Desk gets its own OAuth client (`server/zoho/zohoClient.ts` + tests, env example, `.ai/ACTIVE_WORK.yaml` claim `desk-oauth-client`) | Claude Code `session_01DpGjiCZTGCKrihFTHJKUay` |
-| #554 | yes | `claude/charming-faraday-rrlyzq` | `artifacts/branch-cleanup/delete-merged-branches.sh` skips moved branches | Claude Code `session_01YMDnpncWwwq7aXEDfnHHpp` |
-| #553 | yes | `claude/dreamy-einstein-mbqa0w` | Client Portal agreement gate, first-login tour, Cytracom vendor profile (portal pages, `migrations/0016`, warehouse vendors; claim `portal-agreement-gate`) | Claude Code `session_01Jt6Sn1CsXD7p7wFtG7b12a` |
-| #550 | yes | `claude/nifty-newton-uk9g7t` | Ledger only: `store-counts-phone` claim → verified-live | Claude Code `session_01PxcA8RVur1v39SbYpkmzMY` |
-| #542 | yes | `claude/store-pdfs-de-system` | Hide `.scroll-progress` in print (`client/src/index.css`) | Claude Code `session_017jXyuGTxDWJZzDNLP4dHYj` |
-| this PR | yes | `claude/t10-agent-governance-docs` | Agent docs + secret diff check (`AGENTS.md`, this file, `.github/workflows/secret-diff-check.yml`, `scripts/security/check-added-secrets.mjs`) | DE backlog thread T10 |
+| #587 | yes | `claude/t7-outstanding` | T7 follow-ups: portal SLA response times, city-only NAP, header CTA, cookie Preferences link | T7 |
+| #586 | yes | `claude/lucid-dijkstra-s3v2s3` | Every page gets its own plate; assessment bar off plates | Claude Code session |
+| #580 | yes | `chatgpt/tech-tool-storage-20261011` | DE Tech Tool native storage, Windows installer, operations appearance | ChatGPT / Codex |
+| #578 | no | `chatgpt/portal-black-theme-20261011` | Pure black Client Portal theme, saved contrast settings | ChatGPT / Codex |
+| #576 | no | `docs/store-cart-and-agent-coordination` | Docs: upgrade cart direction, multi-agent coordination, retire PR 567 | its author (see PR) |
+| #575 | yes | `concept/ai-background-check` | Concept: AI Background Check page (3 Exploration concepts) | its author (see PR) |
+| #574 | yes | `claude/exciting-cannon-ttx8m8` | Licensing: JumpCloud installs and starter kits on the License Patch Bay | Claude Code session |
+| #572 | yes | `claude/kie-approval-rule` | Docs (kie.ai): consult DE before generating | Claude Code session |
+| #571 | no | `claude/awesome-bardeen-4pbl2m` | Ask DE greeting fix; desk-oauth-client verified live | Claude Code session (also opened #555, now closed) |
+| #565 | no | `claude/loving-edison-epagrb` | Homepage story backgrounds: Versions 9 and 10, mockups | Claude Code session |
+| #564 | yes | `claude/inspiring-franklin-1o69vr` | Events: live-session pages, event and campaign calendar | Claude Code session |
+| #560 | yes | `claude/t2-ops-hardening` | CI minutes, canonical-host probes, portal headers, secrets/cache docs (touches `.github/workflows/*`) | T2 |
+| #559 | yes | `claude/t2-npm-audit` | Clear critical npm advisories | T2 |
+| #557 | yes | `claude/t10-agent-governance-docs` | Agent docs + secret diff check (this table) | T10 |
+| #553 | yes | `claude/dreamy-einstein-mbqa0w` | Client Portal agreement gate, first-login tour, Cytracom profile | Claude Code session |
+| #550 | yes | `claude/nifty-newton-uk9g7t` | Ledger only: store-counts-phone verified live | Claude Code session |
+| #542 | yes | `claude/store-pdfs-de-system` | Hide `.scroll-progress` in print | Claude Code session |
 
-Backlog threads starting 2026-10-10 (T1, T2, T7 in this repo) add their PRs here or appear in the
-live PR list. Cross-repo pending decisions and secrets: Intelligence Hub
+Cross-repo pending decisions and secrets: Intelligence Hub
 [`docs/OPEN-ITEMS-FOR-DE.md`](https://github.com/digeratiexperts/Intelligence-Hub/blob/master/docs/OPEN-ITEMS-FOR-DE.md).
 
 How to refresh this table: list open PRs (`gh pr list --state open` or the GitHub MCP

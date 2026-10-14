@@ -55,7 +55,7 @@ DE backlog round 2026-10-10 (Claude Code cloud sessions tagged `de-backlog-20261
 
 ## Zoho APIs (cross-project rule)
 
-Intelligence Hub [`docs/ZOHO-OAUTH-STANDARD.md`](https://github.com/digeratiexperts/Intelligence-Hub/blob/master/docs/ZOHO-OAUTH-STANDARD.md) is the DE-wide rule for every Zoho API call (CRM, Desk, Books, WorkDrive, Mail, Sign, Projects): one server-based client and one consent covering every product's scopes, refresh only with the client that issued the token, cached access tokens with back-off, and requests through one shared auth module instead of hand-rolled token calls or env fallback chains. New Zoho work here ports that module (its "Porting to another project" section). Any deviation (for example a separate client per product) needs Joe's explicit decision, recorded in the PR.
+The website's own Zoho rules are in "Zoho tokens: rules for every agent" in this file and in `docs/ZOHO-OAUTH-INVENTORY.md`. The DE-wide standard behind them, shared with the Intelligence Hub and de-platform, is Intelligence Hub [`docs/ZOHO-OAUTH-STANDARD.md`](https://github.com/digeratiexperts/Intelligence-Hub/blob/master/docs/ZOHO-OAUTH-STANDARD.md). Each project keeps its own Connect client and grant, and never shares or reuses another project's clients.
 
 ## Company naming
 
