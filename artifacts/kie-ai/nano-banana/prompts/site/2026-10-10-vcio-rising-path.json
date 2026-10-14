@@ -1,0 +1,13 @@
+{
+  "prompt": "Technology strategy: a roadmap. Studio product photograph, low three-quarter view, 70mm lens, f/8, ISO 100. A gently rising staircase path of flat graphite tiles recedes into the distance, each a little higher than the last; at the far top step stands one upright electric-blue glass tile like a destination marker. Rounded-square tiles about 9 cm across and 2 cm thick with generous corner radius like premium app-icon blanks, faces completely blank and smooth. Finishes: deep electric-blue glass (#1D6FF2, translucent, faint internal refraction, thin white specular line on the bevel), graphite anodized aluminium (near-black, fine brushed grain, crisp chamfer) and matte white ceramic (soft subsurface glow, faint pores). Precise spacing, calm. Path runs from lower left to upper right. Pure black seamless studio ground, realistic contact shadows, deep falloff to black at the frame edges. Do not add any symbols or text to the tiles.",
+  "negative_prompt": "text, letters, numbers, logos, icons, symbols, engraved glyphs, watermark, people, hands, faces, padlock, shield, laptop, server rack, circuit board, binary code, hologram, neon grid, cyberpunk, rainbow gradient, lens flare, bokeh balls, plastic toy look, cartoon, CGI sheen, oversaturated, blurry, distorted geometry, melted edges",
+  "api_parameters": {
+    "resolution": "2K",
+    "output_format": "jpg",
+    "aspect_ratio": "16:9"
+  },
+  "settings": {
+    "style": "premium studio product photography, physically based materials",
+    "quality": "tack sharp, true material texture, controlled highlights"
+  }
+}

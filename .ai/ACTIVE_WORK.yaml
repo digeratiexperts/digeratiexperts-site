@@ -3660,3 +3660,24 @@ claims:
       evidence found). Overlap check 2026-10-14: t7-copy-overlays-pdfs and
       t7-contact-audit-team-config still read active but their branches are fully
       merged (PRs 558 and 561); no open PR touches these files.
+  - id: site-unique-plates
+    owner: claude
+    subsystem: public-marketing-visual-layer
+    branch: claude/lucid-dijkstra-s3v2s3
+    base_sha: 0285ef6d
+    files:
+      - client/src/components/site/PlateBand.tsx (twelve more plates; plateForServiceKey routes each service to its own)
+      - client/src/assets/flagship/** (twelve new resized plates)
+      - client/src/pages/industries/{Healthcare,RealEstate,Accounting,Nonprofits,AnimalHospitals}.tsx (one plate attribute each)
+      - client/src/pages/GenericServicePage.tsx (a page without a process chapter carries its plate on the included chapter)
+      - client/src/lib/stickyCtaVisibility.ts and its test (the assessment bar steps aside over a plate)
+      - artifacts/kie-ai/nano-banana/**/2026-10-10-*, .claude/kie-budget/ledger.jsonl
+    status: in-review
+    started: 2026-10-10
+    note: >-
+      Joe, 2026-10-10: "continue everything", after the visual check showed
+      pages sharing plates and the sticky assessment bar covering plates on
+      desktop. Twelve plates generated in budget job
+      site-unique-plates-2026-10-10 (projected $0.72; closed). Three light plates
+      had the studio softbox in frame and were cropped. Generated images stay
+      ILLUSTRATIVE until Joe approves them on this PR.

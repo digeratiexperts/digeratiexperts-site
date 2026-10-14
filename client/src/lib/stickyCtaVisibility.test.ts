@@ -137,6 +137,18 @@ describe("sticky CTA visibility", () => {
     ).toBe(true);
   });
 
+  it("steps aside while a photographic plate passes under it", () => {
+    const plate = {
+      closest: (selector: string) => (selector === ".de-plate-band" ? plate : null),
+    } as unknown as Element;
+    expect(
+      rectOverlapsPageContent(
+        { top: 700, left: 40, width: 1200, height: 100, right: 1240 },
+        () => [plate],
+      ),
+    ).toBe(true);
+  });
+
   it("stacks with the cookie banner instead of parking behind it", () => {
     const cookie = {
       closest: (selector: string) =>
