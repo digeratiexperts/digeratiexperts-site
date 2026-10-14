@@ -3594,6 +3594,64 @@ claims:
       homepage-story-concepts-2026-10-10 $0.24, homepage-scene-story-2026-10-10
       $0.12). Overlap check 2026-10-10: open PRs 542, 550, 553, 554, 557, 559,
       560, 562, 563 and 564 touch none of these files.
+  - id: portal-black-theme
+    owner: chatgpt
+    subsystem: client-portal
+    branch: chatgpt/portal-black-theme-20261011
+    base_sha: 72cdd50e
+    files:
+      - client/src/components/portal/shell/portalTheme.ts, portalTheme.test.ts, PortalAppearanceSettings.tsx, PortalUserMenu.tsx
+      - client/src/pages/portal/PortalLayout.tsx, PortalSettings.tsx, PortalLogin.tsx, PortalSignup.tsx, PortalForgotPassword.tsx, PortalResetPassword.tsx
+      - client/src/styles/portal.css, portalConsoleTheme.test.ts, portalLightTheme.test.ts
+      - scripts/qa/portal-theme-browser.mjs
+      - artifacts/visual-qa/portal-black-theme/** (live/ added by Claude with this record)
+    status: verified-live
+    started: 2026-10-11
+    merge_sha: b2211eb2250005a3aacfe454cec76c3d60ec24da
+    verification: >-
+      Merged as b2211eb2 (PR 578) on Joe's "continue yes 578" after CI passed
+      on d82d37b. Before merging, Claude merged it onto main 9ba5e218 locally:
+      no file overlap with main, tsc clean, portal theme and stylesheet tests
+      17/17, vite build OK, bundle budget passed (entry CSS 299.82 of 300 kB,
+      so almost no stylesheet headroom is left). Production release.txt reads
+      b2211eb2. Read-only check of https://digeratiexperts.com/portal/login at
+      390 and 1440: a new viewer gets data-theme black, contrast none, body
+      #000000; a saved "light" choice paints light (#f5f5f9); a saved
+      "console" theme with "boost" contrast paints console with boost; no
+      horizontal overflow, no page errors
+      (artifacts/visual-qa/portal-black-theme/live/). Signed-in Settings and
+      the portalled menus were not exercised (no portal QA sign-in in this
+      sandbox). VERIFIED LIVE (sign-in pages).
+    note: >-
+      Tracks issue 577. Pure black Client Portal theme beside Dark, Light and
+      Match device, with Standard / Boost / Maximum contrast saved per viewer;
+      PR 592's opt-in Admin console theme was merged into this branch first
+      (Joe). The PR left the registry untouched because concurrent governance
+      PRs edited it; this record is added by Claude after release.
+  - id: payments-readiness-warm
+    owner: claude
+    subsystem: payments
+    branch: claude/awesome-bardeen-4pbl2m
+    base_sha: 9ba5e218
+    files:
+      - server/paymentReadiness.ts (refresh() and the keep-warm timer only)
+      - server/paymentReadiness.test.ts (one describe block appended)
+      - server/index.ts (the keep-warm start in the listen callback only)
+    status: active
+    started: 2026-10-14
+    note: >-
+      Joe, 2026-10-14, on the status page: "fix the not configured and advisory
+      or ask". The Advisory: /api/health read zohoPaymentsCheckout "unknown"
+      after every restart and "not_ready" ten minutes after the last checkout,
+      while card checkout worked (/api/payments/availability ran a probe and
+      read cardCheckout true, 2026-10-14 23:37Z). Only a checkout or an
+      availability call ever re-probed. Fix: the server re-probes every 9
+      minutes (inside the 10-minute OK TTL), first 60 s after boot so the Zoho
+      Connect snapshot is loaded; the probe is answered by the cached access
+      token, so at most one token refresh an hour. Unconfigured and review
+      instances never probe. Overlap check 2026-10-14: no active claim lists
+      these files; open PR 560 changes the /api/health handler in
+      server/index.ts, not the listen callback.
   - id: store-greeting-plain
     owner: claude
     subsystem: de-desk
