@@ -3622,6 +3622,8 @@ claims:
       - client/src/components/TurnstileWidget.tsx (one exported flag, turnstileActive)
       - server/publicSolutionRoutes.ts, publicSolutionRoutes.test.ts (verifyTurnstile on POST /api/public/solutions/request)
       - client/src/data/teamProfile.ts, teamProfile.test.ts (owner title only)
+      - client/src/components/PageTemplate.tsx (heroAsideOnMobile prop, passed to PageHero asideOnMobile)
+      - client/src/pages/about/Team.tsx (heroAsideOnMobile on, so phones show the founder card)
       - docs/contact-details-audit.md, docs/STORE-EXPERIENCE-SOURCE-OF-TRUTH.md (notes for the above)
     status: active
     started: 2026-10-14

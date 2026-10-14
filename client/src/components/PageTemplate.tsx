@@ -22,6 +22,8 @@ interface PageTemplateProps {
   eyebrow?: string;
   /** Right column of the hero at lg (key facts, a document preview). */
   heroAside?: React.ReactNode;
+  /** Also show heroAside below the hero text on phones (it is hidden there by default). */
+  heroAsideOnMobile?: boolean;
   /**
    * "contained" (default) wraps children in one chapter with prose styles.
    * "chapters" renders children straight into <main> so the page composes its
@@ -60,6 +62,7 @@ export const PageTemplate = ({
   actions,
   eyebrow,
   heroAside,
+  heroAsideOnMobile = false,
   layout = "contained",
   readable = false,
 }: PageTemplateProps): JSX.Element => {
@@ -87,6 +90,7 @@ export const PageTemplate = ({
           breadcrumbs={hasCrumbs ? breadcrumbs : undefined}
           actions={actions ? <div className="w-full">{actions}</div> : undefined}
           aside={heroAside}
+          asideOnMobile={heroAsideOnMobile}
           note={
             showBackButton && !hasCrumbs ? (
               <Button
