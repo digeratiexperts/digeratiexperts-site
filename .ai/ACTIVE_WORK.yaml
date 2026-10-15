@@ -47,7 +47,7 @@ claims:
       - scripts/de-events/build.ts (new)
       - docs/marketing/sessions/ (per-session promotion kits)
       - docs/marketing/ (generated calendar .md, .ics, .html)
-    status: active
+    status: verified-live
     started: 2026-10-10
     note: >-
       Public live-session pages (/events, /events/:slug) with countdown, time-zone
@@ -56,7 +56,8 @@ claims:
       presenter and platform. The internal operating calendar (prospects, clients,
       internal; weekly to annual) is generated into docs/marketing/ and never
       bundled into the site. Copies go to WorkDrive 4. Event & Strategic Planning. PR 564 merged
-      2026-10-15 (live check pending deploy). Follow-up on the same branch:
+      2026-10-15; verified live 00:34 UTC on release f70c755 (/events and the
+      session page 200, unknown slug 404, noindex, renders at 390/768/1440). Follow-up on the same branch:
       per-session promotion kits in docs/marketing/sessions/.
   - id: t2-ops-hardening
     owner: claude
