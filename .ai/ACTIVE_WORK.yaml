@@ -3847,21 +3847,8 @@ claims:
       - client/src/pages/GenericServicePage.tsx (a page without a process chapter carries its plate on the included chapter)
       - client/src/lib/stickyCtaVisibility.ts and its test (the assessment bar steps aside over a plate)
       - artifacts/kie-ai/nano-banana/**/2026-10-10-*, .claude/kie-budget/ledger.jsonl
-    status: verified-live
+    status: in-review
     started: 2026-10-10
-    released: 2026-10-15
-    pr: 586
-    merge_sha: 9637350fe4b42e50ac1fcae55b5ecc3dbc83608a
-    verification: >-
-      Merged as 9637350f by the lead integrator on Joe's "triage and merge the
-      other open PRs", with integration fix 204a9005 (GenericServicePage's
-      included chapter left as on main: the added plate only reached
-      /about/compliance, /about/insurance, /about/support and
-      /support/system-status, outside scope). Green CI on 204a9005; shipped in
-      release f70c755a. Live at 1440 px: /solutions/cloud-backup and
-      /solutions/security-awareness each render their plate band with no broken
-      images or page errors; /about/compliance renders no plate. VERIFIED LIVE.
-      Files released.
     note: >-
       Joe, 2026-10-10: "continue everything", after the visual check showed
       pages sharing plates and the sticky assessment bar covering plates on
