@@ -3911,6 +3911,8 @@ claims:
       - client/src/pages/campaigns/aiBackgroundCheckQuiz.ts, aiBackgroundCheckQuiz.test.ts (new; self-check scoring)
       - client/src/pages/MarketingRouteFallback.tsx (the /go/ai-background-check route only, ahead of /go/:slug)
       - server/spaKnownPaths.ts, scripts/generate-sitemap.mjs, public/sitemap.xml (/go/ai-background-check only)
+      - docs/CLAIMS-REGISTER.md (the /go/ai-background-check section only)
+      - artifacts/visual-qa/ai-background-check/** (new)
     status: active
     started: 2026-10-15
     note: >-
