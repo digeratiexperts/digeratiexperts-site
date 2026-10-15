@@ -3820,3 +3820,20 @@ claims:
       site-unique-plates-2026-10-10 (projected $0.72; closed). Three light plates
       had the studio softbox in frame and were cropped. Generated images stay
       ILLUSTRATIVE until Joe approves them on this PR.
+
+  - id: dataforseo-mcp-wiring
+    owner: claude
+    subsystem: content-tooling
+    branch: claude/gifted-cray-mfxf3k
+    base_sha: f70c755a
+    files:
+      - .mcp.json (dataforseo server, pinned)
+      - .cursor/mcp.json (dataforseo server, pinned)
+      - .env.example (DATAFORSEO_LOGIN / DATAFORSEO_PASSWORD names only)
+      - docs/CONTENT-TOOLING-PLAN.md (statuses, Step 3, IP-whitelist decision)
+    status: implemented
+    started: 2026-10-15
+    note: >-
+      Joe, 2026-10-15: DataForSEO account verified and keys set in the Claude
+      environment; "do what is best" on IP whitelisting (decision: none, with
+      prepaid-balance guardrails). Config and docs only; no runtime code.
