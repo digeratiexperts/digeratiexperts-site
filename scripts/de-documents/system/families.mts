@@ -5,11 +5,13 @@
 //   Checklist  editorial → spec → brief close. "Why it matters, check it, act on it."
 //   Report     brief → spec → editorial → brief close.
 //                                              "Decision first, evidence, limits, next."
+//   Policy     spec, numbered clauses → close. "What applies, who it binds, how to ask."
+//              (Client Portal agreements; the title box carries version and dates.)
 import { aside, type Aside, type Block, type Cta, esc, logo, masthead, md, renderBlocks, type Takeaway, takeaways } from "./components.mts";
 
 export interface Doc {
   slug: string;
-  family: "datasheet" | "checklist" | "report";
+  family: "datasheet" | "checklist" | "report" | "policy";
   /** Public path under client/public, e.g. assets/resources/datasheets/x.pdf — never changes. */
   file: string;
   docId: string;
@@ -93,6 +95,7 @@ export function renderDoc(doc: Doc, toc: TocEntry[] = [], total?: number): strin
   const close = hasRec ? "" : renderBlocks([{ t: "rec" }], doc);
   switch (doc.family) {
     case "datasheet":
+    case "policy":
       return `${titleBlock(doc)}\n${renderBlocks(doc.blocks, doc)}\n${close}`;
     case "checklist":
       return `${renderBlocks([doc.opener!], doc)}\n<div class="break" aria-hidden="true"></div>\n${renderBlocks(doc.blocks, doc)}\n${close}`;

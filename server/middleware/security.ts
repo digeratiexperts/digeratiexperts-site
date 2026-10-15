@@ -353,7 +353,7 @@ export function setSecurityHeaders(req: Request, res: Response, next: NextFuncti
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com",
     "img-src 'self' data: https: blob:",
-    "frame-src https://challenges.cloudflare.com https://meet.digerati-experts.com https://*.zoho.com https://payments.zoho.com https://www.facebook.com https://td.doubleclick.net",
+    "frame-src https://challenges.cloudflare.com https://meet.digerati-experts.com https://*.zoho.com https://payments.zoho.com https://www.facebook.com https://td.doubleclick.net https://www.youtube-nocookie.com https://player.vimeo.com https://www.loom.com",
     "connect-src 'self' https://*.zoho.com https://payments.zoho.com https://cloudflareinsights.com https://*.cloudflareinsights.com https://*.clarity.ms https://www.google-analytics.com https://analytics.google.com https://region1.google-analytics.com https://www.google.com https://www.googletagmanager.com https://connect.facebook.net https://www.facebook.com https://bat.bing.com https://px.ads.linkedin.com https://www.linkedin.com" + (isProduction ? "" : " wss://*.replit.dev ws://localhost:*"),
     "object-src 'none'",
     "base-uri 'self'",

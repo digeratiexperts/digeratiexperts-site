@@ -587,6 +587,27 @@ export const portalSurveyResponses = pgTable("portal_survey_responses", {
   submittedAt: timestamp("submitted_at").defaultNow().notNull(),
 });
 
+/**
+ * Client Portal agreement signatures (shared/portalAgreements.ts). One row per
+ * signature: company-scope rows are signed once for the company, user-scope
+ * rows by each person. Append-only evidence; migrations/0016_portal_agreements.sql.
+ */
+export const portalAgreementSignatures = pgTable("portal_agreement_signatures", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  agreementKey: text("agreement_key").notNull(),
+  agreementVersion: text("agreement_version").notNull(),
+  scope: text("scope").notNull(),
+  clientId: varchar("client_id").notNull(),
+  userId: varchar("user_id").notNull(),
+  signerName: text("signer_name").notNull(),
+  signerEmail: text("signer_email").notNull(),
+  /** SHA-256 of the exact PDF the signer was shown. */
+  documentSha256: text("document_sha256"),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  signedAt: timestamp("signed_at").defaultNow().notNull(),
+});
+
 // Portal services table
 export const portalServices = pgTable("portal_services", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

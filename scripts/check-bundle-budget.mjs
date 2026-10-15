@@ -20,7 +20,11 @@ const budgets = {
   // (client/src/pages/versions, /version-1..3) keeps frozen copies of earlier
   // homepage compositions, so the utilities those compositions use stay in
   // the sheet by design. Measured 291.2kB after the archive; ~9kB headroom.
-  cssRawBytes: 300_000,
+  // Raised from 300_000 on 2026-10-15 (Joe: "raise the CSS budget"): the
+  // Events pages, portal themes (black, console) and Store work had used the
+  // headroom; main measured 299.99kB on 2026-10-14 and 299.17kB with PR 553's
+  // agreement gate. ~16kB headroom; portal-only styles belong in portal.css.
+  cssRawBytes: 315_000,
 };
 
 function fail(message) {
