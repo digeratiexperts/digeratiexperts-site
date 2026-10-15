@@ -70,3 +70,6 @@ would not otherwise see it.
 ## Token discipline (DE operating standard)
 Follow the "Token discipline" section in `AGENTS.md` in this repo. Key rules: one slice = one fresh session started from a handoff · declare the slice before coding · search before reading · stop after two failed attempts and checkpoint · economy models for mechanical work · end with the handoff block (`C:\Users\Joe\DE\Governance\AI-HANDOFF-STANDARD.md`). Spend/routing policy: `C:\Users\Joe\DE\Governance\AI-STACK.md` — not in this repo.
 <!-- <<< DE token-discipline (managed) <<< -->
+
+## DE To-Do list
+"Add to to-do list" means Joe's DE To-Do artifact (https://claude.ai/artifact/M6oQTxMoZZzCeMX795ti8B), written with the `ArtifactData` tool. How to write an entry: the "DE To-Do list" section in `AGENTS.md`.

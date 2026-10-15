@@ -177,3 +177,20 @@ Run targeted tests while iterating; run the full suite once before the checkpoin
 **Handoff**
 End every session with the DE handoff block. Record limit hits, model used, and any manual rescue under USAGE SIGNALS so the monthly scorecard stays accurate.
 <!-- <<< DE token-discipline (managed) <<< -->
+
+## DE To-Do list (all agents, all threads)
+
+Joe keeps one to-do list for everything he has to do himself, across every project and every AI: **DE To-Do**, https://claude.ai/artifact/M6oQTxMoZZzCeMX795ti8B (private to Joe).
+
+When Joe says "add to to-do list", "put it on my to-do", "add that to my list" or the like, he means this list, never a file in a repo, a code TODO or a task tool inside the session.
+
+- **Claude (Claude Code, claude.ai, Cowork):** write it yourself with the `ArtifactData` tool: `action: "set"`, `url` as above, `collection: "tasks"`, a new short kebab-case `doc_id`, and this document:
+  `{title, group, area, notes, from, done: false, createdAt: <epoch ms>, order: <epoch ms>, doneAt: null}`
+  - `title`: the action, in Joe's words where possible (one line, starts with a verb).
+  - `group`: one of `DE Deploy`, `Intelligence Hub`, `Website`, `Business & sales`, `Other`.
+  - `area`: optional short tag (for example `Admin PC`, `Hardware tests`).
+  - `notes`: optional detail: paths, PR numbers, links. Never secrets, keys or client credentials.
+  - `from`: where it came from, for example `Claude Code · Intelligence-Hub` or `claude.ai`.
+  List the collection first (`action: "list"`) and skip anything already on it. To tick something off, `update` it with `done: true, doneAt: <epoch ms>` and the `if_version` you read. Then tell Joe in one line what you added.
+- **Codex / ChatGPT / Cursor / any agent that can't reach claude.ai artifacts:** you can't write to the list. Say so, and end your reply with a block Joe can paste into a Claude session, headed `Add to to-do list:`, one line per task as `group | title | notes`.
+- Only add what Joe asked for, or jobs your own handoff says only Joe can do. Don't add your own follow-up work.
