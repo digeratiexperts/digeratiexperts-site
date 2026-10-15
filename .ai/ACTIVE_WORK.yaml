@@ -46,8 +46,21 @@ claims:
       - scripts/de-events/program.ts (new)
       - scripts/de-events/build.ts (new)
       - docs/marketing/ (generated calendar .md, .ics, .html)
-    status: active
+    status: verified-live
     started: 2026-10-10
+    released: 2026-10-15
+    pr: 564
+    merge_sha: f70c755a50e20719b2e2ef017583a02e514b1f43
+    verification: >-
+      Merged as f70c755a by the lead integrator on Joe's "triage and merge the
+      other open PRs" / "yes approved", after merging main into the branch (ledger
+      union only) and green CI on 84ad7380 (bundle budget included; 299.79/300 kB
+      measured locally). Production release.txt reads f70c755a. Read-only check on
+      https://digeratiexperts.com: /events and
+      /events/cyber-insurance-renewal-readiness answer 200 at 390 px with no page
+      errors or sideways scroll, say "planned", carry robots noindex, nofollow,
+      and sitemap.xml lists no /events/ URL. The interest form was not submitted.
+      VERIFIED LIVE. Files released.
     note: >-
       Public live-session pages (/events, /events/:slug) with countdown, time-zone
       switch, .ics download and a registration form posting to /api/contact. All
@@ -71,8 +84,20 @@ claims:
       - docs/SECRETS-REQUIRED.md (new)
       - docs/proposals/downloads-cache.md (new)
       - docs/proposals/portal-security-headers.md (new)
-    status: active
+    status: verified-live
     started: 2026-10-10
+    released: 2026-10-15
+    pr: 560
+    merge_sha: 9521f1139dd07526f3e9fc39635151ed23378d67
+    verification: >-
+      Merged as 9521f113 by the lead integrator on Joe's "triage and merge the
+      other open PRs" after a line-by-line review and green CI on 201f906f;
+      shipped in release f70c755a (release.txt). Live checks: anonymous GET
+      /api/health returns only status, timestamp, uptime and services {database,
+      zohoDesk, zoho} with Cache-Control no-store and database connected (what
+      production-health.yml reads); GET / sends X-XSS-Protection: 0. The
+      canonical-host probe and the docs-only CI path run in Actions, not on the
+      site. VERIFIED LIVE. Files released.
     note: >-
       Thread T2 of the DE backlog (tasks 13-20), taken over from Cursor. 13, 14
       and 16 were already on main and are skipped with evidence in the PR. Does
@@ -85,8 +110,19 @@ claims:
     files:
       - package.json (overrides block only)
       - package-lock.json
-    status: active
+    status: verified-live
     started: 2026-10-10
+    released: 2026-10-15
+    pr: 559
+    merge_sha: 64c8035153a91b24004ef9990c26ab1b83343f31
+    verification: >-
+      Merged as 64c80351 by the lead integrator on Joe's "triage and merge the
+      other open PRs" after review (four scoped overrides; main's package files
+      unchanged since the PR base) and green CI on 51422980. Combined-set npm
+      audit --omit=dev: 0 vulnerabilities. Shipped in release f70c755a: the
+      production deploy ran npm ci and the build with sharp 0.35 and went live
+      (release.txt f70c755a), so the VPS Node satisfies sharp. VERIFIED LIVE.
+      Files released.
     note: >-
       Backlog task 11: npm audit fix plus four scoped overrides (uuid under
       gaxios and teeny-request, tinypool under vitest, sharp under
@@ -3811,8 +3847,21 @@ claims:
       - client/src/pages/GenericServicePage.tsx (a page without a process chapter carries its plate on the included chapter)
       - client/src/lib/stickyCtaVisibility.ts and its test (the assessment bar steps aside over a plate)
       - artifacts/kie-ai/nano-banana/**/2026-10-10-*, .claude/kie-budget/ledger.jsonl
-    status: in-review
+    status: verified-live
     started: 2026-10-10
+    released: 2026-10-15
+    pr: 586
+    merge_sha: 9637350fe4b42e50ac1fcae55b5ecc3dbc83608a
+    verification: >-
+      Merged as 9637350f by the lead integrator on Joe's "triage and merge the
+      other open PRs", with integration fix 204a9005 (GenericServicePage's
+      included chapter left as on main: the added plate only reached
+      /about/compliance, /about/insurance, /about/support and
+      /support/system-status, outside scope). Green CI on 204a9005; shipped in
+      release f70c755a. Live at 1440 px: /solutions/cloud-backup and
+      /solutions/security-awareness each render their plate band with no broken
+      images or page errors; /about/compliance renders no plate. VERIFIED LIVE.
+      Files released.
     note: >-
       Joe, 2026-10-10: "continue everything", after the visual check showed
       pages sharing plates and the sticky assessment bar covering plates on
