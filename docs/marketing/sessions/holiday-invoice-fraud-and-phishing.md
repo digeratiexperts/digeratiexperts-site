@@ -3,6 +3,7 @@
 **Thu 19 Nov 2026, 11:00 – 11:45 AM Arizona (America/Phoenix) · Live webinar, 45 min**
 Page: https://digeratiexperts.com/events/holiday-invoice-fraud-and-phishing · Campaign: https://digeratiexperts.com/go/email-security
 Session data: `client/src/data/deEvents.ts` (slug `holiday-invoice-fraud-and-phishing`) · Calendar: `docs/marketing/DE-EVENT-CALENDAR.md`
+Slides (draft, internal, 7 slides with presenter notes): [Zoho Show](https://show.zoho.com/show/open/wkjyyd4be374b73bd4afab84ff7c0f49777ee), filed in WorkDrive `0. Digerati Experts / 4. Event & Strategic Planning / event`. Every example in them is constructed; no client email, form or data appears.
 
 > **Status: PLANNED.** Joe, 15 Oct 2026: prepare campaign assets but do not publish unconfirmed event details. The page answers 404 and nothing below is sent until the session is confirmed (step 0). Every draft is copy for review, not sent mail.
 > Rules applied: no statistics, no client names, no "we stop all phishing" promise, no real fraud email from a client shown on screen (`docs/CLAIMS-REGISTER.md`). Bracketed `[…]` items are filled at send time.

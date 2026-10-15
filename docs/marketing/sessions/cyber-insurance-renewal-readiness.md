@@ -3,6 +3,7 @@
 **Thu 5 Nov 2026, 11:00 AM – 12:00 PM Arizona (America/Phoenix) · Live webinar, 60 min**
 Page: https://digeratiexperts.com/events/cyber-insurance-renewal-readiness · Campaign: https://digeratiexperts.com/go/cyber-insurance
 Session data: `client/src/data/deEvents.ts` (slug `cyber-insurance-renewal-readiness`) · Calendar: `docs/marketing/DE-EVENT-CALENDAR.md`
+Slides (draft, internal, 13 slides with presenter notes): [Zoho Show](https://show.zoho.com/show/open/wkjyye5e4524447114edf875f938b1f27cf60), filed in WorkDrive `0. Digerati Experts / 4. Event & Strategic Planning / event`. Every example in them is constructed; no client email, form or data appears.
 
 > **Status: PLANNED, date selected (5 Nov).** Nothing below is published or sent until the session is confirmed (step 0). Every draft is copy for review, not sent mail.
 > Rules applied: no statistics, no client names, no guarantee of coverage, approval or claim outcome; framework and insurer names are the attendee's requirements, never DE certifications (`docs/CLAIMS-REGISTER.md`). Bracketed `[…]` items are filled at send time.
