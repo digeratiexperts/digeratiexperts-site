@@ -18,6 +18,8 @@ import { readGuidedSession } from "@/lib/storeGuidedSession";
 import { writeContactHandoff } from "@/lib/warehouseContactHandoff";
 import { warehousePath } from "@/lib/warehousePaths";
 import { ADDRESS_ERRORS, missingBillingAddress } from "@/lib/billingAddress";
+import { AddressAutocomplete } from "@/components/AddressAutocomplete";
+import type { AddressSuggestion } from "@shared/addressLookup";
 import { SALES_TAX_STATUS_LABEL, checkoutTaxNote, useSalesTaxReadiness } from "@/hooks/useSalesTaxReadiness";
 
 import {
@@ -66,6 +68,7 @@ const Checkout = () => {
     register,
     handleSubmit,
     setError,
+    setValue,
     formState: { errors },
   } = useForm<BillingFormData>({
     resolver: zodResolver(billingSchema),
@@ -82,6 +85,15 @@ const Checkout = () => {
       postalCode: "",
     },
   });
+
+  // Picking an address suggestion fills the rest of the billing block.
+  const fillBillingAddress = (s: AddressSuggestion) => {
+    const opts = { shouldValidate: true, shouldDirty: true } as const;
+    setValue("line1", s.line1, opts);
+    if (s.city) setValue("city", s.city, opts);
+    if (s.state) setValue("state", s.state.slice(0, 2).toUpperCase(), opts);
+    if (s.postalCode) setValue("postalCode", s.postalCode, opts);
+  };
 
   const flagMissingAddress = (data: BillingFormData): boolean => {
     const missing = missingBillingAddress(data);
@@ -358,16 +370,25 @@ const Checkout = () => {
                           <Label htmlFor="line1" className="text-white/80">
                             Street Address *
                           </Label>
-                          <Input
-                            id="line1"
-                            {...register("line1")}
-                            autoComplete="billing address-line1"
-                            aria-required={true}
-                            aria-invalid={!!errors.line1}
-                            placeholder="Street and suite"
-                            className="mt-1 bg-white/5 border-white/20 text-white placeholder:text-white/55 focus:border-de-hairline"
-                            data-testid="input-address-line1"
-                          />
+                          <AddressAutocomplete
+                            onSelect={fillBillingAddress}
+                            listClassName="border-white/20 bg-de-raised text-white"
+                            activeClassName="bg-white/10"
+                          >
+                            {(combobox) => (
+                              <Input
+                                id="line1"
+                                {...register("line1")}
+                                {...combobox}
+                                autoComplete="billing address-line1"
+                                aria-required={true}
+                                aria-invalid={!!errors.line1}
+                                placeholder="Start typing your street address"
+                                className="mt-1 bg-white/5 border-white/20 text-white placeholder:text-white/55 focus:border-de-hairline"
+                                data-testid="input-address-line1"
+                              />
+                            )}
+                          </AddressAutocomplete>
                           {errors.line1 && (
                             <p className="text-red-400 text-sm mt-1" data-testid="error-address-line1">
                               {errors.line1.message}

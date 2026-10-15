@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
+import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 import { Phone } from "lucide-react";
 import { PortalLayout } from "./PortalLayout";
 import { Button } from "@/components/ui/button";
@@ -137,14 +138,19 @@ export function PortalInfrastructure() {
             </Field>
 
             <Field label="Site / address (if onsite)" htmlFor="site">
-              <Input
-                id="site"
-                value={locationDetail}
-                onChange={(e) => setLocationDetail(e.target.value)}
-                autoComplete="street-address"
-                placeholder="Office location or address"
-                className="border-border bg-background"
-              />
+              <AddressAutocomplete onSelect={(s) => setLocationDetail(s.label)}>
+                {(combobox) => (
+                  <Input
+                    id="site"
+                    {...combobox}
+                    value={locationDetail}
+                    onChange={(e) => setLocationDetail(e.target.value)}
+                    autoComplete="street-address"
+                    placeholder="Office location or address"
+                    className="border-border bg-background"
+                  />
+                )}
+              </AddressAutocomplete>
             </Field>
 
             <Field label="Urgency" labelId="priority-label" required>
