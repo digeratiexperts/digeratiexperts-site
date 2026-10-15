@@ -1,0 +1,36 @@
+{
+  "checkedAt": "2026-10-15T01:42:00.090Z",
+  "release": "0ac16e0 (PR 565), CI run 38645740261 deploy job success 22:19Z",
+  "/version-9 390": {
+    "status": 200,
+    "robots": "noindex, nofollow",
+    "backgroundsLoaded": 4,
+    "backgrounds": 4,
+    "overflowX": 0,
+    "errors": []
+  },
+  "/version-9 1440": {
+    "status": 200,
+    "robots": "noindex, nofollow",
+    "backgroundsLoaded": 4,
+    "backgrounds": 4,
+    "overflowX": 0,
+    "errors": []
+  },
+  "/version-10 390": {
+    "status": 200,
+    "robots": "noindex, nofollow",
+    "backgroundsLoaded": 5,
+    "backgrounds": 5,
+    "overflowX": 0,
+    "errors": []
+  },
+  "/version-10 1440": {
+    "status": 200,
+    "robots": "noindex, nofollow",
+    "backgroundsLoaded": 5,
+    "backgrounds": 5,
+    "overflowX": 0,
+    "errors": []
+  }
+}

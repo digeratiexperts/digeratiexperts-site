@@ -3657,7 +3657,9 @@ claims:
       - client/src/pages/versions/v10/** (new; Version 8 copied, then the scene story)
       - client/public/images/visual-system/scene-story/** (new)
       - .claude/kie-budget/ledger.jsonl (the jobs' open, spend and close lines)
-    status: active
+      - design/approved/homepage-scene-story-2026-10.md (new)
+      - artifacts/visual-qa/homepage-v9-v10/live/** (added with the release record)
+    status: verified-live
     started: 2026-10-10
     note: >-
       Joe, 2026-10-10: section backgrounds that "tell a story or prep the user
@@ -3672,6 +3674,18 @@ claims:
       homepage-story-concepts-2026-10-10 $0.24, homepage-scene-story-2026-10-10
       $0.12). Overlap check 2026-10-10: open PRs 542, 550, 553, 554, 557, 559,
       560, 562, 563 and 564 touch none of these files.
+      RELEASED 2026-10-14: Joe, "Do it" (after "merge or push this" and
+      "approve the images"). Merged as 0ac16e0e (PR 565) after CI passed on
+      09e210bb; CI run 38645740261 deployed 0ac16e0e to the production VPS
+      (deploy and runtime verification succeeded 22:19Z). Images approved for
+      the two previews only (design/approved/homepage-scene-story-2026-10.md).
+      Checked on digeratiexperts.com 2026-10-15 at 390 and 1440: /version-9
+      and /version-10 return 200 with robots "noindex, nofollow", all 4
+      Signal Thread plates and all 5 scene frames load, no horizontal
+      overflow, no page errors (artifacts/visual-qa/homepage-v9-v10/live/).
+      The live homepage / stays Version 8; replacing it is Joe's decision.
+      VERIFIED LIVE. Files released.
+
   - id: portal-black-theme
     owner: chatgpt
     subsystem: client-portal
