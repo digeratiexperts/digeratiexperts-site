@@ -85,7 +85,7 @@ export const DE_EVENT_SESSIONS: DeEventSession[] = [
     audience: "prospects-and-clients",
     status: "planned",
     hook:
-      "Year-end invoices, holiday staffing and gift-card requests make late November the busiest month for payment fraud attempts.",
+      "Year-end invoices, thin holiday staffing and gift-card requests give payment-change and gift-card scams the cover they rely on.",
     takeaways: [
       "The anatomy of a payment-change and gift-card request email",
       "Email authentication (SPF, DKIM, DMARC) explained without the jargon",
