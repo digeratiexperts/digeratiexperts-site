@@ -45,6 +45,7 @@ claims:
       - server/spaKnownPaths.ts (the /events entries only)
       - scripts/de-events/program.ts (new)
       - scripts/de-events/build.ts (new)
+      - docs/marketing/sessions/ (per-session promotion kits)
       - docs/marketing/ (generated calendar .md, .ics, .html)
     status: active
     started: 2026-10-10
@@ -54,7 +55,9 @@ claims:
       sessions are planned (noindex, out of sitemap) until Joe confirms date,
       presenter and platform. The internal operating calendar (prospects, clients,
       internal; weekly to annual) is generated into docs/marketing/ and never
-      bundled into the site. Copies go to WorkDrive 4. Event & Strategic Planning.
+      bundled into the site. Copies go to WorkDrive 4. Event & Strategic Planning. PR 564 merged
+      2026-10-15 (live check pending deploy). Follow-up on the same branch:
+      per-session promotion kits in docs/marketing/sessions/.
   - id: t2-ops-hardening
     owner: claude
     subsystem: ci-and-ops
