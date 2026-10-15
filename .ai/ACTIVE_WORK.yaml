@@ -3847,7 +3847,7 @@ claims:
       - client/src/pages/GenericServicePage.tsx (a page without a process chapter carries its plate on the included chapter)
       - client/src/lib/stickyCtaVisibility.ts and its test (the assessment bar steps aside over a plate)
       - artifacts/kie-ai/nano-banana/**/2026-10-10-*, .claude/kie-budget/ledger.jsonl
-    status: in-review
+    status: verified-live
     started: 2026-10-10
     note: >-
       Joe, 2026-10-10: "continue everything", after the visual check showed
@@ -3856,6 +3856,12 @@ claims:
       site-unique-plates-2026-10-10 (projected $0.72; closed). Three light plates
       had the studio softbox in frame and were cropped. Generated images stay
       ILLUSTRATIVE until Joe approves them on this PR.
+      Merged as 9637350f (PR 586, in Joe's "triage and merge the other open PRs"
+      batch; the integrating session removed the GenericServicePage
+      included-chapter plate, which professional-services did not need).
+      Production release.txt f70c755a contains it; all twelve plate AVIFs in the
+      live bundle return 200 and the sticky-bar rule ships. Joe approved the
+      plates on 2026-10-15 ("merge 586"). VERIFIED LIVE. Files released.
 
   - id: dataforseo-mcp-wiring
     owner: claude
