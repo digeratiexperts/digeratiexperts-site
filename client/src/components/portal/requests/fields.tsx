@@ -6,6 +6,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { cn } from "@/lib/utils";
 import { COUNTRIES, US_STATES, isIsoDate, type ServiceRequestAddress } from "@shared/serviceRequests";
+import type { AddressSuggestion } from "@shared/addressLookup";
+import { AddressAutocomplete, lookupCountryCode, type AddressComboboxProps } from "@/components/AddressAutocomplete";
 
 /**
  * Form controls for the service request pages. Every control has a visible
@@ -77,6 +79,7 @@ export function TextField({
   autoComplete,
   inputMode,
   readOnly,
+  inputProps,
 }: BaseProps & {
   value: string;
   onChange: (v: string) => void;
@@ -84,6 +87,8 @@ export function TextField({
   autoComplete?: string;
   inputMode?: "text" | "tel" | "numeric";
   readOnly?: boolean;
+  /** Extra attributes for the input, e.g. the address combobox's ARIA props. */
+  inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
 }) {
   const errId = `${id}-error`;
   return (
@@ -104,6 +109,7 @@ export function TextField({
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? errId : undefined}
         className={controlClass}
+        {...inputProps}
       />
       <FieldError id={errId} error={error} />
     </Highlight>
@@ -463,19 +469,39 @@ export function AddressBlock({
   const country = value.country || "United States of America";
   const isUS = country === "United States of America";
   const field = (k: keyof ServiceRequestAddress) => `customAddress.${String(k)}`;
+  const streetField = (combobox?: AddressComboboxProps) => (
+    <TextField
+      id={`${idPrefix}-street`}
+      label="Street"
+      required={editable}
+      value={value.street ?? ""}
+      onChange={(v) => onChange({ street: v })}
+      readOnly={!editable}
+      autoComplete="street-address"
+      error={errors[field("street")]}
+      highlighted={highlighted(field("street"))}
+      inputProps={combobox}
+    />
+  );
+  // Picking a suggestion fills street, city, state and ZIP. US states are a
+  // name list here, so the full name is used; elsewhere the code or name.
+  const fillAddress = (s: AddressSuggestion) =>
+    onChange({
+      street: s.line1,
+      ...(s.city ? { city: s.city } : {}),
+      ...(s.stateName || s.state ? { state: isUS ? s.stateName || s.state : s.state || s.stateName } : {}),
+      ...(s.postalCode ? { zip: s.postalCode } : {}),
+    });
+  const lookupCountry = lookupCountryCode(country);
   return (
     <div className="space-y-4">
-      <TextField
-        id={`${idPrefix}-street`}
-        label="Street"
-        required={editable}
-        value={value.street ?? ""}
-        onChange={(v) => onChange({ street: v })}
-        readOnly={!editable}
-        autoComplete="street-address"
-        error={errors[field("street")]}
-        highlighted={highlighted(field("street"))}
-      />
+      {editable && lookupCountry ? (
+        <AddressAutocomplete country={lookupCountry} onSelect={fillAddress}>
+          {(combobox) => streetField(combobox)}
+        </AddressAutocomplete>
+      ) : (
+        streetField()
+      )}
       <TextField
         id={`${idPrefix}-city`}
         label="City"

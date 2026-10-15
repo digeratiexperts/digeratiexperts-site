@@ -2,8 +2,8 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 
-// Joe, 2026-10-06: the portal's light mode is "Light steps" (grey-ladder concept C), replacing the
-// 2026-10-03 orchid "Ambient" field: a grey field, white cards one step up, the rail stays graphite.
+// Joe, 2026-10-11: use the supplied light palette while preserving readable
+// semantic status inks and the dark brand rail.
 const root = path.resolve(import.meta.dirname, "../../..");
 const css = readFileSync(path.join(root, "client/src/styles/portal.css"), "utf8").replace(/\r\n/g, "\n");
 const layout = readFileSync(path.join(root, "client/src/pages/portal/PortalLayout.tsx"), "utf8").replace(/\r\n/g, "\n");
@@ -14,13 +14,13 @@ function lightBlock(): string {
   return css.slice(start, css.indexOf("}", start));
 }
 
-describe("portal light theme: Light steps", () => {
+describe("portal light theme", () => {
   it("paints the field grey with white cards one step up, and wells and hover in between", () => {
     const block = lightBlock();
-    expect(block).toContain("--background: 255 11% 93%;");
-    expect(block).toContain("--muted: 260 13% 95%;");
-    expect(block).toContain("--accent: 252 11% 91%;");
-    expect(block).toContain("--border: 257 11% 87%;");
+    expect(block).toContain("--bg: #f5f5f9;");
+    expect(block).toContain("--sunken: #f0f0f5;");
+    expect(block).toContain("--hover: #eeeef4;");
+    expect(block).toContain("--line: #e3e3ec;");
     expect(block).toContain("--card: 0 0% 100%;");
     expect(block).not.toContain("--background: 290 42% 96%;");
   });
@@ -36,7 +36,7 @@ describe("portal light theme: Light steps", () => {
     // (avatars use 12% of brand). Found on /portal/sales-process: ok ink fell to 4.42:1 on orchid.
     const block = lightBlock();
     const hsl = (name: string) => {
-      const m = block.match(new RegExp(`--${name}: (\\d+) (\\d+)% (\\d+)%;`));
+      const m = block.match(new RegExp(`--${name}: ([\\d.]+) ([\\d.]+)% ([\\d.]+)%;`));
       expect(m, name).not.toBeNull();
       return hslToRgb(Number(m![1]), Number(m![2]), Number(m![3]));
     };

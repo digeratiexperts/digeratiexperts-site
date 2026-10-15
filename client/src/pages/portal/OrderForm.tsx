@@ -1,4 +1,6 @@
 import { useState, useMemo, useRef } from "react";
+import { AddressAutocomplete } from "@/components/AddressAutocomplete";
+import type { AddressSuggestion } from "@shared/addressLookup";
 import { PortalLayout } from "./PortalLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -75,6 +77,9 @@ function formatLineAmount(service: PortalOrderCatalogItem): string {
 
 const fieldClass = "border-border bg-background";
 const subPanelClass = "rounded-lg border border-border bg-background p-4";
+
+/** State codes the State select below offers. */
+const ORDER_FORM_STATES = new Set(["AZ", "CA", "NV", "NM", "TX"]);
 
 export function OrderForm() {
   const { toast } = useToast();
@@ -566,13 +571,31 @@ export function OrderForm() {
                   </div>
 
                   <Field label="Street Address" htmlFor="address" required>
-                    <Input
-                      id="address"
-                      value={clientInfo.address}
-                      onChange={(e) => setClientInfo((prev) => ({ ...prev, address: e.target.value }))}
-                      className={fieldClass}
-                      data-testid="input-address"
-                    />
+                    <AddressAutocomplete
+                      onSelect={(s: AddressSuggestion) =>
+                        setClientInfo((prev) => ({
+                          ...prev,
+                          address: s.line1,
+                          city: s.city || prev.city,
+                          // The state list here is DE's service area only; keep the pick when it is outside it.
+                          state: ORDER_FORM_STATES.has(s.state) ? s.state : prev.state,
+                          zipCode: s.postalCode || prev.zipCode,
+                        }))
+                      }
+                    >
+                      {(combobox) => (
+                        <Input
+                          id="address"
+                          {...combobox}
+                          value={clientInfo.address}
+                          onChange={(e) => setClientInfo((prev) => ({ ...prev, address: e.target.value }))}
+                          autoComplete="address-line1"
+                          placeholder="Start typing the street address"
+                          className={fieldClass}
+                          data-testid="input-address"
+                        />
+                      )}
+                    </AddressAutocomplete>
                   </Field>
 
                   <div className="grid grid-cols-2 gap-4 md:grid-cols-4">

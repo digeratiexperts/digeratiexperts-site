@@ -12,6 +12,12 @@ describe("cache headers for files served from dist/public", () => {
     expect(cacheControlFor("assets/hero-Bx3k9QaZ.webp")).toBe("public, max-age=31536000, immutable");
   });
 
+  it("does not pin a plain-named file in assets/ for a year", () => {
+    for (const file of ["assets/price-sheet.pdf", "assets/logo.png", "assets/DE-TechTool-v1.zip"]) {
+      expect(cacheControlFor(file), file).not.toMatch(LONG);
+    }
+  });
+
   it("never caches the deploy marker or a page", () => {
     expect(cacheControlFor("release.txt")).toBe("no-cache, no-store, must-revalidate");
     expect(cacheControlFor("index.html")).toBe("no-cache, no-store, must-revalidate");

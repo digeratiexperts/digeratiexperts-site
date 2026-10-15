@@ -84,3 +84,18 @@ export function usePortalSession(): SessionState {
 
   return state;
 }
+
+/** End the portal session here and on the server, then go to the login page. */
+export async function signOutOfPortal(): Promise<void> {
+  try {
+    await fetch("/api/portal/logout", { method: "POST", credentials: "include" });
+  } catch {
+    /* still clear local */
+  }
+  localStorage.removeItem("portalUser");
+  localStorage.removeItem("portalToken");
+  localStorage.removeItem("portalUserId");
+  localStorage.removeItem("impersonatingCompany");
+  resetPortalSession();
+  window.location.href = "/portal/login";
+}

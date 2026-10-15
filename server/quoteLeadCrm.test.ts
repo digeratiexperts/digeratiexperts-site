@@ -38,8 +38,9 @@ describe("quiz lead -> Zoho lead + scheduled call", () => {
       What_Id: { id: "L1" },
       $se_module: "Leads",
       Owner: { id: "U1" },
-      Reminder: "15 minutes before",
     });
+    // Zoho refuses "15 minutes before" as a Reminder and rejects the whole call.
+    expect(deps.calls[0]).not.toHaveProperty("Reminder");
     expect(deps.calls[0].Subject).toBe("Call Quiz Tester (Example Co): Business quiz lead, urgent priority");
     expect(deps.calls[0].Description).toContain("Urgent priority. Call 480-555-0100 by Mon Oct 5, 10:15 AM Arizona time.");
   });

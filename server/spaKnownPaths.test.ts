@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import { isKnownSpaPath, normalizeSpaPath } from "./spaKnownPaths";
 import { CAMPAIGN_SLUGS } from "@/data/campaigns";
 import { EXECUTIVE_BRIEFS } from "@/data/executiveBriefs";
+import { DE_EVENT_SESSIONS, isPublic } from "@/data/deEvents";
 import resourceRegistry from "@/data/resourceRegistry.v2.json";
 
 describe("spaKnownPaths", () => {
@@ -66,6 +67,13 @@ describe("spaKnownPaths", () => {
     expect(paths.filter((p) => !isKnownSpaPath(p))).toEqual([]);
   });
 
+  it("answers 404 for a session that is not confirmed", () => {
+    // Joe, 2026-10-15: prepare campaign assets but do not publish unconfirmed
+    // event details. A planned session's page must not answer 200.
+    const unpublished = DE_EVENT_SESSIONS.filter((session) => !isPublic(session));
+    expect(unpublished.filter((session) => isKnownSpaPath(`/events/${session.slug}`)).map((s) => s.slug)).toEqual([]);
+  });
+
   it("knows every campaign, executive brief and resource page the client renders", () => {
     const rendered = [
       "/go",
@@ -73,6 +81,8 @@ describe("spaKnownPaths", () => {
       "/resources/briefs",
       ...EXECUTIVE_BRIEFS.map((brief) => `/resources/briefs/${brief.slug}`),
       ...resourceRegistry.resources.map((resource) => resource.route),
+      "/events",
+      ...DE_EVENT_SESSIONS.filter(isPublic).map((session) => `/events/${session.slug}`),
     ];
     expect(rendered.length).toBeGreaterThan(25);
     expect(rendered.filter((p) => !isKnownSpaPath(p))).toEqual([]);

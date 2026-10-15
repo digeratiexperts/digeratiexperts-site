@@ -70,6 +70,8 @@ import { verifyTurnstile } from "./middleware/security";
 import { eventBus, EventTypes } from "./eventBus";
 import { notificationService } from "./services/notificationService";
 import { logger } from "./logger";
+import { newPasswordError } from "./passwordBreach";
+import { passwordPolicyError, type PasswordContext } from "@shared/passwordPolicy";
 import {
   initPortalAuthStore,
   getUser as portalAuthGetUser,
@@ -130,7 +132,14 @@ import { registerRepresentationRoutes } from "./representationRoutes";
 import { requireDeSyncAuth } from "./integrations/deSyncAuth";
 import { registerPortalAssistRoutes } from "./portalAssistRoutes";
 import { registerLicensingRoutes } from "./licensingRoutes";
+import { registerPortalAgreementRoutes } from "./portalAgreementRoutes";
 import { registerLicenseBoardRoutes } from "./licenseBoardRoutes";
+import {
+  jumpcloudAssociateSoftware,
+  jumpcloudConfigured,
+  jumpcloudEnsureChocoApp,
+  jumpcloudFindSystem,
+} from "./integrations/jumpcloud";
 import { registerKbRoutes } from "./kbRoutes";
 import { registerOrgDirectoryRoutes } from "./orgDirectoryRoutes";
 import { registerStoreOrderControlRoutes } from "./storeOrderControls";
@@ -198,6 +207,7 @@ import {
 import { registerDeSyncRoutes } from "./integrations/deSyncRoutes";
 import { resolveJwtSecret } from "./config/authSecrets";
 import { registerRetiredLegacyAuthRoutes } from "./legacyAuthRetired";
+import { registerAddressLookupRoutes } from "./addressLookup";
 import { registerRetiredLegacyGenericRoutes } from "./legacyGenericRetired";
 import { loginRateLimiter, formSubmissionRateLimiter, apiGeneralRateLimiter, paymentRateLimiter } from "./middleware/rateLimiter";
 import { enqueueOutbox } from "./integrations/deSyncStore";
@@ -828,6 +838,8 @@ export async function registerRoutes(app: Express) {
   // Legacy generic register/login are retired (#236): they minted tokens for a
   // second identity model with a caller-chosen email. Both now answer 410 Gone.
   registerRetiredLegacyAuthRoutes(app);
+  // Address type-ahead for checkout and portal forms (Geoapify; off without GEOAPIFY_API_KEY).
+  registerAddressLookupRoutes(app);
 
   // Get current user
   app.get("/api/auth/me", [authMiddleware], async (req: AuthenticatedRequest, res: Response) => {
@@ -1299,6 +1311,14 @@ export async function registerRoutes(app: Express) {
     canManagePeople: (user: any) => Boolean(user) && (user.role === "admin" || canManageOrg(user as OrgUserFields)),
   });
 
+  // Client Portal agreement gate: company + personal agreements, welcome videos (server/portalAgreementRoutes.ts).
+  registerPortalAgreementRoutes(app, {
+    guards: [authMiddleware, validateInput],
+    adminGuards: [authMiddleware, requireAdmin, validateInput],
+    getClient: serviceRequestDeps.getClient,
+    isCompanySigner: (user: any) => Boolean(user) && user.role !== "admin" && canManageOrg(user as OrgUserFields),
+  });
+
   // License patch bay: DE's vendor licence pool, company seats, assignments (server/licenseBoardRoutes.ts).
   registerLicenseBoardRoutes(app, {
     adminGuards: [authMiddleware, requireAdmin, validateInput],
@@ -1307,6 +1327,12 @@ export async function registerRoutes(app: Express) {
     listClientUsers: serviceRequestDeps.listClientUsers,
     listDepartments: serviceRequestDeps.listDepartments!,
     fetchHubCatalog: async () => (await import("./integrations/techSalesClient")).fetchStaffCatalog(),
+    jumpcloud: {
+      configured: () => jumpcloudConfigured(),
+      ensureChocoApp: (name, pkg, orgId) => jumpcloudEnsureChocoApp(name, pkg, orgId),
+      associate: (appId, target, orgId) => jumpcloudAssociateSoftware(appId, target, orgId),
+      findSystem: (name, orgId) => jumpcloudFindSystem(name, orgId),
+    },
   });
 
   // Company structure (site / department leaders) and the people directory (server/orgDirectoryRoutes.ts).
@@ -2231,6 +2257,14 @@ export async function registerRoutes(app: Express) {
   const PASSKEY_CEREMONY_TTL = 10 * 60 * 1000;
 
   // Portal Register Endpoint — creates prospect client + durable user
+  /** What a portal user's password may not contain (shared/passwordPolicy.ts). */
+  const portalPasswordContext = (user: any): PasswordContext => ({
+    email: user?.email,
+    username: user?.username,
+    fullName: user?.fullName,
+    companyName: user?.clientId ? (portalClients.get(user.clientId) as any)?.companyName : null,
+  });
+
   app.post("/api/portal/register", [formSubmissionRateLimiter, verifyTurnstile, validateInput], async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { email, username, password, companyName, fullName } = req.body;
@@ -2244,12 +2278,9 @@ export async function registerRoutes(app: Express) {
         return res.status(400).json({ message: "Email or username already exists" });
       }
 
-      // Validate password strength
-      if (password.length < 8 || !/[A-Z]/.test(password) || !/[0-9]/.test(password)) {
-        return res.status(400).json({ 
-          message: "Password must be at least 8 characters with 1 uppercase letter and 1 number" 
-        });
-      }
+      // Shared policy (shared/passwordPolicy.ts) plus the breached-password check.
+      const passwordError = await newPasswordError(password, { email, username, fullName, companyName });
+      if (passwordError) return res.status(400).json({ message: passwordError });
 
       // Hash password with bcrypt
       const bcryptMod = await import('bcrypt');
@@ -2465,10 +2496,10 @@ export async function registerRoutes(app: Express) {
       const { token, password } = req.body;
       if (!token || !password) return res.status(400).json({ message: "Token and new password are required" });
 
-      // Policy first, so a weak password does not burn the link.
-      if (password.length < 8 || !/[A-Z]/.test(password) || !/[0-9]/.test(password)) {
-        return res.status(400).json({ message: "Password must be at least 8 characters with 1 uppercase letter and 1 number" });
-      }
+      // Policy first, so a weak password does not burn the link. Personal-info
+      // rules need the account, so they run again after the token resolves.
+      const policyError = await newPasswordError(password);
+      if (policyError) return res.status(400).json({ message: policyError });
 
       // Single-use, atomic consume; released again if the new password cannot be saved.
       const consumed = await consumeAuthToken("password_reset", token);
@@ -2479,6 +2510,12 @@ export async function registerRoutes(app: Express) {
 
       const user = portalUsers.get(tokenData.email);
       if (!user) return res.status(400).json({ message: "Account not found" });
+
+      const personalError = passwordPolicyError(password, portalPasswordContext(user));
+      if (personalError) {
+        await releaseAuthToken(consumed.id).catch(() => undefined);
+        return res.status(400).json({ message: personalError });
+      }
 
       const bcrypt = await import('bcrypt');
       user.password = await bcrypt.hash(password, 12);
@@ -3525,14 +3562,11 @@ export async function registerRoutes(app: Express) {
       if (!currentPassword || !newPassword) {
         return res.status(400).json({ message: "Current and new password are required" });
       }
-      if (newPassword.length < 8 || !/[A-Z]/.test(newPassword) || !/[0-9]/.test(newPassword)) {
-        return res.status(400).json({
-          message: "Password must be at least 8 characters with 1 uppercase letter and 1 number",
-        });
-      }
-
       const user = portalUsers.get(req.user?.email || "");
       if (!user) return res.status(404).json({ message: "User not found" });
+
+      const passwordError = await newPasswordError(newPassword, portalPasswordContext(user));
+      if (passwordError) return res.status(400).json({ message: passwordError });
 
       const bcryptMod = await import("bcrypt");
       const valid = await bcryptMod.compare(currentPassword, user.password);

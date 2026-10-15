@@ -1,4 +1,4 @@
-﻿# Claude Code â€” Digerati Experts Website
+# Claude Code — Digerati Experts Website
 
 Before doing any work in this repository, read and obey:
 
@@ -20,15 +20,15 @@ Never develop directly on `main`. Use an isolated branch/worktree. Reconcile aga
 
 ## Project skills (`.claude/skills/`)
 
-Each vendored skill carries an `UPSTREAM.md` with provenance, local deviations and its external-service boundary. Skills that call kie.ai spend credits; run them only when the user asks for an image, and only inside a budget job (`.claude/kie-budget/README.md`: projection, soft and hard limits per job and per month, a ledger; Joe 2026-10-04), and read the key from the environment or the gitignored `.env` (`KIE_AI_API_KEY`, or `KIE_API_KEY` per PR #168), never from a committed file. Copy `.env.example` to `.env` to start. The same skills are mirrored at `.agents/skills/` (symlinks) for Codex / ChatGPT and other tools; `AGENTS.md` carries the cross-agent catalog. To use these skills in every project on a machine, run `bash .claude/install-user-skills.sh` once (links them into `~/.claude/skills` and `~/.agents/skills`).
+Each vendored skill carries an `UPSTREAM.md` with provenance, local deviations and its external-service boundary. Skills that call kie.ai spend credits; run them only when the user asks for an image, and only inside a budget job (`.claude/kie-budget/README.md`: projection, soft and hard limits per job and per month, a ledger; Joe 2026-10-04), and read the key from the environment or the gitignored `.env` (`KIE_AI_API_KEY`; `KIE_API_KEY` is accepted as an alias), never from a committed file. Copy `.env.example` to `.env` to start. The same skills are mirrored at `.agents/skills/` (symlinks) for Codex / ChatGPT and other tools; `AGENTS.md` carries the cross-agent catalog. To use these skills in every project on a machine, run `bash .claude/install-user-skills.sh` once (links them into `~/.claude/skills` and `~/.agents/skills`).
 
 | Skill | Trigger | What it does | Output |
 |---|---|---|---|
 | `/scrollcraft` | scroll-driven / "Apple-style" landing page | Isolated scroll-experience builds | `scrollcraft/builds/<name>/` |
-| `/nano-banana-images` | "nano banana image ofâ€¦", any generated photo/still | JSON-prompted Nano Banana 2 generation via kie.ai (Python) | `artifacts/kie-ai/nano-banana/` |
+| `/nano-banana-images` | "nano banana image of…", any generated photo/still | JSON-prompted Nano Banana 2 generation via kie.ai (Python) | `artifacts/kie-ai/nano-banana/` |
 | `/recraft-icons` | "Recraft icon of...", a custom or missing icon, icon set, SVG glyph Lucide lacks | Native SVG via Recraft (Node), cleaned to `currentColor` for IconWell; key `RECRAFT_API_KEY`, paid plan | `artifacts/recraft/icons/<set>/` |
-| `/excalidraw-visuals` | "excalidraw visual/image ofâ€¦" | Hand-drawn-style PNG diagrams via kie.ai (Node) | `artifacts/kie-ai/excalidraw/` |
-| `/excalidraw-diagram` | "draw me a diagram ofâ€¦" | Editable `.excalidraw` JSON, no API | `artifacts/diagrams/` |
+| `/excalidraw-visuals` | "excalidraw visual/image of…" | Hand-drawn-style PNG diagrams via kie.ai (Node) | `artifacts/kie-ai/excalidraw/` |
+| `/excalidraw-diagram` | "draw me a diagram of…" | Editable `.excalidraw` JSON, no API | `artifacts/diagrams/` |
 | `/frontend-design` | build a component, page or site | Distinctive frontend code. Maintenance Mode: Tier 2 current system applies on `client/`. Exploration Mode: only Tier 0/1 apply (`design/DESIGN-AUTHORITY.md`) | in place |
 | `/video-to-website` | "turn this video into a scroll-driven site" | FFmpeg frames + GSAP/Lenis canvas page | isolated experiment dir |
 | `/skill-builder` | "help me build a skill" | Discovery interview, build and audit of skills | `.claude/skills/<name>/` |
@@ -42,7 +42,31 @@ The Trigger.dev MCP server is declared in the root `.mcp.json`; enable it only w
 
 Generated images are ILLUSTRATIVE candidates until they pass `design/IMAGERY.md` review; only optimized derivatives go under `client/public/images/`.
 
+## Image generation needs DE's go-ahead first (Joe, 2026-10-08)
+
+The budget gate in `.claude/kie-budget/` controls *how much* a job may spend. It does
+not decide whether an image should exist, which is where the money actually goes to
+waste. Joe: "you consult with me with its usage before you do it with multiple choice
+questions and images before and after... this way we avoid the same images all over the
+place... Don't spend all my money on stuff we end up trashing."
+
+So before opening a kie.ai job:
+
+1. **Ask, with options.** Put the choice to DE as a small set of concrete directions —
+   subject, framing, mood — not an open question. Get a pick.
+2. **Show the "before".** State the prompt you intend to send and what you expect back,
+   in plain words, so DE can kill it while it still costs nothing.
+3. **Show the "after".** Put the generated image next to that intent. If the result is
+   not what the "before" described, say so rather than quietly shipping it.
+4. **No incidental variants.** A variant of an existing image is only for a deliberate
+   series or set. Every other image gets its own brief, or the site fills up with
+   near-duplicates of the same picture.
+
+This is the same working agreement as the Hub's "Design and paid-API approval" section;
+it lives here too because the kie.ai skills are in this repo and an agent working here
+would not otherwise see it.
+
 <!-- >>> DE token-discipline (managed; edit in DE\Governance\repo-kit) >>> -->
 ## Token discipline (DE operating standard)
-Follow the "Token discipline" section in `AGENTS.md` in this repo. Key rules: one slice = one fresh session started from a handoff Â· declare the slice before coding Â· search before reading Â· stop after two failed attempts and checkpoint Â· economy models for mechanical work Â· end with the handoff block (`C:\Users\Joe\DE\Governance\AI-HANDOFF-STANDARD.md`). Spend/routing policy: `C:\Users\Joe\DE\Governance\AI-STACK.md` â€” not in this repo.
+Follow the "Token discipline" section in `AGENTS.md` in this repo. Key rules: one slice = one fresh session started from a handoff · declare the slice before coding · search before reading · stop after two failed attempts and checkpoint · economy models for mechanical work · end with the handoff block (`C:\Users\Joe\DE\Governance\AI-HANDOFF-STANDARD.md`). Spend/routing policy: `C:\Users\Joe\DE\Governance\AI-STACK.md` — not in this repo.
 <!-- <<< DE token-discipline (managed) <<< -->

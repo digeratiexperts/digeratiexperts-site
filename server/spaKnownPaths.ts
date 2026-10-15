@@ -16,6 +16,8 @@ const EXACT = new Set([
   "/version-6",
   "/version-7",
   "/version-8",
+  "/version-9",
+  "/version-10",
   "/solutions",
   "/solutions/managed-it-support",
   "/solutions/managed-workplace",
@@ -58,6 +60,8 @@ const EXACT = new Set([
   "/industries/nonprofits",
   "/industries/animal-hospitals",
   "/the-box",
+  // Client Portal agreement gate alias; redirects to /portal/agreement-gate.
+  "/agreement-gate",
   "/resources",
   "/resources/case-studies",
   "/resources/blog",
@@ -136,6 +140,7 @@ const EXACT = new Set([
   "/go/cyber-insurance",
   "/go/email-security",
   "/go/proactive-business",
+  "/go/ai-background-check",
   "/resources/briefs",
   "/resources/briefs/cyber-risk-operating-brief",
   "/resources/briefs/ransomware-readiness-brief",
@@ -154,6 +159,11 @@ const EXACT = new Set([
   "/resources/reports/sample-quarterly-business-review",
   "/resources/checklists/security-readiness-checklist",
   "/resources/checklists/backup-bcdr-checklist",
+  // Live sessions (client/src/data/deEvents.ts). Exact paths for the same
+  // reason as /go. Only CONFIRMED sessions are listed: a planned session is
+  // not published (Joe, 2026-10-15), so its path answers 404. Add the path
+  // here in the same change that sets the session to "confirmed".
+  "/events",
 ]);
 
 const PREFIXES = [

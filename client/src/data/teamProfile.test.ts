@@ -25,6 +25,16 @@ describe("Team page owner config", () => {
     expect(typeof TEAM_OWNER.title).toBe("string");
   });
 
+  // Joe, 2026-10-14: the title is the one the live homepage publishes under the
+  // same photograph, so the two cannot drift apart.
+  it("matches the role line on the live homepage", () => {
+    const home = readFileSync(
+      path.resolve(__dirname, "../pages/versions/v8/sections/09-team.tsx"),
+      "utf8",
+    );
+    expect(home).toContain(`${TEAM_OWNER.role} &amp; ${TEAM_OWNER.title}`);
+  });
+
   it("publishes each owner certification through the verified credentials list, held by the owner", () => {
     for (const c of OWNER_CERTIFICATIONS) {
       expect(c.kind, c.name).toBe("certification");

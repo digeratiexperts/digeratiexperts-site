@@ -62,6 +62,8 @@ const Datasheets = lazy(() => import("@/pages/resources/Datasheets"));
 const DowntimeCalculator = lazy(() => import("@/pages/resources/DowntimeCalculator"));
 const ResourcesIndex = lazy(() => import("@/pages/resources/ResourcesIndex"));
 const TheBox = lazy(() => import("@/pages/TheBox"));
+const EventsIndex = lazy(() => import("@/pages/events/EventsIndex"));
+const EventSession = lazy(() => import("@/pages/events/EventSession"));
 const KnowledgeBase = lazy(() => import("@/pages/support/KnowledgeBase"));
 const RemoteSupport = lazy(() => import("@/pages/support/RemoteSupport"));
 const PayInvoice = lazy(() => import("@/pages/support/PayInvoice"));
@@ -115,6 +117,7 @@ const PortalLearning = lazy(() => import("@/pages/portal/PortalLearning"));
 const PortalChat = lazy(() => import("@/pages/portal/PortalChat"));
 const PortalAgent = lazy(() => import("@/pages/portal/PortalAgent"));
 const PortalSettings = lazy(() => import("@/pages/portal/PortalSettings"));
+const PortalAgreementGate = lazy(() => import("@/pages/portal/PortalAgreementGate"));
 const PortalShipCenter = lazy(() => import("@/pages/portal/PortalShipCenter"));
 const PortalProcurementStore = lazy(() => import("@/pages/portal/PortalProcurementStore"));
 const PortalAdvancedForms = lazy(() => import("@/pages/portal/PortalAdvancedForms").then(m => ({ default: m.PortalAdvancedForms })));
@@ -184,6 +187,8 @@ const HomepageV5 = lazy(() => import("@/pages/versions/v5/HomepageV5"));
 const HomepageV6 = lazy(() => import("@/pages/versions/v6/HomepageV6"));
 const HomepageV7 = lazy(() => import("@/pages/versions/v7/HomepageV7"));
 const HomepageV8 = lazy(() => import("@/pages/versions/v8/HomepageV8"));
+const HomepageV9 = lazy(() => import("@/pages/versions/v9/HomepageV9"));
+const HomepageV10 = lazy(() => import("@/pages/versions/v10/HomepageV10"));
 
 const WarehouseGate = lazy(() => import("@/pages/store/WarehouseGate"));
 const PublicStoreCheckout = lazy(() => import("@/pages/store/PublicStoreCheckout"));
@@ -274,6 +279,22 @@ function Router() {
       )} />
       {/* Version 8 is the homepage now; the server answers /version-8 with a 301 to /. */}
       <Route path="/version-8" component={() => <Redirect to="/" replace />} />
+      {/* Version 9: Version 8 with the Signal Thread section backgrounds. Preview only; Joe decides whether it replaces /. */}
+      <Route path="/version-9" component={() => (
+        <Suspense fallback={<PageLoadingSkeleton />}>
+          <VersionFrame n={9}>
+            <HomepageV9 />
+          </VersionFrame>
+        </Suspense>
+      )} />
+      {/* Version 10: Version 8 with the scene story (one evolving scene behind the opening chapters). Preview only. */}
+      <Route path="/version-10" component={() => (
+        <Suspense fallback={<PageLoadingSkeleton />}>
+          <VersionFrame n={10}>
+            <HomepageV10 />
+          </VersionFrame>
+        </Suspense>
+      )} />
 
       {/* Solutions Pages */}
       <Route path="/solutions" component={() => (
@@ -447,6 +468,19 @@ function Router() {
       <Route path="/the-box" component={() => (
         <Suspense fallback={<PageLoadingSkeleton />}>
           <TheBox />
+        </Suspense>
+      )} />
+
+      {/* Live sessions: public webinars only (client/src/data/deEvents.ts).
+          The internal operating calendar lives in docs/marketing/. */}
+      <Route path="/events" component={() => (
+        <Suspense fallback={<PageLoadingSkeleton />}>
+          <EventsIndex />
+        </Suspense>
+      )} />
+      <Route path="/events/:slug" component={() => (
+        <Suspense fallback={<PageLoadingSkeleton />}>
+          <EventSession />
         </Suspense>
       )} />
 
@@ -802,6 +836,12 @@ function Router() {
           <PortalAgent />
         </Suspense>
       )} />
+      <Route path="/portal/agreement-gate" component={() => (
+        <Suspense fallback={<PageLoadingSkeleton />}>
+          <PortalAgreementGate />
+        </Suspense>
+      )} />
+      <Route path="/agreement-gate">{() => <Redirect to="/portal/agreement-gate" replace />}</Route>
       <Route path="/portal/settings" component={() => (
         <Suspense fallback={<PageLoadingSkeleton />}>
           <PortalSettings />
@@ -1123,8 +1163,8 @@ function AppContent() {
   useStoreChromeGestures(location);
   const isPortal = location.startsWith("/portal");
   const isHome = location === "/";
-  // / (Version 8), /version-0 (the previous homepage) and /version-7 mount their own bottom bar.
-  const ownsBottomBar = isHome || location === "/version-0" || location === "/version-7";
+  // / (Version 8), /version-0 (the previous homepage), /version-7, /version-9 and /version-10 mount their own bottom bar.
+  const ownsBottomBar = isHome || location === "/version-0" || location === "/version-7" || location === "/version-9" || location === "/version-10";
   const hideDoor2HelpDock = isDoor2Path(location) && location.split("?")[0] !== "/store";
   const hideWarehouseChrome = isWarehousePath(location);
   const accent = isPortal ? undefined : accentFor(location);

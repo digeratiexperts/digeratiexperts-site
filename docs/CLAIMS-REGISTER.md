@@ -159,6 +159,16 @@ Joe, 2026-10-03: make the claims flagged by PR #370 "authentic branded and true 
 
 Still for Joe (no change made): the published office address and phone number do not match public business records (BBB, Arizona Corporation Commission mirrors, Yelp list other Chandler and Phoenix addresses and another number); certifications and partner programs to add to `credentials.ts` with their verification links; Trust Center practice claims ("annual penetration testing", "third-party security audits", "Tier III/IV facilities"); the Privacy Policy's other security-practice bullets.
 
+## Campaign `/go/ai-background-check` (2026-10-15, PR #609)
+
+| Where | Claim | Basis | Status | Action |
+| --- | --- | --- | --- | --- |
+| Ownership table, section 1 | Personal-account AI history stays with the person; some tools may train on inputs depending on settings | Vendor consumer vs business terms, checked 2026-10-09/14 (Intelligence-Hub `docs/projects/12-business-ai-messaging/CLAIM-CHECK.md`, `VERIFY-2026-10-14.md`) | Sourced | Re-check vendor terms quarterly |
+| Regulatory flags, section 4 | A BAA is needed for AI handling patient information, and "only some business plans offer one"; FTC Safeguards Rule vendor oversight; CUI has no place in consumer AI | HHS business associate guidance; 16 CFR 314.4(f); DFARS 252.204-7012 (same CLAIM-CHECK) | Sourced | Name no vendor; never call an AI tool "HIPAA compliant"; cite no CMMC deadline (Phase II suspended, no date) |
+| Self-check, section 3 | Low / Medium / High result | Illustrative scoring in `client/src/pages/campaigns/aiBackgroundCheckQuiz.ts`, labelled "an illustrative self-check, not an assessment" | Structural | Keep the label |
+
+Not on the page until Joe confirms them (Joe, 2026-10-15): "free", "30 minutes", and the read-only process line ("screen share by default, or a temporary viewer role (Entra Global Reader / Google read-only) removed at the end of the call and confirmed in writing"). Add a row here when each goes live.
+
 ## How to add a claim
 
 1. Statistics: add the fact to `cyberAwarenessFacts.ts` with source, year, and

@@ -46,7 +46,8 @@ export function scheduledCallFor(input: QuoteLeadCrmInput, leadId: string, owner
     Outgoing_Call_Status: "Scheduled",
     Call_Start_Time: input.followUp.callBy,
     Call_Purpose: "Prospecting",
-    Reminder: "15 minutes before",
+    // No Reminder: Zoho refuses "15 minutes before" (INVALID_DATA on Reminder),
+    // which rejected every scheduled call (verified 2026-10-14).
     Description: `${followUpHeadline(input.followUp, input.phone)}\n\n${input.description}`,
     What_Id: { id: leadId },
     $se_module: "Leads",

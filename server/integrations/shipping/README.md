@@ -251,9 +251,10 @@ carrierStatus: {
 - Optional: test each with `PORTAL_CARRIER_<X>_ENV=sandbox` first (test-host keys can differ
   from production keys).
 
-`SHIPPING_SETUP.md` in the repo root is stale: it describes Web Tools keys, an admin carrier
-form and `/api/portal/shipping/rates`, `/label`, `/track`, `/admin/shipping/carriers`
-endpoints that do not exist in this codebase. Use this README instead.
+The old root `SHIPPING_SETUP.md` was removed on 2026-10-10 (issue 395): it described Web
+Tools keys, an admin carrier form and `/api/portal/shipping/rates`, `/label`, `/track` and
+`/admin/shipping/carriers` endpoints that never existed in this codebase. This README is the
+only shipping setup guide.
 
 ## Doc access and fixtures
 

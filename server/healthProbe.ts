@@ -20,9 +20,27 @@ export function probeStatus(databaseUp: boolean): 200 | 503 {
   return 503;
 }
 
-export async function databaseAcceptsConnections(): Promise<boolean> {
+type DbProbeModule = {
+  pool: { connect(): Promise<{ release(): void }> } | null;
+  reconnectDatabase(): Promise<boolean>;
+};
+
+/**
+ * True when Postgres accepts a connection. A process whose boot-time connect
+ * failed (or whose pool was dropped) has no pool; retry the connection here
+ * (throttled in db.ts) so a recovered database turns the probe green without
+ * a restart. Before this, a brief database stall during a deploy left /healthz
+ * at 503 for good, and both the release and its rollback failed verification
+ * (2026-10-15, 00:38 UTC).
+ */
+export async function databaseAcceptsConnections(
+  load: () => Promise<DbProbeModule> = () => import("./db") as unknown as Promise<DbProbeModule>,
+): Promise<boolean> {
   try {
-    const { pool } = await import("./db");
+    const dbModule = await load();
+    if (!dbModule.pool && !(await dbModule.reconnectDatabase())) return false;
+    // Read through the module so a pool created by the reconnect is seen.
+    const pool = dbModule.pool;
     if (!pool) return false;
     const client = await pool.connect();
     client.release();

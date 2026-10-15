@@ -1,11 +1,13 @@
-import { describe, expect, it } from "vitest";
-import { DEFAULT_PORTAL_THEME_PREFERENCE, resolvePortalTheme } from "./portalTheme";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { DEFAULT_PORTAL_THEME_PREFERENCE, isDarkPortalTheme, readPortalContrast, readPortalThemePreference, resolvePortalTheme, writePortalContrast, writePortalThemePreference } from "./portalTheme";
+
+afterEach(() => vi.unstubAllGlobals());
 
 describe("portal theme", () => {
-  it("defaults to graphite dark whatever the device says", () => {
-    expect(DEFAULT_PORTAL_THEME_PREFERENCE).toBe("dark");
-    expect(resolvePortalTheme(DEFAULT_PORTAL_THEME_PREFERENCE, true)).toBe("dark");
-    expect(resolvePortalTheme(DEFAULT_PORTAL_THEME_PREFERENCE, false)).toBe("dark");
+  it("defaults to pure black whatever the device says", () => {
+    expect(DEFAULT_PORTAL_THEME_PREFERENCE).toBe("black");
+    expect(resolvePortalTheme(DEFAULT_PORTAL_THEME_PREFERENCE, true)).toBe("black");
+    expect(resolvePortalTheme(DEFAULT_PORTAL_THEME_PREFERENCE, false)).toBe("black");
   });
 
   it("Match device follows the device's light/dark setting", () => {
@@ -14,7 +16,50 @@ describe("portal theme", () => {
   });
 
   it("an explicit choice beats the device", () => {
+    expect(resolvePortalTheme("black", true)).toBe("black");
+    expect(resolvePortalTheme("black", false)).toBe("black");
     expect(resolvePortalTheme("dark", true)).toBe("dark");
     expect(resolvePortalTheme("light", false)).toBe("light");
+  });
+
+  it("keeps existing saved choices and persists Black and contrast independently", () => {
+    const values = new Map([["de-portal-theme", "light"]]);
+    vi.stubGlobal("localStorage", {
+      getItem: (key: string) => values.get(key) ?? null,
+      setItem: (key: string, value: string) => values.set(key, value),
+    });
+    const dispatchEvent = vi.fn();
+    vi.stubGlobal("window", { dispatchEvent });
+    expect(readPortalThemePreference()).toBe("light");
+    writePortalThemePreference("black");
+    writePortalContrast("boost");
+    expect(readPortalThemePreference()).toBe("black");
+    expect(readPortalContrast()).toBe("boost");
+    expect(dispatchEvent.mock.calls.map(([event]) => [event.type, event.detail])).toEqual([
+      ["de-portal-theme-change", "black"],
+      ["de-portal-contrast-change", "boost"],
+    ]);
+  });
+
+  it("falls back safely for missing, invalid or unavailable browser storage", () => {
+    for (const value of [null, "unknown"]) {
+      vi.stubGlobal("localStorage", { getItem: () => value });
+      expect(readPortalThemePreference()).toBe("black");
+      expect(readPortalContrast()).toBe("none");
+    }
+    vi.stubGlobal("localStorage", { getItem: () => { throw new Error("Storage unavailable"); } });
+    expect(readPortalThemePreference()).toBe("black");
+    expect(readPortalContrast()).toBe("none");
+  });
+
+  it("the admin console theme is opt-in only, is saved, and paints dark", () => {
+    expect(resolvePortalTheme("console", true)).toBe("console");
+    expect(resolvePortalTheme("console", false)).toBe("console");
+    expect(resolvePortalTheme("system", false)).not.toBe("console");
+    vi.stubGlobal("localStorage", { getItem: () => "console" });
+    expect(readPortalThemePreference()).toBe("console");
+    expect(isDarkPortalTheme("console")).toBe(true);
+    expect(isDarkPortalTheme("black")).toBe(true);
+    expect(isDarkPortalTheme("light")).toBe(false);
   });
 });
