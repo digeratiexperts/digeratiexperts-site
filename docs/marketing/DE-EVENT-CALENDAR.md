@@ -34,8 +34,8 @@
 
 | Month | Campaign pages in play | Live sessions |
 |---|---|---|
-| October 2026 | [Cyber insurance readiness](https://digeratiexperts.com/go/cyber-insurance) | Thu, Oct 29: Before Your Cyber Insurance Renewal: The Controls Underwriters Ask About *(planned)* |
-| November 2026 | [Email security](https://digeratiexperts.com/go/email-security) | Thu, Nov 19: Holiday Invoice Fraud: How Payment-Change Emails Get Past Busy Teams *(planned)* |
+| October 2026 | [Cyber insurance readiness](https://digeratiexperts.com/go/cyber-insurance) | — |
+| November 2026 | [Cyber insurance readiness](https://digeratiexperts.com/go/cyber-insurance), [Email security](https://digeratiexperts.com/go/email-security) | Thu, Nov 5: Before Your Cyber Insurance Renewal: The Controls Underwriters Ask About *(planned)*<br>Thu, Nov 19: Holiday Invoice Fraud: How Payment-Change Emails Get Past Busy Teams *(planned)* |
 | December 2026 | [ProActive Business](https://digeratiexperts.com/go/proactive-business) | — |
 | January 2027 | [Ransomware readiness](https://digeratiexperts.com/go/ransomware-readiness) | Thu, Jan 21: Can You Actually Restore? A Ransomware Readiness Working Session *(planned)* |
 | February 2027 | [Co-Managed IT](https://digeratiexperts.com/go/co-managed-it) | Thu, Feb 18: Co-Managed IT: Backup for the Internal IT Team, Not a Replacement *(planned)* |
@@ -52,33 +52,37 @@
 
 ## October 2026
 
-- **Thu, Oct 1** · Internal · Prep T-28d: Before Your Cyber Insurance Renewal — _overdue at build_  
-  First invite: client and prospect newsletters, LinkedIn, call list
-- **Thu, Oct 1 → Sat, Oct 31** · Prospects + clients · Cybersecurity Awareness Month · campaign: [Cyber insurance readiness](/go/cyber-insurance)  
+- **Thu, Oct 1** · Internal · Prep T-35d: Before Your Cyber Insurance Renewal — _overdue at build_  
+  Confirm topic, presenter and platform; flip the session to confirmed; page live
+- **Thu, Oct 1 → Sat, Oct 31** · Prospects + clients · Cybersecurity Awareness Month · campaign: [Cyber insurance readiness](https://digeratiexperts.com/go/cyber-insurance)  
   October, every year (CISA / National Cybersecurity Alliance). Weekly tips to clients; insurance-readiness push to prospects. Start from: WorkDrive: Cybersecurity Awareness Month 2021/2022 assets (vendor content — rewrite before reuse)
 - **Mon, Oct 5 → Fri, Oct 23** · Clients · QBR season (Q4 business reviews)  
   Book every managed client's review; prep the pack two weeks ahead (tickets, risk, restore-test evidence, roadmap). Start from: Portal /portal/qbr; WorkDrive: QBR Campaign E-mails, QBR Campaign Blueprint, S9 QBR Agenda Template
-- **Thu, Oct 15** · Internal · Prep T-14d: Before Your Cyber Insurance Renewal  
-  Second invite; dry run at the lunch & learn
+- **Thu, Oct 8** · Internal · Prep T-28d: Before Your Cyber Insurance Renewal — _overdue at build_  
+  First invite: client and prospect newsletters, LinkedIn, call list
 - **Thu, Oct 15** · Internal · Prep T-35d: Holiday Invoice Fraud  
   Confirm topic, presenter and platform; flip the session to confirmed; page live
-- **Thu, Oct 22** · Internal · Prep T-7d: Before Your Cyber Insurance Renewal  
-  Reminder to registrants; final slides
+- **Thu, Oct 22** · Internal · Prep T-14d: Before Your Cyber Insurance Renewal  
+  Second invite; dry run at the lunch & learn
 - **Thu, Oct 22** · Internal · Prep T-28d: Holiday Invoice Fraud  
   First invite: client and prospect newsletters, LinkedIn, call list
-- **Wed, Oct 28** · Internal · Prep T-1d: Before Your Cyber Insurance Renewal  
-  Day-before reminder with the join link
-- **Thu, Oct 29, 11:00 AM** · Prospects + clients · Before Your Cyber Insurance Renewal: The Controls Underwriters Ask About — _planned_ · campaign: [Cyber insurance readiness](/go/cyber-insurance)  
-  Live webinar, 60 min. Page: /events/cyber-insurance-renewal-readiness
+- **Thu, Oct 29** · Internal · Prep T-7d: Before Your Cyber Insurance Renewal  
+  Reminder to registrants; final slides
+- **Thu, Oct 29** · Internal · Prep milestone: 5 Nov insurance session ready · campaign: [Cyber insurance readiness](https://digeratiexperts.com/go/cyber-insurance)  
+  Joe, 2026-10-15: the session runs 5 Nov and 29 Oct is the preparation milestone. By today: presenter and platform confirmed, slides drafted and dry-run, invites approved. The page and invites go public only once the session is confirmed. Start from: docs/marketing/sessions/cyber-insurance-renewal-readiness.md
 
 ## November 2026
 
-- **Mon, Nov 2** · Internal · Prep T+2d: Before Your Cyber Insurance Renewal  
-  Follow-up: recording, slides, assessment offer; log attendance in CRM
 - **Mon, Nov 2** · Clients · Annual client satisfaction survey sent  
   Portal satisfaction survey; results feed the January planning kickoff. Start from: Portal satisfaction survey (PortalSatisfactionSurvey)
+- **Wed, Nov 4** · Internal · Prep T-1d: Before Your Cyber Insurance Renewal  
+  Day-before reminder with the join link
 - **Thu, Nov 5** · Internal · Prep T-14d: Holiday Invoice Fraud  
   Second invite; dry run at the lunch & learn
+- **Thu, Nov 5, 11:00 AM** · Prospects + clients · Before Your Cyber Insurance Renewal: The Controls Underwriters Ask About — _planned_ · campaign: [Cyber insurance readiness](https://digeratiexperts.com/go/cyber-insurance)  
+  Live webinar, 60 min. Page: /events/cyber-insurance-renewal-readiness
+- **Mon, Nov 9** · Internal · Prep T+2d: Before Your Cyber Insurance Renewal  
+  Follow-up: recording, slides, assessment offer; log attendance in CRM
 - **Mon, Nov 9 → Fri, Nov 13** · Clients · Annual license and renewal audit  
   Every client's licenses, warranties and domain renewals expiring in the next 12 months, ready for year-end budget talks.
 - **Thu, Nov 12** · Internal · Prep T-7d: Holiday Invoice Fraud  
@@ -87,18 +91,18 @@
   Handwritten, no offer inside.
 - **Wed, Nov 18** · Internal · Prep T-1d: Holiday Invoice Fraud  
   Day-before reminder with the join link
-- **Thu, Nov 19, 11:00 AM** · Prospects + clients · Holiday Invoice Fraud: How Payment-Change Emails Get Past Busy Teams — _planned_ · campaign: [Email security](/go/email-security)  
+- **Thu, Nov 19, 11:00 AM** · Prospects + clients · Holiday Invoice Fraud: How Payment-Change Emails Get Past Busy Teams — _planned_ · campaign: [Email security](https://digeratiexperts.com/go/email-security)  
   Live webinar, 45 min. Page: /events/holiday-invoice-fraud-and-phishing
 - **Mon, Nov 23** · Internal · Prep T+2d: Holiday Invoice Fraud  
   Follow-up: recording, slides, assessment offer; log attendance in CRM
-- **Tue, Nov 24** · Clients · Holiday shopping-scam advisory to clients · campaign: [Email security](/go/email-security)  
+- **Tue, Nov 24** · Clients · Holiday shopping-scam advisory to clients · campaign: [Email security](https://digeratiexperts.com/go/email-security)  
   Before Black Friday / Cyber Monday: delivery-notice and gift-card scams.
 
 ## December 2026
 
 - **Tue, Dec 1** · Clients · Holiday support schedule sent to clients  
   Coverage and escalation for the holidays.
-- **Tue, Dec 1 → Fri, Dec 18** · Clients · Year-end budget and 2027 roadmap conversations · campaign: [ProActive Business](/go/proactive-business)  
+- **Tue, Dec 1 → Fri, Dec 18** · Clients · Year-end budget and 2027 roadmap conversations · campaign: [ProActive Business](https://digeratiexperts.com/go/proactive-business)  
   Use the license audit and QBR roadmaps; the prospect equivalent is the ProActive Business offer.
 - **Mon, Dec 7 → Fri, Dec 18** · Internal · Annual performance reviews  
   One-to-ones; training goals set for the year.
@@ -128,7 +132,7 @@
   Day-before reminder with the join link
 - **Thu, Jan 21** · Internal · Prep T-28d: Co-Managed IT  
   First invite: client and prospect newsletters, LinkedIn, call list
-- **Thu, Jan 21, 11:00 AM** · Prospects + clients · Can You Actually Restore? A Ransomware Readiness Working Session — _planned_ · campaign: [Ransomware readiness](/go/ransomware-readiness)  
+- **Thu, Jan 21, 11:00 AM** · Prospects + clients · Can You Actually Restore? A Ransomware Readiness Working Session — _planned_ · campaign: [Ransomware readiness](https://digeratiexperts.com/go/ransomware-readiness)  
   Live working session, 60 min. Page: /events/ransomware-restore-readiness-2027
 - **Mon, Jan 25** · Internal · Prep T+2d: Can You Actually Restore? A Ransomware Readiness Working Session  
   Follow-up: recording, slides, assessment offer; log attendance in CRM
@@ -145,7 +149,7 @@
   Reminder to registrants; final slides
 - **Wed, Feb 17** · Internal · Prep T-1d: Co-Managed IT  
   Day-before reminder with the join link
-- **Thu, Feb 18, 11:00 AM** · Prospects · Co-Managed IT: Backup for the Internal IT Team, Not a Replacement — _planned_ · campaign: [Co-Managed IT](/go/co-managed-it)  
+- **Thu, Feb 18, 11:00 AM** · Prospects · Co-Managed IT: Backup for the Internal IT Team, Not a Replacement — _planned_ · campaign: [Co-Managed IT](https://digeratiexperts.com/go/co-managed-it)  
   Live webinar, 45 min. Page: /events/co-managed-it-for-internal-teams
 - **Mon, Feb 22** · Internal · Prep T+2d: Co-Managed IT  
   Follow-up: recording, slides, assessment offer; log attendance in CRM
@@ -162,34 +166,34 @@
   Reminder to registrants; final slides
 - **Tue, Mar 30** · Internal · Prep T-1d: World Backup Day  
   Day-before reminder with the join link
-- **Wed, Mar 31** · Prospects + clients · World Backup Day · campaign: [Ransomware readiness](/go/ransomware-readiness)  
+- **Wed, Mar 31** · Prospects + clients · World Backup Day · campaign: [Ransomware readiness](https://digeratiexperts.com/go/ransomware-readiness)  
   March 31 every year; the live restore drill session runs that day.
-- **Wed, Mar 31, 11:00 AM** · Prospects + clients · World Backup Day: A Live Restore Drill — _planned_ · campaign: [Ransomware readiness](/go/ransomware-readiness)  
+- **Wed, Mar 31, 11:00 AM** · Prospects + clients · World Backup Day: A Live Restore Drill — _planned_ · campaign: [Ransomware readiness](https://digeratiexperts.com/go/ransomware-readiness)  
   Live working session, 45 min. Page: /events/world-backup-day-restore-drill
 
 ## April 2027
 
-- **Thu, Apr 1** · Prospects + clients · Tax-season fraud advisory (IRS and payroll impersonation) · campaign: [Email security](/go/email-security)  
+- **Thu, Apr 1** · Prospects + clients · Tax-season fraud advisory (IRS and payroll impersonation) · campaign: [Email security](https://digeratiexperts.com/go/email-security)  
   Before the April 15 deadline: W-2 requests, direct-deposit changes, fake IRS notices.
 - **Fri, Apr 2** · Internal · Prep T+2d: World Backup Day  
   Follow-up: recording, slides, assessment offer; log attendance in CRM
 - **Mon, Apr 5 → Fri, Apr 23** · Clients · QBR season (Q2 business reviews)  
   Book every managed client's review; prep the pack two weeks ahead (tickets, risk, restore-test evidence, roadmap). Start from: Portal /portal/qbr; WorkDrive: QBR Campaign E-mails, QBR Campaign Blueprint, S9 QBR Agenda Template
-- **Thu, Apr 22, 11:00 AM** · Prospects · Webinar: HIPAA security risk analysis for Arizona practices — _proposed_ · campaign: [Healthcare IT](/go/healthcare-it)  
+- **Thu, Apr 22, 11:00 AM** · Prospects · Webinar: HIPAA security risk analysis for Arizona practices — _proposed_ · campaign: [Healthcare IT](https://digeratiexperts.com/go/healthcare-it)  
   Topic proposal; add to deEvents.ts once confirmed.
 
 ## May 2027
 
-- **Mon, May 3 → Fri, May 7** · Prospects · National Small Business Week — _confirm dates_ · campaign: [Cyber Risk Assessment](/go/cyber-risk-assessment)  
+- **Mon, May 3 → Fri, May 7** · Prospects · National Small Business Week — _confirm dates_ · campaign: [Cyber Risk Assessment](https://digeratiexperts.com/go/cyber-risk-assessment)  
   SBA sets the dates each year (usually late April or early May); confirm. Assessment push to owners.
 - **Mon, May 3 → Fri, May 28** · Clients · Mid-year client referral push  
   A newsletter feature and a QBR-follow-up ask.
-- **Thu, May 20, 11:00 AM** · Prospects · Webinar: What a Cyber Risk Assessment actually looks at — _proposed_ · campaign: [Cyber Risk Assessment](/go/cyber-risk-assessment)  
+- **Thu, May 20, 11:00 AM** · Prospects · Webinar: What a Cyber Risk Assessment actually looks at — _proposed_ · campaign: [Cyber Risk Assessment](https://digeratiexperts.com/go/cyber-risk-assessment)  
   Topic proposal; ties to National Small Business Week follow-up.
 
 ## June 2027
 
-- **Thu, Jun 24, 11:00 AM** · Prospects · Webinar: Managed IT without the mystery — what ProActive covers — _proposed_ · campaign: [Managed IT](/go/managed-it)  
+- **Thu, Jun 24, 11:00 AM** · Prospects · Webinar: Managed IT without the mystery — what ProActive covers — _proposed_ · campaign: [Managed IT](https://digeratiexperts.com/go/managed-it)  
   Topic proposal.
 - **Mon, Jun 28, 9:00 AM** · Internal · Mid-year review  
   Goals against plan; reset H2 campaigns.
@@ -201,23 +205,23 @@
 
 ## August 2027
 
-- **Thu, Aug 26, 11:00 AM** · Prospects · Webinar: MFA everywhere — closing the logins attackers try first — _proposed_ · campaign: [Cyber Risk Assessment](/go/cyber-risk-assessment)  
+- **Thu, Aug 26, 11:00 AM** · Prospects · Webinar: MFA everywhere — closing the logins attackers try first — _proposed_ · campaign: [Cyber Risk Assessment](https://digeratiexperts.com/go/cyber-risk-assessment)  
   Topic proposal; back-to-school timing for password and MFA refreshes.
 
 ## September 2027
 
-- **Wed, Sep 1 → Thu, Sep 30** · Prospects + clients · National Preparedness Month · campaign: [Ransomware readiness](/go/ransomware-readiness)  
+- **Wed, Sep 1 → Thu, Sep 30** · Prospects + clients · National Preparedness Month · campaign: [Ransomware readiness](https://digeratiexperts.com/go/ransomware-readiness)  
   September every year (FEMA / Ready.gov). Business-continuity and backup messaging.
-- **Thu, Sep 23, 11:00 AM** · Prospects + clients · Webinar: Q4 cyber insurance renewal readiness — _proposed_ · campaign: [Cyber insurance readiness](/go/cyber-insurance)  
+- **Thu, Sep 23, 11:00 AM** · Prospects + clients · Webinar: Q4 cyber insurance renewal readiness — _proposed_ · campaign: [Cyber insurance readiness](https://digeratiexperts.com/go/cyber-insurance)  
   Repeat of the October 2026 session, updated with what renewals asked this year.
 
 ## October 2027
 
-- **Fri, Oct 1 → Sun, Oct 31** · Prospects + clients · Cybersecurity Awareness Month · campaign: [Cyber insurance readiness](/go/cyber-insurance)  
+- **Fri, Oct 1 → Sun, Oct 31** · Prospects + clients · Cybersecurity Awareness Month · campaign: [Cyber insurance readiness](https://digeratiexperts.com/go/cyber-insurance)  
   October, every year.
 - **Mon, Oct 11 → Fri, Oct 29** · Clients · QBR season (Q4 business reviews)  
   Book every managed client's review; prep the pack two weeks ahead (tickets, risk, restore-test evidence, roadmap). Start from: Portal /portal/qbr; WorkDrive: QBR Campaign E-mails, QBR Campaign Blueprint, S9 QBR Agenda Template
-- **Thu, Oct 28, 11:00 AM** · Prospects + clients · Webinar: Halloween cyber horror stories — _proposed_ · campaign: [Email security](/go/email-security)  
+- **Thu, Oct 28, 11:00 AM** · Prospects + clients · Webinar: Halloween cyber horror stories — _proposed_ · campaign: [Email security](https://digeratiexperts.com/go/email-security)  
   Reuse the 2023 Halloween campaign kit (email invites, call script, postcard). Start from: WorkDrive: Halloween Cybersecurity Webinar campaign kit (2023)
 
 ## November 2027
@@ -225,10 +229,10 @@
 - **Mon, Nov 1** · Clients · Annual client satisfaction survey sent
 - **Mon, Nov 8 → Fri, Nov 12** · Clients · Annual license and renewal audit
 - **Mon, Nov 15** · Clients · Client appreciation: Thanksgiving thank-you cards mailed
-- **Thu, Nov 18, 11:00 AM** · Prospects + clients · Webinar: Holiday invoice fraud, 2027 edition — _proposed_ · campaign: [Email security](/go/email-security)
+- **Thu, Nov 18, 11:00 AM** · Prospects + clients · Webinar: Holiday invoice fraud, 2027 edition — _proposed_ · campaign: [Email security](https://digeratiexperts.com/go/email-security)
 
 ## December 2027
 
-- **Wed, Dec 1 → Fri, Dec 17** · Clients · Year-end budget and 2028 roadmap conversations · campaign: [ProActive Business](/go/proactive-business)
+- **Wed, Dec 1 → Fri, Dec 17** · Clients · Year-end budget and 2028 roadmap conversations · campaign: [ProActive Business](https://digeratiexperts.com/go/proactive-business)
 - **Mon, Dec 6 → Fri, Dec 17** · Internal · Annual performance reviews
 - **Thu, Dec 16, 5:30 PM** · Internal · Year-end team celebration

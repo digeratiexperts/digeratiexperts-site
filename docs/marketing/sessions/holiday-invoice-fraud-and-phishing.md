@@ -4,7 +4,7 @@
 Page: https://digeratiexperts.com/events/holiday-invoice-fraud-and-phishing · Campaign: https://digeratiexperts.com/go/email-security
 Session data: `client/src/data/deEvents.ts` (slug `holiday-invoice-fraud-and-phishing`) · Calendar: `docs/marketing/DE-EVENT-CALENDAR.md`
 
-> **Status: PLANNED.** Nothing below goes out until Joe confirms step 0. Every draft is copy for review, not sent mail.
+> **Status: PLANNED.** Joe, 15 Oct 2026: prepare campaign assets but do not publish unconfirmed event details. The page answers 404 and nothing below is sent until the session is confirmed (step 0). Every draft is copy for review, not sent mail.
 > Rules applied: no statistics, no client names, no "we stop all phishing" promise, no real fraud email from a client shown on screen (`docs/CLAIMS-REGISTER.md`). Bracketed `[…]` items are filled at send time.
 
 ## 0. Decide first (Joe)
@@ -12,8 +12,8 @@ Session data: `client/src/data/deEvents.ts` (slug `holiday-invoice-fraud-and-phi
 | Item | Needed by | Notes |
 |---|---|---|
 | Presenter | Thu 22 Oct (T-28) | Normal track: this session is on schedule |
-| Meeting platform and join link | Thu 22 Oct | Same platform as 29 Oct if that one runs |
-| Go | Thu 22 Oct | On "go": `status: "confirmed"` in `deEvents.ts`, then `npx tsx scripts/de-events/build.ts` |
+| Meeting platform and join link | Thu 22 Oct | Same platform as the 5 Nov session |
+| Confirm | Thu 22 Oct | To publish: `status: "confirmed"` in `client/src/data/deEvents.ts` plus `/events/holiday-invoice-fraud-and-phishing` in `server/spaKnownPaths.ts` (tests fail if one is missing), then `npx tsx scripts/de-events/build.ts`, merge, verify live |
 
 ## 1. Promotion track (normal, five weeks)
 
@@ -21,8 +21,7 @@ Session data: `client/src/data/deEvents.ts` (slug `holiday-invoice-fraud-and-phi
 |---|---|---|
 | Thu 22 Oct | Confirm presenter and platform; mark confirmed | Joe |
 | Thu 22 Oct | Email B to prospects; LinkedIn post 1 | Marketing |
-| Thu 29 Oct | Mention at the end of the 29 Oct insurance session (same audience) | Presenter |
-| Thu 5 Nov | Email A in the client newsletter (first Thursday); Email B resend to non-openers; LinkedIn post 2 | Marketing |
+| Thu 5 Nov | Mention at the end of the 5 Nov insurance session (same audience); Email A in the client newsletter (first Thursday); Email B resend to non-openers; LinkedIn post 2 | Marketing |
 | Mon 9 Nov | Call list: clients' accounts-payable and office managers | Account management |
 | Thu 12 Nov | Email C reminder to registrants | Marketing |
 | Fri 13 Nov | Dry run (internal, 30 min) | Presenter |

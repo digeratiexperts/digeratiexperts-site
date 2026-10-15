@@ -1,13 +1,14 @@
 /**
  * The sessions' contract: each one feeds a real campaign page, sits on the
- * Phoenix offset, and a planned session is never offered to search engines.
+ * Phoenix offset, and a session that is not confirmed is never published.
  */
 import { describe, it, expect } from "vitest";
 import { CAMPAIGNS } from "./campaigns";
 import {
   DE_EVENT_SESSIONS,
   countdownTo,
-  isIndexable,
+  isPublic,
+  publicSessionBySlug,
   sessionBySlug,
   sessionEnd,
   upcomingSessions,
@@ -37,19 +38,32 @@ describe("DE event sessions", () => {
     }
   });
 
-  it("keeps planned sessions out of search", () => {
+  it("does not publish a session that is not confirmed", () => {
+    // Joe, 2026-10-15: prepare campaign assets but do not publish unconfirmed
+    // event details.
     for (const s of DE_EVENT_SESSIONS) {
-      if (s.status === "planned") expect(isIndexable(s)).toBe(false);
+      if (s.status === "planned" || s.status === "cancelled") {
+        expect(isPublic(s), s.slug).toBe(false);
+        expect(publicSessionBySlug(s.slug), s.slug).toBeUndefined();
+      }
     }
+    const listed = upcomingSessions(new Date("2026-01-01T00:00:00Z"));
+    expect(listed.every(isPublic)).toBe(true);
   });
 
-  it("lists upcoming sessions soonest first and drops finished ones", () => {
-    const first = DE_EVENT_SESSIONS[0];
-    const afterFirst = new Date(sessionEnd(first).getTime() + 1);
-    const list = upcomingSessions(afterFirst);
-    expect(list.find((s) => s.slug === first.slug)).toBeUndefined();
-    const starts = list.map((s) => Date.parse(s.start));
-    expect([...starts].sort((a, b) => a - b)).toEqual(starts);
+  it("lists confirmed upcoming sessions soonest first and drops finished ones", () => {
+    const all = DE_EVENT_SESSIONS.map((s) => ({ ...s, status: "confirmed" as const }));
+    const original = DE_EVENT_SESSIONS.splice(0, DE_EVENT_SESSIONS.length, ...all);
+    try {
+      const first = [...all].sort((a, b) => Date.parse(a.start) - Date.parse(b.start))[0];
+      const list = upcomingSessions(new Date(sessionEnd(first).getTime() + 1));
+      expect(list.find((s) => s.slug === first.slug)).toBeUndefined();
+      expect(list.length).toBe(all.length - 1);
+      const starts = list.map((s) => Date.parse(s.start));
+      expect([...starts].sort((a, b) => a - b)).toEqual(starts);
+    } finally {
+      DE_EVENT_SESSIONS.splice(0, DE_EVENT_SESSIONS.length, ...original);
+    }
   });
 
   it("counts down in days, hours, minutes and seconds", () => {

@@ -157,13 +157,10 @@ const EXACT = new Set([
   "/resources/checklists/security-readiness-checklist",
   "/resources/checklists/backup-bcdr-checklist",
   // Live sessions (client/src/data/deEvents.ts). Exact paths for the same
-  // reason as /go: an unknown session slug answers 404.
+  // reason as /go. Only CONFIRMED sessions are listed: a planned session is
+  // not published (Joe, 2026-10-15), so its path answers 404. Add the path
+  // here in the same change that sets the session to "confirmed".
   "/events",
-  "/events/cyber-insurance-renewal-readiness",
-  "/events/holiday-invoice-fraud-and-phishing",
-  "/events/ransomware-restore-readiness-2027",
-  "/events/co-managed-it-for-internal-teams",
-  "/events/world-backup-day-restore-drill",
 ]);
 
 const PREFIXES = [

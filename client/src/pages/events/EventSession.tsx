@@ -29,8 +29,7 @@ import { CAMPAIGNS } from "@/data/campaigns";
 import {
   DE_EVENT_TIME_ZONE,
   countdownTo,
-  isIndexable,
-  sessionBySlug,
+  publicSessionBySlug,
   sessionEnd,
   sessionStart,
   type DeEventSession,
@@ -230,13 +229,14 @@ function RegistrationForm({ session }: { session: DeEventSession }) {
 
 export default function EventSession() {
   const [, params] = useRoute("/events/:slug");
-  const session = params ? sessionBySlug(params.slug) : undefined;
+  // Planned sessions are not public (Joe, 2026-10-15): they resolve to Not Found.
+  const session = params ? publicSessionBySlug(params.slug) : undefined;
 
   useSEO({
     title: session ? `${session.title} | Live Session` : "Session not found",
     description: session?.summary ?? "",
     canonical: session ? `/events/${session.slug}` : undefined,
-    noIndex: !session || !isIndexable(session),
+    noIndex: !session,
   });
 
   const [timeZone, setTimeZone] = useState<string>(DE_EVENT_TIME_ZONE);

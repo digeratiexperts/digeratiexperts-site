@@ -43,11 +43,12 @@ claims:
       - client/src/pages/events/EventSession.tsx (new)
       - client/src/App.tsx (the two /events route registrations only)
       - server/spaKnownPaths.ts (the /events entries only)
+      - server/spaKnownPaths.test.ts (the /events cases only)
       - scripts/de-events/program.ts (new)
       - scripts/de-events/build.ts (new)
       - docs/marketing/sessions/ (per-session promotion kits)
       - docs/marketing/ (generated calendar .md, .ics, .html)
-    status: verified-live
+    status: active
     started: 2026-10-10
     released: 2026-10-15
     pr: 564
@@ -72,6 +73,9 @@ claims:
       2026-10-15; verified live 00:34 UTC on release f70c755 (/events and the
       session page 200, unknown slug 404, noindex, renders at 390/768/1440). Follow-up on the same branch:
       per-session promotion kits in docs/marketing/sessions/.
+      Joe 2026-10-15: insurance session moved to 5 Nov, 29 Oct is the prep
+      milestone; unconfirmed sessions are no longer published (page 404,
+      not listed on /events) until confirmed (PR 598).
   - id: t2-ops-hardening
     owner: claude
     subsystem: ci-and-ops

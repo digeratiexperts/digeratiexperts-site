@@ -273,7 +273,7 @@ function md(): string {
       const span = it.days && it.days > 1 ? ` → ${dayLabel(addDays(it.date, it.days - 1))}` : "";
       out.push(
         `- **${dayLabel(it.date)}${span}${it.time ? `, ${to12h(it.time)}` : ""}** · ${AUD[it.audience]} · ${it.title}${it.flag ? ` — _${it.flag}_` : ""}${
-          it.campaign ? ` · campaign: [${campaignName(it.campaign)}](/go/${it.campaign})` : ""
+          it.campaign ? ` · campaign: [${campaignName(it.campaign)}](${SITE}/go/${it.campaign})` : ""
         }${it.note ? `  \n  ${it.note}` : ""}`,
       );
     }

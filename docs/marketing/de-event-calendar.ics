@@ -191,8 +191,8 @@ END:VEVENT
 BEGIN:VEVENT
 UID:session-cyber-insurance-renewal-readiness@digeratiexperts.com
 DTSTAMP:20261010T000000Z
-DTSTART;TZID=America/Phoenix:20261029T110000
-DTEND;TZID=America/Phoenix:20261029T120000
+DTSTART;TZID=America/Phoenix:20261105T110000
+DTEND;TZID=America/Phoenix:20261105T120000
 SUMMARY:[prospects-and-clients] Live webinar: Before Your Cyber Insurance R
  enewal: The Controls Underwriters Ask About
 DESCRIPTION:Walk the questionnaire before it walks you: MFA\, EDR\, email a
@@ -204,8 +204,8 @@ END:VEVENT
 BEGIN:VEVENT
 UID:prep-cyber-insurance-renewal-readiness--35@digeratiexperts.com
 DTSTAMP:20261010T000000Z
-DTSTART;VALUE=DATE:20260924
-DTEND;VALUE=DATE:20260925
+DTSTART;VALUE=DATE:20261001
+DTEND;VALUE=DATE:20261002
 SUMMARY:[prep T-35d] Before Your Cyber Insurance Renewal
 DESCRIPTION:Confirm topic\, presenter and platform\; flip the session to co
  nfirmed\; page live
@@ -214,8 +214,8 @@ END:VEVENT
 BEGIN:VEVENT
 UID:prep-cyber-insurance-renewal-readiness--28@digeratiexperts.com
 DTSTAMP:20261010T000000Z
-DTSTART;VALUE=DATE:20261001
-DTEND;VALUE=DATE:20261002
+DTSTART;VALUE=DATE:20261008
+DTEND;VALUE=DATE:20261009
 SUMMARY:[prep T-28d] Before Your Cyber Insurance Renewal
 DESCRIPTION:First invite: client and prospect newsletters\, LinkedIn\, call
   list
@@ -224,8 +224,8 @@ END:VEVENT
 BEGIN:VEVENT
 UID:prep-cyber-insurance-renewal-readiness--14@digeratiexperts.com
 DTSTAMP:20261010T000000Z
-DTSTART;VALUE=DATE:20261015
-DTEND;VALUE=DATE:20261016
+DTSTART;VALUE=DATE:20261022
+DTEND;VALUE=DATE:20261023
 SUMMARY:[prep T-14d] Before Your Cyber Insurance Renewal
 DESCRIPTION:Second invite\; dry run at the lunch & learn
 CATEGORIES:prep
@@ -233,8 +233,8 @@ END:VEVENT
 BEGIN:VEVENT
 UID:prep-cyber-insurance-renewal-readiness--7@digeratiexperts.com
 DTSTAMP:20261010T000000Z
-DTSTART;VALUE=DATE:20261022
-DTEND;VALUE=DATE:20261023
+DTSTART;VALUE=DATE:20261029
+DTEND;VALUE=DATE:20261030
 SUMMARY:[prep T-7d] Before Your Cyber Insurance Renewal
 DESCRIPTION:Reminder to registrants\; final slides
 CATEGORIES:prep
@@ -242,8 +242,8 @@ END:VEVENT
 BEGIN:VEVENT
 UID:prep-cyber-insurance-renewal-readiness--1@digeratiexperts.com
 DTSTAMP:20261010T000000Z
-DTSTART;VALUE=DATE:20261028
-DTEND;VALUE=DATE:20261029
+DTSTART;VALUE=DATE:20261104
+DTEND;VALUE=DATE:20261105
 SUMMARY:[prep T-1d] Before Your Cyber Insurance Renewal
 DESCRIPTION:Day-before reminder with the join link
 CATEGORIES:prep
@@ -251,8 +251,8 @@ END:VEVENT
 BEGIN:VEVENT
 UID:prep-cyber-insurance-renewal-readiness-2@digeratiexperts.com
 DTSTAMP:20261010T000000Z
-DTSTART;VALUE=DATE:20261102
-DTEND;VALUE=DATE:20261103
+DTSTART;VALUE=DATE:20261109
+DTEND;VALUE=DATE:20261110
 SUMMARY:[prep T+2d] Before Your Cyber Insurance Renewal
 DESCRIPTION:Follow-up: recording\, slides\, assessment offer\; log attendan
  ce in CRM
@@ -568,6 +568,20 @@ DESCRIPTION:Book every managed client's review\; prep the pack two weeks ah
  nagement\nStart from: Portal /portal/qbr\; WorkDrive: QBR Campaign E-mails
  \, QBR Campaign Blueprint\, S9 QBR Agenda Template
 CATEGORIES:clients
+END:VEVENT
+BEGIN:VEVENT
+UID:dated-prep-milestone-2026-10-29@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;VALUE=DATE:20261029
+DTEND;VALUE=DATE:20261030
+SUMMARY:[internal] Prep milestone: 5 Nov insurance session ready
+DESCRIPTION:Joe\, 2026-10-15: the session runs 5 Nov and 29 Oct is the prep
+ aration milestone. By today: presenter and platform confirmed\, slides dra
+ fted and dry-run\, invites approved. The page and invites go public only o
+ nce the session is confirmed.\nCampaign: /go/cyber-insurance\nOwner: Marke
+ ting\nStart from: docs/marketing/sessions/cyber-insurance-renewal-readines
+ s.md
+CATEGORIES:internal
 END:VEVENT
 BEGIN:VEVENT
 UID:dated-client-survey-2026@digeratiexperts.com
