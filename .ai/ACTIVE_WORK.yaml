@@ -3877,7 +3877,9 @@ claims:
       - .cursor/mcp.json (dataforseo server, pinned)
       - .env.example (DATAFORSEO_LOGIN / DATAFORSEO_PASSWORD names only)
       - docs/CONTENT-TOOLING-PLAN.md (statuses, Step 3, IP-whitelist decision)
-    status: implemented
+    status: verified-live
+    released: 2026-10-15
+    pr: 601
     started: 2026-10-15
     note: >-
       Joe, 2026-10-15: DataForSEO account verified and keys set in the Claude
@@ -3892,7 +3894,9 @@ claims:
     files:
       - server/healthProbe.ts (databaseAcceptsConnections retries the connection when there is no pool)
       - server/healthProbe.test.ts
-    status: implemented
+    status: verified-live
+    released: 2026-10-15
+    pr: 603
     started: 2026-10-15
     note: >-
       Production incident 2026-10-15 00:38 UTC: deploy verification and its
