@@ -3882,3 +3882,19 @@ claims:
       Joe, 2026-10-15: DataForSEO account verified and keys set in the Claude
       environment; "do what is best" on IP whitelisting (decision: none, with
       prepaid-balance guardrails). Config and docs only; no runtime code.
+
+  - id: healthz-db-reconnect
+    owner: claude
+    subsystem: production-runtime
+    branch: claude/gifted-cray-mfxf3k
+    base_sha: ef9a63c2
+    files:
+      - server/healthProbe.ts (databaseAcceptsConnections retries the connection when there is no pool)
+      - server/healthProbe.test.ts
+    status: implemented
+    started: 2026-10-15
+    note: >-
+      Production incident 2026-10-15 00:38 UTC: deploy verification and its
+      rollback both failed (/healthz 503). /healthz never retried the database
+      after a failed boot connect, so one stall at restart kept it red. Joe:
+      "check again, try to fix it."
