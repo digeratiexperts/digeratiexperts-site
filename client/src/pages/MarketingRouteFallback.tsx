@@ -1,9 +1,13 @@
+import { lazy, Suspense } from "react";
 import { Redirect, Route, Switch } from "wouter";
 import CampaignIndex from "@/pages/campaigns/CampaignIndex";
 import CampaignLanding from "@/pages/campaigns/CampaignLanding";
 import ResourceAssetPage from "@/pages/resources/ResourceAssetPage";
 import ExecutiveBriefPage, { ExecutiveBriefIndex } from "@/pages/resources/ExecutiveBriefPage";
 import "@/styles/executive-brief-print.css";
+
+// Lazy so its page stylesheet stays out of the entry CSS (at its budget).
+const AiBackgroundCheck = lazy(() => import("@/pages/campaigns/AiBackgroundCheck"));
 
 /**
  * Late-bound routes for the marketing/resource work ported from stale PR #59.
@@ -22,6 +26,11 @@ export function MarketingRouteFallback() {
       <Route path="/resources/checklists/:slug" component={ResourceAssetPage} />
       <Route path="/resources/briefs/:slug" component={ExecutiveBriefPage} />
       <Route path="/resources/briefs" component={ExecutiveBriefIndex} />
+      <Route path="/go/ai-background-check">
+        <Suspense fallback={<div className="min-h-screen bg-de-bg" />}>
+          <AiBackgroundCheck />
+        </Suspense>
+      </Route>
       <Route path="/go/:slug" component={CampaignLanding} />
       <Route path="/go" component={CampaignIndex} />
       <Route path="/lp/:slug">{(params) => <Redirect to={`/go/${params.slug}`} />}</Route>
