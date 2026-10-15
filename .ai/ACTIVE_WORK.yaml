@@ -3575,7 +3575,7 @@ claims:
     owner: claude
     subsystem: licensing
     branch: claude/exciting-cannon-ttx8m8
-    base_sha: 9ba5e21
+    base_sha: 2f361a8
     files:
       - shared/starterKits.ts (new), shared/jumpcloudPlan.ts (new) and their tests
       - migrations/0018_license_jumpcloud_links.sql (new)
@@ -3587,8 +3587,11 @@ claims:
     status: active
     started: 2026-10-10
     note: >-
-      PR 574 verified live 2026-10-14 (deploy of 55b0492 applied migration
-      0018). Follow-up on the same branch, Joe 2026-10-14 ("it should look
+      PR 595 (company page console) merged 2026-10-14. Now, Joe "merge,
+      then do the first page too": pool page with an Add from catalog
+      command and side panel (catalog as rows, not a 34-card wall), summary
+      chips, calmer company rows. PR 574 verified live 2026-10-14 (deploy of
+      55b0492 applied migration 0018). Earlier follow-up on the same branch, Joe 2026-10-14 ("it should look
       like azure or entra or cytracom"): company page as a console with
       breadcrumb, status chips and tabs (Patch bay, Starter kit, JumpCloud
       installs); fixes the squashed Device name box on phones.

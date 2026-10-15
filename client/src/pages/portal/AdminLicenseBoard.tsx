@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { AppWindow, Building2, ChevronRight, Cpu, KeyRound, Minus, Monitor, Package, Plus, Search, Trash2, Users, X } from "lucide-react";
+import { AppWindow, Building2, ChevronRight, Cpu, KeyRound, Minus, Monitor, Plus, Search, Trash2, Users, X } from "lucide-react";
 import { PortalLayout } from "./PortalLayout";
 import { Callout } from "@/components/portal/ui";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -18,6 +18,7 @@ import { licenseBoardApi, type Board, type CompanyBoard } from "@/lib/licenseBoa
 import { PartsBin } from "@/components/portal/licensing/PartsBin";
 import { JumpCloudTab, StarterKitTab, jumpcloudKey, jumpcloudState, useJumpCloud } from "@/components/portal/licensing/CompanyTools";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { EVERY_MACHINE_ID, deviceTargetId } from "@shared/licenseBoard";
 
 /**
@@ -73,7 +74,7 @@ function PoolItemCard({ item, onChanged }: { item: Board["items"][number]; onCha
       <div className="flex items-center gap-2 sm:gap-3">
         <span className="hidden h-10 w-1 shrink-0 rounded-full sm:block" style={{ background: PATCH_TONES[tone], boxShadow: `0 0 10px ${PATCH_TONES[tone]}` }} aria-hidden />
         <div className="min-w-0 flex-1">
-          <p className="font-[Oxanium] text-[11px] uppercase tracking-[0.16em] text-white/50">{item.vendor}</p>
+          <p className="text-xs text-white/50">{item.vendor}</p>
           <p className="line-clamp-2 hyphens-auto text-sm font-semibold leading-snug text-white" title={item.product}>
             {item.product}
           </p>
@@ -165,13 +166,12 @@ function CompanyCard({
   const fail = useErrorToast();
   const byId = new Map(board.items.map((i) => [i.id, i]));
   return (
-    <PatchCard id={`client:${company.id}`} className="p-3 pl-4">
+    <PatchCard id={`client:${company.id}`} className="px-3 py-2.5">
       <PatchTarget id={`client:${company.id}`} name={company.name} />
       <button type="button" onClick={onOpen} className="group flex w-full items-center gap-2 text-left">
         <Building2 className="hidden h-4 w-4 shrink-0 text-white/40 sm:block" aria-hidden />
         <span className="line-clamp-2 min-w-0 flex-1 break-words text-sm font-semibold leading-snug text-white group-hover:text-[#F04C97]">{company.name}</span>
-        <span className="hidden shrink-0 text-xs text-white/40 group-hover:text-white/70 sm:inline">Open ›</span>
-        <span className="shrink-0 text-white/40 sm:hidden" aria-hidden>›</span>
+        <ChevronRight className="h-4 w-4 shrink-0 text-white/40 group-hover:text-white" aria-hidden />
       </button>
       {company.seats.length ? (
         <ul className="mt-2 flex flex-wrap gap-1.5">
@@ -213,7 +213,7 @@ function CompanyCard({
           })}
         </ul>
       ) : (
-        <p className="mt-1 text-xs text-white/40">No seats yet</p>
+        <p className="mt-0.5 text-xs text-white/40">Nothing patched yet</p>
       )}
     </PatchCard>
   );
@@ -224,7 +224,7 @@ function PoolLevel({ board, onOpenCompany }: { board: Board; onOpenCompany: (id:
   const { toast } = useToast();
   const fail = useErrorToast();
   const [filter, setFilter] = useState("");
-  const [binOpen, setBinOpen] = useState(board.items.length === 0);
+  const [binOpen, setBinOpen] = useState(false);
   const licences = board.items.filter((i) => i.kind !== "app");
   const apps = board.items.filter((i) => i.kind === "app");
   const refresh = () => void qc.invalidateQueries({ queryKey: BOARD_KEY });
@@ -273,71 +273,98 @@ function PoolLevel({ board, onOpenCompany }: { board: Board; onOpenCompany: (id:
     [],
   );
 
+  const seatsHeld = licences.reduce((n, i) => n + i.quantity, 0);
+  const seatsFree = licences.reduce((n, i) => n + i.free, 0);
+  const toOrder = licences.reduce((n, i) => n + i.toOrder, 0);
+  const chip = "inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-2.5 py-1 text-xs text-white/70";
+
   return (
-    <PatchBay cables={cables} canPatch={canPatch} onPatch={onPatch} layoutKey={`${filter}:${binOpen}:${board.items.length}`}>
-      {binOpen ? (
-        <PartsBin board={board} onAdded={refresh} onClose={() => setBinOpen(false)} />
-      ) : (
+    <div>
+      <div className="flex flex-wrap items-center gap-2 border-b border-white/10 pb-3">
         <button
           type="button"
           onClick={() => setBinOpen(true)}
-          className="mb-5 inline-flex min-h-11 items-center gap-2 rounded-xl border border-[#F04C97]/40 bg-[#D3126A]/10 px-4 text-sm font-semibold text-white shadow-[0_0_18px_rgba(211,18,106,0.25)] hover:bg-[#D3126A]/20"
+          className="inline-flex min-h-9 items-center gap-1.5 rounded-md bg-[#D3126A] px-3 text-sm font-semibold text-white hover:bg-[#A30E52]"
         >
-          <Package className="h-4 w-4 text-[#F04C97]" aria-hidden /> Open the parts bin
-          <span className="hidden text-xs font-normal text-white/55 sm:inline">licences, vendor SKUs, apps, agents</span>
+          <Plus className="h-4 w-4" aria-hidden /> Add from catalog
         </button>
-      )}
-      <div className="grid grid-cols-[minmax(0,1fr)_40px_minmax(0,1fr)] sm:grid-cols-[minmax(0,1fr)_96px_minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_200px_minmax(0,1fr)]">
-        <section aria-label="DE licence pool">
-          <ColumnHeading icon={Cpu} title="DE pool" hint="What DE holds. Pull a cable from a jack." />
-          {board.items.length === 0 ? (
-            <p className="rounded-xl border border-dashed border-white/15 p-3 text-sm text-white/55">
-              The pool is empty. Add licences and apps from the parts bin.
-            </p>
-          ) : null}
-          {licences.length ? (
-            <div className="space-y-2.5">
-              <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-white/40">
-                <KeyRound className="h-3 w-3" aria-hidden /> Licences
-              </p>
-              {licences.map((item) => (
-                <PoolItemCard key={item.id} item={item} onChanged={refresh} />
-              ))}
-            </div>
-          ) : null}
-          {apps.length ? (
-            <div className="mt-5 space-y-2.5">
-              <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-white/40">
-                <AppWindow className="h-3 w-3" aria-hidden /> Apps
-              </p>
-              {apps.map((item) => (
-                <PoolItemCard key={item.id} item={item} onChanged={refresh} />
-              ))}
-            </div>
-          ) : null}
-        </section>
-        <div aria-hidden />
-        <section aria-label="Client companies">
-          <ColumnHeading icon={Building2} title="Companies" hint="Drop a cable on a company. Open one to patch its people." />
-          <label className="relative mb-2.5 block">
-            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/35" aria-hidden />
-            <input
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-              placeholder="Find a company"
-              aria-label="Find a company"
-              className="h-10 w-full rounded-md border border-white/15 bg-black/30 pl-8 pr-3 text-sm text-white placeholder:text-white/35"
-            />
-          </label>
-          <div className="space-y-2.5">
-            {companies.map((c) => (
-              <CompanyCard key={c.id} company={c} board={board} onOpen={() => onOpenCompany(c.id)} onChanged={refresh} />
-            ))}
-            {companies.length === 0 ? <p className="text-sm text-white/50">No company matches.</p> : null}
-          </div>
-        </section>
+        <span className="hidden text-sm text-white/45 sm:inline">Licences, vendor SKUs, apps and agents</span>
       </div>
-    </PatchBay>
+      <div className="mt-3 flex flex-wrap gap-2">
+        <span className={chip}>
+          <KeyRound className="h-3.5 w-3.5" aria-hidden /> {licences.length} licences · {seatsHeld} seats · {seatsFree} free
+        </span>
+        <span className={chip}>
+          <AppWindow className="h-3.5 w-3.5" aria-hidden /> {apps.length} apps
+        </span>
+        <span className={chip}>
+          <Building2 className="h-3.5 w-3.5" aria-hidden /> {board.clients.length} companies
+        </span>
+        {toOrder ? <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-xs text-amber-200">{toOrder} seats to order</span> : null}
+      </div>
+
+      <Sheet open={binOpen} onOpenChange={setBinOpen}>
+        <SheetContent side="right" className="w-full overflow-y-auto border-white/10 bg-[#0a0714] text-white sm:max-w-2xl">
+          <SheetHeader className="mb-4 text-left">
+            <SheetTitle className="text-white">Add from catalog</SheetTitle>
+            <SheetDescription className="text-white/55">Adds to DE's pool. Patch it onto companies from there.</SheetDescription>
+          </SheetHeader>
+          <PartsBin board={board} onAdded={refresh} />
+        </SheetContent>
+      </Sheet>
+
+      <PatchBay cables={cables} canPatch={canPatch} onPatch={onPatch} layoutKey={`${filter}:${board.items.length}`}>
+        <div className="mt-5 grid grid-cols-[minmax(0,1fr)_40px_minmax(0,1fr)] sm:grid-cols-[minmax(0,1fr)_96px_minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_200px_minmax(0,1fr)]">
+          <section aria-label="DE licence pool">
+            <ColumnHeading icon={Cpu} title="DE pool" hint="What DE holds. Drag from a jack onto a company." />
+            {board.items.length === 0 ? (
+              <div className="rounded-md border border-dashed border-white/15 p-4 text-sm text-white/60">
+                <p>DE's pool is empty.</p>
+                <button type="button" onClick={() => setBinOpen(true)} className="mt-2 font-semibold text-[#F04C97] hover:underline">
+                  Add from catalog
+                </button>
+              </div>
+            ) : null}
+            {licences.length ? (
+              <div className="space-y-2">
+                <p className="text-xs font-semibold text-white/50">Licences</p>
+                {licences.map((item) => (
+                  <PoolItemCard key={item.id} item={item} onChanged={refresh} />
+                ))}
+              </div>
+            ) : null}
+            {apps.length ? (
+              <div className="mt-5 space-y-2">
+                <p className="text-xs font-semibold text-white/50">Apps</p>
+                {apps.map((item) => (
+                  <PoolItemCard key={item.id} item={item} onChanged={refresh} />
+                ))}
+              </div>
+            ) : null}
+          </section>
+          <div aria-hidden />
+          <section aria-label="Client companies">
+            <ColumnHeading icon={Building2} title="Companies" hint="Drop a cable on a company. Click a name to open it." />
+            <label className="relative mb-2 block">
+              <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/35" aria-hidden />
+              <input
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
+                placeholder="Find a company"
+                aria-label="Find a company"
+                className="h-10 w-full rounded-md border border-white/15 bg-black/30 pl-8 pr-3 text-sm text-white placeholder:text-white/35"
+              />
+            </label>
+            <div className="space-y-2">
+              {companies.map((c) => (
+                <CompanyCard key={c.id} company={c} board={board} onOpen={() => onOpenCompany(c.id)} onChanged={refresh} />
+              ))}
+              {companies.length === 0 ? <p className="text-sm text-white/50">No company matches.</p> : null}
+            </div>
+          </section>
+        </div>
+      </PatchBay>
+    </div>
   );
 }
 
@@ -494,7 +521,7 @@ function CompanyLevel({ clientId, onBack }: { clientId: string; onBack: () => vo
             <PatchCard key={p.itemId} id={`item:${p.itemId}`} className="p-3 pr-2">
               <div className="flex items-center gap-3">
                 <div className="min-w-0 flex-1">
-                  <p className="font-[Oxanium] text-[11px] uppercase tracking-[0.16em] text-white/50">{p.vendor}</p>
+                  <p className="text-xs text-white/50">{p.vendor}</p>
                   <p className="line-clamp-2 hyphens-auto text-sm font-semibold leading-snug text-white" title={p.product}>
                     {p.product}
                   </p>
