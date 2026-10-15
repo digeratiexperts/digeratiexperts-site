@@ -4,7 +4,7 @@
 
 **What it is:** a third, opt-in theme in the portal user menu (Appearance → **Admin console**). Black (PR 578) stays the default, Dark, Light and "Match device" are unchanged, and "Match device" never picks the console theme. The change is portal-scoped CSS tokens plus one menu option. No layout, route, API or data change.
 
-| Layer | Graphite dark (default, unchanged) | Admin console |
+| Layer | Graphite dark (before PR 578 made Black the default) | Admin console |
 |---|---|---|
 | Page | `#050312` | `#1f1f1f` neutral |
 | Rail | `#0b0915` | `#141414`, one step below the page |
@@ -30,4 +30,4 @@ Category colours on card tops stay as they are. Inside the console theme the bra
 
 Already like this before the change, not touched here: at 390px the admin-only "Administer a client…" picker is cut off at the right edge in every theme.
 
-Joe confirms these screenshots before merge.
+Merged in PR 592 (ed318bf3) and live; carried onto PR 578 (b2211eb2), also live.

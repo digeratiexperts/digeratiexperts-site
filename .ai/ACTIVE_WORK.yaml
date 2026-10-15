@@ -135,23 +135,34 @@ claims:
     branch: claude/youthful-babbage-va5j5a
     base_sha: 5da3faf
     files:
-      - client/src/styles/portal.css (new console theme block only; dark and light untouched)
+      - client/src/styles/portal.css (console theme block; reconciled onto PR 578's structure)
       - client/src/styles/portalConsoleTheme.test.ts (new)
-      - client/src/components/portal/shell/portalTheme.ts
-      - client/src/components/portal/shell/portalTheme.test.ts
-      - client/src/components/portal/shell/PortalUserMenu.tsx (one Appearance option)
-      - client/src/pages/portal/PortalLayout.tsx (dark class for the console theme only)
+      - client/src/components/portal/shell/portalTheme.ts, portalTheme.test.ts, PortalUserMenu.tsx
+      - client/src/components/portal/shell/PortalAppearanceSettings.tsx (console swatch, via PR 578)
+      - client/src/pages/portal/PortalLayout.tsx (dark class for the console theme)
       - artifacts/visual-qa/portal-console-theme/** (new)
-    status: active
+    status: verified-live
     started: 2026-10-14
+    merge_sha: ed318bf3d920894a68c592f5d2d28591823abf1e
+    verification: >-
+      Merged as ed318bf3 (PR 592) on Joe's "merge mine first" after CI passed
+      on 81313a2. CI run 38647792472 deployed it ("Deploy and verify
+      production VPS" succeeded) and production release.txt read ed318bf3.
+      Joe then had PR 578 brought onto it: Claude merged PR 592 into
+      chatgpt/portal-black-theme-20261011 (583f9f2, the console theme carried
+      onto 578's html-scoped tokens, contrast modes and Settings swatches),
+      re-captured the console screenshots (a4c2164) and merged main
+      (d82d37b), a fast-forward push; PR 578 merged as b2211eb2. Re-checked
+      2026-10-15: production release f70c755a contains both, and the served
+      portalTheme-ClPflDc0.css carries the console rules (data-theme=console)
+      beside black and the contrast modes. Not checked: a signed-in view of
+      the live portal; the screenshots are from the local dev server.
     note: >-
       Joe, 2026-10-14: "a dark theme that is like entra and IT dashboards ...
       build it then for the Client portal". Opt-in "Admin console" theme in
-      the portal user menu: neutral greys, one blue accent, 6px/4px corners,
-      system UI face, left-bar selected nav. Graphite dark stays the default;
-      Match device never picks it. Open PRs could not be checked from this
-      session (GitHub unauthorized); the mirror showed no active claim on
-      these files. Joe confirms the screenshots before merge.
+      the portal user menu and Settings: neutral greys, one blue accent,
+      6px/4px corners, system UI face, left-bar selected nav. Never the
+      default (Black is, per PR 578); Match device never picks it.
   - id: quote-match-include-it
     issue: 417
     owner: cursor
