@@ -75,30 +75,16 @@ Close the active GitHub issue/claim only when the state above is explicit and no
 
 ## Current open PRs and owners (snapshot)
 
-**Refreshed:** 2026-10-14 from GitHub, `origin/main` at `4505f0c` (merge of #570). This table is a
+**Refreshed:** 2026-10-15 from GitHub, `origin/main` at `09c4e7f`. This table is a
 snapshot for orientation; the live PR list is still the lock. Each PR is owned by the session or
 person that opened it (a Claude Code PR has its session link at the bottom of its body). Do not
-push to, rebase, close or merge it.
+push to, rebase, close or merge it; the lead integrator's exception, on Joe's instruction, is in
+`AGENTS.md` ("Who owns what right now").
 
 | PR | Draft | Branch | What it changes | Owner |
 | --- | --- | --- | --- | --- |
-| #587 | yes | `claude/t7-outstanding` | T7 follow-ups: portal SLA response times, city-only NAP, header CTA, cookie Preferences link | T7 |
-| #586 | yes | `claude/lucid-dijkstra-s3v2s3` | Every page gets its own plate; assessment bar off plates | Claude Code session |
-| #580 | yes | `chatgpt/tech-tool-storage-20261011` | DE Tech Tool native storage, Windows installer, operations appearance | ChatGPT / Codex |
-| #578 | no | `chatgpt/portal-black-theme-20261011` | Pure black Client Portal theme, saved contrast settings | ChatGPT / Codex |
-| #576 | no | `docs/store-cart-and-agent-coordination` | Docs: upgrade cart direction, multi-agent coordination, retire PR 567 | its author (see PR) |
-| #575 | yes | `concept/ai-background-check` | Concept: AI Background Check page (3 Exploration concepts) | its author (see PR) |
-| #574 | yes | `claude/exciting-cannon-ttx8m8` | Licensing: JumpCloud installs and starter kits on the License Patch Bay | Claude Code session |
-| #572 | yes | `claude/kie-approval-rule` | Docs (kie.ai): consult DE before generating | Claude Code session |
-| #571 | no | `claude/awesome-bardeen-4pbl2m` | Ask DE greeting fix; desk-oauth-client verified live | Claude Code session (also opened #555, now closed) |
-| #565 | no | `claude/loving-edison-epagrb` | Homepage story backgrounds: Versions 9 and 10, mockups | Claude Code session |
-| #564 | yes | `claude/inspiring-franklin-1o69vr` | Events: live-session pages, event and campaign calendar | Claude Code session |
-| #560 | yes | `claude/t2-ops-hardening` | CI minutes, canonical-host probes, portal headers, secrets/cache docs (touches `.github/workflows/*`) | T2 |
-| #559 | yes | `claude/t2-npm-audit` | Clear critical npm advisories | T2 |
-| #557 | yes | `claude/t10-agent-governance-docs` | Agent docs + secret diff check (this table) | T10 |
-| #553 | yes | `claude/dreamy-einstein-mbqa0w` | Client Portal agreement gate, first-login tour, Cytracom profile | Claude Code session |
-| #550 | yes | `claude/nifty-newton-uk9g7t` | Ledger only: store-counts-phone verified live | Claude Code session |
-| #542 | yes | `claude/store-pdfs-de-system` | Hide `.scroll-progress` in print | Claude Code session |
+| #593 | yes | `claude/org-representation-portal` | Portal: Hub-defined representatives, My Groups and group requests (needs DE approval and Hub PR 425 live) | Website design overhaul thread (Joe, 2026-10-15) |
+| #575 | yes | `concept/ai-background-check` | Concept: AI Background Check page (3 Exploration concepts; concept B shipped in #609) | Website design overhaul thread (Joe, 2026-10-15) |
 
 Cross-repo pending decisions and secrets: Intelligence Hub
 [`docs/OPEN-ITEMS-FOR-DE.md`](https://github.com/digeratiexperts/Intelligence-Hub/blob/master/docs/OPEN-ITEMS-FOR-DE.md).
