@@ -45,14 +45,120 @@ claims:
       - scripts/de-documents (policy family + three portal agreement PDFs)
       - docs/vendors/cytracom/agreements/ (new)
       - client/src/data/vendorOfferings.ts (new), client/src/pages/store/WarehouseVendors.tsx (vendor profiles section)
+      - client/src/styles/portal.css (gate and tour .pt-* helpers only)
+      - scripts/check-bundle-budget.mjs (cssRawBytes only)
     status: active
+    pr: 553
     started: 2026-10-09
     note: >-
       Joe, 2026-10-09: /agreement-gate onboarding mode with welcome videos (company
       and user), Portal Terms / Rules of Engagement (company), Acceptable Use and
       Portal Guide (each user), and a first-login guided tour. Enforcement ships
       off (PORTAL_AGREEMENT_GATE=enforce turns it on) until Joe approves the
-      AI-drafted legal text.
+      AI-drafted legal text. 2026-10-15 (Joe: "raise the CSS budget and finish #553"): signing
+      is closed per agreement until approvedForSigning is filled in for that
+      version (server refuses with 409; nobody is held); the gate follows every
+      portal theme; the tour auto-starts only after the person signs; the three
+      routes log errors and return a plain 500; CSS budget 300k to 315k.
+  - id: de-events-calendar
+    owner: claude
+    subsystem: marketing-events
+    branch: claude/inspiring-franklin-1o69vr
+    base_sha: 067d2b2
+    files:
+      - client/src/data/deEvents.ts (new)
+      - client/src/data/deEvents.test.ts (new)
+      - client/src/lib/ics.ts (new)
+      - client/src/pages/events/EventsIndex.tsx (new)
+      - client/src/pages/events/EventSession.tsx (new)
+      - client/src/App.tsx (the two /events route registrations only)
+      - server/spaKnownPaths.ts (the /events entries only)
+      - scripts/de-events/program.ts (new)
+      - scripts/de-events/build.ts (new)
+      - docs/marketing/ (generated calendar .md, .ics, .html)
+    status: verified-live
+    started: 2026-10-10
+    released: 2026-10-15
+    pr: 564
+    merge_sha: f70c755a50e20719b2e2ef017583a02e514b1f43
+    verification: >-
+      Merged as f70c755a by the lead integrator on Joe's "triage and merge the
+      other open PRs" / "yes approved", after merging main into the branch (ledger
+      union only) and green CI on 84ad7380 (bundle budget included; 299.79/300 kB
+      measured locally). Production release.txt reads f70c755a. Read-only check on
+      https://digeratiexperts.com: /events and
+      /events/cyber-insurance-renewal-readiness answer 200 at 390 px with no page
+      errors or sideways scroll, say "planned", carry robots noindex, nofollow,
+      and sitemap.xml lists no /events/ URL. The interest form was not submitted.
+      VERIFIED LIVE. Files released.
+    note: >-
+      Public live-session pages (/events, /events/:slug) with countdown, time-zone
+      switch, .ics download and a registration form posting to /api/contact. All
+      sessions are planned (noindex, out of sitemap) until Joe confirms date,
+      presenter and platform. The internal operating calendar (prospects, clients,
+      internal; weekly to annual) is generated into docs/marketing/ and never
+      bundled into the site. Copies go to WorkDrive 4. Event & Strategic Planning.
+  - id: t2-ops-hardening
+    owner: claude
+    subsystem: ci-and-ops
+    branch: claude/t2-ops-hardening
+    base_sha: 7b1b4197
+    files:
+      - .github/workflows/ci.yml (check-test-build: checkout depth, change classifier, step guards only)
+      - .github/workflows/production-health.yml (new canonical-host probe step only)
+      - .github/workflows/portal-prod-check.yml (default base URL only)
+      - scripts/qa/portal-prod-check.mjs (default base URL only)
+      - docs/runbooks/PORTAL-QA-LOGIN.md (portal host URLs only)
+      - server/middleware/security.ts (setSecurityHeaders: X-XSS-Protection, /api/portal no-store)
+      - server/middleware/securityHeaders.test.ts (new)
+      - docs/SECRETS-REQUIRED.md (new)
+      - docs/proposals/downloads-cache.md (new)
+      - docs/proposals/portal-security-headers.md (new)
+    status: verified-live
+    started: 2026-10-10
+    released: 2026-10-15
+    pr: 560
+    merge_sha: 9521f1139dd07526f3e9fc39635151ed23378d67
+    verification: >-
+      Merged as 9521f113 by the lead integrator on Joe's "triage and merge the
+      other open PRs" after a line-by-line review and green CI on 201f906f;
+      shipped in release f70c755a (release.txt). Live checks: anonymous GET
+      /api/health returns only status, timestamp, uptime and services {database,
+      zohoDesk, zoho} with Cache-Control no-store and database connected (what
+      production-health.yml reads); GET / sends X-XSS-Protection: 0. The
+      canonical-host probe and the docs-only CI path run in Actions, not on the
+      site. VERIFIED LIVE. Files released.
+    note: >-
+      Thread T2 of the DE backlog (tasks 13-20), taken over from Cursor. 13, 14
+      and 16 were already on main and are skipped with evidence in the PR. Does
+      not touch server/zoho/* (thread T1). Draft PR only; Joe merges.
+  - id: t2-npm-audit
+    owner: claude
+    subsystem: dependencies
+    branch: claude/t2-npm-audit
+    base_sha: 7b1b4197
+    files:
+      - package.json (overrides block only)
+      - package-lock.json
+    status: verified-live
+    started: 2026-10-10
+    released: 2026-10-15
+    pr: 559
+    merge_sha: 64c8035153a91b24004ef9990c26ab1b83343f31
+    verification: >-
+      Merged as 64c80351 by the lead integrator on Joe's "triage and merge the
+      other open PRs" after review (four scoped overrides; main's package files
+      unchanged since the PR base) and green CI on 51422980. Combined-set npm
+      audit --omit=dev: 0 vulnerabilities. Shipped in release f70c755a: the
+      production deploy ran npm ci and the build with sharp 0.35 and went live
+      (release.txt f70c755a), so the VPS Node satisfies sharp. VERIFIED LIVE.
+      Files released.
+    note: >-
+      Backlog task 11: npm audit fix plus four scoped overrides (uuid under
+      gaxios and teeny-request, tinypool under vitest, sharp under
+      vite-imagetools). Removes both criticals; the rest need major upgrades
+      and are listed for DE in the PR. Claimed here because the audit PR does
+      not edit this file.
   - id: portal-console-theme
     owner: claude
     subsystem: client-portal
@@ -3249,15 +3355,16 @@ claims:
     owner: claude
     subsystem: store-door2
     branch: claude/nifty-newton-uk9g7t
-    pr: 545
+    pr: 545, 547
     base_sha: 5fe8cbf7
     files:
       - client/src/styles/store-builder.css (container-type on the count card, one @container rule for .d2-dial only)
       - client/src/components/store/door2/door2Tokens.test.ts (three tests appended)
       - artifacts/visual-qa/store-counts-phone/**
-    status: active
+    status: verified-live
     started: 2026-10-08
-    merge_sha: c4a0c248629e837a05ad593dc30cbedc00d10f14
+    released: 2026-10-08
+    merge_sha: c4a0c248629e837a05ad593dc30cbedc00d10f14 (PR 545), 020e4a31e7d64edd26ca0cabd00f270f5fa10e3f (PR 547)
     verification: >-
       PR 545 merged on Joe's "Merge" (2026-10-08) with main unchanged since
       the branch (5fe8cbf7) and green CI. The main CI and the deploy job passed;
@@ -3287,7 +3394,19 @@ claims:
       artifacts/visual-qa/store-counts-phone/spacing/. Out of scope and older
       than PR 545: the Match users chip wraps at 320, the count placeholders are
       1.52:1, and the Ask DE nudge can cover the Sites steps on landscape phones.
-      PR 547, not merged.
+      PR 547 merged on Joe's "Merge if it's safe to do so" (2026-10-08) after
+      merging main 33cf7e07 in (ledger only) and green CI on that head. Main CI
+      and the deploy job passed; release.txt and /api/health read 020e4a31 on
+      digeratiexperts.com and portal.digeratiexperts.com. /store serves
+      StorePageAtmosphere-o1x8RMr2.css, byte-identical to the local build, with
+      the 29cqi cap, the 44px tap row and the 1rem under the dial. Live at 320,
+      390, 414, 768, 1024, 1068, 1280 and 1440 with 25, 1000 and 999999: no cut,
+      steps never over the number, steppers step, tab order number then - then
+      +, axe clean, no overflow, no runtime errors; a 300-1920px sweep with
+      999999 finds no cut in either axis (it cut at 300-355px before the merge),
+      and stacked steps sit 14-17px under the digits with 16px below (24-33px
+      and 4px before). PR 547 VERIFIED LIVE. Evidence:
+      artifacts/visual-qa/store-counts-phone/live-547/. Files released.
     note: >-
       Visual status board 2026-10-08 (Joe: "Yes" to starting with the Store
       phone fix): on /store at 390 and 414 the "Your counts" cards are two-up
@@ -3486,7 +3605,7 @@ claims:
     owner: claude
     subsystem: licensing
     branch: claude/exciting-cannon-ttx8m8
-    base_sha: 660a4db
+    base_sha: 2f361a8
     files:
       - shared/starterKits.ts (new), shared/jumpcloudPlan.ts (new) and their tests
       - migrations/0018_license_jumpcloud_links.sql (new)
@@ -3495,9 +3614,18 @@ claims:
       - server/routes.ts (registerLicenseBoardRoutes deps only)
       - client/src/pages/portal/AdminLicenseBoard.tsx, client/src/components/portal/licensing/* , client/src/lib/licenseBoardApi.ts
       - artifacts/visual-qa/license-patch-bay/**
-    status: active
+    status: verified-live
     started: 2026-10-10
     note: >-
+      Verified live 2026-10-15: PRs 574, 595 and 597 are all in production
+      (release.txt ef9a63c, /healthz 200, License Patch Bay loads). PR 595 (company page console) merged 2026-10-14. Then, Joe "merge,
+      then do the first page too": pool page with an Add from catalog
+      command and side panel (catalog as rows, not a 34-card wall), summary
+      chips, calmer company rows. PR 574 verified live 2026-10-14 (deploy of
+      55b0492 applied migration 0018). Earlier follow-up on the same branch, Joe 2026-10-14 ("it should look
+      like azure or entra or cytracom"): company page as a console with
+      breadcrumb, status chips and tabs (Patch bay, Starter kit, JumpCloud
+      installs); fixes the squashed Device name box on phones.
       Joe, 2026-10-08/10 ("continue everything"): JumpCloud / Chocolatey
       installs from the License Patch Bay and starter kits by business type
       (regular, regulated, GCC High). PR 540 (desk-chat-archive-swipe,
@@ -3574,6 +3702,64 @@ claims:
       homepage-story-concepts-2026-10-10 $0.24, homepage-scene-story-2026-10-10
       $0.12). Overlap check 2026-10-10: open PRs 542, 550, 553, 554, 557, 559,
       560, 562, 563 and 564 touch none of these files.
+  - id: portal-black-theme
+    owner: chatgpt
+    subsystem: client-portal
+    branch: chatgpt/portal-black-theme-20261011
+    base_sha: 72cdd50e
+    files:
+      - client/src/components/portal/shell/portalTheme.ts, portalTheme.test.ts, PortalAppearanceSettings.tsx, PortalUserMenu.tsx
+      - client/src/pages/portal/PortalLayout.tsx, PortalSettings.tsx, PortalLogin.tsx, PortalSignup.tsx, PortalForgotPassword.tsx, PortalResetPassword.tsx
+      - client/src/styles/portal.css, portalConsoleTheme.test.ts, portalLightTheme.test.ts
+      - scripts/qa/portal-theme-browser.mjs
+      - artifacts/visual-qa/portal-black-theme/** (live/ added by Claude with this record)
+    status: verified-live
+    started: 2026-10-11
+    merge_sha: b2211eb2250005a3aacfe454cec76c3d60ec24da
+    verification: >-
+      Merged as b2211eb2 (PR 578) on Joe's "continue yes 578" after CI passed
+      on d82d37b. Before merging, Claude merged it onto main 9ba5e218 locally:
+      no file overlap with main, tsc clean, portal theme and stylesheet tests
+      17/17, vite build OK, bundle budget passed (entry CSS 299.82 of 300 kB,
+      so almost no stylesheet headroom is left). Production release.txt reads
+      b2211eb2. Read-only check of https://digeratiexperts.com/portal/login at
+      390 and 1440: a new viewer gets data-theme black, contrast none, body
+      #000000; a saved "light" choice paints light (#f5f5f9); a saved
+      "console" theme with "boost" contrast paints console with boost; no
+      horizontal overflow, no page errors
+      (artifacts/visual-qa/portal-black-theme/live/). Signed-in Settings and
+      the portalled menus were not exercised (no portal QA sign-in in this
+      sandbox). VERIFIED LIVE (sign-in pages).
+    note: >-
+      Tracks issue 577. Pure black Client Portal theme beside Dark, Light and
+      Match device, with Standard / Boost / Maximum contrast saved per viewer;
+      PR 592's opt-in Admin console theme was merged into this branch first
+      (Joe). The PR left the registry untouched because concurrent governance
+      PRs edited it; this record is added by Claude after release.
+  - id: payments-readiness-warm
+    owner: claude
+    subsystem: payments
+    branch: claude/awesome-bardeen-4pbl2m
+    base_sha: 9ba5e218
+    files:
+      - server/paymentReadiness.ts (refresh() and the keep-warm timer only)
+      - server/paymentReadiness.test.ts (one describe block appended)
+      - server/index.ts (the keep-warm start in the listen callback only)
+    status: active
+    started: 2026-10-14
+    note: >-
+      Joe, 2026-10-14, on the status page: "fix the not configured and advisory
+      or ask". The Advisory: /api/health read zohoPaymentsCheckout "unknown"
+      after every restart and "not_ready" ten minutes after the last checkout,
+      while card checkout worked (/api/payments/availability ran a probe and
+      read cardCheckout true, 2026-10-14 23:37Z). Only a checkout or an
+      availability call ever re-probed. Fix: the server re-probes every 9
+      minutes (inside the 10-minute OK TTL), first 60 s after boot so the Zoho
+      Connect snapshot is loaded; the probe is answered by the cached access
+      token, so at most one token refresh an hour. Unconfigured and review
+      instances never probe. Overlap check 2026-10-14: no active claim lists
+      these files; open PR 560 changes the /api/health handler in
+      server/index.ts, not the listen callback.
   - id: store-greeting-plain
     owner: claude
     subsystem: de-desk
@@ -3620,7 +3806,7 @@ claims:
       - client/src/components/evidence/EvidenceFrame.tsx (badge, status, subtitle, source sizes and ink only; 8 users)
       - client/src/components/EcosystemProgression.tsx (text sizes and ink only; also on the pricing section)
       - artifacts/visual-qa/proactive-readability/** (new)
-    status: active
+    status: merged
     started: 2026-10-10
     note: >-
       Joe, 2026-10-10, on /solutions/proactive-ecosystem: all the text "more in
@@ -3631,3 +3817,115 @@ claims:
       page can turn on. Overlap check 2026-10-10: open PR 566 adds an unrelated
       rule to index.css; no other open PR touches these files.
 
+  - id: site-findings-2026-10-14
+    owner: claude
+    subsystem: marketing-site
+    branch: claude/sleepy-archimedes-mccoav
+    base_sha: 4505f0c0
+    files:
+      - client/src/pages/versions/v8/sections/01-hero.tsx (PhoneHeroMeta positioning line only)
+      - client/src/pages/versions/v8/sections/07-client-proof.tsx, 07-client-proof.css (empty review feed and its claim)
+      - client/src/pages/versions/v8/sections/16-contact-footer.tsx, 16-contact-footer.css (phone and email)
+      - client/src/pages/sections/DigeratiEnhancedFooterSection.tsx, footerContact.test.ts (phone and email)
+      - client/src/pages/solutions/SolutionRequest.tsx, door2Leakage.test.ts (Turnstile on the contact step)
+      - client/src/components/TurnstileWidget.tsx (exported turnstileActive flag; onError when the script fails to load)
+      - client/src/components/store/door2/OfflinePanel.tsx ("check" kind: the bot check could not load)
+      - server/publicSolutionRoutes.ts, publicSolutionRoutes.test.ts (verifyTurnstile on POST /api/public/solutions/request)
+      - client/src/data/teamProfile.ts, teamProfile.test.ts (owner title only)
+      - client/src/components/PageTemplate.tsx (heroAsideOnMobile prop, passed to PageHero asideOnMobile)
+      - client/src/pages/about/Team.tsx (heroAsideOnMobile on, so phones show the founder card)
+      - docs/contact-details-audit.md, docs/STORE-EXPERIENCE-SOURCE-OF-TRUTH.md (notes for the above)
+    status: verified-live
+    started: 2026-10-14
+    released: 2026-10-14
+    pr: 591
+    merge_sha: 14d71c4d5372613a6f95f26596fc809fd7bab429
+    verification: >-
+      Merged as 14d71c4d on Joe's "Approved, continue." after green CI on
+      0818b4d. Production release.txt and /api/health release.commit read
+      14d71c4d (built 23:05:40Z). Read-only check against
+      https://digeratiexperts.com (no submissions): phone hero at 320 and 390
+      shows no dot at the start of any row and no sideways scroll; the homepage
+      at 320, 390 and 1440 has no "backed by real client reviews" claim and no
+      review build note, keeps the "Worked with us?" card, and its footer links
+      tel:+13254809870 and mailto:info@digeratiexperts.com; /about/team at 390
+      and 1440 shows Joseph Petro, Chief Technology Strategist (the card is now
+      visible on phones); /solutions/request at 390 renders the check group and
+      widget, and with Cloudflare blocked shows "The security check couldn't
+      load." with retry and email, and "Try the check again" keeps focus on the
+      check. No page errors. A real Turnstile pass was not exercised (this
+      sandbox cannot reach challenges.cloudflare.com); Joe to confirm on a
+      device. VERIFIED LIVE. Files released.
+    note: >-
+      Joe, 2026-10-14: "work on fixing all outstanding items even my items for
+      me. then merge or push this", then "Approved, continue." Fixes the four
+      findings from the 2026-10-13 read-only live check, each reproduced by two
+      independent checkers: stray dot at the start of the wrapped phone-hero
+      positioning line; the V8 Client Proof card showing an internal build note
+      while the intro claimed reviews from Google, Yelp and Thumbtack; no phone or
+      email in the footer; no Turnstile on /solutions/request. Plus the Team page
+      owner title, taken from the title the live homepage already publishes
+      ("Chief Technology Strategist"); no certifications added (no issuer
+      evidence found). Overlap check 2026-10-14: t7-copy-overlays-pdfs and
+      t7-contact-audit-team-config still read active but their branches are fully
+      merged (PRs 558 and 561); no open PR touches these files.
+  - id: site-unique-plates
+    owner: claude
+    subsystem: public-marketing-visual-layer
+    branch: claude/lucid-dijkstra-s3v2s3
+    base_sha: 0285ef6d
+    files:
+      - client/src/components/site/PlateBand.tsx (twelve more plates; plateForServiceKey routes each service to its own)
+      - client/src/assets/flagship/** (twelve new resized plates)
+      - client/src/pages/industries/{Healthcare,RealEstate,Accounting,Nonprofits,AnimalHospitals}.tsx (one plate attribute each)
+      - client/src/pages/GenericServicePage.tsx (a page without a process chapter carries its plate on the included chapter)
+      - client/src/lib/stickyCtaVisibility.ts and its test (the assessment bar steps aside over a plate)
+      - artifacts/kie-ai/nano-banana/**/2026-10-10-*, .claude/kie-budget/ledger.jsonl
+    status: verified-live
+    started: 2026-10-10
+    note: >-
+      Joe, 2026-10-10: "continue everything", after the visual check showed
+      pages sharing plates and the sticky assessment bar covering plates on
+      desktop. Twelve plates generated in budget job
+      site-unique-plates-2026-10-10 (projected $0.72; closed). Three light plates
+      had the studio softbox in frame and were cropped. Generated images stay
+      ILLUSTRATIVE until Joe approves them on this PR.
+      Merged as 9637350f (PR 586, in Joe's "triage and merge the other open PRs"
+      batch; the integrating session removed the GenericServicePage
+      included-chapter plate, which professional-services did not need).
+      Production release.txt f70c755a contains it; all twelve plate AVIFs in the
+      live bundle return 200 and the sticky-bar rule ships. Joe approved the
+      plates on 2026-10-15 ("merge 586"). VERIFIED LIVE. Files released.
+
+  - id: dataforseo-mcp-wiring
+    owner: claude
+    subsystem: content-tooling
+    branch: claude/gifted-cray-mfxf3k
+    base_sha: f70c755a
+    files:
+      - .mcp.json (dataforseo server, pinned)
+      - .cursor/mcp.json (dataforseo server, pinned)
+      - .env.example (DATAFORSEO_LOGIN / DATAFORSEO_PASSWORD names only)
+      - docs/CONTENT-TOOLING-PLAN.md (statuses, Step 3, IP-whitelist decision)
+    status: implemented
+    started: 2026-10-15
+    note: >-
+      Joe, 2026-10-15: DataForSEO account verified and keys set in the Claude
+      environment; "do what is best" on IP whitelisting (decision: none, with
+      prepaid-balance guardrails). Config and docs only; no runtime code.
+
+  - id: healthz-db-reconnect
+    owner: claude
+    subsystem: production-runtime
+    branch: claude/gifted-cray-mfxf3k
+    base_sha: ef9a63c2
+    files:
+      - server/healthProbe.ts (databaseAcceptsConnections retries the connection when there is no pool)
+      - server/healthProbe.test.ts
+    status: implemented
+    started: 2026-10-15
+    note: >-
+      Production incident 2026-10-15 00:38 UTC: deploy verification and its
+      rollback both failed (/healthz 503). /healthz never retried the database
+      after a failed boot connect, so one stall at restart kept it red. Joe:
+      "check again, try to fix it."

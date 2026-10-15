@@ -8,7 +8,8 @@ import { agreementGateStatus, welcomeVideoFrom, PORTAL_AGREEMENTS } from "@share
  * signed once by someone who can bind the company and then cover everyone;
  * personal agreements are signed by each person; staff below the signer wait
  * on the company; DE admins never sign for a client; every signature carries
- * the hash of the PDF that was shown.
+ * the hash of the PDF that was shown. Signing stays closed for any agreement
+ * DE has not approved; most tests run against approved copies of the catalog.
  */
 
 vi.mock("./integrations/ensureDeSyncSchema", () => ({ ensureDeSyncSchema: async () => undefined }));
@@ -35,6 +36,9 @@ const adminOnly: express.RequestHandler = (req, res, next) => {
   next();
 };
 
+const APPROVED = PORTAL_AGREEMENTS.map((a) => ({ ...a, approvedForSigning: { by: "Test", on: "2026-10-15" } }));
+let catalog = APPROVED;
+
 const COMPANY_KEYS = PORTAL_AGREEMENTS.filter((a) => a.scope === "company").map((a) => a.key);
 const USER_KEYS = PORTAL_AGREEMENTS.filter((a) => a.scope === "user").map((a) => a.key);
 const ALL_KEYS = PORTAL_AGREEMENTS.map((a) => a.key);
@@ -49,10 +53,14 @@ beforeAll(async () => {
   registerPortalAgreementRoutes(app, {
     guards: [signedInAs],
     adminGuards: [signedInAs, adminOnly],
-    getClient: (id) => CLIENTS[id],
+    getClient: (id) => {
+      if (id === "broken") throw new Error("directory offline: secret detail");
+      return CLIENTS[id];
+    },
     isCompanySigner: (u: any) => u?.role !== "admin" && Boolean(u?.isCompanyItContact),
     readPdf: async (p) => Buffer.from(`pdf:${p}`),
     mode: () => "enforce",
+    agreements: () => catalog,
     videos: () => ({ company: welcomeVideoFrom("company", null), user: welcomeVideoFrom("user", "https://youtu.be/abcDEF12345") }),
   });
   server = createServer(app);
@@ -69,6 +77,7 @@ afterAll(async () => {
 beforeEach(async () => {
   const { _resetAgreementMemory } = await import("./portalAgreementStore");
   _resetAgreementMemory();
+  catalog = APPROVED;
 });
 
 const call = (method: string, path: string, user: object | null, body?: unknown) =>
@@ -134,6 +143,26 @@ describe("agreement gate", () => {
     }
   });
 
+  it("keeps signing closed, and nobody held, until DE approves the text", async () => {
+    catalog = PORTAL_AGREEMENTS;
+    for (const who of [ANN, IVY]) {
+      const s = await status(who);
+      expect(s.status.items.every((i: any) => i.state === "not_open" && i.canSign === false)).toBe(true);
+      expect(s.status.complete).toBe(true);
+    }
+    expect((await sign(IVY, ALL_KEYS, "Ivy IT")).status).toBe(409);
+    const log = (await (await call("GET", "/api/portal/admin/agreements?clientId=acme", DE_ADMIN)).json()) as any;
+    expect(log.signatures).toHaveLength(0);
+  });
+
+  it("answers a failure with a plain 500 and no internal detail", async () => {
+    const res = await call("GET", "/api/portal/agreements", { ...ANN, clientId: "broken" });
+    expect(res.status).toBe(500);
+    const body = (await res.json()) as any;
+    expect(body.error).toMatch(/could not load your agreements/i);
+    expect(JSON.stringify(body)).not.toContain("secret detail");
+  });
+
   it("serves the welcome videos as player URLs", async () => {
     const s = await status(ANN);
     expect(s.videos.user).toMatchObject({ url: "https://www.youtube-nocookie.com/embed/abcDEF12345", kind: "embed" });
@@ -145,10 +174,17 @@ describe("agreementGateStatus", () => {
   const ref = (key: string, version: string, scope: "company" | "user") => ({ key, version, scope, signerName: "X", signedAt: "2026-01-01T00:00:00Z" });
 
   it("asks again, as updated, when a version moves on", () => {
-    const a = [{ ...PORTAL_AGREEMENTS[1], version: "2027.01" }];
+    const a = [{ ...APPROVED[1], version: "2027.01" }];
     const s = agreementGateStatus({ company: [], user: [ref(a[0].key, "2026.10", "user")], isCompanySigner: false, agreements: a });
     expect(s.items[0].state).toBe("updated");
     expect(s.canFinish).toBe(true);
+  });
+
+  it("lists an unapproved agreement as not open without holding anyone", () => {
+    const a = [{ ...PORTAL_AGREEMENTS[1], approvedForSigning: null }];
+    const s = agreementGateStatus({ company: [], user: [], isCompanySigner: true, agreements: a });
+    expect(s.items[0]).toMatchObject({ state: "not_open", canSign: false });
+    expect(s.complete).toBe(true);
   });
 });
 

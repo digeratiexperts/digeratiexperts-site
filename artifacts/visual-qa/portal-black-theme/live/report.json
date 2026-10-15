@@ -1,0 +1,62 @@
+{
+  "fresh-390": {
+    "theme": "black",
+    "contrast": "none",
+    "portalTheme": "black",
+    "darkClass": true,
+    "bodyBg": "rgb(0, 0, 0)",
+    "overflowX": 0,
+    "ok": true,
+    "errors": []
+  },
+  "light-390": {
+    "theme": "light",
+    "contrast": "none",
+    "portalTheme": "light",
+    "darkClass": false,
+    "bodyBg": "rgb(245, 245, 249)",
+    "overflowX": 0,
+    "ok": true,
+    "errors": []
+  },
+  "console-boost-390": {
+    "theme": "console",
+    "contrast": "boost",
+    "portalTheme": "console",
+    "darkClass": true,
+    "bodyBg": "rgb(31, 31, 31)",
+    "overflowX": 0,
+    "ok": true,
+    "errors": []
+  },
+  "fresh-1440": {
+    "theme": "black",
+    "contrast": "none",
+    "portalTheme": "black",
+    "darkClass": true,
+    "bodyBg": "rgb(0, 0, 0)",
+    "overflowX": 0,
+    "ok": true,
+    "errors": []
+  },
+  "light-1440": {
+    "theme": "light",
+    "contrast": "none",
+    "portalTheme": "light",
+    "darkClass": false,
+    "bodyBg": "rgb(245, 245, 249)",
+    "overflowX": 0,
+    "ok": true,
+    "errors": []
+  },
+  "console-boost-1440": {
+    "theme": "console",
+    "contrast": "boost",
+    "portalTheme": "console",
+    "darkClass": true,
+    "bodyBg": "rgb(31, 31, 31)",
+    "overflowX": 0,
+    "ok": true,
+    "errors": []
+  }
+}

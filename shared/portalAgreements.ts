@@ -9,7 +9,12 @@
  *   user     signed by every person, for themselves.
  *
  * Raising `version` asks everyone to sign again; the gate then says the
- * document "has been updated". The PDFs are built by the DE document system
+ * document "has been updated".
+ *
+ * Signing stays closed until DE approves the text: an agreement with
+ * `approvedForSigning: null` is listed as "not open for signing yet", cannot
+ * be signed (the server refuses it) and never holds anyone at the gate.
+ * Approving a version is a reviewed code change that fills in who and when. The PDFs are built by the DE document system
  * (scripts/de-documents/content/portal-agreements.mts) and published at `pdf`.
  */
 
@@ -25,6 +30,8 @@ export interface PortalAgreement {
   /** Public path of the published PDF (client/public + this path). */
   pdf: string;
   lastModified: string;
+  /** Joe's sign-off on this version's text; null keeps signing closed. */
+  approvedForSigning: { by: string; on: string } | null;
 }
 
 export const PORTAL_AGREEMENTS: PortalAgreement[] = [
@@ -37,6 +44,7 @@ export const PORTAL_AGREEMENTS: PortalAgreement[] = [
       "How Digerati Experts and your company work together through this portal: who may act for the company, how requests become work, what the portal is and is not, and the legal terms that apply.",
     pdf: "/assets/legal/portal/client-portal-terms-and-rules-of-engagement.pdf",
     lastModified: "2026-10-09",
+    approvedForSigning: null,
   },
   {
     key: "portal-acceptable-use",
@@ -46,6 +54,7 @@ export const PORTAL_AGREEMENTS: PortalAgreement[] = [
     summary: "What you may and may not do with your portal account, and how we protect your company's information.",
     pdf: "/assets/legal/portal/client-portal-acceptable-use-policy.pdf",
     lastModified: "2026-10-09",
+    approvedForSigning: null,
   },
   {
     key: "portal-guide",
@@ -55,6 +64,7 @@ export const PORTAL_AGREEMENTS: PortalAgreement[] = [
     summary: "How to get help, track requests, find your documents and keep your account secure.",
     pdf: "/assets/legal/portal/client-portal-guide.pdf",
     lastModified: "2026-10-09",
+    approvedForSigning: null,
   },
 ];
 
@@ -71,7 +81,7 @@ export interface AgreementSignatureRef {
   signedAt: string;
 }
 
-export type AgreementState = "signed" | "outstanding" | "updated" | "awaiting_company";
+export type AgreementState = "signed" | "outstanding" | "updated" | "awaiting_company" | "not_open";
 
 export interface AgreementGateItem extends PortalAgreement {
   state: AgreementState;
@@ -81,7 +91,7 @@ export interface AgreementGateItem extends PortalAgreement {
 }
 
 export interface AgreementGateStatus {
-  /** Nothing outstanding for this person. */
+  /** Nothing outstanding for this person (agreements not yet open for signing do not count). */
   complete: boolean;
   /** The person can sign everything still outstanding themselves. */
   canFinish: boolean;
@@ -105,10 +115,11 @@ export function agreementGateStatus(input: {
     const pool = (a.scope === "company" ? input.company : input.user).filter((s) => s.key === a.key && s.scope === a.scope);
     const current = pool.find((s) => s.version === a.version) ?? null;
     if (current) return { ...a, state: "signed", canSign: false, signature: current };
+    if (!a.approvedForSigning) return { ...a, state: "not_open", canSign: false, signature: null };
     if (a.scope === "company" && !input.isCompanySigner) return { ...a, state: "awaiting_company", canSign: false, signature: null };
     return { ...a, state: pool.length ? "updated" : "outstanding", canSign: true, signature: null };
   });
-  const open = items.filter((i) => i.state !== "signed");
+  const open = items.filter((i) => i.state !== "signed" && i.state !== "not_open");
   return {
     complete: open.length === 0,
     canFinish: open.every((i) => i.canSign),

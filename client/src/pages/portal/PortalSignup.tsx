@@ -4,11 +4,13 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { AlertCircle, Mail, Lock, User, ArrowRight, CheckCircle } from "lucide-react";
 import { useLocation } from "wouter";
-import { DE_LOGO_REVERSE } from '@/lib/brandAssets';
+import { DE_LOGO_PRIMARY, DE_LOGO_REVERSE } from '@/lib/brandAssets';
 import TurnstileWidget from "@/components/TurnstileWidget";
 import "@/styles/portal.css";
+import { usePortalAppearance } from "@/components/portal/shell/portalTheme";
 
 export default function PortalSignup() {
+  const { theme } = usePortalAppearance();
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -95,7 +97,7 @@ export default function PortalSignup() {
 
   if (success) {
     return (
-      <main id="main-content" tabIndex={-1} className="de-portal dark relative flex min-h-dvh items-center justify-center overflow-hidden p-4" data-theme="dark">
+      <main id="main-content" tabIndex={-1} className={`de-portal ${theme !== "light" ? "dark" : ""} relative flex min-h-dvh items-center justify-center overflow-hidden p-4`} data-theme={theme}>
       <div aria-hidden="true" className="pt-login-glow pointer-events-none absolute inset-0" />
       <div aria-hidden="true" className="pt-login-line pointer-events-none absolute inset-x-0 top-0 h-px" />
         <div className="w-full max-w-md">
@@ -115,14 +117,14 @@ export default function PortalSignup() {
   }
 
   return (
-    <main id="main-content" tabIndex={-1} className="de-portal dark relative flex min-h-dvh items-center justify-center overflow-hidden p-4" data-theme="dark">
+    <main id="main-content" tabIndex={-1} className={`de-portal ${theme !== "light" ? "dark" : ""} relative flex min-h-dvh items-center justify-center overflow-hidden p-4`} data-theme={theme}>
       <div aria-hidden="true" className="pt-login-glow pointer-events-none absolute inset-0" />
       <div aria-hidden="true" className="pt-login-line pointer-events-none absolute inset-x-0 top-0 h-px" />
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="flex justify-center mb-8">
           <img
-            src={DE_LOGO_REVERSE}
+            src={theme === "light" ? DE_LOGO_PRIMARY : DE_LOGO_REVERSE}
             alt="Digerati Experts"
             className="h-10 w-auto"
           />
@@ -148,7 +150,7 @@ export default function PortalSignup() {
               <div className="space-y-2">
                 <label className="text-sm font-medium">Email</label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Mail className="absolute left-3 top-4 h-4 w-4 text-muted-foreground" />
                   <Input
                     type="email"
                     placeholder="your@company.com"
@@ -164,7 +166,7 @@ export default function PortalSignup() {
               <div className="space-y-2">
                 <label className="text-sm font-medium">Username</label>
                 <div className="relative">
-                  <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <User className="absolute left-3 top-4 h-4 w-4 text-muted-foreground" />
                   <Input
                     type="text"
                     placeholder="username"
@@ -180,7 +182,7 @@ export default function PortalSignup() {
               <div className="space-y-2">
                 <label className="text-sm font-medium">Password</label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Lock className="absolute left-3 top-4 h-4 w-4 text-muted-foreground" />
                   <Input
                     type="password"
                     placeholder="••••••••"
@@ -199,7 +201,7 @@ export default function PortalSignup() {
               <div className="space-y-2">
                 <label className="text-sm font-medium">Confirm Password</label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Lock className="absolute left-3 top-4 h-4 w-4 text-muted-foreground" />
                   <Input
                     type="password"
                     placeholder="••••••••"

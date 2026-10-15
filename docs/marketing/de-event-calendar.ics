@@ -1,0 +1,952 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Digerati Experts//DE Events//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:DE Events
+X-WR-TIMEZONE:America/Phoenix
+BEGIN:VTIMEZONE
+TZID:America/Phoenix
+BEGIN:STANDARD
+DTSTART:19700101T000000
+TZOFFSETFROM:-0700
+TZOFFSETTO:-0700
+TZNAME:MST
+END:STANDARD
+END:VTIMEZONE
+BEGIN:VEVENT
+UID:series-weekly-huddle@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;TZID=America/Phoenix:20261005T083000
+DTEND;TZID=America/Phoenix:20261005T090000
+RRULE:FREQ=WEEKLY;BYDAY=MO;UNTIL=20271231T235959Z
+SUMMARY:[internal] Team huddle: week plan\, dispatch and blockers
+DESCRIPTION:Set the week: on-site visits\, projects\, escalations\, who cov
+ ers what.\nOwner: Operations\nPrep: Open ticket queue sorted by SLA\; Cale
+ ndar of on-site visits\; Carry-over blockers from Friday
+CATEGORIES:internal,weekly
+END:VEVENT
+BEGIN:VEVENT
+UID:series-weekly-pipeline@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;TZID=America/Phoenix:20261006T090000
+DTEND;TZID=America/Phoenix:20261006T093000
+RRULE:FREQ=WEEKLY;BYDAY=TU;UNTIL=20271231T235959Z
+SUMMARY:[internal] Pipeline review
+DESCRIPTION:Move every open deal one step\; check event registrants and /go
+  leads got a reply.\nOwner: Sales\nPrep: Zoho CRM open deals and new leads
+ \; Event registrations from the past week
+CATEGORIES:internal,weekly
+END:VEVENT
+BEGIN:VEVENT
+UID:series-weekly-publish@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;TZID=America/Phoenix:20261007T100000
+DTEND;TZID=America/Phoenix:20261007T110000
+RRULE:FREQ=WEEKLY;BYDAY=WE;UNTIL=20271231T235959Z
+SUMMARY:[prospects] Content publish block: one Journal post or LinkedIn pie
+ ce
+DESCRIPTION:Steady search and social presence that points to the current mo
+ nth's campaign.\nOwner: Marketing\nPrep: Draft reviewed against docs/CLAIM
+ S-REGISTER.md\; Link to the month's /go page or session
+CATEGORIES:prospects,weekly
+END:VEVENT
+BEGIN:VEVENT
+UID:series-weekly-wrap@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;TZID=America/Phoenix:20261002T150000
+DTEND;TZID=America/Phoenix:20261002T153000
+RRULE:FREQ=WEEKLY;BYDAY=FR;UNTIL=20271231T235959Z
+SUMMARY:[internal] Week wrap + threat-intel briefing
+DESCRIPTION:Close the week's tickets\, review notable advisories\, decide w
+ hat clients need to hear.\nOwner: Technical Office\nPrep: Threat-intel fee
+ d highlights (docs/THREAT-INTEL-FEED.md)\; Tickets at risk of breaching SL
+ A
+CATEGORIES:internal,weekly
+END:VEVENT
+BEGIN:VEVENT
+UID:series-monthly-all-hands@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;TZID=America/Phoenix:20261005T090000
+DTEND;TZID=America/Phoenix:20261005T100000
+RRULE:FREQ=MONTHLY;BYDAY=1MO;UNTIL=20271231T235959Z
+SUMMARY:[internal] All-hands: KPIs\, wins\, the month ahead
+DESCRIPTION:One view of the business: tickets\, SLA\, pipeline\, cash\, the
+  month's campaign and events.\nOwner: Joe\nPrep: Last month's KPI sheet\; 
+ This month's campaign and session list (this calendar)
+CATEGORIES:internal,monthly
+END:VEVENT
+BEGIN:VEVENT
+UID:series-monthly-client-newsletter@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;TZID=America/Phoenix:20261001T070000
+DTEND;TZID=America/Phoenix:20261001T073000
+RRULE:FREQ=MONTHLY;BYDAY=1TH;UNTIL=20271231T235959Z
+SUMMARY:[clients] Client newsletter goes out
+DESCRIPTION:The month's security tip\, the next session invite\, service no
+ tices.\nOwner: Marketing\nPrep: Draft by the prior Monday\; Session invite
+  block\; Reviewed against the claims register\nStart from: WorkDrive: News
+ letter folder and DE printed newsletter PDFs
+CATEGORIES:clients,monthly
+END:VEVENT
+BEGIN:VEVENT
+UID:series-monthly-patch-review@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;TZID=America/Phoenix:20261014T090000
+DTEND;TZID=America/Phoenix:20261014T094500
+RRULE:FREQ=MONTHLY;BYDAY=2WE;UNTIL=20271231T235959Z
+SUMMARY:[clients] Patch Tuesday review and client advisory
+DESCRIPTION:Microsoft ships on the second Tuesday\; the day after\, decide 
+ rings and tell clients what changes.\nOwner: Technical Office\nPrep: Micro
+ soft release notes\; RMM patch-ring status
+CATEGORIES:clients,monthly
+END:VEVENT
+BEGIN:VEVENT
+UID:series-monthly-prospect-newsletter@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;TZID=America/Phoenix:20261008T070000
+DTEND;TZID=America/Phoenix:20261008T073000
+RRULE:FREQ=MONTHLY;BYDAY=2TH;UNTIL=20271231T235959Z
+SUMMARY:[prospects] Prospect newsletter: the month's campaign and next sess
+ ion
+DESCRIPTION:One idea\, one link to the month's /go page\, one session invit
+ e.\nOwner: Marketing\nPrep: Campaign page link\; Session registration link
+CATEGORIES:prospects,monthly
+END:VEVENT
+BEGIN:VEVENT
+UID:series-monthly-lunch-learn@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;TZID=America/Phoenix:20261021T120000
+DTEND;TZID=America/Phoenix:20261021T130000
+RRULE:FREQ=MONTHLY;BYDAY=3WE;UNTIL=20271231T235959Z
+SUMMARY:[internal] Lunch & learn (internal training)
+DESCRIPTION:One tool\, process or threat\, taught by a team member. Doubles
+  as a rehearsal for the month's webinar.\nOwner: Technical Office\nPrep: P
+ resenter picked at the all-hands\; Slides or a live demo\nStart from: Work
+ Drive: Lunch & Learn folder (2012) and attendee-survey templates
+CATEGORIES:internal,monthly
+END:VEVENT
+BEGIN:VEVENT
+UID:series-monthly-office-hours@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;TZID=America/Phoenix:20261015T120000
+DTEND;TZID=America/Phoenix:20261015T123000
+RRULE:FREQ=MONTHLY;BYDAY=3TH;UNTIL=20271231T235959Z
+SUMMARY:[clients] Client office hours: Ask DE Live
+DESCRIPTION:An open half hour for client questions: no agenda\, no sales.\n
+ Owner: Technical Office\nPrep: Meeting link in the client newsletter\; Que
+ stions submitted in the portal
+CATEGORIES:clients,monthly
+END:VEVENT
+BEGIN:VEVENT
+UID:series-monthly-close@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;TZID=America/Phoenix:20261030T130000
+DTEND;TZID=America/Phoenix:20261030T150000
+RRULE:FREQ=MONTHLY;BYDAY=-1FR;UNTIL=20271231T235959Z
+SUMMARY:[internal] Month-end close and client reporting
+DESCRIPTION:Invoices\, license true-ups\, client monthly reports out.\nOwne
+ r: Back Office\nPrep: Zoho Books open items\; License counts from the vend
+ or portals
+CATEGORIES:internal,monthly
+END:VEVENT
+BEGIN:VEVENT
+UID:series-quarterly-planning@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;TZID=America/Phoenix:20261009T090000
+DTEND;TZID=America/Phoenix:20261009T120000
+RRULE:FREQ=YEARLY;BYMONTH=1,4,7,10;BYDAY=2FR;UNTIL=20271231T235959Z
+SUMMARY:[internal] Quarterly planning: goals\, campaigns and events for the
+  quarter
+DESCRIPTION:Confirm next quarter's sessions (flip them to confirmed in deEv
+ ents.ts) and assign owners.\nOwner: Joe\nPrep: This calendar\; Last quarte
+ r's registrations and conversions\nStart from: WorkDrive: Quarterly Market
+ ing Planning Slide Deck\; 4. Event & Strategic Planning
+CATEGORIES:internal,quarterly
+END:VEVENT
+BEGIN:VEVENT
+UID:series-quarterly-restore-test@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;TZID=America/Phoenix:20261210T080000
+DTEND;TZID=America/Phoenix:20261210T120000
+RRULE:FREQ=YEARLY;BYMONTH=3,6,9,12;BYDAY=2TH;UNTIL=20271231T235959Z
+SUMMARY:[clients] Quarterly backup restore test (clients and DE)
+DESCRIPTION:Restore a file and a system for each managed client\; record th
+ e result for QBRs and insurance renewals.\nOwner: Technical Office\nPrep: 
+ Restore-test checklist\; Evidence template for the QBR pack
+CATEGORIES:clients,quarterly
+END:VEVENT
+BEGIN:VEVENT
+UID:series-quarterly-tabletop@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;TZID=America/Phoenix:20261117T140000
+DTEND;TZID=America/Phoenix:20261117T153000
+RRULE:FREQ=YEARLY;BYMONTH=2,5,8,11;BYDAY=3TU;UNTIL=20271231T235959Z
+SUMMARY:[internal] Incident-response tabletop exercise
+DESCRIPTION:Walk one scenario end to end: who calls whom\, what gets isolat
+ ed\, what the client hears.\nOwner: Technical Office\nPrep: Scenario card\
+ ; Current escalation contacts
+CATEGORIES:internal,quarterly
+END:VEVENT
+BEGIN:VEVENT
+UID:session-cyber-insurance-renewal-readiness@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;TZID=America/Phoenix:20261029T110000
+DTEND;TZID=America/Phoenix:20261029T120000
+SUMMARY:[prospects-and-clients] Live webinar: Before Your Cyber Insurance R
+ enewal: The Controls Underwriters Ask About
+DESCRIPTION:Walk the questionnaire before it walks you: MFA\, EDR\, email a
+ uthentication\, backups and awareness training.\nCampaign: /go/cyber-insur
+ ance\nStatus: planned
+URL:https://digeratiexperts.com/events/cyber-insurance-renewal-readiness
+CATEGORIES:session,prospects-and-clients
+END:VEVENT
+BEGIN:VEVENT
+UID:prep-cyber-insurance-renewal-readiness--35@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;VALUE=DATE:20260924
+DTEND;VALUE=DATE:20260925
+SUMMARY:[prep T-35d] Before Your Cyber Insurance Renewal
+DESCRIPTION:Confirm topic\, presenter and platform\; flip the session to co
+ nfirmed\; page live
+CATEGORIES:prep
+END:VEVENT
+BEGIN:VEVENT
+UID:prep-cyber-insurance-renewal-readiness--28@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;VALUE=DATE:20261001
+DTEND;VALUE=DATE:20261002
+SUMMARY:[prep T-28d] Before Your Cyber Insurance Renewal
+DESCRIPTION:First invite: client and prospect newsletters\, LinkedIn\, call
+  list
+CATEGORIES:prep
+END:VEVENT
+BEGIN:VEVENT
+UID:prep-cyber-insurance-renewal-readiness--14@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;VALUE=DATE:20261015
+DTEND;VALUE=DATE:20261016
+SUMMARY:[prep T-14d] Before Your Cyber Insurance Renewal
+DESCRIPTION:Second invite\; dry run at the lunch & learn
+CATEGORIES:prep
+END:VEVENT
+BEGIN:VEVENT
+UID:prep-cyber-insurance-renewal-readiness--7@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;VALUE=DATE:20261022
+DTEND;VALUE=DATE:20261023
+SUMMARY:[prep T-7d] Before Your Cyber Insurance Renewal
+DESCRIPTION:Reminder to registrants\; final slides
+CATEGORIES:prep
+END:VEVENT
+BEGIN:VEVENT
+UID:prep-cyber-insurance-renewal-readiness--1@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;VALUE=DATE:20261028
+DTEND;VALUE=DATE:20261029
+SUMMARY:[prep T-1d] Before Your Cyber Insurance Renewal
+DESCRIPTION:Day-before reminder with the join link
+CATEGORIES:prep
+END:VEVENT
+BEGIN:VEVENT
+UID:prep-cyber-insurance-renewal-readiness-2@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;VALUE=DATE:20261102
+DTEND;VALUE=DATE:20261103
+SUMMARY:[prep T+2d] Before Your Cyber Insurance Renewal
+DESCRIPTION:Follow-up: recording\, slides\, assessment offer\; log attendan
+ ce in CRM
+CATEGORIES:prep
+END:VEVENT
+BEGIN:VEVENT
+UID:session-holiday-invoice-fraud-and-phishing@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;TZID=America/Phoenix:20261119T110000
+DTEND;TZID=America/Phoenix:20261119T114500
+SUMMARY:[prospects-and-clients] Live webinar: Holiday Invoice Fraud: How Pa
+ yment-Change Emails Get Past Busy Teams
+DESCRIPTION:The year-end rush is when a spoofed vendor asks for new bank de
+ tails. See the pattern and the controls that stop it.\nCampaign: /go/email
+ -security\nStatus: planned
+URL:https://digeratiexperts.com/events/holiday-invoice-fraud-and-phishing
+CATEGORIES:session,prospects-and-clients
+END:VEVENT
+BEGIN:VEVENT
+UID:prep-holiday-invoice-fraud-and-phishing--35@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;VALUE=DATE:20261015
+DTEND;VALUE=DATE:20261016
+SUMMARY:[prep T-35d] Holiday Invoice Fraud
+DESCRIPTION:Confirm topic\, presenter and platform\; flip the session to co
+ nfirmed\; page live
+CATEGORIES:prep
+END:VEVENT
+BEGIN:VEVENT
+UID:prep-holiday-invoice-fraud-and-phishing--28@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;VALUE=DATE:20261022
+DTEND;VALUE=DATE:20261023
+SUMMARY:[prep T-28d] Holiday Invoice Fraud
+DESCRIPTION:First invite: client and prospect newsletters\, LinkedIn\, call
+  list
+CATEGORIES:prep
+END:VEVENT
+BEGIN:VEVENT
+UID:prep-holiday-invoice-fraud-and-phishing--14@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;VALUE=DATE:20261105
+DTEND;VALUE=DATE:20261106
+SUMMARY:[prep T-14d] Holiday Invoice Fraud
+DESCRIPTION:Second invite\; dry run at the lunch & learn
+CATEGORIES:prep
+END:VEVENT
+BEGIN:VEVENT
+UID:prep-holiday-invoice-fraud-and-phishing--7@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;VALUE=DATE:20261112
+DTEND;VALUE=DATE:20261113
+SUMMARY:[prep T-7d] Holiday Invoice Fraud
+DESCRIPTION:Reminder to registrants\; final slides
+CATEGORIES:prep
+END:VEVENT
+BEGIN:VEVENT
+UID:prep-holiday-invoice-fraud-and-phishing--1@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;VALUE=DATE:20261118
+DTEND;VALUE=DATE:20261119
+SUMMARY:[prep T-1d] Holiday Invoice Fraud
+DESCRIPTION:Day-before reminder with the join link
+CATEGORIES:prep
+END:VEVENT
+BEGIN:VEVENT
+UID:prep-holiday-invoice-fraud-and-phishing-2@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;VALUE=DATE:20261123
+DTEND;VALUE=DATE:20261124
+SUMMARY:[prep T+2d] Holiday Invoice Fraud
+DESCRIPTION:Follow-up: recording\, slides\, assessment offer\; log attendan
+ ce in CRM
+CATEGORIES:prep
+END:VEVENT
+BEGIN:VEVENT
+UID:session-ransomware-restore-readiness-2027@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;TZID=America/Phoenix:20270121T110000
+DTEND;TZID=America/Phoenix:20270121T120000
+SUMMARY:[prospects-and-clients] Live working session: Can You Actually Rest
+ ore? A Ransomware Readiness Working Session
+DESCRIPTION:Start 2027 with the question that matters after an attack: how 
+ long until the business runs again.\nCampaign: /go/ransomware-readiness\nS
+ tatus: planned
+URL:https://digeratiexperts.com/events/ransomware-restore-readiness-2027
+CATEGORIES:session,prospects-and-clients
+END:VEVENT
+BEGIN:VEVENT
+UID:prep-ransomware-restore-readiness-2027--35@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;VALUE=DATE:20261217
+DTEND;VALUE=DATE:20261218
+SUMMARY:[prep T-35d] Can You Actually Restore? A Ransomware Readiness Worki
+ ng Session
+DESCRIPTION:Confirm topic\, presenter and platform\; flip the session to co
+ nfirmed\; page live
+CATEGORIES:prep
+END:VEVENT
+BEGIN:VEVENT
+UID:prep-ransomware-restore-readiness-2027--28@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;VALUE=DATE:20261224
+DTEND;VALUE=DATE:20261225
+SUMMARY:[prep T-28d] Can You Actually Restore? A Ransomware Readiness Worki
+ ng Session
+DESCRIPTION:First invite: client and prospect newsletters\, LinkedIn\, call
+  list
+CATEGORIES:prep
+END:VEVENT
+BEGIN:VEVENT
+UID:prep-ransomware-restore-readiness-2027--14@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;VALUE=DATE:20270107
+DTEND;VALUE=DATE:20270108
+SUMMARY:[prep T-14d] Can You Actually Restore? A Ransomware Readiness Worki
+ ng Session
+DESCRIPTION:Second invite\; dry run at the lunch & learn
+CATEGORIES:prep
+END:VEVENT
+BEGIN:VEVENT
+UID:prep-ransomware-restore-readiness-2027--7@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;VALUE=DATE:20270114
+DTEND;VALUE=DATE:20270115
+SUMMARY:[prep T-7d] Can You Actually Restore? A Ransomware Readiness Workin
+ g Session
+DESCRIPTION:Reminder to registrants\; final slides
+CATEGORIES:prep
+END:VEVENT
+BEGIN:VEVENT
+UID:prep-ransomware-restore-readiness-2027--1@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;VALUE=DATE:20270120
+DTEND;VALUE=DATE:20270121
+SUMMARY:[prep T-1d] Can You Actually Restore? A Ransomware Readiness Workin
+ g Session
+DESCRIPTION:Day-before reminder with the join link
+CATEGORIES:prep
+END:VEVENT
+BEGIN:VEVENT
+UID:prep-ransomware-restore-readiness-2027-2@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;VALUE=DATE:20270125
+DTEND;VALUE=DATE:20270126
+SUMMARY:[prep T+2d] Can You Actually Restore? A Ransomware Readiness Workin
+ g Session
+DESCRIPTION:Follow-up: recording\, slides\, assessment offer\; log attendan
+ ce in CRM
+CATEGORIES:prep
+END:VEVENT
+BEGIN:VEVENT
+UID:session-co-managed-it-for-internal-teams@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;TZID=America/Phoenix:20270218T110000
+DTEND;TZID=America/Phoenix:20270218T114500
+SUMMARY:[prospects] Live webinar: Co-Managed IT: Backup for the Internal IT
+  Team\, Not a Replacement
+DESCRIPTION:For the one- or two-person IT department: where a co-managed pa
+ rtner fits\, and where it should stay out.\nCampaign: /go/co-managed-it\nS
+ tatus: planned
+URL:https://digeratiexperts.com/events/co-managed-it-for-internal-teams
+CATEGORIES:session,prospects
+END:VEVENT
+BEGIN:VEVENT
+UID:prep-co-managed-it-for-internal-teams--35@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;VALUE=DATE:20270114
+DTEND;VALUE=DATE:20270115
+SUMMARY:[prep T-35d] Co-Managed IT
+DESCRIPTION:Confirm topic\, presenter and platform\; flip the session to co
+ nfirmed\; page live
+CATEGORIES:prep
+END:VEVENT
+BEGIN:VEVENT
+UID:prep-co-managed-it-for-internal-teams--28@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;VALUE=DATE:20270121
+DTEND;VALUE=DATE:20270122
+SUMMARY:[prep T-28d] Co-Managed IT
+DESCRIPTION:First invite: client and prospect newsletters\, LinkedIn\, call
+  list
+CATEGORIES:prep
+END:VEVENT
+BEGIN:VEVENT
+UID:prep-co-managed-it-for-internal-teams--14@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;VALUE=DATE:20270204
+DTEND;VALUE=DATE:20270205
+SUMMARY:[prep T-14d] Co-Managed IT
+DESCRIPTION:Second invite\; dry run at the lunch & learn
+CATEGORIES:prep
+END:VEVENT
+BEGIN:VEVENT
+UID:prep-co-managed-it-for-internal-teams--7@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;VALUE=DATE:20270211
+DTEND;VALUE=DATE:20270212
+SUMMARY:[prep T-7d] Co-Managed IT
+DESCRIPTION:Reminder to registrants\; final slides
+CATEGORIES:prep
+END:VEVENT
+BEGIN:VEVENT
+UID:prep-co-managed-it-for-internal-teams--1@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;VALUE=DATE:20270217
+DTEND;VALUE=DATE:20270218
+SUMMARY:[prep T-1d] Co-Managed IT
+DESCRIPTION:Day-before reminder with the join link
+CATEGORIES:prep
+END:VEVENT
+BEGIN:VEVENT
+UID:prep-co-managed-it-for-internal-teams-2@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;VALUE=DATE:20270222
+DTEND;VALUE=DATE:20270223
+SUMMARY:[prep T+2d] Co-Managed IT
+DESCRIPTION:Follow-up: recording\, slides\, assessment offer\; log attendan
+ ce in CRM
+CATEGORIES:prep
+END:VEVENT
+BEGIN:VEVENT
+UID:session-world-backup-day-restore-drill@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;TZID=America/Phoenix:20270331T110000
+DTEND;TZID=America/Phoenix:20270331T114500
+SUMMARY:[prospects-and-clients] Live working session: World Backup Day: A L
+ ive Restore Drill
+DESCRIPTION:Watch a file and a machine come back from backup in real time\,
+  and leave with the drill to run yourself.\nCampaign: /go/ransomware-readi
+ ness\nStatus: planned
+URL:https://digeratiexperts.com/events/world-backup-day-restore-drill
+CATEGORIES:session,prospects-and-clients
+END:VEVENT
+BEGIN:VEVENT
+UID:prep-world-backup-day-restore-drill--35@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;VALUE=DATE:20270224
+DTEND;VALUE=DATE:20270225
+SUMMARY:[prep T-35d] World Backup Day
+DESCRIPTION:Confirm topic\, presenter and platform\; flip the session to co
+ nfirmed\; page live
+CATEGORIES:prep
+END:VEVENT
+BEGIN:VEVENT
+UID:prep-world-backup-day-restore-drill--28@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;VALUE=DATE:20270303
+DTEND;VALUE=DATE:20270304
+SUMMARY:[prep T-28d] World Backup Day
+DESCRIPTION:First invite: client and prospect newsletters\, LinkedIn\, call
+  list
+CATEGORIES:prep
+END:VEVENT
+BEGIN:VEVENT
+UID:prep-world-backup-day-restore-drill--14@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;VALUE=DATE:20270317
+DTEND;VALUE=DATE:20270318
+SUMMARY:[prep T-14d] World Backup Day
+DESCRIPTION:Second invite\; dry run at the lunch & learn
+CATEGORIES:prep
+END:VEVENT
+BEGIN:VEVENT
+UID:prep-world-backup-day-restore-drill--7@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;VALUE=DATE:20270324
+DTEND;VALUE=DATE:20270325
+SUMMARY:[prep T-7d] World Backup Day
+DESCRIPTION:Reminder to registrants\; final slides
+CATEGORIES:prep
+END:VEVENT
+BEGIN:VEVENT
+UID:prep-world-backup-day-restore-drill--1@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;VALUE=DATE:20270330
+DTEND;VALUE=DATE:20270331
+SUMMARY:[prep T-1d] World Backup Day
+DESCRIPTION:Day-before reminder with the join link
+CATEGORIES:prep
+END:VEVENT
+BEGIN:VEVENT
+UID:prep-world-backup-day-restore-drill-2@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;VALUE=DATE:20270402
+DTEND;VALUE=DATE:20270403
+SUMMARY:[prep T+2d] World Backup Day
+DESCRIPTION:Follow-up: recording\, slides\, assessment offer\; log attendan
+ ce in CRM
+CATEGORIES:prep
+END:VEVENT
+BEGIN:VEVENT
+UID:dated-csam-2026@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;VALUE=DATE:20261001
+DTEND;VALUE=DATE:20261101
+SUMMARY:[prospects-and-clients] Cybersecurity Awareness Month
+DESCRIPTION:October\, every year (CISA / National Cybersecurity Alliance). 
+ Weekly tips to clients\; insurance-readiness push to prospects.\nCampaign:
+  /go/cyber-insurance\nOwner: Marketing\nStart from: WorkDrive: Cybersecuri
+ ty Awareness Month 2021/2022 assets (vendor content — rewrite before reu
+ se)
+CATEGORIES:prospects-and-clients
+END:VEVENT
+BEGIN:VEVENT
+UID:dated-qbr-2026-10@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;VALUE=DATE:20261005
+DTEND;VALUE=DATE:20261024
+SUMMARY:[clients] QBR season (Q4 business reviews)
+DESCRIPTION:Book every managed client's review\; prep the pack two weeks ah
+ ead (tickets\, risk\, restore-test evidence\, roadmap).\nOwner: Account ma
+ nagement\nStart from: Portal /portal/qbr\; WorkDrive: QBR Campaign E-mails
+ \, QBR Campaign Blueprint\, S9 QBR Agenda Template
+CATEGORIES:clients
+END:VEVENT
+BEGIN:VEVENT
+UID:dated-client-survey-2026@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;VALUE=DATE:20261102
+DTEND;VALUE=DATE:20261103
+SUMMARY:[clients] Annual client satisfaction survey sent
+DESCRIPTION:Portal satisfaction survey\; results feed the January planning 
+ kickoff.\nOwner: Account management\nStart from: Portal satisfaction surve
+ y (PortalSatisfactionSurvey)
+CATEGORIES:clients
+END:VEVENT
+BEGIN:VEVENT
+UID:dated-license-audit-2026@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;VALUE=DATE:20261109
+DTEND;VALUE=DATE:20261114
+SUMMARY:[clients] Annual license and renewal audit
+DESCRIPTION:Every client's licenses\, warranties and domain renewals expiri
+ ng in the next 12 months\, ready for year-end budget talks.\nOwner: Back O
+ ffice
+CATEGORIES:clients
+END:VEVENT
+BEGIN:VEVENT
+UID:dated-thanks-2026@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;VALUE=DATE:20261116
+DTEND;VALUE=DATE:20261117
+SUMMARY:[clients] Client appreciation: Thanksgiving thank-you cards mailed
+DESCRIPTION:Handwritten\, no offer inside.\nOwner: Marketing
+CATEGORIES:clients
+END:VEVENT
+BEGIN:VEVENT
+UID:dated-holiday-shopping-advisory-2026@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;VALUE=DATE:20261124
+DTEND;VALUE=DATE:20261125
+SUMMARY:[clients] Holiday shopping-scam advisory to clients
+DESCRIPTION:Before Black Friday / Cyber Monday: delivery-notice and gift-ca
+ rd scams.\nCampaign: /go/email-security\nOwner: Technical Office
+CATEGORIES:clients
+END:VEVENT
+BEGIN:VEVENT
+UID:dated-holiday-schedule-2026@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;VALUE=DATE:20261201
+DTEND;VALUE=DATE:20261202
+SUMMARY:[clients] Holiday support schedule sent to clients
+DESCRIPTION:Coverage and escalation for the holidays.\nOwner: Operations
+CATEGORIES:clients
+END:VEVENT
+BEGIN:VEVENT
+UID:dated-budget-2027@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;VALUE=DATE:20261201
+DTEND;VALUE=DATE:20261219
+SUMMARY:[clients] Year-end budget and 2027 roadmap conversations
+DESCRIPTION:Use the license audit and QBR roadmaps\; the prospect equivalen
+ t is the ProActive Business offer.\nCampaign: /go/proactive-business\nOwne
+ r: Account management
+CATEGORIES:clients
+END:VEVENT
+BEGIN:VEVENT
+UID:dated-reviews-2026@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;VALUE=DATE:20261207
+DTEND;VALUE=DATE:20261219
+SUMMARY:[internal] Annual performance reviews
+DESCRIPTION:One-to-ones\; training goals set for the year.\nOwner: Joe
+CATEGORIES:internal
+END:VEVENT
+BEGIN:VEVENT
+UID:dated-policy-review-2026@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;VALUE=DATE:20261214
+DTEND;VALUE=DATE:20261219
+SUMMARY:[internal] Annual policy\, DR plan and vendor review (DE's own)
+DESCRIPTION:Re-read and re-sign internal policies\; test DE's own recovery 
+ plan.\nOwner: Back Office
+CATEGORIES:internal
+END:VEVENT
+BEGIN:VEVENT
+UID:dated-celebration-2026@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;TZID=America/Phoenix:20261217T173000
+DTEND;TZID=America/Phoenix:20261217T203000
+SUMMARY:[internal] Year-end team celebration
+DESCRIPTION:Owner: Joe
+CATEGORIES:internal
+END:VEVENT
+BEGIN:VEVENT
+UID:dated-kickoff-2027@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;TZID=America/Phoenix:20270105T090000
+DTEND;TZID=America/Phoenix:20270105T130000
+SUMMARY:[internal] Annual planning kickoff
+DESCRIPTION:Set the year's goals\; confirm Q1 sessions and owners\; review 
+ survey results.\nOwner: Joe\nStart from: WorkDrive: Company Strategy & Fra
+ meworks\; 2024 Business Planning\; Digerati_Experts_Marketing_Calendar.doc
+ x
+CATEGORIES:internal
+END:VEVENT
+BEGIN:VEVENT
+UID:dated-awareness-training-2027@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;VALUE=DATE:20270111
+DTEND;VALUE=DATE:20270123
+SUMMARY:[internal] Annual staff security awareness training and policy ackn
+ owledgment
+DESCRIPTION:Every DE employee completes training and signs the acceptable-u
+ se and security policies. Offer the same to clients on awareness plans.\nO
+ wner: Technical Office
+CATEGORIES:internal
+END:VEVENT
+BEGIN:VEVENT
+UID:dated-qbr-2027-01@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;VALUE=DATE:20270111
+DTEND;VALUE=DATE:20270130
+SUMMARY:[clients] QBR season (Q1 business reviews)
+DESCRIPTION:Book every managed client's review\; prep the pack two weeks ah
+ ead (tickets\, risk\, restore-test evidence\, roadmap).\nOwner: Account ma
+ nagement\nStart from: Portal /portal/qbr\; WorkDrive: QBR Campaign E-mails
+ \, QBR Campaign Blueprint\, S9 QBR Agenda Template
+CATEGORIES:clients
+END:VEVENT
+BEGIN:VEVENT
+UID:dated-privacy-day-2027@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;VALUE=DATE:20270128
+DTEND;VALUE=DATE:20270129
+SUMMARY:[prospects-and-clients] Data Privacy Day
+DESCRIPTION:January 28 every year. Client newsletter tip and one Journal po
+ st.\nOwner: Marketing
+CATEGORIES:prospects-and-clients
+END:VEVENT
+BEGIN:VEVENT
+UID:dated-sid-2027@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;VALUE=DATE:20270209
+DTEND;VALUE=DATE:20270210
+SUMMARY:[clients] Safer Internet Day
+DESCRIPTION:Second week of February\; confirm the date. A family-and-staff 
+ safety tip for client newsletters.\nOwner: Marketing
+CATEGORIES:clients
+END:VEVENT
+BEGIN:VEVENT
+UID:dated-backup-day-2027@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;VALUE=DATE:20270331
+DTEND;VALUE=DATE:20270401
+SUMMARY:[prospects-and-clients] World Backup Day
+DESCRIPTION:March 31 every year\; the live restore drill session runs that 
+ day.\nCampaign: /go/ransomware-readiness\nOwner: Marketing
+CATEGORIES:prospects-and-clients
+END:VEVENT
+BEGIN:VEVENT
+UID:dated-tax-fraud-2027@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;VALUE=DATE:20270401
+DTEND;VALUE=DATE:20270402
+SUMMARY:[prospects-and-clients] Tax-season fraud advisory (IRS and payroll 
+ impersonation)
+DESCRIPTION:Before the April 15 deadline: W-2 requests\, direct-deposit cha
+ nges\, fake IRS notices.\nCampaign: /go/email-security\nOwner: Technical O
+ ffice
+CATEGORIES:prospects-and-clients
+END:VEVENT
+BEGIN:VEVENT
+UID:dated-qbr-2027-04@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;VALUE=DATE:20270405
+DTEND;VALUE=DATE:20270424
+SUMMARY:[clients] QBR season (Q2 business reviews)
+DESCRIPTION:Book every managed client's review\; prep the pack two weeks ah
+ ead (tickets\, risk\, restore-test evidence\, roadmap).\nOwner: Account ma
+ nagement\nStart from: Portal /portal/qbr\; WorkDrive: QBR Campaign E-mails
+ \, QBR Campaign Blueprint\, S9 QBR Agenda Template
+CATEGORIES:clients
+END:VEVENT
+BEGIN:VEVENT
+UID:dated-healthcare-webinar-2027@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;TZID=America/Phoenix:20270422T110000
+DTEND;TZID=America/Phoenix:20270422T120000
+SUMMARY:[prospects] Webinar: HIPAA security risk analysis for Arizona pract
+ ices
+DESCRIPTION:Topic proposal\; add to deEvents.ts once confirmed.\nCampaign: 
+ /go/healthcare-it\nOwner: Marketing
+CATEGORIES:prospects
+END:VEVENT
+BEGIN:VEVENT
+UID:dated-nsbw-2027@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;VALUE=DATE:20270503
+DTEND;VALUE=DATE:20270508
+SUMMARY:[prospects] National Small Business Week
+DESCRIPTION:SBA sets the dates each year (usually late April or early May)\
+ ; confirm. Assessment push to owners.\nCampaign: /go/cyber-risk-assessment
+ \nOwner: Marketing
+CATEGORIES:prospects
+END:VEVENT
+BEGIN:VEVENT
+UID:dated-assessment-webinar-2027@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;TZID=America/Phoenix:20270520T110000
+DTEND;TZID=America/Phoenix:20270520T114500
+SUMMARY:[prospects] Webinar: What a Cyber Risk Assessment actually looks at
+DESCRIPTION:Topic proposal\; ties to National Small Business Week follow-up
+ .\nCampaign: /go/cyber-risk-assessment\nOwner: Marketing
+CATEGORIES:prospects
+END:VEVENT
+BEGIN:VEVENT
+UID:dated-referral-2027@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;VALUE=DATE:20270503
+DTEND;VALUE=DATE:20270529
+SUMMARY:[clients] Mid-year client referral push
+DESCRIPTION:A newsletter feature and a QBR-follow-up ask.\nOwner: Marketing
+CATEGORIES:clients
+END:VEVENT
+BEGIN:VEVENT
+UID:dated-managed-it-webinar-2027@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;TZID=America/Phoenix:20270624T110000
+DTEND;TZID=America/Phoenix:20270624T114500
+SUMMARY:[prospects] Webinar: Managed IT without the mystery — what ProAct
+ ive covers
+DESCRIPTION:Topic proposal.\nCampaign: /go/managed-it\nOwner: Marketing
+CATEGORIES:prospects
+END:VEVENT
+BEGIN:VEVENT
+UID:dated-midyear-2027@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;TZID=America/Phoenix:20270628T090000
+DTEND;TZID=America/Phoenix:20270628T120000
+SUMMARY:[internal] Mid-year review
+DESCRIPTION:Goals against plan\; reset H2 campaigns.\nOwner: Joe
+CATEGORIES:internal
+END:VEVENT
+BEGIN:VEVENT
+UID:dated-qbr-2027-07@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;VALUE=DATE:20270705
+DTEND;VALUE=DATE:20270724
+SUMMARY:[clients] QBR season (Q3 business reviews)
+DESCRIPTION:Book every managed client's review\; prep the pack two weeks ah
+ ead (tickets\, risk\, restore-test evidence\, roadmap).\nOwner: Account ma
+ nagement\nStart from: Portal /portal/qbr\; WorkDrive: QBR Campaign E-mails
+ \, QBR Campaign Blueprint\, S9 QBR Agenda Template
+CATEGORIES:clients
+END:VEVENT
+BEGIN:VEVENT
+UID:dated-mfa-webinar-2027@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;TZID=America/Phoenix:20270826T110000
+DTEND;TZID=America/Phoenix:20270826T114500
+SUMMARY:[prospects] Webinar: MFA everywhere — closing the logins attacker
+ s try first
+DESCRIPTION:Topic proposal\; back-to-school timing for password and MFA ref
+ reshes.\nCampaign: /go/cyber-risk-assessment\nOwner: Marketing
+CATEGORIES:prospects
+END:VEVENT
+BEGIN:VEVENT
+UID:dated-preparedness-2027@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;VALUE=DATE:20270901
+DTEND;VALUE=DATE:20271001
+SUMMARY:[prospects-and-clients] National Preparedness Month
+DESCRIPTION:September every year (FEMA / Ready.gov). Business-continuity an
+ d backup messaging.\nCampaign: /go/ransomware-readiness\nOwner: Marketing
+CATEGORIES:prospects-and-clients
+END:VEVENT
+BEGIN:VEVENT
+UID:dated-insurance-webinar-2027@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;TZID=America/Phoenix:20270923T110000
+DTEND;TZID=America/Phoenix:20270923T120000
+SUMMARY:[prospects-and-clients] Webinar: Q4 cyber insurance renewal readine
+ ss
+DESCRIPTION:Repeat of the October 2026 session\, updated with what renewals
+  asked this year.\nCampaign: /go/cyber-insurance\nOwner: Marketing
+CATEGORIES:prospects-and-clients
+END:VEVENT
+BEGIN:VEVENT
+UID:dated-csam-2027@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;VALUE=DATE:20271001
+DTEND;VALUE=DATE:20271101
+SUMMARY:[prospects-and-clients] Cybersecurity Awareness Month
+DESCRIPTION:October\, every year.\nCampaign: /go/cyber-insurance\nOwner: Ma
+ rketing
+CATEGORIES:prospects-and-clients
+END:VEVENT
+BEGIN:VEVENT
+UID:dated-qbr-2027-10@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;VALUE=DATE:20271011
+DTEND;VALUE=DATE:20271030
+SUMMARY:[clients] QBR season (Q4 business reviews)
+DESCRIPTION:Book every managed client's review\; prep the pack two weeks ah
+ ead (tickets\, risk\, restore-test evidence\, roadmap).\nOwner: Account ma
+ nagement\nStart from: Portal /portal/qbr\; WorkDrive: QBR Campaign E-mails
+ \, QBR Campaign Blueprint\, S9 QBR Agenda Template
+CATEGORIES:clients
+END:VEVENT
+BEGIN:VEVENT
+UID:dated-halloween-webinar-2027@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;TZID=America/Phoenix:20271028T110000
+DTEND;TZID=America/Phoenix:20271028T114500
+SUMMARY:[prospects-and-clients] Webinar: Halloween cyber horror stories
+DESCRIPTION:Reuse the 2023 Halloween campaign kit (email invites\, call scr
+ ipt\, postcard).\nCampaign: /go/email-security\nOwner: Marketing\nStart fr
+ om: WorkDrive: Halloween Cybersecurity Webinar campaign kit (2023)
+CATEGORIES:prospects-and-clients
+END:VEVENT
+BEGIN:VEVENT
+UID:dated-client-survey-2027@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;VALUE=DATE:20271101
+DTEND;VALUE=DATE:20271102
+SUMMARY:[clients] Annual client satisfaction survey sent
+DESCRIPTION:Owner: Account management
+CATEGORIES:clients
+END:VEVENT
+BEGIN:VEVENT
+UID:dated-license-audit-2027@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;VALUE=DATE:20271108
+DTEND;VALUE=DATE:20271113
+SUMMARY:[clients] Annual license and renewal audit
+DESCRIPTION:Owner: Back Office
+CATEGORIES:clients
+END:VEVENT
+BEGIN:VEVENT
+UID:dated-holiday-fraud-webinar-2027@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;TZID=America/Phoenix:20271118T110000
+DTEND;TZID=America/Phoenix:20271118T114500
+SUMMARY:[prospects-and-clients] Webinar: Holiday invoice fraud\, 2027 editi
+ on
+DESCRIPTION:Campaign: /go/email-security\nOwner: Marketing
+CATEGORIES:prospects-and-clients
+END:VEVENT
+BEGIN:VEVENT
+UID:dated-thanks-2027@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;VALUE=DATE:20271115
+DTEND;VALUE=DATE:20271116
+SUMMARY:[clients] Client appreciation: Thanksgiving thank-you cards mailed
+DESCRIPTION:Owner: Marketing
+CATEGORIES:clients
+END:VEVENT
+BEGIN:VEVENT
+UID:dated-budget-2028@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;VALUE=DATE:20271201
+DTEND;VALUE=DATE:20271218
+SUMMARY:[clients] Year-end budget and 2028 roadmap conversations
+DESCRIPTION:Campaign: /go/proactive-business\nOwner: Account management
+CATEGORIES:clients
+END:VEVENT
+BEGIN:VEVENT
+UID:dated-reviews-2027@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;VALUE=DATE:20271206
+DTEND;VALUE=DATE:20271218
+SUMMARY:[internal] Annual performance reviews
+DESCRIPTION:Owner: Joe
+CATEGORIES:internal
+END:VEVENT
+BEGIN:VEVENT
+UID:dated-celebration-2027@digeratiexperts.com
+DTSTAMP:20261010T000000Z
+DTSTART;TZID=America/Phoenix:20271216T173000
+DTEND;TZID=America/Phoenix:20271216T203000
+SUMMARY:[internal] Year-end team celebration
+DESCRIPTION:Owner: Joe
+CATEGORIES:internal
+END:VEVENT
+END:VCALENDAR

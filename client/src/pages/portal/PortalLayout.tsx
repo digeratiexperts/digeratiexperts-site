@@ -31,7 +31,7 @@ import { resetPortalSession, signOutOfPortal, usePortalSession } from "@/compone
 import { PortalTour } from "@/components/portal/shell/PortalTour";
 import { AGREEMENT_GATE_PATH, mustVisitGate, useAgreementGate } from "@/lib/portalAgreementGate";
 import { AdminModeSwitch } from "@/components/portal/AdminModeSwitch";
-import { isDarkPortalTheme, usePortalTheme } from "@/components/portal/shell/portalTheme";
+import { isDarkPortalTheme, usePortalAppearance } from "@/components/portal/shell/portalTheme";
 import { PortalCommandPalette } from "@/components/portal/shell/PortalCommandPalette";
 import { PortalActivityPopover } from "@/components/portal/shell/PortalActivityPopover";
 import { PortalUserMenu, initialsOf, roleLabel } from "@/components/portal/shell/PortalUserMenu";
@@ -87,18 +87,7 @@ export function PortalLayout({
   useEffect(() => {
     if (gateBlocks) setLocation(AGREEMENT_GATE_PATH, { replace: true });
   }, [gateBlocks, setLocation]);
-  const [theme, themePreference, setThemePreference] = usePortalTheme();
-  // Portalled overlays (dialogs, menus, popovers) render into <body>; give
-  // <body> the portal token scope while a portal page is mounted.
-  useEffect(() => {
-    const body = document.body;
-    body.classList.add("de-portal-scope");
-    body.dataset.portalTheme = theme;
-    return () => {
-      body.classList.remove("de-portal-scope");
-      delete body.dataset.portalTheme;
-    };
-  }, [theme]);
+  const { theme, themePreference, setThemePreference } = usePortalAppearance();
   const [paletteOpen, setPaletteOpen] = useState(false);
   const impersonatingCompany = readImpersonatingCompany();
   usePortalHubEvents();
@@ -295,7 +284,12 @@ export function PortalLayout({
           </main>
         </SidebarInset>
       </SidebarProvider>
-      <PortalTour user={user} enabled={ready && !gateBlocks && !gate.isLoading} />
+      <PortalTour
+        user={user}
+        enabled={ready && !gateBlocks && !gate.isLoading}
+        // Auto-start only for someone who has been through the gate and signed their own agreements.
+        autoStart={Boolean(gate.data && !gate.data.exempt && gate.data.status.items.some((i) => i.scope === "user" && i.state === "signed"))}
+      />
       <PortalCommandPalette groups={groups} open={paletteOpen} onOpenChange={setPaletteOpen} onSignOut={handleLogout} />
     </div>
   );

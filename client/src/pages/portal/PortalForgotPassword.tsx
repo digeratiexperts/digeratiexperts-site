@@ -4,11 +4,13 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { AlertCircle, Mail, CheckCircle2 } from "lucide-react";
 import { Link } from "wouter";
-import { DE_LOGO_REVERSE } from '@/lib/brandAssets';
+import { DE_LOGO_PRIMARY, DE_LOGO_REVERSE } from '@/lib/brandAssets';
 import "@/styles/portal.css";
+import { usePortalAppearance } from "@/components/portal/shell/portalTheme";
 import TurnstileWidget from "@/components/TurnstileWidget";
 
 export default function PortalForgotPassword() {
+  const { theme } = usePortalAppearance();
   const [email, setEmail] = useState("");
   const [turnstileToken, setTurnstileToken] = useState("");
   // Turnstile tokens are single-use: remount the widget after a failed
@@ -52,12 +54,12 @@ export default function PortalForgotPassword() {
   };
 
   return (
-    <main id="main-content" tabIndex={-1} className="de-portal dark relative flex min-h-dvh items-center justify-center overflow-hidden p-4" data-theme="dark">
+    <main id="main-content" tabIndex={-1} className={`de-portal ${theme !== "light" ? "dark" : ""} relative flex min-h-dvh items-center justify-center overflow-hidden p-4`} data-theme={theme}>
       <div aria-hidden="true" className="pt-login-glow pointer-events-none absolute inset-0" />
       <div aria-hidden="true" className="pt-login-line pointer-events-none absolute inset-x-0 top-0 h-px" />
       <div className="w-full max-w-md">
         <div className="flex justify-center mb-8">
-          <img src={DE_LOGO_REVERSE} alt="Digerati Experts" className="h-10 w-auto" />
+          <img src={theme === "light" ? DE_LOGO_PRIMARY : DE_LOGO_REVERSE} alt="Digerati Experts" className="h-10 w-auto" />
         </div>
 
         <Card className="pt-still relative border-border bg-card shadow-none">
@@ -95,7 +97,7 @@ export default function PortalForgotPassword() {
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Email Address</label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Mail className="absolute left-3 top-4 h-4 w-4 text-muted-foreground" />
                     <Input
                       type="email"
                       placeholder="you@company.com"

@@ -8,7 +8,8 @@ import type { PortalUserSession } from "@/lib/portalRoles";
  * First-login guided tour of the portal shell: a spotlight that glides from
  * one control to the next with a short "press here for…" card beside it.
  *
- * Starts on its own once per person (first dashboard visit after the gate),
+ * Starts on its own once per person, on the first dashboard visit after they
+ * have signed their own agreements at the gate (`autoStart`, from PortalLayout),
  * from /portal/dashboard?tour=1 (the gate's "Take the portal tour"), or from
  * the account menu (window event `de-portal-tour`). Targets are matched by
  * selector; a target that is hidden at this width (the sidebar on a phone)
@@ -35,7 +36,7 @@ const STEPS: Step[] = [
   { target: '[data-tour="nav-self-service"]', title: "Need something new?", body: "Access, a new device, a licence, a new starter: Self-Service has the right form and routes approvals for you." },
   { target: '[data-tour="search"]', title: "Search or jump anywhere", body: "Press Ctrl+K (Cmd+K on a Mac), type a page or a task, and press Enter." },
   { target: '[data-testid="button-live-updates"]', title: "Updates land here", body: "The bell shows changes to your tickets, requests and approvals as they happen." },
-  { target: '[data-tour="nav-contracts"]', title: "Your agreements and documents", body: "Signed agreements, including the ones you just accepted, live in Contracts. Files DE shares with you are under Files & Downloads." },
+  { target: '[data-tour="nav-contracts"]', title: "Your agreements and documents", body: "Contracts holds your agreements with Digerati Experts. Files DE shares with you are under Files & Downloads." },
   { target: '[data-tour="nav-settings"]', title: "Lock down your account", body: "Turn on multi-factor authentication in Settings. A passkey is the strongest option, and DE will never ask for your password." },
   { target: '[data-testid="button-user-menu"]', title: "Your account menu", body: "Light or dark theme, settings, sign out, and this tour again whenever you want it." },
   {
@@ -80,7 +81,7 @@ function cardPosition(rect: Rect | null): { top: number; left: number } | null {
   return { top, left };
 }
 
-export function PortalTour({ user, enabled }: { user: PortalUserSession | null; enabled: boolean }) {
+export function PortalTour({ user, enabled, autoStart }: { user: PortalUserSession | null; enabled: boolean; autoStart: boolean }) {
   const [step, setStep] = useState<number | null>(null);
   const [rect, setRect] = useState<Rect | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -101,7 +102,7 @@ export function PortalTour({ user, enabled }: { user: PortalUserSession | null; 
     }
   }, [userId]);
 
-  // Triggers: ?tour=1, the account-menu event, or first visit to the dashboard.
+  // Triggers: ?tour=1, the account-menu event, or the first dashboard visit after the gate.
   useEffect(() => {
     if (!enabled || !user) return;
     const onEvent = () => setStep(0);
@@ -113,7 +114,7 @@ export function PortalTour({ user, enabled }: { user: PortalUserSession | null; 
     } catch {
       /* treat as seen */
     }
-    if (params.get("tour") === "1" || (!seen && user.role !== "admin" && window.location.pathname === "/portal/dashboard")) {
+    if (params.get("tour") === "1" || (autoStart && !seen && user.role !== "admin" && window.location.pathname === "/portal/dashboard")) {
       const t = window.setTimeout(() => setStep(0), 400);
       return () => {
         window.clearTimeout(t);
@@ -121,7 +122,7 @@ export function PortalTour({ user, enabled }: { user: PortalUserSession | null; 
       };
     }
     return () => window.removeEventListener(PORTAL_TOUR_EVENT, onEvent);
-  }, [enabled, user, userId]);
+  }, [enabled, autoStart, user, userId]);
 
   // A sidebar item hidden at this width (phones) points at the menu button instead.
   const [viaMenu, setViaMenu] = useState(false);

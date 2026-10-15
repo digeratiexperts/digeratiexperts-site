@@ -22,6 +22,11 @@ describe("sticky CTA visibility", () => {
     expect(isStickyCtaRouteAllowed("/solutions/request")).toBe(false);
   });
 
+  it("keeps the bar off /contact, where it covered the email and phone", () => {
+    expect(isStickyCtaRouteAllowed("/contact")).toBe(false);
+    expect(isStickyCtaRouteAllowed("/contact?topic=support")).toBe(false);
+  });
+
   it("keeps the bar off the quiz room, which carries its own next step", () => {
     expect(isStickyCtaRouteAllowed("/quote-wizard")).toBe(false);
     expect(isStickyCtaRouteAllowed("/quote-wizard?utm_source=x")).toBe(false);
@@ -128,6 +133,18 @@ describe("sticky CTA visibility", () => {
       rectOverlapsPageContent(
         { top: 700, left: 40, width: 1200, height: 100, right: 1240 },
         () => [dialog],
+      ),
+    ).toBe(true);
+  });
+
+  it("steps aside while a photographic plate passes under it", () => {
+    const plate = {
+      closest: (selector: string) => (selector === ".de-plate-band" ? plate : null),
+    } as unknown as Element;
+    expect(
+      rectOverlapsPageContent(
+        { top: 700, left: 40, width: 1200, height: 100, right: 1240 },
+        () => [plate],
       ),
     ).toBe(true);
   });

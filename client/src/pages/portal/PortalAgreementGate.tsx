@@ -10,7 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Callout, Field, Token } from "@/components/portal/ui";
-import { usePortalTheme } from "@/components/portal/shell/portalTheme";
+import { isDarkPortalTheme, usePortalAppearance } from "@/components/portal/shell/portalTheme";
 import { signOutOfPortal, usePortalSession } from "@/components/portal/shell/portalSession";
 import { AGREEMENT_GATE_KEY, useAgreementGate, type AgreementGateResponse } from "@/lib/portalAgreementGate";
 import { portalPost } from "@/lib/portalApi";
@@ -27,24 +27,19 @@ import "@/styles/portal.css";
  */
 export default function PortalAgreementGate() {
   const { ready, user } = usePortalSession();
-  const [theme] = usePortalTheme();
+  // Same appearance owner as PortalLayout: every portal theme (black is the default,
+  // plus dark and console) and the saved contrast, with body scope for Radix portals.
+  const { theme } = usePortalAppearance();
+  const dark = isDarkPortalTheme(theme);
   useSEO({ title: "Welcome | Client Portal", description: "Review and sign your Client Portal agreements.", noIndex: true });
-  useEffect(() => {
-    document.body.classList.add("de-portal-scope");
-    document.body.dataset.portalTheme = theme;
-    return () => {
-      document.body.classList.remove("de-portal-scope");
-      delete document.body.dataset.portalTheme;
-    };
-  }, [theme]);
 
   const { data, isLoading, error, refetch } = useAgreementGate(ready && !!user);
 
   return (
-    <div className={cn("de-portal min-h-dvh bg-background text-foreground", theme === "dark" && "dark")} data-theme={theme}>
+    <div className={cn("de-portal min-h-dvh bg-background text-foreground", dark && "dark")} data-theme={theme}>
       <header className="sticky top-0 z-20 border-b border-border bg-[hsl(var(--pt-topbar))] backdrop-blur">
         <div className="mx-auto flex h-14 max-w-3xl items-center gap-3 px-4">
-          <img src={theme === "dark" ? DE_LOGO_REVERSE : DE_LOGO_PRIMARY} alt="Digerati Experts" className="h-7 w-auto" />
+          <img src={dark ? DE_LOGO_REVERSE : DE_LOGO_PRIMARY} alt="Digerati Experts" className="h-7 w-auto" />
           <span className="hidden text-sm text-muted-foreground sm:inline">Client Portal</span>
           <Button variant="ghost" size="sm" className="ml-auto" onClick={() => void signOutOfPortal()} data-testid="gate-sign-out">
             <LogOut className="h-4 w-4" aria-hidden="true" />
@@ -268,6 +263,8 @@ const STATE_COPY = (item: AgreementGateItem, company: string) => {
   switch (item.state) {
     case "updated":
       return `Our ${item.title} has been updated. To continue using the portal, you must review and sign the agreement below.`;
+    case "not_open":
+      return `Digerati Experts is finalising this agreement. Nothing is needed from you yet; we will ask you to review and sign it once it is ready.`;
     case "awaiting_company":
       return `An org admin or your company IT contact signs this once for everyone at ${company}. You do not need to do anything; you can still read it.`;
     default:
@@ -279,7 +276,8 @@ const STATE_COPY = (item: AgreementGateItem, company: string) => {
 
 function AgreementCard({ item, index, total, company }: { item: AgreementGateItem; index: number; total: number; company: string }) {
   const reduce = useReducedMotion();
-  const waiting = item.state === "awaiting_company";
+  const notOpen = item.state === "not_open";
+  const waiting = item.state === "awaiting_company" || notOpen;
   return (
     <motion.article
       initial={reduce ? false : { opacity: 0, y: 8 }}
@@ -291,7 +289,7 @@ function AgreementCard({ item, index, total, company }: { item: AgreementGateIte
     >
       <div className="flex flex-wrap items-center gap-2">
         {waiting ? (
-          <Token label="Waiting on your company" tone="neutral" />
+          <Token label={notOpen ? "Not open for signing yet" : "Waiting on your company"} tone="neutral" />
         ) : (
           <span className="inline-flex items-center gap-1.5 text-sm font-semibold pt-link">
             <AlertCircle className="h-4 w-4" aria-hidden="true" />
@@ -308,18 +306,21 @@ function AgreementCard({ item, index, total, company }: { item: AgreementGateIte
       </h3>
       <p className="mt-1 text-sm text-muted-foreground">{STATE_COPY(item, company)}</p>
       <p className="mt-1 text-sm text-muted-foreground">{item.summary}</p>
-      <a
-        href={item.pdf}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium pt-link underline-offset-2 hover:underline"
-        data-testid={`gate-pdf-${item.key}`}
-      >
-        <FileText className="h-4 w-4" aria-hidden="true" />
-        View {item.title} (PDF)
-        <ExternalLink className="h-3 w-3" aria-hidden="true" />
-        <span className="sr-only">(opens in a new tab)</span>
-      </a>
+      {/* The draft of an agreement that is not open yet is not offered for review. */}
+      {!notOpen && (
+        <a
+          href={item.pdf}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium pt-link underline-offset-2 hover:underline"
+          data-testid={`gate-pdf-${item.key}`}
+        >
+          <FileText className="h-4 w-4" aria-hidden="true" />
+          View {item.title} (PDF)
+          <ExternalLink className="h-3 w-3" aria-hidden="true" />
+          <span className="sr-only">(opens in a new tab)</span>
+        </a>
+      )}
       <p className="mt-2 text-xs text-muted-foreground">
         Version <span className="pt-num">{item.version}</span> · Last modified{" "}
         <span className="pt-num">{new Date(`${item.lastModified}T12:00:00Z`).toLocaleDateString("en-US", { dateStyle: "long", timeZone: "UTC" })}</span>

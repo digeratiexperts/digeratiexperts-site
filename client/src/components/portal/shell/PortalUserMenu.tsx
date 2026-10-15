@@ -38,6 +38,7 @@ export function roleLabel(user: PortalUserSession | null): string {
 const THEME_OPTIONS: { value: PortalThemePreference; label: string; Icon: typeof Sun }[] = [
   { value: "system", label: "Match device", Icon: Monitor },
   { value: "dark", label: "Dark", Icon: Moon },
+  { value: "black", label: "Black", Icon: Moon },
   { value: "light", label: "Light", Icon: Sun },
   { value: "console", label: "Admin console", Icon: PanelsTopLeft },
 ];
@@ -69,7 +70,7 @@ export function PortalUserMenu({ user, themePreference, onTheme, onSignOut, comp
         <DropdownMenuLabel className="font-normal">
           <p className="truncate text-sm font-medium">{name}</p>
           <p className="truncate text-xs text-muted-foreground">{user?.email}</p>
-          <p className="mt-1 text-[11px] uppercase tracking-[0.08em] text-muted-foreground">{roleLabel(user)}</p>
+          <p className="pt-role-badge mt-1 text-[11px] uppercase tracking-[0.08em]">{roleLabel(user)}</p>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuLabel className="pb-1 pt-1.5 text-[11px] font-normal uppercase tracking-[0.08em] text-muted-foreground" id="menu-theme-label">

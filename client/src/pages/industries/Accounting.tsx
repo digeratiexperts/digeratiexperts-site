@@ -145,7 +145,7 @@ export default function Accounting() {
         </Container>
       </Chapter>
 
-      <Chapter plate="ring" tone="well" data-testid="section-expectations">
+      <Chapter plate="accounting" tone="well" data-testid="section-expectations">
         <Container>
           <ChapterHeader
             tone="well"

@@ -35,6 +35,9 @@ const BLOCKING_OVERLAY_SELECTORS = [
   "[data-testid='store-trust-strip']",
   "[data-testid^='product-']",
   "[data-testid='pdp-related-products']",
+  // The photographic plate between chapters (PlateBand): the bar would sit
+  // across the bottom of the picture, so it steps aside while a plate passes.
+  ".de-plate-band",
 ];
 
 export function isStickyCtaRouteAllowed(path: string): boolean {
@@ -48,6 +51,9 @@ export function isStickyCtaRouteAllowed(path: string): boolean {
     // with sticky chrome the real homepage never shows: at 1440 the bar sits
     // across the middle of the hero, cutting the headline.
     !pathname.startsWith("/version-") &&
+    // The contact page is itself the conversion step. At 1440 the bar sat over
+    // the email and phone, the very details a visitor came for.
+    pathname !== "/contact" &&
     !pathname.startsWith("/portal") &&
     !pathname.startsWith("/store") &&
     !isDoor2Path(pathname) &&

@@ -36,6 +36,10 @@
 .v8 .v8s-07 .proof-qr__copy { min-width: 0; }
 .v8 .v8s-07 .proof-qr__copy .v8-small { margin-top: 4px; color: var(--v8-muted-soft); }
 .v8 .v8s-07 .proof-qr__copy .v8-link { margin-top: 4px; min-height: 44px; }
+/* No review entries (Joe, 2026-10-14): the QR leads its own short card, so it drops the divider it carries under a feed. */
+.v8 .v8s-07 .proof-panel--qr .proof-qr { margin-top: 0; padding-top: 0; border-top: 0; }
+/* Beside a review feed the case-studies card keeps its own short height instead of stretching into a tall empty box. */
+.v8 .v8s-07 .proof-pair--feed > .proof-panel--cases { align-self: start; }
 @media (max-width: 1023px) {
   .v8 .v8s-07 .proof-rail { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .v8 .v8s-07 .proof-rail > li:nth-child(3) { border-left: 0; }
@@ -43,7 +47,8 @@
   .v8 .v8s-07 .proof-cells { grid-template-columns: 1fr; }
   .v8 .v8s-07 .proof-cells > li { border-left: 0; padding-left: 0; padding-right: 0; }
   .v8 .v8s-07 .proof-cells > li + li { border-top: 1px solid var(--v8-hairline); }
-  .v8 .v8s-07 .proof-pair { grid-template-columns: 1fr; }
+  /* minmax(0, …): a review carousel must not set the column's minimum width on phones. */
+  .v8 .v8s-07 .proof-pair { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 639px) {
   .v8 .v8s-07 .proof-outcomes { margin-top: 36px; }

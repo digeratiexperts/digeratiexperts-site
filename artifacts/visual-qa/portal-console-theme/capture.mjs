@@ -15,7 +15,7 @@ const login = await page.request.post(`${base}/api/portal/login`, { data: { emai
 if (!login.ok()) throw new Error(`login ${login.status()} ${await login.text()}`);
 
 const results = [];
-for (const theme of ["console", "dark"]) {
+for (const theme of ["console", "black"]) {
   for (const route of ["dashboard", "tickets"]) {
     for (const width of [390, 768, 1440]) {
       await page.setViewportSize({ width, height: width === 390 ? 844 : 900 });

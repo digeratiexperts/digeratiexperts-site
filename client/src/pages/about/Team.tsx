@@ -79,6 +79,9 @@ export default function Team() {
           />
         </div>
       }
+      // The founder card is the page's only person, so phones show it too (it sat
+      // in a desktop-only hero column; Joe, 2026-10-14).
+      heroAsideOnMobile
       heroAside={
         <div
           className="flex flex-col items-start gap-6 rounded-xl border border-[var(--de-hairline)] bg-de-raised p-6 sm:flex-row sm:items-center md:p-7"

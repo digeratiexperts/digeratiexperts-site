@@ -164,6 +164,10 @@ describe("Door 2 public leakage and flow contract", () => {
     expect(requestPage).toContain("Phone");
     expect(requestPage).toContain("publicContactProblems");
     expect(requestPage).toContain("company_website");
+    // The Turnstile check (Joe, 2026-10-14): its token rides the submit, a failed attempt remounts it, and Submit waits for it.
+    expect(requestPage).toContain("<TurnstileWidget key={turnstileKey}");
+    expect(requestPage).toContain("turnstileToken,");
+    expect(requestPage).toContain("disabled={blocked || awaitingCheck}");
     expect(requestPage).not.toContain("Anything DE should know");
     expect(requestPage).not.toContain("<textarea");
     expect(requestPage).not.toContain("not a cart");

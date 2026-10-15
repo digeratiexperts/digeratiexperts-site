@@ -73,17 +73,27 @@ export function createPaymentReadiness(options: PaymentReadinessOptions) {
     }
   }
 
+  /** Starts a probe, or joins the one in flight. */
+  function probeNow(): Promise<boolean> {
+    if (!inFlight) {
+      inFlight = runProbe().finally(() => {
+        inFlight = null;
+      });
+    }
+    return inFlight;
+  }
+
   return {
     /** Fail-closed boolean for the public flag. */
     async isReady(): Promise<boolean> {
       if (!options.isConfigured()) return false;
       if (fresh()) return last!.ready;
-      if (!inFlight) {
-        inFlight = runProbe().finally(() => {
-          inFlight = null;
-        });
-      }
-      return inFlight;
+      return probeNow();
+    },
+    /** Probes even when the cached answer is fresh (the keep-warm timer). */
+    async refresh(): Promise<boolean> {
+      if (!options.isConfigured()) return false;
+      return probeNow();
     },
     /** Record a real-world failure (e.g. OAuth refresh failed during checkout). */
     markFailed(error: string) {
@@ -98,3 +108,37 @@ export function createPaymentReadiness(options: PaymentReadinessOptions) {
 }
 
 export type PaymentReadiness = ReturnType<typeof createPaymentReadiness>;
+
+/** Inside DEFAULT_OK_TTL_MS, so a good answer is replaced before it goes stale. */
+export const DEFAULT_KEEP_WARM_MS = 9 * 60 * 1000;
+/** Lets the boot-time Zoho Connect snapshot load before the first probe. */
+export const DEFAULT_KEEP_WARM_FIRST_DELAY_MS = 60 * 1000;
+
+/**
+ * Re-probes on a timer so readiness stays fresh between checkouts: without it,
+ * /api/health reads "unknown" after a restart and "not ready" ten minutes after
+ * the last checkout, while checkout itself works. The probe is answered by the
+ * cached access token, so this costs Zoho at most one token refresh an hour.
+ * Unconfigured or review instances never probe. Returns a stop function.
+ */
+export function keepPaymentReadinessWarm(
+  readiness: Pick<PaymentReadiness, "refresh">,
+  options: { intervalMs?: number; firstDelayMs?: number } = {},
+): () => void {
+  const intervalMs = options.intervalMs ?? DEFAULT_KEEP_WARM_MS;
+  const tick = () => {
+    // refresh() records its own failures; nothing to log here.
+    void readiness.refresh().catch(() => false);
+  };
+  let interval: ReturnType<typeof setInterval> | null = null;
+  const first = setTimeout(() => {
+    tick();
+    interval = setInterval(tick, intervalMs);
+    (interval as any)?.unref?.();
+  }, options.firstDelayMs ?? DEFAULT_KEEP_WARM_FIRST_DELAY_MS);
+  (first as any)?.unref?.();
+  return () => {
+    clearTimeout(first);
+    if (interval) clearInterval(interval);
+  };
+}
