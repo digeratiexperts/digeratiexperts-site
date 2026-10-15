@@ -6,7 +6,7 @@ import type { GroupRequestKind, GroupRequestStatus } from "@shared/representatio
 
 /**
  * Group-level requests filed by representatives. Postgres when the database
- * is up (migrations/0018_portal_group_requests.sql); memory otherwise, for
+ * is up (migrations/0019_portal_group_requests.sql); memory otherwise, for
  * the dev server and route tests (same pattern as orgDirectoryStore).
  */
 

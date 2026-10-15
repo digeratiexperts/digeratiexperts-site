@@ -45,7 +45,7 @@ Never sent: approval authority, spending limits, headcounts, job titles, provena
 
 Kinds → required scope: `group_request` → `group_requests`; `equipment_collection` → `equipment_collection`; `technology_assessment` → `technology_assessments`; `group_concern` → `group_concerns`.
 
-The company always comes from the session (`effectiveClientId`), never the body (the body schema is strict). A Zoho Desk ticket is opened through the same Desk helper as service requests, tagged with the group and the representative's role, and states that representation is not approval authority. Requests live in `portal_group_requests` (`migrations/0018_portal_group_requests.sql`, additive).
+The company always comes from the session (`effectiveClientId`), never the body (the body schema is strict). A Zoho Desk ticket is opened through the same Desk helper as service requests, tagged with the group and the representative's role, and states that representation is not approval authority. Requests live in `portal_group_requests` (`migrations/0019_portal_group_requests.sql`, additive).
 
 Page: `/portal/representation` ("My Groups" under Account in the Portal nav).
 

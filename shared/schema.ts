@@ -327,7 +327,7 @@ export const portalManualRecords = pgTable("portal_manual_records", {
 
 /**
  * Group-level requests filed by a Hub-defined representative on behalf of the
- * group they represent (migrations/0018_portal_group_requests.sql;
+ * group they represent (migrations/0019_portal_group_requests.sql;
  * shared/representation.ts). scope_key is the Hub group key (site:12, unit:7,
  * account); authorization is re-checked against the Hub projection on every read.
  */
