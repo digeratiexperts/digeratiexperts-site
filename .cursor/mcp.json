@@ -5,6 +5,16 @@
       "args": [
         "chrome-devtools-mcp@latest"
       ]
+    },
+    "dataforseo": {
+      "command": "npx",
+      "args": [
+        "dataforseo-mcp-server@3.1.3"
+      ],
+      "env": {
+        "DATAFORSEO_LOGIN": "${env:DATAFORSEO_LOGIN}",
+        "DATAFORSEO_PASSWORD": "${env:DATAFORSEO_PASSWORD}"
+      }
     }
   }
 }

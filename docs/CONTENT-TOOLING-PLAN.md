@@ -24,10 +24,10 @@ Prices come from vendor-comparison pages found by search on 2026-10-03, not from
 | 2 | axe-core via `@axe-core/playwright` | Free | Website, Store, Portal | WCAG A/AA scan in CI (`npm run smoke:a11y`) | **In CI** |
 | 3 | `vite-imagetools` | Free | Website, Store | Build-time AVIF/WebP and responsive srcsets | **In `vite.config.ts`** |
 | 4 | JSON-LD via `client/src/components/JsonLd.tsx` | Free | Website, Store, Blog | Organization, WebSite, Service, Product, Article, FAQ, Breadcrumb schema. Validate with Google's Rich Results Test | **Already live**; extend when a page lacks it |
-| 5 | kie.ai (existing key) | Pay per use. Veo 3.1 Fast ≈ $0.10–0.12/s; Lite ≈ $0.05/s | Website, `/scrollcraft` | Images (Nano Banana, Flux, Midjourney), video (Veo, Kling, Runway), music (Suno) through one account | **In use** for images; video when a page needs it |
-| 6 | DataForSEO (official MCP server) | $50 prepaid, credits never expire; ≈ $0.0006 per standard SERP call | Website / Blog, Hub research | Live keyword volumes, SERPs, competitor pages for Claude | Joe: create account |
+| 5 | kie.ai (existing key) | Pay per use. Veo 3.1 Fast ≈ $0.10–0.12/s; Lite ≈ $0.05/s | Website, `/scrollcraft` | Images (Nano Banana, Flux, Midjourney), video (Veo, Kling, Runway), music (Suno) through one account | **In use** for images; topped up $50 on 2026-10-07, enough for hero video |
+| 6 | DataForSEO (official MCP server) | $50 prepaid, credits never expire; ≈ $0.0006 per standard SERP call | Website / Blog, Hub research | Live keyword volumes, SERPs, competitor pages for Claude | **Connected** 2026-10-15 (`.mcp.json`, `.cursor/mcp.json`); first keyword pull done |
 | 7 | Canva (Brand Kit) | Pro ≈ $12–15/mo if not already on it | Store promos, social, PDFs | Brand-locked graphics for non-developers; Canva MCP already connects to Claude | Joe: confirm plan, load DE kit |
-| 8 | Recraft (Basic or Pro) | ≈ $12–20/mo. **Free plan is not licensed for commercial use** | Website, Store, Portal | Native SVG icons and illustrations with style locks | **Skill built** (`/recraft-icons`); Joe: subscribe and set `RECRAFT_API_KEY` |
+| 8 | Recraft (Basic or Pro) | ≈ $12–20/mo. **Free plan is not licensed for commercial use** | Website, Store, Portal | Native SVG icons and illustrations with style locks | **Skill built** (`/recraft-icons`); Basic plan chosen (Joe, 2026-10-08); key pending in the environment |
 | 9 | Frase (Starter) | ≈ $39–49/mo | Website / Blog | SERP-based content scoring with a read-write MCP server | Decide after 30 days of #6 |
 
 Baseline monthly cost: about $12–35 plus pay-per-use (kie.ai, DataForSEO after the $50). With Frase: about $55–85.
@@ -98,9 +98,10 @@ Source images live next to the code that imports them; reviewed, already-optimiz
 3. First run: `node .claude/skills/recraft-icons/scripts/recraft.mjs check`, then one `generate` for a concept Lucide lacks, review the sheet against Lucide at 20px, and approve per `IMAGERY.md`. Optionally lock the set with `create-style` from 2-5 approved icons.
 
 ### Step 3: DataForSEO
-1. Create an account and prepay $50.
-2. Add the official DataForSEO MCP server (see their docs for the current package and env names) with the API login in the environment, not in a committed file.
-3. First job: keyword research for the top service pages; results feed the Hub, not straight into page copy.
+1. **Done (2026-10-15):** account verified, API login and password stored as `DATAFORSEO_LOGIN` / `DATAFORSEO_PASSWORD` in the Claude cloud environment (and the gitignored `.env` locally), `api.dataforseo.com` allowed in the environment's network settings.
+2. **Done:** the official MCP server (`dataforseo-mcp-server`, pinned) is declared in `.mcp.json` and `.cursor/mcp.json`; it reads the two variables from the environment. Codex / Gemini: add the same `command` / `args` / `env` to their MCP settings.
+3. **Security decision (Joe, 2026-10-15): no IP whitelist.** Cloud agent sessions have no fixed outbound IP, so any whitelist entry blocks them, and DataForSEO advises against it with integration tools. The account is prepaid, so the most a leaked password can cost is the balance. Guardrails instead: keep the balance at $50 or less, no auto top-up, reset the API password if it is ever exposed. Revisit (whitelist the VPS `192.227.158.46` and route calls through it) only if the server starts calling DataForSEO on a schedule.
+4. **First job, done 2026-10-15:** Google Ads monthly search volume for 20 service keywords, Arizona and US ($0.18). Results feed the Hub evidence chain, not page copy directly. Arizona leaders: "managed it services" 320/mo, "it consulting" 170, "managed it services phoenix" 110 (CPC ≈ $182), "it support phoenix" 90, "business phone system" 90.
 
 ### Step 4: video through kie.ai
 Use the existing key with Veo Fast or Kling through `/scrollcraft` or `/video-to-website` when a page needs a hero loop. Set a monthly credit cap in the kie.ai dashboard first.

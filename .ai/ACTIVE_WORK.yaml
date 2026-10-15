@@ -49,6 +49,19 @@ claims:
       - docs/marketing/ (generated calendar .md, .ics, .html)
     status: verified-live
     started: 2026-10-10
+    released: 2026-10-15
+    pr: 564
+    merge_sha: f70c755a50e20719b2e2ef017583a02e514b1f43
+    verification: >-
+      Merged as f70c755a by the lead integrator on Joe's "triage and merge the
+      other open PRs" / "yes approved", after merging main into the branch (ledger
+      union only) and green CI on 84ad7380 (bundle budget included; 299.79/300 kB
+      measured locally). Production release.txt reads f70c755a. Read-only check on
+      https://digeratiexperts.com: /events and
+      /events/cyber-insurance-renewal-readiness answer 200 at 390 px with no page
+      errors or sideways scroll, say "planned", carry robots noindex, nofollow,
+      and sitemap.xml lists no /events/ URL. The interest form was not submitted.
+      VERIFIED LIVE. Files released.
     note: >-
       Public live-session pages (/events, /events/:slug) with countdown, time-zone
       switch, .ics download and a registration form posting to /api/contact. All
@@ -75,8 +88,20 @@ claims:
       - docs/SECRETS-REQUIRED.md (new)
       - docs/proposals/downloads-cache.md (new)
       - docs/proposals/portal-security-headers.md (new)
-    status: active
+    status: verified-live
     started: 2026-10-10
+    released: 2026-10-15
+    pr: 560
+    merge_sha: 9521f1139dd07526f3e9fc39635151ed23378d67
+    verification: >-
+      Merged as 9521f113 by the lead integrator on Joe's "triage and merge the
+      other open PRs" after a line-by-line review and green CI on 201f906f;
+      shipped in release f70c755a (release.txt). Live checks: anonymous GET
+      /api/health returns only status, timestamp, uptime and services {database,
+      zohoDesk, zoho} with Cache-Control no-store and database connected (what
+      production-health.yml reads); GET / sends X-XSS-Protection: 0. The
+      canonical-host probe and the docs-only CI path run in Actions, not on the
+      site. VERIFIED LIVE. Files released.
     note: >-
       Thread T2 of the DE backlog (tasks 13-20), taken over from Cursor. 13, 14
       and 16 were already on main and are skipped with evidence in the PR. Does
@@ -89,8 +114,19 @@ claims:
     files:
       - package.json (overrides block only)
       - package-lock.json
-    status: active
+    status: verified-live
     started: 2026-10-10
+    released: 2026-10-15
+    pr: 559
+    merge_sha: 64c8035153a91b24004ef9990c26ab1b83343f31
+    verification: >-
+      Merged as 64c80351 by the lead integrator on Joe's "triage and merge the
+      other open PRs" after review (four scoped overrides; main's package files
+      unchanged since the PR base) and green CI on 51422980. Combined-set npm
+      audit --omit=dev: 0 vulnerabilities. Shipped in release f70c755a: the
+      production deploy ran npm ci and the build with sharp 0.35 and went live
+      (release.txt f70c755a), so the VPS Node satisfies sharp. VERIFIED LIVE.
+      Files released.
     note: >-
       Backlog task 11: npm audit fix plus four scoped overrides (uuid under
       gaxios and teeny-request, tinypool under vitest, sharp under
@@ -3543,7 +3579,7 @@ claims:
     owner: claude
     subsystem: licensing
     branch: claude/exciting-cannon-ttx8m8
-    base_sha: 9ba5e21
+    base_sha: 2f361a8
     files:
       - shared/starterKits.ts (new), shared/jumpcloudPlan.ts (new) and their tests
       - migrations/0018_license_jumpcloud_links.sql (new)
@@ -3552,11 +3588,15 @@ claims:
       - server/routes.ts (registerLicenseBoardRoutes deps only)
       - client/src/pages/portal/AdminLicenseBoard.tsx, client/src/components/portal/licensing/* , client/src/lib/licenseBoardApi.ts
       - artifacts/visual-qa/license-patch-bay/**
-    status: active
+    status: verified-live
     started: 2026-10-10
     note: >-
-      PR 574 verified live 2026-10-14 (deploy of 55b0492 applied migration
-      0018). Follow-up on the same branch, Joe 2026-10-14 ("it should look
+      Verified live 2026-10-15: PRs 574, 595 and 597 are all in production
+      (release.txt ef9a63c, /healthz 200, License Patch Bay loads). PR 595 (company page console) merged 2026-10-14. Then, Joe "merge,
+      then do the first page too": pool page with an Add from catalog
+      command and side panel (catalog as rows, not a 34-card wall), summary
+      chips, calmer company rows. PR 574 verified live 2026-10-14 (deploy of
+      55b0492 applied migration 0018). Earlier follow-up on the same branch, Joe 2026-10-14 ("it should look
       like azure or entra or cytracom"): company page as a console with
       breadcrumb, status chips and tabs (Patch bay, Starter kit, JumpCloud
       installs); fixes the squashed Device name box on phones.
@@ -3815,7 +3855,7 @@ claims:
       - client/src/pages/GenericServicePage.tsx (a page without a process chapter carries its plate on the included chapter)
       - client/src/lib/stickyCtaVisibility.ts and its test (the assessment bar steps aside over a plate)
       - artifacts/kie-ai/nano-banana/**/2026-10-10-*, .claude/kie-budget/ledger.jsonl
-    status: in-review
+    status: verified-live
     started: 2026-10-10
     note: >-
       Joe, 2026-10-10: "continue everything", after the visual check showed
@@ -3824,3 +3864,42 @@ claims:
       site-unique-plates-2026-10-10 (projected $0.72; closed). Three light plates
       had the studio softbox in frame and were cropped. Generated images stay
       ILLUSTRATIVE until Joe approves them on this PR.
+      Merged as 9637350f (PR 586, in Joe's "triage and merge the other open PRs"
+      batch; the integrating session removed the GenericServicePage
+      included-chapter plate, which professional-services did not need).
+      Production release.txt f70c755a contains it; all twelve plate AVIFs in the
+      live bundle return 200 and the sticky-bar rule ships. Joe approved the
+      plates on 2026-10-15 ("merge 586"). VERIFIED LIVE. Files released.
+
+  - id: dataforseo-mcp-wiring
+    owner: claude
+    subsystem: content-tooling
+    branch: claude/gifted-cray-mfxf3k
+    base_sha: f70c755a
+    files:
+      - .mcp.json (dataforseo server, pinned)
+      - .cursor/mcp.json (dataforseo server, pinned)
+      - .env.example (DATAFORSEO_LOGIN / DATAFORSEO_PASSWORD names only)
+      - docs/CONTENT-TOOLING-PLAN.md (statuses, Step 3, IP-whitelist decision)
+    status: implemented
+    started: 2026-10-15
+    note: >-
+      Joe, 2026-10-15: DataForSEO account verified and keys set in the Claude
+      environment; "do what is best" on IP whitelisting (decision: none, with
+      prepaid-balance guardrails). Config and docs only; no runtime code.
+
+  - id: healthz-db-reconnect
+    owner: claude
+    subsystem: production-runtime
+    branch: claude/gifted-cray-mfxf3k
+    base_sha: ef9a63c2
+    files:
+      - server/healthProbe.ts (databaseAcceptsConnections retries the connection when there is no pool)
+      - server/healthProbe.test.ts
+    status: implemented
+    started: 2026-10-15
+    note: >-
+      Production incident 2026-10-15 00:38 UTC: deploy verification and its
+      rollback both failed (/healthz 503). /healthz never retried the database
+      after a failed boot connect, so one stall at restart kept it red. Joe:
+      "check again, try to fix it."

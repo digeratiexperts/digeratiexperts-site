@@ -1,6 +1,5 @@
 import { zohoClient } from "./zoho/zohoClient";
 import { zohoCRMService } from "./zoho/zohoCRM";
-import { money } from "@shared/storeCommerce";
 import type { CanonicalQuoteLine } from "./storeQuoteCommerce";
 import { quoteTotals } from "./storeQuoteCommerce";
 import { websiteLeadTaxonomy } from "./zoho/leadTaxonomy";
@@ -28,7 +27,6 @@ export function crmAccountAction(
 export type StoreQuoteCrmResult = {
   accountId?: string;
   contactId?: string;
-  dealId?: string;
   leadId?: string;
   quoteId?: string;
 };
@@ -60,15 +58,11 @@ export function buildCrmQuoteDescription(quote: StoreQuoteCrmInput): string {
     .slice(0, 3000);
 }
 
-function closingDate(): string {
-  const date = new Date();
-  date.setUTCDate(date.getUTCDate() + 30);
-  return date.toISOString().slice(0, 10);
-}
-
 /**
  * Best-effort CRM sync. Never throws to the quote HTTP path.
- * Zoho Quotes module is optional — Deal + Contact + Lead always attempted first.
+ * Zoho Quotes module is optional; Account, Contact and Lead are attempted first.
+ * A store quote never creates a Deal: a person opens the Deal once the request
+ * is qualified (issue 206, ADR-MAP-004; Joe, 2026-10-08).
  */
 export async function syncStoreQuoteToCrm(quote: StoreQuoteCrmInput): Promise<StoreQuoteCrmResult | null> {
   if (!zohoClient.isConfigured()) {
@@ -81,8 +75,6 @@ export async function syncStoreQuoteToCrm(quote: StoreQuoteCrmInput): Promise<St
   const company = (quote.companyName || "Store quote prospect").trim().slice(0, 200);
   const { first, last } = splitName(quote.contactName);
   const description = buildCrmQuoteDescription(quote);
-  const totals = quoteTotals(quote.requestedItems);
-  const amount = money(totals.dueToday + totals.monthly + totals.annual);
 
   const accountAction = crmAccountAction(quote);
   try {
@@ -121,29 +113,6 @@ export async function syncStoreQuoteToCrm(quote: StoreQuoteCrmInput): Promise<St
     }
   } catch (error: any) {
     console.warn("[store-quote] CRM contact sync failed:", error?.message || error);
-  }
-
-  const dealName = `Store quote ${quote.quoteNumber}${quote.companyName ? ` — ${quote.companyName}` : ""}`.slice(0, 120);
-  try {
-    const existingDeals = await zohoCRMService.searchDeals(
-      `(Deal_Name:equals:${dealName.replace(/[()]/g, "")})`,
-    );
-    if (existingDeals[0]?.id) {
-      result.dealId = existingDeals[0].id;
-    } else {
-    const created = await zohoCRMService.createDeal({
-      Deal_Name: dealName,
-      Amount: amount,
-      Stage: "Qualification",
-      Closing_Date: closingDate(),
-      Account_Name: result.accountId ? { id: result.accountId, name: company } : undefined,
-      Contact_Name: result.contactId ? { id: result.contactId, name: quote.contactName } : undefined,
-      Description: description,
-    } as any);
-    result.dealId = (created as { details?: { id?: string }; id?: string }).details?.id || created.id;
-    }
-  } catch (error: any) {
-    console.warn("[store-quote] CRM deal sync failed:", error?.message || error);
   }
 
   try {
@@ -185,7 +154,6 @@ export async function syncStoreQuoteToCrm(quote: StoreQuoteCrmInput): Promise<St
     quoteNumber: quote.quoteNumber,
     accountId: result.accountId || null,
     contactId: result.contactId || null,
-    dealId: result.dealId || null,
     leadId: result.leadId || null,
     quoteId: result.quoteId || null,
   });
