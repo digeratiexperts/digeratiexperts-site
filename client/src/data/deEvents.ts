@@ -13,9 +13,14 @@ import type { CampaignSlug } from "./campaigns";
  * is unambiguous all year.
  *
  * TRUTH (Tier 0): a session stays `planned` until Joe confirms the date, the
- * presenter and the meeting platform. A planned session page is `noindex`,
- * stays out of the sitemap, and says "planned" next to the date; it never
- * shows a join link, an attendee count or a guest speaker it does not have.
+ * presenter and the meeting platform. Joe, 2026-10-15: "Prepare campaign
+ * assets but do not publish unconfirmed event details." So a planned session
+ * is not public at all: /events does not list it, its page answers 404 (the
+ * client shows Not Found and server/spaKnownPaths.ts does not know the path),
+ * and nothing about it reaches search. Confirming a session means setting
+ * `status: "confirmed"` here AND adding its path to spaKnownPaths; the tests
+ * fail if either is missing. A public session never shows a join link, an
+ * attendee count or a guest speaker it does not have.
  */
 
 export type EventAudience = "prospects" | "clients" | "prospects-and-clients";
@@ -50,12 +55,12 @@ export const DE_EVENT_SESSIONS: DeEventSession[] = [
     title: "Before Your Cyber Insurance Renewal: The Controls Underwriters Ask About",
     summary:
       "Walk the questionnaire before it walks you: MFA, EDR, email authentication, backups and awareness training.",
-    start: "2026-10-29T11:00:00-07:00",
+    start: "2026-11-05T11:00:00-07:00",
     durationMinutes: 60,
     audience: "prospects-and-clients",
     status: "planned",
     hook:
-      "Cybersecurity Awareness Month closes as Q4 and Q1 renewals open — the window where a missing control can still be fixed instead of explained.",
+      "Q4 and Q1 renewals are opening — the window where a missing control can still be fixed instead of explained.",
     takeaways: [
       "The control areas carrier questionnaires typically ask about, in plain language",
       "How to tell a missing control from missing evidence of a control you already run",
@@ -85,7 +90,7 @@ export const DE_EVENT_SESSIONS: DeEventSession[] = [
     audience: "prospects-and-clients",
     status: "planned",
     hook:
-      "Year-end invoices, holiday staffing and gift-card requests make late November the busiest month for payment fraud attempts.",
+      "Year-end invoices, thin holiday staffing and gift-card requests give payment-change and gift-card scams the cover they rely on.",
     takeaways: [
       "The anatomy of a payment-change and gift-card request email",
       "Email authentication (SPF, DKIM, DMARC) explained without the jargon",
@@ -193,15 +198,21 @@ export function sessionEnd(session: DeEventSession): Date {
   return new Date(sessionStart(session).getTime() + session.durationMinutes * MS_PER_MINUTE);
 }
 
-/** Planned sessions are visible by direct link only: no index, no sitemap. */
-export function isIndexable(session: DeEventSession): boolean {
+/** Only confirmed (or completed) sessions are public; planned ones are not shown anywhere. */
+export function isPublic(session: DeEventSession): boolean {
   return session.status === "confirmed" || session.status === "completed";
 }
 
-/** Upcoming, not cancelled, soonest first. */
+/** A public session by slug; planned and cancelled sessions resolve to undefined. */
+export function publicSessionBySlug(slug: string): DeEventSession | undefined {
+  const session = sessionBySlug(slug);
+  return session && isPublic(session) ? session : undefined;
+}
+
+/** Upcoming public sessions, soonest first. */
 export function upcomingSessions(now: Date = new Date()): DeEventSession[] {
   return DE_EVENT_SESSIONS.filter(
-    (session) => session.status !== "cancelled" && sessionEnd(session).getTime() > now.getTime(),
+    (session) => isPublic(session) && sessionEnd(session).getTime() > now.getTime(),
   ).sort((a, b) => sessionStart(a).getTime() - sessionStart(b).getTime());
 }
 

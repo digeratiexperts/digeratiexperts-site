@@ -272,6 +272,16 @@ export const DATED: Dated[] = [
   },
   qbrSeason(2026, 10),
   {
+    id: "prep-milestone-2026-10-29",
+    title: "Prep milestone: 5 Nov insurance session ready",
+    audience: "internal",
+    date: "2026-10-29",
+    owner: "Marketing",
+    note: "Joe, 2026-10-15: the session runs 5 Nov and 29 Oct is the preparation milestone. By today: presenter and platform confirmed, slides drafted and dry-run, invites approved. The page and invites go public only once the session is confirmed.",
+    campaign: "cyber-insurance",
+    source: "docs/marketing/sessions/cyber-insurance-renewal-readiness.md",
+  },
+  {
     id: "client-survey-2026",
     title: "Annual client satisfaction survey sent",
     audience: "clients",

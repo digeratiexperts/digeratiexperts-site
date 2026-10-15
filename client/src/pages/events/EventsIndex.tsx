@@ -13,7 +13,6 @@ import { useSEO } from "@/hooks/useSEO";
 import { CAMPAIGNS } from "@/data/campaigns";
 import {
   DE_EVENT_TIME_ZONE,
-  isIndexable,
   sessionEnd,
   sessionStart,
   upcomingSessions,
@@ -70,9 +69,9 @@ export default function EventsIndex() {
     description:
       "Free live sessions from Digerati Experts on cyber insurance readiness, invoice fraud, ransomware recovery and co-managed IT. All times Arizona.",
     canonical: "/events",
-    // Indexed only once at least one session is confirmed (Tier 0: no
-    // search listing for an event that is still a plan).
-    noIndex: !sessions.some(isIndexable),
+    // upcomingSessions() returns confirmed sessions only (Tier 0: an
+    // unconfirmed event is never published), so an empty page stays noindex.
+    noIndex: sessions.length === 0,
   });
 
   const byMonth = new Map<string, DeEventSession[]>();
@@ -113,10 +112,6 @@ export default function EventsIndex() {
               </div>
             ))
           )}
-          <p className="mt-10 text-sm text-de-muted-soft">
-            Dates marked <span className="text-white">Planned</span> are being confirmed. Register interest and we'll email
-            you the confirmed date and join link.
-          </p>
         </div>
       </section>
     </PageTemplate>
