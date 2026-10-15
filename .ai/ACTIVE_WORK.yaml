@@ -78,7 +78,7 @@ claims:
       - scripts/de-events/build.ts (new)
       - docs/marketing/sessions/ (per-session promotion kits)
       - docs/marketing/ (generated calendar .md, .ics, .html)
-    status: active
+    status: verified-live
     started: 2026-10-10
     released: 2026-10-15
     pr: 564
@@ -106,6 +106,9 @@ claims:
       Joe 2026-10-15: insurance session moved to 5 Nov, 29 Oct is the prep
       milestone; unconfirmed sessions are no longer published (page 404,
       not listed on /events) until confirmed (PR 598).
+      PR 598 verified live 2026-10-15 02:30 UTC on release 1290092: /events
+      200 with the empty state and noindex; all five planned session paths 404;
+      no session detail rendered at 390 or 1440.
   - id: t2-ops-hardening
     owner: claude
     subsystem: ci-and-ops
