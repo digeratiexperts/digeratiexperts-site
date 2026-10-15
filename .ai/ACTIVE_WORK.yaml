@@ -3584,10 +3584,11 @@ claims:
       - server/routes.ts (registerLicenseBoardRoutes deps only)
       - client/src/pages/portal/AdminLicenseBoard.tsx, client/src/components/portal/licensing/* , client/src/lib/licenseBoardApi.ts
       - artifacts/visual-qa/license-patch-bay/**
-    status: active
+    status: verified-live
     started: 2026-10-10
     note: >-
-      PR 595 (company page console) merged 2026-10-14. Now, Joe "merge,
+      Verified live 2026-10-15: PRs 574, 595 and 597 are all in production
+      (release.txt ef9a63c, /healthz 200, License Patch Bay loads). PR 595 (company page console) merged 2026-10-14. Then, Joe "merge,
       then do the first page too": pool page with an Add from catalog
       command and side panel (catalog as rows, not a 34-card wall), summary
       chips, calmer company rows. PR 574 verified live 2026-10-14 (deploy of
