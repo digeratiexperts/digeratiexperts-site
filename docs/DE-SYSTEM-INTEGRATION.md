@@ -8,8 +8,8 @@
 
 | System | Owns |
 |--------|------|
-| TechSales (Hub) | Canonical account, deals, catalog, pricing, quotes, agreements, signatures, handoff, entitlements, commercial onboarding |
-| Client Portal | Users, roles, departments, approvals, support interactions, pending commands, UI/session |
+| TechSales (Hub) | Canonical account, deals, catalog, pricing, quotes, agreements, signatures, handoff, entitlements, commercial onboarding, **client organization structure and representation** (sites, departments, representatives and backups, delegation, approval authority — see `docs/PORTAL-REPRESENTATION-CONTRACT.md`) |
+| Client Portal | Users, roles, Portal departments, Portal request approvals (leaders in `shared/orgDirectory.ts`), support interactions, pending commands, UI/session, group-level requests filed by Hub-defined representatives |
 | Website | Anonymous session, attribution, public forms, pre-client cart |
 
 Once an object is an account, deal, quote, agreement, client, or managed order, **canonical ID = Hub `accounts.id`**.
@@ -20,6 +20,7 @@ Once an object is an account, deal, quote, agreement, client, or managed order, 
 |-----------|--------|----------|------|-----|--------|-------|--------|----------|
 | Website → TechSales | Leads / contact / newsletter / assessment / quote wizard | `POST TECHSALES_SYNC_URL` (`/api/webhooks/website-lead`) and `POST /api/integrations/v1/website/*` | Legacy Bearer + `x-de-sync-token`; HMAC when scoped secrets set | Hub SDR + account | LIVE (legacy) / PARTIAL (durable outbox) | Outbox exponential | Email + `eventId` | email, then `canonicalAccountId` |
 | Portal → TechSales | Documents / orders (read) | `GET /api/webhooks/portal/company-documents` `company-orders` | Same legacy secret; `PORTAL_TO_HUB_SECRET` preferred | Hub | READ ONLY / LIVE | none on pull | n/a | `accountId` if mapped, else one-time `companyName` |
+| Portal → TechSales | Representation (read): the groups each Portal user represents | `GET /api/webhooks/portal/representation?accountId=` | HMAC `PORTAL_TO_HUB_SECRET`, signature covers the query; canonical `accountId` required | Hub | BUILT (not released) | 60 s cache; fail closed on error | n/a | `hubAccountId` → Portal user id, else email |
 | Portal → TechSales | Commands (profile, quote response, approvals, onboarding) | `POST /api/integrations/v1/portal/commands` | HMAC + scoped secret | Hub applies | PARTIAL | Outbox | `eventId` | `canonicalAccountId` |
 | TechSales → Portal/Website | Commercial events | `POST {WEBSITE_BASE_URL}/api/integrations/v1/hub/events` | HMAC `HUB_TO_WEBSITE_SECRET` / `HUB_TO_PORTAL_SECRET` | Hub | PARTIAL | Outbox | inbox `eventId` UNIQUE | `canonicalAccountId` |
 | TechSales → Website | Public catalog snapshot | `GET /api/integrations/v1/public-catalog` | HMAC or legacy | Hub catalog | PARTIAL | last-known-good cache | snapshot version | n/a |

@@ -156,6 +156,7 @@ const PortalLicenseRequest = lazy(() => import("@/pages/portal/requests/PortalLi
 const PortalLicensing = lazy(() => import("@/pages/portal/PortalLicensing"));
 const AdminLicenseBoard = lazy(() => import("@/pages/portal/AdminLicenseBoard"));
 const PortalOrganization = lazy(() => import("@/pages/portal/PortalOrganization"));
+const PortalRepresentation = lazy(() => import("@/pages/portal/PortalRepresentation"));
 const PortalKbArticle = lazy(() => import("@/pages/portal/kb/PortalKbArticle"));
 const AdminKb = lazy(() => import("@/pages/portal/kb/AdminKb"));
 const AdminOrderRequests = lazy(() => import("@/pages/portal/AdminOrderRequests"));
@@ -1019,6 +1020,11 @@ function Router() {
       <Route path="/portal/organization" component={() => (
         <Suspense fallback={<PageLoadingSkeleton />}>
           <PortalOrganization />
+        </Suspense>
+      )} />
+      <Route path="/portal/representation" component={() => (
+        <Suspense fallback={<PageLoadingSkeleton />}>
+          <PortalRepresentation />
         </Suspense>
       )} />
       <Route path="/portal/licensing" component={() => (

@@ -92,6 +92,7 @@ export const PORTAL_NAV_GROUPS: PortalNavGroup[] = [
       { href: "/portal/company", label: "Company", icon: Building2, key: "company", hint: "Your account record" },
       { href: "/portal/people", label: "People & Org", icon: Users, key: "people", hint: "Departments, roles, managers" },
       { href: "/portal/organization", label: "Structure & IDs", icon: Network, key: "requests", hint: "Site or department leaders, VIPs, people IDs" },
+      { href: "/portal/representation", label: "My Groups", icon: Users, key: "requests", hint: "Groups you represent and their requests" },
       { href: "/portal/contracts", label: "Contracts", icon: FileSignature, key: "contracts", hint: "Agreements and documents" },
       { href: "/portal/files", label: "Files & Downloads", icon: FolderOpen, key: "files", hint: "Files DE shared with you" },
       { href: "/portal/billing", label: "Billing", icon: Receipt, key: "billing", hint: "Subscription and payments" },

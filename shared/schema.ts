@@ -325,6 +325,32 @@ export const portalManualRecords = pgTable("portal_manual_records", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+/**
+ * Group-level requests filed by a Hub-defined representative on behalf of the
+ * group they represent (migrations/0019_portal_group_requests.sql;
+ * shared/representation.ts). scope_key is the Hub group key (site:12, unit:7,
+ * account); authorization is re-checked against the Hub projection on every read.
+ */
+export const portalGroupRequests = pgTable("portal_group_requests", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  number: text("number").notNull().unique(),
+  clientId: varchar("client_id")
+    .notNull()
+    .references(() => portalClients.id, { onDelete: "cascade" }),
+  hubAccountId: varchar("hub_account_id").notNull(),
+  scopeKey: text("scope_key").notNull(),
+  groupName: text("group_name").notNull(),
+  kind: text("kind").notNull(),
+  subject: text("subject").notNull(),
+  description: text("description").notNull(),
+  status: text("status").notNull().default("submitted"),
+  submittedByUserId: varchar("submitted_by_user_id").notNull(),
+  submittedByRole: text("submitted_by_role").notNull(),
+  deskTicketId: varchar("desk_ticket_id"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 /** Portal service requests (migrations/0009_service_requests.sql; shared/serviceRequests.ts). */
 export const serviceRequests = pgTable("service_requests", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
