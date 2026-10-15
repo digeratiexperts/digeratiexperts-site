@@ -138,6 +138,7 @@ const EXACT = new Set([
   "/go/cyber-insurance",
   "/go/email-security",
   "/go/proactive-business",
+  "/go/ai-background-check",
   "/resources/briefs",
   "/resources/briefs/cyber-risk-operating-brief",
   "/resources/briefs/ransomware-readiness-brief",

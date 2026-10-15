@@ -3899,3 +3899,23 @@ claims:
       rollback both failed (/healthz 503). /healthz never retried the database
       after a failed boot connect, so one stall at restart kept it red. Joe:
       "check again, try to fix it."
+
+  - id: ai-background-check-page
+    issue: 573
+    owner: claude
+    subsystem: campaign-landing-pages
+    branch: claude/ai-background-check-b
+    base_sha: 632564b6
+    files:
+      - client/src/pages/campaigns/AiBackgroundCheck.tsx, ai-background-check.css (new; lazy-loaded page and its scoped stylesheet)
+      - client/src/pages/campaigns/aiBackgroundCheckQuiz.ts, aiBackgroundCheckQuiz.test.ts (new; self-check scoring)
+      - client/src/pages/MarketingRouteFallback.tsx (the /go/ai-background-check route only, ahead of /go/:slug)
+      - server/spaKnownPaths.ts, scripts/generate-sitemap.mjs, public/sitemap.xml (/go/ai-background-check only)
+    status: active
+    started: 2026-10-15
+    note: >-
+      Joe, 2026-10-15: "go with concept B for #575" (Personnel File). Integration
+      of concept PR 575, which stays unmerged. Joe on the open copy decisions:
+      don't say "free" yet; "30 minutes" and "read-only admin console" left out
+      until DE confirms them; every CTA goes to the existing /book flow (no Bigin
+      or Bookings work). Overlap check 2026-10-15: no open PR touches these files.
