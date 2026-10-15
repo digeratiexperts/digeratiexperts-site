@@ -30,6 +30,26 @@
 
 version: 2
 claims:
+  - id: password-policy-address-lookup
+    owner: claude
+    subsystem: portal-auth-forms
+    branch: claude/password-address-forms
+    base_sha: 0d5043db
+    files:
+      - shared/passwordPolicy.ts, shared/addressLookup.ts (new)
+      - server/passwordBreach.ts, server/addressLookup.ts (new)
+      - server/routes.ts (register, reset-password, change-password; address route registration)
+      - client/src/components/portal/PasswordRequirements.tsx, client/src/components/AddressAutocomplete.tsx (new)
+      - client/src/pages/portal/PortalSignup.tsx, PortalResetPassword.tsx, PortalSettings.tsx, PortalLogin.tsx
+      - client/src/pages/portal/OrderForm.tsx, PortalInfrastructure.tsx, client/src/components/portal/requests/fields.tsx
+      - client/src/pages/store/Checkout.tsx
+      - .env.example
+    status: active
+    started: 2026-10-15
+    note: >-
+      Joe, 2026-10-15: live password checklist like a carrier sign-up page, the
+      screenshot's rules plus a breached-password check (HIBP), minimum 10;
+      Geoapify address type-ahead on checkout and portal address forms.
   - id: portal-agreement-gate
     owner: claude
     subsystem: portal-onboarding

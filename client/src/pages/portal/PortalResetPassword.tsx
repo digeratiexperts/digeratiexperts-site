@@ -2,11 +2,13 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
-import { AlertCircle, Lock, CheckCircle2, Eye, EyeOff } from "lucide-react";
+import { AlertCircle, Lock, CheckCircle2 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { DE_LOGO_PRIMARY, DE_LOGO_REVERSE } from '@/lib/brandAssets';
 import "@/styles/portal.css";
 import { usePortalAppearance } from "@/components/portal/shell/portalTheme";
+import { PasswordRequirements, PasswordVisibilityToggle, isBreachedPasswordMessage } from "@/components/portal/PasswordRequirements";
+import { passwordPolicyError } from "@shared/passwordPolicy";
 
 export default function PortalResetPassword() {
   const { theme } = usePortalAppearance();
@@ -16,6 +18,7 @@ export default function PortalResetPassword() {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [showPw, setShowPw] = useState(false);
+  const [breachedPw, setBreachedPw] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -23,6 +26,12 @@ export default function PortalResetPassword() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    const policyError = passwordPolicyError(password);
+    if (policyError) {
+      setError(policyError);
+      return;
+    }
 
     if (password !== confirm) {
       setError("Passwords do not match.");
@@ -41,6 +50,7 @@ export default function PortalResetPassword() {
 
       if (!response.ok) {
         setError(data.message || "Password reset failed");
+        if (isBreachedPasswordMessage(data.message)) setBreachedPw(password);
         return;
       }
 
@@ -95,7 +105,7 @@ export default function PortalResetPassword() {
           <CardHeader className="space-y-2">
             <h1 className="font-heading text-2xl font-semibold leading-none tracking-tight">Choose New Password</h1>
             <CardDescription className="text-muted-foreground">
-              At least 8 characters with 1 uppercase letter and 1 number
+              Choose a password you have not used anywhere else
             </CardDescription>
           </CardHeader>
 
@@ -122,37 +132,39 @@ export default function PortalResetPassword() {
                 )}
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">New Password</label>
+                  <label htmlFor="reset-password" className="text-sm font-medium">New Password</label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-4 h-4 w-4 text-muted-foreground" />
+                    <Lock className="absolute left-3 top-4 h-4 w-4 text-muted-foreground" aria-hidden="true" />
                     <Input
+                      id="reset-password"
                       type={showPw ? "text" : "password"}
-                      placeholder="Min 8 chars, 1 uppercase, 1 number"
+                      autoComplete="new-password"
+                      placeholder="Choose a new password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="border-input bg-background pl-9 pr-10"
+                      className="border-input bg-background pl-9 pr-12"
+                      aria-describedby="reset-password-rules"
                       required
                       data-testid="input-password"
                     />
-                    <button
-                      type="button"
-                      onClick={() => setShowPw(!showPw)}
-                      aria-label={showPw ? "Hide password" : "Show password"}
-                      aria-pressed={showPw}
-                      className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
-                      data-testid="button-toggle-password"
-                    >
-                      {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
+                    <PasswordVisibilityToggle shown={showPw} onToggle={() => setShowPw(!showPw)} />
                   </div>
+                  <PasswordRequirements
+                    id="reset-password-rules"
+                    password={password}
+                    confirm={confirm}
+                    breached={breachedPw !== null && breachedPw === password}
+                  />
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Confirm Password</label>
+                  <label htmlFor="reset-confirm-password" className="text-sm font-medium">Confirm Password</label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-4 h-4 w-4 text-muted-foreground" />
+                    <Lock className="absolute left-3 top-4 h-4 w-4 text-muted-foreground" aria-hidden="true" />
                     <Input
+                      id="reset-confirm-password"
                       type={showPw ? "text" : "password"}
+                      autoComplete="new-password"
                       placeholder="Re-enter your new password"
                       value={confirm}
                       onChange={(e) => setConfirm(e.target.value)}

@@ -8,6 +8,8 @@ import { DE_LOGO_PRIMARY, DE_LOGO_REVERSE } from '@/lib/brandAssets';
 import TurnstileWidget from "@/components/TurnstileWidget";
 import "@/styles/portal.css";
 import { usePortalAppearance } from "@/components/portal/shell/portalTheme";
+import { PasswordRequirements, PasswordVisibilityToggle, isBreachedPasswordMessage } from "@/components/portal/PasswordRequirements";
+import { passwordPolicyError } from "@shared/passwordPolicy";
 
 export default function PortalSignup() {
   const { theme } = usePortalAppearance();
@@ -15,6 +17,9 @@ export default function PortalSignup() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPw, setShowPw] = useState(false);
+  // The password the server last rejected as breached, so the checklist can mark it.
+  const [breachedPw, setBreachedPw] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -32,10 +37,6 @@ export default function PortalSignup() {
   const validateEmail = (email: string) => {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return re.test(email);
-  };
-
-  const validatePassword = (password: string) => {
-    return password.length >= 8 && /[A-Z]/.test(password) && /[0-9]/.test(password);
   };
 
   const handleSignup = async (e: React.FormEvent) => {
@@ -56,8 +57,9 @@ export default function PortalSignup() {
       return;
     }
 
-    if (!validatePassword(password)) {
-      setError("Password must be at least 8 characters with 1 uppercase letter and 1 number");
+    const policyError = passwordPolicyError(password, { email, username });
+    if (policyError) {
+      setError(policyError);
       setLoading(false);
       return;
     }
@@ -79,6 +81,7 @@ export default function PortalSignup() {
 
       if (!response.ok) {
         setError(data.message || data.error || "Signup failed");
+        if (isBreachedPasswordMessage(data.message)) setBreachedPw(password);
         setLoading(false);
         resetTurnstile();
         return;
@@ -148,11 +151,13 @@ export default function PortalSignup() {
               )}
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Email</label>
+                <label htmlFor="signup-email" className="text-sm font-medium">Email</label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-4 h-4 w-4 text-muted-foreground" />
                   <Input
+                    id="signup-email"
                     type="email"
+                    autoComplete="email"
                     placeholder="your@company.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -164,11 +169,13 @@ export default function PortalSignup() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Username</label>
+                <label htmlFor="signup-username" className="text-sm font-medium">Username</label>
                 <div className="relative">
                   <User className="absolute left-3 top-4 h-4 w-4 text-muted-foreground" />
                   <Input
+                    id="signup-username"
                     type="text"
+                    autoComplete="username"
                     placeholder="username"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
@@ -180,31 +187,41 @@ export default function PortalSignup() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Password</label>
+                <label htmlFor="signup-password" className="text-sm font-medium">Password</label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-4 h-4 w-4 text-muted-foreground" />
+                  <Lock className="absolute left-3 top-4 h-4 w-4 text-muted-foreground" aria-hidden="true" />
                   <Input
-                    type="password"
-                    placeholder="••••••••"
+                    id="signup-password"
+                    type={showPw ? "text" : "password"}
+                    autoComplete="new-password"
+                    placeholder="••••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="border-input bg-background pl-10"
+                    className="border-input bg-background pl-10 pr-12"
+                    aria-describedby="signup-password-rules"
                     required
                     data-testid="input-password"
                   />
+                  <PasswordVisibilityToggle shown={showPw} onToggle={() => setShowPw(!showPw)} />
                 </div>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Min 8 characters, 1 uppercase, 1 number
-                </p>
+                <PasswordRequirements
+                  id="signup-password-rules"
+                  password={password}
+                  context={{ email, username }}
+                  confirm={confirmPassword}
+                  breached={breachedPw !== null && breachedPw === password}
+                />
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Confirm Password</label>
+                <label htmlFor="signup-confirm-password" className="text-sm font-medium">Confirm Password</label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-4 h-4 w-4 text-muted-foreground" />
+                  <Lock className="absolute left-3 top-4 h-4 w-4 text-muted-foreground" aria-hidden="true" />
                   <Input
-                    type="password"
-                    placeholder="••••••••"
+                    id="signup-confirm-password"
+                    type={showPw ? "text" : "password"}
+                    autoComplete="new-password"
+                    placeholder="••••••••••"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     className="border-input bg-background pl-10"

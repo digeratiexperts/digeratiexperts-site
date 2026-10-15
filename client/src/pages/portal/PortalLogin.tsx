@@ -9,6 +9,7 @@ import TurnstileWidget from "@/components/TurnstileWidget";
 import { useSEO } from "@/hooks/useSEO";
 import "@/styles/portal.css";
 import { usePortalAppearance } from "@/components/portal/shell/portalTheme";
+import { PasswordVisibilityToggle } from "@/components/portal/PasswordRequirements";
 import { portalReturnLabel } from "@/lib/portalUrls";
 import { marketplaceReturnTo } from "@shared/portalReturnTo";
 import { getPasskey, passkeyErrorMessage, passkeysSupported } from "@/lib/webauthn";
@@ -30,6 +31,7 @@ export default function PortalLogin() {
   const [step, setStep] = useState<LoginStep>("credentials");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPw, setShowPw] = useState(false);
   const [mfaCode, setMfaCode] = useState("");
   const [mfaToken, setMfaToken] = useState("");
   const [mfaMethod, setMfaMethod] = useState<"totp" | "email" | "passkey">("totp");
@@ -369,15 +371,16 @@ export default function PortalLogin() {
                       <Lock className="absolute left-3 top-4 h-4 w-4 text-muted-foreground" aria-hidden="true" />
                       <Input
                         id="login-password"
-                        type="password"
+                        type={showPw ? "text" : "password"}
                         placeholder="••••••••"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="border-input bg-background pl-10"
+                        className="border-input bg-background pl-10 pr-12"
                         required
                         autoComplete="current-password"
                         data-testid="input-password"
                       />
+                      <PasswordVisibilityToggle shown={showPw} onToggle={() => setShowPw(!showPw)} />
                     </div>
                   </div>
 

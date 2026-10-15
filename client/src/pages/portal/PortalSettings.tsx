@@ -9,6 +9,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Field, Panel } from "@/components/portal/ui";
 import { ProvisioningStatusPanel } from "@/components/portal/ProvisioningStatus";
 import { PortalAppearanceSettings } from "@/components/portal/shell/PortalAppearanceSettings";
+import { PasswordRequirements } from "@/components/portal/PasswordRequirements";
+import { passwordPolicyError } from "@shared/passwordPolicy";
 
 type ProfileManager = { id: string; email: string; fullName: string };
 
@@ -99,8 +101,15 @@ export default function PortalSettings() {
     }
   };
 
+  const passwordContext = { email: user.email, username: user.username, fullName: user.fullName };
+
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
+    const policyError = passwordPolicyError(passwordData.new, passwordContext);
+    if (policyError) {
+      toast({ title: "Choose a stronger password", description: policyError, variant: "destructive" });
+      return;
+    }
     if (passwordData.new !== passwordData.confirm) {
       toast({
         title: "Passwords do not match",
@@ -217,8 +226,9 @@ export default function PortalSettings() {
                   autoComplete="new-password"
                   value={passwordData.new}
                   onChange={(e) => setPasswordData({ ...passwordData, new: e.target.value })}
-                  placeholder="••••••••"
+                  placeholder="••••••••••"
                   className="border-border bg-background"
+                  aria-describedby="settings-password-rules"
                   data-testid="input-new-password"
                 />
               </Field>
@@ -235,6 +245,12 @@ export default function PortalSettings() {
                 />
               </Field>
             </div>
+            <PasswordRequirements
+              id="settings-password-rules"
+              password={passwordData.new}
+              context={passwordContext}
+              confirm={passwordData.confirm}
+            />
             <div className="border-t border-border pt-4">
               <Button type="submit" variant="brand" data-testid="button-change-password" disabled={savingPassword}>
                 {savingPassword ? "Updating…" : "Update password"}
