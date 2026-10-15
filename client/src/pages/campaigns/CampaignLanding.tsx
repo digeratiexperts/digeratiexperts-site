@@ -53,7 +53,7 @@ export default function CampaignLanding() {
         <>
           <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             <HeroActions
-              primary={{ label: CTA.primary, href: "/book", testId: "campaign-primary-cta" }}
+              primary={{ label: campaign.cta?.label ?? CTA.primary, href: "/book", testId: "campaign-primary-cta" }}
               secondary={{ label: campaign.deeperLabel, href: campaign.deeperHref, testId: "campaign-secondary-cta" }}
             />
           </div>
@@ -198,9 +198,12 @@ export default function CampaignLanding() {
 
       <ClosingCta
         tone="surface"
-        title="Get My Cyber Risk Assessment"
-        lede="A working session on your Arizona environment — then a recommended path with ownership named."
-        primary={{ label: CTA.primary, href: "/book", testId: "button-conversion-assessment" }}
+        title={campaign.cta?.closingTitle ?? "Get My Cyber Risk Assessment"}
+        lede={
+          campaign.cta?.closingLede ??
+          "A working session on your Arizona environment — then a recommended path with ownership named."
+        }
+        primary={{ label: campaign.cta?.label ?? CTA.primary, href: "/book", testId: "button-conversion-assessment" }}
       />
     </PageTemplate>
   );

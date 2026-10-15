@@ -3899,3 +3899,27 @@ claims:
       rollback both failed (/healthz 503). /healthz never retried the database
       after a failed boot connect, so one stall at restart kept it red. Joe:
       "check again, try to fix it."
+
+  - id: go-ai-background-check
+    issue: 573
+    owner: claude
+    subsystem: campaign-landing
+    branch: claude/ai-background-check-page
+    base_sha: 632564b6
+    files:
+      - client/src/data/campaigns.ts (new ai-background-check entry)
+      - client/src/data/campaigns.test.ts
+      - client/src/pages/campaigns/CampaignLanding.tsx (optional per-campaign CTA label; default unchanged)
+      - server/spaKnownPaths.ts (one /go path)
+      - scripts/generate-sitemap.mjs (one /go path)
+      - public/sitemap.xml (regenerated)
+      - docs/CLAIMS-REGISTER.md (new /go/ai-background-check section)
+    status: active
+    started: 2026-10-15
+    note: >-
+      Joe 2026-10-14: "work on fixing all outstanding items even my items for
+      me", then "continue everything". Maintenance Mode: the approved copy on
+      the existing CampaignLanding template, no new components or styles.
+      Concept A visuals (PR 575) stay pending Joe's pick. Concurrency audit
+      2026-10-15: of open PRs 605, 598, 593, 575, 557, 553 only 553 touches
+      server/spaKnownPaths.ts, in a different hunk.

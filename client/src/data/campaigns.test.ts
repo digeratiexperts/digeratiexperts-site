@@ -8,7 +8,7 @@ import { resourceBySlug, resources } from "./resourceRegistry";
 const STANDALONE = /\bDigerati\b(?! Experts)/;
 
 describe("campaign landing catalog", () => {
-  it("publishes the eight conversion offers", () => {
+  it("publishes the nine conversion offers", () => {
     expect(CAMPAIGNS.map((campaign) => campaign.slug)).toEqual([
       "cyber-risk-assessment",
       "managed-it",
@@ -18,6 +18,7 @@ describe("campaign landing catalog", () => {
       "cyber-insurance",
       "email-security",
       "proactive-business",
+      "ai-background-check",
     ]);
   });
 
@@ -41,6 +42,7 @@ describe("campaign landing catalog", () => {
       expect(campaign.deeperHref).not.toBe("/book");
     }
     expect(campaignBySlug("cyber-risk-assessment")?.pricingNote).toMatch(/2,500|2500/);
+    expect(campaignBySlug("ai-background-check")?.cta?.label).toMatch(/AI Background Check/);
   });
 });
 

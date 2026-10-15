@@ -14,7 +14,8 @@ export type CampaignSlug =
   | "healthcare-it"
   | "cyber-insurance"
   | "email-security"
-  | "proactive-business";
+  | "proactive-business"
+  | "ai-background-check";
 
 export type CampaignStake = { title: string; body: string };
 export type CampaignStep = { title: string; body: string };
@@ -41,6 +42,8 @@ export interface CampaignPage {
   relatedBriefSlug?: string;
   deeperHref: string;
   deeperLabel: string;
+  /** Offer-specific booking CTA; defaults to the site-wide assessment CTA. */
+  cta?: { label: string; closingTitle: string; closingLede: string };
 }
 
 const csra = formatPrice(CANONICAL_CSRA_ONE_TIME);
@@ -594,8 +597,88 @@ export const CAMPAIGNS: CampaignPage[] = [
     deeperHref: "/solutions/proactive-business-ecosystem",
     deeperLabel: "ProActive Business details",
   },
+  {
+    slug: "ai-background-check",
+    offerName: "AI Background Check",
+    eyebrow: "Free 30-minute check",
+    headline: "Your newest employee is AI. Did anyone check its references?",
+    lede:
+      "Your team is already using AI to write emails, summarize contracts, and crunch numbers. The question is not whether to use AI. It is whose AI, and what it can see. The AI Background Check shows you in 30 minutes.",
+    seoTitle: "Free AI Background Check for Arizona Businesses",
+    seoDescription:
+      "A free 30-minute AI Background Check from Digerati Experts: which AI tools are connected to your company data, what they can reach, and the top 3 fixes. Vendor-neutral.",
+    audience:
+      "Owners and operators whose teams already use AI at work, on business or personal accounts, and who want to know what it can reach before something goes wrong.",
+    stakes: [
+      {
+        title: "Personal AI works for the person, not the business",
+        body: "When someone uses AI on a personal account, the chats, the files they pasted in, and the history belong to that person. When they leave, it leaves with them, and depending on the tool and its settings, what they typed may be used to train the next version.",
+      },
+      {
+        title: "AI built into your apps can see what its user can open",
+        body: "AI that came with your email, files, or CRM can reach anything the person using it can open, including old shared folders that were never meant to be shared. It finds them fast.",
+      },
+      {
+        title: "Regulated data raises the stakes",
+        body: "Patient information needs a signed business associate agreement with any AI tool that handles it, and only some business plans offer one. Client financial data falls under the FTC Safeguards Rule's vendor oversight. Controlled unclassified information has no place in consumer AI tools.",
+      },
+    ],
+    includes: [
+      "A short survey about the AI tools your team uses and how they sign in",
+      "A look at your Microsoft 365 or Google Workspace admin console while you share your screen. We look; we do not change settings",
+      "Which AI tools are connected to company data, and what they can reach",
+      "Your top 3 fixes, in plain language, from any vendor, including the AI that came with your software",
+    ],
+    process: [
+      {
+        title: "Interview",
+        body: "Is this the right AI for the job and the budget? Sometimes it is the one that came with your software. Sometimes it is not.",
+      },
+      {
+        title: "Paperwork and keys",
+        body: "Business accounts, business terms that keep your data out of model training, a one-page policy, and access cleaned up before AI gets it.",
+      },
+      {
+        title: "Exit",
+        body: "When someone leaves, their AI access goes too. The company keeps the history and, on plans that include it, the audit trail.",
+      },
+    ],
+    fitFor: [
+      "Businesses whose staff use AI tools today, on company or personal accounts",
+      "Teams about to switch on the AI built into Microsoft 365, Google Workspace, or another app",
+      "Healthcare, finance, insurance, and defense-supply firms handling regulated data",
+    ],
+    fitNot: [
+      "Organizations looking for an AI certification or a compliance sign-off from an MSP",
+      "A full security review of the whole environment: that is the Cyber Risk Assessment",
+    ],
+    faqs: [
+      {
+        question: "Is the AI Background Check the same as the Cyber Risk Assessment?",
+        answer: `No. The AI Background Check is free and covers AI only: which tools are connected to your data and what they can reach. The documented Cybersecurity Risk Assessment reviews the whole environment and is ${csra} one-time when that deliverable is the right next step.`,
+      },
+      {
+        question: "Do you need admin access to our systems?",
+        answer:
+          "No. By default you share your screen and we look together. If a temporary read-only viewer role is easier, it is removed at the end of the call and we confirm that in writing.",
+      },
+      {
+        question: "Will you tell us to switch AI vendors?",
+        answer:
+          "Only if it fits. Digerati Experts is vendor-neutral on AI. The AI that came with your software may be the right answer; it still deserves an interview.",
+      },
+    ],
+    pricingNote: `The AI Background Check is free. A full Cybersecurity Risk Assessment is ${csra} one-time when that document is scoped.`,
+    deeperHref: "/go/cyber-risk-assessment",
+    deeperLabel: "See the Cyber Risk Assessment",
+    cta: {
+      label: "Book my AI Background Check",
+      closingTitle: "Get your free AI Background Check",
+      closingLede:
+        "In 30 minutes: which AI tools are connected to your company data, what they can reach, and the top 3 fixes.",
+    },
+  },
 ];
-
 export const campaignBySlug = (slug: string): CampaignPage | undefined =>
   CAMPAIGNS.find((campaign) => campaign.slug === slug);
 

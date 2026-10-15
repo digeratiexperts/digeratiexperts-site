@@ -159,6 +159,16 @@ Joe, 2026-10-03: make the claims flagged by PR #370 "authentic branded and true 
 
 Still for Joe (no change made): the published office address and phone number do not match public business records (BBB, Arizona Corporation Commission mirrors, Yelp list other Chandler and Phoenix addresses and another number); certifications and partner programs to add to `credentials.ts` with their verification links; Trust Center practice claims ("annual penetration testing", "third-party security audits", "Tier III/IV facilities"); the Privacy Policy's other security-practice bullets.
 
+## Campaign `/go/ai-background-check` (2026-10-15)
+
+| Where | Claim | Basis | Status | Action |
+| --- | --- | --- | --- | --- |
+| Eyebrow, lede, pricing note | "Free", "30 minutes" | Offer approved by Joe 2026-10-09 (Intelligence-Hub `docs/projects/12-business-ai-messaging/COPY.md`) | Structural | Keep while the offer stands; change here and in `campaigns.ts` together |
+| Includes, FAQ | "We look; we do not change settings"; temporary read-only viewer role removed at the end of the call and confirmed in writing | Delivery process in the AI Background Check kit (Intelligence-Hub `docs/projects/12-business-ai-messaging/`); default is a screen share | Process (Joe to confirm) | Joe confirms the process before the page is promoted; remove the line if the process changes |
+| Stakes | Personal-account AI history stays with the person; some tools may train on inputs depending on settings | Vendor consumer vs business terms, checked 2026-10-09/14 (Intelligence-Hub `CLAIM-CHECK.md`, `VERIFY-2026-10-14.md`) | Sourced | Re-check vendor terms quarterly; terms change |
+| Stakes | BAA needed for AI handling patient information, "only some business plans offer one"; FTC Safeguards Rule vendor oversight; CUI not in consumer AI | HHS business associate guidance; 16 CFR 314.4(f); DFARS 252.204-7012 (same CLAIM-CHECK) | Sourced | No vendor named; never say any AI tool is "HIPAA compliant" |
+| FAQ, pricing note | CSRA price | `CANONICAL_CSRA_ONE_TIME` | Structural | None |
+
 ## How to add a claim
 
 1. Statistics: add the fact to `cyberAwarenessFacts.ts` with source, year, and

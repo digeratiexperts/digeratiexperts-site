@@ -83,6 +83,7 @@ const STATIC = [
   ["/go/cyber-insurance", "weekly", "0.8"],
   ["/go/email-security", "weekly", "0.7"],
   ["/go/proactive-business", "weekly", "0.8"],
+  ["/go/ai-background-check", "weekly", "0.8"],
   ["/resources/downtime-calculator", "monthly", "0.6"],
   ["/resources/ebook/defending-digital-realm", "monthly", "0.5"],
   ["/about/mission-values", "monthly", "0.5"],
