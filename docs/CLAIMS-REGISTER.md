@@ -159,7 +159,7 @@ Joe, 2026-10-03: make the claims flagged by PR #370 "authentic branded and true 
 
 Still for Joe (no change made): the published office address and phone number do not match public business records (BBB, Arizona Corporation Commission mirrors, Yelp list other Chandler and Phoenix addresses and another number); certifications and partner programs to add to `credentials.ts` with their verification links; Trust Center practice claims ("annual penetration testing", "third-party security audits", "Tier III/IV facilities"); the Privacy Policy's other security-practice bullets.
 
-## Campaign `/go/ai-background-check` (2026-10-15, PR #609)
+## Campaign `/go/ai-background-check` (2026-10-15, PR #609; offer terms 2026-10-16)
 
 | Where | Claim | Basis | Status | Action |
 | --- | --- | --- | --- | --- |
@@ -167,7 +167,9 @@ Still for Joe (no change made): the published office address and phone number do
 | Regulatory flags, section 4 | A BAA is needed for AI handling patient information, and "only some business plans offer one"; FTC Safeguards Rule vendor oversight; CUI has no place in consumer AI | HHS business associate guidance; 16 CFR 314.4(f); DFARS 252.204-7012 (same CLAIM-CHECK) | Sourced | Name no vendor; never call an AI tool "HIPAA compliant"; cite no CMMC deadline (Phase II suspended, no date) |
 | Self-check, section 3 | Low / Medium / High result | Illustrative scoring in `client/src/pages/campaigns/aiBackgroundCheckQuiz.ts`, labelled "an illustrative self-check, not an assessment" | Structural | Keep the label |
 
-Not on the page until Joe confirms them (Joe, 2026-10-15): "free", "30 minutes", and the read-only process line ("screen share by default, or a temporary viewer role (Entra Global Reader / Google read-only) removed at the end of the call and confirmed in writing"). Add a row here when each goes live.
+| Hero, sign-off, SEO title | "Free" AI Background Check | Joe's offer (approved copy 2026-10-09); put on the page 2026-10-16 ("do what will convert the best to a paid client") | DE decision | If the check ever carries a fee, change every "free" on the page and this row together |
+| Hero terms, sign-off | "30 minutes" | Same decision | DE decision | Keep the booked slot at 30 minutes |
+| Hero terms, sign-off | "Screen share: no passwords, no admin access"; "we never ask for passwords or admin access" | Same decision. The check is run over the client's own screen share | DE process | The check must never request credentials or a viewer role. If DE starts using a temporary read-only role, change this line first |
 
 ## How to add a claim
 

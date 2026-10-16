@@ -141,7 +141,51 @@
 }
 
 .abc-cta-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 20px;
   margin-top: 28px;
+}
+
+.abc-terms {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 14px;
+  color: var(--abc-ink-muted);
+}
+
+/* A bullet on every item, so a wrapped line never starts with a stray separator. */
+.abc-terms li::before {
+  content: "\2022";
+  margin-right: 8px;
+  color: var(--de-magenta-paper-ink);
+}
+
+.abc-sign .abc-terms {
+  margin-top: 16px;
+  color: var(--de-muted-soft);
+}
+
+.abc-sign .abc-terms li {
+  padding: 0;
+  border: 0;
+  font: 400 14px/1.5 "Inter", system-ui, sans-serif;
+}
+
+.abc-sign .abc-terms li::before {
+  color: var(--de-magenta-ink);
+}
+
+.abc-sign-next {
+  margin-top: 14px;
+  max-width: 52ch;
+  line-height: 1.6;
+  color: var(--de-muted-soft);
 }
 
 .abc-sec {
@@ -426,7 +470,7 @@
   color: var(--de-muted);
 }
 
-.abc-sign ul {
+.abc-sign ul:not(.abc-terms) {
   margin: 0 0 24px;
   padding: 0;
   list-style: none;

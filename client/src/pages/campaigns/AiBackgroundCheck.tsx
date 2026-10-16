@@ -10,12 +10,26 @@ import "./ai-background-check.css";
 /**
  * /go/ai-background-check: concept B ("Personnel File") from PR #575, picked by
  * Joe on 2026-10-15. Copy is the claim-checked COPY.md wording (Intelligence
- * Hub, docs/projects/12-business-ai-messaging). Joe, 2026-10-15: do not say
- * "free" yet; the "30 minutes" and "read-only admin console" claims stay out
- * until DE confirms them. Every CTA goes to the existing /book flow.
+ * Hub, docs/projects/12-business-ai-messaging). Every CTA goes to the existing
+ * /book flow. Joe, 2026-10-16: "do what will convert the best to a paid
+ * client", so the offer terms are on the page: free, 30 minutes, screen share
+ * with no passwords or admin access (logged in docs/CLAIMS-REGISTER.md).
  */
 
-const BOOK_LABEL = "Book your AI Background Check";
+const BOOK_LABEL = "Book your free AI Background Check";
+
+/** The offer terms, shown under the hero CTA and in the sign-off. */
+const OFFER_TERMS = ["Free", "30 minutes", "Screen share: no passwords, no admin access"];
+
+function OfferTerms() {
+  return (
+    <ul className="abc-terms" aria-label="What the check involves">
+      {OFFER_TERMS.map((t) => (
+        <li key={t}>{t}</li>
+      ))}
+    </ul>
+  );
+}
 
 const OWNERSHIP_ROWS: { question: string; personal: string; business: string }[] = [
   { question: "Who owns the chats", personal: "The employee", business: "Your company" },
@@ -133,9 +147,9 @@ function ExposureCheck() {
 
 export default function AiBackgroundCheck() {
   useSEO({
-    title: "AI Background Check",
+    title: "Free AI Background Check",
     description:
-      "Your team already uses AI. Find out which AI tools are connected to your company data, what they can reach, and the top 3 fixes.",
+      "A free 30-minute AI Background Check from Digerati Experts: which AI tools are connected to your company data, what they can reach, and your top 3 fixes. Screen share only; no passwords or admin access.",
     canonical: "/go/ai-background-check",
   });
 
@@ -179,6 +193,7 @@ export default function AiBackgroundCheck() {
             </p>
             <div className="abc-cta-row">
               <BookLink testId="abc-hero-cta" />
+              <OfferTerms />
             </div>
           </Container>
         </header>
@@ -278,10 +293,14 @@ export default function AiBackgroundCheck() {
           <Container className="abc-sign-grid">
             <div>
               <span className="abc-label abc-label--accent">Sign-off</span>
-              <h2 id="abc-sign">Book your AI Background Check.</h2>
+              <h2 id="abc-sign">Book your free AI Background Check.</h2>
               <p className="abc-sign-lede">
-                We'll show you which AI tools are connected to your company data, what they can reach, and your top
-                3 fixes.
+                In 30 minutes, we'll show you which AI tools are connected to your company data, what they can reach,
+                and your top 3 fixes. You share your screen and we look together; we never ask for passwords or admin
+                access.
+              </p>
+              <p className="abc-sign-next">
+                What happens next is your call. Keep the fixes and do them yourself, or have DE do them for you.
               </p>
             </div>
             <div>
@@ -291,6 +310,7 @@ export default function AiBackgroundCheck() {
                 ))}
               </ul>
               <BookLink testId="abc-closing-cta" />
+              <OfferTerms />
             </div>
           </Container>
         </section>
