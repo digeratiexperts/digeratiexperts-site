@@ -312,6 +312,13 @@ export default function EventSession() {
               </div>
             </div>
 
+            {session.presenter ? (
+              <p className="mt-4 text-sm text-de-muted-soft">
+                Presented by <span className="text-white">{session.presenter}</span>
+                {session.platform ? <> · on {session.platform}; the join link is emailed the day before</> : null}
+              </p>
+            ) : null}
+
             {/* Calendar + time zone */}
             <div className="mt-6 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-sm">
               <button

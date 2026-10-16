@@ -84,7 +84,7 @@ claims:
     owner: claude
     subsystem: marketing-events
     branch: claude/inspiring-franklin-1o69vr
-    base_sha: 067d2b2
+    base_sha: 81e64ad
     files:
       - client/src/data/deEvents.ts (new)
       - client/src/data/deEvents.test.ts (new)
@@ -98,7 +98,7 @@ claims:
       - scripts/de-events/build.ts (new)
       - docs/marketing/sessions/ (per-session promotion kits)
       - docs/marketing/ (generated calendar .md, .ics, .html)
-    status: verified-live
+    status: active
     started: 2026-10-10
     released: 2026-10-15
     pr: 564
@@ -123,6 +123,11 @@ claims:
       2026-10-15; verified live 00:34 UTC on release f70c755 (/events and the
       session page 200, unknown slug 404, noindex, renders at 390/768/1440). Follow-up on the same branch:
       per-session promotion kits in docs/marketing/sessions/.
+      2026-10-16, reopened: Joe confirmed the 5 Nov and 19 Nov sessions (presenter
+      Joseph Petro, on Zoho). Both set to confirmed, their paths added to
+      spaKnownPaths and the sitemap with /events, presenter and platform shown on
+      the page (never the join link), kits and calendar updated. The other three
+      sessions stay planned (404).
       Joe 2026-10-15: insurance session moved to 5 Nov, 29 Oct is the prep
       milestone; unconfirmed sessions are no longer published (page 404,
       not listed on /events) until confirmed (PR 598).

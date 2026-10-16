@@ -5,28 +5,24 @@ Page: https://digeratiexperts.com/events/cyber-insurance-renewal-readiness · Ca
 Session data: `client/src/data/deEvents.ts` (slug `cyber-insurance-renewal-readiness`) · Calendar: `docs/marketing/DE-EVENT-CALENDAR.md`
 Slides (draft, internal, 13 slides with presenter notes): [Zoho Show](https://show.zoho.com/show/open/wkjyye5e4524447114edf875f938b1f27cf60), filed in WorkDrive `0. Digerati Experts / 4. Event & Strategic Planning / event`. Every example in them is constructed; no client email, form or data appears.
 
-> **Status: PLANNED, date selected (5 Nov).** Nothing below is published or sent until the session is confirmed (step 0). Every draft is copy for review, not sent mail.
+> **Status: CONFIRMED (Joe, 16 Oct 2026).** Presenter Joseph Petro, on Zoho. The page is public once the confirming PR is merged and verified live. Every draft below is copy for DE to review and send; nothing is sent automatically.
 > Rules applied: no statistics, no client names, no guarantee of coverage, approval or claim outcome; framework and insurer names are the attendee's requirements, never DE certifications (`docs/CLAIMS-REGISTER.md`). Bracketed `[…]` items are filled at send time.
 
 ## 0. Decided and still open
 
-**Decided (Joe, 15 Oct 2026):** the session runs **Thu 5 Nov**. **Thu 29 Oct is the internal preparation milestone.** Campaign assets are prepared now, but no unconfirmed event detail is published: the page answers 404 and nothing is sent until the session is confirmed.
+**Decided (Joe, 15 Oct 2026):** the session runs **Thu 5 Nov**. **Thu 29 Oct is the internal preparation milestone.**
+**Decided (Joe, 16 Oct 2026):** **Joseph Petro** presents. Platform: **Zoho** ("both meetings and webinar"): run it as a Zoho Webinar (registration, recording, Q&A), with Zoho Meeting for the internal dry run. The session is confirmed and its page is public.
 
 | Still needed | By | Notes |
 |---|---|---|
-| Presenter | Thu 22 Oct | Named on the page only once confirmed |
-| Meeting platform and join link | Thu 22 Oct | e.g. Zoho Webinar; the join link goes only in the T-1 email, never on the public page |
-| Confirm | Thu 22 Oct | Two weeks of promotion is the minimum for a 5 Nov session |
-
-**To publish:** set `status: "confirmed"` in `client/src/data/deEvents.ts`, add `/events/cyber-insurance-renewal-readiness` to `server/spaKnownPaths.ts` (the tests fail if one is done without the other), run `npx tsx scripts/de-events/build.ts`, merge, and verify the page live.
+| Create the Zoho Webinar and its join link | Thu 22 Oct | The join link goes only in the T-1 email (Email D), never on the public page |
+| Book the Zoho Meeting dry run | Thu 29 Oct | Internal, at the prep milestone |
 
 ## 1. Promotion track (session Thu 5 Nov; milestone Thu 29 Oct)
 
-Nothing in this table goes out before the session is confirmed.
-
 | Date | Step | Owner |
 |---|---|---|
-| By Thu 22 Oct | Presenter and platform confirmed; session marked confirmed and the page verified live | Joe + lead integrator |
+| By Thu 22 Oct | Zoho Webinar created; page verified live (presenter and platform were confirmed 16 Oct) | Joseph Petro + lead integrator |
 | Thu 22 Oct | Email A to clients, Email B to prospects, LinkedIn post 1 | Marketing |
 | Mon 26 Oct | Call list: clients with a renewal in the next six months | Account management |
 | **Thu 29 Oct** | **Prep milestone:** slides drafted and dry-run, all invites approved; Email C reminder to registrants; Email B resend to non-openers; LinkedIn post 2 | Presenter + Marketing |

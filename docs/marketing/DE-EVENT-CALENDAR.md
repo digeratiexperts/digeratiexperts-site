@@ -35,7 +35,7 @@
 | Month | Campaign pages in play | Live sessions |
 |---|---|---|
 | October 2026 | [Cyber insurance readiness](https://digeratiexperts.com/go/cyber-insurance) | — |
-| November 2026 | [Cyber insurance readiness](https://digeratiexperts.com/go/cyber-insurance), [Email security](https://digeratiexperts.com/go/email-security) | Thu, Nov 5: Before Your Cyber Insurance Renewal: The Controls Underwriters Ask About *(planned)*<br>Thu, Nov 19: Holiday Invoice Fraud: How Payment-Change Emails Get Past Busy Teams *(planned)* |
+| November 2026 | [Cyber insurance readiness](https://digeratiexperts.com/go/cyber-insurance), [Email security](https://digeratiexperts.com/go/email-security) | Thu, Nov 5: Before Your Cyber Insurance Renewal: The Controls Underwriters Ask About *(confirmed)*<br>Thu, Nov 19: Holiday Invoice Fraud: How Payment-Change Emails Get Past Busy Teams *(confirmed)* |
 | December 2026 | [ProActive Business](https://digeratiexperts.com/go/proactive-business) | — |
 | January 2027 | [Ransomware readiness](https://digeratiexperts.com/go/ransomware-readiness) | Thu, Jan 21: Can You Actually Restore? A Ransomware Readiness Working Session *(planned)* |
 | February 2027 | [Co-Managed IT](https://digeratiexperts.com/go/co-managed-it) | Thu, Feb 18: Co-Managed IT: Backup for the Internal IT Team, Not a Replacement *(planned)* |
@@ -79,7 +79,7 @@
   Day-before reminder with the join link
 - **Thu, Nov 5** · Internal · Prep T-14d: Holiday Invoice Fraud  
   Second invite; dry run at the lunch & learn
-- **Thu, Nov 5, 11:00 AM** · Prospects + clients · Before Your Cyber Insurance Renewal: The Controls Underwriters Ask About — _planned_ · campaign: [Cyber insurance readiness](https://digeratiexperts.com/go/cyber-insurance)  
+- **Thu, Nov 5, 11:00 AM** · Prospects + clients · Before Your Cyber Insurance Renewal: The Controls Underwriters Ask About — _confirmed_ · campaign: [Cyber insurance readiness](https://digeratiexperts.com/go/cyber-insurance)  
   Live webinar, 60 min. Page: /events/cyber-insurance-renewal-readiness
 - **Mon, Nov 9** · Internal · Prep T+2d: Before Your Cyber Insurance Renewal  
   Follow-up: recording, slides, assessment offer; log attendance in CRM
@@ -91,7 +91,7 @@
   Handwritten, no offer inside.
 - **Wed, Nov 18** · Internal · Prep T-1d: Holiday Invoice Fraud  
   Day-before reminder with the join link
-- **Thu, Nov 19, 11:00 AM** · Prospects + clients · Holiday Invoice Fraud: How Payment-Change Emails Get Past Busy Teams — _planned_ · campaign: [Email security](https://digeratiexperts.com/go/email-security)  
+- **Thu, Nov 19, 11:00 AM** · Prospects + clients · Holiday Invoice Fraud: How Payment-Change Emails Get Past Busy Teams — _confirmed_ · campaign: [Email security](https://digeratiexperts.com/go/email-security)  
   Live webinar, 45 min. Page: /events/holiday-invoice-fraud-and-phishing
 - **Mon, Nov 23** · Internal · Prep T+2d: Holiday Invoice Fraud  
   Follow-up: recording, slides, assessment offer; log attendance in CRM
