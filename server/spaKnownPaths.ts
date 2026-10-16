@@ -164,6 +164,8 @@ const EXACT = new Set([
   // not published (Joe, 2026-10-15), so its path answers 404. Add the path
   // here in the same change that sets the session to "confirmed".
   "/events",
+  "/events/cyber-insurance-renewal-readiness",
+  "/events/holiday-invoice-fraud-and-phishing",
 ]);
 
 const PREFIXES = [

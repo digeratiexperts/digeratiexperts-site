@@ -5,22 +5,23 @@ Page: https://digeratiexperts.com/events/holiday-invoice-fraud-and-phishing · C
 Session data: `client/src/data/deEvents.ts` (slug `holiday-invoice-fraud-and-phishing`) · Calendar: `docs/marketing/DE-EVENT-CALENDAR.md`
 Slides (draft, internal, 7 slides with presenter notes): [Zoho Show](https://show.zoho.com/show/open/wkjyyd4be374b73bd4afab84ff7c0f49777ee), filed in WorkDrive `0. Digerati Experts / 4. Event & Strategic Planning / event`. Every example in them is constructed; no client email, form or data appears.
 
-> **Status: PLANNED.** Joe, 15 Oct 2026: prepare campaign assets but do not publish unconfirmed event details. The page answers 404 and nothing below is sent until the session is confirmed (step 0). Every draft is copy for review, not sent mail.
+> **Status: CONFIRMED (Joe, 16 Oct 2026).** Presenter Joseph Petro, on Zoho. The page is public once the confirming PR is merged and verified live. Every draft below is copy for DE to review and send; nothing is sent automatically.
 > Rules applied: no statistics, no client names, no "we stop all phishing" promise, no real fraud email from a client shown on screen (`docs/CLAIMS-REGISTER.md`). Bracketed `[…]` items are filled at send time.
 
-## 0. Decide first (Joe)
+## 0. Decided and still open
 
-| Item | Needed by | Notes |
+**Decided (Joe, 16 Oct 2026):** **Joseph Petro** presents. Platform: **Zoho**: a Zoho Webinar for the session (registration, recording, Q&A), and Zoho Meeting for the internal dry run. The session is confirmed and its page is public.
+
+| Still needed | By | Notes |
 |---|---|---|
-| Presenter | Thu 22 Oct (T-28) | Normal track: this session is on schedule |
-| Meeting platform and join link | Thu 22 Oct | Same platform as the 5 Nov session |
-| Confirm | Thu 22 Oct | To publish: `status: "confirmed"` in `client/src/data/deEvents.ts` plus `/events/holiday-invoice-fraud-and-phishing` in `server/spaKnownPaths.ts` (tests fail if one is missing), then `npx tsx scripts/de-events/build.ts`, merge, verify live |
+| Create the Zoho Webinar and its join link | Thu 22 Oct (T-28) | The join link goes only in the T-1 email (Email D), never on the public page |
+| Book the Zoho Meeting dry run | Fri 13 Nov | Internal, 30 min |
 
 ## 1. Promotion track (normal, five weeks)
 
 | Date | Step | Owner |
 |---|---|---|
-| Thu 22 Oct | Confirm presenter and platform; mark confirmed | Joe |
+| Thu 22 Oct | Zoho Webinar created (presenter and platform confirmed 16 Oct) | Joseph Petro |
 | Thu 22 Oct | Email B to prospects; LinkedIn post 1 | Marketing |
 | Thu 5 Nov | Mention at the end of the 5 Nov insurance session (same audience); Email A in the client newsletter (first Thursday); Email B resend to non-openers; LinkedIn post 2 | Marketing |
 | Mon 9 Nov | Call list: clients' accounts-payable and office managers | Account management |

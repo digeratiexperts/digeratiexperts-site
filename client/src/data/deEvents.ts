@@ -13,7 +13,8 @@ import type { CampaignSlug } from "./campaigns";
  * is unambiguous all year.
  *
  * TRUTH (Tier 0): a session stays `planned` until Joe confirms the date, the
- * presenter and the meeting platform. Joe, 2026-10-15: "Prepare campaign
+ * presenter and the meeting platform (5 and 19 Nov 2026 confirmed by Joe,
+ * 2026-10-16: Joseph Petro presents, on Zoho). Joe, 2026-10-15: "Prepare campaign
  * assets but do not publish unconfirmed event details." So a planned session
  * is not public at all: /events does not list it, its page answers 404 (the
  * client shows Not Found and server/spaKnownPaths.ts does not know the path),
@@ -45,6 +46,10 @@ export interface DeEventSession {
   /** The /go/:slug campaign this session feeds. */
   campaign: CampaignSlug;
   format: "Live webinar" | "Live working session" | "Office hours";
+  /** Named only once confirmed (Joe, 2026-10-16). */
+  presenter?: string;
+  /** Where the session runs. The join link itself is never public; it goes in the T-1 email. */
+  platform?: string;
 }
 
 export const DE_EVENT_TIME_ZONE = "America/Phoenix";
@@ -58,7 +63,7 @@ export const DE_EVENT_SESSIONS: DeEventSession[] = [
     start: "2026-11-05T11:00:00-07:00",
     durationMinutes: 60,
     audience: "prospects-and-clients",
-    status: "planned",
+    status: "confirmed",
     hook:
       "Q4 and Q1 renewals are opening — the window where a missing control can still be fixed instead of explained.",
     takeaways: [
@@ -79,16 +84,18 @@ export const DE_EVENT_SESSIONS: DeEventSession[] = [
     ],
     campaign: "cyber-insurance",
     format: "Live webinar",
+    presenter: "Joseph Petro",
+    platform: "Zoho Webinar",
   },
   {
     slug: "holiday-invoice-fraud-and-phishing",
     title: "Holiday Invoice Fraud: How Payment-Change Emails Get Past Busy Teams",
     summary:
-      "The year-end rush is when a spoofed vendor asks for new bank details. See the pattern and the controls that stop it.",
+      "The year-end rush is when a spoofed vendor asks for new bank details. See the pattern and the controls that help catch it.",
     start: "2026-11-19T11:00:00-07:00",
     durationMinutes: 45,
     audience: "prospects-and-clients",
-    status: "planned",
+    status: "confirmed",
     hook:
       "Year-end invoices, thin holiday staffing and gift-card requests give payment-change and gift-card scams the cover they rely on.",
     takeaways: [
@@ -108,6 +115,8 @@ export const DE_EVENT_SESSIONS: DeEventSession[] = [
     ],
     campaign: "email-security",
     format: "Live webinar",
+    presenter: "Joseph Petro",
+    platform: "Zoho Webinar",
   },
   {
     slug: "ransomware-restore-readiness-2027",
@@ -168,7 +177,7 @@ export const DE_EVENT_SESSIONS: DeEventSession[] = [
     durationMinutes: 45,
     audience: "prospects-and-clients",
     status: "planned",
-    hook: "March 31 is World Backup Day — the one day a year everyone is reminded to check, and few do.",
+    hook: "March 31 is World Backup Day — a yearly reminder to check that a backup actually restores.",
     takeaways: [
       "A restore drill you can repeat quarterly",
       "What to record so the next audit or insurance renewal has evidence",
