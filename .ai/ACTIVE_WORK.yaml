@@ -98,12 +98,19 @@ claims:
       - scripts/de-events/build.ts (new)
       - docs/marketing/sessions/ (per-session promotion kits)
       - docs/marketing/ (generated calendar .md, .ics, .html)
-    status: active
+    status: verified-live
     started: 2026-10-10
     released: 2026-10-15
-    pr: 564
-    merge_sha: f70c755a50e20719b2e2ef017583a02e514b1f43
+    pr: 617
+    merge_sha: 1c66270643db0af053be230059c6398b4c6a280f
     verification: >-
+      PR 617 (confirm 5 Nov and 19 Nov) merged as 1c66270 after green CI;
+      production release.txt reads 1c66270 (2026-10-16 ~07:25 UTC). Read-only
+      check: /events and both confirmed session pages answer 200 with robots
+      index, follow, render at 390/768/1440 with no sideways scroll or page
+      errors, show "Presented by Joseph Petro" and no join link; the three 2027
+      slugs and an unknown slug answer 404; sitemap.xml lists /events and the two
+      session pages. VERIFIED LIVE. Earlier (PR 564):
       Merged as f70c755a by the lead integrator on Joe's "triage and merge the
       other open PRs" / "yes approved", after merging main into the branch (ledger
       union only) and green CI on 84ad7380 (bundle budget included; 299.79/300 kB
