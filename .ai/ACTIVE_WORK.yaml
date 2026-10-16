@@ -67,7 +67,7 @@ claims:
       - client/src/data/vendorOfferings.ts (new), client/src/pages/store/WarehouseVendors.tsx (vendor profiles section)
       - client/src/styles/portal.css (gate and tour .pt-* helpers only)
       - scripts/check-bundle-budget.mjs (cssRawBytes only)
-    status: active
+    status: merged
     pr: 553
     started: 2026-10-09
     note: >-
@@ -3694,7 +3694,7 @@ claims:
       - AGENTS.md (one new section after Hosts only)
       - CLAUDE.md (one pointer line only)
       - docs/ZOHO-OAUTH-INVENTORY.md (the rules section and the status line)
-    status: active
+    status: merged
     started: 2026-10-10
     note: >-
       Joe, 2026-10-10: "write these rules to other agents that might not
@@ -3713,7 +3713,7 @@ claims:
       - client/src/lib/analytics.ts (exitIntentShown / exitIntentConverted take a variant)
       - client/src/index.css (the .de-exit-navy background only)
       - artifacts/design-concepts/exit-popup-background/**, artifacts/visual-qa/exit-popup-split/** (new)
-    status: active
+    status: merged
     started: 2026-10-10
     note: >-
       Joe, 2026-10-10: the exit popup's warm paper background is "an ugly bg
@@ -3813,7 +3813,7 @@ claims:
       - server/paymentReadiness.ts (refresh() and the keep-warm timer only)
       - server/paymentReadiness.test.ts (one describe block appended)
       - server/index.ts (the keep-warm start in the listen callback only)
-    status: active
+    status: merged
     started: 2026-10-14
     note: >-
       Joe, 2026-10-14, on the status page: "fix the not configured and advisory
@@ -4015,7 +4015,7 @@ claims:
       - server/spaKnownPaths.ts, scripts/generate-sitemap.mjs, public/sitemap.xml (/go/ai-background-check only)
       - docs/CLAIMS-REGISTER.md (the /go/ai-background-check section only)
       - artifacts/visual-qa/ai-background-check/** (new)
-    status: active
+    status: verified-live
     started: 2026-10-15
     note: >-
       Joe, 2026-10-15: "go with concept B for #575" (Personnel File). Integration
@@ -4023,3 +4023,23 @@ claims:
       don't say "free" yet; "30 minutes" and "read-only admin console" left out
       until DE confirms them; every CTA goes to the existing /book flow (no Bigin
       or Bookings work). Overlap check 2026-10-15: no open PR touches these files.
+
+  - id: ai-background-check-offer-terms
+    issue: 573
+    owner: claude
+    subsystem: campaign-landing-pages
+    branch: claude/ai-background-check-conversion
+    base_sha: 81e64ada
+    files:
+      - client/src/pages/campaigns/AiBackgroundCheck.tsx, ai-background-check.css (offer terms, CTA label, next-step line, SEO title)
+      - docs/CLAIMS-REGISTER.md (the /go/ai-background-check section only)
+      - .ai/ACTIVE_WORK.yaml (this claim; status of five merged claims)
+    status: active
+    started: 2026-10-16
+    note: >-
+      Joe, 2026-10-16, on the live /go/ai-background-check: "pretty good" and,
+      on free / 30 minutes / read-only, "do what will convert the best to a paid
+      client". Offer terms go on the page: free, 30 minutes, screen share with
+      no passwords or admin access, plus a next-step line toward paid work.
+      Also retires five claims whose branches are merged (check-active-work
+      warnings). Overlap check 2026-10-16: no open PR touches these files.
