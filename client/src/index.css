@@ -2150,6 +2150,8 @@ button, [role="button"], a {
   will-change: transform;
 }
 .de-hero-art {
+  /* Below the two-column layout, decorative tiles compete with the heading. */
+  display: none;
   position: absolute;
   inset: 0 0 0 auto;
   z-index: 0;
@@ -2167,6 +2169,7 @@ button, [role="button"], a {
 }
 @media (min-width: 1024px) {
   .de-hero-art {
+    display: block;
     width: min(58%, 860px);
     opacity: 1;
   }

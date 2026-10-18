@@ -11,6 +11,7 @@ import {
   CommandSeparator,
   CommandShortcut,
 } from "@/components/ui/command";
+import { DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import type { PortalNavGroup } from "./portalNav";
 
 interface Props {
@@ -48,10 +49,11 @@ export function PortalCommandPalette({ groups, open, onOpenChange, onSignOut }: 
 
   return (
     <CommandDialog open={open} onOpenChange={onOpenChange}>
-      <span className="sr-only" id="portal-cmd-title">Search the portal</span>
-      <CommandInput placeholder="Jump to a page or start an action…" value={query} onValueChange={setQuery} aria-labelledby="portal-cmd-title" />
+      <DialogTitle className="sr-only">Search the portal</DialogTitle>
+      <DialogDescription className="sr-only">Find a page or choose an action. Use the arrow keys to move through results.</DialogDescription>
+      <CommandInput placeholder="Jump to a page or start an action…" value={query} onValueChange={setQuery} aria-label="Search the portal" className="min-w-0 focus-visible:outline-offset-[-2px]" />
       <CommandList className="max-h-[60vh]">
-        <CommandEmpty>Nothing matches. Try a page name like “invoices”.</CommandEmpty>
+        <CommandEmpty><div role="option" aria-disabled="true" aria-selected="false">Nothing matches. Try a page name like “invoices”.</div></CommandEmpty>
         <CommandGroup heading="Actions">
           <CommandItem value="new ticket create support" onSelect={() => go("/portal/tickets/create")}>
             <Plus aria-hidden="true" />
@@ -78,7 +80,7 @@ export function PortalCommandPalette({ groups, open, onOpenChange, onSignOut }: 
             })}
           </CommandGroup>
         ))}
-        <CommandSeparator />
+        <CommandSeparator aria-hidden="true" />
         <CommandGroup heading="Session">
           <CommandItem value="sign out log out" onSelect={() => { onOpenChange(false); onSignOut(); }}>
             <LogOut aria-hidden="true" />
