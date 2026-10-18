@@ -1,6 +1,8 @@
 # Proposal: the year-long cache on /downloads
 
-Status: **for DE review. No headers were changed.** Backlog task 18 (T2), 2026-10-10.
+Status: **proposal for DE review. No headers were changed by this audit.**
+Backlog task 18 (T2), 2026-10-10. Source facts reconciled against `main`
+7d441d5f on 2026-10-18; external proxy settings remain unverified.
 
 ## What the backlog said
 
@@ -15,20 +17,24 @@ options and risks, and leave the headers alone.
    `fileUrl: "/downloads/agents/jumpcloud-<id>.msi"`).
 2. A request for `/downloads/<anything>` therefore falls through to the SPA
    fallback in `server/index.ts` and gets `index.html` with
-   `Cache-Control: no-cache, no-store, must-revalidate` and a 200 status.
+   `Cache-Control: no-cache, no-store, must-revalidate` and a 404 status.
+   `server/spaKnownPaths.ts` grants 200 only to known client routes; it does not
+   include `/downloads`. This describes application source, not an external
+   proxy or download host.
 3. The app's own long caches come from `server/staticCacheControl.ts`:
 
    | Path in `dist/public` | Cache-Control |
    |---|---|
    | `release.txt`, `*.html` | `no-cache, no-store, must-revalidate` |
-   | a file **directly** in `assets/` (Vite's hashed output) | `public, max-age=31536000, immutable` (one year) |
+   | a file directly in `assets/` matching `<name>-<8-character hash>.<ext>` | `public, max-age=31536000, immutable` (one year) |
    | images anywhere else | `public, max-age=2592000` (30 days) |
    | everything else (resource PDFs, fonts, manifest) | `public, max-age=86400, must-revalidate` (1 day) |
 
-   The resource PDFs and covers sit in subfolders of `assets/`
-   (`assets/resources/...`, `assets/covers/...`), so they get one day, not one
-   year. Until 2026-10-02 they fell through to a one-year default; that was fixed
-   then.
+   Resource PDFs under `assets/resources/...` revalidate after one day;
+   image covers under `assets/covers/...` use the 30-day image rule. Plain,
+   unhashed files directly in `assets/` also follow their file-type rule, not
+   the immutable rule. The old one-year default was removed on 2026-10-02;
+   the hash-name guard was added on 2026-10-14.
 
 So if production shows a one-year cache on a `/downloads` URL today, it is
 being set **outside this application**. The candidates, in order of likelihood:
@@ -80,9 +86,9 @@ is exactly how a patched installer fails to reach the people who need it.
 
 ## Related risk found in the same audit (fixed 2026-10-14)
 
-`server/staticCacheControl.ts` gives `public, max-age=31536000, immutable` to
-**any** file directly in `assets/`. Vite only writes hashed names there today,
-but a hand-placed `client/public/assets/<file>` would land there too under an
-unchanging name and be pinned for a year. A guard (a test that fails when
-`client/public/assets/` contains files at its top level, or tightening the rule
-to Vite's `-<hash>.` name pattern) would close it. Done on 2026-10-14: the rule now matches Vite's `<name>-<8-char hash>.<ext>` names only, with a test.
+The old `server/staticCacheControl.ts` rule gave the immutable one-year header
+to any file directly in `assets/`, including a hand-placed file with a stable
+name. On 2026-10-14 the rule was tightened to Vite's
+`<name>-<8-character hash>.<ext>` pattern, with a regression test. Current
+source has that guard. This resolved application risk does not establish the
+cache policy of a separate `/downloads` host or proxy.
