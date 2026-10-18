@@ -281,6 +281,30 @@ export function HomeMonday(): JSX.Element {
           </div>
         </section>
 
+        <section className="hm-band hm-show" aria-labelledby="hm-show-title">
+          <div className="hm-wrap hm-show__grid">
+            <div className="hm-show__copy">
+              <h2 id="hm-show-title" className="hm-h2 hm-h2--light">See your environment as one picture.</h2>
+              <p className="hm-body hm-body--light">
+                Every review ends in a plan you can read: what is covered, what is at risk, and what comes first.
+                The view below is an example, not a client report.
+              </p>
+              <Link href="/book" className="hm-link-light">
+                Book a Cyber Risk Assessment <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              </Link>
+            </div>
+            <div className="hm-show__window">
+              <div className="hm-show__bar"><span /><span /><span /><em>Example, not a client report</em></div>
+              <ul className="hm-show__rows">
+                <li><span className="hm-show__pri hm-show__pri--1" />Confirm admin accounts use MFA</li>
+                <li><span className="hm-show__pri hm-show__pri--2" />Test a full restore from offsite backup</li>
+                <li><span className="hm-show__pri hm-show__pri--3" />Review email forwarding rules</li>
+                <li><span className="hm-show__pri hm-show__pri--3" />Schedule staff security training</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
         <section className="hm-band" aria-labelledby="hm-plans-title">
           <div className="hm-wrap">
             <header className="hm-head">
