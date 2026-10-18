@@ -439,3 +439,149 @@
   scroll-margin-top: 56px;
   position: relative;
 }
+
+/* ---------- Chapter redesign: Hero (content unchanged; presentation only) ----------
+   Rhythm: calmer field, solid headline (no gradient text), one action color, the assessment preview
+   framed as a product window. The city plate stays as faint atmosphere. */
+.hc .v8s-01 .hero {
+  padding-top: clamp(80px, 10vw, 128px);
+}
+.hc .v8s-01 .hero__city-img {
+  opacity: 0.35;
+}
+.hc .v8s-01 .v8-eyebrow {
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 15px;
+  font-weight: 500;
+  color: rgba(247, 245, 242, 0.72);
+}
+.hc .v8s-01 .v8-eyebrow::before {
+  display: none;
+}
+.hc .v8s-01 .v8-h1 {
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  line-height: 1;
+}
+.hc .v8s-01 .v8-h1 .v8-accent {
+  background: none;
+  -webkit-background-clip: initial;
+  background-clip: initial;
+  -webkit-text-fill-color: #f7f5f2;
+  color: #f7f5f2;
+}
+.hc .v8s-01 .hero__sub {
+  font-size: clamp(18px, 1.6vw, 20px);
+  color: rgba(247, 245, 242, 0.72);
+}
+.hc .v8s-01 .v8-btn--hero {
+  background: #d3126a;
+  background-image: none;
+  box-shadow: none;
+  border-radius: 999px;
+}
+.hc .v8s-01 .v8-btn--hero:hover {
+  background: #b80f5c;
+}
+.hc .v8s-01 .v8-btn--outline {
+  border-radius: 999px;
+}
+.hc .v8s-01 .hero__position {
+  color: rgba(247, 245, 242, 0.6);
+}
+
+/* Assessment preview as a product window: white chrome bar, soft shadow */
+.hc .v8s-01 .win {
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 32px 80px -40px rgba(0, 0, 0, 0.8);
+  overflow: hidden;
+}
+.hc .v8s-01 .win__bar,
+.hc .v8s-01 .win__head {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* Trust strip under the hero: airy paper, no shadows, hairline cells */
+.hc .v8s-01 .tstrip {
+  background: #f7f5f2;
+}
+.hc .v8s-01 .tstrip__icon {
+  background: #fff;
+  border: 1px solid rgba(26, 18, 40, 0.12);
+  border-radius: 14px;
+  box-shadow: none;
+}
+
+/* ---------- Chapter redesign: How it works (content unchanged) ----------
+   The three paths become rounded cards on one dark field, the featured path gets a magenta edge,
+   the stack rail reads as a quiet list. */
+.hc .v8s-05 .v8-section {
+  background: #050312;
+}
+.hc .v8s-05 .svc-paths > li .svc-path {
+  background: #0b0b0e;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  padding: 28px;
+}
+.hc .v8s-05 .svc-path--featured {
+  border-color: rgba(211, 18, 106, 0.55);
+  box-shadow: inset 0 0 0 1px rgba(211, 18, 106, 0.2);
+}
+.hc .v8s-05 .svc-paths {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 900px) {
+  .hc .v8s-05 .svc-paths {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+.hc .v8s-05 .svc-path__kicker {
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 14px;
+  color: #ff5aa0;
+}
+.hc .v8s-05 .svc-rail {
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #0b0b0e;
+  overflow: hidden;
+}
+.hc .v8s-05 .svc-rail > li {
+  border-left: 0 !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 20px 24px !important;
+}
+.hc .v8s-05 .svc-rail > li:first-child {
+  border-top: 0;
+}
+@media (min-width: 900px) {
+  .hc .v8s-05 .svc-rail > li {
+    border-top: 0;
+    border-left: 1px solid rgba(255, 255, 255, 0.08) !important;
+  }
+  .hc .v8s-05 .svc-rail > li:nth-child(3n+1) {
+    border-left: 0 !important;
+  }
+  .hc .v8s-05 .svc-rail > li:nth-child(n+4) {
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+  }
+}
+
+/* Chapter-wide: no gradient-filled words in headings, one solid ink; pill buttons everywhere */
+.hc .v8-accent,
+.hc .v8-h2 .v8-accent {
+  background: none;
+  -webkit-background-clip: initial;
+  background-clip: initial;
+  -webkit-text-fill-color: currentColor;
+  color: inherit;
+}
+.hc .v8-btn {
+  border-radius: 999px;
+}
