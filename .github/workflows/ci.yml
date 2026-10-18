@@ -157,6 +157,19 @@ jobs:
         if: env.DE_LIGHT != 'true'
         run: npm run build
 
+      - name: Recovered public visual audit verification
+        if: env.DE_LIGHT != 'true'
+        run: node scripts/qa/visual-audit-public.mjs
+
+      - name: Recovered public visual audit evidence
+        if: always() && env.DE_LIGHT != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: recovered-public-visual-audit
+          path: artifacts/visual-qa/recovered-public-audit
+          if-no-files-found: ignore
+          retention-days: 14
+
       - name: Browser bundle budget
         if: env.DE_LIGHT != 'true'
         run: node scripts/check-bundle-budget.mjs

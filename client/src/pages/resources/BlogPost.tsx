@@ -334,7 +334,7 @@ export default function BlogPost() {
   const hasToc = headings.length >= 2;
   const shareBtn =
     "flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-white/[0.03] text-white/70 transition-colors hover:border-de-hairline hover:bg-de-raised hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ec4899]";
-  let firstParagraphRendered = false;
+
   // Word counter for live audio highlighting — increments in render order so
   // each spoken word can be located via [data-w="N"].
   const wordCounter = { value: 0 };
@@ -900,17 +900,11 @@ export default function BlogPost() {
                       </aside>
                     );
                   }
-                  // Default paragraph — drop-cap on the first one only
-                  const isFirst = !firstParagraphRendered;
-                  if (isFirst) firstParagraphRendered = true;
+                  // Keep the first line intact, including acronyms such as AI and IT.
                   return (
                     <p
                       key={idx}
-                      className={`text-white/85 text-[18px] leading-[1.8] mb-6 ${
-                        isFirst
-                          ? "first-letter:float-left first-letter:mr-3 first-letter:mt-1 first-letter:text-7xl first-letter:font-bold first-letter:leading-[0.85] first-letter:text-de-accent-ink"
-                          : ""
-                      }`}
+                      className="text-white/85 text-[18px] leading-[1.8] mb-6"
                     >
                       {renderTokens(block.text, wordCounter)}
                     </p>
@@ -935,11 +929,11 @@ export default function BlogPost() {
                         "A short Cyber Risk Assessment shows where your environment actually stands and what to do first."}
                     </p>
                     <div className="flex flex-wrap gap-3">
-                      <Button asChild variant="brand" data-testid="button-blog-assessment">
+                      <Button asChild variant="brand" className="h-auto min-h-11 max-w-full whitespace-normal py-3 text-center" data-testid="button-blog-assessment">
                         <Link href={body.bottomCta?.primaryHref ?? "/book"}>
                           {body.bottomCta?.primaryLabel ??
                             "Schedule a Cyber Risk Assessment"}
-                          <ArrowRight className="ml-2 h-4 w-4" />
+                          <ArrowRight className="ml-2 h-4 w-4 shrink-0" aria-hidden="true" />
                         </Link>
                       </Button>
                       {body.bottomCta?.secondaryLabel &&
@@ -947,7 +941,7 @@ export default function BlogPost() {
                           <Button
                             asChild
                             variant="outline"
-                            className="border-white/30 bg-transparent text-white hover:bg-white/10 hover:text-white hover:border-white/50"
+                            className="h-auto min-h-11 max-w-full whitespace-normal border-white/30 bg-transparent py-3 text-center text-white hover:bg-white/10 hover:text-white hover:border-white/50"
                             data-testid="button-blog-secondary"
                           >
                             <Link href={body.bottomCta.secondaryHref}>

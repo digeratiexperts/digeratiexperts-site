@@ -17,7 +17,7 @@ export default function Press() {
   useSEO({
     title: "Press & Media",
     description:
-      "Official media kit and boilerplate for Digerati Experts — Arizona MSP/MSSP for managed IT, cybersecurity, and compliance. Accurate NAP and brand facts for journalists and partners.",
+      "Company information and media contacts for Digerati Experts — Arizona MSP/MSSP for managed IT, cybersecurity, and compliance. Company and brand facts for journalists and partners.",
     canonical: "/about/press",
   });
 
@@ -26,7 +26,7 @@ export default function Press() {
       layout="chapters"
       eyebrow="About · Press & media"
       title="Press & media"
-      subtitle="Use this page for accurate company facts, citations, and interview requests. Please do not invent metrics, client names, or certifications not listed here."
+      subtitle="Company facts, useful resources, and contacts for citations and interview requests."
       breadcrumbs={[{ label: "About" }, { label: "Press & Media" }]}
     >
       <JsonLd
@@ -68,7 +68,7 @@ export default function Press() {
             </section>
 
             <section className="grid gap-5 border-b border-[var(--de-paper-hairline)] py-8 lg:grid-cols-12 lg:gap-14 lg:py-10">
-              <h2 className="font-heading text-2xl font-semibold text-[#1A1228] lg:col-span-4">Official NAP (use exactly)</h2>
+              <h2 className="font-heading text-2xl font-semibold text-[#1A1228] lg:col-span-4">Company contact details</h2>
               <address className="max-w-[68ch] rounded-xl border border-[var(--de-paper-hairline)] bg-white p-6 not-italic leading-relaxed text-[#1A1228] lg:col-span-8">
                 {NAP.name}
                 <br />
@@ -117,7 +117,7 @@ export default function Press() {
                 </li>
                 <li>
                   <Link href="/book" className="text-de-magenta-ink underline decoration-de-magenta-ink/50 underline-offset-4 hover:decoration-de-magenta-ink">
-                    Free risk assessment
+                    Book an assessment conversation
                   </Link>
                 </li>
               </ul>

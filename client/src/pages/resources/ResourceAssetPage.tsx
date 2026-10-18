@@ -57,7 +57,6 @@ function ResourceAssetView({ resource }: { resource: NonNullable<ReturnType<type
           rows={[
             { label: "Type", value: typeLabel },
             { label: "Format", value: "PDF download" },
-            { label: "Status", value: "Draft public resource" },
           ]}
         />
       }
@@ -118,8 +117,7 @@ function ResourceAssetView({ resource }: { resource: NonNullable<ReturnType<type
             </div>
           )}
           <p className="mt-6 text-sm text-[#4A445A]">
-            Draft public resource. No fabricated customer stories. Request a live walkthrough if you need this
-            applied to your environment.
+            Request a walkthrough to discuss how this resource applies to your environment.
           </p>
         </Container>
       </Chapter>
@@ -127,9 +125,9 @@ function ResourceAssetView({ resource }: { resource: NonNullable<ReturnType<type
       <ClosingCta
         tone="surface"
         title="Need this applied to your environment?"
-        lede="A Cyber Risk Assessment turns the datasheet into a recommendation with ownership named."
+        lede="A Cyber Risk Assessment helps turn these recommendations into a prioritized plan for your environment."
         primary={{ label: CTA.primary, href: "/book", testId: "button-conversion-assessment" }}
-        secondary={{ label: "Download PDF", href: resource.file }}
+        secondary={{ label: resource.cta, href: resource.file }}
       />
     </PageTemplate>
   );

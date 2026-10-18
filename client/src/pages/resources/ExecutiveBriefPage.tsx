@@ -31,7 +31,7 @@ export function ExecutiveBriefIndex() {
           Executive briefs
         </h1>
         <p className="mt-4 text-lg leading-relaxed text-black/65">
-          Printable operating notes for buyers and advisors. No invented case studies. Pair a brief with the
+          Practical operating notes for buyers and advisors. Pair a brief with the
           matching datasheet or assessment conversation.
         </p>
         <ol className="mt-12 divide-y divide-black/10 border-y border-black/10">
@@ -98,7 +98,7 @@ export default function ExecutiveBriefPage() {
             </h1>
             <p className="mt-5 text-xl leading-relaxed text-black/65">{brief.dek}</p>
             <p className="mt-6 text-sm text-black/65">
-              For {brief.audience} · {brief.readingMinutes} minute read · Chandler, Arizona
+              Audience: {brief.audience} · {brief.readingMinutes} minute read · Chandler, Arizona
             </p>
             <button
               type="button"
@@ -138,13 +138,13 @@ export default function ExecutiveBriefPage() {
               );
             })}
           </div>
-          <div className="mt-14 flex flex-col gap-3 border-t border-black/10 pt-8 print:hidden sm:flex-row">
+          <div className="mt-14 flex flex-col gap-3 border-t border-black/10 pt-8 print:hidden sm:flex-row sm:flex-wrap">
             <Button asChild variant="brand" className="h-auto min-h-12 whitespace-normal py-2 text-center">
               <Link href="/book">{CTA.primary}</Link>
             </Button>
             {brief.relatedCampaignSlug && (
               <Button asChild variant="outline" className="h-auto min-h-12 whitespace-normal border-black/20 py-2 text-center text-[#1A1228]">
-                <Link href={`/go/${brief.relatedCampaignSlug}`}>Campaign page</Link>
+                <Link href={`/go/${brief.relatedCampaignSlug}`}>Explore this service</Link>
               </Button>
             )}
             {asset && (
@@ -161,7 +161,7 @@ export default function ExecutiveBriefPage() {
           <div className="mx-auto max-w-5xl">
             <ConversionPathBar
               headline="Turn the brief into a recommendation"
-              body="Book the Cyber Risk Assessment conversation. We will not invent a package to match an ad."
+              body="Discuss your priorities with DE and identify the next steps for your environment."
             />
           </div>
         </div>
