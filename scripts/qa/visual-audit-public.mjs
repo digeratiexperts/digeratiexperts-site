@@ -46,6 +46,11 @@ try {
       await page.evaluate(() => document.fonts.ready);
       const main = page.locator('main, article').first();
       const text = await main.innerText();
+      const announcement = page.getByTestId('announce-start-assessment');
+      if (await announcement.count()) {
+        const copy = await announcement.evaluate(el => el.parentElement.textContent || '');
+        assert(!/free\s+(cybersecurity|cyber risk)\s+assessment/i.test(copy), 'Shared announcement must not promise a free scoped assessment');
+      }
       assert(!/For media buyers|How to advertise these|Draft public resource|Official NAP \(use exactly\)|surprise cost surprises|rest of Door 2|used across Door 2|\?\./i.test(text), route);
       assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `${route}: overflow at ${width}`);
       const cta = page.getByTestId('button-blog-assessment');

@@ -709,7 +709,7 @@ export function MegaMenu() {
             <div className="max-w-[var(--de-canvas)] mx-auto relative flex w-full items-center justify-center gap-x-4 px-12 py-2">
               <p className="text-base font-medium leading-snug text-white/90">
                 <span aria-hidden="true" className="mr-1.5">🚀</span>
-                Get Your Free Cybersecurity Assessment &ndash; See Where You Stand Today!
+                Understand your cyber risk and choose a practical next step.
               </p>
               <button
                 type="button"
@@ -717,7 +717,7 @@ export function MegaMenu() {
                 className="inline-flex shrink-0 items-center gap-1.5 text-base font-semibold leading-snug text-white underline underline-offset-4 transition-colors hover:text-white/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 rounded"
                 data-testid="announce-start-assessment"
               >
-                Start My Assessment
+                Book a conversation
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </button>
               <button
