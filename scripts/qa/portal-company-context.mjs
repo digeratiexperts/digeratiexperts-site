@@ -91,7 +91,8 @@ try {
     await page.getByText('Company record unavailable', { exact: true }).waitFor();
     state = 'ready'; await visit('company');
     await page.getByText('EXAMPLE Selected Company A', { exact: true }).waitFor();
-    await page.getByTestId('contact-row-example-member').waitFor();
+    // DataTable renders a visible card below md and a visible row at md+.
+    await page.getByTestId(width < 768 ? 'contact-row-example-member-card' : 'contact-row-example-member').waitFor();
     await capture('company-ready');
     state = 'missing';
     for (const screen of ['loaner', 'return', 'license']) {
