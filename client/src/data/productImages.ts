@@ -12,6 +12,7 @@ import type { ProductCategory, StoreProduct } from "./storeProducts";
 import {
   getVendorForSku,
   inferVendorFromText,
+  isDeOwnedServiceSku,
   vendorLogoUrl,
 } from "./vendorLogos";
 import type { StoreOutcomeId } from "./storeMerchandising";
@@ -161,6 +162,8 @@ type ProductImageInput = Pick<
 > & { imageUrl?: string };
 
 function resolveVendor(product: ProductImageInput): ProductVendorMark | null {
+  // DE-owned services show the DE mark; never infer a provider from their copy.
+  if (isDeOwnedServiceSku(product.sku)) return null;
   return (
     getVendorForSku(product.sku, product.category) ||
     inferVendorFromText(

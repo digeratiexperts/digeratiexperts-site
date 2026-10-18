@@ -34,16 +34,13 @@ import { findBackupCodeIndex, generateBackupCodes } from "./portalMfaCrypto";
 import { generateTotpSecret, totpKeyUri, verifyTotp } from "./portalTotp";
 import {
   buildAuthenticationOptions,
-  buildRegistrationOptions,
-  isPasskeyProvider,
   newChallenge,
-  PASSKEY_PROVIDERS,
   publicPasskeyView,
   resolveRpId,
   verifyAuthentication,
-  verifyRegistration,
-  type PasskeyProviderId,
 } from "./portalPasskeys";
+import { registerPortalPasskeyEnrollmentRoutes } from "./portalPasskeyEnrollmentRoutes";
+import { sendStorageUnavailable } from "./storageUnavailableResponse";
 import {
   parseZohoTicketId,
   validatePortalTicketUpload,
@@ -851,6 +848,7 @@ export async function registerRoutes(app: Express) {
       const { password: _, ...safeUser } = user;
       res.json({ user: safeUser });
     } catch (error: any) {
+      if (sendStorageUnavailable(res, error)) return;
       res.status(500).json({ error: error.message });
     }
   });
@@ -1567,6 +1565,8 @@ export async function registerRoutes(app: Express) {
       });
       res.json({ success: true, ...result, fulfillmentTicketId });
     } catch (error: any) {
+      // Fulfilment writes the ticket to storage; a database outage is a 503, not a 400.
+      if (sendStorageUnavailable(res, error)) return;
       const status = /Forbidden|not the current/i.test(error.message) ? 403 : 400;
       res.status(status).json({ error: error.message });
     }
@@ -1848,6 +1848,7 @@ export async function registerRoutes(app: Express) {
         },
       });
     } catch (error: any) {
+      if (sendStorageUnavailable(res, error)) return;
       res.status(500).json({ error: error.message });
     }
   });
@@ -2020,6 +2021,7 @@ export async function registerRoutes(app: Express) {
         isInternal: target.isInternal,
       });
     } catch (error: any) {
+      if (sendStorageUnavailable(res, error)) return;
       console.error("Ticket creation error:", error);
       res.status(500).json({ error: error.message });
     }
@@ -2083,6 +2085,7 @@ export async function registerRoutes(app: Express) {
         });
         res.json({ success: true, filename: validated.filename });
       } catch (error: any) {
+        if (sendStorageUnavailable(res, error)) return;
         if (error instanceof PortalTicketUploadError) {
           return res.status(error.status).json({ error: error.message });
         }
@@ -2152,6 +2155,7 @@ export async function registerRoutes(app: Express) {
         },
       });
     } catch (error: any) {
+      if (sendStorageUnavailable(res, error)) return;
       res.status(500).json({ error: "Failed to retrieve ticket" });
     }
   });
@@ -2212,6 +2216,7 @@ export async function registerRoutes(app: Express) {
       res.json({ success: true, comment });
       logSecurityEvent("TICKET_COMMENT_ADDED", req, { ticketId: id });
     } catch (error: any) {
+      if (sendStorageUnavailable(res, error)) return;
       res.status(500).json({ error: error.message });
     }
   });
@@ -2245,16 +2250,7 @@ export async function registerRoutes(app: Express) {
     createdAt: number;
   }>();
 
-  // Passkey registration ceremonies in flight (challenge is single use, 10 minutes).
-  const passkeyRegistrations = new Map<string, {
-    userId: string;
-    challenge: string;
-    rpId: string;
-    provider: PasskeyProviderId;
-    nickname: string;
-    createdAt: number;
-  }>();
-  const PASSKEY_CEREMONY_TTL = 10 * 60 * 1000;
+  // Passkey registration ceremonies live in portalPasskeyEnrollmentRoutes.ts (single use, 10 minutes).
 
   // Portal Register Endpoint — creates prospect client + durable user
   /** What a portal user's password may not contain (shared/passwordPolicy.ts). */
@@ -3251,102 +3247,16 @@ export async function registerRoutes(app: Express) {
   // and JumpCloud. A passkey is a second factor after the password, alongside or instead
   // of an authenticator app, and can be added while another MFA method is on.
 
-  const prunePasskeyCeremonies = () => {
-    const now = Date.now();
-    for (const [token, entry] of passkeyRegistrations) {
-      if (now - entry.createdAt > PASSKEY_CEREMONY_TTL) passkeyRegistrations.delete(token);
-    }
-  };
-
-  // Step 1: options for navigator.credentials.create(), tuned to the chosen provider.
-  app.post("/api/portal/mfa/passkey/register/options", [authMiddleware, validateInput], async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const { provider, nickname } = req.body || {};
-      if (!isPasskeyProvider(provider)) {
-        return res.status(400).json({ message: "Provider must be apple, android, microsoft or jumpcloud" });
-      }
-      const user = portalUsers.get(req.user?.email || "");
-      if (!user) return res.status(404).json({ message: "User not found" });
-      if ((user.mfaPasskeys || []).length >= 10) {
-        return res.status(400).json({ message: "You can register up to 10 passkeys. Remove one first." });
-      }
-
-      prunePasskeyCeremonies();
-      const rpId = resolveRpId(req.hostname);
-      const challenge = newChallenge();
-      const setupToken = randomId();
-      passkeyRegistrations.set(setupToken, {
-        userId: user.id,
-        challenge,
-        rpId,
-        provider,
-        nickname: typeof nickname === "string" ? nickname : "",
-        createdAt: Date.now(),
-      });
-
-      const options = buildRegistrationOptions({
-        rpId,
-        user: { id: user.id, email: user.email, fullName: user.fullName },
-        provider,
-        challenge,
-        existing: user.mfaPasskeys || [],
-        userAgent: String(req.headers["user-agent"] || ""),
-      });
-      return res.json({ setupToken, provider, providerLabel: PASSKEY_PROVIDERS[provider].store, options });
-    } catch (error: any) {
-      logger.error("Passkey registration options failed", error);
-      return res.status(500).json({ message: "Could not start passkey setup" });
-    }
-  });
-
-  // Step 2: verify the new credential and save it. Turns MFA on when it was off.
-  app.post("/api/portal/mfa/passkey/register/verify", [authMiddleware, validateInput], async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const { setupToken, credential } = req.body || {};
-      const pending = typeof setupToken === "string" ? passkeyRegistrations.get(setupToken) : undefined;
-      if (typeof setupToken === "string") passkeyRegistrations.delete(setupToken); // single use
-      if (!pending || Date.now() - pending.createdAt > PASSKEY_CEREMONY_TTL) {
-        return res.status(400).json({ message: "Passkey setup expired. Please try again." });
-      }
-      const user = portalUsers.get(req.user?.email || "");
-      if (!user || user.id !== pending.userId) return res.status(403).json({ message: "Unauthorized" });
-
-      let passkey;
-      try {
-        passkey = verifyRegistration({
-          credential,
-          expectedChallenge: pending.challenge,
-          rpId: pending.rpId,
-          provider: pending.provider,
-          nickname: pending.nickname,
-        });
-      } catch (err: any) {
-        logSecurityEvent("PASSKEY_REGISTRATION_REJECTED", req, { email: user.email, reason: err?.message });
-        return res.status(400).json({ message: `Passkey could not be verified: ${err?.message || "invalid response"}` });
-      }
-      if ((user.mfaPasskeys || []).some((p) => p.id === passkey.id)) {
-        return res.status(409).json({ message: "This passkey is already registered." });
-      }
-
-      user.mfaPasskeys = [...(user.mfaPasskeys || []), passkey];
-      let backupCodes: string[] | undefined;
-      if (!user.mfaEnabled) {
-        backupCodes = generateBackupCodes(8);
-        user.mfaEnabled = true;
-        user.mfaMethod = "passkey";
-        user.mfaBackupCodes = backupCodes;
-      }
-      await portalUsers.commit(user);
-
-      logSecurityEvent("PASSKEY_REGISTERED", req, { email: user.email, provider: passkey.provider, aaguid: passkey.aaguid });
-      if (backupCodes) logSecurityEvent("MFA_ENABLED", req, { email: user.email, method: "passkey" });
-
-      return res.json({ success: true, passkey: publicPasskeyView(passkey), backupCodes });
-    } catch (error: any) {
-      if (sendPersistenceFailure(res, error)) return;
-      logger.error("Passkey registration failed", error);
-      return res.status(500).json({ message: "Passkey setup failed" });
-    }
+  // Enrollment (register/options + register/verify): an authenticated session is required,
+  // and each challenge is single use, bound to the requesting user, and expires in 10 minutes.
+  registerPortalPasskeyEnrollmentRoutes(app, {
+    auth: authMiddleware,
+    validateInput,
+    users: portalUsers,
+    generateBackupCodes,
+    logSecurityEvent,
+    sendPersistenceFailure,
+    logger,
   });
 
   // Remove one passkey (password required). Removing the last passkey of a passkey-only
@@ -3791,6 +3701,7 @@ export async function registerRoutes(app: Express) {
       
       res.json(dashboardStats);
     } catch (error: any) {
+      if (sendStorageUnavailable(res, error)) return;
       console.error("[ERROR] Dashboard fetch failed:", error);
       res.status(500).json({ message: "Failed to load dashboard" });
     }
@@ -4482,6 +4393,7 @@ export async function registerRoutes(app: Express) {
         },
       });
     } catch (error: any) {
+      if (sendStorageUnavailable(res, error)) return;
       console.error("[ERROR] Failed to fetch order:", error);
       res.status(500).json({ message: "Failed to load order" });
     }
@@ -4537,6 +4449,7 @@ export async function registerRoutes(app: Express) {
         return res.send(html);
       }
     } catch (error: any) {
+      if (sendStorageUnavailable(res, error)) return;
       console.error("[ERROR] Failed to generate receipt:", error);
       res.status(500).json({ message: "Failed to generate receipt" });
     }
@@ -4986,6 +4899,7 @@ export async function registerRoutes(app: Express) {
       
       res.json(metrics);
     } catch (error: any) {
+      if (sendStorageUnavailable(res, error)) return;
       res.status(500).json({ error: error.message });
     }
   });
