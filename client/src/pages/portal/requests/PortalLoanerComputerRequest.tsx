@@ -1,3 +1,4 @@
+import { RequestContextReadiness } from "@/components/portal/requests/RequestCommon";
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { PortalLayout } from "../PortalLayout";
@@ -21,7 +22,7 @@ const TYPE = "loaner_computer" as const;
 export default function PortalLoanerComputerRequest() {
   const form = useServiceRequestForm(TYPE);
   const [, navigate] = useLocation();
-  const { context, basketCount } = useRequestContext();
+  const { context, companyReady, basketCount } = useRequestContext();
   const invalidate = useInvalidateRequests();
   const [person, setPerson] = useState<PersonOption | null>(null);
   // Amend: show the person the request is for.
@@ -32,6 +33,7 @@ export default function PortalLoanerComputerRequest() {
   const [basketNote, setBasketNote] = useState<string | null>(null);
   const { values, setField, errors } = form;
   const ctx = context.data;
+  const personReady = companyReady && !!person && person.userId === values.requestedForUserId;
 
   // Defaults: the signed-in user as Requested for, the only site as LID.
   useEffect(() => {
@@ -50,6 +52,7 @@ export default function PortalLoanerComputerRequest() {
   });
 
   const run = async (mode: "submit" | "basket") => {
+    if (!personReady) return;
     setBasketNote(null);
     const result = await form.submit(mode);
     if (!result) return;
@@ -83,11 +86,7 @@ export default function PortalLoanerComputerRequest() {
 
   return (
     <PortalLayout title="Request Loaner Computer" hideHeader width="wide">
-      {context.isError && (
-        <Callout tone="bad" title="This form couldn't load your company details" className="mb-4">
-          {context.error instanceof Error ? context.error.message : "Unknown error"}
-        </Callout>
-      )}
+      <RequestContextReadiness context={context} />
       {basketNote && (
         <Callout tone="ok" title="Added to your request basket" className="mb-4">
           {basketNote}{" "}
@@ -97,6 +96,7 @@ export default function PortalLoanerComputerRequest() {
         </Callout>
       )}
       <ServiceRequestShell
+        ready={personReady}
         amending={form.amending?.number}
         amendError={form.amendError}
         type={TYPE}
@@ -118,6 +118,7 @@ export default function PortalLoanerComputerRequest() {
         announcement={form.announcement}
       >
         <RequestedForField
+          enabled={companyReady}
           value={person}
           me={ctx?.me ?? null}
           onChange={(p) => {

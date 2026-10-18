@@ -1,3 +1,4 @@
+import { useRequestContext, RequestContextReadiness } from "@/components/portal/requests/RequestCommon";
 import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -348,8 +349,9 @@ function PolicyEditor({ clientId, initial, onSaved }: { clientId: string; initia
 
 export default function PortalLicensing() {
   const qc = useQueryClient();
-  const overview = useQuery({ queryKey: ["/api/portal/licensing"], queryFn: licensingApi.overview });
-  const people = useQuery({ queryKey: ["/api/portal/licensing/people"], queryFn: licensingApi.people, enabled: Boolean(overview.data?.canManagePeople) });
+  const { context, companyReady } = useRequestContext();
+  const overview = useQuery({ queryKey: ["/api/portal/licensing"], queryFn: licensingApi.overview, enabled: companyReady });
+  const people = useQuery({ queryKey: ["/api/portal/licensing/people"], queryFn: licensingApi.people, enabled: companyReady && overview.isSuccess && Boolean(overview.data?.canManagePeople) });
   const refresh = () => {
     void qc.invalidateQueries({ queryKey: ["/api/portal/licensing"] });
     void qc.invalidateQueries({ queryKey: ["/api/portal/licensing/people"] });
@@ -375,7 +377,8 @@ export default function PortalLicensing() {
         </div>
       }
     >
-      {overview.isLoading ? (
+      <RequestContextReadiness context={context} />
+      {!companyReady ? null : overview.isLoading ? (
         <Skeleton className="h-64 rounded-xl" />
       ) : overview.isError || !d ? (
         <Callout tone="bad" title="Licensing couldn't be loaded">

@@ -136,6 +136,21 @@ const returnFields = (over: Record<string, unknown> = {}) => ({
 const submit = (user: object, type: string, fields: object, mode = "submit") =>
   call("POST", "/api/portal/service-requests", user, { type, mode, fields });
 
+describe("company readiness", () => {
+  it("requires admin selection, distinguishes a missing company, and ignores query overrides", async () => {
+    const missing = await call("GET", "/api/portal/service-requests/context?clientId=acme", DE_ADMIN);
+    expect(missing.status).toBe(400);
+    expect(await missing.json()).toMatchObject({ code: "COMPANY_CONTEXT_REQUIRED" });
+    const deleted = await call("GET", "/api/portal/service-requests/context", { ...DE_ADMIN, impersonatingCompanyId: "deleted" });
+    expect(deleted.status).toBe(400);
+    expect(await deleted.json()).toMatchObject({ code: "COMPANY_NOT_FOUND" });
+    const selected = await call("GET", "/api/portal/service-requests/context?clientId=globex", { ...DE_ADMIN, impersonatingCompanyId: "acme" });
+    expect(await selected.json()).toMatchObject({ company: { id: "acme" }, me: null });
+    const client = await call("GET", "/api/portal/service-requests/context?clientId=globex", { ...ANN, impersonatingCompanyId: "globex" });
+    expect(await client.json()).toMatchObject({ company: { id: "acme" }, me: { userId: ANN.id } });
+  });
+});
+
 describe("submitting requests", () => {
   it("submits a loaner request with an LNR number, a site snapshot, a Desk ticket and a queued Hub copy", async () => {
     const res = await submit(ANN, "loaner_computer", loanerFields());

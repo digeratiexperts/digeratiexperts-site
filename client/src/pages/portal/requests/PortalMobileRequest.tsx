@@ -1,3 +1,4 @@
+import { RequestContextReadiness } from "@/components/portal/requests/RequestCommon";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { Smartphone } from "lucide-react";
@@ -16,7 +17,7 @@ const TYPE = "mobile_request" as const;
 export default function PortalMobileRequest() {
   const form = useServiceRequestForm(TYPE);
   const [, navigate] = useLocation();
-  const { context, basketCount } = useRequestContext();
+  const { context, companyReady, basketCount } = useRequestContext();
   const invalidate = useInvalidateRequests();
   const [person, setPerson] = useState<PersonOption | null>(null);
   const [done, setDone] = useState<Extract<SubmitResult, { kind: "submitted" }> | null>(null);
@@ -32,6 +33,7 @@ export default function PortalMobileRequest() {
     })).filter((group) => group.activities.length > 0);
   }, [activityQuery]);
   const ctx = context.data;
+  const personReady = companyReady && !!person && person.userId === values.requestedForUserId;
 
   useEffect(() => {
     if (form.amending) setPerson({ ...form.amending.requestedFor });
@@ -46,6 +48,7 @@ export default function PortalMobileRequest() {
   }, [ctx]);
 
   const run = async (mode: "submit" | "basket") => {
+    if (!personReady) return;
     setBasketNote(null);
     const result = await form.submit(mode);
     if (!result) return;
@@ -79,6 +82,7 @@ export default function PortalMobileRequest() {
 
   return (
     <PortalLayout title="Mobile & Carrier Service" hideHeader width="wide">
+      <RequestContextReadiness context={context} />
       {basketNote && (
         <Callout tone="ok" title="Added to your request basket" className="mb-4">
           {basketNote}{" "}
@@ -88,6 +92,7 @@ export default function PortalMobileRequest() {
         </Callout>
       )}
       <ServiceRequestShell
+        ready={personReady}
         amending={form.amending?.number}
         amendError={form.amendError}
         type={TYPE}
@@ -109,6 +114,7 @@ export default function PortalMobileRequest() {
         announcement={form.announcement}
       >
         <RequestedForField
+          enabled={companyReady}
           value={person}
           me={ctx?.me ?? null}
           onChange={(p) => {

@@ -1,3 +1,4 @@
+import { portalCompanyProfile } from "./portalCompanyProfile";
 import express, { type Express, type Request, type Response, NextFunction } from "express";
 import { storage } from "./storage";
 import {
@@ -3774,70 +3775,11 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  // Portal Company - Get CRM account and contacts
-  app.get("/api/portal/company", [authMiddleware], async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const { zohoCRMService } = await import("./zoho/zohoCRM");
-      const { zohoClient } = await import("./zoho/zohoClient");
-      
-      if (!zohoClient.isConfigured()) {
-        return res.json({
-          account: null,
-          contacts: [],
-          zohoConnected: false,
-          message: "CRM integration not configured",
-        });
-      }
-      
-      let account = null;
-      let contacts: any[] = [];
-      let zohoConnected = false;
-      
-      try {
-        const userEmail = req.user?.email;
-        
-        // Find the contact by email first, then get their associated account
-        if (userEmail) {
-          const contact = await zohoCRMService.getContactByEmail(userEmail);
-          
-          if (contact && contact.Account_Name?.id) {
-            // Get the account this contact belongs to
-            account = await zohoCRMService.getAccountById(contact.Account_Name.id);
-            
-            if (account) {
-              // Get all contacts for this account
-              contacts = await zohoCRMService.getContactsByAccount(account.id);
-              zohoConnected = true;
-            }
-          } else {
-            console.log(`No Zoho CRM contact/account found for: ${userEmail}`);
-          }
-        }
-      } catch (error) {
-        console.warn("Could not fetch Zoho CRM data:", error);
-      }
-      
-      // Add Zoho links to account and contacts
-      const accountWithLink = account ? {
-        ...account,
-        zohoLink: `https://crm.zoho.com/crm/org/tab/Accounts/${account.id}`,
-      } : null;
-      
-      const contactsWithLinks = contacts.map(c => ({
-        ...c,
-        zohoLink: `https://crm.zoho.com/crm/org/tab/Contacts/${c.id}`,
-      }));
-      
-      res.json({
-        account: accountWithLink,
-        contacts: contactsWithLinks,
-        zohoConnected,
-        message: !zohoConnected ? "Your company profile is being set up" : undefined,
-      });
-    } catch (error: any) {
-      console.error("[ERROR] Company fetch failed:", error);
-      res.status(500).json({ message: "Failed to load company data" });
-    }
+  // Company profile is the authenticated tenant's durable Portal projection.
+  // CRM contact-email joins are not an identity or company authority.
+  app.get("/api/portal/company", [authMiddleware], (req: AuthenticatedRequest, res: Response) => {
+    res.setHeader("Cache-Control", "private, no-store");
+    res.json(portalCompanyProfile(req.user, id => portalClients.get(id), portalUsers.values()));
   });
 
   // Portal Learning Center — role-personalized curriculum (Hub taxonomy + docs)
