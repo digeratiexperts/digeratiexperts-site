@@ -433,3 +433,9 @@
     transition: none;
   }
 }
+
+/* Full-content chapters: every live homepage section, natural height, anchored under the sticky nav */
+.hc-section {
+  scroll-margin-top: 56px;
+  position: relative;
+}
