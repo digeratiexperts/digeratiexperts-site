@@ -18,7 +18,7 @@ export default function Compliance() {
       benefits={[
         "Pass audits with confidence and documented evidence",
         "Faster audit cycles with pre-compiled compliance packets",
-        "Reduced audit findings and surprise cost surprises",
+        "Reduced audit findings and unexpected costs",
         "Better insurance premium justification",
         "Proactive compliance posture, not reactive scrambling",
         "Clear roadmap to compliance certifications"

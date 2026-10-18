@@ -11,7 +11,7 @@ export default function Datasheets() {
   useSEO({
     title: "Datasheets, checklists, and sample reports",
     description:
-      "Download Digerati Experts datasheets for ProActive packages, co-managed IT, UCaaS, checklists, and sample assessment reports. No fabricated case studies.",
+      "Download Digerati Experts datasheets for ProActive packages, co-managed IT, UCaaS, checklists, and sample assessment reports.",
     canonical: "/resources/datasheets",
   });
 
@@ -19,7 +19,7 @@ export default function Datasheets() {
     <PageTemplate
       title="Datasheets & documentation"
       eyebrow="Downloads"
-      subtitle="The files that already ship with the site — package overviews, checklists, and sample reports. Nothing here invents a customer or a certification."
+      subtitle="Explore package overviews, practical checklists, and sample reports to prepare for your next technology decision."
       breadcrumbs={[{ label: "Resources", href: "/resources" }, { label: "Datasheets" }]}
       layout="chapters"
       actions={<HeroActions primary={{ label: CTA.primary, href: "/book" }} />}

@@ -343,7 +343,7 @@ export const blogBodies: Record<string, BlogBody> = {
     ],
     bottomCta: {
       headline: "Ready to turn this into a plan?",
-      body: "Talk with Digerati Experts about what a cyber risk assessment finds before attackers do. We'll help translate this into a practical, prioritized plan for your business.",
+      body: "Talk with Digerati Experts about prioritizing the risks a cyber assessment identifies. We can help turn your priorities into a practical plan for your business.",
       primaryLabel: "Start Cyber Risk Assessment",
       primaryHref: "/book",
       secondaryLabel: "Explore ProActive Ecosystem",
@@ -383,7 +383,7 @@ export const blogBodies: Record<string, BlogBody> = {
     ],
     bottomCta: {
       headline: "Ready to turn this into a plan?",
-      body: "Talk with Digerati Experts about how arizona businesses should build a multilayer ransomware defense. We'll help translate this into a practical, prioritized plan for your business.",
+      body: "Talk with Digerati Experts about building a multilayer ransomware defense for your Arizona business. We can help turn your priorities into a practical plan for your business.",
       primaryLabel: "Start Cyber Risk Assessment",
       primaryHref: "/book",
       secondaryLabel: "Explore Backup & Recovery Readiness",
@@ -424,7 +424,7 @@ export const blogBodies: Record<string, BlogBody> = {
     ],
     bottomCta: {
       headline: "Ready to turn this into a plan?",
-      body: "Talk with Digerati Experts about can ransomware encrypt your backups?. We'll help translate this into a practical, prioritized plan for your business.",
+      body: "Talk with Digerati Experts about making backups recoverable after a ransomware attack. We can help turn your priorities into a practical plan for your business.",
       primaryLabel: "Review Backup & Recovery Readiness",
       primaryHref: "/services/standalone",
       secondaryLabel: "Start Cyber Risk Assessment",
@@ -462,7 +462,7 @@ export const blogBodies: Record<string, BlogBody> = {
     ],
     bottomCta: {
       headline: "Ready to turn this into a plan?",
-      body: "Talk with Digerati Experts about what to do in the first 24 hours after a ransomware attack. We'll help translate this into a practical, prioritized plan for your business.",
+      body: "Talk with Digerati Experts about planning your first steps after a ransomware attack. We can help turn your priorities into a practical plan for your business.",
       primaryLabel: "Create an Incident Response Plan",
       primaryHref: "/services/standalone",
       secondaryLabel: "Start Cyber Risk Assessment",
@@ -501,7 +501,7 @@ export const blogBodies: Record<string, BlogBody> = {
     ],
     bottomCta: {
       headline: "Ready to turn this into a plan?",
-      body: "Talk with Digerati Experts about why mfa alone does not stop ransomware. We'll help translate this into a practical, prioritized plan for your business.",
+      body: "Talk with Digerati Experts about strengthening protection beyond MFA. We can help turn your priorities into a practical plan for your business.",
       primaryLabel: "Assess Identity & Access Risk",
       primaryHref: "/services/standalone",
       secondaryLabel: "Explore Managed Workplace",
@@ -542,7 +542,7 @@ export const blogBodies: Record<string, BlogBody> = {
     ],
     bottomCta: {
       headline: "Ready to turn this into a plan?",
-      body: "Talk with Digerati Experts about email security 101: why phishing protection requires more than spam filtering. We'll help translate this into a practical, prioritized plan for your business.",
+      body: "Talk with Digerati Experts about reducing phishing risk across email and user workflows. We can help turn your priorities into a practical plan for your business.",
       primaryLabel: "Start Cyber Risk Assessment",
       primaryHref: "/book",
       secondaryLabel: "Review Email Security Readiness",
@@ -583,7 +583,7 @@ export const blogBodies: Record<string, BlogBody> = {
     ],
     bottomCta: {
       headline: "Ready to turn this into a plan?",
-      body: "Talk with Digerati Experts about the arizona smb cybersecurity checklist: what actually matters before you buy more tools. We'll help translate this into a practical, prioritized plan for your business.",
+      body: "Talk with Digerati Experts about prioritizing cybersecurity improvements for your Arizona business. We can help turn your priorities into a practical plan for your business.",
       primaryLabel: "Turn This Checklist Into a Risk Roadmap",
       primaryHref: "/book",
       secondaryLabel: "Explore ProActive Ecosystem",
@@ -624,7 +624,7 @@ export const blogBodies: Record<string, BlogBody> = {
     ],
     bottomCta: {
       headline: "Ready to turn this into a plan?",
-      body: "Talk with Digerati Experts about cyber insurance requirements small businesses should prepare for. We'll help translate this into a practical, prioritized plan for your business.",
+      body: "Talk with Digerati Experts about preparing your business for a cyber insurance review. We can help turn your priorities into a practical plan for your business.",
       primaryLabel: "Prepare for Cyber Insurance Review",
       primaryHref: "/book",
       secondaryLabel: "Start Cyber Risk Assessment",
@@ -665,7 +665,7 @@ export const blogBodies: Record<string, BlogBody> = {
     ],
     bottomCta: {
       headline: "Ready to turn this into a plan?",
-      body: "Talk with Digerati Experts about managed it pricing in phoenix and chandler: what arizona businesses should expect. We'll help translate this into a practical, prioritized plan for your business.",
+      body: "Talk with Digerati Experts about understanding managed IT costs for your Phoenix or Chandler business. We can help turn your priorities into a practical plan for your business.",
       primaryLabel: "Compare Your Current IT Coverage",
       primaryHref: "/services/proactive",
       secondaryLabel: "Explore ProActive Ecosystem",
@@ -707,7 +707,7 @@ export const blogBodies: Record<string, BlogBody> = {
     ],
     bottomCta: {
       headline: "Ready to turn this into a plan?",
-      body: "Talk with Digerati Experts about managed it vs break-fix it: why reactive support gets expensive. We'll help translate this into a practical, prioritized plan for your business.",
+      body: "Talk with Digerati Experts about comparing proactive IT support with reactive repairs. We can help turn your priorities into a practical plan for your business.",
       primaryLabel: "Explore ProActive Ecosystem",
       primaryHref: "/services/proactive",
       secondaryLabel: "Compare Your Current IT Coverage",
@@ -747,7 +747,7 @@ export const blogBodies: Record<string, BlogBody> = {
     ],
     bottomCta: {
       headline: "Ready to turn this into a plan?",
-      body: "Talk with Digerati Experts about co-managed it vs hiring another it employee. We'll help translate this into a practical, prioritized plan for your business.",
+      body: "Talk with Digerati Experts about choosing the right balance of internal IT and co-managed support. We can help turn your priorities into a practical plan for your business.",
       primaryLabel: "Explore Co-Managed IT",
       primaryHref: "/services/co-managed-it",
       secondaryLabel: "Start Cyber Risk Assessment",
@@ -787,7 +787,7 @@ export const blogBodies: Record<string, BlogBody> = {
     ],
     bottomCta: {
       headline: "Ready to turn this into a plan?",
-      body: "Talk with Digerati Experts about standalone it services vs full managed it ownership. We'll help translate this into a practical, prioritized plan for your business.",
+      body: "Talk with Digerati Experts about deciding who owns each part of your IT environment. We can help turn your priorities into a practical plan for your business.",
       primaryLabel: "Find the Right Coverage Path",
       primaryHref: "/services/proactive",
       secondaryLabel: "Start Cyber Risk Assessment",
@@ -825,7 +825,7 @@ export const blogBodies: Record<string, BlogBody> = {
     ],
     bottomCta: {
       headline: "Ready to turn this into a plan?",
-      body: "Talk with Digerati Experts about the questions every business should ask before switching it providers. We'll help translate this into a practical, prioritized plan for your business.",
+      body: "Talk with Digerati Experts about planning a change of IT provider. We can help turn your priorities into a practical plan for your business.",
       primaryLabel: "Get a Transition Risk Review",
       primaryHref: "/book",
       secondaryLabel: "Compare Your Current IT Coverage",
@@ -867,7 +867,7 @@ export const blogBodies: Record<string, BlogBody> = {
     ],
     bottomCta: {
       headline: "Ready to turn this into a plan?",
-      body: "Talk with Digerati Experts about shadow ai is the new shadow it. We'll help translate this into a practical, prioritized plan for your business.",
+      body: "Talk with Digerati Experts about bringing employee AI use into your security program. We can help turn your priorities into a practical plan for your business.",
       primaryLabel: "Assess AI & Data Exposure",
       primaryHref: "/book",
       secondaryLabel: "Create a Secure AI Use Policy",
@@ -904,7 +904,7 @@ export const blogBodies: Record<string, BlogBody> = {
     ],
     bottomCta: {
       headline: "Ready to turn this into a plan?",
-      body: "Talk with Digerati Experts about chatgpt, copilot, gemini, and claude for business: how to use ai without leaking company data. We'll help translate this into a practical, prioritized plan for your business.",
+      body: "Talk with Digerati Experts about using business AI tools while protecting company data. We can help turn your priorities into a practical plan for your business.",
       primaryLabel: "Create a Secure AI Use Policy",
       primaryHref: "/services/standalone",
       secondaryLabel: "Assess AI & Data Exposure",
@@ -945,7 +945,7 @@ export const blogBodies: Record<string, BlogBody> = {
     ],
     bottomCta: {
       headline: "Ready to turn this into a plan?",
-      body: "Talk with Digerati Experts about hipaa, cmmc, nist, and cyber insurance: why compliance starts with managed it discipline. We'll help translate this into a practical, prioritized plan for your business.",
+      body: "Talk with Digerati Experts about connecting compliance requirements with day-to-day IT operations. We can help turn your priorities into a practical plan for your business.",
       primaryLabel: "Build a Compliance-Ready IT Foundation",
       primaryHref: "/services/proactive",
       secondaryLabel: "Start Cyber Risk Assessment",

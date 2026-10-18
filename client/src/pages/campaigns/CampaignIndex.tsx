@@ -4,21 +4,21 @@ import { PageTemplate } from "@/components/PageTemplate";
 import { useSEO } from "@/hooks/useSEO";
 import { CTA } from "@/lib/ctaCopy";
 import { CAMPAIGNS } from "@/data/campaigns";
-import { Chapter, ClosingCta, Container, HeroActions, Eyebrow } from "@/components/site/chapters";
+import { Chapter, ClosingCta, Container, HeroActions } from "@/components/site/chapters";
 
 export default function CampaignIndex() {
   useSEO({
     title: "Offers for Arizona businesses",
     description:
-      "Campaign pages for Digerati Experts services — Cyber Risk Assessment, ProActive managed IT, ransomware readiness, co-managed IT, and industry paths.",
+      "Explore Digerati Experts services for Arizona businesses — Cyber Risk Assessment, ProActive managed IT, ransomware readiness, co-managed IT, and industry paths.",
     canonical: "/go",
   });
 
   return (
     <PageTemplate
-      title="Offers built to advertise"
-      eyebrow="Campaign pages"
-      subtitle="Each page is one offer, one primary action, and copy taken from the real ProActive, assessment, standalone, and co-managed architecture — not a second website."
+      title="Find the right next step for your business"
+      eyebrow="Business priorities"
+      subtitle="Explore support for cyber risk, managed IT, recovery, and compliance. Choose the priority that fits your business to see how DE can help."
       breadcrumbs={[{ label: "Offers" }]}
       layout="chapters"
       actions={<HeroActions primary={{ label: CTA.primary, href: "/book" }} />}
@@ -42,7 +42,7 @@ export default function CampaignIndex() {
                     <p className="mt-2 max-w-2xl text-base leading-relaxed text-white/70">{campaign.lede}</p>
                   </div>
                   <span className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-de-magenta-ink">
-                    Open page
+                    Explore this service
                     <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
                   </span>
                 </Link>
@@ -52,50 +52,10 @@ export default function CampaignIndex() {
         </Container>
       </Chapter>
 
-      <Chapter tone="paper">
-        <Container>
-          <Eyebrow tone="paper" className="mb-4">
-            For media buyers
-          </Eyebrow>
-          <h2 className="font-heading text-3xl font-semibold tracking-[-0.02em] text-[#1A1228] md:text-4xl">
-            How to advertise these
-            <span className="text-[#D3126A]" aria-hidden="true">
-              :
-            </span>
-          </h2>
-          <p className="mt-4 max-w-[68ch] text-base leading-relaxed text-[#3A3448]">
-            One offer per ad group. Send paid traffic to the matching /go URL — not the homepage. The primary
-            button on every page is Get My Cyber Risk Assessment. Do not add review counts, certifications,
-            response times, or invented case results to the creative.
-          </p>
-          <div className="mt-8 overflow-x-auto" tabIndex={0} role="region" aria-label="Recommended search titles and landing URLs">
-            <table className="w-full min-w-[36rem] text-left text-sm">
-              <caption className="sr-only">Recommended search titles and landing URLs</caption>
-              <thead>
-                <tr className="border-b border-black/15 text-xs font-semibold uppercase tracking-[0.12em] text-black/65">
-                  <th scope="col" className="py-3 pr-4 font-semibold">Offer</th>
-                  <th scope="col" className="py-3 pr-4 font-semibold">Landing URL</th>
-                  <th scope="col" className="py-3 font-semibold">Recommended search title</th>
-                </tr>
-              </thead>
-              <tbody>
-                {CAMPAIGNS.map((campaign) => (
-                  <tr key={campaign.slug} className="border-b border-black/10 align-top">
-                    <td className="py-3 pr-4 font-medium text-[#1A1228]">{campaign.offerName}</td>
-                    <td className="py-3 pr-4 font-mono text-xs text-black/75">/go/{campaign.slug}</td>
-                    <td className="py-3 text-black/75">{campaign.seoTitle}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Container>
-      </Chapter>
-
       <ClosingCta
         tone="surface"
-        title="Not sure which offer is honest?"
-        lede="Start with the Cyber Risk Assessment conversation. The page you advertise should match the path we would actually recommend."
+        title="Not sure where to start?"
+        lede="Tell us what is changing in your business. We can help you choose a practical next step."
         primary={{ label: CTA.primary, href: "/book", testId: "button-conversion-assessment" }}
       />
     </PageTemplate>

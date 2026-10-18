@@ -54,7 +54,7 @@ export default function Blog() {
         .map((b) => ({
           ...b,
           href: `/resources/blog/${b.slug}`,
-          readTime: blogBodies[b.slug]?.readTime ?? "5 min read",
+          readTime: blogBodies[b.slug]?.overviewReadTime ?? blogBodies[b.slug]?.readTime ?? "5 min read",
           image: toWebImageUrl(b.coverImage),
         }))
         .sort((a, b) => (a.date < b.date ? 1 : -1)),
