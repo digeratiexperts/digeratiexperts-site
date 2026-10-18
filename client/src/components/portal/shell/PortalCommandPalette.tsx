@@ -53,7 +53,7 @@ export function PortalCommandPalette({ groups, open, onOpenChange, onSignOut }: 
       <DialogDescription className="sr-only">Find a page or choose an action. Use the arrow keys to move through results.</DialogDescription>
       <CommandInput placeholder="Jump to a page or start an action…" value={query} onValueChange={setQuery} aria-label="Search the portal" className="min-w-0 focus-visible:outline-offset-[-2px]" />
       <CommandList className="max-h-[60vh]">
-        <CommandEmpty role="option" aria-disabled="true" aria-selected="false">Nothing matches. Try a page name like “invoices”.</CommandEmpty>
+        <CommandEmpty><div role="option" aria-disabled="true" aria-selected="false">Nothing matches. Try a page name like “invoices”.</div></CommandEmpty>
         <CommandGroup heading="Actions">
           <CommandItem value="new ticket create support" onSelect={() => go("/portal/tickets/create")}>
             <Plus aria-hidden="true" />
