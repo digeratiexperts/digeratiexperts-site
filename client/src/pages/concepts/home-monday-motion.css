@@ -130,3 +130,97 @@
     transform: none !important;
   }
 }
+
+/* Dark showcase band: the one dark contrast moment in the light page, mirroring monday's dark product card */
+.hm-show {
+  background: #050312;
+  color: #f7f5f2;
+}
+.hm-show__grid {
+  display: grid;
+  gap: 48px;
+  align-items: center;
+}
+@media (min-width: 900px) {
+  .hm-show__grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 72px;
+  }
+}
+.hm-h2--light {
+  color: #f7f5f2;
+}
+.hm-body--light {
+  color: rgba(247, 245, 242, 0.7);
+}
+.hm-link-light {
+  color: #ff5aa0;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  margin-top: 24px;
+  text-decoration: none;
+}
+.hm-link-light:hover {
+  color: #fff;
+}
+.hm-show__window {
+  border-radius: 24px;
+  background: #0b0b0e;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+.hm-show__bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.hm-show__bar span {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+}
+.hm-show__bar em {
+  margin-left: auto;
+  font-style: normal;
+  font-size: 13px;
+  color: rgba(247, 245, 242, 0.6);
+}
+.hm-show__rows {
+  list-style: none;
+  padding: 12px 18px 20px;
+  display: grid;
+  gap: 2px;
+}
+.hm-show__rows li {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 52px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 16px;
+  color: #f7f5f2;
+}
+.hm-show__rows li:last-child {
+  border-bottom: 0;
+}
+.hm-show__pri {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+.hm-show__pri--1 {
+  background: #d3126a;
+}
+.hm-show__pri--2 {
+  background: #8b5cf6;
+}
+.hm-show__pri--3 {
+  background: rgba(247, 245, 242, 0.35);
+}
