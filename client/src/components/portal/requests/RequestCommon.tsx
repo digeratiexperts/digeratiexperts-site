@@ -10,7 +10,14 @@ import { STATUS_LABELS, type ServiceRequestRecord, type ServiceRequestSite } fro
 
 /** Context (company, me, sites) and the basket count, shared by both forms. */
 export function useRequestContext() {
-  const context = useQuery({ queryKey: ["/api/portal/service-requests/context"], queryFn: srApi.context, staleTime: 60_000 });
+  const context = useQuery({
+    queryKey: ["/api/portal/service-requests/context"], queryFn: srApi.context, staleTime: 60_000,
+    // The shell may finish authentication after this request fails. Its child
+    // readiness notice has not mounted/tracked error or isPending yet, so
+    // subscribing only to the parent's isSuccess can leave it on an old pending
+    // snapshot forever (pending -> error keeps isSuccess false).
+    notifyOnChangeProps: "all",
+  });
   const basket = useQuery({ queryKey: ["/api/portal/service-requests/basket"], queryFn: srApi.basket, enabled: context.isSuccess });
   return { context, companyReady: context.isSuccess && !!context.data?.company.id, basketCount: basket.data?.requests.length ?? 0 };
 }
