@@ -31,6 +31,8 @@ export interface ServiceRequestShellProps {
   onAddToCart: () => void;
   busy: false | "submit" | "basket";
   basketCount: number;
+  /** Company, requested person and any required policy have loaded successfully. */
+  ready?: boolean;
   files: File[];
   onAddFiles: (files: FileList) => void;
   onRemoveFile: (index: number) => void;
@@ -80,7 +82,7 @@ export function ServiceRequestShell(props: ServiceRequestShellProps) {
 
   const onSubmit = (e: FormEvent) => {
     e.preventDefault();
-    props.onOrderNow();
+    if (props.ready !== false && !busy) props.onOrderNow();
   };
 
   const actions = (layout: "rail" | "bar") => (
@@ -89,7 +91,7 @@ export function ServiceRequestShell(props: ServiceRequestShellProps) {
       <button
         type="button"
         onClick={props.onAddToCart}
-        disabled={Boolean(busy)}
+        disabled={Boolean(busy) || props.ready === false}
         className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-md border border-border bg-card px-4 text-sm font-semibold text-foreground shadow-sm hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
       >
         {busy === "basket" ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <ShoppingCart className="h-4 w-4" aria-hidden="true" />}
@@ -99,7 +101,7 @@ export function ServiceRequestShell(props: ServiceRequestShellProps) {
       <button
         type="submit"
         form="service-request-form"
-        disabled={Boolean(busy)}
+        disabled={Boolean(busy) || props.ready === false}
         className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-60"
       >
         {busy === "submit" && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}

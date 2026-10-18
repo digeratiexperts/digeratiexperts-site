@@ -1,3 +1,4 @@
+import { RequestContextReadiness } from "@/components/portal/requests/RequestCommon";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
@@ -37,7 +38,7 @@ const APPROVAL_TEXT = {
 export default function PortalLicenseRequest() {
   const form = useServiceRequestForm(TYPE);
   const [, navigate] = useLocation();
-  const { context, basketCount } = useRequestContext();
+  const { context, companyReady, basketCount } = useRequestContext();
   const invalidate = useInvalidateRequests();
   const [person, setPerson] = useState<PersonOption | null>(null);
   // Amend: show the person the request is for.
@@ -48,6 +49,7 @@ export default function PortalLicenseRequest() {
   const [basketNote, setBasketNote] = useState<string | null>(null);
   const { values, setField, errors } = form;
   const ctx = context.data;
+  const personReady = companyReady && !!person && person.userId === values.requestedForUserId;
 
   useEffect(() => {
     if (ctx?.me && !values.requestedForUserId && !person) {
@@ -61,7 +63,7 @@ export default function PortalLicenseRequest() {
     queryKey: ["/api/portal/licensing/entitlements", values.accountKind, values.requestedForUserId],
     queryFn: () =>
       licensingApi.entitlements(values.accountKind === "person" ? { accountKind: "person", userId: values.requestedForUserId } : { accountKind: values.accountKind }),
-    enabled: values.accountKind !== "person" || Boolean(values.requestedForUserId),
+    enabled: personReady,
   });
   const platforms = ent.data?.platforms ?? [];
   const licenses = ent.data?.licenses ?? [];
@@ -79,10 +81,12 @@ export default function PortalLicenseRequest() {
   }, [values.platform, values.accountKind, values.requestedForUserId, licenses.length]);
 
   const chosen = useMemo(() => onPlatform.find((l) => l.licenseKey === values.licenseKey) ?? null, [onPlatform, values.licenseKey]);
+  const requestReady = personReady && ent.isSuccess && !!chosen && (values.operation === "remove" || chosen.assignment === "request");
   const automaticBase = onPlatform.find((l) => l.kind === "base" && l.assignment === "automatic");
   const accountLabel = values.accountKind === "person" ? person?.name ?? "this person" : values.accountName || "the account";
 
   const run = async (mode: "submit" | "basket") => {
+    if (!requestReady) return;
     setBasketNote(null);
     const result = await form.submit(mode);
     if (!result) return;
@@ -116,6 +120,7 @@ export default function PortalLicenseRequest() {
 
   return (
     <PortalLayout title="Request a Software License" hideHeader width="wide">
+      <RequestContextReadiness context={context} />
       {basketNote && (
         <Callout tone="ok" title="Added to your request basket" className="mb-4">
           {basketNote}{" "}
@@ -125,6 +130,7 @@ export default function PortalLicenseRequest() {
         </Callout>
       )}
       <ServiceRequestShell
+        ready={requestReady}
         amending={form.amending?.number}
         amendError={form.amendError}
         type={TYPE}
@@ -146,6 +152,7 @@ export default function PortalLicenseRequest() {
         announcement={form.announcement}
       >
         <RequestedForField
+          enabled={companyReady}
           value={person}
           me={ctx?.me ?? null}
           onChange={(p) => {
@@ -209,11 +216,15 @@ export default function PortalLicenseRequest() {
           </div>
         </fieldset>
 
-        {ent.isError ? (
+        {!companyReady ? null : !personReady ? (
+          <Callout tone="info" title="Choose a person first">Select who this request is for to load the company's licence choices.</Callout>
+        ) : ent.isPending ? (
+          <Callout tone="info" title="Loading licence policy" role="status">Please wait before choosing a licence.</Callout>
+        ) : ent.isError ? (
           <Callout tone="bad" title="Licences couldn't be loaded">
             {ent.error instanceof Error ? ent.error.message : ""}
           </Callout>
-        ) : !ent.isLoading && platforms.length === 0 ? (
+        ) : ent.isSuccess && platforms.length === 0 ? (
           <Callout tone="warn" title="No licence policy on file yet">
             DE hasn't recorded your company's licence policy. You can still{" "}
             <Link href="/portal/tickets/create" className="underline">

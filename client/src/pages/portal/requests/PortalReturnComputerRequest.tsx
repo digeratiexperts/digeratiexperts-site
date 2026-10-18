@@ -1,3 +1,4 @@
+import { RequestContextReadiness } from "@/components/portal/requests/RequestCommon";
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
@@ -30,7 +31,7 @@ const TYPE = "return_computer" as const;
 export default function PortalReturnComputerRequest() {
   const form = useServiceRequestForm(TYPE);
   const [, navigate] = useLocation();
-  const { context, basketCount } = useRequestContext();
+  const { context, companyReady, basketCount } = useRequestContext();
   const invalidate = useInvalidateRequests();
   const [person, setPerson] = useState<PersonOption | null>(null);
   // Amend: show the person the request is for.
@@ -41,6 +42,7 @@ export default function PortalReturnComputerRequest() {
   const [basketNote, setBasketNote] = useState<string | null>(null);
   const { values, setField, errors } = form;
   const ctx = context.data;
+  const personReady = companyReady && !!person && person.userId === values.requestedForUserId;
   const company = ctx?.company.name ?? "";
 
   useEffect(() => {
@@ -57,7 +59,7 @@ export default function PortalReturnComputerRequest() {
   const assets = useQuery({
     queryKey: ["/api/portal/service-requests/assets", values.requestedForUserId],
     queryFn: () => srApi.assets(values.requestedForUserId),
-    enabled: Boolean(values.requestedForUserId),
+    enabled: personReady,
   });
   const assetList = assets.data?.assets ?? [];
   const selectedAsset = assetList.find((a) => a.id === values.assetId) ?? null;
@@ -65,6 +67,7 @@ export default function PortalReturnComputerRequest() {
   const keepDefaults = () => ({ requestedForUserId: ctx?.me?.userId ?? "", siteId: ctx?.defaultSiteId ?? "" });
 
   const run = async (mode: "submit" | "basket") => {
+    if (!personReady) return;
     setBasketNote(null);
     const result = await form.submit(mode);
     if (!result) return;
@@ -100,11 +103,7 @@ export default function PortalReturnComputerRequest() {
 
   return (
     <PortalLayout title="Return Computer" hideHeader width="wide">
-      {context.isError && (
-        <Callout tone="bad" title="This form couldn't load your company details" className="mb-4">
-          {context.error instanceof Error ? context.error.message : "Unknown error"}
-        </Callout>
-      )}
+      <RequestContextReadiness context={context} />
       {basketNote && (
         <Callout tone="ok" title="Added to your request basket" className="mb-4">
           {basketNote}{" "}
@@ -114,6 +113,7 @@ export default function PortalReturnComputerRequest() {
         </Callout>
       )}
       <ServiceRequestShell
+        ready={personReady}
         amending={form.amending?.number}
         amendError={form.amendError}
         type={TYPE}
@@ -135,6 +135,7 @@ export default function PortalReturnComputerRequest() {
         announcement={form.announcement}
       >
         <RequestedForField
+          enabled={companyReady}
           value={person}
           me={ctx?.me ?? null}
           onChange={(p) => {

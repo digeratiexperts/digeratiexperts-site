@@ -91,6 +91,19 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
+      - name: Portal company context browser regression
+        if: env.DE_LIGHT != 'true'
+        run: node scripts/qa/portal-company-context.mjs
+
+      - name: Portal company context evidence
+        if: always() && env.DE_LIGHT != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: portal-company-context
+          path: artifacts/visual-qa/portal-company-context
+          if-no-files-found: ignore
+          retention-days: 14
+
       - name: Unit tests
         if: env.DE_LIGHT != 'true'
         run: npm test

@@ -1,8 +1,9 @@
+import { CompanyReadiness } from "@/components/portal/CompanyReadiness";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "wouter";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2 } from "lucide-react";
-import { srApi, type PersonOption } from "@/lib/serviceRequestsApi";
+import { srApi, ServiceRequestApiError, type PersonOption } from "@/lib/serviceRequestsApi";
 import { AddressBlock, CheckboxField, LookupField } from "./fields";
 import type { FormValues } from "./useServiceRequestForm";
 import { STATUS_LABELS, type ServiceRequestRecord, type ServiceRequestSite } from "@shared/serviceRequests";
@@ -10,8 +11,13 @@ import { STATUS_LABELS, type ServiceRequestRecord, type ServiceRequestSite } fro
 /** Context (company, me, sites) and the basket count, shared by both forms. */
 export function useRequestContext() {
   const context = useQuery({ queryKey: ["/api/portal/service-requests/context"], queryFn: srApi.context, staleTime: 60_000 });
-  const basket = useQuery({ queryKey: ["/api/portal/service-requests/basket"], queryFn: srApi.basket });
-  return { context, basketCount: basket.data?.requests.length ?? 0 };
+  const basket = useQuery({ queryKey: ["/api/portal/service-requests/basket"], queryFn: srApi.basket, enabled: context.isSuccess });
+  return { context, companyReady: context.isSuccess && !!context.data?.company.id, basketCount: basket.data?.requests.length ?? 0 };
+}
+
+export function RequestContextReadiness({ context }: { context: ReturnType<typeof useRequestContext>["context"] }) {
+  const code = context.error instanceof ServiceRequestApiError ? context.error.body.code : undefined;
+  return <CompanyReadiness loading={context.isPending} error={context.error} missing={code === "COMPANY_CONTEXT_REQUIRED"} unavailable={code === "COMPANY_NOT_FOUND"} onRetry={context.refetch} />;
 }
 
 export function useInvalidateRequests() {
@@ -29,12 +35,14 @@ export function RequestedForField({
   me,
   error,
   highlighted,
+  enabled = true,
 }: {
   value: PersonOption | null;
   onChange: (p: PersonOption | null) => void;
   me: PersonOption | null;
   error?: string;
   highlighted?: boolean;
+  enabled?: boolean;
 }) {
   const [q, setQ] = useState("");
   const [debounced, setDebounced] = useState("");
@@ -45,6 +53,7 @@ export function RequestedForField({
   const people = useQuery({
     queryKey: ["/api/portal/service-requests/people", debounced],
     queryFn: () => srApi.people(debounced),
+    enabled,
   });
   const options = people.data?.people ?? (me ? [me] : []);
   return (
@@ -66,7 +75,7 @@ export function RequestedForField({
           {me?.userId === p.userId && <p className="text-xs text-muted-foreground">That's you</p>}
         </div>
       )}
-      emptyText={people.isLoading ? "Searching…" : "No one in your company matches"}
+      emptyText={!enabled ? "Choose a company first" : people.isError ? "People could not be loaded" : people.isLoading ? "Searching…" : "No one in your company matches"}
       error={error}
       highlighted={highlighted}
     />

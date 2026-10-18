@@ -1,3 +1,4 @@
+import { selectedPortalCompanyId } from "./portalCompanyProfile";
 import express, { type Express, type Request, type RequestHandler, type Response } from "express";
 import {
   addServiceRequestAttachment,
@@ -113,9 +114,7 @@ export const HUB_SERVICE_REQUEST_STATUS_PATH = "/api/integrations/v1/hub/service
 
 /** The company a request is filed under, from the session only. */
 export function effectiveClientId(user: ServiceRequestUser | undefined): string | null {
-  if (!user) return null;
-  if (user.role === "admin") return (user.impersonatingCompanyId || "").trim() || null;
-  return (user.clientId || "").trim() || null;
+  return selectedPortalCompanyId(user);
 }
 
 function person(deps: ServiceRequestRouteDeps, userId: string): ServiceRequestPerson {
@@ -645,6 +644,7 @@ export function registerServiceRequestRoutes(app: Express, deps: ServiceRequestR
     const clientId = effectiveClientId(req.user);
     if (!clientId || !deps.getClient(clientId)) {
       res.status(400).json({
+        code: clientId ? "COMPANY_NOT_FOUND" : "COMPANY_CONTEXT_REQUIRED",
         error:
           req.user?.role === "admin"
             ? "Open a company (impersonate) before filing a request for it."
