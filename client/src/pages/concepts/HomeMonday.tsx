@@ -5,7 +5,8 @@
 import "../versions/v8/v8.css";
 import "../versions/v8/v8-dashboard.css";
 import "./home-monday.css";
-import { useState } from "react";
+import "./home-monday-motion.css";
+import { useEffect, useRef, useState, type RefObject } from "react";
 import { Link } from "wouter";
 import { ArrowRight, Check } from "lucide-react";
 import { MegaMenu } from "@/components/MegaMenu";
@@ -79,9 +80,70 @@ const industries = [
   { label: "Animal hospitals", href: "/industries/animal-hospitals" },
 ];
 
+function HeroArt(): JSX.Element {
+  return (
+    <div className="hm-art" aria-hidden="true">
+      <svg className="hm-art__mark" data-depth="0.4" viewBox="0 0 200 200" role="presentation" focusable="false">
+        <rect x="30" y="58" width="140" height="18" rx="9" fill="#d3126a" />
+        <rect x="30" y="91" width="108" height="18" rx="9" fill="#d3126a" opacity="0.7" />
+        <rect x="30" y="124" width="76" height="18" rx="9" fill="#d3126a" opacity="0.4" />
+      </svg>
+    </div>
+  );
+}
+
+function useDepthParallax(rootRef: RefObject<HTMLElement>): void {
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const layers = Array.from(root.querySelectorAll<HTMLElement>("[data-depth]"));
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const rect = root.getBoundingClientRect();
+      const progress = Math.min(Math.max(-rect.top / (rect.height || 1), -1), 1);
+      for (const el of layers) {
+        const depth = Number(el.dataset.depth) || 0;
+        el.style.transform = `translate3d(0, ${(progress * depth * -120).toFixed(1)}px, 0)`;
+      }
+    };
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      if (frame) cancelAnimationFrame(frame);
+    };
+  }, [rootRef]);
+}
+
 export function HomeMonday(): JSX.Element {
   const [active, setActive] = useState(areas[0].key);
   const current = areas.find((a) => a.key === active) ?? areas[0];
+  const [step, setStep] = useState(0);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const stepRefs = useRef<(HTMLLIElement | null)[]>([]);
+
+  useDepthParallax(rootRef);
+
+  useEffect(() => {
+    const items = stepRefs.current.filter((n): n is HTMLLIElement => n !== null);
+    if (!("IntersectionObserver" in window) || items.length === 0) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) setStep(items.indexOf(entry.target as HTMLLIElement));
+        }
+      },
+      { rootMargin: "-45% 0px -45% 0px" },
+    );
+    items.forEach((n) => observer.observe(n));
+    return () => observer.disconnect();
+  }, []);
 
   useSEO({
     title: "Concept: product-led homepage",
@@ -91,7 +153,7 @@ export function HomeMonday(): JSX.Element {
   });
 
   return (
-    <div className="v8 hm min-h-screen text-[#1a1228]">
+    <div className="v8 hm min-h-screen text-[#1a1228]" ref={rootRef}>
       <OrganizationJsonLd />
       <WebSiteJsonLd />
       <MegaMenu />
@@ -124,6 +186,7 @@ export function HomeMonday(): JSX.Element {
             </div>
 
             <div className="hm-stage">
+              <HeroArt />
               <div className="hm-tabs" role="tablist" aria-label="What we do">
                 {areas.map((a) => (
                   <button
@@ -146,6 +209,9 @@ export function HomeMonday(): JSX.Element {
                   <em>Example view, not a client report</em>
                 </div>
                 <div className="hm-window__body">
+                  <span className="hm-cursor" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="22" height="22"><path d="M4 2l15 9-6.5 1.6L9.6 20 4 2z" fill="#1a1228" stroke="#fff" strokeWidth="1.5" strokeLinejoin="round" /></svg>
+                  </span>
                   <h2 className="hm-window__title">{current.title}</h2>
                   <ul className="hm-window__list">
                     {current.lines.map((line) => (
@@ -179,18 +245,39 @@ export function HomeMonday(): JSX.Element {
 
         <section className="hm-band hm-panel-band" aria-labelledby="hm-steps-title">
           <div className="hm-wrap">
-            <header className="hm-head">
-              <h2 id="hm-steps-title" className="hm-h2">Four steps, one plan you can follow.</h2>
-            </header>
-            <ol className="hm-steps">
-              {steps.map((s, i) => (
-                <li key={s.title} className="hm-card hm-step">
-                  <span className="hm-step__n">{i + 1}</span>
-                  <h3 className="hm-h3">{s.title}</h3>
-                  <p className="hm-body">{s.body}</p>
-                </li>
-              ))}
-            </ol>
+            <div className="hm-story">
+              <div className="hm-story__pin" aria-hidden="true">
+                <span className="hm-story__count">
+                  {String(step + 1).padStart(2, "0")} / {String(steps.length).padStart(2, "0")}
+                </span>
+                <span className="hm-story__word">{steps[step].title}</span>
+                <div className="hm-story__track">
+                  {steps.map((s, i) => (
+                    <span key={s.title} className={i <= step ? "is-on" : undefined} />
+                  ))}
+                </div>
+              </div>
+              <div className="hm-story__steps">
+                <header className="hm-head hm-head--left">
+                  <h2 id="hm-steps-title" className="hm-h2">Four steps, one plan you can follow.</h2>
+                </header>
+                <ol className="hm-steps">
+                  {steps.map((s, i) => (
+                    <li
+                      key={s.title}
+                      ref={(el) => {
+                        stepRefs.current[i] = el;
+                      }}
+                      className={`hm-card hm-step${i === step ? " is-active" : ""}`}
+                    >
+                      <span className="hm-step__n">{i + 1}</span>
+                      <h3 className="hm-h3">{s.title}</h3>
+                      <p className="hm-body">{s.body}</p>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            </div>
           </div>
         </section>
 

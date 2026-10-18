@@ -1,0 +1,132 @@
+/* Concept v3 layers (Exploration, 2026-10-18): custom artwork, depth parallax, live cursor, pinned story.
+   Scoped to .hm. Motion is decorative; every state is also readable without it. */
+
+/* Hero artwork: custom SVG mark plus floating example cards at different depths */
+.hm-stage {
+  isolation: isolate;
+}
+.hm-art {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+}
+.hm-art__mark {
+  position: absolute;
+  right: -6%;
+  top: -10%;
+  width: min(420px, 70%);
+  opacity: 0.09;
+  will-change: transform;
+}
+
+/* Product window: a live cursor that moves across the example, decorative only */
+.hm-window__body {
+  position: relative;
+}
+.hm-cursor {
+  position: absolute;
+  top: 40px;
+  right: 40px;
+  pointer-events: none;
+  animation: hm-cursor 9s ease-in-out infinite;
+}
+@keyframes hm-cursor {
+  0%, 100% { transform: translate(0, 0); }
+  30% { transform: translate(-120px, 110px); }
+  60% { transform: translate(-40px, 220px); }
+  85% { transform: translate(-160px, 60px); }
+}
+
+/* Pinned scroll story for the four steps */
+.hm-story {
+  display: grid;
+  gap: 40px;
+}
+@media (min-width: 900px) {
+  .hm-story {
+    grid-template-columns: 0.8fr 1.2fr;
+    gap: 64px;
+    align-items: start;
+  }
+  .hm-story__pin {
+    position: sticky;
+    top: 140px;
+    height: min(360px, 60vh);
+  }
+  .hm-story .hm-steps {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+}
+.hm-head--left {
+  text-align: left;
+  margin-bottom: 32px;
+}
+.hm-head--left .hm-h2 {
+  margin-inline: 0;
+}
+.hm-story__pin {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 16px;
+  padding: 40px;
+  border-radius: 28px;
+  background: var(--hm-white);
+  border: 1px solid var(--hm-line);
+}
+.hm-story__count {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--hm-magenta);
+}
+.hm-story__word {
+  font-family: "Space Grotesk", Inter, sans-serif;
+  font-weight: 500;
+  font-size: clamp(40px, 5vw, 64px);
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--hm-ink);
+  transition: opacity 300ms ease-out;
+}
+.hm-story__track {
+  display: flex;
+  gap: 8px;
+}
+.hm-story__track span {
+  flex: 1;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--hm-line);
+  transition: background-color 300ms ease-out;
+}
+.hm-story__track span.is-on {
+  background: var(--hm-magenta);
+}
+.hm-step {
+  opacity: 0.55;
+  transition: opacity 300ms ease-out, border-color 300ms ease-out;
+}
+.hm-step.is-active {
+  opacity: 1;
+  border-color: rgba(211, 18, 106, 0.4);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hm-cursor {
+    animation: none;
+  }
+  .hm-step,
+  .hm-story__word,
+  .hm-story__track span {
+    transition: none;
+  }
+  .hm-step {
+    opacity: 1;
+  }
+  .hm-art__mark {
+    transform: none !important;
+  }
+}
