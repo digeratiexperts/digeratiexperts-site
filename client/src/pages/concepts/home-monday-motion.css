@@ -14,10 +14,10 @@
 }
 .hm-art__mark {
   position: absolute;
-  right: -6%;
-  top: -10%;
-  width: min(420px, 70%);
-  opacity: 0.09;
+  left: -14%;
+  bottom: -24%;
+  width: min(320px, 60%);
+  opacity: 0.05;
   will-change: transform;
 }
 
