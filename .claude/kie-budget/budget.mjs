@@ -17,8 +17,9 @@
  */
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-const here = path.dirname(new URL(import.meta.url).pathname);
+const here = path.dirname(fileURLToPath(import.meta.url));
 const LIMITS = path.join(here, "limits.json");
 const LEDGER = process.env.KIE_BUDGET_LEDGER || path.join(here, "ledger.jsonl");
 

@@ -1,4 +1,4 @@
-import { Switch, Route, Redirect, useLocation } from "wouter";
+﻿import { Switch, Route, Redirect, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -191,6 +191,7 @@ const HomepageV9 = lazy(() => import("@/pages/versions/v9/HomepageV9"));
 const HomepageV10 = lazy(() => import("@/pages/versions/v10/HomepageV10"));
 const HomeSimple = lazy(() => import("@/pages/concepts/HomeSimple").then((m) => ({ default: m.HomeSimple })));
 const HomeMonday = lazy(() => import("@/pages/concepts/HomeMonday").then((m) => ({ default: m.HomeMonday })));
+const HomeChapters = lazy(() => import("@/pages/concepts/HomeChapters").then((m) => ({ default: m.HomeChapters })));
 
 const WarehouseGate = lazy(() => import("@/pages/store/WarehouseGate"));
 const PublicStoreCheckout = lazy(() => import("@/pages/store/PublicStoreCheckout"));
@@ -210,10 +211,15 @@ function Router() {
         </Suspense>
       )} />
 
-      {/* Concept: simpler homepage story (Exploration, 2026-10-18) — review only, noindex, not in navigation */}
+      {/* Concept: simpler homepage story (Exploration, 2026-10-18) â€” review only, noindex, not in navigation */}
       <Route path="/concepts/home-simple" component={() => (
         <Suspense fallback={<PageLoadingSkeleton />}>
           <HomeSimple />
+        </Suspense>
+      )} />
+      <Route path="/concepts/home-chapters" component={() => (
+        <Suspense fallback={<PageLoadingSkeleton />}>
+          <HomeChapters />
         </Suspense>
       )} />
       <Route path="/concepts/home-monday" component={() => (
@@ -222,14 +228,14 @@ function Router() {
         </Suspense>
       )} />
 
-      {/* Experience v1 in the site's own chrome — review only, noindex, not in navigation */}
+      {/* Experience v1 in the site's own chrome â€” review only, noindex, not in navigation */}
       <Route path="/experience" component={() => (
         <Suspense fallback={<PageLoadingSkeleton />}>
           <ExperienceInSite />
         </Suspense>
       )} />
 
-      {/* Homepage versions — reference archive, noindex, not in navigation */}
+      {/* Homepage versions â€” reference archive, noindex, not in navigation */}
       <Route path="/versions" component={() => (
         <Suspense fallback={<PageLoadingSkeleton />}>
           <VersionsIndex />
@@ -477,7 +483,7 @@ function Router() {
         )} />
       ))}
       
-      {/* The Digerati Box — marketing core, deliberately NOT under /resources
+      {/* The Digerati Box â€” marketing core, deliberately NOT under /resources
           so it does not inherit the Journal colour lock. */}
       <Route path="/the-box" component={() => (
         <Suspense fallback={<PageLoadingSkeleton />}>
@@ -1125,7 +1131,7 @@ function Router() {
         </Suspense>
       )} />
 
-      {/* Legacy / shorthand URLs → canonical routes */}
+      {/* Legacy / shorthand URLs â†’ canonical routes */}
       <Route path="/assessment">{() => <Redirect to="/book" />}</Route>
       <Route path="/contact" component={() => (
         <Suspense fallback={<PageLoadingSkeleton />}>
@@ -1153,14 +1159,14 @@ function SpaPageViews() {
 
 /*
  * Page families keep one hue of their own. It only ever colours topical
- * signals — eyebrows, glyphs, chips, inline links — while the field, type,
+ * signals â€” eyebrows, glyphs, chips, inline links â€” while the field, type,
  * spacing and primary CTA stay identical sitewide. Anything unlisted inherits
  * the brand magenta default.
  */
 const ACCENT_BY_PREFIX: ReadonlyArray<readonly [string, string]> = [
   ["/internal/warehouse", "electric"],
   ["/store", "electric"],
-  // The Store's contact step keeps the Store's channel (source of truth §16.1).
+  // The Store's contact step keeps the Store's channel (source of truth Â§16.1).
   ["/solutions/request", "electric"],
   ["/support", "cyan"],
   ["/resources/blog", "amber"],
@@ -1178,7 +1184,7 @@ function AppContent() {
   const isPortal = location.startsWith("/portal");
   const isHome = location === "/";
   // / (Version 8), /version-0 (the previous homepage), /version-7, /version-9 and /version-10 mount their own bottom bar.
-  const ownsBottomBar = isHome || location === "/version-0" || location === "/version-7" || location === "/version-9" || location === "/version-10" || location === "/concepts/home-simple" || location === "/concepts/home-monday";
+  const ownsBottomBar = isHome || location === "/version-0" || location === "/version-7" || location === "/version-9" || location === "/version-10" || location === "/concepts/home-simple" || location === "/concepts/home-monday" || location === "/concepts/home-chapters";
   const hideDoor2HelpDock = isDoor2Path(location) && location.split("?")[0] !== "/store";
   const hideWarehouseChrome = isWarehousePath(location);
   const accent = isPortal ? undefined : accentFor(location);
