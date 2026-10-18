@@ -40,11 +40,13 @@ claims:
       - server/portalPasskeyEnrollmentRoutes.ts (new), server/portalPasskeys.testkit.ts (new), server/portalPasskeys.test.ts
       - server/storageUnavailableResponse.ts (new), server/portalTenantFileRoutes.ts
       - server/routes.ts (passkey register wiring; storage catch blocks)
-    status: active
+    status: verified-live
     started: 2026-10-18
     note: >-
       Ecosystem closeout (Joe, 2026-10-18): #226 items 1 and 3, #153 route tests,
       #395 residual #378 503 mapping. #582 and #204 are in Codex PR #619, not here.
+      Closeout checkpoint 2026-10-18: PR #621 merged 17d1f5289d44d378f78185c203ec0aa7f718675f. Native CI 39105202752 passed and actual DE-owned card screenshots were inspected at 390/768/1440 (artifact 12128126503). Deployment 39105871653/job 117613044802 matched local/public canaries at 07:07:59Z; current 9283da04 contains the merge. This claim covers provider marks, enrollment HTTP tests and storage-503 mapping only; #153 physical-device/sign-in and #395 residuals remain open.
+
   - id: password-policy-address-lookup
     owner: claude
     subsystem: portal-auth-forms
@@ -59,12 +61,14 @@ claims:
       - client/src/pages/portal/OrderForm.tsx, PortalInfrastructure.tsx, client/src/components/portal/requests/fields.tsx
       - client/src/pages/store/Checkout.tsx
       - .env.example
-    status: active
+    status: merged
     started: 2026-10-15
     note: >-
       Joe, 2026-10-15: live password checklist like a carrier sign-up page, the
       screenshot's rules plus a breached-password check (HIBP), minimum 10;
       Geoapify address type-ahead on checkout and portal address forms.
+      Closeout checkpoint 2026-10-18: PR #613 merged a3f3e16bbe93f1e0638ecd4f23f55d661b4a64e9 on 2026-10-15. Current released 9283da04 contains it. This retires the active coding claim only; provider configuration and real address/HIBP availability have not been independently verified in this campaign.
+
   - id: portal-agreement-gate
     owner: claude
     subsystem: portal-onboarding
@@ -3623,7 +3627,7 @@ claims:
       - public/llms.txt
       - client/src/components/MegaMenu.tsx (desktop nav item size, logo height lg-xl)
       - client/src/components/CookieConsentBanner.tsx (compact Preferences link md:hidden)
-    status: in-review
+    status: merged
     started: 2026-10-14
     note: >-
       Joe, 2026-10-14: "work on fixing all outstanding items even my items for me. then
@@ -3632,6 +3636,7 @@ claims:
       2026-10-07); header CTA no longer runs past the viewport at 1024-1279; cookie banner
       shows one Preferences control from md. No phone/address value changed. Homepage
       hero (PR 505) untouched.
+      Closeout checkpoint 2026-10-18: PR #587 merged 7d7b1af56ee7cb958e707dbd21f092d8d00ee9c0 on 2026-10-14 and is included in released 9283da04. This retires a stale in-review claim without asserting every live device/content check. The separate unsupported free-assessment announcement discovered in live verification is repaired in the current closeout branch.
 
   - id: zoho-oauth-manager
     owner: claude
@@ -4049,7 +4054,7 @@ claims:
       - client/src/pages/campaigns/AiBackgroundCheck.tsx, ai-background-check.css (offer terms, CTA label, next-step line, SEO title)
       - docs/CLAIMS-REGISTER.md (the /go/ai-background-check section only)
       - .ai/ACTIVE_WORK.yaml (this claim; status of five merged claims)
-    status: active
+    status: verified-live
     started: 2026-10-16
     note: >-
       Joe, 2026-10-16, on the live /go/ai-background-check: "pretty good" and,
@@ -4058,6 +4063,7 @@ claims:
       no passwords or admin access, plus a next-step line toward paid work.
       Also retires five claims whose branches are merged (check-active-work
       warnings). Overlap check 2026-10-16: no open PR touches these files.
+      Closeout checkpoint 2026-10-18: PR #616 merged ab1b3da448d351e9de52ae67b63c60cd0f3cf37a on 2026-10-16. Approved free/30-minute/read-only/no-password offer copy was observed on the live landing page during this campaign. Booking fulfillment is a separate unresolved dependency: the live /book widget offers five consultations but no AI Background Check service. A verified Zoho Bookings service/URL mapping is needed; no fabricated service ID was added.
 
   - id: portal-closeout-20261018
     owner: codex
@@ -4073,7 +4079,7 @@ claims:
       - client/src/components/portal/shell/PortalSessionExpiredDialog.tsx
       - client/src/pages/portal/PortalLayout.tsx (dialog mount only)
       - scripts/qa/portal-session-expiry.mjs
-    status: active
+    status: verified-live
     started: 2026-10-18
     note: >-
       Joe authorized an autonomous ecosystem completion campaign including
@@ -4083,3 +4089,4 @@ claims:
       remove the unused legacy lifecycle mapper without weakening disclosure.
       35 focused tests pass. Local Chromium download is blocked by invalid
       archives; the exact browser regression is required in CI before merging.
+      Closeout checkpoint 2026-10-18: PR #619 merged 7d441d5fba43eee2f2414425cf678e2da1cf1998. Native CI 39102889471 and merged CI/deploy 39103391913 passed, including actual browser draft preservation at 390/1440; issues #582 and #204 closed with evidence. Live release 9283da04 contains this change. The earlier local browser-download limitation is historical, not an outstanding verification gate.
