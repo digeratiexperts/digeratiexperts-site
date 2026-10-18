@@ -51,10 +51,16 @@ try {
       const cta = page.getByTestId('button-blog-assessment');
       if (await cta.count()) {
         await cta.scrollIntoViewIfNeeded();
-        assert(await cta.evaluate(el => {
+        const geometry = await cta.evaluate(el => {
           const rect = el.getBoundingClientRect(), parent = el.parentElement.getBoundingClientRect();
-          return rect.left >= parent.left - 1 && rect.right <= parent.right + 1 && el.scrollWidth <= el.clientWidth + 1;
-        }), `${route}: clipped assessment action at ${width}`);
+          return { left: rect.left, right: rect.right, parentLeft: parent.left, parentRight: parent.right, scrollWidth: el.scrollWidth, clientWidth: el.clientWidth };
+        });
+        const fits = geometry.left >= geometry.parentLeft - 1 && geometry.right <= geometry.parentRight + 1 && geometry.scrollWidth <= geometry.clientWidth + 1;
+        if (!fits) {
+          await page.screenshot({ path: path.join(output, `failure-${width}.png`) });
+          await writeFile(path.join(output, `failure-${width}.json`), JSON.stringify({ route, geometry }));
+        }
+        assert(fits, `${route}: clipped assessment action at ${width}`);
         assert(await cta.getAttribute('href'), `${route}: missing continuation`);
       }
       const name = route.replace(/[^a-z0-9]+/gi, '-').replace(/^-/, '');

@@ -595,7 +595,7 @@ export function ClosingCta({
             <h2 className={cn(titleClass, "max-w-[22ch] md:text-[2.75rem]", inkClass(tone))}>{title}</h2>
             {lede && <p className={cn(ledeClass(tone), "mt-5 max-w-xl")}>{lede}</p>}
           </div>
-          <div className="flex flex-col gap-3 sm:flex-row lg:col-span-5 lg:justify-end">
+          <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:flex-wrap lg:col-span-5 lg:justify-end">
             <ActionAnchor
               action={primary}
               className={buttonPrimary(tone)}
