@@ -220,54 +220,16 @@ jobs:
           $hash = (Get-FileHash -LiteralPath $setup[0].FullName -Algorithm SHA256).Hash.ToLowerInvariant()
           "$hash  $($setup[0].Name)" | Set-Content "$($setup[0].FullName).sha256" -Encoding ASCII
           "UNSIGNED TEST BUILD. Not a production release. Community tools omitted." | Set-Content "$out/TEST-BUILD.txt"
-      - name: Install, reinstall, installed audit and uninstall
+      - name: Real version upgrade, downgrade refusal, obsolete files and installed ACLs
         shell: powershell
         run: |
           $ErrorActionPreference = 'Stop'
           $out = Join-Path $env:RUNNER_TEMP 'de-installer-build'
           $setup = @(Get-ChildItem $out -Filter '*.exe')[0]
-          $install = Join-Path $env:RUNNER_TEMP 'de-installed-tool'
-          foreach ($attempt in 1..2) {
-            $p = Start-Process -FilePath $setup.FullName -ArgumentList @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART',('/DIR="' + $install + '"'),('/LOG="' + $out + '\install-' + $attempt + '.log"')) -Wait -PassThru
-            if ($p.ExitCode -ne 0) { throw "install $attempt exit $($p.ExitCode)" }
-          }
-          $console = Join-Path $install 'msp-ai-kit\windows\console\DETechConsole.ps1'
-          if (-not (Test-Path -LiteralPath $console)) { throw 'installed console missing' }
-          $launcher = Join-Path $install 'msp-ai-kit\windows\DE-TechTool.exe'
-          $probe = Start-Process -FilePath $launcher -ArgumentList '--check' -Wait -PassThru
-          if ($probe.ExitCode -ne 0) { throw 'installed native launcher path check failed' }
-          $probe = Start-Process -FilePath $launcher -ArgumentList '--invalid-option' -Wait -PassThru
-          if ($probe.ExitCode -ne 2) { throw 'native launcher accepted unknown arguments' }
-          $integrity = Get-Content "$install/msp-ai-kit/windows/integrity.json" -Raw | ConvertFrom-Json
-          if (-not @($integrity.files | Where-Object path -eq 'DE-TechTool.exe').Count) { throw 'native launcher is absent from integrity manifest' }
-
-          if (-not (Test-Path "$install/msp-ai-kit/scripts/build.mjs")) { throw 'parent kit dependency missing' }
-          # Exercise version refusal on a disposable runner; restore registration even on failure.
-          $registration = 'HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\{EB058878-62D7-4AD0-B4E1-61F731EB7003}_is1'
-          $installedVersion = (Get-ItemProperty -LiteralPath $registration).DisplayVersion
-          $originalHash = (Get-FileHash -LiteralPath $console -Algorithm SHA256).Hash
-          try {
-            Set-ItemProperty -LiteralPath $registration -Name DisplayVersion -Value '99.0.0'
-            $p = Start-Process -FilePath $setup.FullName -ArgumentList @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART',('/DIR="' + $install + '"'),('/LOG="' + $out + '\downgrade-refusal.log"')) -Wait -PassThru
-            if ($p.ExitCode -eq 0) { throw 'older installer accepted a newer registered version' }
-            if ((Get-FileHash -LiteralPath $console -Algorithm SHA256).Hash -ne $originalHash) { throw 'refused downgrade changed installed console' }
-            if ((Get-ItemProperty -LiteralPath $registration).DisplayVersion -ne '99.0.0') { throw 'refused downgrade changed version registration' }
-            if (-not (Select-String -LiteralPath "$out/downgrade-refusal.log" -SimpleMatch 'REFUSED: newer DE Tech Tool version already installed' -Quiet)) { throw 'downgrade did not refuse for the expected reason' }
-          } finally {
-            Set-ItemProperty -LiteralPath $registration -Name DisplayVersion -Value $installedVersion
-          }
-          $data = Join-Path $env:RUNNER_TEMP 'de-installed-evidence'
-          $result = Join-Path $out 'installed-audit.json'
-          & $console -Headless -Client alamo -Mode audit -DataDir $data -ResultFile $result
-          if ($LASTEXITCODE -notin @(0,1,2)) { throw "installed audit exit $LASTEXITCODE" }
-          if (-not (Test-Path -LiteralPath $result)) { throw 'installed audit result missing' }
-          if (-not @(Get-ChildItem "$data/evidence" -Recurse -Filter '*.zip').Count) { throw 'installed evidence missing' }
-          $p = Start-Process -FilePath "$install/unins000.exe" -ArgumentList @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART') -Wait -PassThru
-          if ($p.ExitCode -ne 0) { throw "uninstall exit $($p.ExitCode)" }
-          if (Test-Path -LiteralPath $console) { throw 'uninstall left console code behind' }
-          if (-not (Test-Path -LiteralPath $data)) { throw 'uninstall deleted evidence' }
-          Write-Host 'Setup lifecycle passed.'
-          exit 0
+          $payload = Join-Path $env:RUNNER_TEMP 'de-installer-payload\msp-ai-kit'
+          $iscc = Join-Path ([Environment]::GetFolderPath('ProgramFilesX86')) 'Inno Setup 6\ISCC.exe'
+          & "$env:KIT/windows/tests/Invoke-InstallerLifecycle.ps1" -SetupPath $setup.FullName -PayloadDir $payload -CompilerPath $iscc -OutDir $out
+          if ($LASTEXITCODE -ne 0) { throw "installer lifecycle exit $LASTEXITCODE" }
       - name: Render appearance concepts from staged release
         shell: powershell
         run: |
@@ -298,6 +260,7 @@ jobs:
             }
           }
       - name: Upload unsigned test setup and lifecycle logs
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: DE-TechTool-unsigned-test-setup
