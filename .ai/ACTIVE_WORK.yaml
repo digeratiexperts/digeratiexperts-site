@@ -30,6 +30,21 @@
 
 version: 2
 claims:
+  - id: closeout-226-153-395
+    owner: claude
+    subsystem: store-vendor-marks, portal-passkeys, storage-503
+    branch: ccr-3c8a5c8e-7wsj3j
+    base_sha: ab1b3da4
+    files:
+      - client/src/data/vendorLogos.ts, client/src/data/productImages.ts, client/src/data/vendorLogos.deServices.test.ts (new)
+      - server/portalPasskeyEnrollmentRoutes.ts (new), server/portalPasskeys.testkit.ts (new), server/portalPasskeys.test.ts
+      - server/storageUnavailableResponse.ts (new), server/portalTenantFileRoutes.ts
+      - server/routes.ts (passkey register wiring; storage catch blocks)
+    status: active
+    started: 2026-10-18
+    note: >-
+      Ecosystem closeout (Joe, 2026-10-18): #226 items 1 and 3, #153 route tests,
+      #395 residual #378 503 mapping. #582 and #204 are in Codex PR #619, not here.
   - id: password-policy-address-lookup
     owner: claude
     subsystem: portal-auth-forms
