@@ -190,7 +190,7 @@ export default function PortalCreateTicket() {
           </Callout>
         )}
 
-        <Callout tone="warn" title={`Something down right now? Call ${PRIMARY_PHONE.display}.`}>
+        <Callout tone="warn" title={<>Something down right now? <a href={PRIMARY_PHONE.telHref} className="inline-block whitespace-nowrap underline underline-offset-2">Call {PRIMARY_PHONE.display}</a>.</>}>
           <span className="inline-flex items-center gap-1.5">
             <Phone className="h-3.5 w-3.5" aria-hidden="true" />
             Response targets: {formatResponseTargets()}.
@@ -231,7 +231,7 @@ export default function PortalCreateTicket() {
               <Field label="Priority" labelId="ticket-priority-label" required hint={PRIORITIES.find((p) => p.value === formData.priority)?.hint}>
                 <Select value={formData.priority} onValueChange={(value) => setFormData({ ...formData, priority: value })}>
                   <SelectTrigger aria-labelledby="ticket-priority-label" className="border-border bg-background" data-testid="select-priority">
-                    <SelectValue />
+                    <SelectValue>{PRIORITIES.find((p) => p.value === formData.priority)?.label}</SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     {PRIORITIES.map((p) => (

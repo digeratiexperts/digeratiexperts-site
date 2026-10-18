@@ -1,4 +1,4 @@
-import { type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { LogOut, Search } from "lucide-react";
 import "@/styles/portal.css";
@@ -105,6 +105,18 @@ export function PortalLayout({
     [user?.id, user?.orgRole, user?.role, user?.isCompanyItContact, integrations.vpn.mode, integrations.phone.mode, integrations.shipping.mode],
   );
   const current = findNavItem(location);
+  const sidebarNav = useRef<HTMLElement>(null);
+  useEffect(() => {
+    if (!ready || gateBlocks) return;
+    const scroller = sidebarNav.current?.querySelector<HTMLElement>('[data-sidebar="content"]');
+    const active = scroller?.querySelector<HTMLElement>('a[aria-current="page"]');
+    if (!scroller || !active) return;
+    const bounds = scroller.getBoundingClientRect();
+    const item = active.getBoundingClientRect();
+    if (item.bottom > bounds.bottom) scroller.scrollTop += item.bottom - bounds.bottom + 8;
+    else if (item.top < bounds.top) scroller.scrollTop -= bounds.top - item.top + 8;
+  }, [location, ready, gateBlocks, groups]);
+
 
   const handleStopImpersonation = useCallback(async () => {
     try {
@@ -142,7 +154,7 @@ export function PortalLayout({
     <div className={cn("de-portal", isDarkPortalTheme(theme) && "dark")} data-theme={theme}>
       <SidebarProvider defaultOpen={typeof window === "undefined" ? true : window.innerWidth >= 1024}>
         <Sidebar collapsible="icon" className="border-sidebar-border">
-          <nav aria-label="Client portal" className="flex h-full min-h-0 flex-col">
+          <nav ref={sidebarNav} aria-label="Client portal" className="flex h-full min-h-0 flex-col">
           <SidebarHeader className="px-3 pb-2 pt-3">
             <Link href="/portal/dashboard" className="flex items-center gap-2 rounded-md px-1 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring" aria-label="Digerati Experts client portal home">
               <img src={DE_MARK} alt="" className="h-7 w-7 shrink-0 group-data-[collapsible=icon]:block hidden" />

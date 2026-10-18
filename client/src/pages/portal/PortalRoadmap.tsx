@@ -206,7 +206,7 @@ export default function PortalRoadmap() {
               </div>
             </dl>
             <div
-              className="relative h-3 overflow-hidden rounded-full bg-secondary"
+              className="relative h-3 overflow-hidden rounded-full bg-muted-foreground"
               role="img"
               aria-label={`Budget: ${budgetSummary.spentPercent}% spent, ${budgetSummary.plannedPercent}% planned, remainder available`}
             >
@@ -219,7 +219,7 @@ export default function PortalRoadmap() {
             <ul className="flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-muted-foreground" aria-hidden="true">
               <li className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-sm bg-primary" />Spent</li>
               <li className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-sm bg-muted-foreground/50" />Planned</li>
-              <li className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-sm border border-border bg-secondary" />Available</li>
+              <li className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-sm border border-border bg-muted-foreground" />Available</li>
             </ul>
           </div>
         </Panel>

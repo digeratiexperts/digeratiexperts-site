@@ -140,6 +140,19 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
+      - name: Portal layout closeout verification
+        if: env.DE_LIGHT != 'true'
+        run: node scripts/qa/portal-layout-closeout.mjs
+
+      - name: Portal layout closeout evidence
+        if: always() && env.DE_LIGHT != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: portal-layout-closeout
+          path: artifacts/visual-qa/portal-layout-closeout
+          if-no-files-found: ignore
+          retention-days: 14
+
       # The MSP AI Kit skill (.claude/skills/msp-ai-kit) is outside Vitest's
       # include patterns too; its builder tests and config check run here so a
       # module edit without a rebuilt example cannot merge green. The Windows

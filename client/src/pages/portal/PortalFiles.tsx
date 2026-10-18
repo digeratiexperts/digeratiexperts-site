@@ -42,7 +42,7 @@ export default function PortalFiles() {
   });
 
   const files = data?.files || [];
-  const companyName = data?.companyName || "Your Company";
+  const companyName = data?.companyName?.trim() || null;
 
   const columns: DataColumn<TenantFile>[] = [
     {
@@ -107,7 +107,7 @@ export default function PortalFiles() {
   ];
 
   return (
-    <PortalLayout title="Files & Downloads" description={`Software, agents and documents DE prepared for ${companyName}.`} titleTestId="text-files-title" width="wide">
+    <PortalLayout title="Files & Downloads" description={companyName ? `Software, agents and documents DE prepared for ${companyName}.` : "Software, agents and documents shared with your organization."} titleTestId="text-files-title" width="wide">
       <div className="space-y-4">
         {isError && (
           <Callout tone="bad" title="Failed to load files">

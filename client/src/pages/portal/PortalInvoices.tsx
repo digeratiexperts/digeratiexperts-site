@@ -132,6 +132,7 @@ export default function PortalInvoices() {
           <StatTile label="Total invoices" value={invoices.length} hint="on file" loading={isLoading} testId="stat-total-invoices" />
           <StatTile label="Paid" value={paidCount} hint="settled" tone="ok" loading={isLoading} testId="stat-paid-invoices" />
           <StatTile
+            className="col-span-2 lg:col-span-1"
             label="Outstanding"
             value={outstandingCount}
             hint={!isLoading && outstandingCount > 0 ? "payment due" : "nothing due"}

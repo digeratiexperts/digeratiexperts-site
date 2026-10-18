@@ -479,7 +479,7 @@ export function OrderForm() {
                                         {service.name}
                                       </h4>
                                       {service.tier && (
-                                        <Token label={service.tier.charAt(0).toUpperCase() + service.tier.slice(1)} tone="neutral" className="normal-case tracking-normal" />
+                                        <Token label={service.tier === "it" ? "IT" : service.tier.charAt(0).toUpperCase() + service.tier.slice(1)} tone="neutral" className="normal-case tracking-normal" />
                                       )}
                                     </div>
                                     <p className="mb-1.5 line-clamp-2 text-xs text-muted-foreground">

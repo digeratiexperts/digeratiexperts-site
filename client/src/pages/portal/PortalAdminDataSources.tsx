@@ -494,7 +494,7 @@ export function PortalAdminDataSources() {
 
         <Callout tone="info" title="How to switch" testId="data-sources-how-to-switch">
           Set the variables in the portal's environment on the server, using{" "}
-          <code className="break-all font-mono text-xs">{data?.envExample ?? "deploy/vps/env.production.example"}</code> as the
+          <code className="inline-block max-w-full overflow-x-auto whitespace-nowrap align-middle font-mono text-xs">{data?.envExample ?? "deploy/vps/env.production.example"}</code> as the
           template, then restart the portal. Leave the provider switch empty to keep sample data; set it to{" "}
           <code className="font-mono text-xs">hidden</code> to remove a page. Come back here and press Check for one company.
         </Callout>
