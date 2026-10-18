@@ -29,6 +29,7 @@ import { findNavItem, isNavItemActive, navGroupsFor } from "@/components/portal/
 import { usePortalIntegrations } from "@/lib/portalIntegrations";
 import { resetPortalSession, signOutOfPortal, usePortalSession } from "@/components/portal/shell/portalSession";
 import { PortalTour } from "@/components/portal/shell/PortalTour";
+import { PortalSessionExpiredDialog } from "@/components/portal/shell/PortalSessionExpiredDialog";
 import { AGREEMENT_GATE_PATH, mustVisitGate, useAgreementGate } from "@/lib/portalAgreementGate";
 import { AdminModeSwitch } from "@/components/portal/AdminModeSwitch";
 import { isDarkPortalTheme, usePortalAppearance } from "@/components/portal/shell/portalTheme";
@@ -291,6 +292,7 @@ export function PortalLayout({
         autoStart={Boolean(gate.data && !gate.data.exempt && gate.data.status.items.some((i) => i.scope === "user" && i.state === "signed"))}
       />
       <PortalCommandPalette groups={groups} open={paletteOpen} onOpenChange={setPaletteOpen} onSignOut={handleLogout} />
+      {user?.id && <PortalSessionExpiredDialog userId={user.id} />}
     </div>
   );
 }

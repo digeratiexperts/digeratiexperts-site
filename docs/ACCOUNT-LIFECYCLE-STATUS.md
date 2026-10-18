@@ -303,16 +303,9 @@ Internal/DE-staff admin screens behind `requireAdmin` are internal surfaces and 
 
 Do not merge, rename into, cross-wire, or infer one from the other. An employee offboarding run says nothing about the account's lifecycle status.
 
-### Legacy implementation surface — migration target
+### Legacy values remain blocked
 
-`server/integrations/tenantIdentity.ts` still encodes the **superseded** taxonomy:
-
-- `HUB_LIFECYCLES` = `suspect, prospect, lead, qualified_opportunity, client_pending_activation, active_client, former_client, disqualified, closed_lost`
-- `mapHubLifecycleToMaturity()` maps from those legacy values.
-
-These are legacy surfaces requiring migration to the canonical 13-value model. They are **not** authority to redefine the vocabulary. Until migrated, do not add new code that depends on the superseded ordering.
-
-`MATURITY_STAGES` and `mapPortalMaturity()` produce a portal-side derived stage. Derived or not, it inherits this document's disclosure boundary: `prospect`, `former`, and `closed` must not surface to a client. If any maturity signal is ever shown client-side, it must go through an approved presentation mapping.
+The unused nine-value lifecycle-to-maturity mapper was removed during the 2026-10-18 closeout (#204). The canonical 13-value model remains authoritative. Historical tokens remain in the disclosure scanner so old stored payloads cannot leak through client serializers. Portal service type and sales stages are separate domains; neither is derived from an obsolete account-lifecycle ordering.
 
 ### Automated enforcement
 

@@ -1,5 +1,15 @@
 import rateLimit from "express-rate-limit";
 
+// A page-hit beacon must not consume the login attempt budget or grow an
+// unbounded audit stream. Default IP handling uses the app's trusted proxy policy.
+export const loginKnockRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  message: { error: "Too many page notifications" },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // ============ SECURITY-HARDENED RATE LIMITERS ============
 
 // Login attempts: STRICT - 5 attempts per 15 minutes

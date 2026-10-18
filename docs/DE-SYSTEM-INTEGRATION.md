@@ -63,15 +63,17 @@ Company name is display/search only after the first successful match is persiste
 | Zoho Payments | checkout metadata | Store/portal checkout. |
 | Zoho WorkDrive | Hub `zoho-workdrive` | Hub-only today. |
 
-### Maturity-stage holes
+### Tenant-join gaps
 
-| Stage | Portal | Hub lifecycle | Break |
-|-------|--------|---------------|-------|
-| prospect | `serviceType=prospect` | suspect/prospect/lead | Register creates portal client without `hub_account_id`; website-lead creates Hub account without `portalClientId`. |
-| quoted | quote request / Hub quote | qualified_opportunity | Mapping lands only after orders/documents pull or Hub event with `portalClientId`. |
-| onboarded | no dedicated serviceType | client_pending_activation | No write-back of Hub activation onto portal `serviceType`. |
-| active | `managed` | active_client | Books customer id is email-lookup only. |
-| co-managed | `comanaged` | active_client + serviceRelationship | Hub serviceRelationship is not synced back. |
+Portal service type, sales stages and the internal Account Lifecycle Status are separate domains. No lifecycle-to-portal maturity mapper is used at runtime; the unused legacy mapper has been removed. The canonical 13-value lifecycle remains Hub-owned and absent from client responses.
+
+| Portal stage | Join gap |
+| --- | --- |
+| prospect | Registration does not yet write both portal client and Hub account identifiers. |
+| quoted | Mapping arrives through a successful orders/documents pull or an event carrying the verified portal client identifier. |
+| onboarded | Hub lifecycle does not automatically rewrite portal service type. |
+| active | Books customer identifiers are resolved by email and are not persisted on portal clients. |
+| co-managed | Portal service type is local; Hub service relationship is not projected back. |
 
 Portal commands fail closed on disabled users, viewer role, and claimed Hub/portal id mismatch. Hub order/document bridges fail closed on unknown `accountId` (no name fallback) and no longer substring-match company names.
 

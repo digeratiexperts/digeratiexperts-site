@@ -7,8 +7,6 @@ import {
   assertPortalCommandAllowed,
   assertSameTenant,
   joinTenantIdentity,
-  mapHubLifecycleToMaturity,
-  mapPortalMaturity,
 } from "./tenantIdentity";
 import { validateZohoAgentPayload } from "./zohoAgentsReadiness";
 
@@ -33,19 +31,6 @@ describe("tenant identity join", () => {
     expect(ids).toMatchObject(acme);
   });
 
-  it("maps Hub lifecycle onto DE maturity stages", () => {
-    expect(mapHubLifecycleToMaturity("lead")).toBe("prospect");
-    expect(mapHubLifecycleToMaturity("qualified_opportunity")).toBe("quoted");
-    expect(mapHubLifecycleToMaturity("client_pending_activation")).toBe("onboarded");
-    expect(mapHubLifecycleToMaturity("active_client")).toBe("active");
-  });
-
-  it("treats comanaged portal serviceType as the terminal live stage", () => {
-    expect(mapPortalMaturity({ serviceType: "comanaged" }).stage).toBe("comanaged");
-    expect(mapPortalMaturity({ serviceType: "managed" }).stage).toBe("active");
-    expect(mapPortalMaturity({ serviceType: "prospect", hasHubQuote: true }).stage).toBe("quoted");
-  });
-
   it("documents a hole at every maturity stage", () => {
     expect(TENANT_JOIN_HOLES.map((h) => h.stage)).toEqual([
       "prospect",
@@ -54,7 +39,6 @@ describe("tenant identity join", () => {
       "active",
       "comanaged",
     ]);
-    expect(mapPortalMaturity({ serviceType: "prospect" }).hole).toMatch(/portalClientId/);
   });
 });
 

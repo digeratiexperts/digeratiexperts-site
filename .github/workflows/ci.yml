@@ -78,6 +78,19 @@ jobs:
         if: env.DE_LIGHT != 'true'
         run: npm run check
 
+      - name: Portal session-expiry browser regression
+        if: env.DE_LIGHT != 'true'
+        run: node scripts/qa/portal-session-expiry.mjs
+
+      - name: Portal session-expiry evidence
+        if: always() && env.DE_LIGHT != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: portal-session-expiry
+          path: artifacts/visual-qa/portal-session-expiry
+          if-no-files-found: ignore
+          retention-days: 7
+
       - name: Unit tests
         if: env.DE_LIGHT != 'true'
         run: npm test

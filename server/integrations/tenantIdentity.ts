@@ -9,30 +9,6 @@
  * match.
  */
 
-export const MATURITY_STAGES = [
-  "prospect",
-  "quoted",
-  "onboarded",
-  "active",
-  "comanaged",
-] as const;
-
-export type MaturityStage = (typeof MATURITY_STAGES)[number];
-
-export const HUB_LIFECYCLES = [
-  "suspect",
-  "prospect",
-  "lead",
-  "qualified_opportunity",
-  "client_pending_activation",
-  "active_client",
-  "former_client",
-  "disqualified",
-  "closed_lost",
-] as const;
-
-export type HubLifecycle = (typeof HUB_LIFECYCLES)[number];
-
 /**
  * Account Lifecycle Status disclosure boundary.
  *
@@ -77,7 +53,9 @@ function normalizeToken(value: string): string {
 
 const LIFECYCLE_VALUE_TOKENS: ReadonlySet<string> = new Set([
   ...ACCOUNT_LIFECYCLE_STATUSES.map((s) => normalizeToken(s)),
-  ...HUB_LIFECYCLES.map((s) => normalizeToken(s)),
+  // Historical payloads must remain blocked after removing the unused mapper.
+  ...["suspect", "prospect", "lead", "qualified_opportunity", "client_pending_activation",
+    "active_client", "former_client", "disqualified", "closed_lost"].map(normalizeToken),
 ]);
 
 /**
@@ -262,73 +240,6 @@ export function assertSameTenant(actor: TenantIds, resource: TenantIds): TenantG
   return { ok: true };
 }
 
-export function mapHubLifecycleToMaturity(
-  lifecycle?: string | null,
-): MaturityStage | "former" | "closed" | "unknown" {
-  switch ((lifecycle || "").trim()) {
-    case "suspect":
-    case "prospect":
-    case "lead":
-      return "prospect";
-    case "qualified_opportunity":
-      return "quoted";
-    case "client_pending_activation":
-      return "onboarded";
-    case "active_client":
-      return "active";
-    case "former_client":
-      return "former";
-    case "disqualified":
-    case "closed_lost":
-      return "closed";
-    default:
-      return "unknown";
-  }
-}
-
-export function mapPortalMaturity(input: {
-  serviceType?: string | null;
-  storeRole?: string | null;
-  status?: string | null;
-  hasHubQuote?: boolean;
-  hasHubAgreement?: boolean;
-  hubLifecycle?: string | null;
-}): { stage: MaturityStage | "former" | "closed" | "unknown"; hole: string | null } {
-  const service = (input.serviceType || "").toLowerCase();
-  const store = (input.storeRole || "").toLowerCase();
-  const status = (input.status || "").toLowerCase();
-  const hubStage = mapHubLifecycleToMaturity(input.hubLifecycle);
-
-  if (service === "comanaged" || store === "comanaged") {
-    return { stage: "comanaged", hole: null };
-  }
-  if (service === "managed" || store === "managed") {
-    return { stage: "active", hole: null };
-  }
-  if (status.includes("onboard") || hubStage === "onboarded") {
-    return {
-      stage: "onboarded",
-      hole: service === "prospect" ? "portal serviceType still prospect after Hub activation pending" : null,
-    };
-  }
-  if (input.hasHubQuote || hubStage === "quoted") {
-    return {
-      stage: "quoted",
-      hole: "portal_clients.hub_account_id may still be empty until first Hub pull or event",
-    };
-  }
-  if (store === "prospect" || service === "prospect" || hubStage === "prospect") {
-    return {
-      stage: "prospect",
-      hole: "website register / lead ingest does not write portalClientId back onto Hub accounts",
-    };
-  }
-  if (hubStage === "former" || hubStage === "closed") {
-    return { stage: hubStage, hole: "portal has no former/closed serviceType" };
-  }
-  return { stage: "unknown", hole: "no portal serviceType/storeRole and no Hub lifecycle" };
-}
-
 export function joinTenantIdentity(input: {
   client?: PortalClientSnapshot | null;
   actor?: PortalActor | null;
@@ -440,7 +351,7 @@ export const TENANT_JOIN_HOLES = [
   },
   {
     stage: "onboarded",
-    hole: "Hub client_pending_activation has no portal serviceType write-back. Portal stays prospect/managed independently.",
+    hole: "Hub Account Lifecycle Status has no portal serviceType write-back. Portal stays prospect/managed independently.",
   },
   {
     stage: "active",
