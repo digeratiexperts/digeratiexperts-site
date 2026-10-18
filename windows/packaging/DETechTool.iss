@@ -44,6 +44,13 @@ SetupLogging=yes
 [Tasks]
 Name: "desktopicon"; Description: "Create a desktop shortcut"; GroupDescription: "Shortcuts:"; Flags: unchecked
 
+; This subtree is immutable installed code. Mutable evidence, profiles and state
+; live outside {app}; never include ProgramData or a user data directory here.
+; Replace the complete owned payload so obsolete executable code cannot survive
+; a reinstall/upgrade. InitializeSetup refuses downgrades before this phase.
+[InstallDelete]
+Type: filesandordirs; Name: "{app}\msp-ai-kit"
+
 [Files]
 Source: "{#PayloadDir}\*"; DestDir: "{app}\msp-ai-kit"; Flags: ignoreversion recursesubdirs createallsubdirs
 
