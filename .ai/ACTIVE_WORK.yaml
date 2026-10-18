@@ -4058,3 +4058,28 @@ claims:
       no passwords or admin access, plus a next-step line toward paid work.
       Also retires five claims whose branches are merged (check-active-work
       warnings). Overlap check 2026-10-16: no open PR touches these files.
+
+  - id: portal-closeout-20261018
+    owner: codex
+    subsystem: portal-session-and-lifecycle
+    branch: codex/portal-closeout-20261018
+    base_sha: ab1b3da448d351e9de52ae67b63c60cd0f3cf37a
+    files:
+      - server/portalLoginKnocksPolicy.ts
+      - server/portalLoginKnocksStore.ts
+      - server/middleware/rateLimiter.ts
+      - server/routes.ts (beacon limiter only)
+      - server/integrations/tenantIdentity.ts
+      - client/src/components/portal/shell/PortalSessionExpiredDialog.tsx
+      - client/src/pages/portal/PortalLayout.tsx (dialog mount only)
+      - scripts/qa/portal-session-expiry.mjs
+    status: active
+    started: 2026-10-18
+    note: >-
+      Joe authorized an autonomous ecosystem completion campaign including
+      implementation, merge and deployment verification. Backstage is the audit
+      system. Issues 582 and 204: bound and rate-limit public login beacons,
+      retain real auth audit, preserve drafts during same-account reauthentication,
+      remove the unused legacy lifecycle mapper without weakening disclosure.
+      35 focused tests pass. Local Chromium download is blocked by invalid
+      archives; the exact browser regression is required in CI before merging.
