@@ -189,6 +189,7 @@ const HomepageV7 = lazy(() => import("@/pages/versions/v7/HomepageV7"));
 const HomepageV8 = lazy(() => import("@/pages/versions/v8/HomepageV8"));
 const HomepageV9 = lazy(() => import("@/pages/versions/v9/HomepageV9"));
 const HomepageV10 = lazy(() => import("@/pages/versions/v10/HomepageV10"));
+const HomeSimple = lazy(() => import("@/pages/concepts/HomeSimple").then((m) => ({ default: m.HomeSimple })));
 
 const WarehouseGate = lazy(() => import("@/pages/store/WarehouseGate"));
 const PublicStoreCheckout = lazy(() => import("@/pages/store/PublicStoreCheckout"));
@@ -205,6 +206,13 @@ function Router() {
       <Route path="/" component={() => (
         <Suspense fallback={<PageLoadingSkeleton />}>
           <HomepageV8 />
+        </Suspense>
+      )} />
+
+      {/* Concept: simpler homepage story (Exploration, 2026-10-18) — review only, noindex, not in navigation */}
+      <Route path="/concepts/home-simple" component={() => (
+        <Suspense fallback={<PageLoadingSkeleton />}>
+          <HomeSimple />
         </Suspense>
       )} />
 
@@ -1164,7 +1172,7 @@ function AppContent() {
   const isPortal = location.startsWith("/portal");
   const isHome = location === "/";
   // / (Version 8), /version-0 (the previous homepage), /version-7, /version-9 and /version-10 mount their own bottom bar.
-  const ownsBottomBar = isHome || location === "/version-0" || location === "/version-7" || location === "/version-9" || location === "/version-10";
+  const ownsBottomBar = isHome || location === "/version-0" || location === "/version-7" || location === "/version-9" || location === "/version-10" || location === "/concepts/home-simple";
   const hideDoor2HelpDock = isDoor2Path(location) && location.split("?")[0] !== "/store";
   const hideWarehouseChrome = isWarehousePath(location);
   const accent = isPortal ? undefined : accentFor(location);
