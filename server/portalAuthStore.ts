@@ -198,7 +198,7 @@ async function upsertUserDb(user: PortalAuthUser) {
 }
 
 /** Throws when the database write fails. No-op (not a failure) when there is no database. */
-async function writeUserDb(user: PortalAuthUser): Promise<void> {
+async function writeUserDb(user: PortalAuthUser, executor = db): Promise<void> {
   persistUserObserver?.(user);
   if (!dbReady || !db) return;
   {
@@ -225,7 +225,7 @@ async function writeUserDb(user: PortalAuthUser): Promise<void> {
       lastLogin: user.lastLogin || null,
       sessionsValidAfter: user.sessionsValidAfter || null,
     };
-    await db
+    await executor
       .insert(portalUsersTable)
       .values(values)
       .onConflictDoUpdate({
@@ -265,10 +265,10 @@ async function upsertClientDb(client: PortalAuthClient) {
   }
 }
 
-async function writeClientDb(client: PortalAuthClient): Promise<void> {
+async function writeClientDb(client: PortalAuthClient, executor = db): Promise<void> {
   if (!dbReady || !db) return;
   {
-    await db
+    await executor
       .insert(portalClientsTable)
       .values({
         id: client.id,
@@ -670,10 +670,29 @@ export async function createProspectClientForUser(user: PortalAuthUser, companyN
     serviceType: "prospect",
     createdAt: new Date(),
   };
-  await commitClient(client);
-  user.clientId = client.id;
-  user.storeRole = "prospect";
-  await commitUser(user);
+  await initPromise;
+  // Publish neither record to the auth cache until both durable writes commit.
+  // A user insert can fail (for example, a duplicate email raced registration)
+  // after the company insert; one transaction prevents an orphan prospect.
+  const linkedUser: PortalAuthUser = { ...user, clientId: client.id, storeRole: "prospect" };
+  if (!dbReady || !db) {
+    if (!memoryOnlyWritesAllowed()) throw new PortalPersistenceError();
+    persistUserObserver?.(linkedUser);
+  } else {
+    try {
+      await db.transaction(async (tx: typeof db) => {
+        await writeClientDb(client, tx);
+        await writeUserDb(linkedUser, tx);
+      });
+    } catch (err: any) {
+      console.error("[portalAuthStore] prospect registration commit failed:", err?.message);
+      throw new PortalPersistenceError();
+    }
+  }
+  Object.assign(user, linkedUser);
+  clientsById.set(client.id, client);
+  committedClients.set(client.id, { ...client });
+  indexUser(user);
   void import("./integrations/linkPortalIdentity")
     .then(({ queuePortalIdentityLink }) =>
       queuePortalIdentityLink({

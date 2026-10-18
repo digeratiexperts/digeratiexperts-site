@@ -20,8 +20,12 @@ function fakeDb(state: { fail: boolean; writes: any[] }) {
   };
 }
 
+const queuePortalIdentityLink = vi.fn();
+
 async function loadStore(mock: { dbReady: boolean; db: unknown }) {
   vi.resetModules();
+  queuePortalIdentityLink.mockReset();
+  vi.doMock("./integrations/linkPortalIdentity", () => ({ queuePortalIdentityLink }));
   vi.doMock("./db", () => ({ db: mock.db, dbReady: mock.dbReady, initPromise: Promise.resolve(mock.dbReady) }));
   const store = await import("./portalAuthStore");
   store.resetPortalAuthStoreForTests();
@@ -124,6 +128,67 @@ describe("commitUser / commitClient durability (#245)", () => {
     state.fail = true;
     await expect(store.commitClient(live)).rejects.toBeInstanceOf(store.PortalPersistenceError);
     expect(store.getClient("c1")!.companyName).toBe("Acme");
+  });
+
+  it("rolls back the company when the second registration write fails", async () => {
+    const durable: unknown[] = [];
+    const attempts: any[] = [];
+    const mock = {
+      transaction: async (operation: (tx: unknown) => Promise<void>) => {
+        const pending: unknown[] = [];
+        await operation({ insert: () => ({ values: (value: any) => ({
+          onConflictDoUpdate: async () => {
+            attempts.push(value);
+            if (attempts.length === 2) throw new Error("user unique constraint");
+            pending.push(value);
+          },
+        }) }) });
+        durable.push(...pending);
+      },
+    };
+    const store = await loadStore({ dbReady: true, db: mock });
+    const user = { ...baseUser(), clientId: null, storeRole: "prospect" as const };
+    await expect(store.createProspectClientForUser(user, "EXAMPLE Company")).rejects.toBeInstanceOf(store.PortalPersistenceError);
+    expect(attempts).toHaveLength(2);
+    expect(durable).toEqual([]);
+    expect(store.listClients()).toEqual([]);
+    expect(store.getUser(user.email)).toBeUndefined();
+    expect(user.clientId).toBeNull();
+    expect(queuePortalIdentityLink).not.toHaveBeenCalled();
+  });
+
+  it("publishes both records and queues identity linking only after the transaction commits", async () => {
+    const durable: any[] = [];
+    let release!: () => void;
+    let wrotePair!: () => void;
+    const pendingCommit = new Promise<void>(resolve => { release = resolve; });
+    const pairWritten = new Promise<void>(resolve => { wrotePair = resolve; });
+    const mock = {
+      transaction: async (operation: (tx: unknown) => Promise<void>) => {
+        const pending: any[] = [];
+        await operation({ insert: () => ({ values: (value: any) => ({
+          onConflictDoUpdate: async () => { pending.push(value); },
+        }) }) });
+        wrotePair();
+        await pendingCommit;
+        durable.push(...pending);
+      },
+    };
+    const store = await loadStore({ dbReady: true, db: mock });
+    const user = { ...baseUser(), clientId: null };
+    const registration = store.createProspectClientForUser(user, "EXAMPLE Company");
+    await pairWritten;
+    expect(store.listClients()).toEqual([]);
+    expect(store.getUser(user.email)).toBeUndefined();
+    expect(queuePortalIdentityLink).not.toHaveBeenCalled();
+    release();
+    const company = await registration;
+    expect(durable).toHaveLength(2);
+    expect(durable[1].clientId).toBe(durable[0].id);
+    expect(store.getClient(company.id)).toBe(company);
+    expect(store.getUser(user.email)).toBe(user);
+    expect(user.clientId).toBe(company.id);
+    await vi.waitFor(() => expect(queuePortalIdentityLink).toHaveBeenCalledOnce());
   });
 
   it("prospect signup fails closed in production without a database and indexes nothing", async () => {
