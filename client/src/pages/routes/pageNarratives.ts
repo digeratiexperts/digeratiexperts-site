@@ -550,7 +550,7 @@ export const pageNarratives: Record<string, PageNarrative> = {
     ],
     ctaHeadline: "Know your exposure before an incident forces the conversation",
     ctaBody:
-      "Schedule a free HIPAA-focused risk assessment. You’ll leave with a prioritized summary of what to fix first — not a product dump.",
+      "Discuss a HIPAA-focused risk assessment. We confirm scope, deliverables and fees before work begins, then prioritize the agreed findings.",
   },
 
   "professional-services": {

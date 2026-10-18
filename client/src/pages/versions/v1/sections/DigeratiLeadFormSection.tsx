@@ -80,7 +80,7 @@ export const DigeratiLeadFormSection = (): JSX.Element => {
   };
 
   const benefits = [
-    { icon: Shield, text: "Complimentary security assessment" },
+    { icon: Shield, text: "Scope and fees confirmed before work begins" },
     { icon: Clock, text: "Results in 24-48 hours" },
     { icon: CheckCircle, text: "No obligation, no credit card" },
   ];
@@ -104,7 +104,7 @@ export const DigeratiLeadFormSection = (): JSX.Element => {
                 Cyber Risk Assessment
               </p>
               <h2 className="mb-4 font-heading text-3xl font-semibold leading-tight tracking-[-0.02em] text-[#1A1228] md:text-4xl lg:text-5xl">
-                Get Your Free Security Assessment
+                Request a Cyber Risk Assessment
               </h2>
               <p className="mx-auto max-w-2xl text-lg leading-relaxed text-black/60 md:text-xl">
                 Discover vulnerabilities before attackers do. Our experts will analyze your security posture and provide actionable recommendations.

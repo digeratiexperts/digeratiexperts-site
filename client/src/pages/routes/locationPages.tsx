@@ -32,7 +32,7 @@ export const locationPageData = {
       "Desktop Agent deployment & management"
     ],
     neighborhoods: ["Downtown Chandler", "Ahwatukee", "South Phoenix", "Tempe"],
-    cta: "Get Your Free IT Security Assessment for Your Chandler Business"
+    cta: "Request an IT Security Assessment for Your Chandler Business"
   },
   'phoenix-az': {
     city: 'Phoenix',
@@ -67,7 +67,7 @@ export const locationPageData = {
       "Multi-location IT management"
     ],
     neighborhoods: ["Downtown Phoenix", "North Phoenix", "East Phoenix", "West Phoenix"],
-    cta: "Get Your Free IT Security Assessment for Your Phoenix Business"
+    cta: "Request an IT Security Assessment for Your Phoenix Business"
   },
   'mesa-az': {
     city: 'Mesa',
@@ -102,7 +102,7 @@ export const locationPageData = {
       "Vendor coordination"
     ],
     neighborhoods: ["Downtown Mesa", "Gilbert", "Apache Junction", "East Mesa"],
-    cta: "Get Free IT Assessment for Your Mesa Business"
+    cta: "Request an IT Assessment for Your Mesa Business"
   },
   'gilbert-az': {
     city: 'Gilbert',

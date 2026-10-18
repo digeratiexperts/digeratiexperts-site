@@ -28,7 +28,7 @@ export default function Healthcare() {
   useSEO({
     title: "Healthcare IT & HIPAA Security | Arizona Practices",
     description:
-      "Keep patient data protected without becoming a HIPAA expert. Arizona-based IT, cybersecurity, and compliance support for medical and dental practices — start with a free risk assessment.",
+      "Keep patient data protected without becoming a HIPAA expert. Arizona-based IT, cybersecurity, and compliance support for medical and dental practices — start with a scoped risk assessment.",
     canonical: "/industries/healthcare",
   });
 
@@ -338,7 +338,7 @@ export default function Healthcare() {
         <ClosingCta
           title={narrative?.ctaHeadline ?? "Protect patient data with a clear plan"}
           lede={
-            narrative?.ctaBody ?? "Schedule a free HIPAA-focused cyber risk assessment for your Arizona practice."
+            narrative?.ctaBody ?? "Discuss a HIPAA-focused cyber risk assessment for your Arizona practice. Scope, deliverables and fees are confirmed before work begins."
           }
           primary={{ label: CTA.primary, href: "/book", testId: "button-get-assessment" }}
         />

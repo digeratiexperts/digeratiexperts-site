@@ -38,7 +38,7 @@ export function StoreAssessmentPanel({
         </div>
         <h3 className="text-lg font-semibold text-white">Not sure where to start?</h3>
         <p className="mt-2 text-sm leading-relaxed text-white/55">
-          Book a free cyber risk assessment, build a guided stack, or open Ask DE. We map gaps
+          Discuss a cyber risk assessment, build a guided stack, or open Ask DE. We map gaps
           to catalog items — no obligation.
         </p>
         <div className="mt-4 flex flex-col gap-2">

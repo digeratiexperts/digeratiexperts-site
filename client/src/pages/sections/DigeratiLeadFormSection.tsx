@@ -95,7 +95,7 @@ export const DigeratiLeadFormSection = (): JSX.Element => {
   };
 
   const benefits = [
-    { icon: Shield, text: "Complimentary security assessment" },
+    { icon: Shield, text: "Scope and fees confirmed before work begins" },
     { icon: CheckCircle, text: "No obligation, no credit card" },
   ];
 
@@ -113,7 +113,7 @@ export const DigeratiLeadFormSection = (): JSX.Element => {
             <Eyebrow tone="paper" className="mb-4">
               Cyber Risk Assessment
             </Eyebrow>
-            <h2 className={`${titleClass} max-w-[20ch]`}>Get Your Free Security Assessment</h2>
+            <h2 className={`${titleClass} max-w-[20ch]`}>Request a Cyber Risk Assessment</h2>
             <p className={`${ledeClass("paper")} mt-5 max-w-xl`}>
               {situation
                 ? "We'll size this Cyber Risk Assessment against the environment you already started in the Store. You do not need to retype users, computers, or sites."
