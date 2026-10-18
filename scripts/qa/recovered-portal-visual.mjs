@@ -17,12 +17,14 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { PortalQuestionnaireCalendar } from '../client/src/pages/portal/PortalQuestionnaireCalendar';
 import { PortalCommandPalette } from '../client/src/components/portal/shell/PortalCommandPalette';
 import { PORTAL_NAV_GROUPS } from '../client/src/components/portal/shell/portalNav';
+import { usePortalAppearance } from '../client/src/components/portal/shell/portalTheme';
 import { Stars } from '../client/src/components/portal/kb/kbUi';
 import { PageHero } from '../client/src/components/site/chapters';
 import '../client/src/index.css';
 const screen = new URLSearchParams(location.search).get('screen');
-function Palette() { const [open, setOpen] = React.useState(false); return <><button onClick={() => setOpen(true)}>Open search</button><PortalCommandPalette groups={PORTAL_NAV_GROUPS} open={open} onOpenChange={setOpen} onSignOut={() => { throw new Error('Sign-out must not run in this fixture'); }} /></>; }
-function Screen() { return screen === 'palette' ? <Palette /> : screen === 'stars' ? <main><h1>EXAMPLE article ratings</h1><Stars rating={{average:4.5,count:8}} /><Stars rating={{average:0,count:0}} /></main> : screen === 'hero' ? <main><PageHero title="EXAMPLE Mobile-readable heading" lede="Illustrative public hero using the actual decorative component." /></main> : <PortalQuestionnaireCalendar />; }
+function Palette() { usePortalAppearance(); const [open, setOpen] = React.useState(false); return <><button onClick={() => setOpen(true)}>Open search</button><PortalCommandPalette groups={PORTAL_NAV_GROUPS} open={open} onOpenChange={setOpen} onSignOut={() => { throw new Error('Sign-out must not run in this fixture'); }} /></>; }
+function Ratings() { usePortalAppearance(); return <main><h1>EXAMPLE article ratings</h1><Stars rating={{average:4.5,count:8}} /><Stars rating={{average:0,count:0}} /></main>; }
+function Screen() { return screen === 'palette' ? <Palette /> : screen === 'stars' ? <Ratings /> : screen === 'hero' ? <main><PageHero title="EXAMPLE Mobile-readable heading" lede="Illustrative public hero using the actual decorative component." /></main> : <PortalQuestionnaireCalendar />; }
 const client = new QueryClient({defaultOptions:{queries:{retry:false,refetchOnWindowFocus:false}}});
 createRoot(document.getElementById('root')!).render(<QueryClientProvider client={client}><Screen /></QueryClientProvider>);
 `);
@@ -48,7 +50,7 @@ try {
       else if(p==='/api/portal/agreements')body={mode:'off',exempt:true,status:{complete:true}};
       await route.fulfill({contentType:'application/json',body:JSON.stringify(body)});
     });
-    async function visit(screen){await page.goto(`${origin}/${path.basename(fixture)}/index.html?screen=${screen}`);await page.evaluate(()=>document.fonts.ready);}
+    async function visit(screen){await page.goto(`${origin}/${path.basename(fixture)}/index.html?screen=${screen}`);await page.evaluate(()=>document.fonts.ready);if(screen!=='hero'){await page.locator('body[data-portal-theme]').waitFor();assert.equal(await page.locator('body').getAttribute('data-portal-theme'),theme);}}
     async function capture(screen){assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),`${screen}: overflow`);await page.screenshot({path:path.join(output,`${screen}-${width}-${theme}.png`)});}
     async function checkAxe(screen){const result=await new AxeBuilder({page}).withRules(['aria-required-children','aria-allowed-attr','aria-dialog-name','aria-input-field-name']).analyze();await writeFile(path.join(output,`${screen}-${width}-${theme}.json`),JSON.stringify(result.violations,null,2));assert.deepEqual(result.violations.map(v=>({id:v.id,nodes:v.nodes.map(n=>n.target)})),[],screen);}
     try {
