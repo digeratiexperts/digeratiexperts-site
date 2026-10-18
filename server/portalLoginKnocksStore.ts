@@ -5,6 +5,7 @@
 import { sql, desc } from "drizzle-orm";
 import { db, dbReady, initPromise } from "./db";
 import { randomBytes } from "crypto";
+import { boundedKnockText, normalizeKnockMeta, normalizeKnockPath, PAGE_HIT_RETENTION_MS } from "./portalLoginKnocksPolicy";
 
 export type KnockKind =
   | "page_hit"
@@ -33,6 +34,25 @@ export type LoginKnock = {
 const memory: LoginKnock[] = [];
 const MAX_MEMORY = 2000;
 let schemaReady = false;
+let nextPageHitPruneAt = 0;
+
+async function pruneOldPageHits(): Promise<void> {
+  const now = Date.now();
+  if (now < nextPageHitPruneAt) return;
+  nextPageHitPruneAt = now + 60 * 60 * 1000;
+  const cutoff = new Date(now - PAGE_HIT_RETENTION_MS).toISOString();
+  for (let i = memory.length - 1; i >= 0; i--) {
+    if (memory[i].kind === "page_hit" && memory[i].createdAt < cutoff) memory.splice(i, 1);
+  }
+  if (dbReady && db && schemaReady) {
+    try {
+      // Preserve real sign-in/MFA audit events; only anonymous page beacons expire.
+      await db.execute(sql`DELETE FROM portal_login_knocks WHERE kind = 'page_hit' AND created_at < ${cutoff}::timestamptz`);
+    } catch {
+      console.warn("[loginKnocks] page-hit retention cleanup failed");
+    }
+  }
+}
 
 function newId(): string {
   return randomBytes(12).toString("hex");
@@ -111,17 +131,20 @@ export async function recordLoginKnock(input: {
   meta?: Record<string, unknown>;
 }): Promise<LoginKnock> {
   await ensureSchema();
-  const bot = classifyBotSignal(input.userAgent, input.meta);
+  await pruneOldPageHits();
+  const userAgent = boundedKnockText(input.userAgent, 512);
+  const meta = normalizeKnockMeta(input.meta);
+  const bot = classifyBotSignal(userAgent, meta);
   const knock: LoginKnock = {
     id: newId(),
     kind: input.kind,
-    email: input.email || null,
-    ip: input.ip || null,
-    userAgent: input.userAgent || null,
-    path: input.path || null,
+    email: boundedKnockText(input.email, 254),
+    ip: boundedKnockText(input.ip, 64),
+    userAgent,
+    path: normalizeKnockPath(input.path),
     isBotLikely: bot.isBotLikely,
     botReason: bot.botReason,
-    meta: input.meta || {},
+    meta,
     createdAt: new Date().toISOString(),
   };
 

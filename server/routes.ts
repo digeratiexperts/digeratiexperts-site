@@ -209,7 +209,7 @@ import { resolveJwtSecret } from "./config/authSecrets";
 import { registerRetiredLegacyAuthRoutes } from "./legacyAuthRetired";
 import { registerAddressLookupRoutes } from "./addressLookup";
 import { registerRetiredLegacyGenericRoutes } from "./legacyGenericRetired";
-import { loginRateLimiter, formSubmissionRateLimiter, apiGeneralRateLimiter, paymentRateLimiter } from "./middleware/rateLimiter";
+import { loginRateLimiter, loginKnockRateLimiter, formSubmissionRateLimiter, apiGeneralRateLimiter, paymentRateLimiter } from "./middleware/rateLimiter";
 import { enqueueOutbox } from "./integrations/deSyncStore";
 import { COMPANY, PRIMARY_PHONE } from "@shared/companyContact";
 import {
@@ -2751,8 +2751,8 @@ export async function registerRoutes(app: Express) {
     return res.redirect(authorizeUrl);
   });
 
-  /** Public beacon: login page loaded (door knock). Rate-limited lightly via no auth. */
-  app.post("/api/portal/login-knocks/ping", apiGeneralRateLimiter, async (req: AuthenticatedRequest, res: Response) => {
+  /** Public page beacon has its own strict budget, independent of login attempts. */
+  app.post("/api/portal/login-knocks/ping", loginKnockRateLimiter, async (req: AuthenticatedRequest, res: Response) => {
     try {
       await recordLoginKnock({
         kind: "page_hit",

@@ -40,6 +40,6 @@ Canonical values (v1.1, exactly one per account):
 
 ## Legacy — migration target, not authority
 
-`server/integrations/tenantIdentity.ts` still encodes the superseded taxonomy in `HUB_LIFECYCLES` (`lead`, `qualified_opportunity`, `client_pending_activation`, `active_client`, `former_client`, `closed_lost`) and `mapHubLifecycleToMaturity()`. Treat as legacy requiring migration. Do not add new dependencies on that ordering. `mapPortalMaturity()` output is derived but inherits the same disclosure boundary.
+The unused legacy lifecycle-to-maturity mapper was removed in closeout #204. Historical tokens (`lead`, `qualified_opportunity`, `client_pending_activation`, `active_client`, `former_client`, `closed_lost`) remain in the disclosure scanner to prevent old payloads from leaking. Do not recreate a second lifecycle vocabulary or derive portal service type from account lifecycle.
 
 Deal/sales pipeline stages (`Lead`, `Opportunity`, `Qualified`, `Proposal Sent`, `Closed Won`) are a **separate domain** and are not Account Lifecycle Status values.
