@@ -4,8 +4,8 @@
  * Moved out of routes.ts unchanged so the enrollment ceremony can be tested
  * over HTTP (#153): enrollment needs an authenticated session, the challenge
  * expires after 10 minutes, and each challenge is single use and bound to the
- * user that requested it. Sign-in with a passkey stays in routes.ts with the
- * other MFA login steps.
+ * user that requested it. Sign-in with a passkey uses the same identity store
+ * through portalPasskeyLoginRoutes.ts.
  */
 import { randomBytes } from "crypto";
 import type { Express, NextFunction, Request, RequestHandler, Response } from "express";
