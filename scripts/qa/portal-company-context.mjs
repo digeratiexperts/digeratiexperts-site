@@ -25,7 +25,7 @@ const Screen = screens[new URLSearchParams(location.search).get('screen') || 'co
 const client = new QueryClient({ defaultOptions: { queries: { retry: false, refetchOnWindowFocus: false } } });
 createRoot(document.getElementById('root')!).render(<QueryClientProvider client={client}><Screen /></QueryClientProvider>);
 `);
-const server = await createServer({ configFile: false, root, esbuild: { jsx: 'automatic' }, resolve: { alias: { '@': path.join(root, 'client/src'), '@shared': path.join(root, 'shared'), '@assets': path.join(root, 'attached_assets') } }, server: { host: '127.0.0.1', port: 0 } });
+const server = await createServer({ configFile: false, root, esbuild: { jsx: 'automatic' }, resolve: { alias: { '@': path.join(root, 'client/src'), '@shared': path.join(root, 'shared'), '@assets': path.join(root, 'attached_assets'), '@brand': path.join(root, 'brand') } }, server: { host: '127.0.0.1', port: 0 } });
 let browser;
 try {
   await server.listen();
@@ -40,6 +40,7 @@ try {
       localStorage.setItem('de-portal-tour-done', 'true');
     }, { theme });
     const page = await context.newPage();
+    page.setDefaultTimeout(15_000);
     const errors = [];
     const writes = [];
     page.on('pageerror', error => errors.push(error.message));
