@@ -43,7 +43,7 @@ export default function PrivacyPolicy() {
               <h3 className="text-xl font-semibold text-[#1A1228] mb-3 mt-6">2.1 Personal Information</h3>
               <p className="text-[#3A3448] mb-4">We collect personal information that you voluntarily provide when you:</p>
               <ul className="list-disc pl-6 text-[#3A3448] space-y-2 mb-4">
-                <li>Request a free security assessment or consultation</li>
+                <li>Request a security assessment or consultation</li>
                 <li>Subscribe to our newsletter or security alerts</li>
                 <li>Contact us for support or inquiries</li>
                 <li>Engage our services as a client</li>

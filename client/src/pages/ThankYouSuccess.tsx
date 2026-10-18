@@ -57,8 +57,8 @@ export default function ThankYouSuccess() {
                 <p>Book a private session with our cybersecurity consultant.</p>
                 <p>Identify how you can better protect your business from cyber threats.</p>
                 <p>
-                  If you qualify, you will receive a{" "}
-                  <strong className="text-de-magenta-paper-ink">free security assessment</strong>.
+                  We will confirm the assessment’s{" "}
+                  <strong className="text-de-magenta-paper-ink">scope, deliverables and fees</strong> before work begins.
                 </p>
               </div>
             </section>

@@ -115,7 +115,7 @@ export function V9LeadForm(): JSX.Element {
         <motion.div className="lead__statement" {...reveal()}>
           <p className="v9-eyebrow">Cyber Risk Assessment</p>
           <h2 className="v9-h2" id="assessment-form-title">
-            Get Your Free Security Assessment
+            Request a Cyber Risk Assessment
           </h2>
           <p className="v9-lede">
             Discover vulnerabilities before attackers do. Our experts will analyze your security posture and provide
@@ -225,7 +225,7 @@ export function V9LeadForm(): JSX.Element {
                 <svg {...svgProps}>
                   <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
                 </svg>
-                Complimentary security assessment
+                Scope and fees confirmed before work begins
               </li>
               <li>
                 <svg {...svgProps}>

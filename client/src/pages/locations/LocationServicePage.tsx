@@ -197,7 +197,7 @@ export function LocationServicePage(props: LocationPageProps) {
       }
       toast({
         title: "Assessment Request Submitted!",
-        description: `We'll contact you within one business day to schedule your free ${props.city} assessment.`,
+        description: `We'll contact you within one business day to discuss your ${props.city} assessment.`,
       });
       form.reset();
     } catch (error: unknown) {
@@ -264,7 +264,7 @@ export function LocationServicePage(props: LocationPageProps) {
                         {props.city} Cyber Risk Assessment
                       </p>
                       <h2 className="font-heading text-xl md:text-2xl font-bold tracking-[-0.02em] text-[#1A1228] mt-1">
-                        Get Your Free {props.city} Security Assessment
+                        Request a {props.city} Security Assessment
                       </h2>
                       <p className="mb-4 mt-1 text-base text-[#2A2438]">
                         {situation

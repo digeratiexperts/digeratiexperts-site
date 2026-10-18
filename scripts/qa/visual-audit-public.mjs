@@ -7,6 +7,9 @@ const root = process.cwd();
 const output = path.join(root, 'artifacts/visual-qa/recovered-public-audit');
 await mkdir(output, { recursive: true });
 const routes = [
+  '/', '/version-0', '/version-1', '/version-3', '/version-7', '/version-9', '/version-10',
+  '/store', '/industries/healthcare', '/locations/chandler-az', '/locations/phoenix-az',
+  '/locations/mesa-az', '/thank-you-success-page', '/legal/privacy-policy',
   '/go', '/about/press', '/about/compliance', '/solutions/standalone-services',
   '/resources/datasheets', '/resources/datasheets/proactive-ecosystem-overview',
   '/resources/checklists/backup-bcdr-checklist', '/resources/reports/cyber-risk-assessment-sample',
@@ -46,6 +49,12 @@ try {
       await page.evaluate(() => document.fonts.ready);
       const main = page.locator('main, article').first();
       const text = await main.innerText();
+      assert(!/\b(?:free|complimentary)\s+(?:(?:it\s+)?(?:cybersecurity|cyber\s+risk|security|risk)\s+)?assessment\b/i.test(await page.locator('body').innerText()), `${route}: unsupported free assessment offer`);
+      const leadForm = page.locator('#assessment-form');
+      if (await leadForm.count()) {
+        await leadForm.getByRole('heading', { name: 'Request a Cyber Risk Assessment', exact: true }).waitFor();
+        assert(await leadForm.getByText('Scope and fees confirmed before work begins', { exact: true }).count(), `${route}: assessment terms missing`);
+      }
       const announcement = page.getByTestId('announce-start-assessment');
       if (await announcement.count()) {
         const copy = await announcement.evaluate(el => el.parentElement.textContent || '');
@@ -68,7 +77,7 @@ try {
         assert(fits, `${route}: clipped assessment action at ${width}`);
         assert(await cta.getAttribute('href'), `${route}: missing continuation`);
       }
-      const name = route.replace(/[^a-z0-9]+/gi, '-').replace(/^-/, '');
+      const name = route.replace(/[^a-z0-9]+/gi, '-').replace(/^-/, '') || 'home';
       await page.screenshot({ path: path.join(output, `${name}-${width}.png`), fullPage: false });
       observations.push({ route, width, overflow: false, blogActionFits: Boolean(await cta.count()), pageErrors: [...errors] });
       assert.deepEqual(errors, [], route);
