@@ -1,8 +1,9 @@
 # Contact details audit: business phone and address
 
-Status: **inventory only, no value changed.** DE will supply the address and
-phone values; this file says where each one lives so the change can be made in
-one pass. Taken on `main` 7b1b4197, 2026-10-10 (DE backlog T7, item 66).
+Status: **inventory only, no value changed by this audit.** This file identifies
+where the approved phone and city-only address values live. Original inventory:
+`main` 7b1b4197, 2026-10-10 (DE backlog T7, item 66). Reconciled against
+`main` 7d441d5f, 2026-10-18: `/llms.txt` now follows the city-only rule.
 
 ## Current values
 
@@ -60,7 +61,7 @@ updates them all.
 | `client/src/pages/sections/DigeratiEnhancedFooterSection.tsx:145, 258` | live site footer, city | "Chandler, Arizona" |
 | `client/src/components/MegaMenu.tsx:396, 1113` | city | "Chandler, AZ team", "Chandler, Arizona" |
 | Contact sections (`sections/DigeratiContactSection.tsx:220`, v1/v3 `:195`, v7 `16-contact-footer.tsx:476`, v8 `:474`) | city | "Located in the heart of Chandler" |
-| `public/llms.txt:29, 31` | phone + **full street address** | `+1-325-480-9870`; `3165 S Alma School Rd Suite 29, Chandler, AZ 85248` |
+| `public/llms.txt` | phone + city-only address | `+1-325-480-9870`; `Chandler, AZ` |
 | `public/v2/**`, `public/scrollcraft/{quiet-pages,version-b,situation-gallery}/index.html` | phone, city | `325-480-9870`, "Chandler, AZ" (published static prototypes) |
 | `document_templates/templates/{docx,pdf}/*`, `document_templates/original/*` | **retired phone** | "Primary Contact (Digerati): admin@digerati-experts.com \| (480) 519-5892" (MSA, NDA, order form and the SOWs; binary files) |
 
@@ -89,13 +90,15 @@ If a value changes, these tests must change with it:
 
 ## Inconsistencies for DE
 
-1. **Street address published against the city-only rule.** `public/llms.txt:31` is served at `/llms.txt` and gives the street and ZIP. Nothing else served does.
+1. **Resolved in current source: city-only `/llms.txt`.** The original inventory found a street and ZIP in `public/llms.txt`; current `main` 7d441d5f contains `NAP: Chandler, AZ`. This is source verification, not a claim about external listings or cached copies.
 2. **Retired phone in every contract template.** The `document_templates` MSA, NDA, order form and SOWs list (480) 519-5892 and `admin@digerati-experts.com`.
 3. **Literals beside the constant.** The schema address and geo in `client/index.html` and `JsonLd.tsx`, the three legal "Address:" lines, and `Press.tsx` would not follow a change to `companyContact.ts`.
 4. **Email addresses differ next to the phone.** The site uses `info@digeratiexperts.com`, account cards use `sales@digerati-experts.com`, and the templates use `admin@digerati-experts.com`. Out of scope here; listed for completeness.
 
 ## Not changed
 
-No phone number or address was changed. DE will supply the values. Once DE
-does, the order is: `shared/companyContact.ts`, then the section 2 literals,
-then the tests above, then the resource PDF rebuild.
+No phone number or address was changed by this audit. The existing approved
+phone and city-only rule remain authoritative. If DE approves future changes,
+update `shared/companyContact.ts`, then the section 2 literals, the tests above,
+and the resource PDF rebuild. Retired binary contract templates and third-party
+listings need their own verification; this inventory does not certify them.
