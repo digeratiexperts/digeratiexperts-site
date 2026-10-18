@@ -73,7 +73,8 @@ try {
       }
       await route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
     });
-    async function visit(screen) { await page.goto(`${origin}/${path.basename(fixture)}/index.html?screen=${screen}`); }
+    let currentScreen = 'company';
+    async function visit(screen) { currentScreen = screen; await page.goto(`${origin}/${path.basename(fixture)}/index.html?screen=${screen}`); }
     async function capture(name) {
       assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `${name}: overflow at ${width}/${theme}`);
       await page.screenshot({ path: path.join(output, `${name}-${width}-${theme}.png`), fullPage: true });
@@ -83,6 +84,7 @@ try {
       const buttons = page.getByRole('button', { name: /^(Order Now|Add to Cart)$/ });
       for (const button of await buttons.all()) assert(await button.isDisabled());
     }
+    try {
     await visit('company');
     await page.getByText('Choose a company to continue', { exact: true }).waitFor();
     assert.equal(await page.getByRole('link', { name: 'Choose a company', exact: true }).getAttribute('href'), '/portal/admin/companies');
@@ -131,7 +133,15 @@ try {
     assert.deepEqual(errors, []);
     assert.deepEqual(writes, []);
     observations.push({ width, theme, selectedCompany: true, missingCompany: true, missingRecord: true, submitReadiness: true, policyStates: ['loading', 'error', 'empty', 'ready'], marketplaceContinuation: true, overflow: false, pageErrors: errors, writes });
-    await context.close();
+    } catch (error) {
+      const failure = { width, theme, currentScreen, state, policy, pageErrors: errors, writes, error: String(error), body: await page.locator('body').innerText() };
+      console.error(JSON.stringify(failure));
+      await writeFile(path.join(output, 'failure.json'), JSON.stringify(failure, null, 2));
+      await page.screenshot({ path: path.join(output, 'failure.png'), fullPage: true });
+      throw error;
+    } finally {
+      await context.close();
+    }
   }
   await writeFile(path.join(output, 'report.json'), JSON.stringify({ classification: 'EXAMPLE local browser fixtures; not production evidence', observations }, null, 2));
   console.log(JSON.stringify(observations));
