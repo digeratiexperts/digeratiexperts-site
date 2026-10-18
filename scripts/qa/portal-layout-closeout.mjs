@@ -13,6 +13,8 @@ await writeFile(path.join(fixture, 'fixture.tsx'), `
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { QueryClientProvider } from '@tanstack/react-query';
+import { Router } from 'wouter';
+import { memoryLocation } from 'wouter/memory-location';
 import { queryClient } from '../client/src/lib/queryClient';
 import Infrastructure from '../client/src/pages/portal/PortalInfrastructure';
 import CreateTicket from '../client/src/pages/portal/PortalCreateTicket';
@@ -27,8 +29,10 @@ import { PortalAdminDataSources as DataSources } from '../client/src/pages/porta
 import '../client/src/index.css';
 const screens = {infrastructure:[Infrastructure,'infrastructure'],create:[CreateTicket,'tickets/create'],tickets:[Tickets,'tickets'],sales:[Sales,'sales-process'],roadmap:[Roadmap,'roadmap'],files:[Files,'files'],invoices:[Invoices,'invoices'],order:[Order,'order-form'],openai:[OpenAI,'admin/openai'],sources:[DataSources,'admin/data-sources']};
 const [Screen, route] = screens[new URLSearchParams(location.search).get('screen') || 'infrastructure'];
-history.replaceState({}, '', '/portal/' + route);
-createRoot(document.getElementById('root')!).render(<QueryClientProvider client={queryClient}><Screen /></QueryClientProvider>);
+// Keep the fixture document URL stable if Vite completes dependency discovery.
+// The real Portal navigation consumes this router location, including active-row scrolling.
+const routing = memoryLocation({path:'/portal/' + route});
+createRoot(document.getElementById('root')!).render(<QueryClientProvider client={queryClient}><Router hook={routing.hook}><Screen /></Router></QueryClientProvider>);
 `);
 const server = await createServer({ configFile:false, root, esbuild:{jsx:'automatic'}, resolve:{alias:{'@':path.join(root,'client/src'),'@shared':path.join(root,'shared'),'@assets':path.join(root,'attached_assets'),'@brand':path.join(root,'brand')}}, server:{host:'127.0.0.1',port:0} });
 let browser;
