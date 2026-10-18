@@ -51,3 +51,7 @@
 {"at":"2026-10-10T18:56:52.707Z","type":"spend","job":"homepage-scene-story-2026-10-10","model":"nano-banana-2","credits":12,"usd":0.06,"task":"95a4dfbc77dc84f50d2a5e611088cc05","file":"artifacts/kie-ai/nano-banana/images/site/2026-10-10-scene-3b-six-gaps.jpg"}
 {"at":"2026-10-10T18:57:16.291Z","type":"close","job":"homepage-scene-story-2026-10-10","spentUsd":0.12}
 {"at":"2026-10-10T18:59:08.256Z","type":"close","job":"site-unique-plates-2026-10-10","spentUsd":0.7200000000000002}
+{"at":"2026-10-18T17:50:57.485Z","type":"open","job":"monday-plates-2026-10-18","model":"gpt-image-2-text-to-image","count":3,"resolution":"1K","projectedCredits":27,"projectedUsd":0.135,"note":"Joe approved up to USD 20 kie.ai, 2026-10-18; abstract plates, no people"}
+{"at":"2026-10-18T17:52:20.403Z","type":"spend","job":"monday-plates-2026-10-18","model":"gpt-image-2-text-to-image","credits":6,"usd":0.03,"task":"5d582d4804a0a1c44fa02762f1c55f2a","file":"artifacts/kie-ai/monday-hero-plate-01.png"}
+{"at":"2026-10-18T17:54:38.736Z","type":"spend","job":"monday-plates-2026-10-18","model":"gpt-image-2-text-to-image","credits":6,"usd":0.03,"task":"48a7d7b3733551e99ce3c4aaf0d8fe95","file":"artifacts/kie-ai/monday-showcase-plate-01.png"}
+{"at":"2026-10-18T17:55:41.202Z","type":"spend","job":"monday-plates-2026-10-18","model":"gpt-image-2-text-to-image","credits":6,"usd":0.03,"task":"6d66802ed223e7e5ffef2567c85cdf83","file":"artifacts/kie-ai/monday-close-plate-01.png"}
