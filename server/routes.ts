@@ -40,6 +40,7 @@ import {
   verifyAuthentication,
 } from "./portalPasskeys";
 import { registerPortalPasskeyEnrollmentRoutes } from "./portalPasskeyEnrollmentRoutes";
+import { sendStorageUnavailable } from "./storageUnavailableResponse";
 import {
   parseZohoTicketId,
   validatePortalTicketUpload,
@@ -847,6 +848,7 @@ export async function registerRoutes(app: Express) {
       const { password: _, ...safeUser } = user;
       res.json({ user: safeUser });
     } catch (error: any) {
+      if (sendStorageUnavailable(res, error)) return;
       res.status(500).json({ error: error.message });
     }
   });
@@ -1563,6 +1565,8 @@ export async function registerRoutes(app: Express) {
       });
       res.json({ success: true, ...result, fulfillmentTicketId });
     } catch (error: any) {
+      // Fulfilment writes the ticket to storage; a database outage is a 503, not a 400.
+      if (sendStorageUnavailable(res, error)) return;
       const status = /Forbidden|not the current/i.test(error.message) ? 403 : 400;
       res.status(status).json({ error: error.message });
     }
@@ -1844,6 +1848,7 @@ export async function registerRoutes(app: Express) {
         },
       });
     } catch (error: any) {
+      if (sendStorageUnavailable(res, error)) return;
       res.status(500).json({ error: error.message });
     }
   });
@@ -2016,6 +2021,7 @@ export async function registerRoutes(app: Express) {
         isInternal: target.isInternal,
       });
     } catch (error: any) {
+      if (sendStorageUnavailable(res, error)) return;
       console.error("Ticket creation error:", error);
       res.status(500).json({ error: error.message });
     }
@@ -2079,6 +2085,7 @@ export async function registerRoutes(app: Express) {
         });
         res.json({ success: true, filename: validated.filename });
       } catch (error: any) {
+        if (sendStorageUnavailable(res, error)) return;
         if (error instanceof PortalTicketUploadError) {
           return res.status(error.status).json({ error: error.message });
         }
@@ -2148,6 +2155,7 @@ export async function registerRoutes(app: Express) {
         },
       });
     } catch (error: any) {
+      if (sendStorageUnavailable(res, error)) return;
       res.status(500).json({ error: "Failed to retrieve ticket" });
     }
   });
@@ -2208,6 +2216,7 @@ export async function registerRoutes(app: Express) {
       res.json({ success: true, comment });
       logSecurityEvent("TICKET_COMMENT_ADDED", req, { ticketId: id });
     } catch (error: any) {
+      if (sendStorageUnavailable(res, error)) return;
       res.status(500).json({ error: error.message });
     }
   });
@@ -3692,6 +3701,7 @@ export async function registerRoutes(app: Express) {
       
       res.json(dashboardStats);
     } catch (error: any) {
+      if (sendStorageUnavailable(res, error)) return;
       console.error("[ERROR] Dashboard fetch failed:", error);
       res.status(500).json({ message: "Failed to load dashboard" });
     }
@@ -4383,6 +4393,7 @@ export async function registerRoutes(app: Express) {
         },
       });
     } catch (error: any) {
+      if (sendStorageUnavailable(res, error)) return;
       console.error("[ERROR] Failed to fetch order:", error);
       res.status(500).json({ message: "Failed to load order" });
     }
@@ -4438,6 +4449,7 @@ export async function registerRoutes(app: Express) {
         return res.send(html);
       }
     } catch (error: any) {
+      if (sendStorageUnavailable(res, error)) return;
       console.error("[ERROR] Failed to generate receipt:", error);
       res.status(500).json({ message: "Failed to generate receipt" });
     }
@@ -4887,6 +4899,7 @@ export async function registerRoutes(app: Express) {
       
       res.json(metrics);
     } catch (error: any) {
+      if (sendStorageUnavailable(res, error)) return;
       res.status(500).json({ error: error.message });
     }
   });
