@@ -104,6 +104,19 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
+      - name: DE-owned product card browser verification
+        if: env.DE_LIGHT != 'true'
+        run: node scripts/qa/de-owned-product-cards.mjs
+
+      - name: DE-owned product card evidence
+        if: always() && env.DE_LIGHT != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: de-owned-product-cards
+          path: artifacts/visual-qa/de-owned-product-cards
+          if-no-files-found: ignore
+          retention-days: 14
+
       - name: Unit tests
         if: env.DE_LIGHT != 'true'
         run: npm test

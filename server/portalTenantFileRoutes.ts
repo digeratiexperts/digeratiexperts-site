@@ -1,5 +1,6 @@
 import type { Express, Request, RequestHandler, Response } from "express";
 import type { IStorage } from "./storage";
+import { sendStorageUnavailable } from "./storageUnavailableResponse";
 
 /**
  * Tenant file routes for the client portal (#259).
@@ -66,6 +67,7 @@ export function registerPortalTenantFileRoutes(app: Express, deps: TenantFileRou
 
       res.json({ files: tenantFiles });
     } catch (error: any) {
+      if (sendStorageUnavailable(res, error)) return;
       res.status(500).json({ error: error.message });
     }
   });
@@ -106,6 +108,7 @@ export function registerPortalTenantFileRoutes(app: Express, deps: TenantFileRou
 
       res.json({ files: tenantFiles, companyName });
     } catch (error: any) {
+      if (sendStorageUnavailable(res, error)) return;
       res.status(500).json({ error: error.message });
     }
   });
@@ -137,6 +140,7 @@ export function registerPortalTenantFileRoutes(app: Express, deps: TenantFileRou
       res.json({ success: true, file: tenantFile });
       logSecurityEvent("TENANT_FILE_UPLOADED", req, { companyId: req.params.id, fileName });
     } catch (error: any) {
+      if (sendStorageUnavailable(res, error)) return;
       res.status(500).json({ error: error.message });
     }
   });
@@ -153,6 +157,7 @@ export function registerPortalTenantFileRoutes(app: Express, deps: TenantFileRou
       res.json({ success: true });
       logSecurityEvent("TENANT_FILE_DELETED", req, { companyId: req.params.companyId, fileId: req.params.fileId });
     } catch (error: any) {
+      if (sendStorageUnavailable(res, error)) return;
       res.status(500).json({ error: error.message });
     }
   });

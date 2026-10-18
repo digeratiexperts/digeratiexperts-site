@@ -66,10 +66,7 @@ export const vendorLogoCatalog: Record<string, string> = {
 export const skuVendorMap: Record<string, string> = {
   // Managed packages — stack vendors as merchandising identity
   "DE-SVC-MGD-OFFICE-MO": "ninjaone",
-  "DE-SVC-MGD-BUSINESS-MO": "blackpoint",
-  "DE-SVC-MGD-ENTERPRISE-MO": "blackpoint",
   "DE-SVC-MGD-WORKPLACE-MO": "ninjaone",
-  "DE-SVC-MGD-CYBER-MO": "blackpoint",
   "DE-SVC-MGD-BCDR-MO": "opti9",
   "DE-SVC-COMANAGED-CUSTOM-MO": "ninjaone",
   // Co-managed
@@ -123,11 +120,30 @@ export const skuVendorMap: Record<string, string> = {
   "DE-DIG-ASMT-DMARC-OT": "mimecast",
   "DE-DIG-TPL-POLICY-CORE-OT": "cis",
   "DE-DIG-TPL-POLICY-ADV-OT": "cis",
-  "DE-DIG-TPL-IR-RUNBOOK-OT": "blackpoint",
   "DE-DIG-TPL-BCP-OT": "opti9",
   // Professional
   "DE-SVC-CONSULT-VCIO-HR": "zoho",
 };
+
+/**
+ * DE-owned security services sold as DE Security Foundation / Managed Threat
+ * Protection (#226). Provider identity (Guardz primary, Blackpoint alternate)
+ * is internal, so these SKUs carry no third-party mark: they skip the SKU map,
+ * the category fallback and text inference, and render the DE mark instead.
+ */
+export const deOwnedServiceSkus: ReadonlySet<string> = new Set([
+  "DE-SVC-MGD-BUSINESS-MO",
+  "DE-SVC-MGD-ENTERPRISE-MO",
+  "DE-SVC-MGD-CYBER-MO",
+  "DE-DIG-TPL-IR-RUNBOOK-OT",
+]);
+
+/** Security providers that never appear as a Store mark on a DE-owned service. */
+export const internalSecurityProviderSlugs: ReadonlySet<string> = new Set(["guardz", "blackpoint"]);
+
+export function isDeOwnedServiceSku(sku: string): boolean {
+  return deOwnedServiceSkus.has(sku);
+}
 
 /** Soft category defaults when a SKU is unmapped (still real DE stack vendors). */
 export const categoryVendorFallback: Partial<Record<string, string>> = {
@@ -155,6 +171,7 @@ export function resolveVendorSlug(
   sku: string,
   category?: string
 ): string | null {
+  if (isDeOwnedServiceSku(sku)) return null;
   const mapped = skuVendorMap[sku];
   if (mapped && vendorLogoCatalog[mapped]) return mapped;
   if (category) {
