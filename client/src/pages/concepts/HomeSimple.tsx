@@ -57,7 +57,9 @@ export function HomeSimple(): JSX.Element {
           <div className="hs-wrap hs-hero__grid">
             <div className="hs-hero__copy">
               <p className="hs-eyebrow">Arizona managed IT and cybersecurity</p>
-              <h1 id="hs-hero-title" className="hs-h1">Cybersecurity-first IT for Arizona businesses.</h1>
+              <h1 id="hs-hero-title" className="hs-h1">
+                <span className="whitespace-nowrap">Cybersecurity-first</span> IT for Arizona businesses.
+              </h1>
               <p className="hs-lede">
                 Managed IT, security and compliance for businesses that can&rsquo;t afford downtime. Every
                 engagement starts with a Cyber Risk Assessment, so the plan fits how your business runs.
@@ -168,7 +170,7 @@ export function HomeSimple(): JSX.Element {
 
         <section className="hs-band hs-band--paper" aria-labelledby="hs-faq-title">
           <div className="hs-wrap">
-            <V8Faq />
+            <div className="v8s-14"><V8Faq /></div>
           </div>
         </section>
 
@@ -191,7 +193,7 @@ export function HomeSimple(): JSX.Element {
           </div>
         </section>
 
-        <V8ContactFooter />
+        <div className="v8s-16"><V8ContactFooter /></div>
       </main>
     </div>
   );

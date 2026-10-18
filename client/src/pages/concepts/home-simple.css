@@ -135,9 +135,14 @@
   display: block;
   width: 100%;
   height: auto;
-  aspect-ratio: 4 / 5;
+  aspect-ratio: 16 / 11;
   object-fit: cover;
-  object-position: 50% 20%;
+  object-position: 50% 42%;
+}
+@media (min-width: 900px) {
+  .hs-hero__photo {
+    aspect-ratio: 4 / 5;
+  }
 }
 .hs-hero__caption {
   position: absolute;
