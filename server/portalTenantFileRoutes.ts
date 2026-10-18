@@ -100,7 +100,7 @@ export function registerPortalTenantFileRoutes(app: Express, deps: TenantFileRou
       }
 
       if (!clientId) {
-        return res.json({ files: [], companyName: "Your Company" });
+        return res.json({ files: [], companyName: "" });
       }
 
       // Get tenant files from storage

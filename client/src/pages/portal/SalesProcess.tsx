@@ -879,7 +879,7 @@ export default function SalesProcess() {
           <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" aria-hidden="true" />
           <Input
             type="search"
-            placeholder="Search stages, meetings, paperwork..."
+            placeholder="Search the sales process"
             aria-label="Search stages, meetings, paperwork"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -1010,7 +1010,7 @@ export default function SalesProcess() {
               value={leadProgress}
             />
 
-            <div className="flex gap-4 overflow-x-auto p-4 md:p-5" style={{ scrollSnapType: 'x mandatory' }}>
+            <div className="flex gap-4 overflow-x-auto p-4 md:p-5 lg:[&>article]:min-w-0 lg:[&>article]:max-w-none lg:[&>article]:flex-1" style={{ scrollSnapType: 'x mandatory' }}>
               {filteredLeadCards.length === 0 ? (
                 <p className="text-sm text-muted-foreground">No lead sources match your search.</p>
               ) : (

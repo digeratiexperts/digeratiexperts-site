@@ -132,7 +132,7 @@ export function AdminModeSwitch({ viewingAs }: { viewingAs: { id?: string; compa
         value={selected}
         disabled={busy}
         onChange={(e) => void go(e.target.value)}
-        className="h-9 min-w-0 flex-1 rounded-lg border border-border bg-card px-2 text-sm text-foreground sm:max-w-xs"
+        className="h-9 w-full min-w-0 rounded-lg border border-border bg-card px-2 text-sm text-foreground sm:w-auto sm:flex-1 sm:max-w-xs"
         data-testid="admin-mode-client"
       >
         <option value="">{mode === "view" ? "View the portal as…" : "Administer a client…"}</option>

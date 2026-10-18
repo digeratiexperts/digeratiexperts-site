@@ -1,7 +1,7 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { AlertCircle, CheckCircle, Power, RefreshCw, Zap } from "lucide-react";
+import { Power, RefreshCw, Zap } from "lucide-react";
 import { PortalLayout } from "./PortalLayout";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { portalGet } from "@/lib/portalApi";
@@ -27,36 +27,13 @@ export function AdminOpenAI() {
   const { toast } = useToast();
 
   // Fetch OpenAI status
-  const { data: statusData, isLoading: statusLoading, refetch } = useQuery<OpenAIStatus>({
+  const { data: statusData, isLoading: statusLoading, isError: statusError, refetch } = useQuery<OpenAIStatus>({
     queryKey: ["/api/portal/admin/openai/status"],
     queryFn: () => portalGet<OpenAIStatus>("/api/portal/admin/openai/status"),
   });
 
   const status = statusData?.status;
   const isEnabled = status?.enabled ?? false;
-
-  // Toggle OpenAI
-  const toggleMutation = useMutation({
-    mutationFn: async () => {
-      return await apiRequest("/api/portal/admin/openai/toggle", "POST", {});
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/portal/admin/openai/status"] });
-      toast({
-        title: "Success",
-        description: "OpenAI integration toggled",
-        duration: 3000,
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to toggle OpenAI",
-        variant: "destructive",
-        duration: 3000,
-      });
-    },
-  });
 
   // Enable OpenAI
   const enableMutation = useMutation({
@@ -104,16 +81,18 @@ export function AdminOpenAI() {
     },
   });
 
-  const anyLoading = statusLoading || toggleMutation.isPending || enableMutation.isPending || disableMutation.isPending;
+  const anyLoading = statusLoading || statusError || !status || enableMutation.isPending || disableMutation.isPending;
 
   return (
     <PortalLayout
       title="OpenAI Billing Control"
       description="Manage OpenAI API usage and the billing kill switch."
-      width="narrow"
+      width="wide"
       actions={
         statusLoading ? (
           <Token label="Checking" tone="neutral" />
+        ) : statusError || !status ? (
+          <Token label="Unavailable" tone="warn" />
         ) : (
           <Token label={isEnabled ? "Enabled" : "Disabled"} tone={isEnabled ? "ok" : "bad"} dot />
         )
@@ -121,10 +100,10 @@ export function AdminOpenAI() {
     >
       <div className="space-y-4">
         <Callout
-          tone={statusLoading ? "info" : isEnabled ? "ok" : "bad"}
-          title={statusLoading ? "Checking integration status…" : isEnabled ? "OpenAI integration is enabled" : "OpenAI integration is disabled"}
+          tone={statusError || !status ? "info" : isEnabled ? "ok" : "bad"}
+          title={statusLoading ? "Checking integration status…" : statusError || !status ? "Integration status is unavailable" : isEnabled ? "OpenAI integration is enabled" : "OpenAI integration is disabled"}
         >
-          Current state of OpenAI integration.
+          {statusError ? "Refresh to confirm the current state before changing it." : "Current state of OpenAI integration."}
         </Callout>
 
         <Panel id="openai-config" title="Configuration" description="Current API settings">
@@ -143,73 +122,22 @@ export function AdminOpenAI() {
           </Callout>
         </Panel>
 
-        <Panel id="openai-control" title="Control" description="Toggle OpenAI integration on/off">
+        <Panel id="openai-control" title="Control" description="Change the confirmed integration state">
           <div className="space-y-3">
             <Button
-              onClick={() => toggleMutation.mutate()}
+              onClick={() => isEnabled ? disableMutation.mutate() : enableMutation.mutate()}
               disabled={anyLoading}
-              variant="outline"
-              className="h-11 w-full gap-2 border-border bg-card hover:bg-accent"
-              data-testid="button-toggle-openai"
+              variant={isEnabled ? "destructive" : "brand"}
+              className="h-11 gap-2"
+              data-testid="button-set-openai"
             >
-              {toggleMutation.isPending ? (
-                <>
-                  <RefreshCw className="h-4 w-4 animate-spin" aria-hidden="true" />
-                  Toggling...
-                </>
-              ) : (
-                <>
-                  <Power className="h-4 w-4" aria-hidden="true" />
-                  Toggle {isEnabled ? "OFF" : "ON"}
-                </>
-              )}
+              {enableMutation.isPending || disableMutation.isPending ? <RefreshCw className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Power className="h-4 w-4" aria-hidden="true" />}
+              {enableMutation.isPending ? "Enabling…" : disableMutation.isPending ? "Disabling…" : statusError || !status ? "Confirm status to change" : isEnabled ? "Disable OpenAI" : "Enable OpenAI"}
             </Button>
-
-            <div className="grid grid-cols-2 gap-3">
-              <Button
-                onClick={() => enableMutation.mutate()}
-                disabled={anyLoading || isEnabled}
-                variant="brand"
-                className="gap-2"
-                data-testid="button-enable-openai"
-              >
-                {enableMutation.isPending ? (
-                  <>
-                    <RefreshCw className="h-4 w-4 animate-spin" aria-hidden="true" />
-                    Enabling...
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle className="h-4 w-4" aria-hidden="true" />
-                    Enable
-                  </>
-                )}
-              </Button>
-
-              <Button
-                onClick={() => disableMutation.mutate()}
-                disabled={anyLoading || !isEnabled}
-                variant="destructive"
-                className="gap-2"
-                data-testid="button-disable-openai"
-              >
-                {disableMutation.isPending ? (
-                  <>
-                    <RefreshCw className="h-4 w-4 animate-spin" aria-hidden="true" />
-                    Disabling...
-                  </>
-                ) : (
-                  <>
-                    <AlertCircle className="h-4 w-4" aria-hidden="true" />
-                    Disable
-                  </>
-                )}
-              </Button>
-            </div>
 
             <Button
               onClick={() => refetch()}
-              disabled={anyLoading}
+              disabled={statusLoading || enableMutation.isPending || disableMutation.isPending}
               variant="ghost"
               className="w-full"
               data-testid="button-refresh-openai-status"
@@ -237,13 +165,13 @@ export function AdminOpenAI() {
         <Panel id="openai-billing" title="Billing Information">
           <div className="space-y-3 text-sm">
             <p>
-              <strong>When Enabled:</strong> OpenAI API calls are made and billed to your Replit credits. Monitor usage and disable during off-peak hours if needed.
+              <strong>When Enabled:</strong> Requests through this integration use the configured API provider. Review usage in that provider’s billing account.
             </p>
             <p>
-              <strong>When Disabled:</strong> No OpenAI API calls are made. Features gracefully degrade without incurring charges. Fallback behaviors are in place.
+              <strong>When Disabled:</strong> New requests through this integration are blocked. Disabling it does not change charges already incurred.
             </p>
             <p className="border-t border-border pt-3 text-xs text-muted-foreground">
-              For detailed billing analytics and usage monitoring, check your Replit account dashboard.
+              Use the configured provider’s billing dashboard for authoritative charges and usage.
             </p>
           </div>
         </Panel>
