@@ -114,6 +114,19 @@ jobs:
         if: env.DE_LIGHT != 'true'
         run: npm run test:advisor
 
+      - name: Recovered Portal and mobile visual verification
+        if: env.DE_LIGHT != 'true'
+        run: node scripts/qa/recovered-portal-visual.mjs
+
+      - name: Recovered Portal visual evidence
+        if: always() && env.DE_LIGHT != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: recovered-portal-visual
+          path: artifacts/visual-qa/recovered-portal
+          if-no-files-found: ignore
+          retention-days: 14
+
       # The MSP AI Kit skill (.claude/skills/msp-ai-kit) is outside Vitest's
       # include patterns too; its builder tests and config check run here so a
       # module edit without a rebuilt example cannot merge green. The Windows

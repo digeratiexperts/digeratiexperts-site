@@ -13,7 +13,7 @@ export function ago(iso: string, now = Date.now()): string {
 export function Stars({ rating, size = "sm" }: { rating: KbRating; size?: "sm" | "md" }) {
   const full = Math.round(rating.average);
   return (
-    <span className="inline-flex items-center gap-0.5" aria-label={rating.count ? `Rated ${rating.average} out of 5 by ${rating.count}` : "Not rated yet"}>
+    <span role="img" className="inline-flex items-center gap-0.5" aria-label={rating.count ? `Rated ${rating.average} out of 5 by ${rating.count}` : "Not rated yet"}>
       {[1, 2, 3, 4, 5].map((n) => (
         <Star key={n} className={cn(size === "sm" ? "h-3.5 w-3.5" : "h-4 w-4", n <= full ? "fill-current text-foreground" : "text-muted-foreground")} aria-hidden="true" />
       ))}

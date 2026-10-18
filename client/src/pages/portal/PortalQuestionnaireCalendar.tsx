@@ -2,8 +2,8 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PortalLayout } from "./PortalLayout";
-import { Calendar, CheckCircle, AlertCircle, Clock, FileText, CheckSquare, X } from "lucide-react";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay } from "date-fns";
+import { Calendar, CheckCircle, AlertCircle, Clock, X } from "lucide-react";
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, startOfWeek, endOfWeek } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Callout, EmptyState, Panel, Token, type TokenTone } from "@/components/portal/ui";
 
@@ -113,16 +113,17 @@ function StatusToken({ status }: { status: CalendarEvent["status"] }) {
 }
 
 export function PortalQuestionnaireCalendar() {
-  const [currentDate, setCurrentDate] = useState(new Date(2025, 10));
+  const [currentDate, setCurrentDate] = useState(() => new Date());
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [filterStatus, setFilterStatus] = useState<"all" | "scheduled" | "in-progress" | "completed">("all");
 
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
-  const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
+  const days = eachDayOfInterval({ start: startOfWeek(monthStart), end: endOfWeek(monthEnd) });
 
   const filteredEvents =
     filterStatus === "all" ? mockEvents : mockEvents.filter((e) => e.status === filterStatus);
+  const monthEvents = filteredEvents.filter(event => isSameMonth(event.date, currentDate));
 
   const getEventsForDate = (date: Date) => {
     return filteredEvents.filter((event) => isSameDay(event.date, date));
@@ -133,6 +134,7 @@ export function PortalQuestionnaireCalendar() {
       <div className="space-y-4">
         <Callout tone="warn" title="Sample preview." testId="questionnaire-sample-banner">
           Events below are illustrative until your live assessment calendar is connected.
+          <button type="button" className="ml-1 underline underline-offset-2" onClick={() => setCurrentDate(new Date(mockEvents[0].date))} data-testid="button-sample-month">View sample dates</button>
         </Callout>
 
         <Tabs defaultValue="calendar" className="w-full">
@@ -200,7 +202,18 @@ export function PortalQuestionnaireCalendar() {
                 </>
               }
             >
-              <div className="grid grid-cols-7 gap-1.5 md:gap-2">
+              <div className="space-y-2 sm:hidden" data-testid="calendar-mobile-agenda">
+                {monthEvents.length === 0 ? (
+                  <p className="py-3 text-sm text-muted-foreground">No sample events in this month.</p>
+                ) : monthEvents.map(event => (
+                  <button key={event.id} type="button" onClick={() => setSelectedEvent(event)} data-testid={`agenda-event-${event.id}`} className="block w-full rounded-lg border border-border bg-background p-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                    <span className="pt-num block text-xs text-muted-foreground">{format(event.date, "EEE, MMM d")}</span>
+                    <span className="mt-1 block font-medium">{event.title}</span>
+                    <span className="mt-2 block"><StatusToken status={event.status} /></span>
+                  </button>
+                ))}
+              </div>
+              <div className="hidden grid-cols-7 gap-1.5 sm:grid md:gap-2" data-testid="calendar-month-grid">
                 {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
                   <div key={day} className="p-1 text-center text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground md:p-2">
                     {day}
@@ -361,26 +374,7 @@ export function PortalQuestionnaireCalendar() {
                 </div>
               </dl>
 
-              {selectedEvent.type === "questionnaire" && (
-                <Button variant="brand" className="w-full" data-testid="button-fill-questionnaire">
-                  <FileText aria-hidden="true" />
-                  Fill Out Questionnaire
-                </Button>
-              )}
-
-              {selectedEvent.status === "scheduled" && selectedEvent.type !== "questionnaire" && (
-                <Button variant="outline" className="w-full border-border bg-card hover:bg-accent" data-testid="button-prepare-event">
-                  <CheckSquare aria-hidden="true" />
-                  Mark as In Progress
-                </Button>
-              )}
-
-              {selectedEvent.status === "in-progress" && (
-                <Button variant="outline" className="w-full border-border bg-card hover:bg-accent" data-testid="button-complete-event">
-                  <CheckCircle aria-hidden="true" />
-                  Mark as Completed
-                </Button>
-              )}
+              <p className="text-sm text-muted-foreground">This is a sample event. Live questionnaires and status changes will be available when your assessment calendar is connected.</p>
             </div>
           </Panel>
         )}
