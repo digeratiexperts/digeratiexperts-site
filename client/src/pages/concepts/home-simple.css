@@ -1,0 +1,437 @@
+/* Concept homepage (Exploration, 2026-10-18). Scoped to .hs. One dark field; paper only in rounded cards.
+   Tokens from design/UI-STYLE-RULES.md: graphite #050312, surface #0a0a0a, paper #f7f5f2, magenta #D3126A. */
+.hs {
+  --hs-ink: #f7f5f2;
+  --hs-muted: rgba(247, 245, 242, 0.68);
+  --hs-line: rgba(255, 255, 255, 0.1);
+  --hs-card: #0b0b0e;
+  --hs-paper-ink: #1a1228;
+  --hs-paper-muted: #5b5563;
+  --hs-paper-line: rgba(26, 18, 40, 0.12);
+  --hs-section: clamp(88px, 11vw, 144px);
+  --hs-gutter: clamp(20px, 4vw, 40px);
+  background: #050312;
+  color: var(--hs-ink);
+}
+
+.hs-wrap {
+  width: min(1160px, calc(100% - var(--hs-gutter) * 2));
+  margin-inline: auto;
+}
+
+.hs-band {
+  padding-block: var(--hs-section);
+}
+
+/* Hero: centered, large type, the founder photo as a wide frame that fades into the field */
+.hs-hero {
+  position: relative;
+  padding-top: clamp(96px, 13vw, 168px);
+  padding-bottom: 0;
+  text-align: center;
+  overflow: hidden;
+  background:
+    radial-gradient(70% 55% at 50% 0%, rgba(91, 69, 224, 0.22), transparent 70%),
+    #050312;
+}
+.hs-hero__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.hs-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 6px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--hs-line);
+  color: var(--hs-muted);
+  font-size: 14px;
+  font-weight: 500;
+  background: rgba(255, 255, 255, 0.03);
+}
+.hs-h1 {
+  margin-top: 28px;
+  font-family: "Space Grotesk", Inter, sans-serif;
+  font-weight: 600;
+  font-size: clamp(36px, 8.4vw, 88px);
+  line-height: 1;
+  letter-spacing: -0.035em;
+  color: var(--hs-ink);
+  max-width: 16ch;
+  text-wrap: balance;
+}
+.hs-lede {
+  margin-top: 24px;
+  font-size: clamp(18px, 1.7vw, 21px);
+  line-height: 1.55;
+  color: var(--hs-muted);
+  max-width: 44ch;
+  text-wrap: pretty;
+}
+.hs-actions {
+  margin-top: 36px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: flex-start;
+}
+.hs-actions--center {
+  justify-content: center;
+}
+.hs-phone {
+  margin-top: 22px;
+  font-size: 15px;
+  color: var(--hs-muted);
+}
+
+.hs-hero__figure {
+  margin: clamp(56px, 8vw, 96px) auto 0;
+  position: relative;
+  max-width: 1160px;
+  border-radius: 28px;
+  overflow: hidden;
+  border: 1px solid var(--hs-line);
+  background: #0a0a0a;
+}
+.hs-hero__photo {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  object-position: 50% 40%;
+}
+.hs-hero__figure::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 45%;
+  background: linear-gradient(to top, #050312 0%, rgba(5, 3, 18, 0) 100%);
+  pointer-events: none;
+}
+.hs-hero__caption {
+  position: absolute;
+  left: 20px;
+  bottom: 20px;
+  z-index: 1;
+  display: grid;
+  gap: 2px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  background: rgba(5, 3, 18, 0.7);
+  border: 1px solid var(--hs-line);
+  text-align: left;
+}
+.hs-hero__name {
+  font-weight: 600;
+  color: #fff;
+}
+.hs-hero__role {
+  font-size: 14px;
+  color: var(--hs-muted);
+}
+@media (min-width: 900px) {
+  .hs-hero__photo {
+    aspect-ratio: 21 / 9;
+    object-position: 50% 30%;
+  }
+}
+
+/* Type */
+.hs-head {
+  text-align: center;
+  margin-bottom: clamp(40px, 6vw, 64px);
+}
+.hs-h2 {
+  font-family: "Space Grotesk", Inter, sans-serif;
+  font-weight: 600;
+  font-size: clamp(34px, 4.6vw, 56px);
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  color: var(--hs-ink);
+  max-width: 22ch;
+  margin-inline: auto;
+  text-wrap: balance;
+}
+.hs-h2--center {
+  text-align: center;
+}
+.hs-h3 {
+  font-family: "Space Grotesk", Inter, sans-serif;
+  font-weight: 600;
+  font-size: 22px;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: var(--hs-ink);
+}
+.hs-body {
+  margin-top: 12px;
+  font-size: 17px;
+  line-height: 1.6;
+  color: var(--hs-muted);
+  max-width: 52ch;
+}
+.hs-center-text {
+  text-align: center;
+  margin-inline: auto;
+}
+.hs-center {
+  display: flex;
+  justify-content: center;
+  margin-top: 40px;
+}
+
+/* Buttons and links */
+.hs-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 12px 24px;
+  border-radius: 14px;
+  font-weight: 600;
+  font-size: 16px;
+  transition: background-color 200ms ease-out, border-color 200ms ease-out, transform 200ms ease-out;
+}
+.hs-btn:active {
+  transform: scale(0.98);
+}
+.hs-btn--primary {
+  background: #d3126a;
+  color: #fff;
+}
+.hs-btn--primary:hover {
+  background: #b80f5c;
+}
+.hs-btn--ghost {
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: #fff;
+}
+.hs-btn--ghost:hover {
+  border-color: rgba(255, 255, 255, 0.55);
+}
+.hs-link {
+  color: #ff5aa0;
+  font-weight: 600;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  transition: color 200ms ease-out;
+}
+.hs-link:hover {
+  color: #fff;
+}
+.hs-link--big {
+  font-size: 17px;
+}
+
+/* Cards: one card treatment for the whole page */
+.hs-card {
+  background: var(--hs-card);
+  border: 1px solid var(--hs-line);
+  border-radius: 22px;
+  padding: 28px;
+}
+
+/* Steps */
+.hs-steps {
+  display: grid;
+  gap: 16px;
+  list-style: none;
+  padding: 0;
+}
+@media (min-width: 768px) {
+  .hs-steps {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (min-width: 1100px) {
+  .hs-steps {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+.hs-step {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.hs-step .hs-body {
+  margin-top: 8px;
+}
+.hs-iconwell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 20px;
+  border-radius: 14px;
+  background: rgba(211, 18, 106, 0.12);
+  color: #ff5aa0;
+}
+
+/* Assessment: text beside a paper card */
+.hs-review {
+  margin-top: clamp(56px, 7vw, 88px);
+  display: grid;
+  gap: 32px;
+  align-items: center;
+}
+@media (min-width: 900px) {
+  .hs-review {
+    grid-template-columns: 1fr 1fr;
+    gap: 64px;
+  }
+}
+.hs-review__card {
+  display: grid;
+  gap: 4px;
+  list-style: none;
+  padding: 16px;
+  border-radius: 22px;
+  background: #f7f5f2;
+  color: var(--hs-paper-ink);
+}
+.hs-review__item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 52px;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--hs-paper-line);
+  font-size: 17px;
+  font-weight: 500;
+}
+.hs-review__item:last-child {
+  border-bottom: 0;
+}
+.hs-review__item svg {
+  color: #d3126a;
+  flex-shrink: 0;
+}
+
+/* Plans */
+.hs-plans {
+  display: grid;
+  gap: 16px;
+}
+@media (min-width: 768px) {
+  .hs-plans {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (min-width: 1100px) {
+  .hs-plans {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+.hs-plan__list {
+  margin-top: 16px;
+  display: grid;
+  gap: 8px;
+  list-style: none;
+  padding: 0;
+  color: var(--hs-muted);
+  font-size: 15px;
+}
+
+/* Statement: one large line, centered, dark field */
+.hs-statement {
+  padding-block: clamp(96px, 12vw, 160px);
+  border-top: 1px solid var(--hs-line);
+  border-bottom: 1px solid var(--hs-line);
+}
+.hs-statement__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+  text-align: center;
+}
+.hs-statement__text {
+  font-family: "Space Grotesk", Inter, sans-serif;
+  font-weight: 600;
+  font-size: clamp(30px, 4.4vw, 52px);
+  line-height: 1.12;
+  letter-spacing: -0.025em;
+  max-width: 28ch;
+  text-wrap: balance;
+  color: var(--hs-ink);
+}
+
+/* Industries */
+.hs-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  list-style: none;
+  padding: 0;
+}
+.hs-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 10px 20px;
+  border-radius: 999px;
+  border: 1px solid var(--hs-line);
+  background: var(--hs-card);
+  color: var(--hs-ink);
+  font-weight: 500;
+  transition: border-color 200ms ease-out;
+}
+.hs-chip:hover {
+  border-color: rgba(255, 255, 255, 0.45);
+}
+
+/* Light content lives in rounded cards, never as a full-bleed band */
+.hs-paper-card {
+  border-radius: 28px;
+  background: #f7f5f2;
+  color: var(--hs-paper-ink);
+  padding: clamp(20px, 4vw, 48px);
+}
+.hs-paper-card .v8s-14 {
+  color: var(--hs-paper-ink);
+}
+
+/* Close */
+.hs-close {
+  background:
+    radial-gradient(60% 60% at 50% 100%, rgba(91, 69, 224, 0.14), transparent 70%),
+    #050312;
+}
+.hs-close__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.hs-close__inner .hs-body {
+  max-width: 46ch;
+}
+.hs-close__inner .hs-h2 {
+  margin-bottom: 8px;
+}
+.hs-also {
+  margin-top: 56px;
+  padding-top: 28px;
+  border-top: 1px solid var(--hs-line);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 28px;
+  width: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hs-btn,
+  .hs-chip,
+  .hs-link {
+    transition: none;
+  }
+}
