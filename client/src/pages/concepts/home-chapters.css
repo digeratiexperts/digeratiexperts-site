@@ -1,29 +1,354 @@
-﻿/* Concept v4 (Exploration, 2026-10-18): chapter site with horizontal carousels inside vertical chapters.
-   Scoped to .hc. Tokens from design/UI-STYLE-RULES.md. Plates are ILLUSTRATIVE. */
+﻿/* Concept v5 (Exploration, 2026-10-18): light-first theme for /concepts/home-chapters.
+   Replaces the dark field with an off-white base; one dark stage (Protect) for the product model;
+   kie.ai plates used large as section backdrops (ILLUSTRATIVE, abstract, no people/text).
+   Scoped to .hc. Every live section component is reused unchanged; this sheet only restyles them.
+   This breaks the Tier 2 dark-led palette on purpose; it is an Exploration concept until Joe picks. */
+
 .hc {
-  --hc-ink: #f7f5f2;
-  --hc-muted: rgba(247, 245, 242, 0.7);
-  --hc-line: rgba(255, 255, 255, 0.12);
-  --hc-card: rgba(11, 11, 14, 0.82);
-  --hc-magenta: #d3126a;
+  --hc-base: #f6f4f0;
+  --hc-base-2: #efece6;
+  --hc-white: #ffffff;
+  --hc-ink: #15121a;
+  --hc-ink-2: #4d4857;
+  --hc-ink-3: #655f70;
+  --hc-line: rgba(21, 18, 26, 0.1);
+  --hc-line-2: rgba(21, 18, 26, 0.16);
+  --hc-accent: #d3126a;
+  --hc-accent-ink: #b50f5a;
+  --hc-accent-soft: rgba(211, 18, 106, 0.08);
+  --hc-dark: #121015;
+  --hc-dark-2: #1a171f;
+  --hc-dark-line: rgba(255, 255, 255, 0.1);
+  --hc-radius: 24px;
+  --hc-radius-sm: 16px;
   --hc-gutter: clamp(20px, 4vw, 40px);
-  background: #050312;
+  --hc-section: clamp(88px, 10vw, 136px);
+  background: var(--hc-base);
   color: var(--hc-ink);
 }
-.hc-wrap {
-  width: min(1160px, calc(100% - var(--hc-gutter) * 2));
-  margin-inline: auto;
-  position: relative;
-  z-index: 1;
+
+/* ---------- Re-point the V8 token set to the light theme so every section inherits it ---------- */
+.hc.v8,
+.hc .v8 {
+  --v8-bg: #f6f4f0;
+  --v8-surface: #f6f4f0;
+  --v8-raised: #ffffff;
+  --v8-canvas: #f6f4f0;
+  --v8-paper: #f6f4f0;
+  --v8-paper-raised: #ffffff;
+  --v8-fg: #15121a;
+  --v8-ink: #15121a;
+  --v8-ink-body: #4d4857;
+  --v8-ink-muted: #655f70;
+  --v8-muted: #4d4857;
+  --v8-muted-soft: #5f5969;
+  --v8-muted-quiet: #655f70;
+  --v8-hairline: rgba(21, 18, 26, 0.1);
+  --v8-hairline-strong: rgba(21, 18, 26, 0.16);
+  --v8-paper-hairline: rgba(21, 18, 26, 0.1);
+  --v8-magenta-ink: #b50f5a;
+  --v8-magenta-paper-ink: #b50f5a;
+  --v8-violet: #7a6cf0;
+  --v8-field-grain: none;
+  --v8-field-grain-paper: none;
+  --v8-radius-sm: 12px;
+  --v8-radius-md: 16px;
+  --v8-radius-lg: 24px;
+  --v8-radius-xl: 28px;
+  --v8-radius-island: 28px;
+}
+/* The dark stage keeps dark tokens */
+#protection {
+  --v8-bg: #121015;
+  --v8-surface: #121015;
+  --v8-raised: #1a171f;
+  --v8-canvas: #121015;
+  --v8-fg: #f7f5f2;
+  --v8-ink: #f7f5f2;
+  --v8-ink-body: rgba(247, 245, 242, 0.72);
+  --v8-muted: rgba(247, 245, 242, 0.72);
+  --v8-muted-soft: rgba(247, 245, 242, 0.6);
+  --v8-muted-quiet: rgba(247, 245, 242, 0.5);
+  --v8-hairline: rgba(255, 255, 255, 0.1);
+  --v8-hairline-strong: rgba(255, 255, 255, 0.18);
+  --v8-magenta-ink: #ff8ac0;
+}
+/* ---------- Kill the dark-field grammar the live sections carry ---------- */
+.hc .v8-section,
+.hc .f-well,
+.hc .f-surface,
+.hc .f-paper,
+.hc .v8s-02 section,
+.hc .v8s-03 section,
+.hc .v8s-05 section,
+.hc .v8s-07 section,
+.hc .v8s-09 section,
+.hc .v8s-10 section,
+.hc .v8s-11 section,
+.hc .v8s-12 section,
+.hc .v8s-15 section {
+  background: transparent !important;
+  background-image: none !important;
+  color: var(--hc-ink);
+  border: 0 !important;
+}
+.hc .v8-section {
+  padding-block: var(--hc-section) !important;
+}
+/* Field grain, lattice, radial glows, pattern layers: off */
+.hc [class*="ChapterPattern"],
+.hc [class*="pattern"],
+.hc .v8-field-grain,
+.hc .hero__field,
+.hc .v8-section::before,
+.hc .v8-section::after,
+.hc .v8-box::after,
+.hc .v8s-06 .model::after {
+  display: none !important;
+}
+.hc .v8-box,
+.hc .v8-card,
+.hc .v8-grid {
+  background: transparent !important;
+  background-image: none !important;
+  border-color: var(--hc-line) !important;
+  box-shadow: none !important;
 }
 
-/* Chapter nav: sticky under the site chrome, marks the chapter in view */
+/* ---------- Type: solid ink, no gradients, no tracked caps, no colons ---------- */
+.hc .v8-h1,
+.hc .v8-h2,
+.hc .v8-h2--sub,
+.hc .v8-h3,
+.hc .v8-h4,
+.hc .v8-h2 span,
+.hc .v8-h1 span {
+  color: var(--hc-ink) !important;
+  -webkit-text-fill-color: var(--hc-ink) !important;
+  background: none !important;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+}
+.hc .v8-h1 {
+  font-size: clamp(44px, 6.6vw, 84px) !important;
+  line-height: 0.98 !important;
+}
+.hc .v8-h2 {
+  font-size: clamp(34px, 4.4vw, 56px) !important;
+  line-height: 1.04 !important;
+}
+.hc .v8-accent,
+.hc .v8-colon {
+  background: none !important;
+  -webkit-text-fill-color: inherit !important;
+  color: inherit !important;
+}
+.hc .v8-colon {
+  display: none !important;
+}
+.hc .v8-eyebrow,
+.hc .v8-meta,
+.hc .v8-small,
+.hc .proof-sources,
+.hc .tstrip__label,
+.hc .v8-seq,
+.hc .svc-path__kicker {
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+  font-family: Inter, system-ui, sans-serif !important;
+  font-size: 15px !important;
+  font-weight: 500 !important;
+  color: var(--hc-ink-3) !important;
+}
+.hc .v8-eyebrow::before,
+.hc .v8-dash,
+.hc .v8-eyebrow .sep {
+  display: none !important;
+}
+.hc .v8-eyebrow .l2 {
+  color: var(--hc-ink-3) !important;
+}
+.hc .v8-lede,
+.hc .v8-body,
+.hc .hero__sub,
+.hc main p {
+  color: var(--hc-ink-2);
+}
+.hc .v8-num,
+.hc .v8-stat,
+.hc .pricing-amount {
+  font-family: "Space Grotesk", Inter, sans-serif !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.03em !important;
+  color: var(--hc-ink) !important;
+}
+
+/* ---------- Buttons and links: one accent, pills ---------- */
+.hc .v8-btn {
+  border-radius: 999px !important;
+  box-shadow: none !important;
+  background-image: none !important;
+}
+.hc .v8-btn--primary,
+.hc .v8-btn--hero {
+  background: var(--hc-accent) !important;
+  color: #fff !important;
+  border: 0 !important;
+}
+.hc .v8-btn--primary:hover,
+.hc .v8-btn--hero:hover {
+  background: var(--hc-accent-ink) !important;
+}
+.hc .v8-btn--outline,
+.hc .v8-btn--ghost {
+  background: var(--hc-white) !important;
+  color: var(--hc-ink) !important;
+  border: 1px solid var(--hc-line-2) !important;
+}
+.hc .v8-btn--outline:hover {
+  border-color: var(--hc-ink) !important;
+}
+.hc .v8-link,
+.hc .v8-link--quiet,
+.hc a.v8-link {
+  color: var(--hc-accent-ink) !important;
+  text-decoration: none;
+}
+.hc .v8-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.hc .v8-check,
+.hc .v8-check svg {
+  color: var(--hc-ink-2) !important;
+}
+.hc .v8-check svg {
+  color: var(--hc-accent) !important;
+}
+.hc .v8-iconwell {
+  background: var(--hc-accent-soft) !important;
+  border: 0 !important;
+  color: var(--hc-accent-ink) !important;
+  border-radius: 14px !important;
+}
+.hc .v8-tag {
+  background: var(--hc-white) !important;
+  border: 1px solid var(--hc-line-2) !important;
+  color: var(--hc-ink-2) !important;
+  border-radius: 999px !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+  font-family: Inter, system-ui, sans-serif !important;
+}
+
+/* ---------- One card ---------- */
+.hc .v8-card,
+.hc .stats-cell,
+.hc .problem,
+.hc .svc-path,
+.hc .proof-cells > li,
+.hc .proof-rail > li,
+.hc .proof-panel,
+.hc .pricing-card,
+.hc .step,
+.hc .ind-card__link,
+.hc .doc,
+.hc .lead,
+.hc .ops > li,
+.hc .feed-card,
+.hc .claim,
+.hc .win,
+.hc .lead__form {
+  background: var(--hc-white) !important;
+  border: 1px solid var(--hc-line) !important;
+  border-radius: var(--hc-radius) !important;
+  box-shadow: 0 1px 2px rgba(21, 18, 26, 0.04), 0 12px 32px -24px rgba(21, 18, 26, 0.18) !important;
+  color: var(--hc-ink);
+}
+.hc .v8-card .v8-h3,
+.hc .v8-card .v8-h4 {
+  color: var(--hc-ink) !important;
+}
+.hc .pricing-card--flagship {
+  border-color: var(--hc-accent) !important;
+  box-shadow: 0 0 0 1px var(--hc-accent), 0 12px 32px -24px rgba(21, 18, 26, 0.18) !important;
+}
+
+/* Grids: cards with air, no seams */
+.hc .stats-cells,
+.hc .problems,
+.hc .svc-paths,
+.hc .proof-cells,
+.hc .pricing-grid,
+.hc .steps,
+.hc .ops {
+  display: grid !important;
+  gap: 16px !important;
+  border: 0 !important;
+}
+.hc .stats-cells > li,
+.hc .problems > *,
+.hc .svc-paths > li,
+.hc .proof-cells > li,
+.hc .pricing-grid > li,
+.hc .steps > li,
+.hc .ops > li {
+  border-left: 0 !important;
+  border-top: 0 !important;
+  padding: 0 !important;
+}
+.hc .stats-cell,
+.hc .problem,
+.hc .svc-path,
+.hc .proof-cells > li,
+.hc .pricing-card,
+.hc .step {
+  padding: 28px !important;
+  height: 100%;
+}
+.hc .stats-box,
+.hc .pricing-box {
+  padding: 0 !important;
+}
+@media (min-width: 640px) {
+  .hc .stats-cells,
+  .hc .problems,
+  .hc .pricing-grid,
+  .hc .steps {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+@media (min-width: 1024px) {
+  .hc .stats-cells,
+  .hc .pricing-grid,
+  .hc .steps {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
+  .hc .problems,
+  .hc .svc-paths,
+  .hc .proof-cells {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+}
+.hc .stats-source {
+  border-top-color: var(--hc-line) !important;
+  color: var(--hc-ink-3) !important;
+}
+.hc .problem__link {
+  color: var(--hc-ink) !important;
+  text-decoration: none !important;
+}
+.hc .problem__arrow {
+  color: var(--hc-ink-3) !important;
+}
+
+/* ---------- Chapter nav ---------- */
 .hc-nav {
   position: sticky;
   top: 0;
   z-index: 20;
-  background: rgba(5, 3, 18, 0.85);
-  backdrop-filter: blur(8px);
+  background: rgba(246, 244, 240, 0.86);
+  backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--hc-line);
 }
 .hc-nav ul {
@@ -33,6 +358,7 @@
   list-style: none;
   padding: 6px var(--hc-gutter);
   overflow-x: auto;
+  scrollbar-width: none;
 }
 .hc-nav__link {
   display: inline-flex;
@@ -40,290 +366,356 @@
   min-height: 44px;
   padding: 0 14px;
   border-radius: 999px;
-  color: var(--hc-muted);
+  color: var(--hc-ink-2);
   font-size: 14px;
   font-weight: 500;
   white-space: nowrap;
   text-decoration: none;
-  transition: color 200ms ease-out, background-color 200ms ease-out;
 }
 .hc-nav__link:hover {
-  color: #fff;
+  color: var(--hc-ink);
 }
 .hc-nav__link.is-active {
-  color: #fff;
-  background: rgba(211, 18, 106, 0.18);
+  color: var(--hc-ink);
+  background: var(--hc-white);
+  box-shadow: 0 1px 2px rgba(21, 18, 26, 0.08);
 }
 .hc-nav__link:focus-visible {
-  outline: 2px solid #ec4899;
+  outline: 2px solid var(--hc-accent);
   outline-offset: 2px;
 }
-
-/* Chapters: each one fills the viewport height */
-.hc-chapter {
-  position: relative;
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  padding-block: clamp(72px, 9vw, 120px);
-  overflow: hidden;
+.hc-section {
   scroll-margin-top: 56px;
+  position: relative;
 }
-.hc-chapter--plate {
-  background: #050312;
+
+/* ---------- Plates: large, as the section's own backdrop ---------- */
+.hc-section--plate {
+  position: relative;
+  isolation: isolate;
 }
-.hc-plate {
+.hc-section--plate > .hc-plate {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  opacity: 0.55;
   pointer-events: none;
   z-index: 0;
+  will-change: transform;
 }
-.hc-chapter--hero {
-  background: #050312;
-  text-align: center;
-}
-.hc-hero__inner {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-.hc-hero__inner::before {
-  content: "";
-  position: absolute;
-  inset: -20% -10% auto;
-  height: 80%;
-  background: radial-gradient(60% 55% at 50% 0%, rgba(91, 69, 224, 0.2), transparent 70%);
-  pointer-events: none;
-  z-index: -1;
-}
-.hc-chapter--hero .hc-plate {
-  opacity: 0.45;
-}
-.hc-chapter--close {
-  min-height: 80vh;
-}
-.hc-chapter--split {
-  min-height: 80vh;
-}
-
-/* Type */
-.hc-pill {
-  display: inline-flex;
-  align-items: center;
-  min-height: 36px;
-  padding: 6px 16px;
-  border-radius: 999px;
-  border: 1px solid var(--hc-line);
-  color: var(--hc-muted);
-  font-size: 14px;
-  background: rgba(255, 255, 255, 0.03);
-}
-.hc-h1 {
-  margin-top: 28px;
-  font-family: "Space Grotesk", Inter, sans-serif;
-  font-weight: 600;
-  font-size: clamp(42px, 7.6vw, 92px);
-  line-height: 1;
-  letter-spacing: -0.035em;
-  max-width: 16ch;
-  text-wrap: balance;
-}
-.hc-h2 {
-  font-family: "Space Grotesk", Inter, sans-serif;
-  font-weight: 600;
-  font-size: clamp(32px, 4.6vw, 56px);
-  line-height: 1.05;
-  letter-spacing: -0.03em;
-  margin-bottom: clamp(28px, 4vw, 44px);
-  text-wrap: balance;
-}
-.hc-h3 {
-  font-family: "Space Grotesk", Inter, sans-serif;
-  font-weight: 600;
-  font-size: 24px;
-  line-height: 1.2;
-  margin-top: 16px;
-}
-.hc-lede {
-  margin-top: 24px;
-  font-size: clamp(18px, 1.7vw, 21px);
-  line-height: 1.55;
-  color: var(--hc-muted);
-  max-width: 44ch;
-}
-.hc-body {
-  margin-top: 12px;
-  font-size: 17px;
-  line-height: 1.6;
-  color: var(--hc-muted);
-}
-.hc-center {
-  text-align: center;
-  margin-inline: auto;
-}
-.hc-note {
-  margin-top: 20px;
-  font-size: 15px;
-  color: var(--hc-muted);
-}
-.hc-actions {
-  margin-top: 36px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-.hc-actions.hc-center {
-  justify-content: center;
-}
-
-/* Buttons and links */
-.hc-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  min-height: 52px;
-  padding: 12px 24px;
-  border-radius: 14px;
-  font-weight: 600;
-  font-size: 16px;
-  transition: background-color 200ms ease-out, border-color 200ms ease-out, transform 200ms ease-out;
-}
-.hc-btn:active {
-  transform: scale(0.98);
-}
-.hc-btn--primary {
-  background: var(--hc-magenta);
-  color: #fff;
-}
-.hc-btn--primary:hover {
-  background: #b80f5c;
-}
-.hc-btn--ghost {
-  border: 1px solid rgba(255, 255, 255, 0.28);
-  color: #fff;
-}
-.hc-btn--ghost:hover {
-  border-color: rgba(255, 255, 255, 0.6);
-}
-.hc-link {
-  color: #ff5aa0;
-  font-weight: 600;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 44px;
-  text-decoration: none;
-}
-.hc-link:hover {
-  color: #fff;
-}
-.hc-link:focus-visible,
-.hc-btn:focus-visible,
-.hc-scroll-cue:focus-visible {
-  outline: 2px solid #ec4899;
-  outline-offset: 2px;
-}
-.hc-scroll-cue {
-  margin-top: 48px;
-  font-size: 14px;
-  color: var(--hc-muted);
-  text-decoration: underline;
-  text-underline-offset: 4px;
-  min-height: 44px;
-  display: inline-flex;
-  align-items: center;
-}
-
-/* Horizontal carousel inside a vertical chapter */
-.hc-carousel {
+.hc-section--plate > :not(.hc-plate) {
   position: relative;
+  z-index: 1;
 }
-.hc-carousel__track {
-  display: flex;
-  gap: 20px;
+
+/* ---------- Hero: headline over the glass plate, product window to the right ---------- */
+#hero .hc-plate {
+  object-position: 70% 50%;
+  opacity: 1;
+}
+.hc .v8s-01 .hero {
+  background: transparent !important;
+  isolation: auto !important;
+  overflow: visible !important;
+  padding-top: clamp(96px, 12vw, 168px) !important;
+  padding-bottom: clamp(72px, 9vw, 120px) !important;
+}
+.hc .v8s-01 .hero__city,
+.hc .v8s-01 .hero__city-img,
+.hc .v8s-01 .hero__city-shade {
+  display: none !important;
+}
+.hc .v8s-01 .hero__sub {
+  font-size: clamp(18px, 1.6vw, 21px);
+}
+.hc .v8s-01 .hero__position,
+.hc .v8s-01 .hero__position li {
+  color: var(--hc-ink-3) !important;
+}
+.hc .v8s-01 .say__word,
+.hc .v8s-01 .say__phon {
+  color: var(--hc-ink-2) !important;
+}
+.hc .v8s-01 .win {
+  background: rgba(255, 255, 255, 0.92) !important;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 32px 80px -40px rgba(21, 18, 26, 0.35) !important;
+}
+.hc .v8s-01 .win__bar,
+.hc .v8s-01 .win__head {
+  background: var(--hc-white) !important;
+  border-bottom: 1px solid var(--hc-line) !important;
+  color: var(--hc-ink) !important;
+}
+.hc .v8s-01 .win,
+.hc .v8s-01 .win * {
+  color: var(--hc-ink) !important;
+}
+.hc .v8s-01 .win .v8-meta,
+.hc .v8s-01 .win .win__title {
+  color: var(--hc-ink-3) !important;
+}
+.hc .v8s-01 .win .bar {
+  background: var(--hc-base-2) !important;
+}
+.hc .v8s-01 .win .bar > span,
+.hc .v8s-01 .win .bar::after {
+  background: var(--hc-accent) !important;
+  background-image: none !important;
+}
+.hc .v8s-01 .tstrip {
+  background: transparent !important;
+}
+.hc .v8s-01 .tstrip__items {
+  display: grid;
+  gap: 16px;
+}
+@media (min-width: 900px) {
+  .hc .v8s-01 .tstrip__items {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+.hc .v8s-01 .tstrip__items > li {
+  background: var(--hc-white);
+  border: 1px solid var(--hc-line) !important;
+  border-radius: var(--hc-radius-sm);
+  padding: 20px !important;
+}
+.hc .v8s-01 .tstrip__icon {
+  background: var(--hc-accent-soft) !important;
+  border: 0 !important;
+  color: var(--hc-accent-ink) !important;
+  border-radius: 12px !important;
+}
+
+/* ---------- Why we exist, stats, problems, services: light sections ---------- */
+#stats .hc-plate {
+  opacity: 0.9;
+}
+.hc .v8s-02 .claim__title,
+.hc .v8s-04 .problem__title {
+  color: var(--hc-ink) !important;
+}
+
+/* ---------- Protect: the one dark stage ---------- */
+#protection {
+  background: var(--hc-dark);
+  color: #f7f5f2;
+}
+#protection .hc-plate {
+  opacity: 0.85;
+  object-position: 50% 60%;
+}
+#protection .v8-h2,
+#protection .v8-h2 span,
+#protection .v8-h3,
+#protection .v8-h4,
+#protection .how__title {
+  color: #f7f5f2 !important;
+  -webkit-text-fill-color: #f7f5f2 !important;
+}
+#protection .v8-lede,
+#protection .v8-body,
+#protection p {
+  color: rgba(247, 245, 242, 0.72) !important;
+}
+#protection .v8-eyebrow,
+#protection .v8-meta {
+  color: rgba(247, 245, 242, 0.6) !important;
+}
+#protection .model {
+  background: rgba(26, 23, 31, 0.85) !important;
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--hc-dark-line) !important;
+  border-radius: 28px !important;
+  box-shadow: 0 40px 100px -50px rgba(0, 0, 0, 0.9) !important;
+}
+#protection .model__title {
+  color: #fff !important;
+}
+#protection .rail {
+  padding: 12px;
+  gap: 4px;
+  border-right-color: var(--hc-dark-line) !important;
+}
+#protection .tab {
+  border-radius: 16px;
+  color: rgba(247, 245, 242, 0.8);
+}
+#protection .tab[aria-selected="true"],
+#protection .tab[aria-selected="true"]:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #fff !important;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18) !important;
+}
+#protection .tab[aria-selected="true"] .v8-iconwell {
+  background: var(--hc-accent) !important;
+  color: #fff !important;
+}
+#protection .steps > li,
+#protection .step {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid var(--hc-dark-line) !important;
+  box-shadow: none !important;
+  color: #f7f5f2;
+}
+#protection .step .v8-body {
+  color: rgba(247, 245, 242, 0.72) !important;
+}
+#protection .v8-iconwell {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #fff !important;
+}
+#protection .node {
+  background: rgba(0, 0, 0, 0.35) !important;
+  border-color: var(--hc-dark-line) !important;
+  border-radius: 16px !important;
+}
+#protection .node__title {
+  color: #fff !important;
+}
+#protection .v8-link {
+  color: #ff8ac0 !important;
+}
+
+/* ---------- Proof, trust, team, industries, pricing: light ---------- */
+.hc .v8s-07 .proof-foot__phone,
+.hc .v8s-08 .docfig__cap {
+  color: var(--hc-ink) !important;
+}
+.hc .v8s-09 .portrait,
+.hc .v8s-08 .docfig {
+  border-radius: var(--hc-radius);
+  overflow: hidden;
+}
+.hc .v8s-10 .ind-card__name,
+.hc .v8s-10 .ind-card__desc {
+  color: #fff !important;
+}
+.hc .v8s-10 .ind-card__link {
+  padding: 0 !important;
+}
+.hc .v8s-10 .ind-scroll,
+.hc .v8s-10 .ind-fade {
+  display: none !important;
+}
+.hc .v8s-11 .pricing-close {
+  border-top: 1px solid var(--hc-line) !important;
+}
+
+/* ---------- Insights + form, FAQ, next step: light ---------- */
+.hc .v8s-12 .feed-card__src,
+.hc .v8s-12 .feed-date {
+  color: var(--hc-ink-3) !important;
+}
+.hc .v8s-13 .lead__fields input,
+.hc .v8s-13 .lead__fields select,
+.hc .v8s-13 .lead__fields textarea,
+.hc .v8s-16 .fields input,
+.hc .v8s-16 .fields select,
+.hc .v8s-16 .fields textarea {
+  border-radius: 14px !important;
+  border-color: var(--hc-line-2) !important;
+  background: var(--hc-white) !important;
+}
+.hc .v8s-14 .faq-item {
+  background: var(--hc-white);
+  border: 1px solid var(--hc-line);
+  border-radius: 18px;
+  margin-top: 10px;
+  box-shadow: none !important;
+}
+.hc .v8s-14 .faq-item[open] {
+  border-color: var(--hc-accent);
+}
+.hc .v8s-14 .faq-item summary {
+  padding-left: 20px;
+  padding-right: 16px;
+}
+.hc .v8s-14 .faq-list {
+  border-bottom: 0;
+}
+.hc .v8s-15 .next__standards > li {
+  background: var(--hc-white);
+  border: 1px solid var(--hc-line);
+  border-radius: 999px;
+}
+
+/* ---------- Contact + footer: close on the warm plate, then a quiet dark footer ---------- */
+#contact .hc-plate {
+  opacity: 1;
+  object-position: 50% 30%;
+}
+.hc .v8s-16 .contact {
+  background: transparent !important;
+}
+.hc .v8s-16 .contact__plate {
+  display: none !important;
+}
+.hc .v8s-16 .contact .v8-h2,
+.hc .v8s-16 .contact .v8-h3 {
+  color: var(--hc-ink) !important;
+  -webkit-text-fill-color: var(--hc-ink) !important;
+}
+.hc .v8s-16 .dir,
+.hc .v8s-16 .dir__value {
+  color: var(--hc-ink) !important;
+}
+.hc .v8s-16 .foot,
+.hc .v8s-16 footer {
+  background: var(--hc-dark) !important;
+  color: #f7f5f2;
+}
+.hc .v8s-16 footer .v8-h2,
+.hc .v8s-16 footer .v8-meta,
+.hc .v8s-16 footer a,
+.hc .v8s-16 footer p {
+  color: rgba(247, 245, 242, 0.8) !important;
+  -webkit-text-fill-color: initial !important;
+}
+.hc .v8s-16 .foot__form input {
+  border-radius: 999px;
+}
+
+/* ---------- Rails (horizontal card rows) ---------- */
+.hc .hc-rail {
+  display: flex !important;
+  gap: 16px !important;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
-  scroll-padding-inline: 0;
-  padding-bottom: 8px;
+  padding: 4px 4px 12px;
   scrollbar-width: none;
   overscroll-behavior-x: contain;
 }
-.hc-carousel__track::-webkit-scrollbar {
+.hc .hc-rail::-webkit-scrollbar {
   display: none;
 }
-.hc-carousel__track:focus-visible {
-  outline: 2px solid #ec4899;
-  outline-offset: 4px;
-  border-radius: 20px;
+.hc .hc-rail:focus-visible {
+  outline: 2px solid var(--hc-accent);
+  outline-offset: 6px;
+  border-radius: var(--hc-radius);
 }
-.hc-slide {
-  flex: 0 0 min(86%, 420px);
+.hc .hc-rail > * {
+  flex: 0 0 min(86%, 360px);
   scroll-snap-align: start;
-  min-height: 340px;
 }
 @media (min-width: 900px) {
-  .hc-slide {
+  .hc .hc-rail > * {
     flex-basis: 380px;
   }
 }
-.hc-card {
-  background: var(--hc-card);
-  border: 1px solid var(--hc-line);
-  border-radius: 24px;
-  padding: 28px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+.hc .v8s-10 .hc-rail > .ind-card {
+  flex-basis: min(86%, 300px);
 }
-.hc-card--glass {
-  backdrop-filter: blur(10px);
-}
-.hc-iconwell {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 52px;
-  height: 52px;
-  border-radius: 16px;
-  background: rgba(211, 18, 106, 0.14);
-  color: #ff5aa0;
-  margin-bottom: 14px;
-}
-.hc-list {
-  margin-top: 12px;
-  display: grid;
-  gap: 10px;
-  list-style: none;
-  padding: 0;
-  color: var(--hc-muted);
-  font-size: 16px;
-  flex: 1;
-}
-.hc-list li {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.hc-list svg {
-  color: var(--hc-magenta);
-  flex-shrink: 0;
-}
-.hc-step__n {
-  font-size: 14px;
-  font-weight: 600;
-  color: #ff5aa0;
-}
-.hc-carousel__bar {
+.hc-railbar {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 16px;
-  margin-top: 20px;
+  width: min(1160px, calc(100% - var(--hc-gutter) * 2));
+  margin: 8px auto 0;
+  padding-bottom: 24px;
 }
 .hc-arrow {
   display: inline-flex;
@@ -332,21 +724,21 @@
   width: 48px;
   height: 48px;
   border-radius: 999px;
-  border: 1px solid var(--hc-line);
-  background: rgba(255, 255, 255, 0.04);
-  color: #fff;
-  transition: border-color 200ms ease-out, opacity 200ms ease-out;
+  border: 1px solid var(--hc-line-2);
+  background: var(--hc-white);
+  color: var(--hc-ink);
 }
-.hc-arrow:hover:not(:disabled) {
-  border-color: rgba(255, 255, 255, 0.5);
+#protection .hc-arrow {
+  background: transparent;
+  border-color: var(--hc-dark-line);
+  color: #fff;
 }
 .hc-arrow:disabled {
   opacity: 0.35;
-  cursor: default;
 }
 .hc-arrow:focus-visible,
 .hc-dot:focus-visible {
-  outline: 2px solid #ec4899;
+  outline: 2px solid var(--hc-accent);
   outline-offset: 2px;
 }
 .hc-dots {
@@ -368,625 +760,235 @@
   width: 9px;
   height: 9px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.3);
-  transition: background-color 200ms ease-out, transform 200ms ease-out;
+  background: var(--hc-line-2);
 }
 .hc-dot.is-on::before {
-  background: var(--hc-magenta);
+  background: var(--hc-accent);
   transform: scale(1.25);
 }
 
-/* Founder split */
-.hc-split {
-  display: grid;
-  gap: 40px;
-  align-items: center;
-}
-@media (min-width: 900px) {
-  .hc-split {
-    grid-template-columns: 0.9fr 1.1fr;
-    gap: 72px;
-  }
-}
-.hc-portrait {
-  margin: 0;
-  position: relative;
-  border-radius: 28px;
-  overflow: hidden;
-  border: 1px solid var(--hc-line);
-}
-.hc-portrait img {
-  display: block;
-  width: 100%;
-  height: auto;
-  aspect-ratio: 4 / 5;
-  object-fit: cover;
-  object-position: 50% 30%;
-}
-.hc-portrait figcaption {
-  position: absolute;
-  left: 16px;
-  bottom: 16px;
-  display: grid;
-  gap: 2px;
-  padding: 12px 16px;
-  border-radius: 14px;
-  background: rgba(5, 3, 18, 0.75);
-  border: 1px solid var(--hc-line);
-}
-.hc-portrait figcaption span:first-child {
-  font-weight: 600;
-}
-.hc-portrait figcaption span:last-child {
-  font-size: 14px;
-  color: var(--hc-muted);
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .hc-carousel__track {
+  .hc .hc-rail {
     scroll-behavior: auto;
   }
-  .hc-btn,
-  .hc-arrow,
-  .hc-dot::before,
-  .hc-nav__link {
-    transition: none;
-  }
 }
 
-/* Full-content chapters: every live homepage section, natural height, anchored under the sticky nav */
-.hc-section {
-  scroll-margin-top: 56px;
-  position: relative;
+/* The hero chapter wraps two blocks; the plate belongs to the first (the hero) only */
+#hero > .hc-plate {
+  height: auto;
+  aspect-ratio: 16 / 9;
+  max-height: 100vh;
+  inset: 0 0 auto 0;
 }
 
-/* ---------- Chapter redesign: Hero (content unchanged; presentation only) ----------
-   Rhythm: calmer field, solid headline (no gradient text), one action color, the assessment preview
-   framed as a product window. The city plate stays as faint atmosphere. */
-.hc .v8s-01 .hero {
-  padding-top: clamp(80px, 10vw, 128px);
+/* ---------- Dashboard-sheet overrides (that sheet loads last; these win by specificity) ---------- */
+.hc.v8 {
+  --v8-dark-card: #ffffff;
+  --v8-dark-inner: #ffffff;
+  --spot-bg: #ffffff;
 }
-.hc .v8s-01 .hero__city-img {
-  opacity: 0.35;
+.hc.v8 .v8-card,
+.hc.v8 .v8-box .v8-card,
+.hc.v8 .v8s-11 .v8-card,
+.hc.v8 .v8s-05 .v8-card {
+  background: #ffffff !important;
+  color: var(--hc-ink) !important;
+  --v8-magenta-ink: #b50f5a;
+  --spot-bg: #ffffff;
 }
-.hc .v8s-01 .v8-eyebrow {
-  text-transform: none;
-  letter-spacing: 0;
-  font-size: 15px;
-  font-weight: 500;
-  color: rgba(247, 245, 242, 0.72);
+#protection.v8 .v8-card,
+#protection .v8-card,
+#protection .v8-box .v8-card {
+  background: rgba(255, 255, 255, 0.04) !important;
+  color: #f7f5f2 !important;
+  --v8-magenta-ink: #ff8ac0;
 }
-.hc .v8s-01 .v8-eyebrow::before {
-  display: none;
+.hc.v8 .v8s-11 .pricing-card--flagship {
+  box-shadow: 0 0 0 1px var(--hc-accent), 0 12px 32px -24px rgba(21, 18, 26, 0.18) !important;
 }
-.hc .v8s-01 .v8-h1 {
-  font-weight: 600;
-  letter-spacing: -0.035em;
-  line-height: 1;
+.hc.v8 .v8s-11 .pricing-card .v8-h3,
+.hc.v8 .v8s-11 .pricing-amount,
+.hc.v8 .v8s-11 .pricing-list,
+.hc.v8 .v8s-11 .pricing-min,
+.hc.v8 .v8s-11 .pricing-per,
+.hc.v8 .v8s-11 .pricing-card__meta,
+.hc.v8 .v8s-11 .pricing-card .v8-body {
+  color: var(--hc-ink) !important;
 }
-.hc .v8s-01 .v8-h1 .v8-accent {
-  background: none;
-  -webkit-background-clip: initial;
-  background-clip: initial;
-  -webkit-text-fill-color: #f7f5f2;
-  color: #f7f5f2;
+.hc.v8 .v8s-11 .pricing-min,
+.hc.v8 .v8s-11 .pricing-per,
+.hc.v8 .v8s-11 .pricing-list {
+  color: var(--hc-ink-2) !important;
 }
-.hc .v8s-01 .hero__sub {
-  font-size: clamp(18px, 1.6vw, 20px);
-  color: rgba(247, 245, 242, 0.72);
-}
-.hc .v8s-01 .v8-btn--hero {
-  background: #d3126a;
-  background-image: none;
-  box-shadow: none;
-  border-radius: 999px;
-}
-.hc .v8s-01 .v8-btn--hero:hover {
-  background: #b80f5c;
-}
-.hc .v8s-01 .v8-btn--outline {
-  border-radius: 999px;
-}
-.hc .v8s-01 .hero__position {
-  color: rgba(247, 245, 242, 0.6);
+.hc.v8 .v8s-11 .pricing-box .v8-lede,
+.hc.v8 .v8s-11 .pricing-close__copy,
+.hc.v8 .v8s-11 .pricing-fit,
+.hc.v8 .v8s-11 .pricing-fitnote {
+  color: var(--hc-ink-2) !important;
 }
 
-/* Assessment preview as a product window: white chrome bar, soft shadow */
-.hc .v8s-01 .win {
-  border-radius: 22px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 32px 80px -40px rgba(0, 0, 0, 0.8);
-  overflow: hidden;
+/* The Protect model's inner lists must never become rails; only the top-level step row may */
+#protection .qlist,
+#protection .pblock__qs,
+#protection .pane__row,
+#protection .boundary__nodes,
+#protection .rail {
+  display: grid !important;
 }
-.hc .v8s-01 .win__bar,
-.hc .v8s-01 .win__head {
-  background: rgba(255, 255, 255, 0.04);
-}
-
-/* Trust strip under the hero: airy paper, no shadows, hairline cells */
-.hc .v8s-01 .tstrip {
-  background: #f7f5f2;
-}
-.hc .v8s-01 .tstrip__icon {
-  background: #fff;
-  border: 1px solid rgba(26, 18, 40, 0.12);
-  border-radius: 14px;
-  box-shadow: none;
+#protection .qlist > li,
+#protection .pblock__qs > li {
+  display: grid !important;
+  white-space: normal;
 }
 
-/* ---------- Chapter redesign: How it works (content unchanged) ----------
-   The three paths become rounded cards on one dark field, the featured path gets a magenta edge,
-   the stack rail reads as a quiet list. */
-.hc .v8s-05 .v8-section {
-  background: #050312;
+/* Protect model: restore its own inner grids (groups, question list, pane row); only .steps is a card row here */
+#protection .model .v8-cells,
+#protection .groups {
+  display: grid !important;
+  gap: 0 !important;
+  border: 0 !important;
 }
-.hc .v8s-05 .svc-paths > li .svc-path {
-  background: #0b0b0e;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 24px;
-  padding: 28px;
+#protection .groups {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  border-top: 1px solid var(--hc-dark-line) !important;
 }
-.hc .v8s-05 .svc-path--featured {
-  border-color: rgba(211, 18, 106, 0.55);
-  box-shadow: inset 0 0 0 1px rgba(211, 18, 106, 0.2);
+#protection .groups > li {
+  display: block !important;
+  padding: 20px 20px 20px 0 !important;
+  border-left: 1px solid var(--hc-dark-line) !important;
+  padding-left: 20px !important;
 }
-.hc .v8s-05 .svc-paths {
-  display: grid;
-  gap: 16px;
-  grid-template-columns: 1fr;
-}
-@media (min-width: 900px) {
-  .hc .v8s-05 .svc-paths {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-.hc .v8s-05 .svc-path__kicker {
-  text-transform: none;
-  letter-spacing: 0;
-  font-size: 14px;
-  color: #ff5aa0;
-}
-.hc .v8s-05 .svc-rail {
-  border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: #0b0b0e;
-  overflow: hidden;
-}
-.hc .v8s-05 .svc-rail > li {
+#protection .groups > li:first-child {
   border-left: 0 !important;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 20px 24px !important;
+  padding-left: 0 !important;
 }
-.hc .v8s-05 .svc-rail > li:first-child {
-  border-top: 0;
-}
-@media (min-width: 900px) {
-  .hc .v8s-05 .svc-rail > li {
-    border-top: 0;
-    border-left: 1px solid rgba(255, 255, 255, 0.08) !important;
-  }
-  .hc .v8s-05 .svc-rail > li:nth-child(3n+1) {
-    border-left: 0 !important;
-  }
-  .hc .v8s-05 .svc-rail > li:nth-child(n+4) {
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
-  }
-}
-
-/* Chapter-wide: no gradient-filled words in headings, one solid ink; pill buttons everywhere */
-.hc .v8-accent,
-.hc .v8-h2 .v8-accent {
-  background: none;
-  -webkit-background-clip: initial;
-  background-clip: initial;
-  -webkit-text-fill-color: currentColor;
-  color: inherit;
-}
-.hc .v8-btn {
-  border-radius: 999px;
-}
-
-/* ---------- Chapter redesign: Why DE / stats (content unchanged) ----------
-   Drop the violet radial and the boxed island; four sourced stats as individual cards on the dark field. */
-.hc .v8s-03 .stats-box {
-  background: transparent;
-  background-image: none;
-  border: 0;
-  border-radius: 0;
-  padding: 0;
-}
-.hc .v8s-03 .stats-cells {
-  display: grid;
-  gap: 16px;
-  border: 0;
-  background: transparent;
-  grid-template-columns: 1fr;
-}
-@media (min-width: 640px) {
-  .hc .v8s-03 .stats-cells {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-@media (min-width: 1024px) {
-  .hc .v8s-03 .stats-cells {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-}
-.hc .v8s-03 .stats-cells > li {
+#protection .groups li li {
+  display: grid !important;
+  grid-template-columns: 10px minmax(0, 1fr) !important;
+  column-gap: 10px !important;
+  padding: 4px 0 !important;
   border: 0 !important;
-  display: block;
 }
-.hc .v8s-03 .stats-cell {
-  display: block;
-  padding: 28px;
-  border-radius: 24px;
-  background: #0b0b0e;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  height: 100%;
+#protection .qlist > li {
+  display: grid !important;
+  grid-template-columns: 14px minmax(0, 1fr) !important;
+  column-gap: 12px !important;
+  padding: 11px 0 !important;
+  border-top: 1px solid var(--hc-dark-line) !important;
 }
-.hc .v8s-03 .stats-cell .v8-stat {
-  font-weight: 600;
-  letter-spacing: -0.03em;
-}
-.hc .v8s-03 .stats-source {
-  border-top-color: rgba(255, 255, 255, 0.1);
-}
-
-/* ---------- Chapter redesign: Problems (content unchanged) ----------
-   Paper field stays; the seamed grid becomes white cards with room to breathe. The whole card stays clickable. */
-.hc .v8s-04 .problems {
-  display: grid;
-  gap: 16px;
-  border: 0 !important;
-  grid-template-columns: 1fr;
-}
-@media (min-width: 640px) {
-  .hc .v8s-04 .problems {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-@media (min-width: 1024px) {
-  .hc .v8s-04 .problems {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-.hc .v8s-04 .problems > :nth-child(n) {
-  border: 1px solid rgba(26, 18, 40, 0.12) !important;
-  border-radius: 22px;
-  background: #fff;
-  padding: 24px !important;
-  transition: border-color 200ms ease-out, transform 200ms ease-out;
-}
-.hc .v8s-04 .problem:hover {
-  border-color: rgba(211, 18, 106, 0.45) !important;
-  transform: translateY(-2px);
-}
-.hc .v8s-04 .problem__link {
-  text-decoration: none;
-}
-.hc .v8s-04 .problem__link:focus-visible::after {
-  border-radius: 22px;
-}
-@media (prefers-reduced-motion: reduce) {
-  .hc .v8s-04 .problem:hover {
-    transform: none;
-  }
-}
-
-/* The dashboard sheet loads after this one; keep the stats island fully flat on the chapter page */
-.hc .v8s-03 .stats-box,
-.hc .v8s-03 .v8-box.stats-box {
-  background: transparent !important;
-  background-image: none !important;
-  border: 0 !important;
-  box-shadow: none !important;
-  padding: 0 !important;
-}
-
-/* ---------- Chapter redesign: Protect / eight-block model (content + interaction unchanged) ----------
-   The model panel is already a product window; give it a rounder shell, a quieter rail, and a pill for the selected tab. */
-.hc .v8s-06 .model {
-  border-radius: 26px;
-  border-color: rgba(255, 255, 255, 0.1);
-  box-shadow: 0 32px 80px -48px rgba(0, 0, 0, 0.8);
-  overflow: hidden;
-}
-.hc .v8s-06 .model::after {
-  display: none;
-}
-.hc .v8s-06 .rail {
-  padding: 12px;
-  gap: 4px;
-}
-.hc .v8s-06 .tab {
-  border-radius: 16px;
-  min-height: 64px;
-}
-.hc .v8s-06 .tab[aria-selected="true"],
-.hc .v8s-06 .tab[aria-selected="true"]:hover {
-  background: rgba(211, 18, 106, 0.16);
-  color: #fff;
-  box-shadow: inset 0 0 0 1px rgba(211, 18, 106, 0.55);
-}
-.hc .v8s-06 .tab[aria-selected="true"] .v8-iconwell {
-  background: rgba(211, 18, 106, 0.22);
-  border-color: transparent;
-  color: #ff8ac0;
-}
-.hc .v8s-06 .tab[aria-selected="true"] .tab__answers {
-  color: rgba(255, 255, 255, 0.8);
-}
-.hc .v8s-06 .pane__answers {
-  color: #ff5aa0;
-}
-.hc .v8s-06 .node {
-  border-radius: 16px;
-}
-
-/* ---------- Chapter redesign: Proof (content unchanged) ----------
-   Seamed cells become cards; the two surfaces become rounded panels. */
-.hc .v8s-07 .proof-cells {
-  display: grid;
-  gap: 16px;
+#protection .qlist > li:first-child {
   border-top: 0 !important;
-  grid-template-columns: 1fr;
 }
-@media (min-width: 768px) {
-  .hc .v8s-07 .proof-cells {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+#protection .pane__row {
+  display: grid !important;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 8fr) !important;
+  column-gap: 40px !important;
+}
+@media (max-width: 1023px) {
+  #protection .groups {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  #protection .pane__row {
+    grid-template-columns: 1fr !important;
   }
 }
-.hc .v8s-07 .proof-cells > li {
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  border-radius: 22px;
-  background: #0b0b0e;
-  padding: 24px !important;
-}
-.hc .v8s-07 .proof-rail > li,
-.hc .v8s-07 .proof-panel {
-  border-radius: 24px;
+
+/* The Protect question lists use a dash as the first grid cell; keep it so the text lands in column 2 */
+#protection .qlist .v8-dash,
+#protection .pblock__qs .v8-dash,
+#protection .groups .v8-dash {
+  display: block !important;
+  width: 14px;
+  height: 2px;
+  background: var(--hc-accent);
+  position: relative;
+  top: -4px;
 }
 
-/* Protect: win the selected-tab rule against the dashboard sheet; methodology steps as cards */
-.hc .v8s-06 .tab[aria-selected="true"],
-.hc .v8s-06 .tab[aria-selected="true"]:hover {
-  background: rgba(211, 18, 106, 0.16) !important;
-  color: #fff !important;
-  box-shadow: inset 0 0 0 1px rgba(211, 18, 106, 0.55) !important;
+/* Any lede/body the dashboard sheet painted white must read as ink on the light base */
+.hc.v8 .v8-lede,
+.hc.v8 .v8-body,
+.hc.v8 main .v8-section p,
+.hc.v8 .v8-head p,
+.hc.v8 .proof-verify .v8-body,
+.hc.v8 .contact__copy p,
+.hc.v8 .v8s-16 .contact .v8-lede {
+  color: var(--hc-ink-2) !important;
 }
-.hc .v8s-06 .tab[aria-selected="true"] .v8-iconwell {
-  background: rgba(211, 18, 106, 0.22) !important;
-  color: #ff8ac0 !important;
+.hc.v8 .v8-card p,
+.hc.v8 .v8-card .v8-body,
+.hc.v8 .v8-card .v8-h4,
+.hc.v8 .v8-card .v8-h3 {
+  color: var(--hc-ink) !important;
 }
-.hc .v8s-06 .method,
-.hc .v8s-06 .steps {
-  display: grid;
-  gap: 16px;
-  border: 0 !important;
+.hc.v8 .v8-card .v8-body,
+.hc.v8 .v8-card p {
+  color: var(--hc-ink-2) !important;
 }
-.hc .v8s-06 .method > li,
-.hc .v8s-06 .steps > li {
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  border-radius: 22px;
-  background: #0b0b0e;
-  padding: 24px !important;
+#protection.v8 .v8-lede,
+#protection.v8 .v8-body,
+#protection.v8 p,
+#protection.v8 .v8-card p {
+  color: rgba(247, 245, 242, 0.72) !important;
 }
-
-/* ---------- Chapter redesign: Trust (Why Arizona) and Team (content unchanged) ---------- */
-.hc .v8s-08 .doc,
-.hc .v8s-08 .docfig {
-  border-radius: 24px;
-  overflow: hidden;
+/* Copy buttons in the contact details: visible on light */
+.hc .v8s-16 .dir button,
+.hc .v8s-16 .copy {
+  border: 1px solid var(--hc-line-2) !important;
+  background: var(--hc-white) !important;
+  color: var(--hc-ink-2) !important;
 }
-.hc .v8s-09 .portrait {
-  border-radius: 24px;
-  overflow: hidden;
+/* Footer stays dark; its headings and links read light */
+.hc .v8s-16 .foot,
+.hc .v8s-16 .foot * {
+  color: rgba(247, 245, 242, 0.82) !important;
 }
-.hc .v8s-09 .ops > li,
-.hc .v8s-09 .lead {
-  border-radius: 22px;
+.hc .v8s-16 .foot .v8-h2,
+.hc .v8s-16 .foot h2,
+.hc .v8s-16 .foot h3,
+.hc .v8s-16 .foot strong {
+  color: #ffffff !important;
 }
-
-/* ---------- Chapter redesign: Industries (content + photo hover kept) ---------- */
-.hc .v8s-10 .ind-card {
-  border-radius: 22px;
-  overflow: hidden;
-}
-.hc .v8s-10 .ind-card__link:focus-visible {
-  border-radius: 22px;
-}
-
-/* No decorative colon after chapter headings on this page */
-.hc .v8-h2 > .v8-colon,
-.hc .v8-h2 .colon {
-  display: none;
+.hc .v8s-16 .foot input {
+  color: var(--hc-ink) !important;
+  background: var(--hc-white) !important;
 }
 
-/* ---------- Chapter redesign: Packages / pricing (content + prices unchanged) ----------
-   Flatten the boxed island; four plan cards with the flagship as a full magenta outline. */
-.hc .v8s-11 .pricing-box,
-.hc .v8s-11 .v8-box.pricing-box {
-  background: transparent !important;
-  background-image: none !important;
-  border: 0 !important;
-  box-shadow: none !important;
-  padding: 0 !important;
-}
-.hc .v8s-11 .pricing-grid {
-  display: grid;
-  gap: 16px;
-  border: 0 !important;
-  grid-template-columns: 1fr;
-}
-@media (min-width: 640px) {
-  .hc .v8s-11 .pricing-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-@media (min-width: 1100px) {
-  .hc .v8s-11 .pricing-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-}
-.hc .v8s-11 .pricing-card {
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  border-radius: 24px;
-  background: #0b0b0e;
-  padding: 28px !important;
-}
-.hc .v8s-11 .pricing-card--flagship,
-.hc .v8s-11 .pricing-card.is-flagship {
-  border-color: rgba(211, 18, 106, 0.6) !important;
-  box-shadow: inset 0 0 0 1px rgba(211, 18, 106, 0.25);
-}
-.hc .v8s-11 .pricing-flag {
-  border-radius: 999px;
-}
-.hc .v8s-11 .pricing-close {
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-/* Flagship plan: a full magenta outline, not just a top edge, against the dashboard sheet */
-.hc .v8s-11 .pricing-card--flagship {
-  border: 1px solid rgba(211, 18, 106, 0.65) !important;
-  border-top-width: 1px !important;
-  box-shadow: inset 0 0 0 1px rgba(211, 18, 106, 0.25) !important;
-}
-
-/* ---------- Chapter redesign: Insights, Assessment form, FAQ, Next step, Contact (content unchanged) ----------
-   Light polish only: these sections already fit. Rounded panels, pill chips, one card radius. */
-.hc .v8s-12 .feed-card,
-.hc .v8s-12 .monitor-panel,
-.hc .v8s-12 .dg {
-  border-radius: 22px;
-}
-.hc .v8s-12 .v8-card {
-  border-radius: 22px;
-}
-.hc .v8s-13 .lead__form {
-  border-radius: 24px;
-  box-shadow: 0 24px 60px -40px rgba(26, 18, 40, 0.3);
-}
-.hc .v8s-13 .lead__fields input,
-.hc .v8s-13 .lead__fields select,
-.hc .v8s-13 .lead__fields textarea {
-  border-radius: 14px;
-}
-.hc .v8s-14 .faq-item {
-  border-radius: 18px;
-  background: #fff;
-  border: 1px solid rgba(26, 18, 40, 0.1);
-  margin-top: 10px;
+/* Contrast fixes on the light base */
+.hc.v8 .v8s-14 .city-list .v8-chip.is-home {
+  color: var(--hc-accent-ink) !important;
+  background: var(--hc-accent-soft) !important;
+  border-color: var(--hc-accent) !important;
   box-shadow: none !important;
 }
-.hc .v8s-14 .faq-item summary {
-  padding-left: 20px;
-  padding-right: 16px;
+.hc.v8 .v8s-14 .v8-chip {
+  color: var(--hc-ink) !important;
+  background: var(--hc-white) !important;
+  border: 1px solid var(--hc-line-2) !important;
 }
-.hc .v8s-14 .faq-list {
-  border-bottom: 0;
+.hc.v8 .v8s-16 .foot button,
+.hc.v8 .v8s-16 .foot .v8-btn,
+.hc.v8 .v8s-16 .foot [data-testid="footer-newsletter-submit"] {
+  background: var(--hc-accent) !important;
+  color: #ffffff !important;
+  border: 0 !important;
 }
-.hc .v8s-14 .faq-item[open] {
-  border-color: rgba(211, 18, 106, 0.45);
-}
-.hc .v8s-14 .cards > li,
-.hc .v8s-14 .chip-row > li {
-  border-radius: 999px;
-}
-.hc .v8s-15 .next__standards > li {
-  border-radius: 999px;
-  border: 1px solid rgba(26, 18, 40, 0.12);
-  background: #fff;
-}
-.hc .v8s-16 .contact__plate {
-  opacity: 0.1;
-}
-.hc .v8s-16 .foot__form input {
-  border-radius: 999px;
-}
-.hc .v8s-16 .fields input,
-.hc .v8s-16 .fields select,
-.hc .v8s-16 .fields textarea {
-  border-radius: 14px;
+.hc.v8 .lead__footers li,
+.hc.v8 .hero__position li,
+.hc.v8 .tstrip__label {
+  color: var(--hc-ink-3) !important;
 }
 
-/* Hide the decorative colon on every heading level on this page */
-.hc .v8-colon {
-  display: none !important;
+/* Phone hero meta uses utility white text; on the light base it reads as ink */
+.hc.v8 .v8s-01 .hero > .v8-canvas > .hero__copy > ul.text-white\/75,
+.hc.v8 .v8s-01 .hero > .v8-canvas > .hero__copy > ul.text-white\/75 *,
+.hc.v8 .v8s-01 .hero .text-white\/75,
+.hc.v8 .v8s-01 .hero .text-white\/85,
+.hc.v8 .v8s-01 .hero .text-white\/90 {
+  color: var(--hc-ink-2) !important;
+  text-decoration-color: rgba(21, 18, 26, 0.3) !important;
 }
-
-/* ---------- Rails and plates on the full-content chapter page ---------- */
-.hc-section--plate {
-  position: relative;
-  isolation: isolate;
-}
-.hc-section--plate > .hc-plate {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  opacity: 0.22;
-  pointer-events: none;
-  z-index: 0;
-  will-change: transform;
-}
-.hc-section--plate > :not(.hc-plate) {
-  position: relative;
-  z-index: 1;
-}
-/* On the paper Protect chapter the plate reads as tint, not darkness */
-#protection.hc-section--plate > .hc-plate {
-  opacity: 0.1;
-}
-
-/* A card grid promoted to a rail: one row, snap scrolling, hidden scrollbar. Cards keep their styles. */
-.hc .hc-rail {
-  display: flex !important;
-  gap: 16px !important;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  padding-bottom: 8px;
-  scrollbar-width: none;
-  overscroll-behavior-x: contain;
-}
-.hc .hc-rail::-webkit-scrollbar {
-  display: none;
-}
-.hc .hc-rail:focus-visible {
-  outline: 2px solid #ec4899;
-  outline-offset: 6px;
-  border-radius: 22px;
-}
-.hc .hc-rail > * {
-  flex: 0 0 min(86%, 360px);
-  scroll-snap-align: start;
-}
-@media (min-width: 900px) {
-  .hc .hc-rail > * {
-    flex-basis: 380px;
-  }
-}
-.hc-railbar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  width: min(1160px, calc(100% - var(--hc-gutter) * 2));
-  margin: 8px auto 0;
-  padding-bottom: 24px;
-}
-
-/* Industries rail: the section's own narrow-width arrows stay hidden on this page; the shared rail bar drives it */
-.hc .v8s-10 .ind-scroll,
-.hc .v8s-10 .ind-fade {
-  display: none !important;
-}
-.hc .v8s-10 .hc-rail > .ind-card {
-  flex-basis: min(86%, 300px);
-}
-@media (min-width: 900px) {
-  .hc .v8s-10 .hc-rail > .ind-card {
-    flex-basis: 300px;
-  }
+.hc.v8 .v8s-01 .hero .text-white\/75 svg,
+.hc.v8 .v8s-01 .hero .text-white\/85 svg {
+  color: var(--hc-accent) !important;
 }
