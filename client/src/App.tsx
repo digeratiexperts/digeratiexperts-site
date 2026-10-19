@@ -38,6 +38,7 @@ const ManagedWorkplace = lazy(() => import("@/pages/solutions/ManagedWorkplace")
 const BackupDisasterRecovery = lazy(() => import("@/pages/solutions/BackupDisasterRecovery"));
 const ProActiveEcosystemPage = lazy(() => import("@/pages/solutions/ProActiveEcosystemPage"));
 const CoManagedIT = lazy(() => import("@/pages/solutions/CoManagedIT"));
+const EfficiencyBeforeAI = lazy(() => import("@/pages/solutions/EfficiencyBeforeAI"));
 const BusinessNeedsIndex = lazy(() => import("@/pages/solutions/BusinessNeedsIndex"));
 const BusinessNeedsFamily = lazy(() => import("@/pages/solutions/BusinessNeedsFamily"));
 const SolutionRequest = lazy(() => import("@/pages/solutions/SolutionRequest"));
@@ -374,6 +375,11 @@ function Router() {
       <Route path="/solutions/co-managed-it" component={() => (
         <Suspense fallback={<PageLoadingSkeleton />}>
           <CoManagedIT />
+        </Suspense>
+      )} />
+      <Route path="/solutions/efficiency-before-ai" component={() => (
+        <Suspense fallback={<PageLoadingSkeleton />}>
+          <EfficiencyBeforeAI />
         </Suspense>
       )} />
       {/* The Store's old public home: one address now (the server 301s these too). */}
