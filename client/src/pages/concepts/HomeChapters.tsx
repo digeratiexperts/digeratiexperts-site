@@ -59,9 +59,10 @@ const rails: Record<string, { selector: string; label: string }> = {
 
 // ILLUSTRATIVE kie.ai plates (abstract, no people, no text), faint atmosphere behind three chapters.
 const plates: Record<string, string> = {
-  hero: "/concepts/monday/hero-plate.webp",
-  protection: "/concepts/monday/showcase-plate.webp",
-  contact: "/concepts/monday/close-plate.webp",
+  hero: "/concepts/monday/light-hero.webp",
+  stats: "/concepts/monday/light-section.webp",
+  protection: "/concepts/monday/light-dark-stage.webp",
+  contact: "/concepts/monday/light-close.webp",
 };
 
 export function HomeChapters(): JSX.Element {
@@ -125,7 +126,7 @@ export function HomeChapters(): JSX.Element {
   }, []);
 
   return (
-    <div className="v8 hc min-h-screen text-white" ref={rootRef}>
+    <div className="v8 hc min-h-screen" ref={rootRef}>
       <OrganizationJsonLd />
       <WebSiteJsonLd />
       <MegaMenu />
@@ -148,7 +149,7 @@ export function HomeChapters(): JSX.Element {
         {chapters.map((c) => (
           <section key={c.id} id={c.id} ref={sectionRefs.current[c.id]} className={`hc-section${plates[c.id] ? " hc-section--plate" : ""}`} aria-label={c.label}>
             {plates[c.id] && (
-              <img className="hc-plate" src={plates[c.id]} alt="" aria-hidden="true" width={1600} height={900} loading={c.id === "hero" ? "eager" : "lazy"} data-depth="0.35" />
+              <img className="hc-plate" src={plates[c.id]} alt="" aria-hidden="true" width={1600} height={900} loading={c.id === "hero" ? "eager" : "lazy"} data-depth="0.18" />
             )}
             {c.render()}
             {rails[c.id] && <ChapterRail sectionRef={sectionRefs.current[c.id]} gridSelector={rails[c.id].selector} label={rails[c.id].label} />}
