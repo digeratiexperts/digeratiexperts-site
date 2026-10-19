@@ -585,3 +585,100 @@
 .hc .v8-btn {
   border-radius: 999px;
 }
+
+/* ---------- Chapter redesign: Why DE / stats (content unchanged) ----------
+   Drop the violet radial and the boxed island; four sourced stats as individual cards on the dark field. */
+.hc .v8s-03 .stats-box {
+  background: transparent;
+  background-image: none;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+}
+.hc .v8s-03 .stats-cells {
+  display: grid;
+  gap: 16px;
+  border: 0;
+  background: transparent;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 640px) {
+  .hc .v8s-03 .stats-cells {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1024px) {
+  .hc .v8s-03 .stats-cells {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+.hc .v8s-03 .stats-cells > li {
+  border: 0 !important;
+  display: block;
+}
+.hc .v8s-03 .stats-cell {
+  display: block;
+  padding: 28px;
+  border-radius: 24px;
+  background: #0b0b0e;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  height: 100%;
+}
+.hc .v8s-03 .stats-cell .v8-stat {
+  font-weight: 600;
+  letter-spacing: -0.03em;
+}
+.hc .v8s-03 .stats-source {
+  border-top-color: rgba(255, 255, 255, 0.1);
+}
+
+/* ---------- Chapter redesign: Problems (content unchanged) ----------
+   Paper field stays; the seamed grid becomes white cards with room to breathe. The whole card stays clickable. */
+.hc .v8s-04 .problems {
+  display: grid;
+  gap: 16px;
+  border: 0 !important;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 640px) {
+  .hc .v8s-04 .problems {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1024px) {
+  .hc .v8s-04 .problems {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+.hc .v8s-04 .problems > :nth-child(n) {
+  border: 1px solid rgba(26, 18, 40, 0.12) !important;
+  border-radius: 22px;
+  background: #fff;
+  padding: 24px !important;
+  transition: border-color 200ms ease-out, transform 200ms ease-out;
+}
+.hc .v8s-04 .problem:hover {
+  border-color: rgba(211, 18, 106, 0.45) !important;
+  transform: translateY(-2px);
+}
+.hc .v8s-04 .problem__link {
+  text-decoration: none;
+}
+.hc .v8s-04 .problem__link:focus-visible::after {
+  border-radius: 22px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hc .v8s-04 .problem:hover {
+    transform: none;
+  }
+}
+
+/* The dashboard sheet loads after this one; keep the stats island fully flat on the chapter page */
+.hc .v8s-03 .stats-box,
+.hc .v8s-03 .v8-box.stats-box {
+  background: transparent !important;
+  background-image: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
