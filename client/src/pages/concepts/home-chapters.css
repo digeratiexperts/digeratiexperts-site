@@ -852,3 +852,65 @@
   border-top-width: 1px !important;
   box-shadow: inset 0 0 0 1px rgba(211, 18, 106, 0.25) !important;
 }
+
+/* ---------- Chapter redesign: Insights, Assessment form, FAQ, Next step, Contact (content unchanged) ----------
+   Light polish only: these sections already fit. Rounded panels, pill chips, one card radius. */
+.hc .v8s-12 .feed-card,
+.hc .v8s-12 .monitor-panel,
+.hc .v8s-12 .dg {
+  border-radius: 22px;
+}
+.hc .v8s-12 .v8-card {
+  border-radius: 22px;
+}
+.hc .v8s-13 .lead__form {
+  border-radius: 24px;
+  box-shadow: 0 24px 60px -40px rgba(26, 18, 40, 0.3);
+}
+.hc .v8s-13 .lead__fields input,
+.hc .v8s-13 .lead__fields select,
+.hc .v8s-13 .lead__fields textarea {
+  border-radius: 14px;
+}
+.hc .v8s-14 .faq-item {
+  border-radius: 18px;
+  background: #fff;
+  border: 1px solid rgba(26, 18, 40, 0.1);
+  margin-top: 10px;
+  box-shadow: none !important;
+}
+.hc .v8s-14 .faq-item summary {
+  padding-left: 20px;
+  padding-right: 16px;
+}
+.hc .v8s-14 .faq-list {
+  border-bottom: 0;
+}
+.hc .v8s-14 .faq-item[open] {
+  border-color: rgba(211, 18, 106, 0.45);
+}
+.hc .v8s-14 .cards > li,
+.hc .v8s-14 .chip-row > li {
+  border-radius: 999px;
+}
+.hc .v8s-15 .next__standards > li {
+  border-radius: 999px;
+  border: 1px solid rgba(26, 18, 40, 0.12);
+  background: #fff;
+}
+.hc .v8s-16 .contact__plate {
+  opacity: 0.1;
+}
+.hc .v8s-16 .foot__form input {
+  border-radius: 999px;
+}
+.hc .v8s-16 .fields input,
+.hc .v8s-16 .fields select,
+.hc .v8s-16 .fields textarea {
+  border-radius: 14px;
+}
+
+/* Hide the decorative colon on every heading level on this page */
+.hc .v8-colon {
+  display: none !important;
+}
