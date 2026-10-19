@@ -1,4 +1,4 @@
-﻿/* Concept v7 (Exploration, 2026-10-19): DARK-FIRST premium pass for /concepts/home-chapters.
+/* Concept v7 (Exploration, 2026-10-19): DARK-FIRST premium pass for /concepts/home-chapters.
    Default = ChatGPT/Grok/x.ai-grade dark: charcoal #0a0a0a ground, white cards #1a1a1c,
    magenta accent. Light mode (Apple-style) flips via [data-theme="light"] on the root,
    persisted + system-preference aware (see ThemeToggle). All 14 live sections reused;
@@ -9,8 +9,12 @@
   --ink-2: #a1a1a6;
   --ink-3: #6e6e73;
   --base: #0a0a0a;
-  --card: #1a1a1c;
-  --card-2: #242428;
+  --card: #ffffff;
+  --card-2: #f1f1f2;
+  --card-ink: #121212;
+  --card-ink-2: #4a4a4f;
+  --card-ink-3: #6b6b72;
+  --card-line: rgba(18, 18, 18, 0.1);
   --line: rgba(255, 255, 255, 0.08);
   --line-2: rgba(255, 255, 255, 0.14);
   --accent: #d3126a;
@@ -38,6 +42,10 @@
   --base: #fafafa;
   --card: #ffffff;
   --card-2: #f1f1f2;
+  --card-ink: #121212;
+  --card-ink-2: #4a4a4f;
+  --card-ink-3: #6b6b72;
+  --card-line: rgba(18, 18, 18, 0.1);
   --line: rgba(18, 18, 18, 0.1);
   --line-2: rgba(18, 18, 18, 0.16);
   --accent: #d3126a;
@@ -165,8 +173,8 @@
 .hc .v8-link, .hc .v8-link--quiet, .hc a.v8-link { color: var(--accent-ink) !important; text-decoration: none; transition: color var(--t-fast) var(--ease); }
 .hc .v8-link:hover { text-decoration: underline; text-underline-offset: 4px; }
 .hc .v8-check svg { color: var(--accent) !important; }
-.hc .v8-iconwell, .hc .tstrip__icon { background: var(--card-2) !important; border: 0 !important; color: var(--ink) !important; border-radius: 12px !important; box-shadow: none !important; }
-.hc .v8-tag { background: var(--card) !important; border: 1px solid var(--line-2) !important; color: var(--ink-2) !important; border-radius: 999px !important; text-transform: none !important; letter-spacing: 0 !important; font-family: Inter, system-ui, sans-serif !important; }
+.hc .v8-iconwell, .hc .tstrip__icon { background: var(--card-2) !important; border: 0 !important; color: var(--card-ink) !important; border-radius: 12px !important; box-shadow: none !important; }
+.hc .v8-tag { background: var(--card) !important; border: 1px solid var(--card-line) !important; color: var(--card-ink-2) !important; border-radius: 999px !important; text-transform: none !important; letter-spacing: 0 !important; font-family: Inter, system-ui, sans-serif !important; }
 
 /* ---------- Cards ---------- */
 .hc.v8 .v8-card, .hc.v8 .v8-box .v8-card, .hc.v8 .stats-cell, .hc.v8 .problem,
@@ -185,8 +193,8 @@
   box-shadow: 0 1px 1px rgba(0,0,0,0.2), 0 32px 80px -40px rgba(0,0,0,0.75) !important;
   transform: translateY(-2px);
 }
-.hc.v8 .v8-card .v8-h3, .hc.v8 .v8-card .v8-h4, .hc.v8 .problem__title, .hc.v8 .claim__title { color: var(--ink) !important; }
-.hc.v8 .v8-card .v8-body, .hc.v8 .v8-card p, .hc.v8 .problem__body { color: var(--ink-2) !important; }
+.hc.v8 .v8-card .v8-h3, .hc.v8 .v8-card .v8-h4, .hc.v8 .problem__title, .hc.v8 .claim__title { color: var(--card-ink) !important; }
+.hc.v8 .v8-card .v8-body, .hc.v8 .v8-card p, .hc.v8 .problem__body { color: var(--card-ink-2) !important; }
 .hc.v8 .pricing-card--flagship { border: 1px solid var(--accent) !important; box-shadow: 0 0 0 1px var(--accent), 0 24px 60px -40px rgba(0,0,0,0.6) !important; }
 .hc.v8 .v8-seq { background: none !important; border: 0 !important; padding: 0 !important; }
 .hc.v8 .problem__link { color: var(--ink) !important; text-decoration: none !important; }
@@ -197,13 +205,13 @@
   display: block; position: relative; width: auto; height: clamp(80px, 7vw, 104px);
   max-width: 100%; object-fit: contain; object-position: left center;
   margin: 0 0 20px; pointer-events: none;
-  filter: drop-shadow(0 16px 20px rgba(0,0,0,0.4));
+  filter: drop-shadow(0 16px 24px rgba(0,0,0,0.18));
   transition: transform var(--t-slow) var(--ease);
 }
 .hc .hc-has-obj { overflow: hidden; }
 .hc .hc-has-obj::before {
   content: ""; position: absolute; top: -60px; left: -40px; width: 240px; height: 240px;
-  border-radius: 999px; background: radial-gradient(closest-side, rgba(255,255,255,0.06), transparent 70%);
+  border-radius: 999px; background: radial-gradient(closest-side, rgba(18,18,18,0.06), transparent 70%);
   pointer-events: none;
 }
 .hc .hc-has-obj:hover .hc-obj { transform: translateY(-4px) rotate(-2deg); }
@@ -219,7 +227,7 @@
 @media (min-width: 640px) {
   .hc .stats-cells, .hc .pricing-grid, .hc .steps, .hc .why__pillars { grid-template-columns: repeat(2, minmax(0,1fr)) !important; }
 }
-@media (min-width: 1024px) {
+@media (min-width: 900px) {
   .hc .problems:not(.hc-rail) { grid-template-columns: repeat(4, minmax(0,1fr)) !important; grid-auto-rows: minmax(220px, auto); }
   .hc .problems:not(.hc-rail) > :first-child { grid-column: span 2; grid-row: span 2; }
   .hc .problems:not(.hc-rail) > :first-child .hc-obj { height: clamp(180px, 18vw, 260px); margin: 0 0 24px auto; object-position: right center; }
@@ -286,9 +294,9 @@
 .hc .v8s-01 .hero { background: transparent !important; padding-top: var(--section) !important; padding-bottom: 0 !important; }
 .hc .v8s-01 .hero__body { display: grid !important; grid-template-columns: 1fr !important; justify-items: center; }
 .hc .v8s-01 .win { width: min(100%, 880px); margin: 0 auto !important; background: var(--card) !important; border: 1px solid var(--line) !important; border-radius: var(--r) !important; box-shadow: 0 1px 1px rgba(0,0,0,0.2), 0 48px 120px -48px rgba(0,0,0,0.6) !important; color: var(--ink) !important; }
-.hc .v8s-01 .win, .hc .v8s-01 .win * { color: var(--ink) !important; }
+.hc .v8s-01 .win, .hc .v8s-01 .win * { color: var(--card-ink) !important; }
 .hc .v8s-01 .win__bar, .hc .v8s-01 .win__head { background: var(--card) !important; border-bottom: 1px solid var(--line) !important; }
-.hc .v8s-01 .win .v8-meta, .hc .v8s-01 .win .win__title { color: var(--ink-3) !important; }
+.hc .v8s-01 .win .v8-meta, .hc .v8s-01 .win .win__title { color: var(--card-ink-3) !important; }
 .hc .v8s-01 .win .bar { background: var(--card-2) !important; }
 .hc .v8s-01 .win .bar > span, .hc .v8s-01 .win .bar::after { background: var(--ink) !important; background-image: none !important; }
 .hc .v8s-01 .tstrip { background: transparent !important; padding-top: 48px !important; }
@@ -335,8 +343,8 @@
 .hc .v8s-10 .ind-card__link { padding: 0 !important; border-radius: var(--r) !important; }
 .hc .v8s-10 .ind-scroll, .hc .v8s-10 .ind-fade { display: none !important; }
 .hc .v8s-11 .pricing-close { border-top: 1px solid var(--line) !important; }
-.hc.v8 .v8s-11 .pricing-card .v8-h3, .hc.v8 .v8s-11 .pricing-amount, .hc.v8 .v8s-11 .pricing-card__meta { color: var(--ink) !important; }
-.hc.v8 .v8s-11 .pricing-min, .hc.v8 .v8s-11 .pricing-per, .hc.v8 .v8s-11 .pricing-list, .hc.v8 .v8s-11 .pricing-fit, .hc.v8 .v8s-11 .pricing-fitnote, .hc.v8 .v8s-11 .pricing-close__copy { color: var(--ink-2) !important; }
+.hc.v8 .v8s-11 .pricing-card .v8-h3, .hc.v8 .v8s-11 .pricing-amount, .hc.v8 .v8s-11 .pricing-card__meta { color: var(--card-ink) !important; }
+.hc.v8 .v8s-11 .pricing-min, .hc.v8 .v8s-11 .pricing-per, .hc.v8 .v8s-11 .pricing-list, .hc.v8 .v8s-11 .pricing-fit, .hc.v8 .v8s-11 .pricing-fitnote, .hc.v8 .v8s-11 .pricing-close__copy { color: var(--card-ink-2) !important; }
 .hc .v8s-12 .feed-card__src, .hc .v8s-12 .feed-date { color: var(--ink-3) !important; }
 .hc .v8s-13 .lead__fields input, .hc .v8s-13 .lead__fields select, .hc .v8s-13 .lead__fields textarea,
 .hc .v8s-16 .fields input, .hc .v8s-16 .fields select, .hc .v8s-16 .fields textarea { border-radius: 14px !important; border-color: var(--line-2) !important; background: var(--card) !important; color: var(--ink) !important; }
@@ -345,13 +353,13 @@
 .hc.v8 .v8s-14 .faq-item summary { padding: 18px 20px !important; }
 .hc.v8 .v8s-14 .faq-answer { padding: 0 20px 20px !important; }
 .hc.v8 .v8s-14 .faq-list { border-bottom: 0; }
-.hc.v8 .v8s-14 .v8-chip { color: var(--ink) !important; background: var(--card) !important; border: 1px solid var(--line-2) !important; }
+.hc.v8 .v8s-14 .v8-chip { color: var(--card-ink) !important; background: var(--card) !important; border: 1px solid var(--card-line) !important; }
 .hc.v8 .v8s-14 .city-list .v8-chip.is-home { color: var(--accent-ink) !important; background: var(--accent-soft) !important; border-color: var(--accent) !important; box-shadow: none !important; }
-.hc.v8 .next__standards > li { padding: 10px 18px !important; border-radius: 999px !important; }
+.hc.v8 .next__standards > li { padding: 10px 18px !important; border-radius: 999px !important; color: var(--card-ink) !important; background: var(--card) !important; border: 1px solid var(--card-line) !important; }
 .hc .v8s-16 .contact { background: transparent !important; }
 .hc .v8s-16 .contact__plate { display: none !important; }
 .hc .v8s-16 .contact .v8-h2, .hc .v8s-16 .contact .v8-h3, .hc .v8s-16 .dir, .hc .v8s-16 .dir__value { color: var(--ink) !important; -webkit-text-fill-color: var(--ink) !important; }
-.hc .v8s-16 .dir button, .hc .v8s-16 .copy { border: 1px solid var(--line-2) !important; background: var(--card) !important; color: var(--ink-2) !important; }
+.hc .v8s-16 .dir button, .hc .v8s-16 .copy { border: 1px solid var(--card-line) !important; background: var(--card) !important; color: var(--card-ink-2) !important; }
 .hc .v8s-16 .foot, .hc .v8s-16 footer { background: var(--dark-2) !important; }
 .hc .v8s-16 .foot, .hc .v8s-16 .foot * { color: rgba(245,245,245,0.82) !important; }
 .hc .v8s-16 .foot h2, .hc .v8s-16 .foot h3, .hc .v8s-16 .foot strong { color: #ffffff !important; }
@@ -388,4 +396,22 @@
   .hc-poster__figure { animation: none; }
   .hc .hc-obj, .hc .v8-btn, .hc-poster__btn, .hc-nav__link, .hc-dot::before { transition: none !important; }
   .hc .hc-has-obj:hover .hc-obj { transform: none; }
+}
+
+/* Force white card surfaces: beat the v8-dashboard spotlight wash (higher specificity + !important) */
+.hc.v8 :is(.v8s-02 .claims > *, .v8s-04 .problem, .v8s-05 .v8-card, .v8s-08 .why__pillars li, .v8s-11 .v8-card, .v8s-12 .feed-card, .v8s-14 .faq-item, .v8s-15 .next__standards li),
+.hc.v8 .v8-card, .hc.v8 .v8-box .v8-card, .hc.v8 .stats-cell, .hc.v8 .svc-path,
+.hc.v8 .proof-cells > li, .hc.v8 .proof-rail > li, .hc.v8 .proof-panel,
+.hc.v8 .pricing-card, .hc.v8 .step, .hc.v8 .feed-card, .hc.v8 .claim, .hc.v8 .claims > *,
+.hc.v8 .why__pillars > li, .hc.v8 .lead__form, .hc.v8 .tackle__ask, .hc.v8 .faq-item,
+.hc.v8 .tstrip__items > li, .hc.v8 .next__standards > li {
+  background-image: none !important;
+  background-color: var(--card) !important;
+}
+/* Card text on white surfaces */
+.hc.v8 :is(.v8s-02 .claims > *, .v8s-04 .problem, .v8s-05 .v8-card, .v8s-08 .why__pillars li, .v8s-11 .v8-card, .v8s-12 .feed-card, .v8s-14 .faq-item, .v8s-15 .next__standards li) .v8-h3,
+.hc.v8 :is(.v8s-02 .claims > *, .v8s-04 .problem, .v8s-05 .v8-card, .v8s-08 .why__pillars li, .v8s-11 .v8-card, .v8s-12 .feed-card, .v8s-14 .faq-item, .v8s-15 .next__standards li) .v8-h4,
+.hc.v8 :is(.v8s-02 .claims > *, .v8s-04 .problem, .v8s-05 .v8-card, .v8s-08 .why__pillars li, .v8s-11 .v8-card, .v8s-12 .feed-card, .v8s-14 .faq-item, .v8s-15 .next__standards li) .v8-body,
+.hc.v8 :is(.v8s-02 .claims > *, .v8s-04 .problem, .v8s-05 .v8-card, .v8s-08 .why__pillars li, .v8s-11 .v8-card, .v8s-12 .feed-card, .v8s-14 .faq-item, .v8s-15 .next__standards li) p {
+  color: var(--card-ink) !important;
 }
