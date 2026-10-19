@@ -109,6 +109,9 @@ describe("public solution Door 2 API", () => {
         selectedNeeds: [{ familyId: "identity_access", offerId: "de-identity-standalone", deliveryModel: "standalone" }],
         deliveryPreference: "standalone",
         environment: {
+          firstName: "Jordan",
+          lastName: "Buyer",
+          accountType: "individual",
           userCount: "25",
           workstationCount: "32",
           mobileDeviceCount: "18",
@@ -147,6 +150,9 @@ describe("public solution Door 2 API", () => {
         contactPhone: "480-555-0100",
         organizationName: "Example Medical",
         environment: {
+          firstName: "Jordan",
+          lastName: "Buyer",
+          accountType: "individual",
           userCount: "42",
           workstationCount: "48",
           mobileDeviceCount: "20",
@@ -188,7 +194,7 @@ describe("public solution Door 2 API", () => {
         contactEmail: "jordan@example.com",
         contactPhone: "480-555-0100",
         organizationName: "Example Medical",
-        environment: { userCount: "9", workstationCount: "9", mobileDeviceCount: "4", siteCount: "1", deviceOwnership: "company", internalIt: "unsure" },
+        environment: { firstName: "Jordan", lastName: "Buyer", accountType: "individual", userCount: "9", workstationCount: "9", mobileDeviceCount: "4", siteCount: "1", deviceOwnership: "company", internalIt: "unsure" },
       }),
     });
     expect(response.status).toBe(200);
@@ -207,7 +213,7 @@ describe("public solution Door 2 API", () => {
         familyId: "identity_access",
         contactName: "Jordan Buyer",
         contactEmail: "jordan@example.com",
-        environment: { userCount: "9", workstationCount: "9", mobileDeviceCount: "4", siteCount: "1", deviceOwnership: "company", internalIt: "unsure" },
+        environment: { firstName: "Jordan", lastName: "Buyer", accountType: "individual", userCount: "9", workstationCount: "9", mobileDeviceCount: "4", siteCount: "1", deviceOwnership: "company", internalIt: "unsure" },
       }),
     });
     expect(missing.status).toBe(400);
@@ -222,7 +228,7 @@ describe("public solution Door 2 API", () => {
       contactEmail: "jordan@example.com",
       contactPhone: "480-555-0100",
       organizationName: "Example Medical",
-      environment: { userCount: "9", workstationCount: "9", mobileDeviceCount: "4", siteCount: "1", deviceOwnership: "company", internalIt: "unsure" },
+      environment: { firstName: "Jordan", lastName: "Buyer", accountType: "individual", userCount: "9", workstationCount: "9", mobileDeviceCount: "4", siteCount: "1", deviceOwnership: "company", internalIt: "unsure" },
       idempotencyKey: "door2-test-key",
     };
     const first = await fetch(`${baseUrl}/api/public/solutions/request`, {
@@ -256,7 +262,7 @@ describe("public solution Door 2 API", () => {
         contactEmail: "riley@example.com",
         contactPhone: "480-555-0199",
         organizationName: "Riley Accounting",
-        environment: { userCount: "12", workstationCount: "14", mobileDeviceCount: "6", siteCount: "1", deviceOwnership: "company", internalIt: "no" },
+        environment: { firstName: "Jordan", lastName: "Buyer", accountType: "individual", userCount: "12", workstationCount: "14", mobileDeviceCount: "6", siteCount: "1", deviceOwnership: "company", internalIt: "no" },
         ...extra,
       }),
     });
@@ -414,7 +420,7 @@ describe("public solution Door 2 API", () => {
   });
 
   it("refuses a submit with no profile before it stores any contact detail, and swallows honeypot bots", async () => {
-    const noProfile = await fourFieldSubmit({ environment: { userCount: "12" }, idempotencyKey: "no-profile" });
+    const noProfile = await fourFieldSubmit({ environment: { firstName: "Jordan", lastName: "Buyer", accountType: "individual", userCount: "12" }, idempotencyKey: "no-profile" });
     expect(noProfile.status).toBe(400);
     const noProfileBody = await noProfile.json();
     expect(noProfileBody.code).toBe("PROFILE_INCOMPLETE");
@@ -584,3 +590,4 @@ describe("public solution Door 2 API", () => {
     });
   });
 });
+

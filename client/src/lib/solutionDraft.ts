@@ -38,6 +38,10 @@ export type SolutionDraftNeed = {
  * of truth for quantities and fulfillment.
  */
 export type SolutionEnvironment = {
+  firstName: string;
+  lastName: string;
+  businessName: string;
+  accountType: "individual" | "business" | "";
   userCount: string;
   workstationCount: string;
   mobileDeviceCount: string;
@@ -93,6 +97,10 @@ export const FAMILY_IDS: ReadonlySet<string> = new Set(curatedSolutionFamilies.m
 
 export function emptyEnvironment(): SolutionEnvironment {
   return {
+    firstName: "",
+    lastName: "",
+    businessName: "",
+    accountType: "",
     userCount: "",
     workstationCount: "",
     mobileDeviceCount: "",
@@ -239,6 +247,10 @@ export function parseDraft(raw: unknown): SolutionDraft {
     deliveryPreference,
     intent: asIntent(input.intent),
     environment: {
+      firstName: clip(environmentInput.firstName, 60),
+      lastName: clip(environmentInput.lastName, 60),
+      businessName: clip(environmentInput.businessName, 120),
+      accountType: environmentInput.accountType === "individual" || environmentInput.accountType === "business" ? environmentInput.accountType : "",
       userCount: clip(environmentInput.userCount, 12),
       workstationCount: clip(environmentInput.workstationCount, 12),
       mobileDeviceCount: clip(environmentInput.mobileDeviceCount, 12),
@@ -331,7 +343,12 @@ function countReady(value: string, allowZero = false): boolean {
 }
 
 export function isProfileComplete(environment: SolutionEnvironment): boolean {
-  return profileGaps(environment).length === 0;
+  if (profileGaps(environment).length > 0) return false;
+  if (environment.firstName.trim() === "") return false;
+  if (environment.lastName.trim() === "") return false;
+  if (environment.accountType !== "individual" && environment.accountType !== "business") return false;
+  if (environment.accountType === "business" && environment.businessName.trim() === "") return false;
+  return true;
 }
 
 /** What is still missing from the profile, in the buyer's words, in the order the strip asks. */

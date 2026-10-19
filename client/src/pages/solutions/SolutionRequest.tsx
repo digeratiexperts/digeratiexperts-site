@@ -173,6 +173,22 @@ export default function SolutionRequest() {
   const wide = useMinWidth(1024);
 
   const [fields, setFields] = useState<PublicContactFields>(EMPTY_FIELDS);
+  // Reuse the name captured in the profile step instead of asking again.
+  useEffect(() => {
+    setFields((current) => {
+      const next = { ...current };
+      const env = draft.environment;
+      if (next.contactName.trim() === "") {
+        const full = [env.firstName, env.lastName].filter(Boolean).join(" ").trim();
+        if (full) next.contactName = full;
+      }
+      if (next.organizationName.trim() === "" && env.businessName.trim() !== "") {
+        next.organizationName = env.businessName.trim();
+      }
+      return next;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draft.environment.firstName, draft.environment.lastName, draft.environment.businessName]);
   const [problems, setProblems] = useState<Problems>({});
   const [formError, setFormError] = useState("");
   const [honeypot, setHoneypot] = useState("");

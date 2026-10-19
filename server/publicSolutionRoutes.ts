@@ -37,7 +37,7 @@ import {
 } from "./publicSolutionRequestStore";
 
 const SESSION_COOKIE = "de_solution_request";
-import { EMAIL_RE } from "../shared/publicContact";
+import { EMAIL_RE, isValidName } from "../shared/publicContact";
 
 const SESSION_COOKIE_OPTIONS = {
   httpOnly: true,
@@ -219,7 +219,7 @@ export function registerPublicSolutionRoutes(app: Express): void {
     const contactPhone = typeof req.body?.contactPhone === "string" ? req.body.contactPhone.trim() : "";
     if (
       organizationName.length < 2 ||
-      contactName.length < 2 ||
+      !isValidName(contactName) ||
       !EMAIL_RE.test(contactEmail) ||
       contactPhone.replace(/\D/g, "").length < 7
     ) {

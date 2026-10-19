@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { useAnnouncer } from "@/components/AccessibleAnnouncer";
 import { ChoiceTiles } from "@/components/store/door2/ChoiceTiles";
+import { nameProblem } from "@shared/publicContact";
 import { LiveLine } from "@/components/store/door2/primitives";
 import {
   isProfileComplete,
@@ -297,6 +298,70 @@ export function SolutionProfileForm({
           >
             Done
           </button>
+        ) : null}
+      </div>
+
+      <div className="mt-6 grid gap-4 sm:grid-cols-2">
+        <div className="d2-field">
+          <label htmlFor="profile-first-name" className="d2-field__label">First name</label>
+          <input
+            id="profile-first-name"
+            className="d2-input"
+            autoComplete="given-name"
+            value={environment.firstName}
+            onChange={(event) => onChange("firstName", event.target.value)}
+            aria-invalid={nameProblem(environment.firstName, "first name") ? "true" : undefined}
+          />
+          {nameProblem(environment.firstName, "first name") ? (
+            <p className="d2-field__error">{nameProblem(environment.firstName, "first name")}</p>
+          ) : null}
+        </div>
+        <div className="d2-field">
+          <label htmlFor="profile-last-name" className="d2-field__label">Last name</label>
+          <input
+            id="profile-last-name"
+            className="d2-input"
+            autoComplete="family-name"
+            value={environment.lastName}
+            onChange={(event) => onChange("lastName", event.target.value)}
+            aria-invalid={nameProblem(environment.lastName, "last name") ? "true" : undefined}
+          />
+          {nameProblem(environment.lastName, "last name") ? (
+            <p className="d2-field__error">{nameProblem(environment.lastName, "last name")}</p>
+          ) : null}
+        </div>
+        <div className="d2-field sm:col-span-2">
+          <label className="d2-field__label">Account type</label>
+          <div className="flex flex-wrap gap-3">
+            {(["individual", "business"] as const).map((value) => (
+              <button
+                key={value}
+                type="button"
+                className="d2-chip"
+                style={environment.accountType === value ? { borderColor: "var(--d2-accent)", color: "var(--d2-accent-ink)", background: "color-mix(in srgb, var(--d2-accent) 12%, transparent)" } : undefined}
+                onClick={() => onChange("accountType", value)}
+                aria-pressed={environment.accountType === value}
+              >
+                {value === "individual" ? "Individual" : "Business"}
+              </button>
+            ))}
+          </div>
+        </div>
+        {environment.accountType === "business" ? (
+          <div className="d2-field sm:col-span-2">
+            <label htmlFor="profile-business-name" className="d2-field__label">Business name</label>
+            <input
+              id="profile-business-name"
+              className="d2-input"
+              autoComplete="organization"
+              value={environment.businessName}
+              onChange={(event) => onChange("businessName", event.target.value)}
+              aria-invalid={nameProblem(environment.businessName, "business name") ? "true" : undefined}
+            />
+            {nameProblem(environment.businessName, "business name") ? (
+              <p className="d2-field__error">{nameProblem(environment.businessName, "business name")}</p>
+            ) : null}
+          </div>
         ) : null}
       </div>
 

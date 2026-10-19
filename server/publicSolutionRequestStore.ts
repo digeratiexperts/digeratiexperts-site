@@ -1,5 +1,6 @@
 import { createHash, randomUUID } from "crypto";
 import { normalizeSolutionReference, REFERENCE_PATTERN } from "@shared/solutionReference";
+import { isValidName } from "@shared/publicContact";
 import { curatedSolutionFamilies, type CuratedDeliveryModel, type CuratedSolutionFamily } from "../client/src/data/curatedSolutions";
 import { FAMILY_PACKAGE_POLICY, preferredInstallMode, type InstallMode } from "../client/src/lib/solutionPackage";
 import {
@@ -27,6 +28,10 @@ export type SolutionNextStep = "quote" | "consultation" | "assessment";
 export type SolutionDurability = "database" | "spool" | "crm" | "email" | "memory";
 
 export type PublicSolutionEnvironment = {
+  firstName: string;
+  lastName: string;
+  businessName: string;
+  accountType: string;
   userCount: string;
   workstationCount: string;
   mobileDeviceCount: string;
@@ -138,6 +143,9 @@ function countReady(value: string, allowZero = false): boolean {
 
 /** The same six facts the client requires before it lets a buyer continue. */
 export function isPublicProfileComplete(environment: PublicSolutionEnvironment): boolean {
+  if (!isValidName(environment.firstName) || !isValidName(environment.lastName)) return false;
+  if (environment.accountType !== "individual" && environment.accountType !== "business") return false;
+  if (environment.accountType === "business" && !isValidName(environment.businessName)) return false;
   return (
     countReady(environment.userCount) &&
     countReady(environment.workstationCount, true) &&
@@ -193,6 +201,10 @@ export function publicOfferInFamily(
 
 function emptyEnvironment(): PublicSolutionEnvironment {
   return {
+    firstName: "",
+    lastName: "",
+    businessName: "",
+    accountType: "",
     userCount: "",
     workstationCount: "",
     mobileDeviceCount: "",
@@ -318,6 +330,10 @@ function clip(value: unknown, max: number): string {
 function parseEnvironment(value: unknown, fallback: PublicSolutionEnvironment): PublicSolutionEnvironment {
   const input = value && typeof value === "object" ? (value as Record<string, unknown>) : {};
   return {
+    firstName: clip(input.firstName ?? fallback.firstName, 60),
+    lastName: clip(input.lastName ?? fallback.lastName, 60),
+    businessName: clip(input.businessName ?? fallback.businessName, 120),
+    accountType: (input.accountType === "individual" || input.accountType === "business" ? input.accountType : fallback.accountType) as string,
     userCount: clip(input.userCount ?? fallback.userCount, 12),
     workstationCount: clip(input.workstationCount ?? fallback.workstationCount, 12),
     mobileDeviceCount: clip(input.mobileDeviceCount ?? fallback.mobileDeviceCount, 12),

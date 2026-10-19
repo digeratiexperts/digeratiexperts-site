@@ -18,6 +18,10 @@ import {
 } from "./solutionDraft";
 
 const sized = {
+  firstName: "Alex",
+  lastName: "Buyer",
+  businessName: "",
+  accountType: "individual" as const,
   userCount: "25",
   workstationCount: "32",
   mobileDeviceCount: "18",
@@ -124,7 +128,7 @@ describe("SolutionDraft", () => {
   it("treats sizing profile and fulfillment as first-class saved state, and names gaps in buyer words", () => {
     let draft = emptyDraft();
     expect(profileGaps(draft.environment)).toEqual(["users", "computers", "mobile devices", "sites", "device ownership", "internal IT"]);
-    draft = patchEnvironment(draft, { userCount: "25", workstationCount: "32", mobileDeviceCount: "18", siteCount: "2", deviceOwnership: "hybrid", internalIt: "no" });
+    draft = patchEnvironment(draft, { firstName: "Jo", lastName: "Buyer", accountType: "individual", userCount: "25", workstationCount: "32", mobileDeviceCount: "18", siteCount: "2", deviceOwnership: "hybrid", internalIt: "no" });
     draft = patchFulfillment(draft, { installation: "remote_assist", remoteSupport: "as_needed" });
     expect(isProfileComplete(draft.environment)).toBe(true);
     expect(profileSummary(draft.environment)).toBe("25 users · 32 computers · 18 mobile devices · 2 sites");
