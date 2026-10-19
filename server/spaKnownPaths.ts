@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Prefix/exact allowlist for production SPA catch-all status codes.
  * Known client routes get 200 + index.html; everything else gets 404 + index.html
  * so crawlers see a real not-found without breaking deep links.
@@ -18,8 +18,6 @@ const EXACT = new Set([
   "/version-8",
   "/version-9",
   "/version-10",
-  "/concepts/home-simple",
-  "/concepts/home-monday",
   "/concepts/home-chapters",
   "/solutions",
   "/solutions/managed-it-support",
@@ -195,3 +193,4 @@ export function isKnownSpaPath(pathname: string): boolean {
   if (EXACT.has(path)) return true;
   return PREFIXES.some((prefix) => path === prefix.replace(/\/+$/, "") || path.startsWith(prefix));
 }
+

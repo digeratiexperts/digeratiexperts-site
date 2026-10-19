@@ -1,4 +1,4 @@
-﻿import { Switch, Route, Redirect, useLocation } from "wouter";
+import { Switch, Route, Redirect, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -189,8 +189,6 @@ const HomepageV7 = lazy(() => import("@/pages/versions/v7/HomepageV7"));
 const HomepageV8 = lazy(() => import("@/pages/versions/v8/HomepageV8"));
 const HomepageV9 = lazy(() => import("@/pages/versions/v9/HomepageV9"));
 const HomepageV10 = lazy(() => import("@/pages/versions/v10/HomepageV10"));
-const HomeSimple = lazy(() => import("@/pages/concepts/HomeSimple").then((m) => ({ default: m.HomeSimple })));
-const HomeMonday = lazy(() => import("@/pages/concepts/HomeMonday").then((m) => ({ default: m.HomeMonday })));
 const HomeChapters = lazy(() => import("@/pages/concepts/HomeChapters").then((m) => ({ default: m.HomeChapters })));
 
 const WarehouseGate = lazy(() => import("@/pages/store/WarehouseGate"));
@@ -211,20 +209,10 @@ function Router() {
         </Suspense>
       )} />
 
-      {/* Concept: simpler homepage story (Exploration, 2026-10-18) â€” review only, noindex, not in navigation */}
-      <Route path="/concepts/home-simple" component={() => (
-        <Suspense fallback={<PageLoadingSkeleton />}>
-          <HomeSimple />
-        </Suspense>
-      )} />
+      {/* Concept: dark-first premium homepage (Exploration, 2026-10-19) - review only, noindex, not in navigation */}
       <Route path="/concepts/home-chapters" component={() => (
         <Suspense fallback={<PageLoadingSkeleton />}>
           <HomeChapters />
-        </Suspense>
-      )} />
-      <Route path="/concepts/home-monday" component={() => (
-        <Suspense fallback={<PageLoadingSkeleton />}>
-          <HomeMonday />
         </Suspense>
       )} />
 
@@ -1184,7 +1172,7 @@ function AppContent() {
   const isPortal = location.startsWith("/portal");
   const isHome = location === "/";
   // / (Version 8), /version-0 (the previous homepage), /version-7, /version-9 and /version-10 mount their own bottom bar.
-  const ownsBottomBar = isHome || location === "/version-0" || location === "/version-7" || location === "/version-9" || location === "/version-10" || location === "/concepts/home-simple" || location === "/concepts/home-monday" || location === "/concepts/home-chapters";
+  const ownsBottomBar = isHome || location === "/version-0" || location === "/version-7" || location === "/version-9" || location === "/version-10" || location === "/concepts/home-chapters";
   const hideDoor2HelpDock = isDoor2Path(location) && location.split("?")[0] !== "/store";
   const hideWarehouseChrome = isWarehousePath(location);
   const accent = isPortal ? undefined : accentFor(location);
@@ -1236,3 +1224,4 @@ function App() {
 }
 
 export default App;
+
