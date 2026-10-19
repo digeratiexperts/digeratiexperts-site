@@ -102,6 +102,8 @@ Generated card objects/plates run through `.claude/kie-budget/`:
 `$env:KIE_JOB = "<name>"` before `kie.mjs still ... --approved "Joe, <date>" --cap 15`.
 Standing caps quoted in-session (e.g. Joe 2026-10-19: "$20" job window, month
 soft "$25" in limits.json) - never print keys, cite the approval and job name in
-the PR body. Alpha-cut generated objects to transparent WebP before wiring into
-cards (sharp: luminance key + trim + `webp({quality:84})`), and keep the source
-PNGs under `artifacts/kie-ai/` as review candidates.
+the PR body. **Asset rule (Joe, 2026-10-19):** only generate kie.ai assets that have a real
+purpose in the design (one object per card that carries meaning, one plate per
+stage that carries mood) - never batch-generate filler. But where an asset earns
+its place, spend freely within the approved cap; quality beats thrift. Record
+every generation in the kie-budget ledger with the job name and approval quote.
