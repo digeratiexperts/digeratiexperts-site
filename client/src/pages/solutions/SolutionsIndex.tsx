@@ -10,6 +10,7 @@ import {
   IndexedList,
   buttonSecondary,
   cardDark,
+  textLinkClass,
 } from "@/components/site/chapters";
 import { 
   CheckCircle, ArrowRight, Shield, Headphones, Wifi, Monitor, 
@@ -239,6 +240,13 @@ const SolutionsIndex = () => {
             tone="surface"
             items={foundationServices.map((s) => ({ icon: s.icon, title: s.title, text: s.description }))}
           />
+          <p className="mt-8 max-w-3xl text-base text-white/70">
+            Weighing an AI budget against these basics?{" "}
+            <a href="/solutions/efficiency-before-ai" className={textLinkClass("surface")} data-testid="link-efficiency-before-ai">
+              Why your team’s efficiency comes before AI readiness
+              <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" aria-hidden="true" />
+            </a>
+          </p>
         </Container>
       </Chapter>
 
