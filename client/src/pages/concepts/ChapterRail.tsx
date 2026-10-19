@@ -13,6 +13,7 @@ type Props = {
 export function ChapterRail({ sectionRef, gridSelector, label }: Props): JSX.Element | null {
   const [count, setCount] = useState(0);
   const [index, setIndex] = useState(0);
+  const [overflows, setOverflows] = useState(false);
   const gridRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
@@ -25,6 +26,12 @@ export function ChapterRail({ sectionRef, gridSelector, label }: Props): JSX.Ele
     grid.tabIndex = 0;
     grid.setAttribute("aria-label", `${label}, use arrow keys to move`);
     setCount(grid.children.length);
+
+    // Controls only when the row actually overflows; a row that fits needs none.
+    const measure = () => setOverflows(grid.scrollWidth > grid.clientWidth + 8);
+    measure();
+    const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(measure) : null;
+    ro?.observe(grid);
 
     const onScroll = () => {
       const first = grid.children[0] as HTMLElement | undefined;
@@ -41,6 +48,7 @@ export function ChapterRail({ sectionRef, gridSelector, label }: Props): JSX.Ele
     return () => {
       grid.removeEventListener("scroll", onScroll);
       grid.removeEventListener("keydown", onKey);
+      ro?.disconnect();
       grid.classList.remove("hc-rail");
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -55,7 +63,7 @@ export function ChapterRail({ sectionRef, gridSelector, label }: Props): JSX.Ele
     setIndex(clamped);
   };
 
-  if (count < 2) return null;
+  if (count < 2 || !overflows) return null;
 
   return (
     <div className="hc-railbar">

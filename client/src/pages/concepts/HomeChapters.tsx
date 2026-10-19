@@ -53,6 +53,8 @@ const navItems = ["hero", "stats", "services", "pricing", "testimonials", "team"
 const rails: Record<string, { selector: string; label: string }> = {
   challenges: { selector: ".problems", label: "problem" },
   pricing: { selector: ".pricing-grid", label: "plan" },
+  industries: { selector: ".ind-rail", label: "industry" },
+  testimonials: { selector: ".proof-cells", label: "outcome" },
 };
 
 // ILLUSTRATIVE kie.ai plates (abstract, no people, no text), faint atmosphere behind three chapters.

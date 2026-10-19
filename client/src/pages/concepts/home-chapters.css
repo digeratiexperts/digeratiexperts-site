@@ -976,3 +976,17 @@
   margin: 8px auto 0;
   padding-bottom: 24px;
 }
+
+/* Industries rail: the section's own narrow-width arrows stay hidden on this page; the shared rail bar drives it */
+.hc .v8s-10 .ind-scroll,
+.hc .v8s-10 .ind-fade {
+  display: none !important;
+}
+.hc .v8s-10 .hc-rail > .ind-card {
+  flex-basis: min(86%, 300px);
+}
+@media (min-width: 900px) {
+  .hc .v8s-10 .hc-rail > .ind-card {
+    flex-basis: 300px;
+  }
+}
