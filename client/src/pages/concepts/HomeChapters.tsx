@@ -7,6 +7,10 @@ import "./home-chapters.css";
 import "../versions/v8/v8-dashboard.css";
 import { useRef, useState, useEffect, createRef, type RefObject } from "react";
 import { ChapterRail } from "./ChapterRail";
+import { useCardObjects } from "./CardObjects";
+import { Link } from "wouter";
+import { ArrowRight } from "lucide-react";
+import { PRIMARY_PHONE } from "@/data/companyContact";
 import { MegaMenu } from "@/components/MegaMenu";
 import { SiteBottomBar } from "@/components/SiteBottomBar";
 import { useSEO } from "@/hooks/useSEO";
@@ -51,8 +55,6 @@ const navItems = ["hero", "stats", "services", "pricing", "testimonials", "team"
 
 // Card rows that become horizontal rails on this page (content unchanged). Selector = the existing grid.
 const rails: Record<string, { selector: string; label: string }> = {
-  challenges: { selector: ".problems", label: "problem" },
-  pricing: { selector: ".pricing-grid", label: "plan" },
   industries: { selector: ".ind-rail", label: "industry" },
   testimonials: { selector: ".proof-cells", label: "outcome" },
 };
@@ -72,6 +74,7 @@ export function HomeChapters(): JSX.Element {
     Object.fromEntries(chapters.map((c) => [c.id, createRef<HTMLElement>()])),
   );
   useSpotlight(rootRef);
+  useCardObjects(rootRef);
   useSEO({
     title: "Concept: chapter homepage",
     description: "Review concept. Not the live homepage.",
@@ -146,6 +149,26 @@ export function HomeChapters(): JSX.Element {
             })}
           </ul>
         </nav>
+        <section className="hc-poster" aria-labelledby="hc-poster-title">
+          <div className="hc-poster__dark" aria-hidden="true" />
+          <div className="hc-wrap hc-poster__grid">
+            <div className="hc-poster__copy">
+              <p className="hc-poster__eyebrow">Arizona MSP. Cybersecurity &amp; Managed IT.</p>
+              <h1 id="hc-poster-title" className="hc-poster__title">
+                Cybersecurity-first IT<br />that powers<br />your business.
+              </h1>
+              <p className="hc-poster__sub">Managed IT, security and compliance for Arizona businesses that can&rsquo;t afford downtime.</p>
+              <div className="hc-poster__actions">
+                <Link href="/book" className="hc-poster__btn">Get a Cyber Risk Assessment <ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
+                <a href={PRIMARY_PHONE.telHref} className="hc-poster__call">Call {PRIMARY_PHONE.display}</a>
+              </div>
+            </div>
+            <figure className="hc-poster__figure">
+              <img src="/images/founder/joe-petro-studio-blazer-white.jpg" alt="Joseph Petro, Founder of Digerati Experts" width={900} height={1100} fetchPriority="high" />
+              <figcaption><span>Joseph Petro</span><span>Founder &amp; Chief Technology Strategist</span></figcaption>
+            </figure>
+          </div>
+        </section>
         {chapters.map((c) => (
           <section key={c.id} id={c.id} ref={sectionRefs.current[c.id]} className={`hc-section${plates[c.id] ? " hc-section--plate" : ""}`} aria-label={c.label}>
             {plates[c.id] && (

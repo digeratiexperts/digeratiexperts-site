@@ -1,0 +1,1172 @@
+[
+  {
+    "family": "KIE-AI",
+    "frame": "monday-hero-plate-01",
+    "page": "",
+    "provider": "kie.ai",
+    "model": "gpt-image-2-text-to-image",
+    "input": {
+      "prompt": "Abstract environment plate for a cybersecurity company website: deep graphite-black field, soft violet light bloom in the upper right, thin magenta light lines in a quiet grid receding into the distance, a single faint three-bar motif made of horizontal light strokes. No people, no faces, no text, no logos, no screens. Calm, premium, minimal, photographic depth of field.",
+      "aspect_ratio": "16:9"
+    },
+    "prompt": "Abstract environment plate for a cybersecurity company website: deep graphite-black field, soft violet light bloom in the upper right, thin magenta light lines in a quiet grid receding into the distance, a single faint three-bar motif made of horizontal light strokes. No people, no faces, no text, no logos, no screens. Calm, premium, minimal, photographic depth of field.",
+    "refs": [],
+    "aspect": "16:9",
+    "taskId": "5d582d4804a0a1c44fa02762f1c55f2a",
+    "submittedAt": "2026-10-18T17:51:03.495Z",
+    "approvedBy": "Joe, 2026-10-18, up to USD 20 kie.ai",
+    "cap": 15,
+    "creditsBefore": 9604,
+    "classification": "ILLUSTRATIVE",
+    "status": "candidate",
+    "usage": [],
+    "license": "DE-generated under kie.ai commercial terms (Joe confirms the provider terms once)",
+    "completedAt": "2026-10-18T17:52:20.420Z",
+    "resultUrls": [
+      "https://tempfile.aiquickdraw.com/images/chatgpt/file_00000000bac081f6b9f9fc5ef8212a5e.png"
+    ],
+    "kie": {
+      "costTime": 65,
+      "createTime": 1792345862771,
+      "completeTime": 1792345928488,
+      "creditsConsumed": 6
+    },
+    "creditsAfter": 9598,
+    "creditsSpent": 6,
+    "capExceeded": false,
+    "file": "artifacts\\kie-ai\\monday-hero-plate-01.png",
+    "sha256": "97f7c21cd89002d040a0cd6b6cef2ddf7208e1aa6d23b892857ac28808bf6351",
+    "bytes": 1515868
+  },
+  {
+    "family": "KIE-AI",
+    "frame": "monday-showcase-plate-01",
+    "page": "",
+    "provider": "kie.ai",
+    "model": "gpt-image-2-text-to-image",
+    "input": {
+      "prompt": "Abstract light architecture for a dark graphite product section: a soft paper-white plane catching a single magenta light edge, layered translucent glass panes at different depths, subtle violet glow at the far edge, empty of objects that could be read as people, screens or text. No faces, no logos, no text. Minimal, premium, photographic lighting.",
+      "aspect_ratio": "16:9"
+    },
+    "prompt": "Abstract light architecture for a dark graphite product section: a soft paper-white plane catching a single magenta light edge, layered translucent glass panes at different depths, subtle violet glow at the far edge, empty of objects that could be read as people, screens or text. No faces, no logos, no text. Minimal, premium, photographic lighting.",
+    "refs": [],
+    "aspect": "16:9",
+    "taskId": "48a7d7b3733551e99ce3c4aaf0d8fe95",
+    "submittedAt": "2026-10-18T17:52:51.550Z",
+    "approvedBy": "Joe, 2026-10-18, up to USD 20 kie.ai",
+    "cap": 15,
+    "creditsBefore": 9598,
+    "classification": "ILLUSTRATIVE",
+    "status": "candidate",
+    "usage": [],
+    "license": "DE-generated under kie.ai commercial terms (Joe confirms the provider terms once)",
+    "completedAt": "2026-10-18T17:54:38.750Z",
+    "resultUrls": [
+      "https://tempfile.aiquickdraw.com/images/chatgpt/file_000000006bf881f5b7f1c5205f3a03db.png"
+    ],
+    "kie": {
+      "costTime": 92,
+      "createTime": 1792345970821,
+      "completeTime": 1792346063900,
+      "creditsConsumed": 6
+    },
+    "creditsAfter": 9592,
+    "creditsSpent": 6,
+    "capExceeded": false,
+    "file": "artifacts\\kie-ai\\monday-showcase-plate-01.png",
+    "sha256": "74374b36a7df74cb3cd0eb2c6558e79fac4e64ed14392c2f08a4f46754bb16a3",
+    "bytes": 1701727
+  },
+  {
+    "family": "KIE-AI",
+    "frame": "monday-close-plate-01",
+    "page": "",
+    "provider": "kie.ai",
+    "model": "gpt-image-2-text-to-image",
+    "input": {
+      "prompt": "Abstract closing scene for a cybersecurity firm: deep graphite-black night field with a faint horizon glow in soft violet and warm amber far away, a fine magenta grid fading into darkness, no buildings, no people, no faces, no text, no logos. Calm, premium, minimal.",
+      "aspect_ratio": "16:9"
+    },
+    "prompt": "Abstract closing scene for a cybersecurity firm: deep graphite-black night field with a faint horizon glow in soft violet and warm amber far away, a fine magenta grid fading into darkness, no buildings, no people, no faces, no text, no logos. Calm, premium, minimal.",
+    "refs": [],
+    "aspect": "16:9",
+    "taskId": "6d66802ed223e7e5ffef2567c85cdf83",
+    "submittedAt": "2026-10-18T17:54:39.574Z",
+    "approvedBy": "Joe, 2026-10-18, up to USD 20 kie.ai",
+    "cap": 15,
+    "creditsBefore": 9592,
+    "classification": "ILLUSTRATIVE",
+    "status": "candidate",
+    "usage": [],
+    "license": "DE-generated under kie.ai commercial terms (Joe confirms the provider terms once)",
+    "completedAt": "2026-10-18T17:55:41.229Z",
+    "resultUrls": [
+      "https://tempfile.aiquickdraw.com/images/chatgpt/file_00000000568081f7a0404c5a8cde68f8.png"
+    ],
+    "kie": {
+      "costTime": 55,
+      "createTime": 1792346078847,
+      "completeTime": 1792346134578,
+      "creditsConsumed": 6
+    },
+    "creditsAfter": 9586,
+    "creditsSpent": 6,
+    "capExceeded": false,
+    "file": "artifacts\\kie-ai\\monday-close-plate-01.png",
+    "sha256": "1432e3ccbd6707f6b81224e84f7561ac9667a1f004145d6d00de05eedd37d10c",
+    "bytes": 1540032
+  },
+  {
+    "family": "KIE-AI",
+    "frame": "light-hero-plate-01",
+    "page": "",
+    "provider": "kie.ai",
+    "model": "gpt-image-2-text-to-image",
+    "input": {
+      "prompt": "Bright, airy abstract hero backdrop for a premium technology company website on a warm off-white field: soft translucent glass panels in pale lavender and blush tones floating at different depths, gentle daylight from the upper left, long soft shadows, a faint horizontal three-bar motif in light grey. Wide composition with empty space on the left for a headline. No people, no faces, no text, no logos, no screens. Clean, minimal, photographic, high key.",
+      "aspect_ratio": "16:9"
+    },
+    "prompt": "Bright, airy abstract hero backdrop for a premium technology company website on a warm off-white field: soft translucent glass panels in pale lavender and blush tones floating at different depths, gentle daylight from the upper left, long soft shadows, a faint horizontal three-bar motif in light grey. Wide composition with empty space on the left for a headline. No people, no faces, no text, no logos, no screens. Clean, minimal, photographic, high key.",
+    "refs": [],
+    "aspect": "16:9",
+    "taskId": "7d54ef7d3b3ebbb7d2774ac8a0a1074f",
+    "submittedAt": "2026-10-19T02:49:51.494Z",
+    "approvedBy": "Joe, 2026-10-18, up to USD 20 kie.ai",
+    "cap": 15,
+    "creditsBefore": 9586,
+    "classification": "ILLUSTRATIVE",
+    "status": "candidate",
+    "usage": [],
+    "license": "DE-generated under kie.ai commercial terms (Joe confirms the provider terms once)",
+    "completedAt": "2026-10-19T02:50:53.385Z",
+    "resultUrls": [
+      "https://tempfile.aiquickdraw.com/images/chatgpt/file_00000000757c81f5b35bdbb78623e4e4.png"
+    ],
+    "kie": {
+      "costTime": 52,
+      "createTime": 1792378190924,
+      "completeTime": 1792378243207,
+      "creditsConsumed": 6
+    },
+    "creditsAfter": 9580,
+    "creditsSpent": 6,
+    "capExceeded": false,
+    "file": "artifacts\\kie-ai\\light-hero-plate-01.png",
+    "sha256": "057a3639e1c81def13dbf5a3959f059e32744e79aeba1f08aff7502c87f26ea8",
+    "bytes": 1463484
+  },
+  {
+    "family": "KIE-AI",
+    "frame": "light-section-plate-01",
+    "page": "",
+    "provider": "kie.ai",
+    "model": "gpt-image-2-text-to-image",
+    "input": {
+      "prompt": "Soft abstract background for a light product section: a pale grey-white studio sweep with a single large rounded glass slab catching warm light, a subtle magenta light edge along its bottom, shallow depth of field. No people, no faces, no text, no logos, no screens. Minimal, premium, airy.",
+      "aspect_ratio": "16:9"
+    },
+    "prompt": "Soft abstract background for a light product section: a pale grey-white studio sweep with a single large rounded glass slab catching warm light, a subtle magenta light edge along its bottom, shallow depth of field. No people, no faces, no text, no logos, no screens. Minimal, premium, airy.",
+    "refs": [],
+    "aspect": "16:9",
+    "taskId": "68974bdb3d7f24b125c5560f02737580",
+    "submittedAt": "2026-10-19T02:50:54.353Z",
+    "approvedBy": "Joe, 2026-10-18, up to USD 20 kie.ai",
+    "cap": 15,
+    "creditsBefore": 9580,
+    "classification": "ILLUSTRATIVE",
+    "status": "candidate",
+    "usage": [],
+    "license": "DE-generated under kie.ai commercial terms (Joe confirms the provider terms once)",
+    "completedAt": "2026-10-19T02:51:56.177Z",
+    "resultUrls": [
+      "https://tempfile.aiquickdraw.com/images/chatgpt/file_0000000037d081f998cae383b38d1c9e.png"
+    ],
+    "kie": {
+      "costTime": 54,
+      "createTime": 1792378253785,
+      "completeTime": 1792378308898,
+      "creditsConsumed": 6
+    },
+    "creditsAfter": 9574,
+    "creditsSpent": 6,
+    "capExceeded": false,
+    "file": "artifacts\\kie-ai\\light-section-plate-01.png",
+    "sha256": "c58f5a1d6abafa362ac60d03d107f1a2205f4dc5222dfb7697edd0fccc8ca31f",
+    "bytes": 1609888
+  },
+  {
+    "family": "KIE-AI",
+    "frame": "light-dark-stage-plate-01",
+    "page": "",
+    "provider": "kie.ai",
+    "model": "gpt-image-2-text-to-image",
+    "input": {
+      "prompt": "Dark product-stage backdrop for one dark section on an otherwise light website: deep charcoal field, soft directional light revealing layered matte-black panels with precise edges, a thin warm-white light line, calm and architectural. No people, no faces, no text, no logos, no screens. Premium, minimal.",
+      "aspect_ratio": "16:9"
+    },
+    "prompt": "Dark product-stage backdrop for one dark section on an otherwise light website: deep charcoal field, soft directional light revealing layered matte-black panels with precise edges, a thin warm-white light line, calm and architectural. No people, no faces, no text, no logos, no screens. Premium, minimal.",
+    "refs": [],
+    "aspect": "16:9",
+    "taskId": "6e83110f643ba7f09d585f384cc978e7",
+    "submittedAt": "2026-10-19T02:51:57.315Z",
+    "approvedBy": "Joe, 2026-10-18, up to USD 20 kie.ai",
+    "cap": 15,
+    "creditsBefore": 9574,
+    "classification": "ILLUSTRATIVE",
+    "status": "candidate",
+    "usage": [],
+    "license": "DE-generated under kie.ai commercial terms (Joe confirms the provider terms once)",
+    "completedAt": "2026-10-19T02:52:59.060Z",
+    "resultUrls": [
+      "https://tempfile.aiquickdraw.com/images/chatgpt/file_00000000564481f586d0f6d6c573e705.png"
+    ],
+    "kie": {
+      "costTime": 50,
+      "createTime": 1792378316747,
+      "completeTime": 1792378367370,
+      "creditsConsumed": 6
+    },
+    "creditsAfter": 9568,
+    "creditsSpent": 6,
+    "capExceeded": false,
+    "file": "artifacts\\kie-ai\\light-dark-stage-plate-01.png",
+    "sha256": "12cad72f83b94186a17c0a3338ba76cdcb0c78db657747ea0783f7585d4fb0b9",
+    "bytes": 1754077
+  },
+  {
+    "family": "KIE-AI",
+    "frame": "light-close-plate-01",
+    "page": "",
+    "provider": "kie.ai",
+    "model": "gpt-image-2-text-to-image",
+    "input": {
+      "prompt": "Warm closing backdrop for a light website: off-white to pale peach gradient sky at golden hour, a smooth matte-white curved surface in the foreground catching the light, soft long shadows, generous empty space. No people, no faces, no text, no logos, no screens. Calm, premium, minimal.",
+      "aspect_ratio": "16:9"
+    },
+    "prompt": "Warm closing backdrop for a light website: off-white to pale peach gradient sky at golden hour, a smooth matte-white curved surface in the foreground catching the light, soft long shadows, generous empty space. No people, no faces, no text, no logos, no screens. Calm, premium, minimal.",
+    "refs": [],
+    "aspect": "16:9",
+    "taskId": "c57f580d417bb6aebba16f325fadbb2e",
+    "submittedAt": "2026-10-19T02:53:00.517Z",
+    "approvedBy": "Joe, 2026-10-18, up to USD 20 kie.ai",
+    "cap": 15,
+    "creditsBefore": 9568,
+    "classification": "ILLUSTRATIVE",
+    "status": "candidate",
+    "usage": [],
+    "license": "DE-generated under kie.ai commercial terms (Joe confirms the provider terms once)",
+    "completedAt": "2026-10-19T02:54:02.293Z",
+    "resultUrls": [
+      "https://tempfile.aiquickdraw.com/images/chatgpt/file_00000000305c81f686a931e279d44ef1.png"
+    ],
+    "kie": {
+      "costTime": 54,
+      "createTime": 1792378379950,
+      "completeTime": 1792378434559,
+      "creditsConsumed": 6
+    },
+    "creditsAfter": 9562,
+    "creditsSpent": 6,
+    "capExceeded": false,
+    "file": "artifacts\\kie-ai\\light-close-plate-01.png",
+    "sha256": "a7b75db6d901c11de55abcf6f5946d65f96a88d826244c5285076643c3fd7770",
+    "bytes": 1606142
+  },
+  {
+    "family": "KIE-AI",
+    "frame": "obj-lock",
+    "page": "",
+    "provider": "kie.ai",
+    "model": "gpt-image-2-text-to-image",
+    "input": {
+      "prompt": "Single 3D object, monochrome charcoal and soft white matte materials, subtle satin highlights, isometric three-quarter view, centered on a pure white background with a soft contact shadow, product-photography studio lighting from the upper left, no text, no logos, no people, minimal, premium. The object: a padlock, rounded body, closed shackle.",
+      "aspect_ratio": "1:1"
+    },
+    "prompt": "Single 3D object, monochrome charcoal and soft white matte materials, subtle satin highlights, isometric three-quarter view, centered on a pure white background with a soft contact shadow, product-photography studio lighting from the upper left, no text, no logos, no people, minimal, premium. The object: a padlock, rounded body, closed shackle.",
+    "refs": [],
+    "aspect": "1:1",
+    "taskId": "72a570c06b66f29c37102833de3222d3",
+    "submittedAt": "2026-10-19T07:36:37.763Z",
+    "approvedBy": "Joe, 2026-10-19, up to USD 20 kie.ai",
+    "cap": 15,
+    "creditsBefore": 9562,
+    "classification": "ILLUSTRATIVE",
+    "status": "candidate",
+    "usage": [],
+    "license": "DE-generated under kie.ai commercial terms (Joe confirms the provider terms once)",
+    "completedAt": "2026-10-19T07:37:39.542Z",
+    "resultUrls": [
+      "https://tempfile.aiquickdraw.com/images/chatgpt/file_00000000bf80822f9cde96a222acc2c2.png"
+    ],
+    "kie": {
+      "costTime": 52,
+      "createTime": 1792395397283,
+      "completeTime": 1792395449711,
+      "creditsConsumed": 6
+    },
+    "creditsAfter": 9556,
+    "creditsSpent": 6,
+    "capExceeded": false,
+    "file": "artifacts\\kie-ai\\obj-lock.png",
+    "sha256": "8cf9f188c99aca0ac0e64826677032abd7676116659b03fe4b47177a5405c645",
+    "bytes": 1238650
+  },
+  {
+    "family": "KIE-AI",
+    "frame": "obj-server",
+    "page": "",
+    "provider": "kie.ai",
+    "model": "gpt-image-2-text-to-image",
+    "input": {
+      "prompt": "Single 3D object, monochrome charcoal and soft white matte materials, subtle satin highlights, isometric three-quarter view, centered on a pure white background with a soft contact shadow, product-photography studio lighting from the upper left, no text, no logos, no people, minimal, premium. The object: a small desktop server tower with a rounded front panel and a single row of indicator slots.",
+      "aspect_ratio": "1:1"
+    },
+    "prompt": "Single 3D object, monochrome charcoal and soft white matte materials, subtle satin highlights, isometric three-quarter view, centered on a pure white background with a soft contact shadow, product-photography studio lighting from the upper left, no text, no logos, no people, minimal, premium. The object: a small desktop server tower with a rounded front panel and a single row of indicator slots.",
+    "refs": [],
+    "aspect": "1:1",
+    "taskId": "d610e4a386d31350485a1cfedb3cef1b",
+    "submittedAt": "2026-10-19T07:37:40.403Z",
+    "approvedBy": "Joe, 2026-10-19, up to USD 20 kie.ai",
+    "cap": 15,
+    "creditsBefore": 9556,
+    "classification": "ILLUSTRATIVE",
+    "status": "candidate",
+    "usage": [],
+    "license": "DE-generated under kie.ai commercial terms (Joe confirms the provider terms once)",
+    "completedAt": "2026-10-19T07:39:27.839Z",
+    "resultUrls": [
+      "https://tempfile.aiquickdraw.com/images/chatgpt/file_00000000ecb081f5852614a2c20d61b2.png"
+    ],
+    "kie": {
+      "costTime": 100,
+      "createTime": 1792395459932,
+      "completeTime": 1792395560411,
+      "creditsConsumed": 6
+    },
+    "creditsAfter": 9550,
+    "creditsSpent": 6,
+    "capExceeded": false,
+    "file": "artifacts\\kie-ai\\obj-server.png",
+    "sha256": "bc24f54cd18fc9ce54149a1e87597ea481aba4ec03b301985484551d11e19e2c",
+    "bytes": 1531347
+  },
+  {
+    "family": "KIE-AI",
+    "frame": "obj-shield",
+    "page": "",
+    "provider": "kie.ai",
+    "model": "gpt-image-2-text-to-image",
+    "input": {
+      "prompt": "A single simplified toy-like 3D object, soft rounded geometry, matte charcoal grey body with one cream-white accent part, no fine details, no text, no logos, no screens, no people, isometric three-quarter view, centered on a pure white background with a soft contact shadow, gentle studio light from the upper left, minimal and premium like a design-studio render. The object: a rounded shield shape, cream-white rim.",
+      "aspect_ratio": "1:1"
+    },
+    "prompt": "A single simplified toy-like 3D object, soft rounded geometry, matte charcoal grey body with one cream-white accent part, no fine details, no text, no logos, no screens, no people, isometric three-quarter view, centered on a pure white background with a soft contact shadow, gentle studio light from the upper left, minimal and premium like a design-studio render. The object: a rounded shield shape, cream-white rim.",
+    "refs": [],
+    "aspect": "1:1",
+    "taskId": "c9ef2466a2d2a38ac54f902232fe4089",
+    "submittedAt": "2026-10-19T07:39:54.144Z",
+    "approvedBy": "Joe, 2026-10-19, up to USD 20 kie.ai",
+    "cap": 15,
+    "creditsBefore": 9550,
+    "classification": "ILLUSTRATIVE",
+    "status": "candidate",
+    "usage": [],
+    "license": "DE-generated under kie.ai commercial terms (Joe confirms the provider terms once)",
+    "completedAt": "2026-10-19T07:40:55.768Z",
+    "resultUrls": [
+      "https://tempfile.aiquickdraw.com/images/chatgpt/file_00000000a50c820d936ec1f957947f4f.png"
+    ],
+    "kie": {
+      "costTime": 48,
+      "createTime": 1792395593672,
+      "completeTime": 1792395642293,
+      "creditsConsumed": 6
+    },
+    "creditsAfter": 9544,
+    "creditsSpent": 6,
+    "capExceeded": false,
+    "file": "artifacts\\kie-ai\\obj-shield.png",
+    "sha256": "4bdb66e96ba84620bb8f2f53c2a8265887c1773e092a3260c5ca737b135ec44c",
+    "bytes": 1295690
+  },
+  {
+    "family": "KIE-AI",
+    "frame": "obj-email",
+    "page": "",
+    "provider": "kie.ai",
+    "model": "gpt-image-2-text-to-image",
+    "input": {
+      "prompt": "A single simplified toy-like 3D object, soft rounded geometry, matte charcoal grey body with one cream-white accent part, no fine details, no text, no logos, no screens, no people, isometric three-quarter view, centered on a pure white background with a soft contact shadow, gentle studio light from the upper left, minimal and premium like a design-studio render. The object: a closed envelope, cream-white flap.",
+      "aspect_ratio": "1:1"
+    },
+    "prompt": "A single simplified toy-like 3D object, soft rounded geometry, matte charcoal grey body with one cream-white accent part, no fine details, no text, no logos, no screens, no people, isometric three-quarter view, centered on a pure white background with a soft contact shadow, gentle studio light from the upper left, minimal and premium like a design-studio render. The object: a closed envelope, cream-white flap.",
+    "refs": [],
+    "aspect": "1:1",
+    "taskId": "9eb802daaf9fb29b1a5b910e7ca12349",
+    "submittedAt": "2026-10-19T07:40:56.563Z",
+    "approvedBy": "Joe, 2026-10-19, up to USD 20 kie.ai",
+    "cap": 15,
+    "creditsBefore": 9544,
+    "classification": "ILLUSTRATIVE",
+    "status": "candidate",
+    "usage": [],
+    "license": "DE-generated under kie.ai commercial terms (Joe confirms the provider terms once)",
+    "completedAt": "2026-10-19T07:42:13.456Z",
+    "resultUrls": [
+      "https://tempfile.aiquickdraw.com/images/chatgpt/file_0000000020e881f58dd9d7c73dcd22c1.png"
+    ],
+    "kie": {
+      "costTime": 67,
+      "createTime": 1792395656093,
+      "completeTime": 1792395723241,
+      "creditsConsumed": 6
+    },
+    "creditsAfter": 9538,
+    "creditsSpent": 6,
+    "capExceeded": false,
+    "file": "artifacts\\kie-ai\\obj-email.png",
+    "sha256": "dac60c0ebbd00f81222b8cd778632563764c613c5c8172d0fa169b53702a00d9",
+    "bytes": 1278732
+  },
+  {
+    "family": "KIE-AI",
+    "frame": "obj-backup",
+    "page": "",
+    "provider": "kie.ai",
+    "model": "gpt-image-2-text-to-image",
+    "input": {
+      "prompt": "A single simplified toy-like 3D object, soft rounded geometry, matte charcoal grey body with one cream-white accent part, no fine details, no text, no logos, no screens, no people, isometric three-quarter view, centered on a pure white background with a soft contact shadow, gentle studio light from the upper left, minimal and premium like a design-studio render. The object: a stack of two rounded hard-drive discs, cream-white top disc.",
+      "aspect_ratio": "1:1"
+    },
+    "prompt": "A single simplified toy-like 3D object, soft rounded geometry, matte charcoal grey body with one cream-white accent part, no fine details, no text, no logos, no screens, no people, isometric three-quarter view, centered on a pure white background with a soft contact shadow, gentle studio light from the upper left, minimal and premium like a design-studio render. The object: a stack of two rounded hard-drive discs, cream-white top disc.",
+    "refs": [],
+    "aspect": "1:1",
+    "taskId": "e38eb81a3c16eb1dc052964bae2cc5db",
+    "submittedAt": "2026-10-19T07:42:14.294Z",
+    "approvedBy": "Joe, 2026-10-19, up to USD 20 kie.ai",
+    "cap": 15,
+    "creditsBefore": 9538,
+    "classification": "ILLUSTRATIVE",
+    "status": "candidate",
+    "usage": [],
+    "license": "DE-generated under kie.ai commercial terms (Joe confirms the provider terms once)",
+    "completedAt": "2026-10-19T07:43:46.477Z",
+    "resultUrls": [
+      "https://tempfile.aiquickdraw.com/images/chatgpt/file_00000000049081f7be77cad14677f27d.png"
+    ],
+    "kie": {
+      "costTime": 80,
+      "createTime": 1792395733830,
+      "completeTime": 1792395814921,
+      "creditsConsumed": 6
+    },
+    "creditsAfter": 9532,
+    "creditsSpent": 6,
+    "capExceeded": false,
+    "file": "artifacts\\kie-ai\\obj-backup.png",
+    "sha256": "17d373a743b32747c23a21a300ba36fff3ad61f53fa6017d39396bfec0f7f40c",
+    "bytes": 1230567
+  },
+  {
+    "family": "KIE-AI",
+    "frame": "obj-cloud",
+    "page": "",
+    "provider": "kie.ai",
+    "model": "gpt-image-2-text-to-image",
+    "input": {
+      "prompt": "A single simplified toy-like 3D object, soft rounded geometry, matte charcoal grey body with one cream-white accent part, no fine details, no text, no logos, no screens, no people, isometric three-quarter view, centered on a pure white background with a soft contact shadow, gentle studio light from the upper left, minimal and premium like a design-studio render. The object: a soft rounded cloud with a cream-white underside.",
+      "aspect_ratio": "1:1"
+    },
+    "prompt": "A single simplified toy-like 3D object, soft rounded geometry, matte charcoal grey body with one cream-white accent part, no fine details, no text, no logos, no screens, no people, isometric three-quarter view, centered on a pure white background with a soft contact shadow, gentle studio light from the upper left, minimal and premium like a design-studio render. The object: a soft rounded cloud with a cream-white underside.",
+    "refs": [],
+    "aspect": "1:1",
+    "taskId": "3d4951b1e7ffcce1220911dc4b1c4f61",
+    "submittedAt": "2026-10-19T07:43:47.222Z",
+    "approvedBy": "Joe, 2026-10-19, up to USD 20 kie.ai",
+    "cap": 15,
+    "creditsBefore": 9532,
+    "classification": "ILLUSTRATIVE",
+    "status": "candidate",
+    "usage": [],
+    "license": "DE-generated under kie.ai commercial terms (Joe confirms the provider terms once)",
+    "completedAt": "2026-10-19T07:45:19.133Z",
+    "resultUrls": [
+      "https://tempfile.aiquickdraw.com/images/chatgpt/file_000000004f8881f5a4fa3b0ffeb00c7b.png"
+    ],
+    "kie": {
+      "costTime": 84,
+      "createTime": 1792395826758,
+      "completeTime": 1792395911428,
+      "creditsConsumed": 6
+    },
+    "creditsAfter": 9526,
+    "creditsSpent": 6,
+    "capExceeded": false,
+    "file": "artifacts\\kie-ai\\obj-cloud.png",
+    "sha256": "a86ae0f28ce5e88e201b6e46635246c596a653c6c11ca9c7017f9acda7bd4f42",
+    "bytes": 1280820
+  },
+  {
+    "family": "KIE-AI",
+    "frame": "obj-laptop",
+    "page": "",
+    "provider": "kie.ai",
+    "model": "gpt-image-2-text-to-image",
+    "input": {
+      "prompt": "A single simplified toy-like 3D object, soft rounded geometry, matte charcoal grey body with one cream-white accent part, no fine details, no text, no logos, no screens, no people, isometric three-quarter view, centered on a pure white background with a soft contact shadow, gentle studio light from the upper left, minimal and premium like a design-studio render. The object: a closed laptop, cream-white lid.",
+      "aspect_ratio": "1:1"
+    },
+    "prompt": "A single simplified toy-like 3D object, soft rounded geometry, matte charcoal grey body with one cream-white accent part, no fine details, no text, no logos, no screens, no people, isometric three-quarter view, centered on a pure white background with a soft contact shadow, gentle studio light from the upper left, minimal and premium like a design-studio render. The object: a closed laptop, cream-white lid.",
+    "refs": [],
+    "aspect": "1:1",
+    "taskId": "cab110db65071e3cc34d13f638e4a62c",
+    "submittedAt": "2026-10-19T07:45:19.962Z",
+    "approvedBy": "Joe, 2026-10-19, up to USD 20 kie.ai",
+    "cap": 15,
+    "creditsBefore": 9526,
+    "classification": "ILLUSTRATIVE",
+    "status": "candidate",
+    "usage": [],
+    "license": "DE-generated under kie.ai commercial terms (Joe confirms the provider terms once)",
+    "completedAt": "2026-10-19T07:47:07.321Z",
+    "resultUrls": [
+      "https://tempfile.aiquickdraw.com/images/chatgpt/file_0000000015e881f5b8068954a87de5d7.png"
+    ],
+    "kie": {
+      "costTime": 100,
+      "createTime": 1792395919497,
+      "completeTime": 1792396020432,
+      "creditsConsumed": 6
+    },
+    "creditsAfter": 9520,
+    "creditsSpent": 6,
+    "capExceeded": false,
+    "file": "artifacts\\kie-ai\\obj-laptop.png",
+    "sha256": "8fed5c466bac9acf4fa3a198d6a7e5e09ec980960a8f8c837c39c9c77696e009",
+    "bytes": 1236429
+  },
+  {
+    "family": "KIE-AI",
+    "frame": "obj-phone",
+    "page": "",
+    "provider": "kie.ai",
+    "model": "gpt-image-2-text-to-image",
+    "input": {
+      "prompt": "A single simplified toy-like 3D object, soft rounded geometry, matte charcoal grey body with one cream-white accent part, no fine details, no text, no logos, no screens, no people, isometric three-quarter view, centered on a pure white background with a soft contact shadow, gentle studio light from the upper left, minimal and premium like a design-studio render. The object: an old rotary desk phone, cream-white handset.",
+      "aspect_ratio": "1:1"
+    },
+    "prompt": "A single simplified toy-like 3D object, soft rounded geometry, matte charcoal grey body with one cream-white accent part, no fine details, no text, no logos, no screens, no people, isometric three-quarter view, centered on a pure white background with a soft contact shadow, gentle studio light from the upper left, minimal and premium like a design-studio render. The object: an old rotary desk phone, cream-white handset.",
+    "refs": [],
+    "aspect": "1:1",
+    "taskId": "7ad8e05074b8f486ea89161a071a1f49",
+    "submittedAt": "2026-10-19T07:47:08.175Z",
+    "approvedBy": "Joe, 2026-10-19, up to USD 20 kie.ai",
+    "cap": 15,
+    "creditsBefore": 9520,
+    "classification": "ILLUSTRATIVE",
+    "status": "candidate",
+    "usage": [],
+    "license": "DE-generated under kie.ai commercial terms (Joe confirms the provider terms once)",
+    "completedAt": "2026-10-19T07:48:09.922Z",
+    "resultUrls": [
+      "https://tempfile.aiquickdraw.com/images/chatgpt/file_000000007dfc81f5950f0dcfea153fa6.png"
+    ],
+    "kie": {
+      "costTime": 56,
+      "createTime": 1792396027705,
+      "completeTime": 1792396084223,
+      "creditsConsumed": 6
+    },
+    "creditsAfter": 9514,
+    "creditsSpent": 6,
+    "capExceeded": false,
+    "file": "artifacts\\kie-ai\\obj-phone.png",
+    "sha256": "a6ada528123a8e9c4df05e0c26610f7750756e4a8f37e012f90d27332368384a",
+    "bytes": 1362398
+  },
+  {
+    "family": "KIE-AI",
+    "frame": "obj-clipboard",
+    "page": "",
+    "provider": "kie.ai",
+    "model": "gpt-image-2-text-to-image",
+    "input": {
+      "prompt": "A single simplified toy-like 3D object, soft rounded geometry, matte charcoal grey body with one cream-white accent part, no fine details, no text, no logos, no screens, no people, isometric three-quarter view, centered on a pure white background with a soft contact shadow, gentle studio light from the upper left, minimal and premium like a design-studio render. The object: a clipboard with a cream-white clip.",
+      "aspect_ratio": "1:1"
+    },
+    "prompt": "A single simplified toy-like 3D object, soft rounded geometry, matte charcoal grey body with one cream-white accent part, no fine details, no text, no logos, no screens, no people, isometric three-quarter view, centered on a pure white background with a soft contact shadow, gentle studio light from the upper left, minimal and premium like a design-studio render. The object: a clipboard with a cream-white clip.",
+    "refs": [],
+    "aspect": "1:1",
+    "taskId": "6fd3d9ef1cb01a886b0b1e6abf4a9194",
+    "submittedAt": "2026-10-19T07:48:10.694Z",
+    "approvedBy": "Joe, 2026-10-19, up to USD 20 kie.ai",
+    "cap": 15,
+    "creditsBefore": 9514,
+    "classification": "ILLUSTRATIVE",
+    "status": "candidate",
+    "usage": [],
+    "license": "DE-generated under kie.ai commercial terms (Joe confirms the provider terms once)",
+    "completedAt": "2026-10-19T07:49:12.361Z",
+    "resultUrls": [
+      "https://tempfile.aiquickdraw.com/images/chatgpt/file_0000000003c481f5ac5ed83286b2f9b1.png"
+    ],
+    "kie": {
+      "costTime": 53,
+      "createTime": 1792396090227,
+      "completeTime": 1792396143046,
+      "creditsConsumed": 6
+    },
+    "creditsAfter": 9508,
+    "creditsSpent": 6,
+    "capExceeded": false,
+    "file": "artifacts\\kie-ai\\obj-clipboard.png",
+    "sha256": "473a94400dfed2ee568729cbb3c3cc8625f05a31279d386415129be51bedf7bc",
+    "bytes": 1288535
+  },
+  {
+    "family": "KIE-AI",
+    "frame": "obj-key",
+    "page": "",
+    "provider": "kie.ai",
+    "model": "gpt-image-2-text-to-image",
+    "input": {
+      "prompt": "A single simplified toy-like 3D object, soft rounded geometry, matte charcoal grey body with one cream-white accent part, no fine details, no text, no logos, no screens, no people, isometric three-quarter view, centered on a pure white background with a soft contact shadow, gentle studio light from the upper left, minimal and premium like a design-studio render. The object: a large rounded key, cream-white bow.",
+      "aspect_ratio": "1:1"
+    },
+    "prompt": "A single simplified toy-like 3D object, soft rounded geometry, matte charcoal grey body with one cream-white accent part, no fine details, no text, no logos, no screens, no people, isometric three-quarter view, centered on a pure white background with a soft contact shadow, gentle studio light from the upper left, minimal and premium like a design-studio render. The object: a large rounded key, cream-white bow.",
+    "refs": [],
+    "aspect": "1:1",
+    "taskId": "a3a22642dcaa3210186390634f1ba801",
+    "submittedAt": "2026-10-19T07:49:13.171Z",
+    "approvedBy": "Joe, 2026-10-19, up to USD 20 kie.ai",
+    "cap": 15,
+    "creditsBefore": 9508,
+    "classification": "ILLUSTRATIVE",
+    "status": "candidate",
+    "usage": [],
+    "license": "DE-generated under kie.ai commercial terms (Joe confirms the provider terms once)",
+    "completedAt": "2026-10-19T07:50:29.981Z",
+    "resultUrls": [
+      "https://tempfile.aiquickdraw.com/images/chatgpt/file_000000002a7c81f5b191b97ff7e09482.png"
+    ],
+    "kie": {
+      "costTime": 73,
+      "createTime": 1792396152711,
+      "completeTime": 1792396226040,
+      "creditsConsumed": 6
+    },
+    "creditsAfter": 9502,
+    "creditsSpent": 6,
+    "capExceeded": false,
+    "file": "artifacts\\kie-ai\\obj-key.png",
+    "sha256": "a74841c5c2c74f4b556bbc77b0aa367ffa9fe7a2b87d485bed3ef14c7ae8d90e",
+    "bytes": 1204878
+  },
+  {
+    "family": "KIE-AI",
+    "frame": "obj-network",
+    "page": "",
+    "provider": "kie.ai",
+    "model": "gpt-image-2-text-to-image",
+    "input": {
+      "prompt": "A single simplified toy-like 3D object, soft rounded geometry, matte charcoal grey body with one cream-white accent part, no fine details, no text, no logos, no screens, no people, isometric three-quarter view, centered on a pure white background with a soft contact shadow, gentle studio light from the upper left, minimal and premium like a design-studio render. The object: a small Wi-Fi router box with a cream-white antenna.",
+      "aspect_ratio": "1:1"
+    },
+    "prompt": "A single simplified toy-like 3D object, soft rounded geometry, matte charcoal grey body with one cream-white accent part, no fine details, no text, no logos, no screens, no people, isometric three-quarter view, centered on a pure white background with a soft contact shadow, gentle studio light from the upper left, minimal and premium like a design-studio render. The object: a small Wi-Fi router box with a cream-white antenna.",
+    "refs": [],
+    "aspect": "1:1",
+    "taskId": "7e74d4e3ffe545628fbfce569edf6d76",
+    "submittedAt": "2026-10-19T07:50:30.756Z",
+    "approvedBy": "Joe, 2026-10-19, up to USD 20 kie.ai",
+    "cap": 15,
+    "creditsBefore": 9502,
+    "classification": "ILLUSTRATIVE",
+    "status": "candidate",
+    "usage": [],
+    "license": "DE-generated under kie.ai commercial terms (Joe confirms the provider terms once)",
+    "completedAt": "2026-10-19T07:52:17.941Z",
+    "resultUrls": [
+      "https://tempfile.aiquickdraw.com/images/chatgpt/file_0000000008f081f7a769ec26a4f14293.png"
+    ],
+    "kie": {
+      "costTime": 101,
+      "createTime": 1792396230292,
+      "completeTime": 1792396331120,
+      "creditsConsumed": 6
+    },
+    "creditsAfter": 9496,
+    "creditsSpent": 6,
+    "capExceeded": false,
+    "file": "artifacts\\kie-ai\\obj-network.png",
+    "sha256": "534677098a21cdc8ec6cb22fff73c3142548cab9db860d57fa9494a1516d92b8",
+    "bytes": 1179828
+  },
+  {
+    "family": "KIE-AI",
+    "frame": "obj-headset",
+    "page": "",
+    "provider": "kie.ai",
+    "model": "gpt-image-2-text-to-image",
+    "input": {
+      "prompt": "A single simplified toy-like 3D object, soft rounded geometry, matte charcoal grey body with one cream-white accent part, no fine details, no text, no logos, no screens, no people, isometric three-quarter view, centered on a pure white background with a soft contact shadow, gentle studio light from the upper left, minimal and premium like a design-studio render. The object: a support headset, cream-white ear cups.",
+      "aspect_ratio": "1:1"
+    },
+    "prompt": "A single simplified toy-like 3D object, soft rounded geometry, matte charcoal grey body with one cream-white accent part, no fine details, no text, no logos, no screens, no people, isometric three-quarter view, centered on a pure white background with a soft contact shadow, gentle studio light from the upper left, minimal and premium like a design-studio render. The object: a support headset, cream-white ear cups.",
+    "refs": [],
+    "aspect": "1:1",
+    "taskId": "22769e9aff5a1b3f5763f0c9469a1fe4",
+    "submittedAt": "2026-10-19T07:52:18.669Z",
+    "approvedBy": "Joe, 2026-10-19, up to USD 20 kie.ai",
+    "cap": 15,
+    "creditsBefore": 9496,
+    "classification": "ILLUSTRATIVE",
+    "status": "candidate",
+    "usage": [],
+    "license": "DE-generated under kie.ai commercial terms (Joe confirms the provider terms once)",
+    "completedAt": "2026-10-19T07:53:50.617Z",
+    "resultUrls": [
+      "https://tempfile.aiquickdraw.com/images/chatgpt/file_00000000c9e481f5811897f132d3dbe7.png"
+    ],
+    "kie": {
+      "costTime": 76,
+      "createTime": 1792396338205,
+      "completeTime": 1792396414880,
+      "creditsConsumed": 6
+    },
+    "creditsAfter": 9490,
+    "creditsSpent": 6,
+    "capExceeded": false,
+    "file": "artifacts\\kie-ai\\obj-headset.png",
+    "sha256": "2713835de1a816e8e53e6c1d764415d9ee2a9653e59b6aa2b4178351ce8e8317",
+    "bytes": 1234492
+  },
+  {
+    "family": "KIE-AI",
+    "frame": "obj-document",
+    "page": "",
+    "provider": "kie.ai",
+    "model": "gpt-image-2-text-to-image",
+    "input": {
+      "prompt": "A single simplified toy-like 3D object, soft rounded geometry, matte charcoal grey body with one cream-white accent part, no fine details, no text, no logos, no screens, no people, isometric three-quarter view, centered on a pure white background with a soft contact shadow, gentle studio light from the upper left, minimal and premium like a design-studio render. The object: a folded document sheet, cream-white corner.",
+      "aspect_ratio": "1:1"
+    },
+    "prompt": "A single simplified toy-like 3D object, soft rounded geometry, matte charcoal grey body with one cream-white accent part, no fine details, no text, no logos, no screens, no people, isometric three-quarter view, centered on a pure white background with a soft contact shadow, gentle studio light from the upper left, minimal and premium like a design-studio render. The object: a folded document sheet, cream-white corner.",
+    "refs": [],
+    "aspect": "1:1",
+    "taskId": "0d8d0ecb6edeb43e6d9bd0500a6fb9fe",
+    "submittedAt": "2026-10-19T07:53:51.405Z",
+    "approvedBy": "Joe, 2026-10-19, up to USD 20 kie.ai",
+    "cap": 15,
+    "creditsBefore": 9490,
+    "classification": "ILLUSTRATIVE",
+    "status": "candidate",
+    "usage": [],
+    "license": "DE-generated under kie.ai commercial terms (Joe confirms the provider terms once)",
+    "completedAt": "2026-10-19T07:54:53.170Z",
+    "resultUrls": [
+      "https://tempfile.aiquickdraw.com/images/chatgpt/file_00000000df7481f7bdb09042ddf56309.png"
+    ],
+    "kie": {
+      "costTime": 52,
+      "createTime": 1792396430942,
+      "completeTime": 1792396483626,
+      "creditsConsumed": 6
+    },
+    "creditsAfter": 9484,
+    "creditsSpent": 6,
+    "capExceeded": false,
+    "file": "artifacts\\kie-ai\\obj-document.png",
+    "sha256": "8f166dea8fef2a6a0cd1b23775286000d9422c22c581812340419e9382c4c9c9",
+    "bytes": 1293813
+  },
+  {
+    "family": "KIE-AI",
+    "frame": "obj-chart",
+    "page": "",
+    "provider": "kie.ai",
+    "model": "gpt-image-2-text-to-image",
+    "input": {
+      "prompt": "A single simplified toy-like 3D object, soft rounded geometry, matte charcoal grey body with one cream-white accent part, no fine details, no text, no logos, no screens, no people, isometric three-quarter view, centered on a pure white background with a soft contact shadow, gentle studio light from the upper left, minimal and premium like a design-studio render. The object: a small bar-chart block with three rounded bars, cream-white tallest bar.",
+      "aspect_ratio": "1:1"
+    },
+    "prompt": "A single simplified toy-like 3D object, soft rounded geometry, matte charcoal grey body with one cream-white accent part, no fine details, no text, no logos, no screens, no people, isometric three-quarter view, centered on a pure white background with a soft contact shadow, gentle studio light from the upper left, minimal and premium like a design-studio render. The object: a small bar-chart block with three rounded bars, cream-white tallest bar.",
+    "refs": [],
+    "aspect": "1:1",
+    "taskId": "348e2c1372a09a18433f4ca1b3d9f8e8",
+    "submittedAt": "2026-10-19T07:54:54.089Z",
+    "approvedBy": "Joe, 2026-10-19, up to USD 20 kie.ai",
+    "cap": 15,
+    "creditsBefore": 9484,
+    "classification": "ILLUSTRATIVE",
+    "status": "candidate",
+    "usage": [],
+    "license": "DE-generated under kie.ai commercial terms (Joe confirms the provider terms once)",
+    "completedAt": "2026-10-19T07:55:55.848Z",
+    "resultUrls": [
+      "https://tempfile.aiquickdraw.com/images/chatgpt/file_00000000938c822fb6b1bb1954069720.png"
+    ],
+    "kie": {
+      "costTime": 47,
+      "createTime": 1792396493619,
+      "completeTime": 1792396541751,
+      "creditsConsumed": 6
+    },
+    "creditsAfter": 9478,
+    "creditsSpent": 6,
+    "capExceeded": false,
+    "file": "artifacts\\kie-ai\\obj-chart.png",
+    "sha256": "52943989664283822804bd6a8d5c04ceb3f94217b1e2793e0e44b81d3dac31cb",
+    "bytes": 1169228
+  },
+  {
+    "family": "KIE-AI",
+    "frame": "obj-building",
+    "page": "",
+    "provider": "kie.ai",
+    "model": "gpt-image-2-text-to-image",
+    "input": {
+      "prompt": "A single simplified toy-like 3D object, soft rounded geometry, matte charcoal grey body with one cream-white accent part, no fine details, no text, no logos, no screens, no people, isometric three-quarter view, centered on a pure white background with a soft contact shadow, gentle studio light from the upper left, minimal and premium like a design-studio render. The object: a small office building block, cream-white roof.",
+      "aspect_ratio": "1:1"
+    },
+    "prompt": "A single simplified toy-like 3D object, soft rounded geometry, matte charcoal grey body with one cream-white accent part, no fine details, no text, no logos, no screens, no people, isometric three-quarter view, centered on a pure white background with a soft contact shadow, gentle studio light from the upper left, minimal and premium like a design-studio render. The object: a small office building block, cream-white roof.",
+    "refs": [],
+    "aspect": "1:1",
+    "taskId": "fe9080ad39ce5fa566d7bbda88373e9f",
+    "submittedAt": "2026-10-19T07:55:56.669Z",
+    "approvedBy": "Joe, 2026-10-19, up to USD 20 kie.ai",
+    "cap": 15,
+    "creditsBefore": 9478,
+    "classification": "ILLUSTRATIVE",
+    "status": "candidate",
+    "usage": [],
+    "license": "DE-generated under kie.ai commercial terms (Joe confirms the provider terms once)",
+    "completedAt": "2026-10-19T07:56:58.348Z",
+    "resultUrls": [
+      "https://tempfile.aiquickdraw.com/images/chatgpt/file_00000000538481f59ce966359d5de5b9.png"
+    ],
+    "kie": {
+      "costTime": 51,
+      "createTime": 1792396556206,
+      "completeTime": 1792396607775,
+      "creditsConsumed": 6
+    },
+    "creditsAfter": 9472,
+    "creditsSpent": 6,
+    "capExceeded": false,
+    "file": "artifacts\\kie-ai\\obj-building.png",
+    "sha256": "dbed74c7e9fd388ee63a0d14a5c5e8e39cee04f9efaf2cd77de4e2e59c502ac2",
+    "bytes": 1226994
+  },
+  {
+    "family": "KIE-AI",
+    "frame": "obj-eye",
+    "page": "",
+    "provider": "kie.ai",
+    "model": "gpt-image-2-text-to-image",
+    "input": {
+      "prompt": "A single simplified toy-like 3D object, soft rounded geometry, matte charcoal grey body with one cream-white accent part, no fine details, no text, no logos, no screens, no people, isometric three-quarter view, centered on a pure white background with a soft contact shadow, gentle studio light from the upper left, minimal and premium like a design-studio render. The object: a rounded camera eye, cream-white lens ring.",
+      "aspect_ratio": "1:1"
+    },
+    "prompt": "A single simplified toy-like 3D object, soft rounded geometry, matte charcoal grey body with one cream-white accent part, no fine details, no text, no logos, no screens, no people, isometric three-quarter view, centered on a pure white background with a soft contact shadow, gentle studio light from the upper left, minimal and premium like a design-studio render. The object: a rounded camera eye, cream-white lens ring.",
+    "refs": [],
+    "aspect": "1:1",
+    "taskId": "715c90119ad1022feb3af7b401cc8136",
+    "submittedAt": "2026-10-19T07:56:59.270Z",
+    "approvedBy": "Joe, 2026-10-19, up to USD 20 kie.ai",
+    "cap": 15,
+    "creditsBefore": 9472,
+    "classification": "ILLUSTRATIVE",
+    "status": "candidate",
+    "usage": [],
+    "license": "DE-generated under kie.ai commercial terms (Joe confirms the provider terms once)",
+    "completedAt": "2026-10-19T07:58:01.034Z",
+    "resultUrls": [
+      "https://tempfile.aiquickdraw.com/images/chatgpt/file_00000000d22881f7981607610038a526.png"
+    ],
+    "kie": {
+      "costTime": 51,
+      "createTime": 1792396618800,
+      "completeTime": 1792396670244,
+      "creditsConsumed": 6
+    },
+    "creditsAfter": 9466,
+    "creditsSpent": 6,
+    "capExceeded": false,
+    "file": "artifacts\\kie-ai\\obj-eye.png",
+    "sha256": "203543f8721af752074d87633caec6e0e0bfff1cab5b452e6ebc076e1e400baf",
+    "bytes": 1323783
+  },
+  {
+    "family": "KIE-AI",
+    "frame": "obj-gear",
+    "page": "",
+    "provider": "kie.ai",
+    "model": "gpt-image-2-text-to-image",
+    "input": {
+      "prompt": "A single simplified toy-like 3D object, soft rounded geometry, matte charcoal grey body with one cream-white accent part, no fine details, no text, no logos, no screens, no people, isometric three-quarter view, centered on a pure white background with a soft contact shadow, gentle studio light from the upper left, minimal and premium like a design-studio render. The object: a rounded gear, cream-white center.",
+      "aspect_ratio": "1:1"
+    },
+    "prompt": "A single simplified toy-like 3D object, soft rounded geometry, matte charcoal grey body with one cream-white accent part, no fine details, no text, no logos, no screens, no people, isometric three-quarter view, centered on a pure white background with a soft contact shadow, gentle studio light from the upper left, minimal and premium like a design-studio render. The object: a rounded gear, cream-white center.",
+    "refs": [],
+    "aspect": "1:1",
+    "taskId": "e6809d2cb090b1f7f35b827897c6cfcc",
+    "submittedAt": "2026-10-19T07:58:02.143Z",
+    "approvedBy": "Joe, 2026-10-19, up to USD 20 kie.ai",
+    "cap": 15,
+    "creditsBefore": 9466,
+    "classification": "ILLUSTRATIVE",
+    "status": "candidate",
+    "usage": [],
+    "license": "DE-generated under kie.ai commercial terms (Joe confirms the provider terms once)",
+    "completedAt": "2026-10-19T07:59:19.042Z",
+    "resultUrls": [
+      "https://tempfile.aiquickdraw.com/images/chatgpt/file_00000000c4f081f6a421053f28d148fb.png"
+    ],
+    "kie": {
+      "costTime": 62,
+      "createTime": 1792396681682,
+      "completeTime": 1792396744588,
+      "creditsConsumed": 6
+    },
+    "creditsAfter": 9460,
+    "creditsSpent": 6,
+    "capExceeded": false,
+    "file": "artifacts\\kie-ai\\obj-gear.png",
+    "sha256": "c3d17b9aa0dbec13317e6b198d4ae5e7d41e759ce8cf146767ccb81e67a58fa2",
+    "bytes": 1318892
+  },
+  {
+    "family": "KIE-AI",
+    "frame": "obj-map",
+    "page": "",
+    "provider": "kie.ai",
+    "model": "gpt-image-2-text-to-image",
+    "input": {
+      "prompt": "A single simplified toy-like 3D object, soft rounded geometry, matte charcoal grey body with one cream-white accent part, no fine details, no text, no logos, no screens, no people, isometric three-quarter view, centered on a pure white background with a soft contact shadow, gentle studio light from the upper left, minimal and premium like a design-studio render. The object: a map pin, cream-white dot.",
+      "aspect_ratio": "1:1"
+    },
+    "prompt": "A single simplified toy-like 3D object, soft rounded geometry, matte charcoal grey body with one cream-white accent part, no fine details, no text, no logos, no screens, no people, isometric three-quarter view, centered on a pure white background with a soft contact shadow, gentle studio light from the upper left, minimal and premium like a design-studio render. The object: a map pin, cream-white dot.",
+    "refs": [],
+    "aspect": "1:1",
+    "taskId": "c1aeb4e5c96f98b1790c8fa23cf84613",
+    "submittedAt": "2026-10-19T07:59:20.268Z",
+    "approvedBy": "Joe, 2026-10-19, up to USD 20 kie.ai",
+    "cap": 15,
+    "creditsBefore": 9460,
+    "classification": "ILLUSTRATIVE",
+    "status": "candidate",
+    "usage": [],
+    "license": "DE-generated under kie.ai commercial terms (Joe confirms the provider terms once)",
+    "completedAt": "2026-10-19T08:00:22.154Z",
+    "resultUrls": [
+      "https://tempfile.aiquickdraw.com/images/chatgpt/file_000000005f6c81f592e4c27e6f0cb2ee.png"
+    ],
+    "kie": {
+      "costTime": 50,
+      "createTime": 1792396759811,
+      "completeTime": 1792396810230,
+      "creditsConsumed": 6
+    },
+    "creditsAfter": 9454,
+    "creditsSpent": 6,
+    "capExceeded": false,
+    "file": "artifacts\\kie-ai\\obj-map.png",
+    "sha256": "f0c6240999305eb6d8c4e2658c3825a2a4153e12cd277a92cc30e784cd62454f",
+    "bytes": 1281251
+  },
+  {
+    "family": "KIE-AI",
+    "frame": "obj-people",
+    "page": "",
+    "provider": "kie.ai",
+    "model": "gpt-image-2-text-to-image",
+    "input": {
+      "prompt": "A single simplified toy-like 3D object, soft rounded geometry, matte charcoal grey body with one cream-white accent part, no fine details, no text, no logos, no screens, no people, isometric three-quarter view, centered on a pure white background with a soft contact shadow, gentle studio light from the upper left, minimal and premium like a design-studio render. The object: two rounded person figures, cream-white heads.",
+      "aspect_ratio": "1:1"
+    },
+    "prompt": "A single simplified toy-like 3D object, soft rounded geometry, matte charcoal grey body with one cream-white accent part, no fine details, no text, no logos, no screens, no people, isometric three-quarter view, centered on a pure white background with a soft contact shadow, gentle studio light from the upper left, minimal and premium like a design-studio render. The object: two rounded person figures, cream-white heads.",
+    "refs": [],
+    "aspect": "1:1",
+    "taskId": "562da55a6c6a715a8c999e91c7cac232",
+    "submittedAt": "2026-10-19T08:00:23.267Z",
+    "approvedBy": "Joe, 2026-10-19, up to USD 20 kie.ai",
+    "cap": 15,
+    "creditsBefore": 9454,
+    "classification": "ILLUSTRATIVE",
+    "status": "candidate",
+    "usage": [],
+    "license": "DE-generated under kie.ai commercial terms (Joe confirms the provider terms once)",
+    "completedAt": "2026-10-19T08:01:25.344Z",
+    "resultUrls": [
+      "https://tempfile.aiquickdraw.com/images/chatgpt/file_00000000829c81f5a72cbd29d0021018.png"
+    ],
+    "kie": {
+      "costTime": 56,
+      "createTime": 1792396822803,
+      "completeTime": 1792396879668,
+      "creditsConsumed": 6
+    },
+    "creditsAfter": 9448,
+    "creditsSpent": 6,
+    "capExceeded": false,
+    "file": "artifacts\\kie-ai\\obj-people.png",
+    "sha256": "9774016d5a195a249613d193c3b8f3f8d0b19746767133c8a6cff4a088e9c604",
+    "bytes": 1266514
+  },
+  {
+    "family": "KIE-AI",
+    "frame": "obj-bell",
+    "page": "",
+    "provider": "kie.ai",
+    "model": "gpt-image-2-text-to-image",
+    "input": {
+      "prompt": "A single simplified toy-like 3D object, soft rounded geometry, matte charcoal grey body with one cream-white accent part, no fine details, no text, no logos, no screens, no people, isometric three-quarter view, centered on a pure white background with a soft contact shadow, gentle studio light from the upper left, minimal and premium like a design-studio render. The object: a rounded alert bell, cream-white clapper.",
+      "aspect_ratio": "1:1"
+    },
+    "prompt": "A single simplified toy-like 3D object, soft rounded geometry, matte charcoal grey body with one cream-white accent part, no fine details, no text, no logos, no screens, no people, isometric three-quarter view, centered on a pure white background with a soft contact shadow, gentle studio light from the upper left, minimal and premium like a design-studio render. The object: a rounded alert bell, cream-white clapper.",
+    "refs": [],
+    "aspect": "1:1",
+    "taskId": "c8fa6fab5d70821f2496a52846c29c8b",
+    "submittedAt": "2026-10-19T08:01:26.167Z",
+    "approvedBy": "Joe, 2026-10-19, up to USD 20 kie.ai",
+    "cap": 15,
+    "creditsBefore": 9448,
+    "classification": "ILLUSTRATIVE",
+    "status": "candidate",
+    "usage": [],
+    "license": "DE-generated under kie.ai commercial terms (Joe confirms the provider terms once)",
+    "completedAt": "2026-10-19T08:02:27.976Z",
+    "resultUrls": [
+      "https://tempfile.aiquickdraw.com/images/chatgpt/file_00000000c04081f4a0760b61c0342266.png"
+    ],
+    "kie": {
+      "costTime": 55,
+      "createTime": 1792396885704,
+      "completeTime": 1792396941107,
+      "creditsConsumed": 6
+    },
+    "creditsAfter": 9442,
+    "creditsSpent": 6,
+    "capExceeded": false,
+    "file": "artifacts\\kie-ai\\obj-bell.png",
+    "sha256": "83600d6b0af50e86d3470158765fd4a64120b4c9185c9599f57316669cca615f",
+    "bytes": 1202767
+  },
+  {
+    "family": "KIE-AI",
+    "frame": "obj-calendar",
+    "page": "",
+    "provider": "kie.ai",
+    "model": "gpt-image-2-text-to-image",
+    "input": {
+      "prompt": "A single simplified toy-like 3D object, soft rounded geometry, matte charcoal grey body with one cream-white accent part, no fine details, no text, no logos, no screens, no people, isometric three-quarter view, centered on a pure white background with a soft contact shadow, gentle studio light from the upper left, minimal and premium like a design-studio render. The object: a desk calendar block, cream-white top page.",
+      "aspect_ratio": "1:1"
+    },
+    "prompt": "A single simplified toy-like 3D object, soft rounded geometry, matte charcoal grey body with one cream-white accent part, no fine details, no text, no logos, no screens, no people, isometric three-quarter view, centered on a pure white background with a soft contact shadow, gentle studio light from the upper left, minimal and premium like a design-studio render. The object: a desk calendar block, cream-white top page.",
+    "refs": [],
+    "aspect": "1:1",
+    "taskId": "68a05175e2ae6b3a6c1d3134b6b2f28b",
+    "submittedAt": "2026-10-19T08:02:28.746Z",
+    "approvedBy": "Joe, 2026-10-19, up to USD 20 kie.ai",
+    "cap": 15,
+    "creditsBefore": 9442,
+    "classification": "ILLUSTRATIVE",
+    "status": "candidate",
+    "usage": [],
+    "license": "DE-generated under kie.ai commercial terms (Joe confirms the provider terms once)",
+    "completedAt": "2026-10-19T08:03:30.453Z",
+    "resultUrls": [
+      "https://tempfile.aiquickdraw.com/images/chatgpt/file_000000008c2c81f58824d5de6389e1f0.png"
+    ],
+    "kie": {
+      "costTime": 60,
+      "createTime": 1792396948286,
+      "completeTime": 1792397008245,
+      "creditsConsumed": 6
+    },
+    "creditsAfter": 9436,
+    "creditsSpent": 6,
+    "capExceeded": false,
+    "file": "artifacts\\kie-ai\\obj-calendar.png",
+    "sha256": "1bb51eb686a850304463793c120e11ae0906867cf8abcfc19a81d9ea1978ff01",
+    "bytes": 1265698
+  },
+  {
+    "family": "KIE-AI",
+    "frame": "obj-toolbox",
+    "page": "",
+    "provider": "kie.ai",
+    "model": "gpt-image-2-text-to-image",
+    "input": {
+      "prompt": "A single simplified toy-like 3D object, soft rounded geometry, matte charcoal grey body with one cream-white accent part, no fine details, no text, no logos, no screens, no people, isometric three-quarter view, centered on a pure white background with a soft contact shadow, gentle studio light from the upper left, minimal and premium like a design-studio render. The object: a rounded toolbox, cream-white handle.",
+      "aspect_ratio": "1:1"
+    },
+    "prompt": "A single simplified toy-like 3D object, soft rounded geometry, matte charcoal grey body with one cream-white accent part, no fine details, no text, no logos, no screens, no people, isometric three-quarter view, centered on a pure white background with a soft contact shadow, gentle studio light from the upper left, minimal and premium like a design-studio render. The object: a rounded toolbox, cream-white handle.",
+    "refs": [],
+    "aspect": "1:1",
+    "taskId": "74ffc14f21af8146e32372e3e980008b",
+    "submittedAt": "2026-10-19T08:03:31.311Z",
+    "approvedBy": "Joe, 2026-10-19, up to USD 20 kie.ai",
+    "cap": 15,
+    "creditsBefore": 9436,
+    "classification": "ILLUSTRATIVE",
+    "status": "candidate",
+    "usage": [],
+    "license": "DE-generated under kie.ai commercial terms (Joe confirms the provider terms once)",
+    "completedAt": "2026-10-19T08:04:32.878Z",
+    "resultUrls": [
+      "https://tempfile.aiquickdraw.com/images/chatgpt/file_0000000007c881f9bf8953775459d8c2.png"
+    ],
+    "kie": {
+      "costTime": 54,
+      "createTime": 1792397010849,
+      "completeTime": 1792397065079,
+      "creditsConsumed": 6
+    },
+    "creditsAfter": 9430,
+    "creditsSpent": 6,
+    "capExceeded": false,
+    "file": "artifacts\\kie-ai\\obj-toolbox.png",
+    "sha256": "5383fa79f86c59d22ba53ed85db7b24276b7ed63952c72bcec7c032ff597bafd",
+    "bytes": 1292432
+  },
+  {
+    "family": "KIE-AI",
+    "frame": "obj-server",
+    "page": "",
+    "provider": "kie.ai",
+    "model": "gpt-image-2-text-to-image",
+    "input": {
+      "prompt": "A single simplified toy-like 3D object, soft rounded geometry, matte charcoal grey body with one cream-white accent part, no fine details, no text, no logos, no screens, no people, isometric three-quarter view, centered on a pure white background with a soft contact shadow, gentle studio light from the upper left, minimal and premium like a design-studio render. The object: a small rounded server tower block with a cream-white front panel and no indicator lights.",
+      "aspect_ratio": "1:1"
+    },
+    "prompt": "A single simplified toy-like 3D object, soft rounded geometry, matte charcoal grey body with one cream-white accent part, no fine details, no text, no logos, no screens, no people, isometric three-quarter view, centered on a pure white background with a soft contact shadow, gentle studio light from the upper left, minimal and premium like a design-studio render. The object: a small rounded server tower block with a cream-white front panel and no indicator lights.",
+    "refs": [],
+    "aspect": "1:1",
+    "taskId": "12d3bbcd3dde9ddeff0a4625f82a0a44",
+    "submittedAt": "2026-10-19T08:05:02.321Z",
+    "approvedBy": "Joe, 2026-10-19, up to USD 20 kie.ai",
+    "cap": 15,
+    "creditsBefore": 9430,
+    "classification": "ILLUSTRATIVE",
+    "status": "candidate",
+    "usage": [],
+    "license": "DE-generated under kie.ai commercial terms (Joe confirms the provider terms once)",
+    "completedAt": "2026-10-19T08:06:04.118Z",
+    "resultUrls": [
+      "https://tempfile.aiquickdraw.com/images/chatgpt/file_00000000265081f5a8ddbccf27665e83.png"
+    ],
+    "kie": {
+      "costTime": 48,
+      "createTime": 1792397101867,
+      "completeTime": 1792397150437,
+      "creditsConsumed": 6
+    },
+    "creditsAfter": 9424,
+    "creditsSpent": 6,
+    "capExceeded": false,
+    "file": "artifacts\\kie-ai\\obj-server.png",
+    "sha256": "bb5c5bd9103e7ed54daffc2f77b9ab614187cef44d81a7570ded7bc40e19a531",
+    "bytes": 1334915
+  }
+]
