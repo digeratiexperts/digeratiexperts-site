@@ -344,10 +344,10 @@ function countReady(value: string, allowZero = false): boolean {
 
 export function isProfileComplete(environment: SolutionEnvironment): boolean {
   if (profileGaps(environment).length > 0) return false;
-  if (environment.firstName.trim() === "") return false;
-  if (environment.lastName.trim() === "") return false;
+  if ((environment.firstName ?? "").trim() === "") return false;
+  if ((environment.lastName ?? "").trim() === "") return false;
   if (environment.accountType !== "individual" && environment.accountType !== "business") return false;
-  if (environment.accountType === "business" && environment.businessName.trim() === "") return false;
+  if (environment.accountType === "business" && (environment.businessName ?? "").trim() === "") return false;
   return true;
 }
 

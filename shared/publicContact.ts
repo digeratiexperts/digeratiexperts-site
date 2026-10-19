@@ -57,7 +57,8 @@ const NAME_PLACEHOLDERS = new Set([
  * same character. Does not require a minimum length or exactly two words, and
  * does not claim to verify legal identity.
  */
-export function isValidName(value: string): boolean {
+export function isValidName(value: unknown): boolean {
+  if (typeof value !== "string") return false;
   const trimmed = value.trim();
   if (trimmed === "") return false;
   // Must contain at least one letter.
