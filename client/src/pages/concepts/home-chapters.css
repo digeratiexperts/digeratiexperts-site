@@ -914,3 +914,65 @@
 .hc .v8-colon {
   display: none !important;
 }
+
+/* ---------- Rails and plates on the full-content chapter page ---------- */
+.hc-section--plate {
+  position: relative;
+  isolation: isolate;
+}
+.hc-section--plate > .hc-plate {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.22;
+  pointer-events: none;
+  z-index: 0;
+  will-change: transform;
+}
+.hc-section--plate > :not(.hc-plate) {
+  position: relative;
+  z-index: 1;
+}
+/* On the paper Protect chapter the plate reads as tint, not darkness */
+#protection.hc-section--plate > .hc-plate {
+  opacity: 0.1;
+}
+
+/* A card grid promoted to a rail: one row, snap scrolling, hidden scrollbar. Cards keep their styles. */
+.hc .hc-rail {
+  display: flex !important;
+  gap: 16px !important;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding-bottom: 8px;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+}
+.hc .hc-rail::-webkit-scrollbar {
+  display: none;
+}
+.hc .hc-rail:focus-visible {
+  outline: 2px solid #ec4899;
+  outline-offset: 6px;
+  border-radius: 22px;
+}
+.hc .hc-rail > * {
+  flex: 0 0 min(86%, 360px);
+  scroll-snap-align: start;
+}
+@media (min-width: 900px) {
+  .hc .hc-rail > * {
+    flex-basis: 380px;
+  }
+}
+.hc-railbar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  width: min(1160px, calc(100% - var(--hc-gutter) * 2));
+  margin: 8px auto 0;
+  padding-bottom: 24px;
+}
