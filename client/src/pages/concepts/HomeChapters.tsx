@@ -8,6 +8,7 @@ import "../versions/v8/v8-dashboard.css";
 import { useRef, useState, useEffect, createRef, type RefObject } from "react";
 import { ChapterRail } from "./ChapterRail";
 import { useCardObjects } from "./CardObjects";
+import { useTheme, ThemeToggle } from "./ThemeToggle";
 import { Link } from "wouter";
 import { ArrowRight } from "lucide-react";
 import { PRIMARY_PHONE } from "@/data/companyContact";
@@ -69,6 +70,7 @@ const plates: Record<string, string> = {
 
 export function HomeChapters(): JSX.Element {
   const rootRef = useRef<HTMLDivElement>(null);
+  const { theme, toggle } = useTheme();
   const [active, setActive] = useState("hero");
   const sectionRefs = useRef<Record<string, RefObject<HTMLElement>>>(
     Object.fromEntries(chapters.map((c) => [c.id, createRef<HTMLElement>()])),
@@ -129,7 +131,7 @@ export function HomeChapters(): JSX.Element {
   }, []);
 
   return (
-    <div className="v8 hc min-h-screen" ref={rootRef}>
+    <div className="v8 hc min-h-screen" ref={rootRef} data-theme={theme}>
       <OrganizationJsonLd />
       <WebSiteJsonLd />
       <MegaMenu />
@@ -148,6 +150,9 @@ export function HomeChapters(): JSX.Element {
               );
             })}
           </ul>
+          <div className="hc-nav__toggle">
+            <ThemeToggle theme={theme} onToggle={toggle} />
+          </div>
         </nav>
         <section className="hc-poster" aria-labelledby="hc-poster-title">
           <div className="hc-poster__dark" aria-hidden="true" />

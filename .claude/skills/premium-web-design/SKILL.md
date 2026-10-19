@@ -13,11 +13,13 @@ merged PRs #632-#649. Original to this repo; no external upstream. Tier 0/1 of
 
 ## The ten rules (Joe's masterclass, applied)
 
-1. **Light-first base.** Page ground `#fafafa` (never pure white), text charcoal
-   `#121212` (never `#000`). White for cards and controls; one dark stage allowed
-   per page for the single most important argument. Dark-on-light is the default
-   mood; a full dark page reads as template. On the DE production homepage in
-   Maintenance Mode, Tier 2 tokens still govern; these rules control concept work.
+1. **Dark-first base, with an Apple-style light/dark toggle.** Default ground is charcoal
+   `#0a0a0a` with white cards (`#1a1a1c`) and a single magenta accent - the
+   ChatGPT/Grok/x.ai register. Light mode flips to `#fafafa` ground / `#ffffff`
+   cards / charcoal text and is reachable via a manual toggle (system preference
+   is the default, persisted). One dark stage per page still reserves the single
+   most important argument. The toggle is a real element, not a CSS-only
+   afterthought: persist to localStorage, read system pref on first paint, no FOUC.
 2. **One accent, used like a scalpel.** One saturated accent (DE: magenta
    `#D3126A`) for primary actions only. Buttons are pills, >=56px tall, 150ms
    color transitions - no gradients on buttons, no washes on hover.

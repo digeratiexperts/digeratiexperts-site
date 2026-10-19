@@ -84,3 +84,6 @@
 {"at":"2026-10-19T08:03:30.435Z","type":"spend","job":"card-objects-2026-10-19","model":"gpt-image-2-text-to-image","credits":6,"usd":0.03,"task":"68a05175e2ae6b3a6c1d3134b6b2f28b","file":"artifacts/kie-ai/obj-calendar.png"}
 {"at":"2026-10-19T08:04:32.866Z","type":"spend","job":"card-objects-2026-10-19","model":"gpt-image-2-text-to-image","credits":6,"usd":0.03,"task":"74ffc14f21af8146e32372e3e980008b","file":"artifacts/kie-ai/obj-toolbox.png"}
 {"at":"2026-10-19T08:06:04.101Z","type":"spend","job":"card-objects-2026-10-19","model":"gpt-image-2-text-to-image","credits":6,"usd":0.03,"task":"12d3bbcd3dde9ddeff0a4625f82a0a44","file":"artifacts/kie-ai/obj-server.png"}
+{"at":"2026-10-19T09:18:52.720Z","type":"close","job":"card-objects-2026-10-19","spentUsd":0.6900000000000004}
+{"at":"2026-10-19T09:18:59.979Z","type":"close","job":"monday-plates-2026-10-18","spentUsd":0.09}
+{"at":"2026-10-19T09:19:00.126Z","type":"close","job":"light-plates-2026-10-18","spentUsd":0.12}
