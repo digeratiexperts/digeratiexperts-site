@@ -1,71 +1,45 @@
-import { Bot, ClipboardCheck, GraduationCap, HardDrive, Headphones, Layers, ShieldCheck, Users } from "lucide-react";
+import { Bot, ClipboardCheck, Layers } from "lucide-react";
 import { PageTemplate } from "@/components/PageTemplate";
 import {
   Chapter,
   Container,
   ChapterHeader,
-  CheckList,
   ClosingCta,
   FaqChapter,
   FeatureGrid,
   HeroActions,
-  HeroFacts,
-  IndexedList,
   StepRail,
-  cardPaper,
 } from "@/components/site/chapters";
 import { useSEO } from "@/hooks/useSEO";
+import { BudgetBalancer } from "./efficiency/BudgetBalancer";
+import { FoundationCheck } from "./efficiency/FoundationCheck";
+import { HypeBento, type HypeItem } from "./efficiency/HypeBento";
+import { StackTower } from "./efficiency/StackTower";
+import "./efficiency/efficiency.css";
 
 /**
  * /solutions/efficiency-before-ai: DE's position that a secure, working IT
  * foundation and an efficient team come before AI spend. A position piece: it
  * carries no statistics or third-party figures (docs/CLAIMS-REGISTER.md).
+ * Serious argument, playful page: the stack tower, the self-check and the
+ * budget balancer live in ./efficiency with their own lazily loaded CSS.
  */
 
-const pressure = [
+const pitches: HypeItem[] = [
   {
-    title: "“Your competitors are already ahead.”",
-    text: "Urgency is the pitch. Most businesses are working out the same questions you are, and the ones that rush AI in without controls take on new exposure along with it.",
+    pitch: "“Your competitors are already ahead.”",
+    reality:
+      "Urgency is the pitch. Most businesses are working out the same questions you are, and the ones that rush AI in without controls take on new exposure along with it.",
   },
   {
-    title: "“Adopt now or fall behind.”",
-    text: "A license bought on a deadline doesn't make anyone faster. A tool nobody was trained on, on top of systems that already slow your team down, adds cost without adding capacity.",
+    pitch: "“Adopt now or fall behind.”",
+    reality:
+      "A license bought on a deadline doesn't make anyone faster. A tool nobody was trained on, on top of systems that already slow your team down, adds cost without adding capacity.",
   },
   {
-    title: "“AI will do the work.”",
-    text: "Your people still serve your clients. AI can help them, but it can't answer the phone when the internet is down or restore a file from a backup nobody tested.",
-  },
-];
-
-const foundationGaps = [
-  "Staff locked out because identities and MFA were never cleaned up",
-  "Aging laptops and slow logins that cost time every morning",
-  "Backups that exist but have never been restored to prove they work",
-  "Shared passwords and accounts nobody switched off when someone left",
-  "One internet connection and no plan for when it drops",
-  "New hires waiting on access while their first week slips away",
-];
-
-const budgetCuts = [
-  {
-    icon: HardDrive,
-    title: "Hardware refresh pushed out",
-    text: "Old devices fail more, patch less and slow everyone down. Delaying them to fund AI moves the cost to your team's day.",
-  },
-  {
-    icon: GraduationCap,
-    title: "Security awareness training dropped",
-    text: "People are still the first line against phishing and payment fraud. AI tools make convincing scams easier to write, not harder.",
-  },
-  {
-    icon: ShieldCheck,
-    title: "Backup and recovery testing skipped",
-    text: "Recovery is the line that decides whether a bad day is an inconvenience or a closed office. It is not where the savings should come from.",
-  },
-  {
-    icon: Headphones,
-    title: "Support hours trimmed",
-    text: "When a problem stops someone from working, the time to fix it is what your clients feel. Fewer support hours means longer stops.",
+    pitch: "“AI will do the work.”",
+    reality:
+      "Your people still serve your clients. AI can help them, but it can't answer the phone when the internet is down or restore a file from a backup nobody tested.",
   },
 ];
 
@@ -162,18 +136,8 @@ export default function EfficiencyBeforeAI() {
           />
         </div>
       }
-      heroAside={
-        <HeroFacts
-          title="Where the budget goes first"
-          rows={[
-            { label: "1 · Foundation", value: "Secure identities, devices, network and tested backups" },
-            { label: "2 · Operations", value: "The tools and support your team uses every day, working" },
-            { label: "3 · Readiness", value: "Clean data and access, so nothing sees more than it should" },
-            { label: "4 · AI", value: "On business accounts, with a job to do" },
-          ]}
-          footnote="AI is a tool for your people and your operations. It is not a replacement for either."
-        />
-      }
+      heroAside={<StackTower />}
+      heroAsideOnMobile
     >
       <Chapter tone="well" seam={false} aria-labelledby="fear-pitch">
         <Container>
@@ -184,34 +148,20 @@ export default function EfficiencyBeforeAI() {
             titleId="fear-pitch"
             lede="Fear sells fast decisions. Fast decisions about technology tend to skip the questions that matter: what problem this solves, what it can reach, and what gets cut to pay for it."
           />
-          <IndexedList tone="well" items={pressure} />
+          <HypeBento items={pitches} />
         </Container>
       </Chapter>
 
       <Chapter tone="paper" aria-labelledby="what-ai-cant-fix">
         <Container>
-          <div className="grid gap-10 lg:grid-cols-12 lg:gap-14">
-            <div className="lg:col-span-7">
-              <ChapterHeader
-                tone="paper"
-                layout="stack"
-                eyebrow="The foundation"
-                title="What actually stops your team from working"
-                titleId="what-ai-cant-fix"
-                lede="When service delivery breaks, it is rarely because a business lacked AI. It is because something underneath failed. None of these are fixed by adding an AI tool."
-              />
-              <CheckList tone="paper" items={foundationGaps} />
-            </div>
-            <aside className={`${cardPaper} self-start p-6 md:p-7 lg:col-span-5`}>
-              <Users className="h-6 w-6 text-de-magenta-paper-ink" aria-hidden="true" />
-              <h3 className="mt-4 font-heading text-lg font-semibold text-[#1A1228]">AI inherits what is underneath it</h3>
-              <p className="mt-2 text-base leading-relaxed text-[#3A3448]">
-                An AI tool is only as good as the systems and data it sits on. If files are disorganized and permissions
-                are wide open, AI surfaces that faster than anyone. A strong, secure foundation is what makes AI useful,
-                and what keeps it safe.
-              </p>
-            </aside>
-          </div>
+          <ChapterHeader
+            tone="paper"
+            eyebrow="The foundation"
+            title="What actually stops your team from working"
+            titleId="what-ai-cant-fix"
+            lede="When service delivery breaks, it is rarely because a business lacked AI. It is because something underneath failed. None of these are fixed by adding an AI tool. Tick the ones that sound familiar."
+          />
+          <FoundationCheck />
         </Container>
       </Chapter>
 
@@ -222,9 +172,9 @@ export default function EfficiencyBeforeAI() {
             eyebrow="The budget"
             title="AI budgets are cutting the things that keep you running"
             titleId="budget-cuts"
-            lede="An AI line item has to be paid for somewhere. When it comes out of the basics, the risk doesn't disappear. It moves to your team, your clients and the next bad day."
+            lede="An AI line item has to be paid for somewhere. When it comes out of the basics, the risk doesn't disappear. It moves to your team, your clients and the next bad day. Try it: move a line into the AI pilot."
           />
-          <FeatureGrid tone="surface" columns={4} items={budgetCuts} />
+          <BudgetBalancer />
         </Container>
       </Chapter>
 
