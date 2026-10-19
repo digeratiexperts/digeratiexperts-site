@@ -133,6 +133,7 @@ Reusable skill packs live in `.claude/skills/<name>/SKILL.md` (Claude Code disco
 | `excalidraw-visuals` | Hand-drawn-style PNG diagrams via kie.ai (Node) | Yes, per image |
 | `excalidraw-diagram` | Editable `.excalidraw` files, no API | No |
 | `frontend-design` | Distinctive frontend code. Maintenance Mode: Tier 2 current system applies on `client/`. Exploration Mode: only Tier 0/1 apply, on `client/` too (`design/DESIGN-AUTHORITY.md`) | No |
+| `premium-web-design` | Joe's premium/Apple-discipline masterclass rules for concept passes (bento, poster hero, one dark stage, objects-in-cards, 3 motion speeds) + the capture/axe/evidence pipeline and quality gate | Only via kie.ai workflows it references |
 | `video-to-website` | FFmpeg frames + GSAP/Lenis scroll page from a video | No |
 | `web-design-rules` | Standalone page / reference-match builds with `scripts/serve.mjs` + `scripts/screenshot.mjs`; same mode rule as `frontend-design` | No |
 | `skill-builder` | Create or audit a skill | No |
