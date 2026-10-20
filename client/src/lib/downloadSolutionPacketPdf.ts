@@ -7,15 +7,21 @@
 const ENDPOINT = "/api/public/solutions/packet-pdf";
 const FALLBACK_ERROR = "Unable to download the solution PDF.";
 
+// The last PDF fetched, keyed by its payload. Download then Print (or a
+// second Print) of an unchanged solution reuses it instead of rendering again.
+let lastPacket: { key: string; blob: Blob } | null = null;
+
 /** Fetches the packet PDF. Throws an Error carrying the server's message. */
 export async function fetchSolutionPacketPdf(payload: Record<string, unknown>): Promise<Blob> {
+  const key = JSON.stringify(payload);
+  if (lastPacket?.key === key) return lastPacket.blob;
   let response: Response;
   try {
     response = await fetch(ENDPOINT, {
       method: "POST",
       headers: { "Content-Type": "application/json", Accept: "application/pdf" },
       credentials: "include",
-      body: JSON.stringify(payload),
+      body: key,
     });
   } catch {
     throw new Error(FALLBACK_ERROR);
@@ -30,7 +36,9 @@ export async function fetchSolutionPacketPdf(payload: Record<string, unknown>): 
     }
     throw new Error(message);
   }
-  return response.blob();
+  const blob = await response.blob();
+  lastPacket = { key, blob };
+  return blob;
 }
 
 function saveBlob(blob: Blob, filename: string): void {
@@ -41,7 +49,8 @@ function saveBlob(blob: Blob, filename: string): void {
   document.body.appendChild(link);
   link.click();
   link.remove();
-  URL.revokeObjectURL(url);
+  // Revoking in the same tick can cancel the download in Safari and Firefox.
+  window.setTimeout(() => URL.revokeObjectURL(url), 30_000);
 }
 
 /**
@@ -60,6 +69,9 @@ export async function downloadSolutionPacketPdf(
   }
 }
 
+/** Shown when the print falls back to a download (Android). */
+export const PRINT_DOWNLOADED = "Your PDF downloaded. Open it to print.";
+
 /**
  * How this browser can print a PDF:
  * - "dialog": desktop browsers print a PDF loaded in a hidden frame;
@@ -67,9 +79,6 @@ export async function downloadSolutionPacketPdf(
  * - "download": Android Chrome cannot show or print a PDF inside a page, so
  *   the file downloads and opens in the system viewer, which prints.
  */
-/** Shown when the print falls back to a download (Android). */
-export const PRINT_DOWNLOADED = "Your PDF downloaded. Open it to print.";
-
 export type PacketPrintMode = "dialog" | "tab" | "download";
 
 export function packetPrintModeFor(userAgent: string, maxTouchPoints = 0): PacketPrintMode {
@@ -113,6 +122,16 @@ export async function printSolutionPacketPdf(
   let mode = packetPrintModeFor(navigator.userAgent, navigator.maxTouchPoints ?? 0);
   const tab = mode === "tab" ? window.open("", "_blank") : null;
   if (mode === "tab" && !tab) mode = "download";
+  if (tab) {
+    // The tab is blank until the PDF arrives; say what is happening.
+    try {
+      tab.document.title = "Preparing your PDF…";
+      tab.document.body.style.cssText = "font:16px/1.5 system-ui,sans-serif;margin:24px;color:#333";
+      tab.document.body.textContent = "Preparing your PDF…";
+    } catch {
+      /* the tab stays blank until the PDF loads */
+    }
+  }
 
   let blob: Blob;
   try {
