@@ -13,6 +13,15 @@ let dbReady = false;
 let initAttempted = false;
 let dbType: 'neon' | 'postgresql' | 'memory' = 'memory';
 
+/**
+ * Every statement gets a deadline, client-side (pg `query_timeout`) and
+ * server-side (`statement_timeout`). Without one, a query on a socket the
+ * database has silently dropped waits forever, and so does every request
+ * behind it: on 2026-10-20 /api/health and /api/zoho/desk/status hung for
+ * hours while /healthz answered 503 (#657).
+ */
+export const DB_QUERY_TIMEOUT_MS = 15_000;
+
 process.on('unhandledRejection', (reason) => {
   if (String(reason).includes('endpoint has been disabled') || 
       String(reason).includes('Connection terminated') ||
@@ -53,15 +62,19 @@ async function initDb(): Promise<boolean> {
 
     try {
       if (isNeon) {
-        pool = new NeonPool({ 
+        pool = new NeonPool({
           connectionString: databaseUrl,
           connectionTimeoutMillis: 10000,
+          query_timeout: DB_QUERY_TIMEOUT_MS,
+          statement_timeout: DB_QUERY_TIMEOUT_MS,
           max: 5,
         });
       } else {
-        pool = new PgPool({ 
+        pool = new PgPool({
           connectionString: databaseUrl,
           connectionTimeoutMillis: 10000,
+          query_timeout: DB_QUERY_TIMEOUT_MS,
+          statement_timeout: DB_QUERY_TIMEOUT_MS,
           max: 5,
           idleTimeoutMillis: 30000,
         });
@@ -121,6 +134,27 @@ export function getDatabaseStatus(): { connected: boolean; type: string } {
 }
 
 const initPromise = initDb();
+
+/**
+ * Forget a pool that exists but no longer answers, so the next health probe
+ * opens a fresh connection (reconnectDatabase, throttled) instead of trusting
+ * dead sockets. `dbReady` is only ever set at a successful connect, so before
+ * this a database that dropped out from under a running process left the
+ * process believing it was connected: token-store reads hung on the dead
+ * pool while /healthz reported 503 for good (#657, 2026-10-20). Callers that
+ * observed the failure (the health probe, the Zoho token store) invoke it;
+ * routine idle-connection errors from the pool do not, because the pool
+ * already discards those clients on its own.
+ */
+export function markDatabaseDown(reason: string): void {
+  if (!pool && !dbReady) return;
+  console.warn(`⚠️ Database marked unavailable (${reason}); will reconnect on the next probe`);
+  const dead = pool;
+  pool = null;
+  dbReady = false;
+  dbType = 'memory';
+  if (dead) dead.end().catch(() => {});
+}
 
 let reconnecting: Promise<boolean> | null = null;
 let lastReconnectAt = 0;

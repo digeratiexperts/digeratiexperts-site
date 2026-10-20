@@ -256,6 +256,39 @@ describe("DE Desk widget ticket route", () => {
       expect(getDeskClient).toHaveBeenCalledTimes(1);
     });
 
+    // 2026-10-20 (#656): the shared in-flight probe never settled (token
+    // store hung on a dead database pool) and every caller waited forever.
+    it("answers degraded when the probe stalls past its deadline, then re-probes after the cache expires", async () => {
+      const { setDeskProbeTimeoutForTests } = await import("./widgetTicketRoute");
+      setDeskProbeTimeoutForTests(50);
+      try {
+        getDeskClient.mockReturnValueOnce(new Promise(() => {}));
+        const started = Date.now();
+        const responses = await Promise.all(
+          Array.from({ length: 3 }, () => fetch(`${baseUrl}/api/zoho/desk/status`)),
+        );
+        expect(Date.now() - started).toBeLessThan(5_000);
+        for (const response of responses) {
+          expect(response.status).toBe(503);
+          expect(await response.json()).toMatchObject({
+            configured: true,
+            connected: false,
+            state: "degraded",
+            reason: "unavailable",
+          });
+        }
+        expect(getDeskClient).toHaveBeenCalledTimes(1);
+
+        // The timed-out result is cached like any other failure.
+        const cached = await fetch(`${baseUrl}/api/zoho/desk/status`);
+        expect(cached.status).toBe(503);
+        expect(await cached.json()).toMatchObject({ cached: true, state: "degraded" });
+        expect(getDeskClient).toHaveBeenCalledTimes(1);
+      } finally {
+        setDeskProbeTimeoutForTests();
+      }
+    });
+
     it("does not claim connectivity for an empty organization response", async () => {
       getDeskClient.mockResolvedValueOnce({ get: vi.fn(async () => ({ data: { data: [] } })) });
       const response = await fetch(`${baseUrl}/api/zoho/desk/status`);

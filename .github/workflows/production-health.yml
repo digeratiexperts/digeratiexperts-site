@@ -67,18 +67,32 @@ jobs:
             printf '%s' "${value:-$2}"
           }
 
-          BODY="$(probe_once || true)"
-          DB="$(field '.services.database' 'unreachable')"
+          # An empty body with curl exit 28 means the server took the request
+          # and sent nothing within 20s: the process is up and something inside
+          # it is hanging (2026-10-20, #657: a dead database pool). Report that
+          # as "stalled", which points at the app, not at DNS or the host.
+          db_default() {
+            if [ "${PROBE_RC:-0}" = "28" ]; then printf 'stalled'; else printf 'unreachable'; fi
+          }
+
+          BODY="$(probe_once)"; PROBE_RC=$?
+          DB="$(field '.services.database' "$(db_default)")"
 
           if [ "$DB" != "connected" ]; then
-            echo "First probe reported '$DB'; re-checking in 30s before alerting."
+            echo "First probe reported '$DB' (curl exit $PROBE_RC); re-checking in 30s before alerting."
             sleep 30
-            BODY="$(probe_once || true)"
-            DB="$(field '.services.database' 'unreachable')"
+            BODY="$(probe_once)"; PROBE_RC=$?
+            DB="$(field '.services.database' "$(db_default)")"
           fi
 
           STATUS="$(field '.status' 'unknown')"
           UPTIME="$(field '.uptime' 'unknown')"
+
+          # The liveness probe deploy.sh uses. It answers in under a second
+          # even when /api/health stalls, so it tells "process up, database
+          # down" (503) from "process gone" (000) in the issue.
+          HEALTHZ="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 20 https://digeratiexperts.com/healthz 2>/dev/null || true)"
+          HEALTHZ="${HEALTHZ:-000}"
 
           # Second probe: the support desk. The endpoint answers 503 with a
           # JSON body when the desk is unreachable, so curl -f would discard
@@ -121,6 +135,7 @@ jobs:
           DB="$(scalar "$DB")"
           STATUS="$(scalar "$STATUS")"
           UPTIME="$(scalar "$UPTIME")"
+          HEALTHZ="$(printf '%s' "$HEALTHZ" | tr -cd '0-9' | head -c 3)"
           DESK="$(scalar "$DESK")"
           DESK_REASON="$(scalar "$DESK_REASON")"
           DESK_STATE="$(scalar "$DESK_STATE")"
@@ -136,6 +151,7 @@ jobs:
           echo "database=$DB"     >> "$GITHUB_OUTPUT"
           echo "status=$STATUS"   >> "$GITHUB_OUTPUT"
           echo "uptime=$UPTIME"   >> "$GITHUB_OUTPUT"
+          echo "healthz=$HEALTHZ" >> "$GITHUB_OUTPUT"
           echo "truncated=$TRUNCATED" >> "$GITHUB_OUTPUT"
           echo "body_b64=$(printf '%s' "$BODY_CAPPED" | base64 -w0)" >> "$GITHUB_OUTPUT"
           echo "desk=$DESK"               >> "$GITHUB_OUTPUT"
@@ -143,7 +159,7 @@ jobs:
           echo "desk_state=$DESK_STATE"   >> "$GITHUB_OUTPUT"
           echo "desk_error=$DESK_ERROR"   >> "$GITHUB_OUTPUT"
 
-          echo "database=$DB status=$STATUS uptime=$UPTIME truncated=$TRUNCATED desk=$DESK reason=$DESK_REASON state=$DESK_STATE error=$DESK_ERROR"
+          echo "database=$DB status=$STATUS uptime=$UPTIME healthz=$HEALTHZ truncated=$TRUNCATED desk=$DESK reason=$DESK_REASON state=$DESK_STATE error=$DESK_ERROR"
 
       - name: File or clear the health issue
         uses: actions/github-script@v7
@@ -151,6 +167,7 @@ jobs:
           DB: ${{ steps.probe.outputs.database }}
           STATUS: ${{ steps.probe.outputs.status }}
           UPTIME: ${{ steps.probe.outputs.uptime }}
+          HEALTHZ: ${{ steps.probe.outputs.healthz }}
           BODY_B64: ${{ steps.probe.outputs.body_b64 }}
           TRUNCATED: ${{ steps.probe.outputs.truncated }}
           DESK: ${{ steps.probe.outputs.desk }}
@@ -161,7 +178,7 @@ jobs:
           script: |
             const MARKER = 'Production database is not connected';
             const DESK_MARKER = 'Production support desk is unreachable';
-            const { DB, STATUS, UPTIME, BODY_B64, TRUNCATED, DESK, DESK_REASON, DESK_STATE, DESK_ERROR } = process.env;
+            const { DB, STATUS, UPTIME, HEALTHZ, BODY_B64, TRUNCATED, DESK, DESK_REASON, DESK_STATE, DESK_ERROR } = process.env;
 
             // Decoded here rather than passed raw: see the probe step's note on
             // why the body never travels through a delimiter.
@@ -239,9 +256,15 @@ jobs:
               const body = [
                 `\`services.database\` reads **\`${DB}\`**, not \`connected\`. Confirmed by a second probe 30s after the first.`,
                 '',
-                `Top-level status: \`${STATUS}\` · process uptime: \`${UPTIME}\`s`,
+                `Top-level status: \`${STATUS}\` · process uptime: \`${UPTIME}\`s · \`/healthz\`: \`${HEALTHZ || '000'}\``,
                 '',
                 'The site keeps serving pages, so this is invisible from the homepage. What breaks is anything durable — portal auth, store orders, quote submissions, chat persistence — and on `fallback_memory` those writes go to memory and are lost on the next restart.',
+                '',
+                DB === 'stalled'
+                  ? 'State `stalled`: the server accepted the request and sent nothing within 20 s, so the process is up and a dependency (usually the database) is hanging it. `/healthz` 503 next to it means Postgres is not accepting connections. Runbook: the diagnosis comment on #657 (2026-10-20): service status, app.log, database test from the VPS, then a service restart.'
+                  : DB === 'unreachable'
+                    ? 'State `unreachable`: no HTTP answer at all (DNS, TLS, the proxy or the host). Check the VPS and OpenLiteSpeed before the app.'
+                    : 'State `fallback_memory`: the process is up and answering but has no database. It retries the connection on every `/healthz` probe; if it stays this way, check `DATABASE_URL`, the database host, and app.log on the VPS.',
                 '',
                 '```json',
                 BODY,

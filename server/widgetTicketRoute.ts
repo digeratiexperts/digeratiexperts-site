@@ -9,6 +9,7 @@ import { isZohoAuthUnavailableError, type ZohoConnectionState } from "./zoho/oau
 import { PRIMARY_PHONE } from "@shared/companyContact";
 import { deskTicketSchema } from "@shared/deskTicket";
 import { fallbackTicket, saveTicketOutsideDesk, type DeskFallbackOutcome, type FallbackTicket } from "./deskTicketFallback";
+import { withDeadline } from "./withDeadline";
 
 /**
  * The public DE Desk "Get Support" ticket, and a status probe for the desk it
@@ -138,6 +139,20 @@ const DESK_STATUS_TTL_MS = 60 * 1000;
 let deskStatusCache: { at: number; body: DeskStatus } | null = null;
 let deskStatusInFlight: Promise<DeskStatus> | null = null;
 
+/**
+ * One probe is shared by every concurrent caller, so a probe that never
+ * settles would pin every later request to it. On 2026-10-20 (#656, #657)
+ * that happened when the token store hung on a dead database pool and the
+ * endpoint answered nothing for hours. Token refresh and the Desk read each
+ * carry a 15 s timeout; this is the bound on the whole probe.
+ */
+const DESK_PROBE_TIMEOUT_MS = 20_000;
+let deskProbeTimeoutMs = DESK_PROBE_TIMEOUT_MS;
+
+export function setDeskProbeTimeoutForTests(ms?: number): void {
+  deskProbeTimeoutMs = ms ?? DESK_PROBE_TIMEOUT_MS;
+}
+
 export interface DeskStatus {
   configured: boolean;
   connected: boolean;
@@ -216,10 +231,18 @@ export function registerWidgetTicketRoute(app: Express, options: WidgetTicketRou
     }
     // Coalesce a cold/expired probe so concurrent visitors do not fan out to Zoho.
     if (!deskStatusInFlight) {
-      deskStatusInFlight = probeDesk().then((body) => {
-        deskStatusCache = { at: Date.now(), body };
-        return body;
-      }).finally(() => { deskStatusInFlight = null; });
+      const checkedAt = new Date().toISOString();
+      deskStatusInFlight = withDeadline(probeDesk(), deskProbeTimeoutMs, "desk status probe")
+        .catch((error: unknown): DeskStatus => {
+          // probeDesk() never rejects on its own; this is the deadline. The
+          // Desk is not known to be broken, only unreachable right now.
+          console.error("[DESK STATUS] probe did not finish:", error instanceof Error ? error.message : String(error));
+          return { configured: true, connected: false, state: "degraded", reason: "unavailable", checkedAt };
+        })
+        .then((body) => {
+          deskStatusCache = { at: Date.now(), body };
+          return body;
+        }).finally(() => { deskStatusInFlight = null; });
     }
     const body = await deskStatusInFlight;
     res.status(body.connected ? 200 : 503).json({ ...body, cached: false });

@@ -13,7 +13,8 @@
  */
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";
 import { sql } from "drizzle-orm";
-import { db, dbReady } from "../../db";
+import { db, dbReady, markDatabaseDown } from "../../db";
+import { isDeadlineError, withDeadline } from "../../withDeadline";
 import { fingerprint } from "./manager";
 import {
   MemoryZohoTokenStore,
@@ -203,8 +204,33 @@ export class DbZohoTokenStore implements ZohoTokenStore {
 }
 
 /**
+ * How long one token-store statement may take before the store gives up on
+ * the database for that call. /api/health and /api/zoho/desk/status both
+ * read this store; on 2026-10-20 (#657) those reads hung for hours on a
+ * pool whose sockets the database had dropped, and both endpoints answered
+ * nothing at all. Below the pg query_timeout in db.ts so the caller gets an
+ * answer first.
+ */
+const DB_STORE_TIMEOUT_MS = 8_000;
+let dbStoreTimeoutMs = DB_STORE_TIMEOUT_MS;
+
+export function setZohoTokenStoreTimeoutForTests(ms?: number): void {
+  dbStoreTimeoutMs = ms ?? DB_STORE_TIMEOUT_MS;
+}
+
+/** A failure that means "the database is not answering", not "this statement is wrong". */
+export function looksLikeDatabaseOutage(error: unknown): boolean {
+  if (isDeadlineError(error)) return true;
+  const message = error instanceof Error ? error.message : String(error);
+  return /ECONNREFUSED|ECONNRESET|ETIMEDOUT|ENOTFOUND|EAI_AGAIN|EPIPE|Connection terminated|connection to server|endpoint has been disabled|timeout exceeded when trying to connect|Query read timeout|statement timeout|canceling statement|Cannot use a pool after calling end|socket hang up|terminating connection/i.test(message);
+}
+
+/**
  * The database store while the database and table are there, memory otherwise.
  * Never throws for a missing database: token caching just stays in-process.
+ * Never hangs on a dead one either: every statement has a deadline, and a
+ * database that stops answering is marked down (db.ts) so the health probe
+ * reconnects and this store answers from memory until then.
  */
 export class ResilientZohoTokenStore implements ZohoTokenStore {
   readonly memory = new MemoryZohoTokenStore();
@@ -215,38 +241,57 @@ export class ResilientZohoTokenStore implements ZohoTokenStore {
     if (!dbReady || !db) return false;
     if (this.tableChecked !== null) return this.tableChecked;
     try {
-      const [r] = rows(await db.execute(sql`SELECT to_regclass('public.zoho_oauth_tokens') AS present`));
+      const [r] = rows(await withDeadline(
+        db.execute(sql`SELECT to_regclass('public.zoho_oauth_tokens') AS present`),
+        dbStoreTimeoutMs,
+        "zoho token store table check",
+      ));
       this.tableChecked = Boolean(r?.present);
       if (!this.tableChecked) {
         console.error("[zoho-oauth] table zoho_oauth_tokens is missing; run `npm run db:migrate` (migrations/0017_zoho_oauth_tokens.sql). Tokens are cached in memory only.");
       }
     } catch (error: any) {
       console.warn("[zoho-oauth] could not verify zoho_oauth_tokens:", error?.message || error);
+      if (looksLikeDatabaseOutage(error)) markDatabaseDown(`zoho token store table check: ${error?.message || error}`);
       return false;
     }
     return this.tableChecked;
   }
 
-  private async pick(): Promise<ZohoTokenStore> {
-    return (await this.useDb()) ? this.database : this.memory;
+  /**
+   * Run `operation` on the database store with a deadline; on an outage
+   * (deadline, dropped connection) mark the database down and answer from
+   * memory. Any other database error is the caller's to see, as before.
+   */
+  private async viaDatabase<T>(label: string, operation: (store: ZohoTokenStore) => Promise<T>): Promise<T> {
+    if (!(await this.useDb())) return operation(this.memory);
+    try {
+      return await withDeadline(operation(this.database), dbStoreTimeoutMs, `zoho token store ${label}`);
+    } catch (error: any) {
+      if (!looksLikeDatabaseOutage(error)) throw error;
+      const message = error?.message || String(error);
+      console.warn(`[zoho-oauth] ${label} did not reach the database (${message}); answering from memory until it reconnects`);
+      markDatabaseDown(`zoho token store ${label}: ${message}`);
+      return operation(this.memory);
+    }
   }
 
   async read(provider: string) {
-    return (await this.pick()).read(provider);
+    return this.viaDatabase("read", (store) => store.read(provider));
   }
   async saveGrant(input: ZohoGrantInput) {
-    return (await this.pick()).saveGrant(input);
+    return this.viaDatabase("saveGrant", (store) => store.saveGrant(input));
   }
   async patch(provider: string, refreshToken: string, patch: ZohoStatePatch) {
-    return (await this.pick()).patch(provider, refreshToken, patch);
+    return this.viaDatabase("patch", (store) => store.patch(provider, refreshToken, patch));
   }
   async remove(provider: string) {
-    return (await this.pick()).remove(provider);
+    return this.viaDatabase("remove", (store) => store.remove(provider));
   }
   async readState(fp: string) {
-    return (await this.pick()).readState(fp);
+    return this.viaDatabase("readState", (store) => store.readState(fp));
   }
   async writeState(fp: string, patch: ZohoStatePatch) {
-    return (await this.pick()).writeState(fp, patch);
+    return this.viaDatabase("writeState", (store) => store.writeState(fp, patch));
   }
 }

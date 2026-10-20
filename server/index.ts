@@ -28,6 +28,7 @@ import cookieParser from "cookie-parser";
 import compression from "compression";
 import { resolveWarehouseStaff } from "./warehouseAccess";
 import { publicHealthView } from "./publicHealth";
+import { withDeadline } from "./withDeadline";
 import { zohoPayments } from "./zohoPayments";
 import { zohoClient } from "./zoho/zohoClient";
 import { zohoHealthStates } from "./zoho/zohoHealth";
@@ -141,7 +142,9 @@ app.all("/api/health", cookieParser(), async (req, res) => {
       zohoDesk: zohoClient.getDeskAuthStatus(),
       // Token health per product from stored state (no Zoho call): connected,
       // degraded, needs_reconnect, not_configured, or unknown before first use.
-      zoho: await zohoHealthStates().catch(() => null),
+      // Bounded: these reads go through the token store and, before #657,
+      // hung this whole endpoint when the database pool went dead.
+      zoho: await withDeadline(zohoHealthStates(), 5_000, "zoho health states").catch(() => null),
       openai: openaiConfigured ? "configured" : "not_configured",
       // Solution requests waiting on disk for the database (#243). A count, and whether the folder takes writes.
       solutionSpool: { pending: spoolPendingCount(), writable: spoolWritable(spoolDir()) },

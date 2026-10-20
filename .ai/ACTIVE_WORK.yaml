@@ -30,6 +30,29 @@
 
 version: 2
 claims:
+  - id: health-probe-deadlines
+    issue: 657
+    owner: claude
+    subsystem: health-probes, zoho-oauth-store, production-health-workflow
+    branch: claude/health-probe-deadlines
+    base_sha: 946824a
+    files:
+      - server/withDeadline.ts, server/withDeadline.test.ts (new)
+      - server/db.ts (pg query/statement timeouts, markDatabaseDown)
+      - server/healthProbe.ts, server/healthProbe.test.ts (bounded probe runs SELECT 1, marks a dead pool down)
+      - server/zoho/oauth/db-store.ts, server/zoho/oauth/db-store.test.ts (new) (deadline on token-store statements, memory fallback on outage)
+      - server/widgetTicketRoute.ts, server/widgetTicketRoute.test.ts (deadline on the shared desk status probe)
+      - server/index.ts (/api/health: bounded Zoho state read only)
+      - .github/workflows/production-health.yml (stalled vs unreachable, /healthz code in the issue)
+    status: active
+    started: 2026-10-20
+    note: >-
+      Production incident 2026-10-20 (#657, #656): from ~23:37 UTC the
+      database stopped answering under the running process; /healthz said 503
+      while /api/health and /api/zoho/desk/status hung on untimed token-store
+      reads through the dead pool, so the monitor read "no response body".
+      Joe, 2026-10-20: "All approved, merge, tell me what you need." Code only;
+      the incident itself needs the VPS runbook on #657.
   - id: closeout-226-153-395
     owner: claude
     subsystem: store-vendor-marks, portal-passkeys, storage-503
