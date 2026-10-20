@@ -242,6 +242,9 @@ export function registerWidgetTicketRoute(app: Express, options: WidgetTicketRou
       // The probe keeps running and settles the shared promise (and the cache)
       // on its own; this request stops waiting so the widget and the monitor
       // get an answer. Not cached: the next request reads the real result.
+      // probeDesk() catches everything after the synchronous isDeskConfigured(),
+      // so today the only rejection here is the deadline; the other branch
+      // stays so an unexpected throw still answers instead of hanging.
       const timedOut = error instanceof DeadlineError;
       console.error("[DESK STATUS] probe did not answer", { timedOut, deadlineMs: probeDeadlineMs });
       body = { configured: true, connected: false, state: "degraded", reason: "unavailable", timedOut, checkedAt: new Date().toISOString() };
