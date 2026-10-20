@@ -13,6 +13,8 @@ let db: any = null;
 let dbReady = false;
 let initAttempted = false;
 let dbType: 'neon' | 'postgresql' | 'memory' = 'memory';
+/** The connect attempt in flight (boot or reconnect), so nothing else touches the pool it is building. */
+let initInFlight: Promise<boolean> | null = null;
 
 process.on('unhandledRejection', (reason) => {
   if (String(reason).includes('endpoint has been disabled') || 
@@ -30,7 +32,16 @@ function isNeonDatabase(url: string): boolean {
 async function initDb(): Promise<boolean> {
   if (initAttempted) return dbReady;
   initAttempted = true;
-  
+  const attempt = connectAtStart();
+  initInFlight = attempt;
+  try {
+    return await attempt;
+  } finally {
+    if (initInFlight === attempt) initInFlight = null;
+  }
+}
+
+async function connectAtStart(): Promise<boolean> {
   const databaseUrl = process.env.DATABASE_URL;
   
   if (!databaseUrl) {
@@ -42,10 +53,18 @@ async function initDb(): Promise<boolean> {
   const isNeon = isNeonDatabase(databaseUrl);
   
   return new Promise((resolve) => {
+    // Every step below checks that the module still holds the pool this
+    // attempt created. The 8 s timer, markDatabaseDown() and a later attempt
+    // can all replace or drop `pool` while connect() is pending; a late
+    // success must not build `db` on someone else's pool (or on null) and
+    // flip dbReady for a connection nobody keeps.
+    let created: NeonPool | PgPool | null = null;
+    const stillOurs = () => created !== null && pool === created;
+
     const timeout = setTimeout(() => {
       console.log("⚠️ Database connection timeout - using in-memory storage");
-      if (pool) {
-        pool.end().catch(() => {});
+      if (stillOurs()) {
+        pool!.end().catch(() => {});
         pool = null;
       }
       dbType = 'memory';
@@ -54,12 +73,13 @@ async function initDb(): Promise<boolean> {
 
     try {
       if (isNeon) {
-        pool = new NeonPool(poolOptions(databaseUrl, "neon"));
+        created = new NeonPool(poolOptions(databaseUrl, "neon"));
       } else {
-        pool = new PgPool(poolOptions(databaseUrl, "postgresql"));
+        created = new PgPool(poolOptions(databaseUrl, "postgresql"));
       }
+      pool = created;
       
-      (pool as any).on('error', (err: Error) => {
+      (created as any).on('error', (err: Error) => {
         const errMsg = String(err.message);
         if (!errMsg.includes('endpoint has been disabled') && 
             !errMsg.includes('Connection terminated')) {
@@ -67,17 +87,24 @@ async function initDb(): Promise<boolean> {
         }
       });
       
-      pool.connect()
+      created.connect()
         .then((client: any) => {
           return client.query('SELECT 1').then(() => {
             client.release();
             clearTimeout(timeout);
+
+            if (!stillOurs()) {
+              console.log("⚠️ Database connected after this attempt was abandoned; discarding that pool");
+              created!.end().catch(() => {});
+              resolve(false);
+              return;
+            }
             
             if (isNeon) {
-              db = drizzleNeon({ client: pool as NeonPool, schema });
+              db = drizzleNeon({ client: created as NeonPool, schema });
               dbType = 'neon';
             } else {
-              db = drizzlePg({ client: pool as PgPool, schema });
+              db = drizzlePg({ client: created as PgPool, schema });
               dbType = 'postgresql';
             }
             
@@ -89,8 +116,8 @@ async function initDb(): Promise<boolean> {
         .catch((error: Error) => {
           clearTimeout(timeout);
           console.log("⚠️ Database connection failed:", error.message);
-          if (pool) {
-            pool.end().catch(() => {});
+          if (stillOurs()) {
+            pool!.end().catch(() => {});
             pool = null;
           }
           dbType = 'memory';
@@ -127,6 +154,9 @@ export async function reconnectDatabase(): Promise<boolean> {
   if (dbReady) return true;
   if (!process.env.DATABASE_URL) return false;
   if (reconnecting) return reconnecting;
+  // The boot-time connect is still running: join it rather than start a
+  // second pool beside it.
+  if (initInFlight) return initInFlight;
   if (Date.now() - lastReconnectAt < RECONNECT_COOLDOWN_MS) return false;
   lastReconnectAt = Date.now();
   initAttempted = false;
@@ -147,6 +177,14 @@ export async function reconnectDatabase(): Promise<boolean> {
  * next throttled reconnectDatabase() rebuilds it.
  */
 export function markDatabaseDown(reason: string): void {
+  if (initInFlight) {
+    // A connect attempt is building the pool right now (boot, or the probe's
+    // reconnect). Ending it here would leave that attempt to finish on a
+    // dropped pool: dbReady true, pool null, db bound to nothing (the state
+    // the 2026-10-20 review traced). The attempt settles the state itself.
+    console.log(`⚠️ Database reported down (${reason}) while a connect is in flight; leaving that attempt to settle`);
+    return;
+  }
   if (!pool && !dbReady) return;
   console.log(`⚠️ Database marked down (${reason}); will reconnect`);
   const dead = pool;

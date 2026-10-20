@@ -218,11 +218,52 @@ export function setZohoTokenStoreTimeoutForTests(ms?: number): void {
   dbStoreTimeoutMs = ms ?? DB_STORE_TIMEOUT_MS;
 }
 
-/** A failure that means "the database is not answering", not "this statement is wrong". */
+const OUTAGE_MESSAGE = /ECONNREFUSED|ECONNRESET|ETIMEDOUT|ENOTFOUND|EAI_AGAIN|EPIPE|Connection terminated|connection to server|endpoint has been disabled|timeout exceeded when trying to connect|Query read timeout|statement timeout|canceling statement|Cannot use a pool after calling end|socket hang up|terminating connection/i;
+
+/**
+ * Node socket codes and the Postgres SQLSTATE classes that mean the server
+ * went away: 08xxx connection exceptions, 57P01..57P03 (admin shutdown,
+ * crash shutdown, cannot connect now).
+ */
+const OUTAGE_CODE = /^(ECONNREFUSED|ECONNRESET|ETIMEDOUT|ENOTFOUND|EAI_AGAIN|EPIPE|08\d{3}|57P0[123])$/;
+
+/**
+ * A failure that means "the database is not answering", not "this statement
+ * is wrong". drizzle 0.44+ wraps every driver error in DrizzleQueryError
+ * ("Failed query: …") with the pg error as `cause`, and pg reports a refused
+ * connect on several addresses as an AggregateError with `errors`, so the
+ * message of the outermost error alone says nothing: walk `cause` and
+ * `errors` (bounded, cycle-safe).
+ */
+/** "Failed query: … <- connect ECONNREFUSED …": the wrapper and what it hides, for logs. */
+export function describeDatabaseError(error: unknown): string {
+  const parts: string[] = [];
+  let current: unknown = error;
+  for (let depth = 0; depth < 4 && current != null; depth += 1) {
+    const message = current instanceof Error ? current.message : String(current);
+    parts.push(message.split("\n")[0]);
+    current = (current as { cause?: unknown }).cause;
+  }
+  return parts.join(" <- ");
+}
+
 export function looksLikeDatabaseOutage(error: unknown): boolean {
-  if (isDeadlineError(error)) return true;
-  const message = error instanceof Error ? error.message : String(error);
-  return /ECONNREFUSED|ECONNRESET|ETIMEDOUT|ENOTFOUND|EAI_AGAIN|EPIPE|Connection terminated|connection to server|endpoint has been disabled|timeout exceeded when trying to connect|Query read timeout|statement timeout|canceling statement|Cannot use a pool after calling end|socket hang up|terminating connection/i.test(message);
+  const seen = new Set<unknown>();
+  const pending: unknown[] = [error];
+  while (pending.length && seen.size < 16) {
+    const current = pending.pop();
+    if (current == null || seen.has(current)) continue;
+    seen.add(current);
+    if (isDeadlineError(current)) return true;
+    const message = current instanceof Error ? current.message : String(current);
+    const code = (current as { code?: unknown }).code;
+    if (OUTAGE_MESSAGE.test(message) || (typeof code === "string" && OUTAGE_CODE.test(code))) return true;
+    const cause = (current as { cause?: unknown }).cause;
+    if (cause !== undefined) pending.push(cause);
+    const errors = (current as { errors?: unknown }).errors;
+    if (Array.isArray(errors)) pending.push(...errors);
+  }
+  return false;
 }
 
 /**
@@ -251,8 +292,8 @@ export class ResilientZohoTokenStore implements ZohoTokenStore {
         console.error("[zoho-oauth] table zoho_oauth_tokens is missing; run `npm run db:migrate` (migrations/0017_zoho_oauth_tokens.sql). Tokens are cached in memory only.");
       }
     } catch (error: any) {
-      console.warn("[zoho-oauth] could not verify zoho_oauth_tokens:", error?.message || error);
-      if (looksLikeDatabaseOutage(error)) markDatabaseDown(`zoho token store table check: ${error?.message || error}`);
+      console.warn("[zoho-oauth] could not verify zoho_oauth_tokens:", describeDatabaseError(error));
+      if (looksLikeDatabaseOutage(error)) markDatabaseDown(`zoho token store table check: ${describeDatabaseError(error)}`);
       return false;
     }
     return this.tableChecked;
@@ -269,7 +310,7 @@ export class ResilientZohoTokenStore implements ZohoTokenStore {
       return await withDeadline(operation(this.database), dbStoreTimeoutMs, `zoho token store ${label}`);
     } catch (error: any) {
       if (!looksLikeDatabaseOutage(error)) throw error;
-      const message = error?.message || String(error);
+      const message = describeDatabaseError(error);
       console.warn(`[zoho-oauth] ${label} did not reach the database (${message}); answering from memory until it reconnects`);
       markDatabaseDown(`zoho token store ${label}: ${message}`);
       return operation(this.memory);

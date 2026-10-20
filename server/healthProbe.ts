@@ -22,7 +22,7 @@ export function probeStatus(databaseUp: boolean): 200 | 503 {
 
 type ProbeClient = {
   release(error?: Error): void;
-  query?(text: string): Promise<unknown>;
+  query(text: string): Promise<unknown>;
 };
 
 type DbProbeModule = {
@@ -44,22 +44,35 @@ function withTimeout<T>(work: Promise<T>, ms: number): Promise<T> {
   });
 }
 
+/**
+ * One connection, one round trip, one deadline for both. pg-pool hands an idle
+ * client back with no socket I/O, so a connect alone can "succeed" on a socket
+ * the server has already dropped; SELECT 1 proves the link (#657). A client
+ * that fails, or that only arrives after the probe stopped waiting, is
+ * released with an error so pg-pool destroys it instead of handing a dead
+ * socket to the next caller.
+ */
 async function connectOnce(pool: NonNullable<DbProbeModule["pool"]>, timeoutMs: number): Promise<boolean> {
-  const client = await withTimeout(pool.connect(), timeoutMs);
-  try {
-    // pg-pool hands an idle client back with no socket I/O, so a connect alone
-    // can "succeed" on a socket the server has already dropped; one round
-    // trip proves the link (#657 follow-up from PR 659).
-    if (typeof client.query === "function") {
-      await withTimeout(client.query("SELECT 1"), timeoutMs);
+  let client: ProbeClient | undefined;
+  let gaveUp = false;
+  const asError = (error: unknown) => (error instanceof Error ? error : new Error(String(error)));
+  const work = (async () => {
+    const connected = await pool.connect();
+    if (gaveUp) {
+      connected.release(new Error(`database probe: connection arrived after the ${timeoutMs}ms deadline`));
+      return;
     }
+    client = connected;
+    await connected.query("SELECT 1");
+  })();
+  try {
+    await withTimeout(work, timeoutMs);
   } catch (error) {
-    // Release with the error so pg-pool destroys this client instead of
-    // returning a dead socket to the next caller.
-    client.release(error instanceof Error ? error : new Error(String(error)));
+    gaveUp = true;
+    client?.release(asError(error));
     throw error;
   }
-  client.release();
+  client?.release();
   return true;
 }
 

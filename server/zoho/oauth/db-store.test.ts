@@ -98,4 +98,46 @@ describe("ResilientZohoTokenStore deadlines", () => {
     expect(looksLikeDatabaseOutage(new Error('relation "zoho_oauth_tokens" does not exist'))).toBe(false);
     expect(looksLikeDatabaseOutage(new Error("duplicate key value violates unique constraint"))).toBe(false);
   });
+
+  it("sees an outage through drizzle's DrizzleQueryError wrapper, which hides the driver message", async () => {
+    // drizzle 0.44+ rethrows every driver error as "Failed query: …" with the
+    // pg error as `cause`; the first cut only read the outer message.
+    const { looksLikeDatabaseOutage } = await import("./db-store");
+    const { drizzle } = await import("drizzle-orm/node-postgres");
+    const { sql } = await import("drizzle-orm");
+    const throwing = (error: Error) => drizzle({ client: { query: async () => { throw error; } } as any });
+    const refused = await throwing(Object.assign(new Error("connect ECONNREFUSED 127.0.0.1:5432"), { code: "ECONNREFUSED" }))
+      .execute(sql`select 1`).catch((error: unknown) => error);
+    expect((refused as Error).message).toMatch(/^Failed query/);
+    expect(looksLikeDatabaseOutage(refused)).toBe(true);
+
+    const schemaBug = await throwing(Object.assign(new Error('relation "zoho_oauth_tokens" does not exist'), { code: "42P01" }))
+      .execute(sql`select 1`).catch((error: unknown) => error);
+    expect(looksLikeDatabaseOutage(schemaBug)).toBe(false);
+
+    // pg reports a refused connect on several addresses as an AggregateError.
+    const aggregate = new AggregateError([Object.assign(new Error("connect ECONNREFUSED ::1:5432"), { code: "ECONNREFUSED" })], "");
+    expect(looksLikeDatabaseOutage(aggregate)).toBe(true);
+    // Postgres' own codes for "the server went away", with messages the regex does not list.
+    expect(looksLikeDatabaseOutage(Object.assign(new Error("administrator command"), { code: "57P01" }))).toBe(true);
+    expect(looksLikeDatabaseOutage(Object.assign(new Error("server closed the connection unexpectedly"), { code: "08006" }))).toBe(true);
+    // A cycle in `cause` must not loop.
+    const loop: any = new Error("Failed query: select 1");
+    loop.cause = loop;
+    expect(looksLikeDatabaseOutage(loop)).toBe(false);
+  });
+
+  it("answers from memory and marks the database down on a wrapped dropped connection", async () => {
+    const { ResilientZohoTokenStore } = await import("./db-store");
+    const wrapped = Object.assign(new Error("Failed query: select * from zoho_oauth_tokens\nparams: unified"), {
+      cause: Object.assign(new Error("Connection terminated unexpectedly"), { code: "ECONNRESET" }),
+    });
+    dbMock.execute.mockResolvedValueOnce(tablePresent).mockRejectedValueOnce(wrapped);
+    const store = new ResilientZohoTokenStore();
+    expect(await store.read("unified")).toBeNull();
+    expect(dbMock.markDatabaseDown).toHaveBeenCalledTimes(1);
+    expect(dbMock.markDatabaseDown.mock.calls[0][0]).toBe(
+      "zoho token store read: Failed query: select * from zoho_oauth_tokens <- Connection terminated unexpectedly",
+    );
+  });
 });
