@@ -20,6 +20,8 @@
     "smoke:door2": "node scripts/door2-browser-smoke.mjs",
     "smoke:desk": "node scripts/desk-browser-smoke.mjs",
     "smoke:a11y": "node scripts/a11y-smoke.mjs",
+    "route-meta:write": "node scripts/route-meta/snapshot.mjs --write",
+    "check:route-meta": "node scripts/route-meta/snapshot.mjs --check",
     "db:push": "drizzle-kit push",
     "db:migrate": "node scripts/run-migrations.mjs",
     "test:advisor": "tsx --test server/services/msp-advisor/*.test.ts",
