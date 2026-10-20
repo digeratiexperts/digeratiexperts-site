@@ -259,6 +259,10 @@ jobs:
           # axe-core WCAG A/AA scan of the settled page; fails on "critical" or
           # "serious", reports the rest (docs/CONTENT-TOOLING-PLAN.md).
           A11Y_BASE=http://127.0.0.1:3300 npm run smoke:a11y
+          # The server sends each sitemap page's title, description and canonical
+          # from shared/routeMeta.json; fail when a page's own tags have changed
+          # without the snapshot (server/routeMeta.ts).
+          ROUTE_META_BASE=http://127.0.0.1:3300 npm run check:route-meta
 
   # Production is a CyberPanel/OpenLiteSpeed VPS, not a Replit deployment.
   # This job is pinned to a repo-scoped production runner. Generic Linux

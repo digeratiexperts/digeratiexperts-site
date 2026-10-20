@@ -18,6 +18,7 @@ import { registerWarehouseGates } from "./warehouseRoutes";
 import { registerPortalMarketplaceRoutes } from "./portalMarketplaceRoutes";
 import { registerPublicSupportChat } from "./publicSupportChat";
 import { isKnownSpaPath } from "./spaKnownPaths";
+import { applyRouteMeta, readIndexShell, routeMetaFor } from "./routeMeta";
 import { cacheControlFor } from "./staticCacheControl";
 import { deskTicketSpoolDir, quoteSpoolDir, spoolDir, spoolPendingCount, spoolWritable } from "./publicSolutionSpool";
 import { registerCampaignAliasRedirects } from "./campaignAliasRedirects";
@@ -608,8 +609,13 @@ function listEndpoints(): Array<{ method: string; path: string }> {
       
       if (fs.existsSync(indexPath)) {
         // Known SPA routes → 200; unknown paths still get the shell but HTTP 404.
-        const status = isKnownSpaPath(req.path) ? 200 : 404;
-        res.status(status).sendFile(indexPath);
+        const known = isKnownSpaPath(req.path);
+        const shell = readIndexShell(indexPath);
+        res.status(known ? 200 : 404);
+        // Same caching as the sendFile this replaced: revalidate every time, keyed on the build's mtime.
+        res.setHeader("Cache-Control", "public, max-age=0");
+        res.setHeader("Last-Modified", shell.lastModified);
+        res.type("html").send(known ? applyRouteMeta(shell.html, routeMetaFor(req.path)) : shell.html);
       } else {
         log(`⚠️ Production build not found at ${distPath}`);
         res.status(404).send(`
