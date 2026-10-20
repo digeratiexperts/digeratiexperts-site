@@ -84,11 +84,15 @@ claims:
       - "server/storage.ts (resolveStorage and DatabaseStorage.getDb: 503 instead of a TypeError after a post-boot drop)"
       - server/storage.droppedDb.test.ts (new)
       - scripts/qa/portal-layout-closeout.mjs (pre-bundle the fixture's lazy deps)
-    status: active
+    status: verified-live
     started: 2026-10-20
     note: >-
       Round two of the #657 hardening, from the adversarial review of the PR
-      663 port (2026-10-20). Three defects: drizzle 0.44+ wraps every driver
+      663 port (2026-10-20). PR 676 merged 2026-10-20 21:17Z (4f1b483d),
+      deploy job green 21:33Z, live 21:43Z: release.txt 4f1b483d, /healthz
+      200, /ready 200, /api/health database connected with the Zoho map
+      connected, /api/zoho/desk/status connected, process uptime 591 s
+      (read-only checks). Three defects: drizzle 0.44+ wraps every driver
       error in DrizzleQueryError ("Failed query: …", pg error as cause), so
       looksLikeDatabaseOutage only ever matched the deadline path;
       markDatabaseDown() during a connect attempt (boot, or the probe's
