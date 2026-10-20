@@ -21,3 +21,39 @@ describe("packetPrintModeFor", () => {
     expect(packetPrintModeFor(UA.ipados, 0)).toBe("dialog");
   });
 });
+
+describe("fetchSolutionPacketPdf", () => {
+  it("reuses the last PDF for an unchanged solution and fetches again when it changes", async () => {
+    const { vi } = await import("vitest");
+    const fetchMock = vi.fn(async () => new Response(new Blob(["%PDF-1.7"], { type: "application/pdf" })));
+    vi.stubGlobal("fetch", fetchMock);
+    try {
+      const { fetchSolutionPacketPdf } = await import("./downloadSolutionPacketPdf");
+      const a = await fetchSolutionPacketPdf({ reference: "SOL-A", packages: [] });
+      const again = await fetchSolutionPacketPdf({ reference: "SOL-A", packages: [] });
+      expect(again).toBe(a);
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      await fetchSolutionPacketPdf({ reference: "SOL-B", packages: [] });
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it("does not keep a failed response", async () => {
+    const { vi } = await import("vitest");
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ error: "Busy" }), { status: 503 }))
+      .mockResolvedValueOnce(new Response(new Blob(["%PDF-1.7"], { type: "application/pdf" })));
+    vi.stubGlobal("fetch", fetchMock);
+    try {
+      const { fetchSolutionPacketPdf } = await import("./downloadSolutionPacketPdf");
+      await expect(fetchSolutionPacketPdf({ reference: "SOL-C" })).rejects.toThrow("Busy");
+      await expect(fetchSolutionPacketPdf({ reference: "SOL-C" })).resolves.toBeInstanceOf(Blob);
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+});

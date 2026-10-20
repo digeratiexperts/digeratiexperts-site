@@ -88,15 +88,96 @@ async function renderWithWeasyPrint(html: string, dir: string): Promise<Buffer> 
   return buf;
 }
 
-async function renderWithPlaywright(html: string): Promise<Buffer> {
-  const { chromium } = await import("playwright");
-  const executablePath = process.env.PDF_CHROMIUM_PATH?.trim() || undefined;
-  const browser = await chromium.launch({
-    headless: true,
-    ...(executablePath ? { executablePath } : {}),
-  });
+/**
+ * True when a WeasyPrint failure means it is not installed (no Python, no
+ * module), as opposed to a failure on this document. Production runs without
+ * WeasyPrint, so remembering this saves a Python spawn on every render.
+ */
+export function isWeasyPrintMissing(err: unknown): boolean {
+  const e = err as { code?: unknown; stderr?: unknown; message?: unknown } | null;
+  if (e?.code === "ENOENT") return true;
+  const text = `${String(e?.stderr ?? "")} ${String(e?.message ?? "")}`;
+  return /No module named ['"]?weasyprint|ModuleNotFoundError/i.test(text);
+}
+
+let weasyPrintMissing = false;
+
+// One Chromium stays warm between renders: launching it costs most of a
+// render. Each render gets its own context, so nothing carries over between
+// documents. The browser closes after an idle spell to give its memory back.
+const BROWSER_IDLE_MS = 120_000;
+type PdfBrowser = import("playwright").Browser;
+let browserPromise: Promise<PdfBrowser> | null = null;
+let idleTimer: ReturnType<typeof setTimeout> | null = null;
+let activeRenders = 0;
+
+function getBrowser(): Promise<PdfBrowser> {
+  if (!browserPromise) {
+    const launching = (async () => {
+      const { chromium } = await import("playwright");
+      const executablePath = process.env.PDF_CHROMIUM_PATH?.trim() || undefined;
+      const browser = await chromium.launch({
+        headless: true,
+        ...(executablePath ? { executablePath } : {}),
+      });
+      browser.on("disconnected", () => {
+        if (browserPromise === launching) browserPromise = null;
+      });
+      return browser;
+    })();
+    browserPromise = launching;
+    launching.catch(() => {
+      if (browserPromise === launching) browserPromise = null;
+    });
+  }
+  return browserPromise;
+}
+
+function scheduleIdleClose(): void {
+  if (idleTimer) clearTimeout(idleTimer);
+  idleTimer = setTimeout(() => {
+    idleTimer = null;
+    if (activeRenders === 0) void closePdfBrowser();
+  }, BROWSER_IDLE_MS);
+  idleTimer.unref?.();
+}
+
+/** Close the warm Chromium, if any. Scripts call this before exiting. */
+export async function closePdfBrowser(): Promise<void> {
+  if (idleTimer) {
+    clearTimeout(idleTimer);
+    idleTimer = null;
+  }
+  const pending = browserPromise;
+  browserPromise = null;
+  if (!pending) return;
   try {
-    const page = await browser.newPage();
+    await (await pending).close();
+  } catch {
+    /* already gone */
+  }
+}
+
+async function renderWithPlaywright(html: string): Promise<Buffer> {
+  activeRenders += 1;
+  try {
+    return await renderInWarmBrowser(html);
+  } catch (err) {
+    // A browser that crashed mid-render is replaced on the next call.
+    const browser = await browserPromise?.catch(() => null);
+    if (browser && !browser.isConnected()) browserPromise = null;
+    throw err;
+  } finally {
+    activeRenders -= 1;
+    scheduleIdleClose();
+  }
+}
+
+async function renderInWarmBrowser(html: string): Promise<Buffer> {
+  const browser = await getBrowser();
+  const context = await browser.newContext();
+  try {
+    const page = await context.newPage();
     await page.setContent(html, { waitUntil: "load", timeout: RENDER_TIMEOUT_MS });
     // The document's @page rules set size and margins (running header and
     // footer); tagged + outline give screen readers structure and bookmarks.
@@ -112,7 +193,7 @@ async function renderWithPlaywright(html: string): Promise<Buffer> {
     }
     return Buffer.from(buf);
   } finally {
-    await browser.close().catch(() => {});
+    await context.close().catch(() => {});
   }
 }
 
@@ -171,8 +252,10 @@ async function renderHtmlToPdfNow(html: string): Promise<Buffer> {
   const dir = await mkdtemp(path.join(tmpdir(), "de-pdf-"));
   try {
     try {
+      if (weasyPrintMissing) throw new Error("WeasyPrint is not installed (remembered)");
       return await renderWithWeasyPrint(html, dir);
     } catch (weasyErr) {
+      if (isWeasyPrintMissing(weasyErr)) weasyPrintMissing = true;
       try {
         return await renderWithPlaywright(html);
       } catch (playErr) {

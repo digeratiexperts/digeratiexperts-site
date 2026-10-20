@@ -20,7 +20,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { PDFDict, PDFDocument, PDFName } from "pdf-lib";
 import { htmlTitle } from "../../server/pdf/finalizePdf";
-import { renderHtmlToPdf } from "../../server/pdf/renderHtmlToPdf";
+import { closePdfBrowser, renderHtmlToPdf } from "../../server/pdf/renderHtmlToPdf";
 import { storePdfCases } from "./storePdfCases";
 import { closeAloneOnLastPage, describePages, formatKb, pageProblem, parseVerifyOutput, textProblems } from "./storePdfChecks";
 
@@ -109,6 +109,10 @@ for (const c of cases) {
   execFileSync("pdftoppm", ["-r", "45", "-png", pdfFile, path.join(outDir, "previews", c.name)]);
   rows.push({ name: c.name, kind: c.kind, pages, expectedPages: describePages(c.pages), bytes: pdf.length, title, pdfua: "not run", fonts: "", problems });
 }
+
+// The renderer keeps Chromium warm between documents; release it so the
+// script can exit.
+await closePdfBrowser();
 
 // Structure, fonts, split words and PDF/UA-1: the resource PDFs' verifier.
 const verify = spawnSync(

@@ -64,3 +64,24 @@ describe("PDF render concurrency limiter", () => {
     (await b)();
   });
 });
+
+describe("WeasyPrint availability", () => {
+  it("treats a missing interpreter or module as not installed", async () => {
+    const { isWeasyPrintMissing } = await import("./renderHtmlToPdf");
+    expect(isWeasyPrintMissing(Object.assign(new Error("spawn python ENOENT"), { code: "ENOENT" }))).toBe(true);
+    expect(
+      isWeasyPrintMissing(
+        Object.assign(new Error("Command failed"), {
+          code: 1,
+          stderr: "ModuleNotFoundError: No module named 'weasyprint'",
+        }),
+      ),
+    ).toBe(true);
+  });
+
+  it("keeps trying WeasyPrint after a failure on one document", async () => {
+    const { isWeasyPrintMissing } = await import("./renderHtmlToPdf");
+    expect(isWeasyPrintMissing(Object.assign(new Error("Command failed"), { code: 4, stderr: "pdf too small (900 bytes)" }))).toBe(false);
+    expect(isWeasyPrintMissing(new Error("timeout"))).toBe(false);
+  });
+});
