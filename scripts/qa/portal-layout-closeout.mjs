@@ -34,7 +34,12 @@ const [Screen, route] = screens[new URLSearchParams(location.search).get('screen
 const routing = memoryLocation({path:'/portal/' + route});
 createRoot(document.getElementById('root')!).render(<QueryClientProvider client={queryClient}><Router hook={routing.hook}><Screen /></Router></QueryClientProvider>);
 `);
-const server = await createServer({ configFile:false, root, esbuild:{jsx:'automatic'}, resolve:{alias:{'@':path.join(root,'client/src'),'@shared':path.join(root,'shared'),'@assets':path.join(root,'attached_assets'),'@brand':path.join(root,'brand')}}, server:{host:'127.0.0.1',port:0} });
+// Pre-bundle what the fixture reaches only through lazy routes. Left to discovery,
+// Vite finds them mid-run, re-optimizes and reloads the page, and on a slow runner
+// that reload mixes two React copies ("Cannot read properties of null (reading
+// 'useSyncExternalStore')", CI 2026-10-20 run 39484050012).
+const prebundle = ['react','react-dom/client','wouter','wouter/memory-location','@radix-ui/react-select','@radix-ui/react-progress'];
+const server = await createServer({ configFile:false, root, esbuild:{jsx:'automatic'}, optimizeDeps:{include:prebundle}, resolve:{alias:{'@':path.join(root,'client/src'),'@shared':path.join(root,'shared'),'@assets':path.join(root,'attached_assets'),'@brand':path.join(root,'brand')}}, server:{host:'127.0.0.1',port:0} });
 let browser;
 const observations=[];
 try {
