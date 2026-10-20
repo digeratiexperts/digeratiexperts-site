@@ -18,6 +18,7 @@ import { registerWarehouseGates } from "./warehouseRoutes";
 import { registerPortalMarketplaceRoutes } from "./portalMarketplaceRoutes";
 import { registerPublicSupportChat } from "./publicSupportChat";
 import { isKnownSpaPath } from "./spaKnownPaths";
+import { applyRouteMeta, readIndexShell, routeMetaFor } from "./routeMeta";
 import { cacheControlFor } from "./staticCacheControl";
 import { deskTicketSpoolDir, quoteSpoolDir, spoolDir, spoolPendingCount, spoolWritable } from "./publicSolutionSpool";
 import { registerCampaignAliasRedirects } from "./campaignAliasRedirects";
@@ -31,6 +32,7 @@ import { publicHealthView } from "./publicHealth";
 import { zohoPayments } from "./zohoPayments";
 import { zohoClient } from "./zoho/zohoClient";
 import { zohoHealthStates } from "./zoho/zohoHealth";
+import { withDeadline } from "./deadline";
 import { evaluatePaymentSucceeded } from "./zohoPaymentWebhook";
 import { setupCrossServiceHandlers } from "./crossServiceHandler";
 import { eventBus, EventTypes } from "./eventBus";
@@ -100,6 +102,12 @@ import { setSecurityHeaders } from "./middleware/security";
 import { registerVersionPreviewRobots } from "./versionPreviewRobots";
 app.use(setSecurityHeaders);
 
+// The Zoho map reads stored token state from Postgres. A database that dropped
+// out from under the process left that read hanging for nine hours on
+// 2026-10-19/20 (#657), and with it this whole endpoint, so the monitor could
+// not even read services.database. Cap it: null means "could not read".
+const HEALTH_ZOHO_DEADLINE_MS = 5_000;
+
 // cookieParser runs app-wide only further down; parse here so a signed-in
 // admin cookie (not just a Bearer token) unlocks the full map.
 app.all("/api/health", cookieParser(), async (req, res) => {
@@ -141,7 +149,7 @@ app.all("/api/health", cookieParser(), async (req, res) => {
       zohoDesk: zohoClient.getDeskAuthStatus(),
       // Token health per product from stored state (no Zoho call): connected,
       // degraded, needs_reconnect, not_configured, or unknown before first use.
-      zoho: await zohoHealthStates().catch(() => null),
+      zoho: await withDeadline(zohoHealthStates(), HEALTH_ZOHO_DEADLINE_MS, "zoho token health").catch(() => null),
       openai: openaiConfigured ? "configured" : "not_configured",
       // Solution requests waiting on disk for the database (#243). A count, and whether the folder takes writes.
       solutionSpool: { pending: spoolPendingCount(), writable: spoolWritable(spoolDir()) },
@@ -608,8 +616,13 @@ function listEndpoints(): Array<{ method: string; path: string }> {
       
       if (fs.existsSync(indexPath)) {
         // Known SPA routes → 200; unknown paths still get the shell but HTTP 404.
-        const status = isKnownSpaPath(req.path) ? 200 : 404;
-        res.status(status).sendFile(indexPath);
+        const known = isKnownSpaPath(req.path);
+        const shell = readIndexShell(indexPath);
+        res.status(known ? 200 : 404);
+        // Same caching as the sendFile this replaced: revalidate every time, keyed on the build's mtime.
+        res.setHeader("Cache-Control", "public, max-age=0");
+        res.setHeader("Last-Modified", shell.lastModified);
+        res.type("html").send(known ? applyRouteMeta(shell.html, routeMetaFor(req.path)) : shell.html);
       } else {
         log(`⚠️ Production build not found at ${distPath}`);
         res.status(404).send(`

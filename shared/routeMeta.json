@@ -1,0 +1,828 @@
+{
+  "/": {
+    "title": "Managed Security Service Provider | Digerati Experts",
+    "description": "Arizona MSP/MSSP. Cybersecurity-first managed IT, 24/7 emergency incident response, and a Cyber Risk Assessment that matches the operating model to your environment.",
+    "canonical": "/",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/about/21-questions": {
+    "title": "21 Questions Before Hiring an IT Company | Digerati Experts",
+    "description": "21 questions Arizona businesses should ask before hiring an IT support company. Use this comparison chart to evaluate MSPs.",
+    "canonical": "/about/21-questions",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/about/client-bill-of-rights": {
+    "title": "Client Bill of Rights | Digerati Experts",
+    "description": "Digerati Experts Client Bill of Rights: satisfaction, compliance-first recommendations, plain English, transparent pricing, and a single point of contact.",
+    "canonical": "/about/client-bill-of-rights",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/about/compliance": {
+    "title": "Audit-Ready Compliance Documentation | Digerati Experts",
+    "description": "Digerati Experts provides comprehensive compliance documentation that helps you pass audits and meet regulatory requirements. Our documented evidence trails, control mapping, and audit packets are ready when you need them.",
+    "canonical": "/about/compliance",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/about/guarantee": {
+    "title": "100% Money-Back Guarantee | Digerati Experts",
+    "description": "Digerati Experts 30-day, no-questions-asked money-back guarantee on managed IT and cybersecurity services.",
+    "canonical": "/about/guarantee",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/about/mission-values": {
+    "title": "Mission & Values - Our Commitment | Digerati Experts",
+    "description": "Digerati Experts mission and core values. Security-first IT, local partnership, and proactive protection for Arizona businesses.",
+    "canonical": "/about/mission-values",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/about/press": {
+    "title": "Press & Media | Digerati Experts",
+    "description": "Company information and media contacts for Digerati Experts — Arizona MSP/MSSP for managed IT, cybersecurity, and compliance. Company and brand facts for journalists and partners.",
+    "canonical": "/about/press",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/about/team": {
+    "title": "Our Team - IT & Security Experts in Chandler, AZ | Digerati Experts",
+    "description": "Meet the people behind Digerati Experts: cybersecurity, systems and service-desk work led by founder Joseph Petro, serving Arizona businesses from Chandler.",
+    "canonical": "/about/team",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/book": {
+    "title": "Get My Cyber Risk Assessment | Digerati Experts",
+    "description": "Book a Cyber Risk Assessment conversation with Digerati Experts. We review your Arizona environment and recommend a fit — no obligation.",
+    "canonical": "/book",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/contact": {
+    "title": "Contact | Digerati Experts",
+    "description": "Contact Digerati Experts in Chandler, Arizona. Call 325-480-9870 or send a message for a Cyber Risk Assessment.",
+    "canonical": "/contact",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/events": {
+    "title": "Live Sessions and Webinars | Digerati Experts",
+    "description": "Free live sessions from Digerati Experts on cyber insurance readiness, invoice fraud, ransomware recovery and co-managed IT. All times Arizona.",
+    "canonical": "/events",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/events/cyber-insurance-renewal-readiness": {
+    "title": "Before Your Cyber Insurance Renewal: The Controls Underwriters Ask About | Live Session | Digerati Experts",
+    "description": "Walk the questionnaire before it walks you: MFA, EDR, email authentication, backups and awareness training.",
+    "canonical": "/events/cyber-insurance-renewal-readiness",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/events/holiday-invoice-fraud-and-phishing": {
+    "title": "Holiday Invoice Fraud: How Payment-Change Emails Get Past Busy Teams | Live Session | Digerati Experts",
+    "description": "The year-end rush is when a spoofed vendor asks for new bank details. See the pattern and the controls that help catch it.",
+    "canonical": "/events/holiday-invoice-fraud-and-phishing",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/go": {
+    "title": "Offers for Arizona businesses | Digerati Experts",
+    "description": "Explore Digerati Experts services for Arizona businesses — Cyber Risk Assessment, ProActive managed IT, ransomware readiness, co-managed IT, and industry paths.",
+    "canonical": "/go",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/go/ai-background-check": {
+    "title": "Free AI Background Check | Digerati Experts",
+    "description": "A free 30-minute AI Background Check from Digerati Experts: which AI tools are connected to your company data, what they can reach, and your top 3 fixes. Screen share only; no passwords or admin access.",
+    "canonical": "/go/ai-background-check",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/go/co-managed-it": {
+    "title": "Co-Managed IT for Teams That Already Have IT Staff | Digerati Experts",
+    "description": "Co-Managed IT from Digerati Experts extends internal teams with helpdesk, security, and kits — without replacing the staff you already have.",
+    "canonical": "/go/co-managed-it",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/go/cyber-insurance": {
+    "title": "Cyber Insurance Readiness for Small Businesses | Digerati Experts",
+    "description": "Prepare MFA, backups, awareness, and evidence for cyber insurance reviews with Digerati Experts. Assessment-led — not a coverage guarantee.",
+    "canonical": "/go/cyber-insurance",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/go/cyber-risk-assessment": {
+    "title": "Cyber Risk Assessment for Arizona Businesses | Digerati Experts",
+    "description": "Book a Cyber Risk Assessment conversation with Digerati Experts. We review identity, endpoints, email, and backups before recommending ProActive, standalone, or co-managed work.",
+    "canonical": "/go/cyber-risk-assessment",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/go/email-security": {
+    "title": "Email Security and Phishing Defense for Arizona Businesses | Digerati Experts",
+    "description": "Email security beyond spam filtering from Digerati Experts — MFA, authentication, and operating response after a mailbox is compromised.",
+    "canonical": "/go/email-security",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/go/healthcare-it": {
+    "title": "Healthcare IT and HIPAA Security for Arizona Practices | Digerati Experts",
+    "description": "HIPAA-aligned managed IT for Arizona practices from Digerati Experts. Assessment-led access, backup, and documentation support — not a certification badge.",
+    "canonical": "/go/healthcare-it",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/go/managed-it": {
+    "title": "Managed IT and Cybersecurity for Arizona | ProActive Ecosystem | Digerati Experts",
+    "description": "ProActive IT, Office, Business, and Enterprise from Digerati Experts. Assessment-led managed IT with published per-user floors and monthly minimums.",
+    "canonical": "/go/managed-it",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/go/proactive-business": {
+    "title": "ProActive Business Managed IT and Security | Digerati Experts",
+    "description": "ProActive Business from Digerati Experts: threat detection, awareness, BCDR posture, and compliance reporting support. Published floor $245/user/mo with a $5,400/mo minimum.",
+    "canonical": "/go/proactive-business",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/go/ransomware-readiness": {
+    "title": "Ransomware Readiness and Backup for Arizona Businesses | Digerati Experts",
+    "description": "Assess whether ransomware would encrypt your backups and whether Arizona operations can restore. Digerati Experts connects backup, identity, and response.",
+    "canonical": "/go/ransomware-readiness",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/industries/accounting-finance": {
+    "title": "IT & Cybersecurity for Accounting Firms | Digerati Experts",
+    "description": "Managed IT and security for Arizona accounting and finance firms — stop BEC, protect tax season systems, and meet cyber-insurance expectations.",
+    "canonical": "/industries/accounting-finance",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/industries/animal-hospitals": {
+    "title": "IT & Cybersecurity for Veterinary Practices | Digerati Experts",
+    "description": "Managed IT and cybersecurity for Arizona animal hospitals — protect PIMS, imaging, and client records without building an internal IT team.",
+    "canonical": "/industries/animal-hospitals",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/industries/healthcare": {
+    "title": "Healthcare IT & HIPAA Security | Arizona Practices | Digerati Experts",
+    "description": "Keep patient data protected without becoming a HIPAA expert. Arizona-based IT, cybersecurity, and compliance support for medical and dental practices — start with a scoped risk assessment.",
+    "canonical": "/industries/healthcare",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/industries/law-firms": {
+    "title": "IT & Cybersecurity for Law Firms | Digerati Experts",
+    "description": "Secure IT for Arizona law firms — protect client privilege, stop ransomware and wire fraud, and stay aligned with ABA cybersecurity expectations.",
+    "canonical": "/industries/law-firms",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/industries/nonprofits": {
+    "title": "IT & Cybersecurity for Nonprofits | Digerati Experts",
+    "description": "Affordable managed IT and security for Arizona nonprofits — protect donor data, grant systems, and board confidence.",
+    "canonical": "/industries/nonprofits",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/industries/real-estate": {
+    "title": "IT & Cybersecurity for Real Estate | Digerati Experts",
+    "description": "Protect Arizona brokerages from wire fraud and BEC with managed email security, MFA, and accountable IT support.",
+    "canonical": "/industries/real-estate",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/legal/privacy-policy": {
+    "title": "Privacy Policy | Digerati Experts",
+    "description": "Digerati Experts privacy policy. How we collect, use, and protect personal information in accordance with Arizona and federal laws.",
+    "canonical": "/legal/privacy-policy",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/legal/terms-of-use": {
+    "title": "Terms of Service | Digerati Experts",
+    "description": "Digerati Experts terms of service governing use of managed security and IT services.",
+    "canonical": "/legal/terms-of-use",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/locations/chandler-az": {
+    "title": "Managed IT Services & Cybersecurity in Chandler, AZ | Digerati Experts",
+    "description": "Chandler-based managed IT and cybersecurity for healthcare, law, accounting and growing Arizona businesses, with a published SLA: 15-minute response for critical incidents.",
+    "canonical": "/locations/chandler-az",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/locations/gilbert-az": {
+    "title": "IT Services & Cybersecurity for Gilbert, AZ | Digerati Experts",
+    "description": "Managed IT, security and growth-focused technology planning for fast-growing Gilbert, Arizona businesses.",
+    "canonical": "/locations/gilbert-az",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/locations/mesa-az": {
+    "title": "Managed IT Services for Mesa, AZ Businesses | Digerati Experts",
+    "description": "Local managed IT, cybersecurity and compliance support for Mesa and East Valley businesses, including Apache Junction and Gold Canyon.",
+    "canonical": "/locations/mesa-az",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/locations/phoenix-az": {
+    "title": "IT Support & Cybersecurity Services in Phoenix, AZ | Digerati Experts",
+    "description": "Managed IT, cybersecurity and compliance support for Phoenix organizations, from Digerati Experts' Chandler-based team, with a published SLA and 24/7/365 emergency incident response.",
+    "canonical": "/locations/phoenix-az",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/locations/scottsdale-az": {
+    "title": "Premium IT Services for Scottsdale Businesses | Digerati Experts",
+    "description": "White-glove managed IT, executive technology strategy and enterprise-grade cybersecurity for Scottsdale, Arizona organizations.",
+    "canonical": "/locations/scottsdale-az",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/locations/tempe-az": {
+    "title": "Managed IT & Cybersecurity for Tempe Businesses | Digerati Experts",
+    "description": "Managed IT and cybersecurity for Tempe organizations — modern security expertise and technology planning near ASU.",
+    "canonical": "/locations/tempe-az",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/pricing": {
+    "title": "ProActive Ecosystem Pricing — Managed IT & Cybersecurity Packages | Digerati Experts",
+    "description": "Estimate your ProActive Ecosystem starting point across IT, Office, Business, and Enterprise packages. Final pricing is confirmed after assessment.",
+    "canonical": "/proactive-ecosystem-pricing",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/resources/blog": {
+    "title": "The Digerati Journal — Cybersecurity & Managed IT Insights | Digerati Experts",
+    "description": "Digerati Experts delivers cybersecurity-first managed IT for Arizona businesses. Assessment-led recommendations, partner-backed monitoring, and accountable day-to-day IT in one operating model.",
+    "canonical": "/resources/blog",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/resources/blog/arizona-smb-cybersecurity-checklist": {
+    "title": "Arizona SMB Cybersecurity Checklist | Digerati Experts",
+    "description": "A practical cybersecurity checklist for Arizona small and midsize businesses focused on identity, devices, email, backups, monitoring, response, and risk prioritization.",
+    "canonical": "/resources/blog/arizona-smb-cybersecurity-checklist",
+    "robots": "index, follow",
+    "ogImage": "/assets/covers/blog/arizona-smb-cybersecurity-checklist.png"
+  },
+  "/resources/blog/can-ransomware-encrypt-your-backups": {
+    "title": "Can Ransomware Encrypt Your Backups? | Digerati Experts",
+    "description": "Backups are only useful if they can survive ransomware and restore the business. Learn what Arizona businesses should check before relying on backup alone.",
+    "canonical": "/resources/blog/can-ransomware-encrypt-your-backups",
+    "robots": "index, follow",
+    "ogImage": "/assets/covers/blog/can-ransomware-encrypt-your-backups.png"
+  },
+  "/resources/blog/chatgpt-copilot-gemini-claude-business-data-security": {
+    "title": "ChatGPT, Copilot, Gemini, and Claude for Business Data Security | Digerati Experts",
+    "description": "Learn how businesses can use AI tools like ChatGPT, Copilot, Gemini, and Claude more safely with policies, approved use cases, data rules, and human review.",
+    "canonical": "/resources/blog/chatgpt-copilot-gemini-claude-business-data-security",
+    "robots": "index, follow",
+    "ogImage": "/assets/covers/blog/chatgpt-copilot-gemini-claude-business-data-security.png"
+  },
+  "/resources/blog/co-managed-it-vs-hiring-another-it-employee": {
+    "title": "Co-Managed IT vs Hiring Another IT Employee | Digerati Experts",
+    "description": "Learn when co-managed IT makes more sense than hiring another internal IT employee, and how Arizona businesses can add security, coverage, and expertise without replacing their team.",
+    "canonical": "/resources/blog/co-managed-it-vs-hiring-another-it-employee",
+    "robots": "index, follow",
+    "ogImage": "/assets/covers/blog/co-managed-it-vs-hiring-another-it-employee.png"
+  },
+  "/resources/blog/cyber-insurance-requirements-small-businesses": {
+    "title": "Cyber Insurance Requirements for Small Businesses | Digerati Experts",
+    "description": "Cyber insurance applications increasingly ask about MFA, endpoint protection, backups, training, incident response, and controls. Learn how to prepare before renewal.",
+    "canonical": "/resources/blog/cyber-insurance-requirements-small-businesses",
+    "robots": "index, follow",
+    "ogImage": "/assets/covers/blog/cyber-insurance-requirements-small-businesses.png"
+  },
+  "/resources/blog/email-security-more-than-spam-filtering": {
+    "title": "Email Security Requires More Than Spam Filtering | Digerati Experts",
+    "description": "Email security protects against phishing, spoofing, impersonation, credential theft, and malware. Learn why spam filtering alone is not enough for Arizona businesses.",
+    "canonical": "/resources/blog/email-security-more-than-spam-filtering",
+    "robots": "index, follow",
+    "ogImage": "/assets/covers/blog/email-security-more-than-spam-filtering.png"
+  },
+  "/resources/blog/first-24-hours-after-ransomware-attack": {
+    "title": "What to Do in the First 24 Hours After a Ransomware Attack | Digerati Experts",
+    "description": "Learn the first steps Arizona businesses should take after a suspected ransomware attack, from containment and communication to recovery planning.",
+    "canonical": "/resources/blog/first-24-hours-after-ransomware-attack",
+    "robots": "index, follow",
+    "ogImage": "/assets/covers/blog/first-24-hours-after-ransomware-attack.png"
+  },
+  "/resources/blog/hipaa-cmmc-nist-cyber-insurance-managed-it-discipline": {
+    "title": "HIPAA, CMMC, NIST, and Cyber Insurance Managed IT Discipline | Digerati Experts",
+    "description": "Compliance readiness starts with managed IT discipline: identity, endpoint security, backups, documentation, access control, monitoring, and evidence.",
+    "canonical": "/resources/blog/hipaa-cmmc-nist-cyber-insurance-managed-it-discipline",
+    "robots": "index, follow",
+    "ogImage": "/assets/covers/blog/hipaa-cmmc-nist-cyber-insurance-managed-it-discipline.png"
+  },
+  "/resources/blog/managed-it-pricing-phoenix-chandler": {
+    "title": "Managed IT Pricing in Phoenix and Chandler | Digerati Experts",
+    "description": "Learn what affects managed IT pricing for Arizona businesses, including users, endpoints, locations, support needs, cybersecurity, backups, compliance, and onboarding.",
+    "canonical": "/resources/blog/managed-it-pricing-phoenix-chandler",
+    "robots": "index, follow",
+    "ogImage": "/assets/covers/blog/managed-it-pricing-phoenix-chandler.png"
+  },
+  "/resources/blog/managed-it-vs-break-fix-it": {
+    "title": "Managed IT vs Break-Fix IT | Digerati Experts",
+    "description": "Break-fix IT waits for problems. Managed IT reduces recurring issues, improves security, and builds a more stable business technology foundation.",
+    "canonical": "/resources/blog/managed-it-vs-break-fix-it",
+    "robots": "index, follow",
+    "ogImage": "/assets/covers/blog/managed-it-vs-break-fix-it.png"
+  },
+  "/resources/blog/multilayer-ransomware-defense-arizona-businesses": {
+    "title": "Multilayer Ransomware Defense for Arizona Businesses | Digerati Experts",
+    "description": "Ransomware defense requires more than antivirus. Learn how Arizona businesses can reduce risk with layered identity, email, endpoint, network, backup, monitoring, and response controls.",
+    "canonical": "/resources/blog/multilayer-ransomware-defense-arizona-businesses",
+    "robots": "index, follow",
+    "ogImage": "/assets/covers/blog/multilayer-ransomware-defense-arizona-businesses.png"
+  },
+  "/resources/blog/questions-before-switching-it-providers": {
+    "title": "Questions to Ask Before Switching IT Providers | Digerati Experts",
+    "description": "Before switching IT providers, Arizona businesses should review admin access, documentation, backups, contracts, security tools, licensing, and transition risk.",
+    "canonical": "/resources/blog/questions-before-switching-it-providers",
+    "robots": "index, follow",
+    "ogImage": "/assets/covers/blog/questions-before-switching-it-providers.png"
+  },
+  "/resources/blog/shadow-ai-is-the-new-shadow-it": {
+    "title": "Shadow AI Is the New Shadow IT | Digerati Experts",
+    "description": "Employees are already using AI tools. Learn how Arizona businesses can manage Shadow AI without killing productivity or exposing company data.",
+    "canonical": "/resources/blog/shadow-ai-is-the-new-shadow-it",
+    "robots": "index, follow",
+    "ogImage": "/assets/covers/blog/shadow-ai-is-the-new-shadow-it.png"
+  },
+  "/resources/blog/standalone-it-services-vs-full-managed-it-ownership": {
+    "title": "Standalone IT Services vs Full Managed IT Ownership | Digerati Experts",
+    "description": "Learn the difference between targeted standalone IT/security services, broader ProActive Ecosystem managed IT ownership, and Co-Managed IT support.",
+    "canonical": "/resources/blog/standalone-it-services-vs-full-managed-it-ownership",
+    "robots": "index, follow",
+    "ogImage": "/assets/covers/blog/standalone-it-services-vs-full-managed-it-ownership.png"
+  },
+  "/resources/blog/what-a-cyber-risk-assessment-finds-before-attackers-do": {
+    "title": "What a Cyber Risk Assessment Finds Before Attackers Do | Digerati Experts",
+    "description": "Learn how a cyber risk assessment helps Arizona businesses uncover identity, email, endpoint, network, backup, and compliance gaps before attackers exploit them.",
+    "canonical": "/resources/blog/what-a-cyber-risk-assessment-finds-before-attackers-do",
+    "robots": "index, follow",
+    "ogImage": "/assets/covers/blog/what-a-cyber-risk-assessment-finds-before-attackers-do.png"
+  },
+  "/resources/blog/why-mfa-alone-does-not-stop-ransomware": {
+    "title": "Why MFA Alone Does Not Stop Ransomware | Digerati Experts",
+    "description": "Multi-factor authentication is important, but it is not a complete ransomware defense. Learn how identity, device trust, access control, and monitoring work together.",
+    "canonical": "/resources/blog/why-mfa-alone-does-not-stop-ransomware",
+    "robots": "index, follow",
+    "ogImage": "/assets/covers/blog/why-mfa-alone-does-not-stop-ransomware.png"
+  },
+  "/resources/briefs": {
+    "title": "Executive briefs | Digerati Experts",
+    "description": "Short Digerati Experts briefs on cyber risk, ransomware readiness, insurance preparation, and the ProActive operating model.",
+    "canonical": "/resources/briefs",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/resources/briefs/cyber-insurance-brief": {
+    "title": "Cyber Insurance Readiness Brief | Digerati Experts",
+    "description": "How Digerati Experts helps prepare MFA, backup, awareness, and evidence for cyber insurance reviews — without guaranteeing coverage.",
+    "canonical": "/resources/briefs/cyber-insurance-brief",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/resources/briefs/cyber-risk-operating-brief": {
+    "title": "Cyber Risk Operating Brief | Digerati Experts",
+    "description": "An executive brief from Digerati Experts on what a Cyber Risk Assessment is for, what it is not, and how recommendations are chosen.",
+    "canonical": "/resources/briefs/cyber-risk-operating-brief",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/resources/briefs/proactive-operating-brief": {
+    "title": "ProActive Operating Model Brief | Digerati Experts",
+    "description": "How Digerati Experts structures ProActive IT, Office, Business, and Enterprise versus standalone and co-managed paths.",
+    "canonical": "/resources/briefs/proactive-operating-brief",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/resources/briefs/ransomware-readiness-brief": {
+    "title": "Ransomware Readiness Brief | Digerati Experts",
+    "description": "Digerati Experts brief on ransomware readiness: backups versus recoverability, MFA limits, and how assessment drives the next layer.",
+    "canonical": "/resources/briefs/ransomware-readiness-brief",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/resources/case-studies": {
+    "title": "Client Case Studies | Digerati Experts",
+    "description": "Arizona client case studies from Digerati Experts — challenge, approach, and outcome by industry.",
+    "canonical": "/resources/case-studies",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/resources/checklists/backup-bcdr-checklist": {
+    "title": "Backup & Business Continuity Checklist | Digerati Experts",
+    "description": "What real backup and business continuity readiness looks like — beyond just having backups configured.",
+    "canonical": "/resources/checklists/backup-bcdr-checklist",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/resources/checklists/security-readiness-checklist": {
+    "title": "Small Business Cybersecurity Readiness Checklist | Digerati Experts",
+    "description": "A practical, leadership-readable checklist for the security controls every small or growing business should have in place — and the questions to ask if you don’t.",
+    "canonical": "/resources/checklists/security-readiness-checklist",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/resources/cyber-facts": {
+    "title": "Cybersecurity Facts with Sources | Digerati Experts",
+    "description": "Sourced cybersecurity statistics on ransomware, identity, email fraud, recovery cost and Arizona losses. Each figure names its report and year and links to the publisher.",
+    "canonical": "/resources/cyber-facts",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/resources/datasheets": {
+    "title": "Datasheets, checklists, and sample reports | Digerati Experts",
+    "description": "Download Digerati Experts datasheets for ProActive packages, co-managed IT, UCaaS, checklists, and sample assessment reports.",
+    "canonical": "/resources/datasheets",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/resources/datasheets/co-managed-it-datasheet": {
+    "title": "Co-Managed IT Datasheet | Digerati Experts",
+    "description": "Co-Managed IT is a separate path for businesses with internal IT — not a ProActive package level. We extend your team without replacing them.",
+    "canonical": "/resources/datasheets/co-managed-it-datasheet",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/resources/datasheets/managed-workplace-overview": {
+    "title": "Managed Workplace Overview | Digerati Experts",
+    "description": "How Digerati Experts manages the modern workplace — devices, identity, lifecycle, and the operational security that keeps people working safely.",
+    "canonical": "/resources/datasheets/managed-workplace-overview",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/resources/datasheets/proactive-business-ecosystem-datasheet": {
+    "title": "ProActive Business Ecosystem Datasheet | Digerati Experts",
+    "description": "Security-first managed IT for businesses where downtime, data loss, or a security incident would actually hurt.",
+    "canonical": "/resources/datasheets/proactive-business-ecosystem-datasheet",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/resources/datasheets/proactive-ecosystem-overview": {
+    "title": "ProActive IT & Security Ecosystem Overview | Digerati Experts",
+    "description": "The umbrella offer: complete managed IT and cybersecurity for growing businesses that want fewer issues, stronger protection, and one accountable technology partner.",
+    "canonical": "/resources/datasheets/proactive-ecosystem-overview",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/resources/datasheets/proactive-enterprise-ecosystem-datasheet": {
+    "title": "ProActive Enterprise Ecosystem Datasheet | Digerati Experts",
+    "description": "Governance, compliance, and mature security operations for businesses that need evidence-supporting reporting and quarterly leadership cadence.",
+    "canonical": "/resources/datasheets/proactive-enterprise-ecosystem-datasheet",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/resources/datasheets/proactive-it-ecosystem-datasheet": {
+    "title": "ProActive IT Ecosystem Datasheet | Digerati Experts",
+    "description": "Entry-level managed IT with the DE Security Foundation included for businesses that want a real partner instead of break/fix support.",
+    "canonical": "/resources/datasheets/proactive-it-ecosystem-datasheet",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/resources/datasheets/proactive-office-ecosystem-datasheet": {
+    "title": "ProActive Office Ecosystem Datasheet | Digerati Experts",
+    "description": "The small-office operating package — managed IT, 24/7 managed detection and response, stronger identity, endpoint backup, and a real annual review.",
+    "canonical": "/resources/datasheets/proactive-office-ecosystem-datasheet",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/resources/datasheets/ucaas-voice-meetings-datasheet": {
+    "title": "UCaaS / Voice & Meetings Datasheet | Digerati Experts",
+    "description": "Voice and meetings infrastructure built for business operations — available standalone or as an add-on when building a ProActive Ecosystem.",
+    "canonical": "/resources/datasheets/ucaas-voice-meetings-datasheet",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/resources/downtime-calculator": {
+    "title": "Downtime Cost Calculator | Digerati Experts",
+    "description": "Calculate how much IT downtime costs your business. Free downtime cost calculator shows the real impact of outages on your productivity and revenue.",
+    "canonical": "/resources/downtime-calculator",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/resources/ebook/defending-digital-realm": {
+    "title": "Defending the Digital Realm - Free Ebook | Digerati Experts",
+    "description": "Digerati Experts delivers cybersecurity-first managed IT for Arizona businesses. Assessment-led recommendations, partner-backed monitoring, and accountable day-to-day IT in one operating model.",
+    "canonical": "/resources/ebook/defending-digital-realm",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/resources/reports/compliance-risk-reports-overview": {
+    "title": "Compliance & Risk Reports Overview | Digerati Experts",
+    "description": "How Digerati Experts produces evidence-supporting compliance and risk reporting — without overstating what an MSP can sign off on.",
+    "canonical": "/resources/reports/compliance-risk-reports-overview",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/resources/reports/cyber-risk-assessment-sample": {
+    "title": "Digerati Experts Cyber Risk Assessment Sample Report | Digerati Experts",
+    "description": "A leadership-ready preview of how Digerati Experts translates technical findings into business risk, priorities, and a 30/60/90 remediation roadmap.",
+    "canonical": "/resources/reports/cyber-risk-assessment-sample",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/resources/reports/sample-quarterly-business-review": {
+    "title": "Sample Quarterly Business Review (QBR) | Digerati Experts",
+    "description": "A worked example of a Digerati Experts QBR — the recurring leadership conversation behind every ProActive Ecosystem engagement.",
+    "canonical": "/resources/reports/sample-quarterly-business-review",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/resources/security-checklist": {
+    "title": "Business Security Checklist | Digerati Experts",
+    "description": "Interactive security checklist for Arizona businesses. Assess access control, endpoints, network, backups, and training before you talk to an MSP.",
+    "canonical": "/resources/security-checklist",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/resources/security-updates": {
+    "title": "Security Updates | Digerati Experts",
+    "description": "A scored stream of actively exploited vulnerabilities, CISA advisories, and Microsoft security updates from Digerati Experts.",
+    "canonical": "/resources/security-updates",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/resources/videos": {
+    "title": "Videos & Learning Topics | Digerati Experts",
+    "description": "Cybersecurity topic guides from Digerati Experts. This is a topic library — not a live on-demand webinar catalog.",
+    "canonical": "/resources/videos",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/services/ucaas": {
+    "title": "UCaaS Voice & Meetings | Managed Phone Systems | Digerati Experts",
+    "description": "We design, secure, and run your phone system and meeting stack so it actually supports the business. E911 compliance, call routing, retention policies, and 24/7 support.",
+    "canonical": "/services/ucaas",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/solutions": {
+    "title": "Managed IT & Security Solutions | Digerati Experts",
+    "description": "Comprehensive managed IT and cybersecurity solutions. Network security, endpoint protection, cloud security, compliance support, and 24/7 monitoring for Arizona businesses.",
+    "canonical": "/solutions",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/solutions/backup-disaster-recovery": {
+    "title": "Backup & Disaster Recovery (BCDR) | Digerati Experts",
+    "description": "Recover in hours, not days. BCDR with documented RPO/RTO targets, scheduled restore testing, and DR runbooks. Your business comes back up on a timeline you define.",
+    "canonical": "/solutions/backup-disaster-recovery",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/solutions/cloud-backup": {
+    "title": "Cloud Backup | Digerati Experts",
+    "description": "Cloud Backup is your minimum continuity layer. Automated encryption-at-rest and in-transit protection for endpoints, servers, and cloud data (M365/Google). We verify monthly that restores actually work—because a backup that doesn't restore is worthless.",
+    "canonical": "/solutions/cloud-backup",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/solutions/co-managed-it": {
+    "title": "Co-Managed IT & Cybersecurity Solutions | Digerati Experts",
+    "description": "Keep your internal IT capability and add Digerati Experts where it helps. Build co-managed technology and cybersecurity packages with defined responsibilities, implementation options, and preferred pricing where appropriate.",
+    "canonical": "/solutions/co-managed-it",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/solutions/compliance-reports": {
+    "title": "Compliance & Risk Reports | Digerati Experts",
+    "description": "Compliance & Risk Reports is where DE becomes audit-ready. We map our stack to your framework (HIPAA, GDPR, FTC Safeguards, CIS, Cyber-Insurance), retain evidence (training logs, access reviews, baselines, incident trails), and produce board-ready compliance posture reports.",
+    "canonical": "/solutions/compliance-reports",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/solutions/data-encryption": {
+    "title": "Data Encryption & Control | Digerati Experts",
+    "description": "Data Encryption & Control uses browser-layer security to protect data even if endpoints are compromised. DLP policies, anti-phishing, DNS filtering, and secure browsing controls at the gateway. Data governance happens inside the browser—the last place hackers look.",
+    "canonical": "/solutions/data-encryption",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/solutions/efficiency-before-ai": {
+    "title": "Team Efficiency Before AI Readiness | Digerati Experts",
+    "description": "AI hype sells urgency. Digerati Experts helps businesses build the secure, working IT foundation that keeps the team and service delivery running first, then adds AI where it earns its place.",
+    "canonical": "/solutions/efficiency-before-ai",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/solutions/managed-it-support": {
+    "title": "Managed IT Support | Digerati Experts",
+    "description": "Managed IT Support is not generic helpdesk—it's support built on our proven DE stack. We handle remote troubleshooting, endpoint remediation, user onboarding, SaaS provisioning, and device basics. Support for everything you've deployed with DE; out-of-scope items are escalated or handled via education.",
+    "canonical": "/solutions/managed-it-support",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/solutions/managed-workplace": {
+    "title": "Managed Workplace - Identity, Devices & Apps Management | Digerati Experts",
+    "description": "We manage identity, devices, email, and app access so your staff stays productive and your business stays protected. New hires ready in 1 day.",
+    "canonical": "/solutions/managed-workplace",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/solutions/proactive-business-ecosystem": {
+    "title": "ProActive Business Ecosystem | Digerati Experts",
+    "description": "Security-first managed IT for Arizona SMBs. Starts at $245/user/mo with a $5,400/mo minimum. Includes 24/7 SOC, MDR, Security Awareness Training, full backup and BCDR, compliance/risk reporting, and semi-annual technology + security reviews.",
+    "canonical": "/solutions/proactive-business-ecosystem",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/solutions/proactive-ecosystem": {
+    "title": "ProActive Ecosystem | Digerati Experts",
+    "description": "Digerati Experts ProActive Ecosystem is the umbrella operating model: IT, Office, Business, and Enterprise. Cybersecurity-first managed IT matched to how your environment actually runs.",
+    "canonical": "/solutions/proactive-ecosystem",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/solutions/proactive-enterprise-ecosystem": {
+    "title": "ProActive Enterprise Ecosystem | Digerati Experts",
+    "description": "Governance-grade managed security for Arizona organizations. Starts at $345/user/mo with a $9,000/mo minimum. Unified Security Posture, advanced compliance/risk reporting, custom BCDR, and quarterly executive reviews. Custom after assessment.",
+    "canonical": "/solutions/proactive-enterprise-ecosystem",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/solutions/proactive-it-ecosystem": {
+    "title": "ProActive IT Ecosystem | Digerati Experts",
+    "description": "Entry managed IT package from Digerati Experts. Starts at $125/user/mo with a $1,600/mo minimum. Includes the DE Security Foundation across identity, endpoint, email, awareness, and managed security monitoring. Backup is not included by default.",
+    "canonical": "/solutions/proactive-it-ecosystem",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/solutions/proactive-office-ecosystem": {
+    "title": "ProActive Office Ecosystem | Digerati Experts",
+    "description": "Small office operating package from Digerati Experts. Starts at $165/user/mo with a $2,400/mo minimum. Includes the DE Security Foundation with 24/7 managed detection and response, managed network & connectivity, endpoint backup, and an annual combined technology + cyber review.",
+    "canonical": "/solutions/proactive-office-ecosystem",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/solutions/security-awareness": {
+    "title": "Security Awareness Training | Digerati Experts",
+    "description": "Security Awareness is human-risk hardening. Your employees are your first line of defense—or your biggest vulnerability. We train, test, and coach your team so people stop being the weakest link. Phishing simulations, targeted campaigns, and ongoing coaching reduce incidents and change culture.",
+    "canonical": "/solutions/security-awareness",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/solutions/security-operations": {
+    "title": "Security Operations (SOC-as-a-Service) | Digerati Experts",
+    "description": "Security Operations is Threat Detection & Response plus threat hunting, policy tuning, and continuous optimization. We run the security room. Includes detection, triage, response, plus proactive hunting, policy refinement, log correlation, and longer retention. Enterprise-grade security maturity.",
+    "canonical": "/solutions/security-operations",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/solutions/standalone-services": {
+    "title": "Standalone IT & Cybersecurity Solutions | Digerati Experts",
+    "description": "Buy a preconfigured Digerati Experts technology or cybersecurity solution without enrolling in a traditional managed IT program. Choose self-install, remote implementation help, or on-site support where available.",
+    "canonical": "/solutions/standalone-services",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/solutions/threat-detection": {
+    "title": "Threat Detection & Response | Digerati Experts",
+    "description": "Threat Detection & Response is detection + triage + containment + guided recovery. We monitor endpoints, cloud apps, email, and network events 24/7 for threats. When we see something, we investigate, contain (isolate endpoints, reset credentials), and walk you through recovery. Not just alerts—real response.",
+    "canonical": "/solutions/threat-detection",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/solutions/unified-security": {
+    "title": "Unified Security Posture | Digerati Experts",
+    "description": "Unified Security Posture is DE's highest security promise: identity, endpoint, cloud, email, network, and incident response fully integrated and continuously governed. Single pane of glass. One cohesive security strategy, not a collection of disconnected tools.",
+    "canonical": "/solutions/unified-security",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/solutions/vcio-strategy": {
+    "title": "vCIO & Strategy | Digerati Experts",
+    "description": "vCIO & Strategy is where we become your IT leadership function. Quarterly Technology Business Reviews, risk registers, budget forecasting, vendor rationalization, and roadmap planning. We align technology to your business goals and compliance requirements.",
+    "canonical": "/solutions/vcio-strategy",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/store": {
+    "title": "Solve a Business Need | Digerati Experts",
+    "description": "Tell Digerati Experts what you have once, pick what needs attention, and hold a sized solution you can send for a real quote.",
+    "canonical": "/store",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/store/solutions/backup-continuity": {
+    "title": "Backup & Business Continuity | Store | Digerati Experts",
+    "description": "Protected data, tested recovery, continuity planning, and incident-ready recovery decisions.",
+    "canonical": "/store/solutions/backup-continuity",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/store/solutions/business-communications": {
+    "title": "Business Communications | Store | Digerati Experts",
+    "description": "Business calling, messaging, meetings, call flows, number transitions, and communications support.",
+    "canonical": "/store/solutions/business-communications",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/store/solutions/compliance-risk": {
+    "title": "Compliance & Risk Readiness | Store | Digerati Experts",
+    "description": "Risk assessment, control planning, evidence, policies, and readiness support without unsupported certification claims.",
+    "canonical": "/store/solutions/compliance-risk",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/store/solutions/cybersecurity-operations": {
+    "title": "Cybersecurity Operations | Store | Digerati Experts",
+    "description": "Layered prevention, detection, investigation, response coordination, and security improvement.",
+    "canonical": "/store/solutions/cybersecurity-operations",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/store/solutions/documentation-standards": {
+    "title": "Documentation & Standards | Store | Digerati Experts",
+    "description": "Operational documentation, diagrams, inventories, standards, runbooks, and accountable maintenance.",
+    "canonical": "/store/solutions/documentation-standards",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/store/solutions/email-collaboration": {
+    "title": "Email & Collaboration | Store | Digerati Experts",
+    "description": "Secure, supportable email, productivity, meetings, file collaboration, and administration.",
+    "canonical": "/store/solutions/email-collaboration",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/store/solutions/endpoint-devices": {
+    "title": "Endpoint & Device Management | Store | Digerati Experts",
+    "description": "Managed computers and mobile devices with defined ownership, standards, and lifecycle controls.",
+    "canonical": "/store/solutions/endpoint-devices",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/store/solutions/hardware-lifecycle": {
+    "title": "Hardware & Lifecycle | Store | Digerati Experts",
+    "description": "Approved business hardware, secure provisioning, deployment, replacement planning, and lifecycle control.",
+    "canonical": "/store/solutions/hardware-lifecycle",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/store/solutions/identity-access": {
+    "title": "Identity & Access | Store | Digerati Experts",
+    "description": "Secure sign-ins, access governance, account lifecycle, and administrative control.",
+    "canonical": "/store/solutions/identity-access",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/store/solutions/it-operations": {
+    "title": "IT Operations & Support | Store | Digerati Experts",
+    "description": "Reliable day-to-day support, maintenance, monitoring, and operating discipline.",
+    "canonical": "/store/solutions/it-operations",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/store/solutions/network-connectivity": {
+    "title": "Network & Connectivity | Store | Digerati Experts",
+    "description": "Reliable, secure networks across offices, remote users, internet connections, and cloud access.",
+    "canonical": "/store/solutions/network-connectivity",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/store/solutions/security-awareness": {
+    "title": "Security Awareness & Human Risk | Store | Digerati Experts",
+    "description": "Practical employee education, phishing resilience, onboarding, and measurable behavior improvement.",
+    "canonical": "/store/solutions/security-awareness",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/store/solutions/technology-strategy": {
+    "title": "Technology Strategy & Advisory | Store | Digerati Experts",
+    "description": "Roadmaps, budgets, risk decisions, standards, projects, and accountable technology planning.",
+    "canonical": "/store/solutions/technology-strategy",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/trust/trust-center": {
+    "title": "Trust Center | Digerati Experts",
+    "description": "Digerati Experts Trust Center: security practices, compliance support, and how to request questionnaires. Framework names describe customer requirements — not DE certifications.",
+    "canonical": "/trust/trust-center",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/trust/vulnerability-disclosure": {
+    "title": "Vulnerability Disclosure Policy | Digerati Experts",
+    "description": "Report security vulnerabilities to Digerati Experts. Our responsible disclosure policy, safe harbor, and response timeline.",
+    "canonical": "/trust/vulnerability-disclosure",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  }
+}

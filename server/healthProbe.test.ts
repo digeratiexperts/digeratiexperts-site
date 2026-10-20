@@ -48,6 +48,82 @@ describe("health probes", () => {
     expect(attempts).toBe(1);
   });
 
+  it("drops a pool that died after boot and rebuilds it, instead of staying at 503 until a restart", async () => {
+    // 2026-10-20: the live pool lost Neon; dbReady stayed true, reconnect
+    // short-circuited, /healthz read 503 for nine hours.
+    const log: string[] = [];
+    const mod: any = {
+      pool: { connect: async () => { throw new Error("Connection terminated unexpectedly"); } },
+      markDatabaseDown: (reason: string) => { log.push(`down:${reason}`); mod.pool = null; },
+      reconnectDatabase: async () => {
+        log.push("reconnect");
+        mod.pool = { connect: async () => ({ release: () => log.push("released") }) };
+        return true;
+      },
+    };
+    expect(await databaseAcceptsConnections(async () => mod)).toBe(true);
+    expect(log).toEqual(["down:Connection terminated unexpectedly", "reconnect", "released"]);
+  });
+
+  it("stays down, pool dropped, when the rebuild also fails", async () => {
+    const mod: any = {
+      pool: { connect: async () => { throw new Error("endpoint has been disabled"); } },
+      markDatabaseDown: () => { mod.pool = null; },
+      reconnectDatabase: async () => false,
+    };
+    expect(await databaseAcceptsConnections(async () => mod)).toBe(false);
+    expect(mod.pool).toBeNull();
+  });
+
+  it("answers false within the timeout when a connect never settles, so /healthz cannot hang", async () => {
+    let marked = false;
+    const mod: any = {
+      pool: { connect: () => new Promise(() => {}) },
+      markDatabaseDown: () => { marked = true; mod.pool = null; },
+      reconnectDatabase: async () => false,
+    };
+    const started = Date.now();
+    expect(await databaseAcceptsConnections(async () => mod, 50)).toBe(false);
+    expect(Date.now() - started).toBeLessThan(1000);
+    expect(marked).toBe(true);
+  });
+
+  // 2026-10-20 (#657, ported from PR 659): a pooled client that connected before
+  // the database went away is handed back with no socket I/O, so the probe
+  // must run a query, and must destroy the client when that query fails.
+  it("runs a query on the pooled client and releases a failing one with the error", async () => {
+    const releasedWith: unknown[] = [];
+    const downReasons: string[] = [];
+    const mod = {
+      pool: {
+        connect: async () => ({
+          release: (error?: Error) => releasedWith.push(error),
+          query: async () => { throw new Error("Connection terminated unexpectedly"); },
+        }),
+      },
+      // The rebuilt pool is the same failing mock, so the second attempt fails too.
+      reconnectDatabase: async () => true,
+      markDatabaseDown: (reason: string) => downReasons.push(reason),
+    };
+    expect(await databaseAcceptsConnections(async () => mod)).toBe(false);
+    expect(releasedWith).toHaveLength(2);
+    expect(releasedWith[0]).toBeInstanceOf(Error);
+    expect(downReasons).toEqual(["Connection terminated unexpectedly"]);
+  });
+
+  it("marks the database down when the probe query stalls past its deadline", async () => {
+    const downReasons: string[] = [];
+    const mod: any = {
+      pool: { connect: async () => ({ release() {}, query: () => new Promise<never>(() => {}) }) },
+      reconnectDatabase: async () => false,
+      markDatabaseDown: (reason: string) => { downReasons.push(reason); mod.pool = null; },
+    };
+    const started = Date.now();
+    expect(await databaseAcceptsConnections(async () => mod, 20)).toBe(false);
+    expect(Date.now() - started).toBeLessThan(1000);
+    expect(downReasons).toEqual(["database probe timed out after 20ms"]);
+  });
+
   it("does not reconnect when a pool already exists", async () => {
     let attempts = 0;
     const mod = {

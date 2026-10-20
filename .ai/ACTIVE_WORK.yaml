@@ -30,28 +30,61 @@
 
 version: 2
 claims:
-  - id: de-socket-activation
+  - id: db-dropout-deadlines
     owner: claude
-    subsystem: deploy-vps
-    branch: claude/socket-activation
-    base_sha: 946824a3
+    subsystem: platform-health
+    branch: claude/sleepy-archimedes-mccoav
+    base_sha: 24e3c108
     files:
-      - server/listenTarget.ts
-      - server/listenTarget.test.ts
-      - server/index.ts (the listen call only)
-      - deploy/vps/digeratiexperts-site.socket
-      - deploy/vps/digeratiexperts-site.service (Wants/After lines only)
-      - deploy/vps/README.md (one new section)
+      - "server/db.ts (pool options only: query_timeout via dbPoolOptions)"
+      - server/dbPoolOptions.ts, server/dbPoolOptions.test.ts (new)
+      - server/deadline.ts, server/deadline.test.ts (new)
+      - server/widgetTicketRoute.ts, server/widgetTicketRoute.test.ts (desk status probe deadline only)
+      - "server/index.ts (/api/health: deadline on the Zoho token-health map only)"
+      - server/integrations/ensureDeSyncSchema.ts (release the client with the error in the bootstrap's failure path only)
+      - server/zoho/oauth/db-store.ts, server/zoho/oauth/db-store.test.ts (token-store deadlines and memory fallback, ported from PR 659)
+      - server/healthProbe.ts, server/healthProbe.test.ts (SELECT 1 round trip and release-with-error on top of PR 665)
+      - .github/workflows/production-health.yml (/healthz read in the probe step and its issue text)
     status: active
     started: 2026-10-20
     note: >-
-      Every deploy ends in systemctl restart, and OpenLiteSpeed answers the
-      public site with a plain 503 for the restart window (seen 2026-10-08).
-      systemd socket activation keeps 127.0.0.1:3300 open across the
-      restart; the app takes fd 3 only when LISTEN_PID is its own pid and
-      otherwise binds the port as before, so the socket unit is optional.
-      Activation on the VPS is Joe's (root): install the two units, enable
-      the socket. deploy.sh and sudoers unchanged.
+      Hardening after #657 and #656 (2026-10-19 23:36 to 2026-10-20 13:43 UTC):
+      Postgres dropped out from under the running process; /healthz answered 503
+      but /api/health and /api/zoho/desk/status sent no bytes for nine hours, so
+      the monitor reported "unreachable" with no body and the Desk Get Support
+      tab waited on one stuck probe. Joe, 2026-10-20: "All approved, merge, tell
+      me what you need." dbReady is left as is: with the query cap pg-pool
+      drops the dead client and opens a new one on demand, so the pool heals
+      without a reconnect. Follow-ups, not here: a caller holding a client via
+      db.transaction (portalAuthStore.ts, portalManualRecords.ts) returns it
+      wedged after a timeout and the next query pays one more cap;
+      healthProbe's idle-client check does no socket I/O. Overlap check:
+      payments-readiness-warm claims the server/index.ts listen callback, a
+      different hunk. Three PRs answered the same incident: PR 665 (merged
+      14:10Z; markDatabaseDown and the bounded probe) is the base this builds
+      on; PR 659 (same session as the #657 diagnosis) conflicted with 665 on
+      db.ts and healthProbe.ts, so its unique pieces were ported here with
+      credit and 659 closed as superseded.
+  - id: de-db-dead-pool-recovery
+    owner: claude
+    subsystem: server-database
+    branch: claude/db-dead-pool-recovery
+    base_sha: 946824a3
+    files:
+      - server/db.ts (markDatabaseDown only)
+      - server/healthProbe.ts
+      - server/healthProbe.test.ts
+    status: active
+    started: 2026-10-20
+    note: >-
+      2026-10-20 04:44-13:43 UTC: the live process lost Neon after boot and
+      sat at /healthz 503 with /api/health hanging for nine hours, until the
+      next deploy restarted it. db.ts kept dbReady true for a pool that had
+      died, so reconnectDatabase() answered true without rebuilding anything.
+      The probe now drops a dead pool (markDatabaseDown) and lets the
+      throttled reconnect rebuild it, and is bounded at 5s so a monitor
+      always gets an answer. Storage already handles the boot-failure state
+      this returns the module to. No other file.
   - id: closeout-226-153-395
     owner: claude
     subsystem: store-vendor-marks, portal-passkeys, storage-503
@@ -4112,3 +4145,24 @@ claims:
       35 focused tests pass. Local Chromium download is blocked by invalid
       archives; the exact browser regression is required in CI before merging.
       Closeout checkpoint 2026-10-18: PR #619 merged 7d441d5fba43eee2f2414425cf678e2da1cf1998. Native CI 39102889471 and merged CI/deploy 39103391913 passed, including actual browser draft preservation at 390/1440; issues #582 and #204 closed with evidence. Live release 9283da04 contains this change. The earlier local browser-download limitation is historical, not an outstanding verification gate.
+
+  - id: server-route-meta
+    owner: claude
+    subsystem: seo-metadata
+    branch: claude/gifted-cray-mfxf3k
+    base_sha: 946824a3
+    files:
+      - scripts/route-meta/snapshot.mjs (new; renders sitemap URLs, writes or checks the snapshot)
+      - shared/routeMeta.json (new, generated)
+      - server/routeMeta.ts (new; puts a route's title, description, canonical and social tags into index.html)
+      - server/routeMeta.test.ts (new)
+      - server/index.ts (production SPA catch-all only)
+      - package.json (route-meta scripts only)
+      - .github/workflows/ci.yml (one check step after the public smoke)
+    status: implemented
+    started: 2026-10-20
+    note: >-
+      Joe picked "Snapshot file" (2026-10-20): every route sent the same title,
+      description and no canonical before JavaScript ran, so Google saw 118
+      identical pages. The snapshot records what each page already sets in the
+      browser; the server sends it. No page wording changes.

@@ -94,6 +94,7 @@ async function runBootstrap(): Promise<void> {
   }
 
   const client = await pool.connect();
+  let failure: unknown = null;
   try {
     await client.query("BEGIN");
     for (const statement of statements) {
@@ -101,10 +102,14 @@ async function runBootstrap(): Promise<void> {
     }
     await client.query("COMMIT");
   } catch (error) {
+    failure = error;
     await client.query("ROLLBACK").catch(() => undefined);
     throw error;
   } finally {
-    client.release();
+    // Release with the error so pg-pool destroys a client a query timeout
+    // (server/dbPoolOptions.ts) left wedged, instead of handing it back idle
+    // for the next query to stall on.
+    client.release(failure instanceof Error ? failure : failure ? true : undefined);
   }
 }
 
