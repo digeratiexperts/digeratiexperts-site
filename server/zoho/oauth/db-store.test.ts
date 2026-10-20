@@ -9,7 +9,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const dbMock = vi.hoisted(() => ({
   execute: vi.fn<(...args: unknown[]) => Promise<unknown>>(),
   dbReady: true,
-  markDatabaseDown: vi.fn<(reason: string) => void>(),
+  dbGeneration: 3,
+  markDatabaseDown: vi.fn<(reason: string, seenGeneration?: number) => void>(),
 }));
 
 vi.mock("../../db", () => ({
@@ -18,6 +19,9 @@ vi.mock("../../db", () => ({
   },
   get dbReady() {
     return dbMock.dbReady;
+  },
+  get dbGeneration() {
+    return dbMock.dbGeneration;
   },
   markDatabaseDown: dbMock.markDatabaseDown,
 }));
@@ -56,6 +60,9 @@ describe("ResilientZohoTokenStore deadlines", () => {
     expect(Date.now() - started).toBeLessThan(2_000);
     expect(dbMock.markDatabaseDown).toHaveBeenCalledTimes(1);
     expect(dbMock.markDatabaseDown.mock.calls[0][0]).toMatch(/zoho token store read did not answer within 30 ms/);
+    // The generation captured before the statement, so db.ts can ignore a
+    // report about a pool that has since been replaced.
+    expect(dbMock.markDatabaseDown.mock.calls[0][1]).toBe(3);
   });
 
   it("marks the database down when the table check itself stalls", async () => {
@@ -125,6 +132,42 @@ describe("ResilientZohoTokenStore deadlines", () => {
     const loop: any = new Error("Failed query: select 1");
     loop.cause = loop;
     expect(looksLikeDatabaseOutage(loop)).toBe(false);
+  });
+
+  it("judges a drizzle wrapper by its cause only, never by the statement or parameters in its text", async () => {
+    // A Zoho error message persisted in last_error can contain "socket hang
+    // up"; a constraint or schema error on that row is not an outage.
+    const { looksLikeDatabaseOutage } = await import("./db-store");
+    const wrapped = Object.assign(
+      new Error('Failed query: UPDATE zoho_oauth_tokens SET last_error = $1\nparams: Zoho token endpoint unreachable: socket hang up'),
+      { cause: Object.assign(new Error('column "last_error" does not exist'), { code: "42703" }) },
+    );
+    expect(looksLikeDatabaseOutage(wrapped)).toBe(false);
+    // Server-side cancellations: the server is up; one cancelled statement is not an outage.
+    expect(looksLikeDatabaseOutage(Object.assign(new Error("canceling statement due to statement timeout"), { code: "57014" }))).toBe(false);
+    expect(looksLikeDatabaseOutage(Object.assign(new Error("terminating connection due to idle-in-transaction timeout"), { code: "25P03" }))).toBe(false);
+    // A non-drizzle wrapper (pg-pool's connection-timeout error) is still read by its own message.
+    expect(looksLikeDatabaseOutage(new Error("Connection terminated due to connection timeout", { cause: new Error("timeout expired") }))).toBe(true);
+  });
+
+  it("describes an error chain by first non-blank lines, through AggregateError, without throwing on odd causes", async () => {
+    const { describeDatabaseError } = await import("./db-store");
+    // drizzle's multi-line SQL templates begin with a newline.
+    const write = Object.assign(new Error("Failed query: \n      INSERT INTO zoho_oauth_tokens (provider) VALUES ($1)\n    \nparams: unified"), {
+      cause: new Error("Connection terminated unexpectedly"),
+    });
+    expect(describeDatabaseError(write)).toBe("Failed query: INSERT INTO zoho_oauth_tokens (provider) VALUES ($1) <- Connection terminated unexpectedly");
+    // Node reports a refused connect on several addresses as an AggregateError with an empty message.
+    const refused = new AggregateError([Object.assign(new Error("connect ECONNREFUSED ::1:5432"), { code: "ECONNREFUSED" })], "");
+    const wrappedRefused = Object.assign(new Error("Failed query: select 1\nparams: "), { cause: new Error("Connection terminated due to connection timeout", { cause: refused }) });
+    expect(describeDatabaseError(wrappedRefused)).toBe("Failed query: select 1 <- Connection terminated due to connection timeout <- connect ECONNREFUSED ::1:5432");
+    // A null-prototype cause has no toString; a plain object cause has a message.
+    const odd: any = new Error("Failed query: select 1");
+    odd.cause = Object.create(null);
+    expect(describeDatabaseError(odd)).toBe("Failed query: select 1");
+    const plain: any = new Error("Failed query: select 1");
+    plain.cause = { message: "read ECONNRESET", code: "ECONNRESET" };
+    expect(describeDatabaseError(plain)).toBe("Failed query: select 1 <- read ECONNRESET");
   });
 
   it("answers from memory and marks the database down on a wrapped dropped connection", async () => {

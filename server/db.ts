@@ -15,6 +15,14 @@ let initAttempted = false;
 let dbType: 'neon' | 'postgresql' | 'memory' = 'memory';
 /** The connect attempt in flight (boot or reconnect), so nothing else touches the pool it is building. */
 let initInFlight: Promise<boolean> | null = null;
+/**
+ * Bumped every time the pool changes hands (a connect succeeds, or the pool
+ * is marked down). A caller that captured it before a statement can pass it
+ * to markDatabaseDown(), which then ignores a report about a pool that is
+ * already gone: a read issued on the old pool whose deadline fires after the
+ * reconnect must not end the healthy replacement.
+ */
+let dbGeneration = 0;
 
 process.on('unhandledRejection', (reason) => {
   if (String(reason).includes('endpoint has been disabled') || 
@@ -59,15 +67,18 @@ async function connectAtStart(): Promise<boolean> {
     // success must not build `db` on someone else's pool (or on null) and
     // flip dbReady for a connection nobody keeps.
     let created: NeonPool | PgPool | null = null;
+    let endedByAttempt = false;
     const stillOurs = () => created !== null && pool === created;
+    const dropOurPool = () => {
+      endedByAttempt = true;
+      pool!.end().catch(() => {});
+      pool = null;
+      dbType = 'memory';
+    };
 
     const timeout = setTimeout(() => {
       console.log("⚠️ Database connection timeout - using in-memory storage");
-      if (stillOurs()) {
-        pool!.end().catch(() => {});
-        pool = null;
-      }
-      dbType = 'memory';
+      if (stillOurs()) dropOurPool();
       resolve(false);
     }, 8000);
 
@@ -88,39 +99,51 @@ async function connectAtStart(): Promise<boolean> {
       });
       
       created.connect()
-        .then((client: any) => {
-          return client.query('SELECT 1').then(() => {
-            client.release();
-            clearTimeout(timeout);
+        .then((client: any) =>
+          client.query('SELECT 1').then(
+            () => client.release(),
+            (error: Error) => {
+              // Release with the error so pg-pool destroys the client. Left
+              // checked out, it keeps pool.end() from ever settling.
+              client.release(error);
+              throw error;
+            },
+          ),
+        )
+        .then(() => {
+          clearTimeout(timeout);
 
-            if (!stillOurs()) {
-              console.log("⚠️ Database connected after this attempt was abandoned; discarding that pool");
-              created!.end().catch(() => {});
-              resolve(false);
-              return;
-            }
-            
-            if (isNeon) {
-              db = drizzleNeon({ client: created as NeonPool, schema });
-              dbType = 'neon';
-            } else {
-              db = drizzlePg({ client: created as PgPool, schema });
-              dbType = 'postgresql';
-            }
-            
-            dbReady = true;
-            console.log(`✅ Database connected successfully (${dbType})`);
-            resolve(true);
-          });
+          if (!stillOurs()) {
+            console.log("⚠️ Database connected after this attempt was abandoned; discarding that pool");
+            if (!endedByAttempt) created!.end().catch(() => {});
+            resolve(false);
+            return;
+          }
+          
+          if (isNeon) {
+            db = drizzleNeon({ client: created as NeonPool, schema });
+            dbType = 'neon';
+          } else {
+            db = drizzlePg({ client: created as PgPool, schema });
+            dbType = 'postgresql';
+          }
+          
+          dbGeneration += 1;
+          dbReady = true;
+          console.log(`✅ Database connected successfully (${dbType})`);
+          resolve(true);
         })
         .catch((error: Error) => {
           clearTimeout(timeout);
-          console.log("⚠️ Database connection failed:", error.message);
-          if (stillOurs()) {
-            pool!.end().catch(() => {});
-            pool = null;
+          if (!stillOurs()) {
+            // The 8 s timer already gave this attempt up; the module state
+            // belongs to whatever came after it.
+            console.log("⚠️ An abandoned database connect attempt failed:", error.message);
+            resolve(false);
+            return;
           }
-          dbType = 'memory';
+          console.log("⚠️ Database connection failed:", error.message);
+          dropOurPool();
           resolve(false);
         });
     } catch (error: any) {
@@ -176,7 +199,13 @@ export async function reconnectDatabase(): Promise<boolean> {
  * module to its boot-failure state, which storage already handles, so the
  * next throttled reconnectDatabase() rebuilds it.
  */
-export function markDatabaseDown(reason: string): void {
+export function markDatabaseDown(reason: string, seenGeneration?: number): void {
+  if (seenGeneration !== undefined && seenGeneration !== dbGeneration) {
+    // The caller's statement ran on a pool that has since been replaced; its
+    // late failure says nothing about the pool we hold now.
+    console.log(`⚠️ Database reported down (${reason}) by a caller on an earlier pool (generation ${seenGeneration}, now ${dbGeneration}); ignoring`);
+    return;
+  }
   if (initInFlight) {
     // A connect attempt is building the pool right now (boot, or the probe's
     // reconnect). Ending it here would leave that attempt to finish on a
@@ -193,7 +222,8 @@ export function markDatabaseDown(reason: string): void {
   dbReady = false;
   dbType = 'memory';
   initAttempted = false;
+  dbGeneration += 1;
   dead?.end().catch(() => {});
 }
 
-export { pool, db, dbReady, initPromise, initAttempted, dbType };
+export { pool, db, dbReady, initPromise, initAttempted, dbType, dbGeneration };

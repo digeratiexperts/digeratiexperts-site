@@ -10,6 +10,8 @@
  * does not set it.
  */
 
+import { DB_POOL_MAX } from "./dbPoolOptions";
+
 export function memoryOnlySmokeAllowed(): boolean {
   return process.env.DE_SMOKE_ALLOW_MEMORY_ONLY === "1";
 }
@@ -25,11 +27,32 @@ type ProbeClient = {
   query(text: string): Promise<unknown>;
 };
 
-type DbProbeModule = {
-  pool: { connect(): Promise<ProbeClient> } | null;
-  reconnectDatabase(): Promise<boolean>;
-  markDatabaseDown?(reason: string): void;
+type ProbePool = {
+  connect(): Promise<ProbeClient>;
+  totalCount?: number;
+  idleCount?: number;
+  waitingCount?: number;
+  options?: { max?: number };
 };
+
+type DbProbeModule = {
+  pool: ProbePool | null;
+  reconnectDatabase(): Promise<boolean>;
+  markDatabaseDown?(reason: string, seenGeneration?: number): void;
+  dbGeneration?: number;
+};
+
+/**
+ * Every client checked out and none idle: the pool is busy, not dead. A probe
+ * deadline hit here is a slow database or a traffic spike; ending the pool
+ * would strand the callers queued behind it and send every write to memory.
+ * A pool of wedged clients looks the same for at most one query cap
+ * (dbPoolOptions.ts), after which pg-pool has destroyed them.
+ */
+function poolLooksSaturated(pool: ProbePool): boolean {
+  if (typeof pool.totalCount !== "number" || typeof pool.idleCount !== "number") return false;
+  return pool.idleCount === 0 && pool.totalCount >= (pool.options?.max ?? DB_POOL_MAX);
+}
 
 /** A probe that never answers is an outage nobody can see; bound it. */
 export const PROBE_TIMEOUT_MS = 5_000;
@@ -94,15 +117,20 @@ export async function databaseAcceptsConnections(
     // Read through the module so a pool created by the reconnect is seen.
     const pool = dbModule.pool;
     if (!pool) return false;
+    const generation = dbModule.dbGeneration;
     try {
       return await connectOnce(pool, timeoutMs);
     } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (poolLooksSaturated(pool)) {
+        console.log(`⚠️ /healthz: ${message}; the pool is saturated (${pool.totalCount} in use, ${pool.waitingCount ?? "?"} waiting), busy rather than dead; not marking it down`);
+        return false;
+      }
       // The pool existed and could not hand out a connection: Postgres went
       // away after boot. Drop the dead pool so the (throttled) reconnect can
       // rebuild it, and try that once now rather than leaving the process at
       // 503 until a restart (2026-10-20, nine hours).
-      const message = error instanceof Error ? error.message : String(error);
-      dbModule.markDatabaseDown?.(message);
+      dbModule.markDatabaseDown?.(message, generation);
       if (!(await dbModule.reconnectDatabase())) return false;
       const rebuilt = dbModule.pool;
       if (!rebuilt) return false;

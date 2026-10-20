@@ -165,6 +165,29 @@ describe("health probes", () => {
     await probe;
   });
 
+  it("does not mark a saturated pool down: a deadline there means busy, not dead", async () => {
+    let marked = false;
+    const mod: any = {
+      pool: { connect: () => new Promise(() => {}), totalCount: 5, idleCount: 0, waitingCount: 3, options: { max: 5 } },
+      markDatabaseDown: () => { marked = true; },
+      reconnectDatabase: async () => { throw new Error("must not reconnect a busy pool"); },
+    };
+    expect(await databaseAcceptsConnections(async () => mod, 20)).toBe(false);
+    expect(marked).toBe(false);
+  });
+
+  it("passes the pool generation it probed to markDatabaseDown", async () => {
+    const calls: unknown[][] = [];
+    const mod: any = {
+      dbGeneration: 7,
+      pool: { connect: async () => { throw new Error("Connection terminated unexpectedly"); } },
+      markDatabaseDown: (...args: unknown[]) => { calls.push(args); mod.pool = null; },
+      reconnectDatabase: async () => false,
+    };
+    expect(await databaseAcceptsConnections(async () => mod)).toBe(false);
+    expect(calls).toEqual([["Connection terminated unexpectedly", 7]]);
+  });
+
   it("does not reconnect when a pool already exists", async () => {
     let attempts = 0;
     const mod = {

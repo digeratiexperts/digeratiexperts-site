@@ -12,6 +12,7 @@ const pg = vi.hoisted(() => {
   class Pool {
     static created: Pool[] = [];
     ended = false;
+    endCalls = 0;
     private waiters: Waiter[] = [];
     constructor(public readonly options: unknown) {
       Pool.created.push(this);
@@ -23,8 +24,9 @@ const pg = vi.hoisted(() => {
       return new Promise((resolve, reject) => this.waiters.push({ resolve, reject }));
     }
     end() {
+      this.endCalls += 1;
       this.ended = true;
-      return Promise.resolve();
+      return this.endCalls === 1 ? Promise.resolve() : Promise.reject(new Error("Called end on pool more than once"));
     }
     /** Test hook: settle the oldest pending connect. */
     settleConnect(ok = true) {
@@ -32,6 +34,12 @@ const pg = vi.hoisted(() => {
       if (!waiter) throw new Error("no pending connect");
       if (ok) waiter.resolve({ query: async () => ({ rows: [] }), release() {} });
       else waiter.reject(new Error("connect ECONNREFUSED 127.0.0.1:5432"));
+    }
+    /** Test hook: hand the oldest pending connect a client of the test's choosing. */
+    settleConnectWith(client: unknown) {
+      const waiter = this.waiters.shift();
+      if (!waiter) throw new Error("no pending connect");
+      waiter.resolve(client);
     }
   }
   return { Pool };
@@ -118,6 +126,71 @@ describe("db.ts pool lifecycle", () => {
     expect(await again).toBe(true);
     expect(dbm.pool).toBe(pg.Pool.created[1]);
     expect((dbm.db as { client: unknown }).client).toBe(pg.Pool.created[1]);
+  });
+
+  it("ignores a mark-down from a caller that saw an earlier pool, once the reconnect has settled", async () => {
+    // Review of 1629b209: a token-store read issued on pool A keeps waiting
+    // through the outage; its deadline fires after pool B is up and must not
+    // end B. The caller passes the generation it captured before the read.
+    const dbm = await loadDb();
+    pg.Pool.created[0].settleConnect(true);
+    await dbm.initPromise;
+    const seenOnA = dbm.dbGeneration;
+    dbm.markDatabaseDown("probe: Connection terminated unexpectedly");
+    const again = dbm.reconnectDatabase();
+    pg.Pool.created[1].settleConnect(true);
+    expect(await again).toBe(true);
+    dbm.markDatabaseDown("zoho token store read: did not answer within 8000 ms", seenOnA);
+    expect(dbm.dbReady).toBe(true);
+    expect(dbm.pool).toBe(pg.Pool.created[1]);
+    expect(pg.Pool.created[1].ended).toBe(false);
+    // A caller on the current pool still can.
+    dbm.markDatabaseDown("probe: endpoint has been disabled", dbm.dbGeneration);
+    expect(dbm.dbReady).toBe(false);
+    expect(pg.Pool.created[1].ended).toBe(true);
+  });
+
+  it("releases the boot client with the error when SELECT 1 fails, so the pool can end", async () => {
+    const dbm = await loadDb();
+    const releasedWith: unknown[] = [];
+    pg.Pool.created[0].settleConnectWith({
+      query: async () => { throw new Error("Connection terminated unexpectedly"); },
+      release: (error?: Error) => releasedWith.push(error),
+    });
+    expect(await dbm.initPromise).toBe(false);
+    expect(releasedWith).toHaveLength(1);
+    expect(releasedWith[0]).toBeInstanceOf(Error);
+    expect(pg.Pool.created[0].ended).toBe(true);
+    expect(dbm.pool).toBeNull();
+  });
+
+  it("leaves the replacement's dbType alone when an abandoned attempt's connect fails late, and ends the abandoned pool once", async () => {
+    vi.useFakeTimers();
+    const dbm = await loadDb();
+    await vi.advanceTimersByTimeAsync(8_000);
+    expect(await dbm.initPromise).toBe(false);
+    const again = dbm.reconnectDatabase();
+    pg.Pool.created[1].settleConnect(true);
+    expect(await again).toBe(true);
+    expect(dbm.getDatabaseStatus()).toEqual({ connected: true, type: "postgresql" });
+    // Attempt A's pg connect now hits connectionTimeoutMillis.
+    pg.Pool.created[0].settleConnect(false);
+    await vi.advanceTimersByTimeAsync(10);
+    expect(dbm.getDatabaseStatus()).toEqual({ connected: true, type: "postgresql" });
+    expect(dbm.pool).toBe(pg.Pool.created[1]);
+    expect(pg.Pool.created[0].endCalls).toBe(1);
+  });
+
+  it("ends a pool abandoned by the timer exactly once when its connect lands late", async () => {
+    vi.useFakeTimers();
+    const dbm = await loadDb();
+    await vi.advanceTimersByTimeAsync(8_000);
+    expect(await dbm.initPromise).toBe(false);
+    expect(pg.Pool.created[0].endCalls).toBe(1);
+    pg.Pool.created[0].settleConnect(true);
+    await vi.advanceTimersByTimeAsync(10);
+    expect(pg.Pool.created[0].endCalls).toBe(1);
+    expect(dbm.dbReady).toBe(false);
   });
 
   it("ignores a mark-down while the reconnect is in flight, so the rebuilt pool is kept", async () => {
