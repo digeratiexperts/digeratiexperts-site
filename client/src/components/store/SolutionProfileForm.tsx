@@ -332,7 +332,7 @@ export function SolutionProfileForm({
         </div>
         <div className="d2-field sm:col-span-2">
           <label className="d2-field__label">Account type</label>
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-3" role="group" aria-label="Account type">
             {(["individual", "business"] as const).map((value) => (
               <button
                 key={value}
