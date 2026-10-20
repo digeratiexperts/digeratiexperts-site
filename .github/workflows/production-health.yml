@@ -71,17 +71,20 @@ jobs:
           # and sent nothing within 20s: the process is up and something inside
           # it is hanging (2026-10-20, #657: a dead database pool). Report that
           # as "stalled", which points at the app, not at DNS or the host.
+          # The step runs under bash -e, so the exit code is captured with
+          # `|| PROBE_RC=$?`: a bare `BODY="$(probe_once)"` would abort the
+          # step on the very failure it is here to report.
           db_default() {
             if [ "${PROBE_RC:-0}" = "28" ]; then printf 'stalled'; else printf 'unreachable'; fi
           }
 
-          BODY="$(probe_once)"; PROBE_RC=$?
+          PROBE_RC=0; BODY="$(probe_once)" || PROBE_RC=$?
           DB="$(field '.services.database' "$(db_default)")"
 
           if [ "$DB" != "connected" ]; then
             echo "First probe reported '$DB' (curl exit $PROBE_RC); re-checking in 30s before alerting."
             sleep 30
-            BODY="$(probe_once)"; PROBE_RC=$?
+            PROBE_RC=0; BODY="$(probe_once)" || PROBE_RC=$?
             DB="$(field '.services.database' "$(db_default)")"
           fi
 
