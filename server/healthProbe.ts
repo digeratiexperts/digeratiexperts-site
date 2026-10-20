@@ -23,7 +23,27 @@ export function probeStatus(databaseUp: boolean): 200 | 503 {
 type DbProbeModule = {
   pool: { connect(): Promise<{ release(): void }> } | null;
   reconnectDatabase(): Promise<boolean>;
+  markDatabaseDown?(reason: string): void;
 };
+
+/** A probe that never answers is an outage nobody can see; bound it. */
+export const PROBE_TIMEOUT_MS = 5_000;
+
+function withTimeout<T>(work: Promise<T>, ms: number): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(`database probe timed out after ${ms}ms`)), ms);
+    work.then(
+      (value) => { clearTimeout(timer); resolve(value); },
+      (error) => { clearTimeout(timer); reject(error); },
+    );
+  });
+}
+
+async function connectOnce(pool: NonNullable<DbProbeModule["pool"]>, timeoutMs: number): Promise<boolean> {
+  const client = await withTimeout(pool.connect(), timeoutMs);
+  client.release();
+  return true;
+}
 
 /**
  * True when Postgres accepts a connection. A process whose boot-time connect
@@ -35,6 +55,7 @@ type DbProbeModule = {
  */
 export async function databaseAcceptsConnections(
   load: () => Promise<DbProbeModule> = () => import("./db") as unknown as Promise<DbProbeModule>,
+  timeoutMs: number = PROBE_TIMEOUT_MS,
 ): Promise<boolean> {
   try {
     const dbModule = await load();
@@ -42,9 +63,20 @@ export async function databaseAcceptsConnections(
     // Read through the module so a pool created by the reconnect is seen.
     const pool = dbModule.pool;
     if (!pool) return false;
-    const client = await pool.connect();
-    client.release();
-    return true;
+    try {
+      return await connectOnce(pool, timeoutMs);
+    } catch (error) {
+      // The pool existed and could not hand out a connection: Postgres went
+      // away after boot. Drop the dead pool so the (throttled) reconnect can
+      // rebuild it, and try that once now rather than leaving the process at
+      // 503 until a restart (2026-10-20, nine hours).
+      const message = error instanceof Error ? error.message : String(error);
+      dbModule.markDatabaseDown?.(message);
+      if (!(await dbModule.reconnectDatabase())) return false;
+      const rebuilt = dbModule.pool;
+      if (!rebuilt) return false;
+      return await connectOnce(rebuilt, timeoutMs);
+    }
   } catch {
     return false;
   }
