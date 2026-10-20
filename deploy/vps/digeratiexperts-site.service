@@ -21,6 +21,12 @@
 [Unit]
 Description=Digerati Experts public website (Node/Express)
 After=network.target
+# Optional socket activation (deploy/vps/digeratiexperts-site.socket): when
+# the socket unit is installed and enabled, systemd passes the listening fd
+# and restarts no longer answer 503 at the proxy. Wants= (not Requires=) so
+# a host without the socket unit still starts the service as before.
+Wants=digeratiexperts-site.socket
+After=digeratiexperts-site.socket
 
 [Service]
 Type=simple

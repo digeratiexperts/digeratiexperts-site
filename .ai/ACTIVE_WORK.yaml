@@ -30,6 +30,28 @@
 
 version: 2
 claims:
+  - id: de-socket-activation
+    owner: claude
+    subsystem: deploy-vps
+    branch: claude/socket-activation
+    base_sha: 946824a3
+    files:
+      - server/listenTarget.ts
+      - server/listenTarget.test.ts
+      - server/index.ts (the listen call only)
+      - deploy/vps/digeratiexperts-site.socket
+      - deploy/vps/digeratiexperts-site.service (Wants/After lines only)
+      - deploy/vps/README.md (one new section)
+    status: active
+    started: 2026-10-20
+    note: >-
+      Every deploy ends in systemctl restart, and OpenLiteSpeed answers the
+      public site with a plain 503 for the restart window (seen 2026-10-08).
+      systemd socket activation keeps 127.0.0.1:3300 open across the
+      restart; the app takes fd 3 only when LISTEN_PID is its own pid and
+      otherwise binds the port as before, so the socket unit is optional.
+      Activation on the VPS is Joe's (root): install the two units, enable
+      the socket. deploy.sh and sudoers unchanged.
   - id: closeout-226-153-395
     owner: claude
     subsystem: store-vendor-marks, portal-passkeys, storage-503
