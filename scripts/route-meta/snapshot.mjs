@@ -113,5 +113,19 @@ if (mode === "write") {
     );
     process.exit(1);
   }
-  console.log(`route-meta: shared/routeMeta.json matches all ${paths.length} sitemap routes`);
+  // The snapshot only helps if the server puts it in the HTML it sends, before
+  // any JavaScript runs. "/" once bypassed it (express.static served the bare
+  // index.html), which the browser check above cannot see.
+  const unescape = (s) => s.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&amp;/g, "&");
+  const unsent = [];
+  for (const p of paths) {
+    const html = await (await fetch(base + p)).text();
+    const sent = unescape(html.match(/<title>([^<]*)<\/title>/i)?.[1] ?? "");
+    if (sent !== fresh[p].title) unsent.push(`${p}: server sent "${sent}", page sets "${fresh[p].title}"`);
+  }
+  if (unsent.length) {
+    console.error(`route-meta: the server does not send the snapshot title for ${unsent.length} route(s):\n  ${unsent.join("\n  ")}`);
+    process.exit(1);
+  }
+  console.log(`route-meta: shared/routeMeta.json matches all ${paths.length} sitemap routes, and the server sends each title`);
 }

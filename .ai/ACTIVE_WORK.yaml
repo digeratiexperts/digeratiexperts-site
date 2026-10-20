@@ -4159,13 +4159,15 @@ claims:
       - server/index.ts (production SPA catch-all only)
       - package.json (route-meta scripts only)
       - .github/workflows/ci.yml (one check step after the public smoke)
+      - client/src/pages/concepts/home-chapters.css (one missing closing brace; unblocks the build)
+      - package-lock.json (follow-redirects 1.16.1, same change as PRs 671-673)
     status: implemented
     started: 2026-10-20
     note: >-
       Joe picked "Snapshot file" (2026-10-20): every route sent the same title,
       description and no canonical before JavaScript ran, so Google saw 118
       identical pages. The snapshot records what each page already sets in the
-      browser; the server sends it. No page wording changes.
+      browser; the server sends it. No page wording changes. Follow-up 2026-10-20: "/" was served by express.static and skipped the snapshot (live release 72c176ff); static index is off and the check now also reads the raw HTML title.
 
   - id: search-title-wording
     owner: claude
