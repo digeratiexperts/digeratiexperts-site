@@ -1,3 +1,4 @@
+import { DeadlineError, withDeadline } from "./deadline";
 import type { Express, NextFunction, Request, RequestHandler, Response } from "express";
 import rateLimit from "express-rate-limit";
 import { logSecurityEvent } from "./middleware/security";
@@ -135,6 +136,14 @@ function validateInput(req: Request, res: Response, next: NextFunction) {
 // The status probe reaches Zoho over the network. Cache it so a dashboard or
 // a monitor polling it cannot turn into a Zoho rate-limit problem of its own.
 const DESK_STATUS_TTL_MS = 60 * 1000;
+/**
+ * How long one status request waits on the shared probe. The probe itself is
+ * bounded by the Zoho HTTP timeouts and the pool query timeout, but on
+ * 2026-10-19/20 (#656) a token-store read behind it hung for nine hours and
+ * every request joined the same wait; the monitor reads this route with a
+ * 20 s limit, so answer "degraded" before that and let the probe finish.
+ */
+const DESK_PROBE_DEADLINE_MS = 15 * 1000;
 let deskStatusCache: { at: number; body: DeskStatus } | null = null;
 let deskStatusInFlight: Promise<DeskStatus> | null = null;
 
@@ -156,6 +165,8 @@ export interface DeskStatus {
   reason?: DeskFailureKind | "not_configured" | "auth_failed";
   errorCode?: string;
   status?: number;
+  /** The probe did not answer within the route deadline; the Desk itself may be fine. */
+  timedOut?: boolean;
   checkedAt: string;
 }
 
@@ -199,6 +210,8 @@ export interface WidgetTicketRouteOptions {
   /** Tests pass a pass-through so five requests do not trip the real limiter. */
   ticketRateLimiter?: RequestHandler;
   statusRateLimiter?: RequestHandler;
+  /** Milliseconds a status request waits on the shared probe; tests pass a short one. */
+  probeDeadlineMs?: number;
   /** Where a ticket goes when the Desk API does not take it. Tests pass a stub. */
   fallback?: (ticket: FallbackTicket, options: { acknowledge?: boolean }) => Promise<DeskFallbackOutcome>;
 }
@@ -207,6 +220,7 @@ export function registerWidgetTicketRoute(app: Express, options: WidgetTicketRou
   const ticketLimiter = options.ticketRateLimiter ?? widgetTicketRateLimiter;
   const statusLimiter = options.statusRateLimiter ?? deskStatusRateLimiter;
   const fallback = options.fallback ?? ((ticket, opts) => saveTicketOutsideDesk(ticket, opts));
+  const probeDeadlineMs = options.probeDeadlineMs ?? DESK_PROBE_DEADLINE_MS;
 
   app.get(DESK_STATUS_PATH, statusLimiter, async (_req: Request, res: Response) => {
     res.set("Cache-Control", "no-store");
@@ -221,7 +235,17 @@ export function registerWidgetTicketRoute(app: Express, options: WidgetTicketRou
         return body;
       }).finally(() => { deskStatusInFlight = null; });
     }
-    const body = await deskStatusInFlight;
+    let body: DeskStatus;
+    try {
+      body = await withDeadline(deskStatusInFlight, probeDeadlineMs, "desk status probe");
+    } catch (error) {
+      // The probe keeps running and settles the shared promise (and the cache)
+      // on its own; this request stops waiting so the widget and the monitor
+      // get an answer. Not cached: the next request reads the real result.
+      const timedOut = error instanceof DeadlineError;
+      console.error("[DESK STATUS] probe did not answer", { timedOut, deadlineMs: probeDeadlineMs });
+      body = { configured: true, connected: false, state: "degraded", reason: "unavailable", timedOut, checkedAt: new Date().toISOString() };
+    }
     res.status(body.connected ? 200 : 503).json({ ...body, cached: false });
   });
 

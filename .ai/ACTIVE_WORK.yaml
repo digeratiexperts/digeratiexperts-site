@@ -30,6 +30,29 @@
 
 version: 2
 claims:
+  - id: db-dropout-deadlines
+    owner: claude
+    subsystem: platform-health
+    branch: claude/sleepy-archimedes-mccoav
+    base_sha: 946824a3
+    files:
+      - server/db.ts (pool options only: query_timeout via dbPoolOptions)
+      - server/dbPoolOptions.ts, server/dbPoolOptions.test.ts (new)
+      - server/deadline.ts, server/deadline.test.ts (new)
+      - server/widgetTicketRoute.ts, server/widgetTicketRoute.test.ts (desk status probe deadline only)
+      - server/index.ts (/api/health: deadline on the Zoho token-health map only)
+      - .github/workflows/production-health.yml (/healthz read in the probe step and its issue text)
+    status: active
+    started: 2026-10-20
+    note: >-
+      Hardening after #657 and #656 (2026-10-19 23:36 to 2026-10-20 13:43 UTC):
+      Postgres dropped out from under the running process; /healthz answered 503
+      but /api/health and /api/zoho/desk/status sent no bytes for nine hours, so
+      the monitor reported "unreachable" with no body and the Desk Get Support
+      tab waited on one stuck probe. Joe, 2026-10-20: "All approved, merge, tell
+      me what you need." Overlap check: payments-readiness-warm claims the
+      server/index.ts listen callback, a different hunk; no open PR touches
+      these files.
   - id: closeout-226-153-395
     owner: claude
     subsystem: store-vendor-marks, portal-passkeys, storage-503

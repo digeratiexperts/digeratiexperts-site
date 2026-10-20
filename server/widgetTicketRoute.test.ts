@@ -256,6 +256,42 @@ describe("DE Desk widget ticket route", () => {
       expect(getDeskClient).toHaveBeenCalledTimes(1);
     });
 
+    it("answers degraded within its deadline when the probe never settles (#656), then serves the real result", async () => {
+      let release!: (value: unknown) => void;
+      const get = vi.fn(() => new Promise((resolve) => { release = resolve; }));
+      getDeskClient.mockResolvedValueOnce({ get });
+      const { registerWidgetTicketRoute } = await import("./widgetTicketRoute");
+      const app = express();
+      registerWidgetTicketRoute(app, {
+        ticketRateLimiter: passThrough,
+        statusRateLimiter: passThrough,
+        fallback: (ticket, options) => fallback(ticket, options),
+        probeDeadlineMs: 50,
+      });
+      const quick = createServer(app);
+      await new Promise<void>((resolve) => quick.listen(0, "127.0.0.1", resolve));
+      const address = quick.address();
+      if (!address || typeof address === "string") throw new Error("no test port");
+      const url = `http://127.0.0.1:${address.port}/api/zoho/desk/status`;
+      try {
+        const started = Date.now();
+        const response = await fetch(url);
+        expect(Date.now() - started).toBeLessThan(2000);
+        expect(response.status).toBe(503);
+        expect(await response.json()).toMatchObject({ connected: false, state: "degraded", reason: "unavailable", timedOut: true, cached: false });
+        // The probe is still the one in flight; once it settles, the next request reads its real result.
+        release({ data: { data: [{ id: "org" }] } });
+        await vi.waitFor(async () => {
+          const retry = await fetch(url);
+          expect(retry.status).toBe(200);
+          expect(await retry.json()).toMatchObject({ connected: true });
+        });
+        expect(getDeskClient).toHaveBeenCalledTimes(1);
+      } finally {
+        await new Promise<void>((resolve) => quick.close(() => resolve()));
+      }
+    });
+
     it("does not claim connectivity for an empty organization response", async () => {
       getDeskClient.mockResolvedValueOnce({ get: vi.fn(async () => ({ data: { data: [] } })) });
       const response = await fetch(`${baseUrl}/api/zoho/desk/status`);

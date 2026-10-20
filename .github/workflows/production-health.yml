@@ -77,6 +77,20 @@ jobs:
             DB="$(field '.services.database' 'unreachable')"
           fi
 
+          # /healthz (server/healthProbe.ts) is the cheap liveness probe: 200 when
+          # Postgres accepts a connection, 503 when it does not, and it never
+          # waits on the Zoho token store. When /api/health sends no body, this
+          # tells "the process is up but the API stalled" from "the database is
+          # down" from "the site is down" (2026-10-20, #657: nine hours of
+          # "unreachable" with no body while /healthz answered 503 in 0.3 s).
+          HEALTHZ="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 20 "https://digeratiexperts.com/healthz" 2>/dev/null || echo 000)"
+          if [ -z "$BODY" ]; then
+            case "$HEALTHZ" in
+              200) DB="stalled" ;;
+              503) DB="unavailable" ;;
+            esac
+          fi
+
           STATUS="$(field '.status' 'unknown')"
           UPTIME="$(field '.uptime' 'unknown')"
 
@@ -125,6 +139,7 @@ jobs:
           DESK_REASON="$(scalar "$DESK_REASON")"
           DESK_STATE="$(scalar "$DESK_STATE")"
           DESK_ERROR="$(scalar "$DESK_ERROR")"
+          HEALTHZ="$(scalar "$HEALTHZ")"
 
           # Body: capped, then base64 on one line, so there is no delimiter to
           # break out of and no size that can produce an unreadable issue.
@@ -142,8 +157,9 @@ jobs:
           echo "desk_reason=$DESK_REASON" >> "$GITHUB_OUTPUT"
           echo "desk_state=$DESK_STATE"   >> "$GITHUB_OUTPUT"
           echo "desk_error=$DESK_ERROR"   >> "$GITHUB_OUTPUT"
+          echo "healthz=$HEALTHZ"         >> "$GITHUB_OUTPUT"
 
-          echo "database=$DB status=$STATUS uptime=$UPTIME truncated=$TRUNCATED desk=$DESK reason=$DESK_REASON state=$DESK_STATE error=$DESK_ERROR"
+          echo "database=$DB status=$STATUS uptime=$UPTIME truncated=$TRUNCATED desk=$DESK reason=$DESK_REASON state=$DESK_STATE error=$DESK_ERROR healthz=$HEALTHZ"
 
       - name: File or clear the health issue
         uses: actions/github-script@v7
@@ -157,11 +173,12 @@ jobs:
           DESK_REASON: ${{ steps.probe.outputs.desk_reason }}
           DESK_STATE: ${{ steps.probe.outputs.desk_state }}
           DESK_ERROR: ${{ steps.probe.outputs.desk_error }}
+          HEALTHZ: ${{ steps.probe.outputs.healthz }}
         with:
           script: |
             const MARKER = 'Production database is not connected';
             const DESK_MARKER = 'Production support desk is unreachable';
-            const { DB, STATUS, UPTIME, BODY_B64, TRUNCATED, DESK, DESK_REASON, DESK_STATE, DESK_ERROR } = process.env;
+            const { DB, STATUS, UPTIME, BODY_B64, TRUNCATED, DESK, DESK_REASON, DESK_STATE, DESK_ERROR, HEALTHZ } = process.env;
 
             // Decoded here rather than passed raw: see the probe step's note on
             // why the body never travels through a delimiter.
@@ -239,8 +256,13 @@ jobs:
               const body = [
                 `\`services.database\` reads **\`${DB}\`**, not \`connected\`. Confirmed by a second probe 30s after the first.`,
                 '',
-                `Top-level status: \`${STATUS}\` · process uptime: \`${UPTIME}\`s`,
+                `Top-level status: \`${STATUS}\` · process uptime: \`${UPTIME}\`s · \`/healthz\`: \`${HEALTHZ}\``,
                 '',
+                ...(DB === 'stalled'
+                  ? ['The process is up and Postgres accepts connections (`/healthz` 200), but `/api/health` sent no body within 20s: a read behind it is hanging. Restarting the service clears it; the fix belongs in the code path that hung.', '']
+                  : DB === 'unavailable'
+                    ? ['The process is up but Postgres is not accepting connections (`/healthz` 503). The app retries the connection on its own and goes green when the database answers.', '']
+                    : []),
                 'The site keeps serving pages, so this is invisible from the homepage. What breaks is anything durable — portal auth, store orders, quote submissions, chat persistence — and on `fallback_memory` those writes go to memory and are lost on the next restart.',
                 '',
                 '```json',
