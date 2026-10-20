@@ -45,7 +45,7 @@ claims:
       - server/zoho/oauth/db-store.ts, server/zoho/oauth/db-store.test.ts (token-store deadlines and memory fallback, ported from PR 659)
       - server/healthProbe.ts, server/healthProbe.test.ts (SELECT 1 round trip and release-with-error on top of PR 665)
       - .github/workflows/production-health.yml (/healthz read in the probe step and its issue text)
-    status: active
+    status: verified-live
     started: 2026-10-20
     note: >-
       Hardening after #657 and #656 (2026-10-19 23:36 to 2026-10-20 13:43 UTC):
@@ -64,7 +64,42 @@ claims:
       14:10Z; markDatabaseDown and the bounded probe) is the base this builds
       on; PR 659 (same session as the #657 diagnosis) conflicted with 665 on
       db.ts and healthProbe.ts, so its unique pieces were ported here with
-      credit and 659 closed as superseded.
+      credit and 659 closed as superseded. PR 663 merged 2026-10-20 19:21Z
+      (8f718800). Main was red at the production dependency audit
+      (follow-redirects advisory, PR 671/672) and at the build (PR 669's
+      unclosed CSS block, PR 671); live 2026-10-20 20:21Z on release
+      ac218ba3: /healthz 200, /ready 200, /api/health database connected
+      with CRM, Desk, Books and Payments connected, /api/zoho/desk/status
+      connected, process uptime 427 s, read-only checks only.
+  - id: db-hardening-round2
+    owner: claude
+    subsystem: platform-health
+    branch: claude/sleepy-archimedes-mccoav
+    base_sha: ac218ba3
+    files:
+      - "server/db.ts (initInFlight guard: markDatabaseDown and reconnectDatabase during a connect attempt; late-connect guard in the boot path)"
+      - server/db.test.ts (new)
+      - server/healthProbe.ts, server/healthProbe.test.ts (one deadline for connect + SELECT 1; late client released with an error)
+      - server/zoho/oauth/db-store.ts, server/zoho/oauth/db-store.test.ts (outage classification through DrizzleQueryError cause / AggregateError errors / pg codes; error-chain messages; pool generation)
+      - "server/storage.ts (resolveStorage and DatabaseStorage.getDb: 503 instead of a TypeError after a post-boot drop)"
+      - server/storage.droppedDb.test.ts (new)
+      - scripts/qa/portal-layout-closeout.mjs (pre-bundle the fixture's lazy deps)
+    status: active
+    started: 2026-10-20
+    note: >-
+      Round two of the #657 hardening, from the adversarial review of the PR
+      663 port (2026-10-20). Three defects: drizzle 0.44+ wraps every driver
+      error in DrizzleQueryError ("Failed query: …", pg error as cause), so
+      looksLikeDatabaseOutage only ever matched the deadline path;
+      markDatabaseDown() during a connect attempt (boot, or the probe's
+      reconnect) ended the pool that attempt was building, and the late
+      success then set dbReady with pool null and db bound to nothing; the
+      probe gave the connect and the query a deadline each (up to 28 s per
+      /healthz call) and leaked a client that connected after the deadline.
+      Joe, 2026-10-20: "All approved, merge, tell me what you need."
+      Overlap check: de-db-dead-pool-recovery (PR 665, merged) owned
+      server/db.ts markDatabaseDown and healthProbe.ts; this builds on it.
+      No open PR touches these files.
   - id: de-db-dead-pool-recovery
     owner: claude
     subsystem: server-database

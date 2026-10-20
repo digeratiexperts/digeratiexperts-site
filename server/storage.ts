@@ -780,6 +780,11 @@ export class DatabaseStorage implements IStorage {
       this.seeded = true;
       await this.seedDemoClients();
     }
+    if (!this.dbModule.db) {
+      // markDatabaseDown() dropped the pool after boot (#665). Answer 503 the
+      // way a failed boot does, not a TypeError on a null client.
+      throw new StorageUnavailableError();
+    }
     return this.dbModule.db;
   }
 
@@ -1386,6 +1391,18 @@ if (!strictDurability()) {
 /** Resolve the durable backend or throw StorageUnavailableError; retries the connection (throttled) so a recovered database is picked up. */
 async function resolveStorage(): Promise<IStorage> {
   await storageReady;
+  if (storageIsDatabase) {
+    const dbModule = await import("./db");
+    if (!dbModule.dbReady) {
+      // The pool was dropped after boot (markDatabaseDown, #665). Stop handing
+      // out DatabaseStorage on a null client and go through the reconnect gate
+      // below, exactly as after a failed boot.
+      console.log("⚠️ Database dropped after boot; durable storage is unavailable until it reconnects");
+      storageIsDatabase = false;
+      dbAvailable = false;
+      storageInstance = strictDurability() ? null : memoryStorage();
+    }
+  }
   if (storageInstance && (storageIsDatabase || !strictDurability())) return storageInstance;
   try {
     const dbModule = await import("./db");

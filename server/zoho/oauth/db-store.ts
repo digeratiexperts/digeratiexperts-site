@@ -13,7 +13,7 @@
  */
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";
 import { sql } from "drizzle-orm";
-import { db, dbReady, markDatabaseDown } from "../../db";
+import { db, dbGeneration, dbReady, markDatabaseDown } from "../../db";
 import { isDeadlineError, withDeadline } from "../../deadline";
 import { fingerprint } from "./manager";
 import {
@@ -218,11 +218,101 @@ export function setZohoTokenStoreTimeoutForTests(ms?: number): void {
   dbStoreTimeoutMs = ms ?? DB_STORE_TIMEOUT_MS;
 }
 
-/** A failure that means "the database is not answering", not "this statement is wrong". */
+/**
+ * Messages from pg and pg-pool for a server that is not there. Server-side
+ * cancellations ("canceling statement due to statement timeout", 57014;
+ * "terminating connection due to idle-in-transaction timeout", 25P03) are
+ * deliberately absent: the server is up and answering, and one cancelled
+ * statement must not end the whole pool. "terminating connection due to
+ * administrator command" is caught by its code (57P01) below.
+ */
+const OUTAGE_MESSAGE = /ECONNREFUSED|ECONNRESET|ETIMEDOUT|ENOTFOUND|EAI_AGAIN|EPIPE|Connection terminated|connection to server|endpoint has been disabled|timeout exceeded when trying to connect|Query read timeout|Cannot use a pool after calling end|socket hang up/i;
+
+/**
+ * Node socket codes and the Postgres SQLSTATE classes that mean the server
+ * went away: 08xxx connection exceptions, 57P01..57P03 (admin shutdown,
+ * crash shutdown, cannot connect now).
+ */
+const OUTAGE_CODE = /^(ECONNREFUSED|ECONNRESET|ETIMEDOUT|ENOTFOUND|EAI_AGAIN|EPIPE|08\d{3}|57P0[123])$/;
+
+/**
+ * A failure that means "the database is not answering", not "this statement
+ * is wrong". drizzle 0.44+ wraps every driver error in DrizzleQueryError
+ * ("Failed query: …") with the pg error as `cause`, and pg reports a refused
+ * connect on several addresses as an AggregateError with `errors`, so the
+ * message of the outermost error alone says nothing: walk `cause` and
+ * `errors` (bounded, cycle-safe).
+ */
+/** The message of an error-like value, never throwing (a null-prototype cause has no toString). */
+function messageOf(value: unknown): string {
+  if (typeof value === "string") return value;
+  const message = (value as { message?: unknown } | null)?.message;
+  if (typeof message === "string") return message;
+  try {
+    return String(value);
+  } catch {
+    return ""; // a null-prototype cause has nothing to say
+  }
+}
+
+/**
+ * First non-blank line, trimmed. drizzle's "Failed query:" puts the statement
+ * on the next line (the SQL templates begin with a newline), so a line that
+ * ends in a colon takes the following non-blank line with it.
+ */
+function firstLine(message: string): string {
+  const lines = message.split("\n").map((line) => line.trim());
+  const index = lines.findIndex(Boolean);
+  if (index < 0) return "";
+  const first = lines[index];
+  if (!first.endsWith(":")) return first;
+  const next = lines.slice(index + 1).find(Boolean);
+  return next && !next.startsWith("params:") ? `${first} ${next}` : first;
+}
+
+/** What went into `cause` (or, for Node's AggregateError, the first of `errors`). */
+function underlying(error: unknown): unknown {
+  const cause = (error as { cause?: unknown } | null)?.cause;
+  if (cause !== undefined) return cause;
+  const errors = (error as { errors?: unknown } | null)?.errors;
+  return Array.isArray(errors) && errors.length ? errors[0] : undefined;
+}
+
+/** "Failed query: … <- connect ECONNREFUSED …": the wrapper and what it hides, for logs. */
+export function describeDatabaseError(error: unknown): string {
+  const parts: string[] = [];
+  const seen = new Set<unknown>();
+  let current: unknown = error;
+  for (let depth = 0; depth < 4 && current != null && !seen.has(current); depth += 1) {
+    seen.add(current);
+    const line = firstLine(messageOf(current));
+    if (line) parts.push(line);
+    current = underlying(current);
+  }
+  return parts.join(" <- ");
+}
+
 export function looksLikeDatabaseOutage(error: unknown): boolean {
-  if (isDeadlineError(error)) return true;
-  const message = error instanceof Error ? error.message : String(error);
-  return /ECONNREFUSED|ECONNRESET|ETIMEDOUT|ENOTFOUND|EAI_AGAIN|EPIPE|Connection terminated|connection to server|endpoint has been disabled|timeout exceeded when trying to connect|Query read timeout|statement timeout|canceling statement|Cannot use a pool after calling end|socket hang up|terminating connection/i.test(message);
+  const seen = new Set<unknown>();
+  const pending: unknown[] = [error];
+  while (pending.length && seen.size < 16) {
+    const current = pending.pop();
+    if (current == null || seen.has(current)) continue;
+    seen.add(current);
+    if (isDeadlineError(current)) return true;
+    const code = (current as { code?: unknown }).code;
+    if (typeof code === "string" && OUTAGE_CODE.test(code)) return true;
+    const message = messageOf(current);
+    // DrizzleQueryError's text embeds the statement and its parameters, which
+    // can carry any upstream string (a Zoho error message with "socket hang
+    // up" in it); only its cause is judged.
+    if (!message.startsWith("Failed query:") && OUTAGE_MESSAGE.test(message)) return true;
+    const cause = (current as { cause?: unknown }).cause;
+    if (cause !== undefined) pending.push(cause);
+    const errors = (current as { errors?: unknown }).errors;
+    if (Array.isArray(errors)) pending.push(...errors);
+  }
+  return false;
 }
 
 /**
@@ -240,6 +330,7 @@ export class ResilientZohoTokenStore implements ZohoTokenStore {
   private async useDb(): Promise<boolean> {
     if (!dbReady || !db) return false;
     if (this.tableChecked !== null) return this.tableChecked;
+    const generation = dbGeneration;
     try {
       const [r] = rows(await withDeadline(
         db.execute(sql`SELECT to_regclass('public.zoho_oauth_tokens') AS present`),
@@ -251,8 +342,8 @@ export class ResilientZohoTokenStore implements ZohoTokenStore {
         console.error("[zoho-oauth] table zoho_oauth_tokens is missing; run `npm run db:migrate` (migrations/0017_zoho_oauth_tokens.sql). Tokens are cached in memory only.");
       }
     } catch (error: any) {
-      console.warn("[zoho-oauth] could not verify zoho_oauth_tokens:", error?.message || error);
-      if (looksLikeDatabaseOutage(error)) markDatabaseDown(`zoho token store table check: ${error?.message || error}`);
+      console.warn("[zoho-oauth] could not verify zoho_oauth_tokens:", describeDatabaseError(error));
+      if (looksLikeDatabaseOutage(error)) markDatabaseDown(`zoho token store table check: ${describeDatabaseError(error)}`, generation);
       return false;
     }
     return this.tableChecked;
@@ -265,13 +356,16 @@ export class ResilientZohoTokenStore implements ZohoTokenStore {
    */
   private async viaDatabase<T>(label: string, operation: (store: ZohoTokenStore) => Promise<T>): Promise<T> {
     if (!(await this.useDb())) return operation(this.memory);
+    // Which pool this statement runs on; a failure that lands after the pool
+    // was replaced must not take the replacement down (db.ts).
+    const generation = dbGeneration;
     try {
       return await withDeadline(operation(this.database), dbStoreTimeoutMs, `zoho token store ${label}`);
     } catch (error: any) {
       if (!looksLikeDatabaseOutage(error)) throw error;
-      const message = error?.message || String(error);
+      const message = describeDatabaseError(error);
       console.warn(`[zoho-oauth] ${label} did not reach the database (${message}); answering from memory until it reconnects`);
-      markDatabaseDown(`zoho token store ${label}: ${message}`);
+      markDatabaseDown(`zoho token store ${label}: ${message}`, generation);
       return operation(this.memory);
     }
   }
