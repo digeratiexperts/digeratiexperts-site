@@ -139,6 +139,12 @@ for (const viewport of viewports) {
   await page.locator("#profile-sites").fill("2");
   await page.getByRole("radio", { name: "A mix", exact: true }).check();
   await page.getByRole("radio", { name: "No", exact: true }).check();
+  // Since the profile captures identity (PR #648), a profile is complete only with a real first and
+  // last name and an account type (plus a business name for a business); the Continue CTA is gated on it.
+  await page.locator("#profile-first-name").fill("Smoke");
+  await page.locator("#profile-last-name").fill("Tester");
+  await page.getByTestId("store-profile").getByRole("button", { name: "Business", exact: true }).click();
+  await page.locator("#profile-business-name").fill("Smoke Test Co");
   row.sizedLine = await page.getByText(/Sized for 25 users · 32 computers · 18 mobile devices · 2 sites/).count();
 
   // Under 768 the later goal groups are closed disclosures; the goal pill opens its group at any width.

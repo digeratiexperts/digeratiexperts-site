@@ -17,6 +17,10 @@ function draftWith(partial: Partial<SolutionDraft>): SolutionDraft {
 }
 
 const sized = {
+  firstName: "Alex",
+  lastName: "Buyer",
+  businessName: "",
+  accountType: "individual" as const,
   userCount: "25",
   workstationCount: "30",
   mobileDeviceCount: "15",

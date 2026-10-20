@@ -956,7 +956,25 @@ export default function PublicSolutionWorkspace() {
                   {HEADING}
                 </h1>
                 <p className="d2-lede d2-ink d2-measure mt-4">{LEDE}</p>
-                <JourneyRail current={currentStep} complete={completeSteps} />
+                <JourneyRail
+                current={currentStep}
+                complete={completeSteps}
+                onSelect={(id) => {
+                  const target =
+                    id === "profile"
+                      ? "profile"
+                      : id === "need"
+                        ? "needs"
+                        : id === "relationship"
+                          ? "relationship"
+                          : id === "package"
+                            ? "packages"
+                            : id === "delivery"
+                              ? "delivery"
+                              : null;
+                  if (target) scrollToChapter(target);
+                }}
+              />
                 {hydrating ? (
                   <LiveLine className="mt-6" testId="hydrating-line">
                     Opening your saved solution…
