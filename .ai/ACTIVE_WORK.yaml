@@ -4111,3 +4111,24 @@ claims:
       description and no canonical before JavaScript ran, so Google saw 118
       identical pages. The snapshot records what each page already sets in the
       browser; the server sends it. No page wording changes.
+
+  - id: search-title-wording
+    owner: claude
+    subsystem: seo-metadata
+    branch: claude/gifted-cray-mfxf3k
+    base_sha: 946824a3
+    files:
+      - client/src/pages/versions/v8/HomepageV8.tsx (useSEO title only; the live homepage)
+      - client/src/pages/routes/locationPages.tsx (phoenix-az title and metaDescription)
+      - client/src/pages/services/UCaaS.tsx (useSEO title and description)
+      - client/src/pages/GenericServicePage.tsx (optional seoTitle / metaDescription props)
+      - client/src/pages/routes/servicePages.tsx (managed-it-support and vcio-strategy seoTitle / metaDescription)
+      - shared/routeMeta.json (regenerated)
+      - docs/CONTENT-TOOLING-PLAN.md (Step 3 item 4 note)
+    status: in-progress
+    started: 2026-10-20
+    note: >-
+      Joe, 2026-10-20, on the status page's search section: "All approved and
+      fix anything in yellow or red." Search-facing titles and snippets now
+      use the Arizona search terms DataForSEO measured. No visible page text
+      changes (checked at 390 and 1440: headings unchanged).

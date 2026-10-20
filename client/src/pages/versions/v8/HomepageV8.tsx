@@ -75,7 +75,7 @@ export default function HomepageV8(): JSX.Element {
   const rootRef = useRef<HTMLDivElement>(null);
   useSpotlight(rootRef);
   useSEO({
-    title: "Managed Security Service Provider",
+    title: "Managed IT Services & Cybersecurity in Arizona",
     description: "Arizona MSP/MSSP. Cybersecurity-first managed IT, 24/7 emergency incident response, and a Cyber Risk Assessment that matches the operating model to your environment.",
     canonical: "/",
   });
