@@ -4,6 +4,7 @@ import { drizzle as drizzleNeon } from 'drizzle-orm/neon-serverless';
 import { drizzle as drizzlePg } from 'drizzle-orm/node-postgres';
 import ws from "ws";
 import * as schema from "@shared/schema";
+import { poolOptions } from "./dbPoolOptions";
 
 neonConfig.webSocketConstructor = ws;
 
@@ -53,18 +54,9 @@ async function initDb(): Promise<boolean> {
 
     try {
       if (isNeon) {
-        pool = new NeonPool({ 
-          connectionString: databaseUrl,
-          connectionTimeoutMillis: 10000,
-          max: 5,
-        });
+        pool = new NeonPool(poolOptions(databaseUrl, "neon"));
       } else {
-        pool = new PgPool({ 
-          connectionString: databaseUrl,
-          connectionTimeoutMillis: 10000,
-          max: 5,
-          idleTimeoutMillis: 30000,
-        });
+        pool = new PgPool(poolOptions(databaseUrl, "postgresql"));
       }
       
       (pool as any).on('error', (err: Error) => {

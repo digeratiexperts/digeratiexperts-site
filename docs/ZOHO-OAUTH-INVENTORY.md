@@ -162,7 +162,7 @@ Every product reports one of these:
 There is also `unknown`: credentials are present but not used since boot. Only `/api/health` and `/api/zoho/connection` show it.
 
 Where the states show:
-- **`GET /api/health`** (public). `services.zoho` maps `crm`, `desk`, `books` and `payments` to states only, from stored state and with no Zoho call. `services.zohoDesk` keeps its old values for existing monitors, plus `degraded`.
+- **`GET /api/health`** (public). `services.zoho` maps `crm`, `desk`, `books` and `payments` to states only, from stored state and with no Zoho call; it is `null` when that read failed or did not answer within 5 s (a database stall, #657), so readers must allow null. `services.zohoDesk` keeps its old values for existing monitors, plus `degraded`.
 - **`GET /api/zoho/desk/status`** (public). The new `state` field. `connected` and `reason` are unchanged, so `reason: auth_failed` now only means `needs_reconnect`. `.github/workflows/production-health.yml` puts `state` in the issue it opens and says not to rotate a token when the state is `degraded`.
 - **`GET /api/zoho/status`** (public, CRM). The new `state` field. It makes at most one cheap CRM read every 10 minutes; before, it minted a token on every request. The message is our own wording.
 - **`GET /api/zoho/connection`** (admin). The Connect grant summary, each product's health with reasons, the redirect URI, and `canManage`.

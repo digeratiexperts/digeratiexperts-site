@@ -30,6 +30,41 @@
 
 version: 2
 claims:
+  - id: db-dropout-deadlines
+    owner: claude
+    subsystem: platform-health
+    branch: claude/sleepy-archimedes-mccoav
+    base_sha: 24e3c108
+    files:
+      - "server/db.ts (pool options only: query_timeout via dbPoolOptions)"
+      - server/dbPoolOptions.ts, server/dbPoolOptions.test.ts (new)
+      - server/deadline.ts, server/deadline.test.ts (new)
+      - server/widgetTicketRoute.ts, server/widgetTicketRoute.test.ts (desk status probe deadline only)
+      - "server/index.ts (/api/health: deadline on the Zoho token-health map only)"
+      - server/integrations/ensureDeSyncSchema.ts (release the client with the error in the bootstrap's failure path only)
+      - server/zoho/oauth/db-store.ts, server/zoho/oauth/db-store.test.ts (token-store deadlines and memory fallback, ported from PR 659)
+      - server/healthProbe.ts, server/healthProbe.test.ts (SELECT 1 round trip and release-with-error on top of PR 665)
+      - .github/workflows/production-health.yml (/healthz read in the probe step and its issue text)
+    status: active
+    started: 2026-10-20
+    note: >-
+      Hardening after #657 and #656 (2026-10-19 23:36 to 2026-10-20 13:43 UTC):
+      Postgres dropped out from under the running process; /healthz answered 503
+      but /api/health and /api/zoho/desk/status sent no bytes for nine hours, so
+      the monitor reported "unreachable" with no body and the Desk Get Support
+      tab waited on one stuck probe. Joe, 2026-10-20: "All approved, merge, tell
+      me what you need." dbReady is left as is: with the query cap pg-pool
+      drops the dead client and opens a new one on demand, so the pool heals
+      without a reconnect. Follow-ups, not here: a caller holding a client via
+      db.transaction (portalAuthStore.ts, portalManualRecords.ts) returns it
+      wedged after a timeout and the next query pays one more cap;
+      healthProbe's idle-client check does no socket I/O. Overlap check:
+      payments-readiness-warm claims the server/index.ts listen callback, a
+      different hunk. Three PRs answered the same incident: PR 665 (merged
+      14:10Z; markDatabaseDown and the bounded probe) is the base this builds
+      on; PR 659 (same session as the #657 diagnosis) conflicted with 665 on
+      db.ts and healthProbe.ts, so its unique pieces were ported here with
+      credit and 659 closed as superseded.
   - id: de-db-dead-pool-recovery
     owner: claude
     subsystem: server-database
