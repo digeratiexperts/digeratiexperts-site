@@ -59,6 +59,26 @@ claims:
       healthProbe's idle-client check does no socket I/O. Overlap check:
       payments-readiness-warm claims the server/index.ts listen callback, a
       different hunk; no open PR touches these files.
+  - id: de-db-dead-pool-recovery
+    owner: claude
+    subsystem: server-database
+    branch: claude/db-dead-pool-recovery
+    base_sha: 946824a3
+    files:
+      - server/db.ts (markDatabaseDown only)
+      - server/healthProbe.ts
+      - server/healthProbe.test.ts
+    status: active
+    started: 2026-10-20
+    note: >-
+      2026-10-20 04:44-13:43 UTC: the live process lost Neon after boot and
+      sat at /healthz 503 with /api/health hanging for nine hours, until the
+      next deploy restarted it. db.ts kept dbReady true for a pool that had
+      died, so reconnectDatabase() answered true without rebuilding anything.
+      The probe now drops a dead pool (markDatabaseDown) and lets the
+      throttled reconnect rebuild it, and is bounded at 5s so a monitor
+      always gets an answer. Storage already handles the boot-failure state
+      this returns the module to. No other file.
   - id: closeout-226-153-395
     owner: claude
     subsystem: store-vendor-marks, portal-passkeys, storage-503

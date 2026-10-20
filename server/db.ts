@@ -136,4 +136,26 @@ export async function reconnectDatabase(): Promise<boolean> {
   return reconnecting;
 }
 
+/**
+ * A pool that connected at boot and then lost Postgres (Neon compute gone,
+ * network dropped, "endpoint has been disabled") kept dbReady = true for the
+ * life of the process, so reconnectDatabase() answered true without doing
+ * anything and nothing ever rebuilt the pool. /healthz sat at 503 and
+ * /api/health hung on the dead pool for nine hours on 2026-10-20 until a
+ * deploy restarted the process. This drops the dead pool and returns the
+ * module to its boot-failure state, which storage already handles, so the
+ * next throttled reconnectDatabase() rebuilds it.
+ */
+export function markDatabaseDown(reason: string): void {
+  if (!pool && !dbReady) return;
+  console.log(`⚠️ Database marked down (${reason}); will reconnect`);
+  const dead = pool;
+  pool = null;
+  db = null;
+  dbReady = false;
+  dbType = 'memory';
+  initAttempted = false;
+  dead?.end().catch(() => {});
+}
+
 export { pool, db, dbReady, initPromise, initAttempted, dbType };
