@@ -600,6 +600,8 @@ function listEndpoints(): Array<{ method: string; path: string }> {
     const indexPath = path.join(distPath, "index.html");
     
     app.use(express.static(distPath, {
+      // "/" must reach the catch-all below like every other route, so it gets its own head tags (server/routeMeta.ts).
+      index: false,
       // Every file gets an explicit header below; only Vite's hashed output is cached forever.
       cacheControl: false,
       etag: true,
@@ -619,8 +621,8 @@ function listEndpoints(): Array<{ method: string; path: string }> {
         const known = isKnownSpaPath(req.path);
         const shell = readIndexShell(indexPath);
         res.status(known ? 200 : 404);
-        // Same caching as the sendFile this replaced: revalidate every time, keyed on the build's mtime.
-        res.setHeader("Cache-Control", "public, max-age=0");
+        // The shell is HTML: never stored (staticCacheControl), revalidated against the build's mtime.
+        res.setHeader("Cache-Control", cacheControlFor("index.html"));
         res.setHeader("Last-Modified", shell.lastModified);
         res.type("html").send(known ? applyRouteMeta(shell.html, routeMetaFor(req.path)) : shell.html);
       } else {
