@@ -11,6 +11,7 @@ export const PUBLIC_ROUTES = [
   "/solutions/proactive-business-ecosystem",
   "/solutions/proactive-enterprise-ecosystem",
   "/solutions/co-managed-it",
+  "/solutions/efficiency-before-ai",
   "/solutions/standalone-services",
   "/solutions/managed-it-support",
   "/proactive-ecosystem-pricing",

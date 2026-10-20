@@ -171,6 +171,18 @@ Still for Joe (no change made): the published office address and phone number do
 | Hero terms, sign-off | "30 minutes" | Same decision | DE decision | Keep the booked slot at 30 minutes |
 | Hero terms, sign-off | "Screen share: no passwords, no admin access"; "we never ask for passwords or admin access" | Same decision. The check is run over the client's own screen share | DE process | The check must never request credentials or a viewer role. If DE starts using a temporary read-only role, change this line first |
 
+## Solutions page `/solutions/efficiency-before-ai` (2026-10-19)
+
+A position piece: DE's view that a secure, working IT foundation and an efficient team come before AI spend. It carries no statistics, percentages, survey results, vendor names or third-party figures, and names no client.
+
+| Where | Claim | Basis | Status | Action |
+| --- | --- | --- | --- | --- |
+| Whole page | AI hype sells urgency; foundation first, AI second; AI budgets cut from the basics move risk rather than remove it | DE position (Joe's brief, 2026-10-19) | DE decision | Keep it as opinion. Adding a statistic means adding a sourced row here first |
+| Readiness step, hero aside | AI built into work apps can reach whatever the person using it can open | Same claim as the AI Background Check "Keys" step above | Sourced | Re-check with that page's vendor terms |
+| FAQ, "already using AI" | Free AI Background Check: connected tools, what they can reach, top three fixes | The `/go/ai-background-check` offer rows above | DE decision | Change with that offer |
+| Foundation self-check | "Holding" / "Cracks showing" / "Foundation first" verdict from the visitor's own ticks | Illustrative scoring in `client/src/pages/solutions/efficiency/efficiencyModel.ts`, labelled "Illustrative self-check, not an assessment" | Structural | Keep the label |
+| Budget balancer | Moving a basic into the AI pilot "moves the risk" to the named place | Qualitative only: equal shares, no dollar figures, labelled on the page; a test fails if a line carries a digit, `$` or `%` | Structural | Adding real figures means a sourced row here first |
+
 ## How to add a claim
 
 1. Statistics: add the fact to `cyberAwarenessFacts.ts` with source, year, and

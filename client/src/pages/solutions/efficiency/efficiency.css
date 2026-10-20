@@ -1,0 +1,844 @@
+/*
+ * /solutions/efficiency-before-ai widgets: the stack tower, the hype bento, the
+ * foundation self-check and the budget balancer. Scoped under .eba-* and loaded
+ * only with this lazily imported page, so none of it lands in the entry
+ * stylesheet (at its budget). Tier 2 tokens only. Motion uses three speeds
+ * (150ms controls, 320ms panels, 900ms imagery) on one easing, and all of it
+ * stops under prefers-reduced-motion.
+ */
+.eba-tower,
+.eba-hype,
+.eba-check,
+.eba-budget {
+  --eba-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --eba-fast: 150ms;
+  --eba-panel: 320ms;
+  --eba-slow: 900ms;
+  --eba-ink: #1a1228;
+  --eba-ink-soft: #3a3448;
+  --eba-ring: #ec4899;
+}
+
+.eba-label {
+  margin: 0;
+  font: 600 0.75rem/1.2 "Oxanium", "Space Grotesk", system-ui, sans-serif;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.eba-label--muted {
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.eba-label--accent {
+  color: var(--de-magenta-ink);
+}
+
+/* Outline pill for secondary controls on dark fields. */
+.eba-pill {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 999px;
+  background: transparent;
+  padding: 0 1.25rem;
+  color: #fff;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color var(--eba-fast, 150ms) var(--eba-ease, ease),
+    border-color var(--eba-fast, 150ms) var(--eba-ease, ease);
+}
+
+.eba-pill:hover {
+  border-color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.eba-pill:focus-visible,
+.eba-text-btn:focus-visible {
+  outline: 2px solid var(--eba-ring, #ec4899);
+  outline-offset: 2px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Stack tower (hero aside)                                            */
+/* ------------------------------------------------------------------ */
+
+.eba-tower {
+  margin: 0;
+  border: 1px solid var(--de-hairline);
+  border-radius: 1.25rem;
+  /* Near-opaque so the hero's tile art doesn't compete with the stack. */
+  background:
+    radial-gradient(120% 70% at 50% 0%, rgba(91, 69, 224, 0.18), transparent 60%),
+    rgba(10, 8, 18, 0.94);
+  padding: 1.25rem 1.25rem 1.5rem;
+}
+
+.eba-tower-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: clip;
+  padding: 1.5rem 0.5rem 0.25rem;
+}
+
+.eba-tower-upper {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  transform-origin: 0% 100%;
+  transition: transform var(--eba-slow) var(--eba-ease);
+}
+
+.eba-slab,
+.eba-brick {
+  display: flex;
+  height: 3rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0.5rem;
+  color: rgba(255, 255, 255, 0.92);
+  font: 600 0.8125rem/1 "Space Grotesk", system-ui, sans-serif;
+  /* The first shadow is the slab's depth; the second its contact shadow. */
+  box-shadow:
+    0 0.5rem 0 #0b0910,
+    0 0.875rem 1.25rem rgba(0, 0, 0, 0.45);
+  transition:
+    transform var(--eba-slow) var(--eba-ease),
+    opacity var(--eba-slow) var(--eba-ease);
+}
+
+.eba-slab {
+  margin-bottom: 0.875rem;
+}
+
+.eba-slab--ops {
+  width: 86%;
+  background: #24202b;
+}
+
+.eba-slab--ready {
+  width: 68%;
+  background: #2d2836;
+}
+
+/* The shiny one: violet light, one sheen pass. */
+.eba-slab--ai {
+  position: relative;
+  width: 44%;
+  overflow: hidden;
+  border-color: rgba(150, 132, 255, 0.6);
+  background: #2a2148;
+  color: #fff;
+  font-size: 0.9375rem;
+  letter-spacing: 0.08em;
+  box-shadow:
+    0 0.5rem 0 #17122b,
+    0 0 2.5rem rgba(91, 69, 224, 0.5);
+}
+
+.eba-slab--ai::after {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.3) 50%, transparent 70%);
+  content: "";
+  transform: translateX(-130%);
+  animation: eba-sheen 2.4s var(--eba-ease) 0.8s 2;
+}
+
+@keyframes eba-sheen {
+  to {
+    transform: translateX(130%);
+  }
+}
+
+.eba-base {
+  display: grid;
+  width: 100%;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.375rem;
+}
+
+.eba-brick {
+  border-top: 2px solid var(--de-magenta);
+  background: #1b1820;
+  font-size: 0.75rem;
+}
+
+.eba-tower-ground {
+  width: 100%;
+  margin: 1rem 0 0;
+  border-top: 1px solid var(--de-hairline);
+  padding-top: 0.625rem;
+  color: rgba(255, 255, 255, 0.62);
+  font: 600 0.6875rem/1.2 "Oxanium", "Space Grotesk", system-ui, sans-serif;
+  letter-spacing: 0.16em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.eba-tower[data-pulled] .eba-brick[data-brick="backup"] {
+  opacity: 0.4;
+  transform: translate(115%, 0.75rem) rotate(16deg);
+}
+
+.eba-tower[data-pulled] .eba-tower-upper {
+  transform: translateY(0.375rem) rotate(3.5deg);
+}
+
+.eba-tower[data-pulled] .eba-slab--ai {
+  transform: translate(2rem, 0.375rem) rotate(10deg);
+}
+
+.eba-tower-caption {
+  display: grid;
+  gap: 0.625rem;
+  margin-top: 1.25rem;
+}
+
+.eba-tower-status {
+  min-height: 3em;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.eba-tower-caption .eba-pill {
+  justify-self: start;
+}
+
+/* ------------------------------------------------------------------ */
+/* Hype bento                                                          */
+/* ------------------------------------------------------------------ */
+
+.eba-hype {
+  display: grid;
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (min-width: 768px) {
+  .eba-hype {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.25rem;
+  }
+
+  .eba-hype-card--lead {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (min-width: 1024px) {
+  .eba-hype {
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  }
+
+  .eba-hype-card--lead {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+  }
+}
+
+.eba-hype-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  border: 1px solid var(--de-hairline);
+  border-radius: 1.25rem;
+  background: var(--de-raised);
+  padding: 1.5rem;
+}
+
+.eba-hype-head {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+/* The lead card is two rows tall: icon and noise on top, the argument anchored low. */
+.eba-hype-card--lead .eba-hype-pitch {
+  margin-top: auto;
+  padding-top: 2rem;
+}
+
+.eba-hype-card--lead {
+  padding: 2rem;
+}
+
+.eba-hype-quote {
+  margin: 0 0 0.75rem;
+  color: #fff;
+  font: 600 1.375rem/1.2 "Space Grotesk", system-ui, sans-serif;
+  letter-spacing: -0.02em;
+}
+
+.eba-hype-card--lead .eba-hype-quote {
+  font-size: clamp(1.75rem, 3.2vw, 2.75rem);
+  line-height: 1.08;
+}
+
+/* The strike draws itself when the bento scrolls into view. */
+.eba-hype-quote s {
+  background-image: linear-gradient(var(--de-magenta), var(--de-magenta));
+  background-position: 0 58%;
+  background-repeat: no-repeat;
+  background-size: 0% 0.12em;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  text-decoration: none;
+  transition: background-size var(--eba-slow) var(--eba-ease);
+}
+
+.eba-hype[data-inview] .eba-hype-quote s {
+  background-size: 100% 0.12em;
+}
+
+.eba-hype-card:nth-child(2) s {
+  transition-delay: 150ms;
+}
+
+.eba-hype-card:nth-child(3) s {
+  transition-delay: 300ms;
+}
+
+.eba-hype-real {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.eba-hype-card--lead .eba-hype-real {
+  max-width: 34rem;
+  font-size: 1.0625rem;
+}
+
+/* Noise bars: loud at first, flat once you look at them. */
+.eba-noise {
+  display: flex;
+  height: 3rem;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.eba-noise span {
+  flex: 1 1 0;
+  max-width: 0.5rem;
+  border-radius: 999px;
+  background: linear-gradient(to top, rgba(211, 18, 106, 0.85), rgba(91, 69, 224, 0.7));
+  transition: transform var(--eba-slow) var(--eba-ease);
+}
+
+.eba-hype[data-inview] .eba-noise span {
+  transform: scaleY(0.2);
+}
+
+/* ------------------------------------------------------------------ */
+/* Foundation self-check (paper)                                       */
+/* ------------------------------------------------------------------ */
+
+.eba-check {
+  display: grid;
+  gap: 2rem;
+}
+
+@media (min-width: 1024px) {
+  .eba-check {
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+    align-items: start;
+    gap: 3.5rem;
+  }
+}
+
+.eba-check-set {
+  min-width: 0;
+  margin: 0;
+  border: 0;
+  padding: 0;
+}
+
+.eba-check-legend {
+  margin-bottom: 1rem;
+  padding: 0;
+  color: var(--eba-ink);
+  font: 600 1.125rem/1.35 "Space Grotesk", system-ui, sans-serif;
+}
+
+.eba-check-grid {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (min-width: 640px) {
+  .eba-check-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.eba-check-item {
+  display: flex;
+  height: 100%;
+  min-height: 3.5rem;
+  align-items: flex-start;
+  gap: 0.875rem;
+  border: 1px solid var(--de-paper-hairline);
+  border-radius: 0.875rem;
+  background: #fff;
+  padding: 1rem 1.125rem;
+  color: var(--eba-ink-soft);
+  font-size: 0.975rem;
+  line-height: 1.5;
+  cursor: pointer;
+  transition:
+    border-color var(--eba-fast) var(--eba-ease),
+    box-shadow var(--eba-panel) var(--eba-ease),
+    transform var(--eba-panel) var(--eba-ease);
+}
+
+.eba-check-item:hover {
+  border-color: rgba(163, 14, 82, 0.45);
+  transform: translateY(-1px);
+}
+
+.eba-check-item[data-checked] {
+  border-color: var(--de-magenta-paper-ink);
+  box-shadow: inset 0 0 0 1px var(--de-magenta-paper-ink);
+  color: var(--eba-ink);
+}
+
+.eba-check-input {
+  display: grid;
+  flex: none;
+  width: 1.375rem;
+  height: 1.375rem;
+  margin: 0.1rem 0 0;
+  border: 1.5px solid #7a7386;
+  border-radius: 0.375rem;
+  background: #fff;
+  place-content: center;
+  appearance: none;
+  cursor: pointer;
+  transition:
+    background-color var(--eba-fast) var(--eba-ease),
+    border-color var(--eba-fast) var(--eba-ease);
+}
+
+.eba-check-input::after {
+  width: 0.7rem;
+  height: 0.4rem;
+  border-bottom: 2px solid #fff;
+  border-left: 2px solid #fff;
+  content: "";
+  transform: translate(1px, -1px) rotate(-45deg) scale(0);
+  transition: transform var(--eba-fast) var(--eba-ease);
+}
+
+.eba-check-input:checked {
+  border-color: var(--de-magenta-paper-ink);
+  background: var(--de-magenta-paper-ink);
+}
+
+.eba-check-input:checked::after {
+  transform: translate(1px, -1px) rotate(-45deg) scale(1);
+}
+
+.eba-check-input:focus-visible {
+  outline: 2px solid var(--eba-ring);
+  outline-offset: 2px;
+}
+
+.eba-meter {
+  border: 1px solid var(--de-paper-hairline);
+  border-radius: 1.25rem;
+  background: #fff;
+  padding: 1.75rem;
+  box-shadow:
+    0 1px 2px rgba(26, 18, 16, 0.06),
+    0 1.25rem 2.5rem -1rem rgba(26, 18, 16, 0.2);
+}
+
+@media (min-width: 1024px) {
+  .eba-meter {
+    position: sticky;
+    top: calc(var(--de-nav-offset) + 1rem);
+  }
+}
+
+.eba-wall {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid var(--eba-ink);
+  padding: 1.25rem 0.25rem 0;
+}
+
+.eba-wall-ai {
+  display: flex;
+  width: 52%;
+  height: 2.5rem;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.5rem;
+  border: 1px solid #5b45e0;
+  border-radius: 0.5rem;
+  background: #ece9ff;
+  color: #2a1f7a;
+  font: 700 0.875rem/1 "Space Grotesk", system-ui, sans-serif;
+  letter-spacing: 0.08em;
+  box-shadow: 0 0.375rem 0 #c9c1ff;
+  transform: translateX(var(--eba-shift, 0)) rotate(var(--eba-tilt, 0deg));
+  transform-origin: 0% 100%;
+  transition: transform var(--eba-slow) var(--eba-ease);
+}
+
+.eba-wall-bricks {
+  display: grid;
+  width: 100%;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.375rem;
+}
+
+.eba-wall-brick {
+  position: relative;
+  height: 2.25rem;
+  border: 1px solid rgba(26, 18, 40, 0.18);
+  border-top: 2px solid var(--eba-ink);
+  border-radius: 0.375rem;
+  background: #ece8e3;
+  transition:
+    background-color var(--eba-panel) var(--eba-ease),
+    border-color var(--eba-panel) var(--eba-ease);
+}
+
+.eba-wall-brick svg {
+  position: absolute;
+  inset: 0.25rem 0.375rem;
+  width: calc(100% - 0.75rem);
+  height: calc(100% - 0.5rem);
+  fill: none;
+  stroke: var(--de-magenta-paper-ink);
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+  transition: stroke-dashoffset var(--eba-panel) var(--eba-ease);
+}
+
+.eba-wall-brick[data-cracked] {
+  border-color: rgba(163, 14, 82, 0.4);
+  border-top-color: var(--de-magenta-paper-ink);
+  background: #fbe9f0;
+}
+
+.eba-wall-brick[data-cracked] svg {
+  stroke-dashoffset: 0;
+}
+
+.eba-meter-count {
+  margin: 0;
+  color: var(--eba-ink);
+  font: 600 2.5rem/1 "Space Grotesk", system-ui, sans-serif;
+  letter-spacing: -0.03em;
+}
+
+.eba-meter-count span {
+  color: #5c5668;
+  font-size: 1rem;
+  letter-spacing: 0;
+}
+
+.eba-meter-level {
+  margin: 0.5rem 0 0;
+  color: var(--de-magenta-paper-ink);
+  font: 600 1.25rem/1.2 "Space Grotesk", system-ui, sans-serif;
+}
+
+.eba-meter-message {
+  min-height: 4.5em;
+  margin: 0.5rem 0 0;
+  color: var(--eba-ink-soft);
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.eba-meter-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1.25rem;
+  margin-top: 1.25rem;
+}
+
+.eba-text-btn {
+  min-height: 2.75rem;
+  border: 0;
+  background: none;
+  padding: 0 0.25rem;
+  color: var(--eba-ink);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.eba-meter-note {
+  margin: 1.25rem 0 0;
+  border-top: 1px solid var(--de-paper-hairline);
+  padding-top: 1rem;
+  color: #5c5668;
+  font-size: 0.875rem;
+  line-height: 1.55;
+}
+
+/* ------------------------------------------------------------------ */
+/* Budget balancer (the page's one dark stage)                         */
+/* ------------------------------------------------------------------ */
+
+.eba-bar-wrap {
+  margin-bottom: 1.5rem;
+}
+
+.eba-bar-legend {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  color: rgba(255, 255, 255, 0.62);
+  font: 600 0.75rem/1.2 "Oxanium", "Space Grotesk", system-ui, sans-serif;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.eba-bar {
+  display: flex;
+  height: 3.5rem;
+  border: 1px solid var(--de-hairline);
+  border-radius: 0.875rem;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 0.25rem 0.125rem;
+}
+
+.eba-seg {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 0;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  margin: 0 0.125rem;
+  border-top: 2px solid var(--de-magenta);
+  border-radius: 0.625rem;
+  background: #1f1b25;
+  color: rgba(255, 255, 255, 0.88);
+  font: 600 0.75rem/1 "Space Grotesk", system-ui, sans-serif;
+  white-space: nowrap;
+  transition:
+    flex-grow var(--eba-slow) var(--eba-ease),
+    margin var(--eba-slow) var(--eba-ease),
+    opacity var(--eba-panel) var(--eba-ease);
+}
+
+.eba-seg[data-cut] {
+  flex-grow: 0;
+  margin: 0;
+  opacity: 0;
+}
+
+.eba-seg--ai {
+  flex-grow: 0;
+  border-top-color: #8b7bff;
+  background: #2a2148;
+  box-shadow: inset 0 0 1.5rem rgba(91, 69, 224, 0.45);
+  color: #fff;
+}
+
+.eba-lines {
+  display: grid;
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (min-width: 640px) {
+  .eba-lines {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1280px) {
+  .eba-lines {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.eba-line {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  border: 1px solid var(--de-hairline);
+  border-radius: 1.25rem;
+  background: var(--de-raised);
+  padding: 1.5rem;
+  transition:
+    border-color var(--eba-panel) var(--eba-ease),
+    background-color var(--eba-panel) var(--eba-ease);
+}
+
+.eba-line[data-cut] {
+  border-color: rgba(240, 76, 151, 0.6);
+  border-style: dashed;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.eba-line-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.eba-stamp {
+  border: 1px solid rgba(240, 76, 151, 0.7);
+  border-radius: 999px;
+  padding: 0.3rem 0.65rem;
+  color: var(--de-magenta-ink);
+  font: 600 0.6875rem/1.2 "Oxanium", "Space Grotesk", system-ui, sans-serif;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0;
+  transform: rotate(-6deg) scale(1.15);
+  transition:
+    opacity var(--eba-panel) var(--eba-ease),
+    transform var(--eba-panel) var(--eba-ease);
+}
+
+.eba-line[data-cut] .eba-stamp {
+  opacity: 1;
+  transform: rotate(-6deg) scale(1);
+}
+
+.eba-line-title {
+  margin: 0;
+  color: #fff;
+  font: 600 1.125rem/1.3 "Space Grotesk", system-ui, sans-serif;
+}
+
+.eba-line-text {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.eba-line[data-cut] .eba-line-title,
+.eba-line[data-cut] .eba-line-text {
+  color: rgba(255, 255, 255, 0.66);
+}
+
+.eba-line-risk {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--eba-panel) var(--eba-ease);
+}
+
+.eba-line-risk > p {
+  min-height: 0;
+  overflow: hidden;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.eba-line-risk strong {
+  color: var(--de-magenta-ink);
+  font-weight: 600;
+}
+
+.eba-line[data-cut] .eba-line-risk {
+  grid-template-rows: 1fr;
+}
+
+.eba-line-btn {
+  width: 100%;
+  margin-top: auto;
+}
+
+.eba-line[data-cut] .eba-line-btn {
+  border-color: rgba(240, 76, 151, 0.7);
+}
+
+.eba-readout {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem 1.5rem;
+  margin-top: 1.5rem;
+  border: 1px solid var(--de-hairline);
+  border-radius: 1.25rem;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 1.25rem 1.5rem;
+}
+
+.eba-readout-headline {
+  margin: 0;
+  color: #fff;
+  font: 600 1.25rem/1.3 "Space Grotesk", system-ui, sans-serif;
+}
+
+.eba-readout-detail {
+  margin: 0.375rem 0 0;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.eba-budget-note {
+  margin-top: 0.875rem;
+}
+
+/* ------------------------------------------------------------------ */
+/* Reduced motion: states still change, nothing moves to get there.    */
+/* ------------------------------------------------------------------ */
+
+@media (prefers-reduced-motion: reduce) {
+  .eba-tower *,
+  .eba-tower *::after,
+  .eba-hype *,
+  .eba-check *,
+  .eba-check *::after,
+  .eba-budget * {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .eba-hype-quote s {
+    background-size: 100% 0.12em;
+  }
+
+  .eba-noise span {
+    transform: scaleY(0.2);
+  }
+}

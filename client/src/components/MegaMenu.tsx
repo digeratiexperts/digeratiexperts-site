@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback, useId } from 'react';
 import { Link, useLocation } from 'wouter';
-import { ChevronDown, Shield, Server, Users, FileCheck, Phone, ExternalLink, X, ArrowRight, Monitor, Cloud, Lock, Zap, HeadphonesIcon, Building, BarChart3, ClipboardCheck, Layers, TrendingUp, Star, CheckCircle, Award, LayoutGrid } from 'lucide-react';
+import { ChevronDown, Shield, Server, Users, FileCheck, Phone, ExternalLink, X, ArrowRight, Monitor, Cloud, Lock, Zap, HeadphonesIcon, Building, BarChart3, ClipboardCheck, Layers, TrendingUp, Star, CheckCircle, Award, LayoutGrid, Gauge } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DE_LOGO_REVERSE } from '@/lib/brandAssets';
 import ebookCover from '@/assets/images/ebook-defending-digital-realm-cover.webp';
@@ -275,6 +275,7 @@ export function MegaMenu() {
             { title: 'Standalone Services', description: 'A specific gap — backup, UCaaS, awareness, or a project', icon: <Server className="h-5 w-5" />, url: '/solutions/standalone-services' },
             { title: 'Solve a Business Need', description: 'Curated DE solutions organized around the outcome you need', icon: <ClipboardCheck className="h-5 w-5" />, url: '/store' },
             { title: 'Cyber Risk Assessment', description: 'Match the operating model to your environment', icon: <ClipboardCheck className="h-5 w-5" />, url: '/book' },
+            { title: 'Efficiency Before AI', description: 'A working foundation and team first, AI second', icon: <Gauge className="h-5 w-5" />, url: '/solutions/efficiency-before-ai' },
           ]
         },
         {
