@@ -1,0 +1,40 @@
+# systemd socket for the Digerati Experts public website (production).
+#
+# Owns 127.0.0.1:3300 so the listening socket survives `systemctl restart
+# digeratiexperts-site`: requests that arrive while the process is replaced
+# wait in the kernel backlog and are answered by the new process, instead of
+# OpenLiteSpeed answering "503 Service Unavailable" for the restart window
+# (observed 2026-10-08, every deploy). The app takes the socket as fd 3 when
+# systemd sets LISTEN_FDS/LISTEN_PID (server/listenTarget.ts); without this
+# unit it binds the port itself, so installing it is optional and reversible.
+#
+# Install (root, once):
+#   sudo cp deploy/vps/digeratiexperts-site.socket /etc/systemd/system/
+#   sudo cp deploy/vps/digeratiexperts-site.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl stop digeratiexperts-site           # frees the port once
+#   sudo systemctl enable --now digeratiexperts-site.socket
+#   sudo systemctl start digeratiexperts-site
+# Verify: curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:3300/healthz
+# then `sudo systemctl restart digeratiexperts-site` while curling in a loop —
+# no connection refused, no 503, only a pause.
+#
+# Rollback: systemctl disable --now digeratiexperts-site.socket, then start
+# the service; it binds the port itself again.
+#
+# deploy.sh needs no change: it restarts the service, and the socket stays.
+
+[Unit]
+Description=Digerati Experts public website listening socket (127.0.0.1:3300)
+
+[Socket]
+ListenStream=127.0.0.1:3300
+NoDelay=true
+# Connections queued during a restart. 1024 covers a deploy's pause at the
+# site's traffic; a longer pause than the backlog can absorb still fails
+# loudly at the proxy rather than silently.
+Backlog=1024
+ReusePort=true
+
+[Install]
+WantedBy=sockets.target

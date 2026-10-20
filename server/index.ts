@@ -701,8 +701,10 @@ function listEndpoints(): Array<{ method: string; path: string }> {
     `🌐 Using port: ${port} (PORT=${process.env.PORT || "unset"}, REPLIT_SERVER_PORT=${process.env.REPLIT_SERVER_PORT || "unset"})`,
   );
 
-  server.listen(port, host, () => {
-    log(`🚀 Running on http://${host}:${port}`);
+  const { resolveListenTarget, describeListenTarget } = await import("./listenTarget");
+  const listenTarget = resolveListenTarget(process.env, process.pid, { port, host });
+  const onListening = () => {
+    log(`🚀 Running on ${describeListenTarget(listenTarget)}`);
     void import("./integrations/deSyncWorker")
       .then(({ startDeSyncWorker }) => startDeSyncWorker())
       .catch((error) => {
@@ -767,5 +769,7 @@ function listEndpoints(): Array<{ method: string; path: string }> {
         log(`🔎 Routes: https://${slug}-${owner}.replit.app/__debug/routes`);
       }
     }
-  });
+  };
+  if ("fd" in listenTarget) server.listen({ fd: listenTarget.fd }, onListening);
+  else server.listen(listenTarget.port, listenTarget.host, onListening);
 })();

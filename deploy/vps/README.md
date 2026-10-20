@@ -175,3 +175,38 @@ For a fresh host: install `digeratiexperts-site.service` with
 | `scripts/deploy.sh` (rsync to `public_html`) | Conflicts with OLS→Node proxy |
 | `ecosystem.config.js` | PM2 config; superseded by systemd |
 | Manual root `systemctl restart` after every deploy | `deploy.sh` performs restart + verify |
+
+## Zero-downtime restarts (socket activation)
+
+Every deploy ends in `systemctl restart digeratiexperts-site`. While the old
+process is gone and the new one has not bound 127.0.0.1:3300 yet, OpenLiteSpeed
+answers the public site with a plain "503 Service Unavailable" (observed on
+every deploy, 2026-10-08). `deploy/vps/digeratiexperts-site.socket` removes that
+window: systemd owns the socket, keeps it open across the restart, and hands it
+to the service as fd 3; requests that arrive during the swap wait in the kernel
+backlog and are answered by the new process. `server/listenTarget.ts` takes the
+fd only when `LISTEN_PID` is the service's own pid; otherwise the app binds the
+port itself, so the socket unit is optional and reversible.
+
+Install once as root (the deploy user needs nothing new; `deploy.sh` is
+unchanged):
+
+```bash
+sudo cp deploy/vps/digeratiexperts-site.socket /etc/systemd/system/
+sudo cp deploy/vps/digeratiexperts-site.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl stop digeratiexperts-site            # frees the port once
+sudo systemctl enable --now digeratiexperts-site.socket
+sudo systemctl start digeratiexperts-site
+curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:3300/healthz   # 200
+```
+
+Prove it: run `while :; do curl -s -o /dev/null -w '%{http_code} ' -m 10
+http://127.0.0.1:3300/healthz; sleep 0.5; done` in one shell and
+`sudo systemctl restart digeratiexperts-site` in another. Before: a run of
+`000` (connection refused). After: a pause, then `200`, never `000`. The boot
+log line reads `🚀 Running on systemd socket (fd 3)`.
+
+Rollback: `sudo systemctl disable --now digeratiexperts-site.socket && sudo
+systemctl restart digeratiexperts-site`; the service binds the port itself
+again.
