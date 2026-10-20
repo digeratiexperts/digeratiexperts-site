@@ -42,6 +42,8 @@ claims:
       - server/widgetTicketRoute.ts, server/widgetTicketRoute.test.ts (desk status probe deadline only)
       - "server/index.ts (/api/health: deadline on the Zoho token-health map only)"
       - server/integrations/ensureDeSyncSchema.ts (release the client with the error in the bootstrap's failure path only)
+      - server/zoho/oauth/db-store.ts, server/zoho/oauth/db-store.test.ts (token-store deadlines and memory fallback, ported from PR 659)
+      - server/healthProbe.ts, server/healthProbe.test.ts (SELECT 1 round trip and release-with-error on top of PR 665)
       - .github/workflows/production-health.yml (/healthz read in the probe step and its issue text)
     status: active
     started: 2026-10-20
@@ -58,7 +60,11 @@ claims:
       wedged after a timeout and the next query pays one more cap;
       healthProbe's idle-client check does no socket I/O. Overlap check:
       payments-readiness-warm claims the server/index.ts listen callback, a
-      different hunk; no open PR touches these files.
+      different hunk. Three PRs answered the same incident: PR 665 (merged
+      14:10Z; markDatabaseDown and the bounded probe) is the base this builds
+      on; PR 659 (same session as the #657 diagnosis) conflicted with 665 on
+      db.ts and healthProbe.ts, so its unique pieces were ported here with
+      credit and 659 closed as superseded.
   - id: de-db-dead-pool-recovery
     owner: claude
     subsystem: server-database

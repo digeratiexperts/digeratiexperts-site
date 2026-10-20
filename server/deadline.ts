@@ -19,6 +19,10 @@ export class DeadlineError extends Error {
   }
 }
 
+export function isDeadlineError(error: unknown): error is DeadlineError {
+  return error instanceof DeadlineError || (error instanceof Error && error.name === "DeadlineError");
+}
+
 export function withDeadline<T>(work: Promise<T>, ms: number, label: string): Promise<T> {
   let timer: ReturnType<typeof setTimeout> | undefined;
   const timeout = new Promise<never>((_, reject) => {

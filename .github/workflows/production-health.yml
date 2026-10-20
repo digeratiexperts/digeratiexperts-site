@@ -67,14 +67,22 @@ jobs:
             printf '%s' "${value:-$2}"
           }
 
-          BODY="$(probe_once || true)"
-          DB="$(field '.services.database' 'unreachable')"
+          # An empty body with curl exit 28 means the server took the request
+          # and sent nothing within 20s: the process is up and something inside
+          # it is hanging (2026-10-20, #657: a dead database pool). Report that
+          # as "stalled", which points at the app, not at DNS or the host.
+          db_default() {
+            if [ "${PROBE_RC:-0}" = "28" ]; then printf 'stalled'; else printf 'unreachable'; fi
+          }
+
+          BODY="$(probe_once)"; PROBE_RC=$?
+          DB="$(field '.services.database' "$(db_default)")"
 
           if [ "$DB" != "connected" ]; then
-            echo "First probe reported '$DB'; re-checking in 30s before alerting."
+            echo "First probe reported '$DB' (curl exit $PROBE_RC); re-checking in 30s before alerting."
             sleep 30
-            BODY="$(probe_once || true)"
-            DB="$(field '.services.database' 'unreachable')"
+            BODY="$(probe_once)"; PROBE_RC=$?
+            DB="$(field '.services.database' "$(db_default)")"
           fi
 
           # /healthz (server/healthProbe.ts) is the cheap liveness probe: 200 when
@@ -282,7 +290,9 @@ jobs:
                   ? ['The process is up and answered `/healthz` with `ok` (a pooled connection was handed out), but `/api/health` sent no body within 20s: a read behind it is hanging. The 30 s query cap (server/dbPoolOptions.ts) should clear it on its own; if the next probe still reads stalled, restart the service and fix the code path that hung.', '']
                   : DB === 'unavailable'
                     ? ['The process is up and answered `/healthz` itself with `unavailable` (503): Postgres is not accepting connections. The app retries the connection on its own and goes green when the database answers.', '']
-                    : []),
+                    : DB === 'unreachable'
+                      ? ['No HTTP answer at all from `/api/health` (DNS, TLS, the proxy or the host). Check the VPS and OpenLiteSpeed before the app.', '']
+                      : []),
                 ...(DB === 'stalled' ? [] : ['The site keeps serving pages, so this is invisible from the homepage. What breaks is anything durable — portal auth, store orders, quote submissions, chat persistence — and on `fallback_memory` those writes go to memory and are lost on the next restart.', '']),
                 '```json',
                 BODY,

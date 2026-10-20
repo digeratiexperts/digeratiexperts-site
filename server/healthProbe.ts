@@ -20,8 +20,13 @@ export function probeStatus(databaseUp: boolean): 200 | 503 {
   return 503;
 }
 
+type ProbeClient = {
+  release(error?: Error): void;
+  query?(text: string): Promise<unknown>;
+};
+
 type DbProbeModule = {
-  pool: { connect(): Promise<{ release(): void }> } | null;
+  pool: { connect(): Promise<ProbeClient> } | null;
   reconnectDatabase(): Promise<boolean>;
   markDatabaseDown?(reason: string): void;
 };
@@ -41,6 +46,19 @@ function withTimeout<T>(work: Promise<T>, ms: number): Promise<T> {
 
 async function connectOnce(pool: NonNullable<DbProbeModule["pool"]>, timeoutMs: number): Promise<boolean> {
   const client = await withTimeout(pool.connect(), timeoutMs);
+  try {
+    // pg-pool hands an idle client back with no socket I/O, so a connect alone
+    // can "succeed" on a socket the server has already dropped; one round
+    // trip proves the link (#657 follow-up from PR 659).
+    if (typeof client.query === "function") {
+      await withTimeout(client.query("SELECT 1"), timeoutMs);
+    }
+  } catch (error) {
+    // Release with the error so pg-pool destroys this client instead of
+    // returning a dead socket to the next caller.
+    client.release(error instanceof Error ? error : new Error(String(error)));
+    throw error;
+  }
   client.release();
   return true;
 }
