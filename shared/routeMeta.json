@@ -1,6 +1,6 @@
 {
   "/": {
-    "title": "Managed Security Service Provider | Digerati Experts",
+    "title": "Managed IT Services & Cybersecurity in Arizona | Digerati Experts",
     "description": "Arizona MSP/MSSP. Cybersecurity-first managed IT, 24/7 emergency incident response, and a Cyber Risk Assessment that matches the operating model to your environment.",
     "canonical": "/",
     "robots": "index, follow",
@@ -238,8 +238,8 @@
     "ogImage": "https://digeratiexperts.com/og-image.png"
   },
   "/locations/phoenix-az": {
-    "title": "IT Support & Cybersecurity Services in Phoenix, AZ | Digerati Experts",
-    "description": "Managed IT, cybersecurity and compliance support for Phoenix organizations, from Digerati Experts' Chandler-based team, with a published SLA and 24/7/365 emergency incident response.",
+    "title": "Managed IT Services & Cybersecurity in Phoenix, AZ | Digerati Experts",
+    "description": "Managed IT services, IT support and cybersecurity for Phoenix businesses from a Chandler-based team, with a published SLA and 24/7/365 incident response.",
     "canonical": "/locations/phoenix-az",
     "robots": "index, follow",
     "ogImage": "https://digeratiexperts.com/og-image.png"
@@ -567,8 +567,8 @@
     "ogImage": "https://digeratiexperts.com/og-image.png"
   },
   "/services/ucaas": {
-    "title": "UCaaS Voice & Meetings | Managed Phone Systems | Digerati Experts",
-    "description": "We design, secure, and run your phone system and meeting stack so it actually supports the business. E911 compliance, call routing, retention policies, and 24/7 support.",
+    "title": "Business Phone Systems | UCaaS Voice & Meetings | Digerati Experts",
+    "description": "We design, secure, and run your business phone system and meeting stack so it actually supports the business. E911 compliance, call routing, retention policies, and 24/7 support.",
     "canonical": "/services/ucaas",
     "robots": "index, follow",
     "ogImage": "https://digeratiexperts.com/og-image.png"
@@ -623,8 +623,8 @@
     "ogImage": "https://digeratiexperts.com/og-image.png"
   },
   "/solutions/managed-it-support": {
-    "title": "Managed IT Support | Digerati Experts",
-    "description": "Managed IT Support is not generic helpdesk—it's support built on our proven DE stack. We handle remote troubleshooting, endpoint remediation, user onboarding, SaaS provisioning, and device basics. Support for everything you've deployed with DE; out-of-scope items are escalated or handled via education.",
+    "title": "Managed IT Support for Small Businesses | Digerati Experts",
+    "description": "Managed IT support for small businesses: service desk, remote troubleshooting, onboarding and device support, with a 15-minute SLA for critical incidents.",
     "canonical": "/solutions/managed-it-support",
     "robots": "index, follow",
     "ogImage": "https://digeratiexperts.com/og-image.png"
@@ -707,8 +707,8 @@
     "ogImage": "https://digeratiexperts.com/og-image.png"
   },
   "/solutions/vcio-strategy": {
-    "title": "vCIO & Strategy | Digerati Experts",
-    "description": "vCIO & Strategy is where we become your IT leadership function. Quarterly Technology Business Reviews, risk registers, budget forecasting, vendor rationalization, and roadmap planning. We align technology to your business goals and compliance requirements.",
+    "title": "IT Consulting & vCIO Strategy | Digerati Experts",
+    "description": "IT consulting and vCIO leadership: quarterly technology reviews, risk registers, budget forecasting, vendor rationalization and roadmap planning.",
     "canonical": "/solutions/vcio-strategy",
     "robots": "index, follow",
     "ogImage": "https://digeratiexperts.com/og-image.png"

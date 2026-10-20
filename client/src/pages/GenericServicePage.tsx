@@ -36,8 +36,12 @@ interface ServiceStat {
 
 interface GenericServicePageProps {
   title: string;
+  /** Search-result title when it should differ from the on-page heading (`title`). */
+  seoTitle?: string;
   subtitle: string;
   description: string;
+  /** ≤155-char search snippet; `description` doubles as on-page copy. */
+  metaDescription?: string;
   features: ServiceFeature[];
   benefits: string[];
   gradientColors?: string;
@@ -97,8 +101,10 @@ const serviceFacts = [
 
 export default function GenericServicePage({
   title,
+  seoTitle,
   subtitle,
   description,
+  metaDescription,
   features,
   benefits,
   stat,
@@ -111,8 +117,8 @@ export default function GenericServicePage({
   const breadcrumbs = breadcrumbsFromCanonical(canonical, title);
 
   useSEO({
-    title,
-    description,
+    title: seoTitle ?? title,
+    description: metaDescription ?? description,
     canonical,
   });
 

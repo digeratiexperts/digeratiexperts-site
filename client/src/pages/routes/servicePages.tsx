@@ -26,6 +26,8 @@ export const servicePageData = {
   },
   'managed-it-support': {
     title: "Managed IT Support",
+    seoTitle: "Managed IT Support for Small Businesses",
+    metaDescription: "Managed IT support for small businesses: service desk, remote troubleshooting, onboarding and device support, with a 15-minute SLA for critical incidents.",
     subtitle: "Fast, proactive help anchored to the DE stack",
     description: "Managed IT Support is not generic helpdesk—it's support built on our proven DE stack. We handle remote troubleshooting, endpoint remediation, user onboarding, SaaS provisioning, and device basics. Support for everything you've deployed with DE; out-of-scope items are escalated or handled via education.",
     features: [
@@ -214,6 +216,8 @@ export const servicePageData = {
   },
   'vcio-strategy': {
     title: "vCIO & Strategy",
+    seoTitle: "IT Consulting & vCIO Strategy",
+    metaDescription: "IT consulting and vCIO leadership: quarterly technology reviews, risk registers, budget forecasting, vendor rationalization and roadmap planning.",
     subtitle: "Executive IT guidance aligned to business and compliance",
     description: "vCIO & Strategy is where we become your IT leadership function. Quarterly Technology Business Reviews, risk registers, budget forecasting, vendor rationalization, and roadmap planning. We align technology to your business goals and compliance requirements.",
     features: [
