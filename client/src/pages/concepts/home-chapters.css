@@ -87,8 +87,10 @@
   --v8-radius-island: 28px;
   --v8-dark-card: #1a1a1c;
   --v8-dark-inner: #1a1a1c;
-  --spot-bg: #1a1a1c;
-}
+  --spot-bg: #ffffff;
+  --spot-line: rgba(18, 18, 18, 0.1);
+  --spot-tint: rgba(211, 18, 106, 0.06);
+  --spot-edge: rgba(211, 18, 106, 0.25);
 .hc[data-theme="light"].v8, .hc[data-theme="light"] .v8 {
   --v8-bg: #fafafa;
   --v8-surface: #fafafa;
@@ -112,6 +114,9 @@
   --v8-dark-card: #ffffff;
   --v8-dark-inner: #ffffff;
   --spot-bg: #ffffff;
+  --spot-line: rgba(18, 18, 18, 0.1);
+  --spot-tint: rgba(211, 18, 106, 0.06);
+  --spot-edge: rgba(211, 18, 106, 0.25);
 }
 #protection { /* the single dark stage stays dark in BOTH modes */
   --v8-bg: #0a0a0a;
@@ -185,7 +190,7 @@
   position: relative; background: var(--card) !important; background-image: none !important;
   border: 1px solid var(--line) !important; border-radius: var(--r) !important;
   box-shadow: 0 1px 1px rgba(0,0,0,0.2), 0 24px 60px -40px rgba(0,0,0,0.6) !important;
-  padding: 28px !important; color: var(--ink);
+  padding: 28px !important; color: var(--card-ink);
   transition: border-color var(--t-mid) var(--ease), box-shadow var(--t-mid) var(--ease), transform var(--t-mid) var(--ease) !important;
 }
 .hc.v8 :is(.v8-card, .problem, .pricing-card, .svc-path, .step):is(:hover, :focus-within) {
