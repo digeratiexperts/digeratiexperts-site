@@ -4161,7 +4161,9 @@ claims:
       - .github/workflows/ci.yml (one check step after the public smoke)
       - client/src/pages/concepts/home-chapters.css (one missing closing brace; unblocks the build)
       - package-lock.json (follow-redirects 1.16.1, same change as PRs 671-673)
-    status: implemented
+    status: verified-live
+    released: 2026-10-20
+    pr: "661, 674"
     started: 2026-10-20
     note: >-
       Joe picked "Snapshot file" (2026-10-20): every route sent the same title,
@@ -4182,7 +4184,9 @@ claims:
       - client/src/pages/routes/servicePages.tsx (managed-it-support and vcio-strategy seoTitle / metaDescription)
       - shared/routeMeta.json (regenerated)
       - docs/CONTENT-TOOLING-PLAN.md (Step 3 item 4 note)
-    status: in-progress
+    status: verified-live
+    released: 2026-10-20
+    pr: "667"
     started: 2026-10-20
     note: >-
       Joe, 2026-10-20, on the status page's search section: "All approved and
