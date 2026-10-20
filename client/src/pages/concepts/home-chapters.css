@@ -91,6 +91,7 @@
   --spot-line: rgba(18, 18, 18, 0.1);
   --spot-tint: rgba(211, 18, 106, 0.06);
   --spot-edge: rgba(211, 18, 106, 0.25);
+}
 .hc[data-theme="light"].v8, .hc[data-theme="light"] .v8 {
   --v8-bg: #fafafa;
   --v8-surface: #fafafa;
