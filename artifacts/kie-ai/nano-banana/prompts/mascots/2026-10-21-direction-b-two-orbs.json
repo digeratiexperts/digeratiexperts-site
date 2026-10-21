@@ -1,0 +1,9 @@
+{
+  "prompt": "Studio product photograph on a seamless dark charcoal floor and backdrop (#0a0a0a), soft key light from the upper left, a faint violet rim light from behind, gentle contact shadows, shallow depth of field, 85mm lens, f/4. Two small abstract mascot characters side by side, equal visual weight, the left one slightly larger. Left character, Dex: a frosted white glass orb about the size of a grapefruit resting on the floor, a soft warm magenta (#D3126A) glow deep inside its core, two calm vertical dark eye-ovals on its front surface, subtle subsurface scattering. Right character, Rati: a smaller faceted graphite-black gemstone polyhedron hovering in mid-air, a thin glowing magenta light line across its front facet, a faint dotted orbit ring of light connecting it around Dex. Premium, calm, precise. Do not add any text.",
+  "negative_prompt": "text, letters, logo text, watermark, people, human faces, hands, cartoon outlines, childish toy look, neon cyberpunk, clutter, extra characters, low detail, plastic blur",
+  "api_parameters": {
+    "aspect_ratio": "16:9",
+    "resolution": "2K",
+    "output_format": "png"
+  }
+}

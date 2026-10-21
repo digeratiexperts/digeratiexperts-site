@@ -1,0 +1,19 @@
+{
+  "provider": "kie.ai",
+  "taskId": "895aceaea7ae333694f45903e1f0fc8a",
+  "model": "nano-banana-2",
+  "promptFile": "/home/user/digeratiexperts-site/artifacts/kie-ai/nano-banana/prompts/mascots/2026-10-21-direction-c-desk-companions.json",
+  "input": {
+    "prompt": "{\"prompt\": \"Studio product photograph on a seamless dark charcoal floor and backdrop (#0a0a0a), soft key light from the upper left, a faint violet rim light from behind, gentle contact shadows, shallow depth of field, 85mm lens, f/4. Two small abstract mascot characters side by side, equal visual weight, the left one slightly larger. Left character, Dex: a small rounded matte-white desk robot with a pill-shaped head and a glossy black visor face showing two soft white dot-eyes, a thin magenta (#D3126A) ring light on its chest, refined industrial design. Right character, Rati: a compact graphite-grey engineering robot with one round black camera lens ringed in magenta and a single slim articulated tool arm. Clean, engineered, premium industrial design like high-end consumer electronics, not toy-like. Do not add any text.\", \"negative_prompt\": \"text, letters, logo text, watermark, people, human faces, hands, cartoon outlines, childish toy look, neon cyberpunk, clutter, extra characters, low detail, plastic blur\"}",
+    "aspect_ratio": "16:9",
+    "resolution": "2K",
+    "output_format": "png"
+  },
+  "resultUrls": [
+    "https://tempfile.aiquickdraw.com/a2/895aceaea7ae333694f45903e1f0fc8a_1792619230421.png"
+  ],
+  "creditsConsumed": 12.0,
+  "generatedAt": "2026-10-21T21:47:20.320063+00:00",
+  "classification": "ILLUSTRATIVE",
+  "approvalStatus": "candidate"
+}

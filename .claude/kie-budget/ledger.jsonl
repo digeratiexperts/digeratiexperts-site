@@ -87,3 +87,8 @@
 {"at":"2026-10-19T09:18:52.720Z","type":"close","job":"card-objects-2026-10-19","spentUsd":0.6900000000000004}
 {"at":"2026-10-19T09:18:59.979Z","type":"close","job":"monday-plates-2026-10-18","spentUsd":0.09}
 {"at":"2026-10-19T09:19:00.126Z","type":"close","job":"light-plates-2026-10-18","spentUsd":0.12}
+{"at":"2026-10-21T21:45:54.247Z","type":"open","job":"mascot-directions-2026-10-21","model":"nano-banana-2","count":3,"resolution":"2K","projectedCredits":36,"projectedUsd":0.18,"note":"Dex+Rati mascot directions A/B/C, one image each (Joe: Go, 2026-10-21)"}
+{"at":"2026-10-21T21:47:18.551Z","type":"spend","job":"mascot-directions-2026-10-21","model":"nano-banana-2","credits":12,"usd":0.06,"task":"7ffea8b9ec8f0f3f8d03ef0151f06a32","file":"artifacts/kie-ai/nano-banana/images/mascots/2026-10-21-direction-b-two-orbs.png"}
+{"at":"2026-10-21T21:47:20.310Z","type":"spend","job":"mascot-directions-2026-10-21","model":"nano-banana-2","credits":12,"usd":0.06,"task":"895aceaea7ae333694f45903e1f0fc8a","file":"artifacts/kie-ai/nano-banana/images/mascots/2026-10-21-direction-c-desk-companions.png"}
+{"at":"2026-10-21T21:48:04.678Z","type":"spend","job":"mascot-directions-2026-10-21","model":"nano-banana-2","credits":12,"usd":0.06,"task":"d26da4e971486f7c4313a979b01606ae","file":"artifacts/kie-ai/nano-banana/images/mascots/2026-10-21-direction-a-living-mark.png"}
+{"at":"2026-10-21T21:48:28.665Z","type":"close","job":"mascot-directions-2026-10-21","spentUsd":0.18}
