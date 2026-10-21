@@ -15,6 +15,24 @@ const BAR_H = 9.5;
 
 export type DexState = "idle" | "listening" | "thinking" | "speaking";
 
+export type DexMode = "normal" | "alert" | "curious" | "focused" | "extreme";
+
+/**
+ * Dex's modes: a fixed pose per mode, held as numbers so the coming animation can tween between them.
+ * eyeRy scales eye height, eyeDy moves both eyes (negative is up), eyeSpread is each eye's distance from
+ * centre (22), barX shifts each bar sideways in viewBox units (bar 0 is the top).
+ */
+export const DEX_MODES: Record<
+  DexMode,
+  { label: string; note: string; eyeRy: number; eyeDy: number; eyeSpread: number; barX: readonly [number, number, number, number] }
+> = {
+  normal: { label: "Normal", note: "Level bars, eyes open. The resting pose.", eyeRy: 1, eyeDy: 0, eyeSpread: 5, barX: [0, 0, 0, 0] },
+  alert: { label: "Alert", note: "Eyes wide and raised. Something needs attention.", eyeRy: 1.3, eyeDy: -0.6, eyeSpread: 5, barX: [0, 0, 0, 0] },
+  curious: { label: "Curious", note: "Eyes look up and apart; the bars tilt a touch.", eyeRy: 1.05, eyeDy: -1.2, eyeSpread: 5.6, barX: [-1, 0, 0, 1] },
+  focused: { label: "Focused", note: "Narrowed eyes looking down. Working through a ticket.", eyeRy: 0.72, eyeDy: 0.7, eyeSpread: 4.6, barX: [0, 0, 0, 0] },
+  extreme: { label: "Extreme", note: "Hard alert: eyes wide, bars jolted apart. Reserved for incidents.", eyeRy: 1.45, eyeDy: -0.4, eyeSpread: 6, barX: [-1.6, 1.6, -1.6, 1.6] },
+};
+
 type Common = { size?: number; title?: string; className?: string };
 
 function a11y(title?: string) {
@@ -22,7 +40,14 @@ function a11y(title?: string) {
 }
 
 /** Dex, full form: the four gold bars with two eyes in the third bar. */
-export function DexMark({ size = 96, title, className = "", state = "idle" }: Common & { state?: DexState }): JSX.Element {
+export function DexMark({
+  size = 96,
+  title,
+  className = "",
+  state = "idle",
+  mode = "normal",
+}: Common & { state?: DexState; mode?: DexMode }): JSX.Element {
+  const pose = DEX_MODES[mode];
   return (
     <svg
       viewBox="-6 -6 56 68.5"
@@ -39,19 +64,24 @@ export function DexMark({ size = 96, title, className = "", state = "idle" }: Co
         </linearGradient>
       </defs>
       <g className="dex-mark__bars" fill="url(#dex-gold)">
+        {/* The mode shift sits on a wrapper <g>, so the CSS state animation on each rect is left alone. */}
         {MARK_BARS.map((b, i) => (
-          <rect key={b.y} className={`dex-mark__bar b${i}`} x={b.x} y={b.y} width={b.w} height={BAR_H} rx={BAR_H / 2} />
+          <g key={b.y} transform={`translate(${pose.barX[i]} 0)`}>
+            <rect className={`dex-mark__bar b${i}`} x={b.x} y={b.y} width={b.w} height={BAR_H} rx={BAR_H / 2} />
+          </g>
         ))}
       </g>
       {/* Highlights: one soft line along the top of each bar, the "glaze". */}
       <g fill="#fff" opacity=".35">
         {MARK_BARS.map((b, i) => (
-          <rect key={b.y} className={`dex-mark__bar b${i}`} x={b.x + 3} y={b.y + 1.3} width={b.w - 6} height={1.6} rx={0.8} />
+          <g key={b.y} transform={`translate(${pose.barX[i]} 0)`}>
+            <rect className={`dex-mark__bar b${i}`} x={b.x + 3} y={b.y + 1.3} width={b.w - 6} height={1.6} rx={0.8} />
+          </g>
         ))}
       </g>
       <g className="dex-mark__eyes" fill="#121212">
-        <ellipse className="dex-eye" cx={17} cy={36.08} rx={1.9} ry={2.1} />
-        <ellipse className="dex-eye" cx={27} cy={36.08} rx={1.9} ry={2.1} />
+        <ellipse className="dex-eye" cx={22 - pose.eyeSpread} cy={36.08 + pose.eyeDy} rx={1.9} ry={2.1 * pose.eyeRy} />
+        <ellipse className="dex-eye" cx={22 + pose.eyeSpread} cy={36.08 + pose.eyeDy} rx={1.9} ry={2.1 * pose.eyeRy} />
       </g>
     </svg>
   );

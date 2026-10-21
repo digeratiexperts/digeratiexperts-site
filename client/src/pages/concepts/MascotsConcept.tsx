@@ -4,7 +4,7 @@
 // compact form is still open: Joe found the orb weak and asked for very different directions, so
 // six ILLUSTRATIVE candidates are shown to pick from. Review only, noindex, not in navigation.
 import { useSEO } from "@/hooks/useSEO";
-import { DexMark, RatiMark, type DexState } from "@/components/mascots/Mascots";
+import { DEX_MODES, DexMark, RatiMark, type DexMode, type DexState } from "@/components/mascots/Mascots";
 
 const states: { state: DexState; label: string; note: string }[] = [
   { state: "idle", label: "Idle", note: "Bars breathe in turn, like the pronunciation meter." },
@@ -54,6 +54,23 @@ export function MascotsConcept(): JSX.Element {
               <figure key={s.state} className="rounded-2xl border border-white/10 bg-[#0d0d10] p-5 text-center">
                 <DexMark size={110} state={s.state} />
                 <figcaption className="mt-3"><span className="block font-semibold">{s.label}</span><span className="text-sm text-[#a1a1a6]">{s.note}</span></figcaption>
+              </figure>
+            ))}
+          </div>
+        </section>
+
+        <section className={card} aria-labelledby="modes">
+          <h2 id="modes" className="text-2xl font-semibold">Dex&rsquo;s modes</h2>
+          <p className="mt-2 max-w-3xl text-[#a1a1a6]">
+            What Dex is doing right now, as a fixed pose. Each one is held as numbers in <code>DEX_MODES</code>, so the animation
+            can tween between them later. States (above) are how he moves; modes are what he is doing. The rule: Dex changes
+            shape only for a specific reason, and each change answers one situation. He never shifts for decoration.
+          </p>
+          <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-5">
+            {(Object.keys(DEX_MODES) as DexMode[]).map((m) => (
+              <figure key={m} className="rounded-2xl border border-white/10 bg-[#0d0d10] p-5 text-center">
+                <DexMark size={110} mode={m} />
+                <figcaption className="mt-3"><span className="block font-semibold">{DEX_MODES[m].label}</span><span className="text-sm text-[#a1a1a6]">{DEX_MODES[m].note}</span></figcaption>
               </figure>
             ))}
           </div>
