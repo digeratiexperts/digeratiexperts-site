@@ -13,13 +13,14 @@ const states: { state: DexState; label: string; note: string }[] = [
   { state: "speaking", label: "Speaking", note: "The bars open slightly, in rhythm." },
 ];
 
-const compact: { file: string; name: string; note: string }[] = [
-  { file: "dex-compact-3-capsule", name: "1 · Capsule", note: "One bar of the logo, alive. The simplest; reads at 16 px." },
-  { file: "dex-compact-1-tile", name: "2 · Tile", note: "An app-icon square with the bars pressed in. Ready-made avatar." },
-  { file: "dex-compact-4-beads", name: "3 · Beads", note: "A typing indicator that looks back at you. Closest to ChatGPT's dots." },
-  { file: "dex-compact-6-bubble", name: "4 · Bubble", note: "A speech bubble built from the bars. Says 'assistant' at a glance." },
-  { file: "dex-compact-5-ring", name: "5 · Ring", note: "One bar bent into a frame, eyes inside. Clean, but the face floats." },
-  { file: "dex-compact-2-pebble", name: "6 · Pebble", note: "A worn gold stone with engraved lines. Calm, least distinctive." },
+// Each compact form has one job. It appears only where that job happens, never as decoration (Joe, 2026-10-21).
+const compact: { file: string; name: string; note: string; use: string }[] = [
+  { file: "dex-compact-3-capsule", name: "1 · Capsule", note: "One bar of the logo, alive. Reads at 16 px.", use: "Status line: a request is running, shown beside the text it belongs to." },
+  { file: "dex-compact-1-tile", name: "2 · Tile", note: "An app-icon square with the bars pressed in.", use: "Identity: Dex's avatar in email signatures, the Zoho profile photo and the app icon." },
+  { file: "dex-compact-4-beads", name: "3 · Beads", note: "A typing indicator that looks back at you.", use: "Live chat: shown while Dex is composing a reply." },
+  { file: "dex-compact-6-bubble", name: "4 · Bubble", note: "A speech bubble built from the bars.", use: "Conversation: marks Dex's messages in the chat window and the launcher." },
+  { file: "dex-compact-5-ring", name: "5 · Ring", note: "One bar bent into a frame, eyes inside.", use: "Attention: a badge when something needs a person. Pairs with Alert mode." },
+  { file: "dex-compact-2-pebble", name: "6 · Pebble", note: "A worn gold stone with engraved lines.", use: "Quiet moments: sign-offs, empty states and “nothing needs you”." },
 ];
 
 const card = "rounded-3xl border border-white/10 bg-[#151217] p-6";
@@ -77,17 +78,16 @@ export function MascotsConcept(): JSX.Element {
         </section>
 
         <section className={card} aria-labelledby="compact">
-          <h2 id="compact" className="text-2xl font-semibold">Dex&rsquo;s compact form: pick a direction</h2>
+          <h2 id="compact" className="text-2xl font-semibold">Dex&rsquo;s compact form: six forms, one job each</h2>
           <p className="mt-2 max-w-3xl text-[#a1a1a6]">
-            For avatars, chat bubbles, email signatures and the favicon, where four bars are too small to read. Six very
-            different directions, all in Dex&rsquo;s gold with his two eyes. Generated candidates (ILLUSTRATIVE); the chosen one is
-            then redrawn exactly in code like the full form.
+            Where four bars are too small to read. Each form is assigned to one use case and appears only there. Generated
+            candidates (ILLUSTRATIVE); each one is redrawn exactly in code like the full form before it ships.
           </p>
           <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {compact.map((c) => (
               <figure key={c.file} className="overflow-hidden rounded-2xl border border-white/10 bg-[#0d0d10]">
                 <img src={`/images/mascots/${c.file}.webp`} alt={`Dex compact direction: ${c.name.replace(/^\d · /, "")}`} width={800} height={800} loading="lazy" className="aspect-square w-full object-cover" />
-                <figcaption className="p-4"><span className="block font-semibold">{c.name}</span><span className="text-sm text-[#a1a1a6]">{c.note}</span></figcaption>
+                <figcaption className="p-4"><span className="block font-semibold">{c.name}</span><span className="text-sm text-[#a1a1a6]">{c.note}</span><span className="mt-3 block text-sm text-[#ff4d8d]">Used for: {c.use}</span></figcaption>
               </figure>
             ))}
           </div>
