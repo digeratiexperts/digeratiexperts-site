@@ -1108,8 +1108,16 @@ claims:
       - server/portalPersistenceRedirects.test.ts (new)
       - server/portalInvoicePayment.test.ts (live-shape case only)
       - docs/runbooks/PORTAL-QA-LOGIN.md (section 1 only)
-    status: active
+    status: verified-live
     started: 2026-10-21
+    released: 2026-10-21
+    pr: 682
+    merge_sha: f8a34af590af80a237771906d80b2dfef0a05a79
+    verification: >-
+      Merged on Joe's "do the backend fixes". Main CI and the production
+      deploy passed; release.txt read a09e6547 (main, includes f8a34af5);
+      /healthz 200. The new redirect test fails on the old routes.ts and
+      passes on the new one.
     note: >-
       Joe, 2026-10-21 ("do the backend fixes"), issue 395 residuals. The
       email-verification link and Zoho sign-in now say a failed save is
