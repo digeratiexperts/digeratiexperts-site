@@ -96,6 +96,12 @@ try {
         const required = large ? 3 : 4.5;
         const bgLight = lum(bg) > 0.6;
         const usedLight = lum(blend(used, bg)) > 0.6;
+        // Photo-backed cards (industry rail, monitor diagram) paint a dark shade
+        // gradient over their <img>; backgroundColor-based backdrop detection
+        // cannot see those, so skip the known-safe classes here. The Ask DE
+        // launcher lives on the always-dark bottom bar (rgba(10,10,10,0.95)).
+        const photoOverlay = el.closest('.ind-card, .monitor-figure, .de-bottom-bar, .de-unified-bar');
+        if (photoOverlay) continue;
         if (ratio < required) {
           textNodes.push({
             text: text.slice(0, 48),
