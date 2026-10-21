@@ -347,7 +347,7 @@
 .hc #protection .qlist > li:first-child { border-top: 0 !important; }
 .hc #protection .pane__row { display: grid !important; grid-template-columns: minmax(0,5fr) minmax(0,8fr) !important; column-gap: 40px !important; }
 .hc #protection .qlist .v8-dash, .hc #protection .pblock__qs .v8-dash, .hc #protection .groups .v8-dash { display: block !important; width: 14px; height: 2px; background: var(--accent); position: relative; top: -4px; }
-@media (max-width: 1023px) { #protection .groups { grid-template-columns: repeat(2, minmax(0,1fr)) !important; } #protection .pane__row { grid-template-columns: 1fr !important; } }
+@media (max-width: 1023px) { .hc #protection .groups { grid-template-columns: repeat(2, minmax(0,1fr)) !important; } .hc #protection .pane__row { grid-template-columns: 1fr !important; } }
 
 /* ---------- Light sections, remaining details ---------- */
 .hc .v8s-09 .portrait, .hc .v8s-08 .docfig { border-radius: var(--r); overflow: hidden; }
