@@ -30,6 +30,31 @@
 
 version: 2
 claims:
+  - id: home-mesh-concept
+    owner: claude
+    subsystem: homepage-concept
+    branch: claude/lucid-dijkstra-s3v2s3
+    base_sha: 76324c3c
+    files:
+      - client/src/pages/concepts/HomeMesh.tsx (new)
+      - client/src/pages/concepts/home-mesh.css (new)
+      - client/src/pages/concepts/chapterChrome.ts (new; hooks moved out of HomeChapters.tsx)
+      - client/src/pages/concepts/HomeChapters.tsx (uses chapterChrome.ts; no visual change)
+      - client/src/pages/concepts/home-chapters.css (scope 43 id rules to .hc; owner-lit and pill-opacity rules appended)
+      - client/src/pages/concepts/CardObjects.tsx (optional plan argument)
+      - client/src/pages/concepts/ThemeToggle.tsx (applyToRoot option; guarded storage)
+      - client/src/pages/versions/v8/sections/01-hero.tsx (optional aside prop; / renders unchanged)
+      - client/src/App.tsx (route + bottom-bar list)
+      - client/src/lib/stickyCtaVisibility.ts and its test (homepage concepts keep the bar off)
+      - server/spaKnownPaths.ts (one path)
+      - scrollcraft/builds/home-mesh/MESH.md (new)
+    status: active
+    started: 2026-10-21
+    note: >-
+      Joe (2026-10-21): "do one more page and really do a hardcore mesh of the
+      current / and /concepts/home-chapters ... be very detailed in how you
+      mesh them". Third page at /concepts/home-mesh; live / unchanged. Spec:
+      scrollcraft/builds/home-mesh/MESH.md.
   - id: home-chapters-dark-contrast
     owner: claude
     subsystem: homepage-concept

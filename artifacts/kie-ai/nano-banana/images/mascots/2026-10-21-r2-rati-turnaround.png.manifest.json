@@ -1,0 +1,19 @@
+{
+  "provider": "kie.ai",
+  "taskId": "2aee7d63dfd2539faad98379fa528c83",
+  "model": "nano-banana-2",
+  "promptFile": "/home/user/digeratiexperts-site/artifacts/kie-ai/nano-banana/prompts/mascots/2026-10-21-r2-rati-turnaround.json",
+  "input": {
+    "prompt": "{\"prompt\": \"Studio product photograph on a seamless dark charcoal floor and backdrop (#0a0a0a), soft key light from the upper left, a faint violet rim light from behind, gentle contact shadows, 85mm lens, f/4, premium Apple-style product photography. A character turnaround sheet: the same character shown three times in a row, evenly spaced, identical size. The character, Rati: the same four-bar stacked shape built from thin glowing magenta (#D3126A) wire outlines over clear glass, fine engraved measurement tick marks along the edges, one bright magenta scanning dot of light, no eyes. Left: front view. Middle: three-quarter view showing the glass depth. Right: side view showing the thin profile of the stacked bars. The scanning dot sits on a different bar in each view. No text, no labels.\", \"negative_prompt\": \"text, letters, words, watermark, logo text, people, human faces, hands, mouths, cartoon outlines, childish toy look, neon cyberpunk, clutter, extra characters, scratches, split or broken bars\"}",
+    "aspect_ratio": "16:9",
+    "resolution": "2K",
+    "output_format": "png"
+  },
+  "resultUrls": [
+    "https://tempfile.aiquickdraw.com/a2/2aee7d63dfd2539faad98379fa528c83_1792623938148.png"
+  ],
+  "creditsConsumed": 12.0,
+  "generatedAt": "2026-10-21T23:05:52.792045+00:00",
+  "classification": "ILLUSTRATIVE",
+  "approvalStatus": "candidate"
+}

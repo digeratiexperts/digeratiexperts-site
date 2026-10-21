@@ -1,0 +1,19 @@
+{
+  "provider": "kie.ai",
+  "taskId": "d26da4e971486f7c4313a979b01606ae",
+  "model": "nano-banana-2",
+  "promptFile": "/home/user/digeratiexperts-site/artifacts/kie-ai/nano-banana/prompts/mascots/2026-10-21-direction-a-living-mark.json",
+  "input": {
+    "prompt": "{\"prompt\": \"Studio product photograph on a seamless dark charcoal floor and backdrop (#0a0a0a), soft key light from the upper left, a faint violet rim light from behind, gentle contact shadows, shallow depth of field, 85mm lens, f/4. Two small abstract mascot characters side by side, equal visual weight, the left one slightly larger. Left character, Dex: four horizontal rounded bars stacked vertically like a logo mark (top bar wide, two middle bars shorter, bottom bar wide), made of glossy warm gold ceramic with subtle micro-scratches, slightly squashed as if breathing in, with two small round matte black dot-eyes set into the third bar. Right character, Rati: the same four-bar shape but smaller, built from thin glowing magenta (#D3126A) wire outlines over clear glass, with tiny engraved measurement tick marks beside it and one bright magenta scanning dot of light. Premium, calm, precise, like an Apple product shot. Do not add any text.\", \"negative_prompt\": \"text, letters, logo text, watermark, people, human faces, hands, cartoon outlines, childish toy look, neon cyberpunk, clutter, extra characters, low detail, plastic blur\"}",
+    "aspect_ratio": "16:9",
+    "resolution": "2K",
+    "output_format": "png"
+  },
+  "resultUrls": [
+    "https://tempfile.aiquickdraw.com/a2/d26da4e971486f7c4313a979b01606ae_1792619267857.png"
+  ],
+  "creditsConsumed": 12.0,
+  "generatedAt": "2026-10-21T21:48:04.689040+00:00",
+  "classification": "ILLUSTRATIVE",
+  "approvalStatus": "candidate"
+}

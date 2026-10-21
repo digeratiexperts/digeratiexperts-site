@@ -1,0 +1,9 @@
+{
+  "prompt": "Studio product photograph on a seamless dark charcoal floor and backdrop (#0a0a0a), soft key light from the upper left, a faint violet rim light from behind, gentle contact shadows, 85mm lens, f/4, premium Apple-style product photography. Two characters side by side. Left, Dex: four horizontal rounded bars stacked vertically like a logo mark, top bar wide, second and third bars shorter and centered, bottom bar wide, each bar a single unbroken solid piece with evenly rounded ends, small even gaps between bars, polished warm-gold ceramic with a smooth flawless glaze, two matte black round dot-eyes set into the third bar, slightly squashed as if mid-breath. Right, Rati: the same four-bar stacked shape built from thin glowing magenta (#D3126A) wire outlines over clear glass, fine engraved measurement tick marks along the edges, one bright magenta scanning dot of light, about 70 percent of Dex's size. Equal spacing, calm, precise. No text.",
+  "negative_prompt": "text, letters, words, watermark, logo text, people, human faces, hands, mouths, cartoon outlines, childish toy look, neon cyberpunk, clutter, extra characters, scratches, split or broken bars",
+  "api_parameters": {
+    "aspect_ratio": "16:9",
+    "resolution": "2K",
+    "output_format": "png"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "prompt": "Studio product photograph on a seamless dark charcoal floor and backdrop (#0a0a0a), soft key light from the upper left, a faint violet rim light from behind, gentle contact shadows, 85mm lens, f/4, premium Apple-style product photography. A character turnaround sheet: the same character shown three times in a row, evenly spaced, identical size. The character, Rati: the same four-bar stacked shape built from thin glowing magenta (#D3126A) wire outlines over clear glass, fine engraved measurement tick marks along the edges, one bright magenta scanning dot of light, no eyes. Left: front view. Middle: three-quarter view showing the glass depth. Right: side view showing the thin profile of the stacked bars. The scanning dot sits on a different bar in each view. No text, no labels.",
+  "negative_prompt": "text, letters, words, watermark, logo text, people, human faces, hands, mouths, cartoon outlines, childish toy look, neon cyberpunk, clutter, extra characters, scratches, split or broken bars",
+  "api_parameters": {
+    "aspect_ratio": "16:9",
+    "resolution": "2K",
+    "output_format": "png"
+  }
+}

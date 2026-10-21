@@ -1,0 +1,19 @@
+{
+  "provider": "kie.ai",
+  "taskId": "6237c25e54661ac0804bbadd1d722c31",
+  "model": "nano-banana-2",
+  "promptFile": "/home/user/digeratiexperts-site/artifacts/kie-ai/nano-banana/prompts/mascots/2026-10-21-r3-compact-6-bubble.json",
+  "input": {
+    "prompt": "{\"prompt\": \"Studio product photograph on a seamless dark charcoal floor and backdrop (#0a0a0a), soft key light from the upper left, a faint violet rim light from behind, gentle contact shadows, 85mm lens, f/4, premium Apple-style product photography, centered single subject. A compact mascot character: a soft rounded speech-bubble shape with a small tail at the bottom left, made of polished warm-gold ceramic (#E3B23C) with a smooth flawless glaze and soft highlights, with four subtle horizontal raised ridges across its face (wide, short, short, wide) and two small matte black round dot-eyes on the third ridge. Friendly assistant feel, premium. No text.\", \"negative_prompt\": \"text, letters, words, watermark, logo text, people, human faces, hands, mouths, smiles drawn, cartoon outlines, childish toy look, neon cyberpunk, clutter, extra characters, scratches\"}",
+    "aspect_ratio": "1:1",
+    "resolution": "2K",
+    "output_format": "png"
+  },
+  "resultUrls": [
+    "https://tempfile.aiquickdraw.com/a2/6237c25e54661ac0804bbadd1d722c31_1792624489394.png"
+  ],
+  "creditsConsumed": 12.0,
+  "generatedAt": "2026-10-21T23:14:54.181271+00:00",
+  "classification": "ILLUSTRATIVE",
+  "approvalStatus": "candidate"
+}

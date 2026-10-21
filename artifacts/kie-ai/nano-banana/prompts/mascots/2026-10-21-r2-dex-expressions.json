@@ -1,0 +1,9 @@
+{
+  "prompt": "Studio product photograph on a seamless dark charcoal floor and backdrop (#0a0a0a), soft key light from the upper left, a faint violet rim light from behind, gentle contact shadows, 85mm lens, f/4, premium Apple-style product photography. A character expression sheet: the same character shown three times in a row, evenly spaced, identical size and material. The character, Dex: four horizontal rounded bars stacked vertically like a logo mark, top bar wide, second and third bars shorter and centered, bottom bar wide, each bar a single unbroken solid piece with evenly rounded ends, small even gaps between bars, polished warm-gold ceramic with a smooth flawless glaze, with two matte black dot-eyes in the third bar. Left pose, listening: bars level and still, eyes round and open. Middle pose, thinking: bars offset in a gentle wave, eyes looking upward. Right pose, speaking: bars spread slightly apart vertically, eyes curved upward like a smile. No text, no labels.",
+  "negative_prompt": "text, letters, words, watermark, logo text, people, human faces, hands, mouths, cartoon outlines, childish toy look, neon cyberpunk, clutter, extra characters, scratches, split or broken bars",
+  "api_parameters": {
+    "aspect_ratio": "16:9",
+    "resolution": "2K",
+    "output_format": "png"
+  }
+}

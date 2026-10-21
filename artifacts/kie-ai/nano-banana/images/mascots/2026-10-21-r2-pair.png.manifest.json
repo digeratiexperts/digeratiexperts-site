@@ -1,0 +1,19 @@
+{
+  "provider": "kie.ai",
+  "taskId": "105b70bb13a20806808be80ccc9a74c8",
+  "model": "nano-banana-2",
+  "promptFile": "/home/user/digeratiexperts-site/artifacts/kie-ai/nano-banana/prompts/mascots/2026-10-21-r2-pair.json",
+  "input": {
+    "prompt": "{\"prompt\": \"Studio product photograph on a seamless dark charcoal floor and backdrop (#0a0a0a), soft key light from the upper left, a faint violet rim light from behind, gentle contact shadows, 85mm lens, f/4, premium Apple-style product photography. Two characters side by side. Left, Dex: four horizontal rounded bars stacked vertically like a logo mark, top bar wide, second and third bars shorter and centered, bottom bar wide, each bar a single unbroken solid piece with evenly rounded ends, small even gaps between bars, polished warm-gold ceramic with a smooth flawless glaze, two matte black round dot-eyes set into the third bar, slightly squashed as if mid-breath. Right, Rati: the same four-bar stacked shape built from thin glowing magenta (#D3126A) wire outlines over clear glass, fine engraved measurement tick marks along the edges, one bright magenta scanning dot of light, about 70 percent of Dex's size. Equal spacing, calm, precise. No text.\", \"negative_prompt\": \"text, letters, words, watermark, logo text, people, human faces, hands, mouths, cartoon outlines, childish toy look, neon cyberpunk, clutter, extra characters, scratches, split or broken bars\"}",
+    "aspect_ratio": "16:9",
+    "resolution": "2K",
+    "output_format": "png"
+  },
+  "resultUrls": [
+    "https://tempfile.aiquickdraw.com/workers/images/image_9ca3f4e2443276aec43d2e0ac91b6583.png"
+  ],
+  "creditsConsumed": 12.0,
+  "generatedAt": "2026-10-21T23:05:29.812211+00:00",
+  "classification": "ILLUSTRATIVE",
+  "approvalStatus": "candidate"
+}

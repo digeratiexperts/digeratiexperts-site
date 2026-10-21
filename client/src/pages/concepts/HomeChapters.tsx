@@ -5,7 +5,8 @@
 import "../versions/v8/v8.css";
 import "./home-chapters.css";
 import "../versions/v8/v8-dashboard.css";
-import { useRef, useState, useEffect, createRef, type RefObject } from "react";
+import { useRef, createRef, type RefObject } from "react";
+import { useActiveChapter, useClosing, useHandoff, useNavDock, usePlateParallax } from "./chapterChrome";
 import { ChapterRail } from "./ChapterRail";
 import { useCardObjects } from "./CardObjects";
 import { useTheme, ThemeToggle } from "./ThemeToggle";
@@ -52,6 +53,8 @@ const chapters = [
   { id: "contact", label: "Contact", render: () => <div className="v8s-16"><V8ContactFooter /></div> },
 ];
 
+const chapterIds = chapters.map((c) => c.id);
+
 const navItems = ["hero", "stats", "services", "pricing", "testimonials", "team", "insights", "contact"];
 
 // Card rows that become horizontal rails on this page (content unchanged). Selector = the existing grid.
@@ -71,8 +74,6 @@ const plates: Record<string, string> = {
 export function HomeChapters(): JSX.Element {
   const rootRef = useRef<HTMLDivElement>(null);
   const { theme, toggle } = useTheme();
-  const [active, setActive] = useState("hero");
-  const [closing, setClosing] = useState(false);
   const sectionRefs = useRef<Record<string, RefObject<HTMLElement>>>(
     Object.fromEntries(chapters.map((c) => [c.id, createRef<HTMLElement>()])),
   );
@@ -85,128 +86,12 @@ export function HomeChapters(): JSX.Element {
     noIndex: true,
   });
 
-  // Depth parallax on the plates: each plate drifts against its own section. Off under reduced motion.
-  useEffect(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const layers = Array.from(document.querySelectorAll<HTMLElement>(".hc-plate[data-depth]"));
-    if (layers.length === 0) return;
-    let frame = 0;
-    const update = () => {
-      frame = 0;
-      const vh = window.innerHeight || 1;
-      for (const el of layers) {
-        const rect = (el.parentElement ?? el).getBoundingClientRect();
-        const progress = Math.max(-1, Math.min(1, (rect.top + rect.height / 2 - vh / 2) / vh));
-        const depth = Number(el.dataset.depth) || 0;
-        el.style.transform = `translate3d(0, ${(progress * depth * 120).toFixed(1)}px, 0) scale(1.08)`;
-      }
-    };
-    const onScroll = () => {
-      if (!frame) frame = requestAnimationFrame(update);
-    };
-    update();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll);
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
-      if (frame) cancelAnimationFrame(frame);
-    };
-  }, []);
-
-  useEffect(() => {
-    const sections = chapters
-      .map((c) => document.getElementById(c.id))
-      .filter((n): n is HTMLElement => n !== null);
-    if (!("IntersectionObserver" in window) || sections.length === 0) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) setActive(entry.target.id);
-        }
-      },
-      { rootMargin: "-40% 0px -55% 0px" },
-    );
-    sections.forEach((s) => observer.observe(s));
-    return () => observer.disconnect();
-  }, []);
-
-  // The site menu is fixed above this page; dock the chapter pill under its bottom edge, wherever that is.
-  useEffect(() => {
-    const nav = document.querySelector<HTMLElement>(".hc-nav");
-    if (!nav) return;
-    let frame = 0;
-    const update = () => {
-      frame = 0;
-      const menu = document.querySelector<HTMLElement>(".mega-menu-container");
-      const bottom = menu ? Math.max(0, Math.round(menu.getBoundingClientRect().bottom)) : 0;
-      (nav.closest<HTMLElement>(".hc") ?? nav).style.setProperty("--hc-nav-top", `${bottom}px`);
-    };
-    const onScroll = () => {
-      if (!frame) frame = requestAnimationFrame(update);
-    };
-    update();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll);
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
-      if (frame) cancelAnimationFrame(frame);
-    };
-  }, []);
-
-  // Scrollcraft signature (scrollcraft/builds/home-mesh/BRIEF.md): once the close is on screen the
-  // chapter pill folds into one assessment button with the principal's face. Scroll back and it unfolds.
-  useEffect(() => {
-    const close = document.getElementById("cta");
-    if (!close || !("IntersectionObserver" in window)) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => setClosing(entry.isIntersecting || entry.boundingClientRect.top < 0),
-      { rootMargin: "0px 0px -35% 0px" },
-    );
-    observer.observe(close);
-    return () => observer.disconnect();
-  }, []);
-
-  // Scrollcraft peak: the monitoring hand-off (Signal, human triage, named owner) is drawn by scroll.
-  // Writes --hc-handoff (0 to 1) on the list; the named owner lights at the end. Static under reduced motion.
-  useEffect(() => {
-    const list = document.querySelector<HTMLElement>(".v8s-12 .dg");
-    if (!list) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      list.style.setProperty("--hc-handoff", "1");
-      const last = list.lastElementChild as HTMLElement | null;
-      if (last) list.style.setProperty("--hc-handoff-len", `${Math.max(0, last.offsetTop - 36)}px`);
-      list.classList.add("is-owned");
-      return;
-    }
-    let frame = 0;
-    const update = () => {
-      frame = 0;
-      const vh = window.innerHeight || 1;
-      const rect = list.getBoundingClientRect();
-      // 0 when the list's top reaches 80% of the viewport, 1 when its bottom reaches 45%.
-      const start = vh * 0.8;
-      const end = vh * 0.45;
-      const span = rect.height + (start - end);
-      const p = Math.max(0, Math.min(1, (start - rect.top) / span));
-      list.style.setProperty("--hc-handoff", p.toFixed(3));
-      const last = list.lastElementChild as HTMLElement | null;
-      if (last) list.style.setProperty("--hc-handoff-len", `${Math.max(0, last.offsetTop - 36)}px`);
-      list.classList.toggle("is-owned", p >= 0.98);
-    };
-    const onScroll = () => {
-      if (!frame) frame = requestAnimationFrame(update);
-    };
-    update();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll);
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
-      if (frame) cancelAnimationFrame(frame);
-    };
-  }, []);
+  // Shared chrome and the Scrollcraft layer (chapterChrome.ts; scrollcraft/builds/home-mesh/BRIEF.md).
+  usePlateParallax();
+  useNavDock();
+  useHandoff();
+  const active = useActiveChapter(chapterIds, "hero");
+  const closing = useClosing("cta");
 
   return (
     <div className="v8 hc min-h-screen" ref={rootRef} data-theme={theme}>

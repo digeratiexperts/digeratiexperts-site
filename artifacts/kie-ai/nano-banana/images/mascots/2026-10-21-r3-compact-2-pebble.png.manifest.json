@@ -1,0 +1,19 @@
+{
+  "provider": "kie.ai",
+  "taskId": "c1d12e8f1f021099aa8fb53591f8cfd0",
+  "model": "nano-banana-2",
+  "promptFile": "/home/user/digeratiexperts-site/artifacts/kie-ai/nano-banana/prompts/mascots/2026-10-21-r3-compact-2-pebble.json",
+  "input": {
+    "prompt": "{\"prompt\": \"Studio product photograph on a seamless dark charcoal floor and backdrop (#0a0a0a), soft key light from the upper left, a faint violet rim light from behind, gentle contact shadows, 85mm lens, f/4, premium Apple-style product photography, centered single subject. A compact mascot character: a smooth flattened river pebble shape made of polished warm-gold ceramic (#E3B23C) with a smooth flawless glaze and soft highlights, with four fine horizontal engraved lines across its front (wide, short, short, wide), and two small matte black round dot-eyes between the second and third lines. Organic, calm, hand-held size. No text.\", \"negative_prompt\": \"text, letters, words, watermark, logo text, people, human faces, hands, mouths, smiles drawn, cartoon outlines, childish toy look, neon cyberpunk, clutter, extra characters, scratches\"}",
+    "aspect_ratio": "1:1",
+    "resolution": "2K",
+    "output_format": "png"
+  },
+  "resultUrls": [
+    "https://tempfile.aiquickdraw.com/a2/c1d12e8f1f021099aa8fb53591f8cfd0_1792624452878.png"
+  ],
+  "creditsConsumed": 12.0,
+  "generatedAt": "2026-10-21T23:14:19.229490+00:00",
+  "classification": "ILLUSTRATIVE",
+  "approvalStatus": "candidate"
+}

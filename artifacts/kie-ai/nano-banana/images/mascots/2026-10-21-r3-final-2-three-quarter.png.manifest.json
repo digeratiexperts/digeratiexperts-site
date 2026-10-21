@@ -1,0 +1,22 @@
+{
+  "provider": "kie.ai",
+  "taskId": "d3825b983c5639e7cbda49c54cbb821e",
+  "model": "nano-banana-2",
+  "promptFile": "/home/user/digeratiexperts-site/artifacts/kie-ai/nano-banana/prompts/mascots/2026-10-21-r3-final-2-three-quarter.json",
+  "input": {
+    "prompt": "{\"prompt\": \"Studio product photograph on a seamless dark charcoal floor and backdrop (#0a0a0a), soft key light from the upper left, a faint violet rim light from behind, gentle contact shadows, 85mm lens, f/4, premium Apple-style product photography, centered single subject. Use the left character in the reference image (the gold four-bar figure, Dex) as the exact design: same four bars, same proportions wide, short, short, wide, same polished gold, two black dot-eyes in the third bar. Exactly four bars, never five. Show Dex alone in a three-quarter view from the left, revealing the depth and rounded ends of each bar, eyes visible. No text.\", \"negative_prompt\": \"text, letters, words, watermark, logo text, people, human faces, hands, mouths, smiles drawn, cartoon outlines, childish toy look, neon cyberpunk, clutter, extra characters, scratches, five bars, split bars\"}",
+    "aspect_ratio": "1:1",
+    "resolution": "2K",
+    "output_format": "png",
+    "image_input": [
+      "https://tempfile.aiquickdraw.com/workers/images/image_9ca3f4e2443276aec43d2e0ac91b6583.png"
+    ]
+  },
+  "resultUrls": [
+    "https://tempfile.aiquickdraw.com/a2/d3825b983c5639e7cbda49c54cbb821e_1792624498193.png"
+  ],
+  "creditsConsumed": 12.0,
+  "generatedAt": "2026-10-21T23:15:11.875637+00:00",
+  "classification": "ILLUSTRATIVE",
+  "approvalStatus": "candidate"
+}

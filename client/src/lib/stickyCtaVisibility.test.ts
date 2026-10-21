@@ -43,6 +43,8 @@ describe("sticky CTA visibility", () => {
     expect(isStickyCtaRouteAllowed("/version-3")).toBe(false);
     expect(isStickyCtaRouteAllowed("/version-4")).toBe(false);
     expect(isStickyCtaRouteAllowed("/version-4?present=1")).toBe(false);
+    expect(isStickyCtaRouteAllowed("/concepts/home-chapters")).toBe(false);
+    expect(isStickyCtaRouteAllowed("/concepts/home-mesh")).toBe(false);
     // The index that lists the versions is an ordinary page and keeps the bar.
     expect(isStickyCtaRouteAllowed("/versions")).toBe(true);
   });

@@ -1,0 +1,9 @@
+{
+  "prompt": "Studio product photograph on a seamless dark charcoal floor and backdrop (#0a0a0a), soft key light from the upper left, a faint violet rim light from behind, gentle contact shadows, 85mm lens, f/4, premium Apple-style product photography, centered single subject. A compact mascot character: a small rounded-square tile like a premium app icon, made of polished warm-gold ceramic (#E3B23C) with a smooth flawless glaze and soft highlights, with four horizontal grooves pressed into its face in the rhythm wide, short, short, wide, and two small matte black round dot-eyes sitting in the third groove. Thick, solid, tactile. No text.",
+  "negative_prompt": "text, letters, words, watermark, logo text, people, human faces, hands, mouths, smiles drawn, cartoon outlines, childish toy look, neon cyberpunk, clutter, extra characters, scratches",
+  "api_parameters": {
+    "aspect_ratio": "1:1",
+    "resolution": "2K",
+    "output_format": "png"
+  }
+}

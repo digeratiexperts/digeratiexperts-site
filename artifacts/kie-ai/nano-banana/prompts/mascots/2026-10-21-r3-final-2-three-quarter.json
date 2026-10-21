@@ -1,0 +1,12 @@
+{
+  "prompt": "Studio product photograph on a seamless dark charcoal floor and backdrop (#0a0a0a), soft key light from the upper left, a faint violet rim light from behind, gentle contact shadows, 85mm lens, f/4, premium Apple-style product photography, centered single subject. Use the left character in the reference image (the gold four-bar figure, Dex) as the exact design: same four bars, same proportions wide, short, short, wide, same polished gold, two black dot-eyes in the third bar. Exactly four bars, never five. Show Dex alone in a three-quarter view from the left, revealing the depth and rounded ends of each bar, eyes visible. No text.",
+  "negative_prompt": "text, letters, words, watermark, logo text, people, human faces, hands, mouths, smiles drawn, cartoon outlines, childish toy look, neon cyberpunk, clutter, extra characters, scratches, five bars, split bars",
+  "image_input": [
+    "https://tempfile.aiquickdraw.com/workers/images/image_9ca3f4e2443276aec43d2e0ac91b6583.png"
+  ],
+  "api_parameters": {
+    "aspect_ratio": "1:1",
+    "resolution": "2K",
+    "output_format": "png"
+  }
+}

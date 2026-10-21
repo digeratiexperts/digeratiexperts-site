@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import type { MouseEvent } from "react";
+import type { MouseEvent, ReactNode } from "react";
 import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
 // Phoenix city lights at dusk: the previous homepage hero plate (Joe, 2026-10-07: "it looked fine with the old background").
 import heroCityLights from "@assets/de-hero-arizona-dusk-1600.webp";
@@ -415,7 +415,12 @@ const TRUST_ITEMS: Array<{ icon: LucideIcon; title: string; body: string }> = [
 
 const POSITIONING = ["Assessment-led", "Client-owned access", "Fully managed or co-managed"];
 
-export function V8Hero(): JSX.Element {
+/**
+ * `aside` (optional) shares the right column with the assessment preview, in a `.hero__stage`.
+ * The homepage passes nothing and renders exactly as before; /concepts/home-mesh passes the
+ * founder portrait.
+ */
+export function V8Hero({ aside }: { aside?: ReactNode } = {}): JSX.Element {
   const { openBooking } = useBooking();
   const prefersReducedMotion = useReducedMotion();
   const isPhone = useIsPhone();
@@ -520,7 +525,14 @@ export function V8Hero(): JSX.Element {
             )}
           </motion.div>
 
-          <AssessmentPreview />
+          {aside ? (
+            <div className="hero__stage">
+              {aside}
+              <AssessmentPreview />
+            </div>
+          ) : (
+            <AssessmentPreview />
+          )}
         </div>
       </section>
 

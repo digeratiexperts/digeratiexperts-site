@@ -3,7 +3,7 @@
 // (abstract, no faces, no text). Decorative: aria-hidden, empty alt.
 import { useEffect, type RefObject } from "react";
 
-type Placement = { selector: string; objects: string[]; size?: number };
+export type Placement = { selector: string; objects: string[]; size?: number };
 
 const BASE = "/concepts/objects/obj-";
 
@@ -18,12 +18,12 @@ export const objectPlan: Record<string, Placement[]> = {
   pricing: [{ selector: ".pricing-grid .pricing-card", objects: ["laptop", "network", "shield", "building"], size: 120 }],
 };
 
-export function useCardObjects(rootRef: RefObject<HTMLElement>): void {
+export function useCardObjects(rootRef: RefObject<HTMLElement>, plan: Record<string, Placement[]> = objectPlan): void {
   useEffect(() => {
     const root = rootRef.current;
     if (!root) return;
     const placed: HTMLElement[] = [];
-    for (const [chapter, placements] of Object.entries(objectPlan)) {
+    for (const [chapter, placements] of Object.entries(plan)) {
       const section = root.querySelector<HTMLElement>(`#${chapter}`);
       if (!section) continue;
       for (const p of placements) {
@@ -52,5 +52,5 @@ export function useCardObjects(rootRef: RefObject<HTMLElement>): void {
         img.remove();
       }
     };
-  }, [rootRef]);
+  }, [rootRef, plan]);
 }

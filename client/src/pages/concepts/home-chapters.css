@@ -120,7 +120,7 @@
   --spot-tint: rgba(211, 18, 106, 0.06);
   --spot-edge: rgba(211, 18, 106, 0.25);
 }
-#protection { /* the single dark stage stays dark in BOTH modes */
+.hc #protection { /* the single dark stage stays dark in BOTH modes */
   --v8-bg: #0a0a0a;
   --v8-surface: #0a0a0a;
   --v8-raised: #1a1a1c;
@@ -319,35 +319,35 @@
 .hc-section--plate { position: relative; isolation: isolate; }
 .hc-section--plate > .hc-plate { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; z-index: 0; will-change: transform; }
 .hc-section--plate > :not(.hc-plate) { position: relative; z-index: 1; }
-#hero > .hc-plate, #stats > .hc-plate { display: none; }
-#protection .hc-plate { opacity: 0.7; object-position: 50% 60%; }
-#contact .hc-plate { opacity: 0.85; object-position: 50% 30%; }
+.hc #hero > .hc-plate, .hc #stats > .hc-plate { display: none; }
+.hc #protection .hc-plate { opacity: 0.7; object-position: 50% 60%; }
+.hc #contact .hc-plate { opacity: 0.85; object-position: 50% 30%; }
 
 /* ---------- Protect: the dark stage (always dark) ---------- */
-#protection { background: var(--dark); color: #f5f5f5; }
-#protection .v8-h2, #protection .v8-h2 span, #protection .v8-h3, #protection .v8-h4, #protection .how__title { color: #f5f5f5 !important; -webkit-text-fill-color: #f5f5f5 !important; }
-#protection .v8-lede, #protection .v8-body, #protection p, #protection .v8-card p, #protection .step .v8-body { color: rgba(245,245,245,0.72) !important; }
-#protection .v8-eyebrow, #protection .v8-meta { color: rgba(245,245,245,0.6) !important; }
-#protection .model { background: rgba(26,26,28,0.9) !important; border: 1px solid var(--dark-line) !important; border-radius: 28px !important; box-shadow: 0 48px 120px -56px rgba(0,0,0,0.9) !important; overflow: hidden; }
-#protection .model__title { color: #fff !important; }
-#protection .rail { padding: 12px; gap: 4px; border-right-color: var(--dark-line) !important; }
-#protection .tab { border-radius: 16px; color: rgba(245,245,245,0.8); transition: background-color var(--t-fast) var(--ease); }
-#protection .tab[aria-selected="true"], #protection .tab[aria-selected="true"]:hover { background: rgba(255,255,255,0.08) !important; color: #fff !important; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.18) !important; }
-#protection .tab[aria-selected="true"] .v8-iconwell { background: var(--accent) !important; color: #fff !important; }
-#protection :is(.v8-card, .step), #protection .v8-box .v8-card { background: rgba(255,255,255,0.04) !important; border: 1px solid var(--dark-line) !important; box-shadow: none !important; color: #f5f5f5 !important; }
-#protection .v8-iconwell { background: rgba(255,255,255,0.08) !important; color: #fff !important; }
-#protection .node { background: rgba(0,0,0,0.35) !important; border-color: var(--dark-line) !important; border-radius: 16px !important; }
-#protection .node__title { color: #fff !important; }
-#protection .v8-link { color: #ff4d8d !important; }
-#protection .groups { grid-template-columns: repeat(4, minmax(0,1fr)) !important; border-top: 1px solid var(--dark-line) !important; }
-#protection .groups > li { display: block !important; padding: 20px 20px 20px 0 !important; border-left: 1px solid var(--dark-line) !important; padding-left: 20px !important; }
-#protection .groups > li:first-child { border-left: 0 !important; padding-left: 0 !important; }
-#protection .groups li li { display: grid !important; grid-template-columns: 10px minmax(0,1fr) !important; column-gap: 10px !important; padding: 4px 0 !important; border: 0 !important; }
-#protection .qlist > li { display: grid !important; grid-template-columns: 14px minmax(0,1fr) !important; column-gap: 12px !important; padding: 11px 0 !important; border-top: 1px solid var(--dark-line) !important; }
-#protection .qlist > li:first-child { border-top: 0 !important; }
-#protection .pane__row { display: grid !important; grid-template-columns: minmax(0,5fr) minmax(0,8fr) !important; column-gap: 40px !important; }
-#protection .qlist .v8-dash, #protection .pblock__qs .v8-dash, #protection .groups .v8-dash { display: block !important; width: 14px; height: 2px; background: var(--accent); position: relative; top: -4px; }
-@media (max-width: 1023px) { #protection .groups { grid-template-columns: repeat(2, minmax(0,1fr)) !important; } #protection .pane__row { grid-template-columns: 1fr !important; } }
+.hc #protection { background: var(--dark); color: #f5f5f5; }
+.hc #protection .v8-h2, .hc #protection .v8-h2 span, .hc #protection .v8-h3, .hc #protection .v8-h4, .hc #protection .how__title { color: #f5f5f5 !important; -webkit-text-fill-color: #f5f5f5 !important; }
+.hc #protection .v8-lede, .hc #protection .v8-body, .hc #protection p, .hc #protection .v8-card p, .hc #protection .step .v8-body { color: rgba(245,245,245,0.72) !important; }
+.hc #protection .v8-eyebrow, .hc #protection .v8-meta { color: rgba(245,245,245,0.6) !important; }
+.hc #protection .model { background: rgba(26,26,28,0.9) !important; border: 1px solid var(--dark-line) !important; border-radius: 28px !important; box-shadow: 0 48px 120px -56px rgba(0,0,0,0.9) !important; overflow: hidden; }
+.hc #protection .model__title { color: #fff !important; }
+.hc #protection .rail { padding: 12px; gap: 4px; border-right-color: var(--dark-line) !important; }
+.hc #protection .tab { border-radius: 16px; color: rgba(245,245,245,0.8); transition: background-color var(--t-fast) var(--ease); }
+.hc #protection .tab[aria-selected="true"], .hc #protection .tab[aria-selected="true"]:hover { background: rgba(255,255,255,0.08) !important; color: #fff !important; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.18) !important; }
+.hc #protection .tab[aria-selected="true"] .v8-iconwell { background: var(--accent) !important; color: #fff !important; }
+.hc #protection :is(.v8-card, .step), .hc #protection .v8-box .v8-card { background: rgba(255,255,255,0.04) !important; border: 1px solid var(--dark-line) !important; box-shadow: none !important; color: #f5f5f5 !important; }
+.hc #protection .v8-iconwell { background: rgba(255,255,255,0.08) !important; color: #fff !important; }
+.hc #protection .node { background: rgba(0,0,0,0.35) !important; border-color: var(--dark-line) !important; border-radius: 16px !important; }
+.hc #protection .node__title { color: #fff !important; }
+.hc #protection .v8-link { color: #ff4d8d !important; }
+.hc #protection .groups { grid-template-columns: repeat(4, minmax(0,1fr)) !important; border-top: 1px solid var(--dark-line) !important; }
+.hc #protection .groups > li { display: block !important; padding: 20px 20px 20px 0 !important; border-left: 1px solid var(--dark-line) !important; padding-left: 20px !important; }
+.hc #protection .groups > li:first-child { border-left: 0 !important; padding-left: 0 !important; }
+.hc #protection .groups li li { display: grid !important; grid-template-columns: 10px minmax(0,1fr) !important; column-gap: 10px !important; padding: 4px 0 !important; border: 0 !important; }
+.hc #protection .qlist > li { display: grid !important; grid-template-columns: 14px minmax(0,1fr) !important; column-gap: 12px !important; padding: 11px 0 !important; border-top: 1px solid var(--dark-line) !important; }
+.hc #protection .qlist > li:first-child { border-top: 0 !important; }
+.hc #protection .pane__row { display: grid !important; grid-template-columns: minmax(0,5fr) minmax(0,8fr) !important; column-gap: 40px !important; }
+.hc #protection .qlist .v8-dash, .hc #protection .pblock__qs .v8-dash, .hc #protection .groups .v8-dash { display: block !important; width: 14px; height: 2px; background: var(--accent); position: relative; top: -4px; }
+@media (max-width: 1023px) { .hc #protection .groups { grid-template-columns: repeat(2, minmax(0,1fr)) !important; } .hc #protection .pane__row { grid-template-columns: 1fr !important; } }
 
 /* ---------- Light sections, remaining details ---------- */
 .hc .v8s-09 .portrait, .hc .v8s-08 .docfig { border-radius: var(--r); overflow: hidden; }
@@ -391,7 +391,7 @@
 .hc .v8s-10 .hc-rail > .ind-card { flex-basis: min(86%, 320px) !important; }
 .hc-railbar { display: flex; align-items: center; justify-content: center; gap: 16px; width: min(1240px, calc(100% - var(--gutter) * 2)); margin: 32px auto 0; padding-bottom: 24px; }
 .hc-arrow { display: inline-flex; align-items: center; justify-content: center; width: 48px; height: 48px; border-radius: 999px; border: 1px solid var(--line-2); background: var(--card); color: var(--ink); transition: border-color var(--t-fast) var(--ease); }
-#protection .hc-arrow { background: transparent; border-color: var(--dark-line); color: #fff; }
+.hc #protection .hc-arrow { background: transparent; border-color: var(--dark-line); color: #fff; }
 .hc-arrow:disabled { opacity: 0.35; }
 .hc-arrow:focus-visible, .hc-dot:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .hc-dots { display: flex; gap: 4px; }
@@ -471,7 +471,7 @@
 .hc.v8 .pricing-card .pricing-flag { color: #b50f5a !important; -webkit-text-fill-color: #b50f5a !important; }
 
 /* Step numerals inside the dark Protect stage */
-#protection .v8-seq { color: #9a9aa0 !important; -webkit-text-fill-color: #9a9aa0 !important; }
+.hc #protection .v8-seq { color: #9a9aa0 !important; -webkit-text-fill-color: #9a9aa0 !important; }
 
 /* White card interiors inherit the light-mode token ladder, so every nested
    V8 element (body copy, stats, links, meta) paints readable dark ink.
@@ -713,3 +713,13 @@
    headings rule; var(--card-ink) = #121212 on the white sheet in both themes). */
 .hc.v8 .doc .doc__name.doc__name { color: var(--card-ink) !important; -webkit-text-fill-color: var(--card-ink) !important; }
 
+/* The named owner lights at the end of the hand-off. The card-ink pass above also sets
+   -webkit-text-fill-color, which wins over color, so the lit state sets both, more specifically. */
+.hc.v8 .v8s-12 .dg.is-owned .dg-step:last-child :is(.v8-seq, .dg-label) {
+  color: #b50f5a !important;
+  -webkit-text-fill-color: #b50f5a !important;
+}
+/* The glass pill passes over white bands as well as dark ones. At 72% its grey links fell to about
+   3.2:1 over white (4.4:1 by day over dark); at 86% the worst case is above 5:1. */
+.hc-nav { background: rgba(10, 10, 10, 0.86); }
+.hc[data-theme="light"] .hc-nav { background: rgba(250, 250, 250, 0.86); }
