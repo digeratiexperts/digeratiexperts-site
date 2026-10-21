@@ -30,6 +30,25 @@
 
 version: 2
 claims:
+  - id: home-chapters-legibility-ink
+    owner: opencode
+    subsystem: concepts-homepage
+    branch: opencode/home-chapters-legibility
+    base_sha: 8ea622a6
+    pr: 683
+    files:
+      - client/src/pages/concepts/home-chapters.css (dark-ink token re-point + text-fill repairs on white card surfaces; light-theme poster/doc fixes)
+      - client/src/pages/concepts/HomeChapters.tsx (founder img fetchPriority → lowercase attr; no route/SEO changes)
+      - scripts/qa/home-chapters-legibility.mjs, artifacts/visual-qa/home-chapters-legibility/** (new computed-style audit)
+    status: active
+    started: 2026-10-21
+    note: >-
+      Computed-style legibility audit on /concepts/home-chapters: axe 0,
+      contrast issues 0, 0px overflow, 0 console errors at 390/768/1440 in both
+      themes. The pending promotion of the concept into / (App.tsx route swap +
+      SEO + spaKnownPaths) is deliberately NOT in this PR — held until the
+      concurrent Claude session (Joe heads-up, 2026-10-21) finishes its page
+      work to avoid a collision.
   - id: de-bug-hunt-2026-10-21
     owner: claude
     subsystem: server-platform, homepage-seo
