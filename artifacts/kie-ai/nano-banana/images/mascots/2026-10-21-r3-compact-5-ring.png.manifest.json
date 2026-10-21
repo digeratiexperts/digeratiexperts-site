@@ -1,0 +1,19 @@
+{
+  "provider": "kie.ai",
+  "taskId": "f95a8f5660540ae82c3f71146ee41ac1",
+  "model": "nano-banana-2",
+  "promptFile": "/home/user/digeratiexperts-site/artifacts/kie-ai/nano-banana/prompts/mascots/2026-10-21-r3-compact-5-ring.json",
+  "input": {
+    "prompt": "{\"prompt\": \"Studio product photograph on a seamless dark charcoal floor and backdrop (#0a0a0a), soft key light from the upper left, a faint violet rim light from behind, gentle contact shadows, 85mm lens, f/4, premium Apple-style product photography, centered single subject. A compact mascot character: a thick rounded-square ring made from one continuous rounded bar of polished warm-gold ceramic (#E3B23C) with a smooth flawless glaze and soft highlights, standing upright like a halo, with two small matte black round dot-eyes floating in the open center. Clean geometry, premium. No text.\", \"negative_prompt\": \"text, letters, words, watermark, logo text, people, human faces, hands, mouths, smiles drawn, cartoon outlines, childish toy look, neon cyberpunk, clutter, extra characters, scratches\"}",
+    "aspect_ratio": "1:1",
+    "resolution": "2K",
+    "output_format": "png"
+  },
+  "resultUrls": [
+    "https://tempfile.aiquickdraw.com/a2/f95a8f5660540ae82c3f71146ee41ac1_1792624448835.png"
+  ],
+  "creditsConsumed": 12.0,
+  "generatedAt": "2026-10-21T23:14:22.141647+00:00",
+  "classification": "ILLUSTRATIVE",
+  "approvalStatus": "candidate"
+}

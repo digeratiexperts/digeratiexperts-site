@@ -57,43 +57,6 @@ export function DexMark({ size = 96, title, className = "", state = "idle" }: Co
   );
 }
 
-/** Dex, compact form: a frosted orb with the logo glowing inside and two calm eyes. */
-export function DexOrb({ size = 96, title, className = "", state = "idle" }: Common & { state?: DexState }): JSX.Element {
-  return (
-    <svg viewBox="0 0 120 120" width={size} height={size} className={`mascot dex-orb is-${state} ${className}`} {...a11y(title)}>
-      <defs>
-        <radialGradient id="dex-orb-glass" cx="38%" cy="32%" r="75%">
-          <stop offset="0" stopColor="#FFFFFF" />
-          <stop offset=".55" stopColor="#EEEAF2" />
-          <stop offset="1" stopColor="#B9B1C6" />
-        </radialGradient>
-        <radialGradient id="dex-orb-core" cx="50%" cy="50%" r="50%">
-          <stop offset="0" stopColor="#D3126A" stopOpacity=".55" />
-          <stop offset=".55" stopColor="#E3B23C" stopOpacity=".25" />
-          <stop offset="1" stopColor="#E3B23C" stopOpacity="0" />
-        </radialGradient>
-        <linearGradient id="dex-orb-gold" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#FFE6A3" />
-          <stop offset="1" stopColor="#E3B23C" />
-        </linearGradient>
-      </defs>
-      <circle cx="60" cy="60" r="54" fill="url(#dex-orb-glass)" />
-      <circle className="dex-orb__core" cx="60" cy="62" r="30" fill="url(#dex-orb-core)" />
-      {/* The logo mark, scaled into the core: 44 x 56.5 at 0.42 = 18.5 x 23.7. */}
-      <g className="dex-orb__mark" transform="translate(50.76 50.13) scale(0.42)" fill="url(#dex-orb-gold)">
-        {MARK_BARS.map((b) => (
-          <rect key={b.y} x={b.x} y={b.y} width={b.w} height={BAR_H} rx={BAR_H / 2} />
-        ))}
-      </g>
-      <g className="dex-orb__eyes" fill="#2a2730">
-        <ellipse className="dex-eye" cx="38" cy="61" rx="3.6" ry="6.4" />
-        <ellipse className="dex-eye" cx="82" cy="61" rx="3.6" ry="6.4" />
-      </g>
-      <ellipse cx="44" cy="30" rx="14" ry="7" fill="#fff" opacity=".5" />
-    </svg>
-  );
-}
-
 /** Rati: the same four bars drawn as magenta blueprint outlines, measuring ticks and a scanning dot. No face. */
 export function RatiMark({ size = 96, title, className = "" }: Common): JSX.Element {
   return (

@@ -1,15 +1,25 @@
 // Concept (Exploration, 2026-10-21): /concepts/mascots, review page for Dex (public AI employee)
-// and Rati (behind-the-scenes AI tech employee). Joe picked the gold four-bar figure, the frosted
-// orb and the magenta glass outline from the generated candidates; these are the exact, code-drawn
-// masters built on the logo geometry. Review only, noindex, not in navigation.
+// and Rati (behind-the-scenes AI tech employee). The gold four-bar Dex and the magenta outline Rati
+// are code-drawn on the logo geometry (Joe: "the yellow ones are mostly almost locked in"). The
+// compact form is still open: Joe found the orb weak and asked for very different directions, so
+// six ILLUSTRATIVE candidates are shown to pick from. Review only, noindex, not in navigation.
 import { useSEO } from "@/hooks/useSEO";
-import { DexMark, DexOrb, RatiMark, type DexState } from "@/components/mascots/Mascots";
+import { DexMark, RatiMark, type DexState } from "@/components/mascots/Mascots";
 
 const states: { state: DexState; label: string; note: string }[] = [
   { state: "idle", label: "Idle", note: "Bars breathe in turn, like the pronunciation meter." },
   { state: "listening", label: "Listening", note: "Still and level, eyes open." },
   { state: "thinking", label: "Thinking", note: "A slow wave through the bars, eyes look up." },
   { state: "speaking", label: "Speaking", note: "The bars open slightly, in rhythm." },
+];
+
+const compact: { file: string; name: string; note: string }[] = [
+  { file: "dex-compact-3-capsule", name: "1 · Capsule", note: "One bar of the logo, alive. The simplest; reads at 16 px." },
+  { file: "dex-compact-1-tile", name: "2 · Tile", note: "An app-icon square with the bars pressed in. Ready-made avatar." },
+  { file: "dex-compact-4-beads", name: "3 · Beads", note: "A typing indicator that looks back at you. Closest to ChatGPT's dots." },
+  { file: "dex-compact-6-bubble", name: "4 · Bubble", note: "A speech bubble built from the bars. Says 'assistant' at a glance." },
+  { file: "dex-compact-5-ring", name: "5 · Ring", note: "One bar bent into a frame, eyes inside. Clean, but the face floats." },
+  { file: "dex-compact-2-pebble", name: "6 · Pebble", note: "A worn gold stone with engraved lines. Calm, least distinctive." },
 ];
 
 const card = "rounded-3xl border border-white/10 bg-[#151217] p-6";
@@ -30,9 +40,8 @@ export function MascotsConcept(): JSX.Element {
 
         <section className={card} aria-labelledby="pair">
           <h2 id="pair" className="text-2xl font-semibold">The pair</h2>
-          <div className="mt-6 flex flex-wrap items-end justify-center gap-12 sm:gap-20">
-            <figure className="text-center"><DexMark size={180} title="Dex" /><figcaption className="mt-3 text-[#a1a1a6]">Dex · full form</figcaption></figure>
-            <figure className="text-center"><DexOrb size={180} title="Dex, compact form" /><figcaption className="mt-3 text-[#a1a1a6]">Dex · compact form</figcaption></figure>
+          <div className="mt-6 flex flex-wrap items-end justify-center gap-16 sm:gap-24">
+            <figure className="text-center"><DexMark size={190} title="Dex" /><figcaption className="mt-3 text-[#a1a1a6]">Dex · public</figcaption></figure>
             <figure className="text-center"><RatiMark size={150} title="Rati" /><figcaption className="mt-3 text-[#a1a1a6]">Rati · behind the scenes</figcaption></figure>
           </div>
         </section>
@@ -48,19 +57,32 @@ export function MascotsConcept(): JSX.Element {
               </figure>
             ))}
           </div>
-          <div className="mt-6 grid gap-6 sm:grid-cols-2">
-            <figure className="rounded-2xl border border-white/10 bg-[#0d0d10] p-5 text-center"><DexOrb size={120} state="idle" /><figcaption className="mt-3 text-sm text-[#a1a1a6]">Orb, idle: the core breathes</figcaption></figure>
-            <figure className="rounded-2xl border border-white/10 bg-[#0d0d10] p-5 text-center"><DexOrb size={120} state="speaking" /><figcaption className="mt-3 text-sm text-[#a1a1a6]">Orb, speaking: the core pulses faster</figcaption></figure>
+        </section>
+
+        <section className={card} aria-labelledby="compact">
+          <h2 id="compact" className="text-2xl font-semibold">Dex&rsquo;s compact form: pick a direction</h2>
+          <p className="mt-2 max-w-3xl text-[#a1a1a6]">
+            For avatars, chat bubbles, email signatures and the favicon, where four bars are too small to read. Six very
+            different directions, all in Dex&rsquo;s gold with his two eyes. Generated candidates (ILLUSTRATIVE); the chosen one is
+            then redrawn exactly in code like the full form.
+          </p>
+          <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {compact.map((c) => (
+              <figure key={c.file} className="overflow-hidden rounded-2xl border border-white/10 bg-[#0d0d10]">
+                <img src={`/images/mascots/${c.file}.webp`} alt={`Dex compact direction: ${c.name.replace(/^\d · /, "")}`} width={800} height={800} loading="lazy" className="aspect-square w-full object-cover" />
+                <figcaption className="p-4"><span className="block font-semibold">{c.name}</span><span className="text-sm text-[#a1a1a6]">{c.note}</span></figcaption>
+              </figure>
+            ))}
           </div>
         </section>
 
         <section className={card} aria-labelledby="sizes">
           <h2 id="sizes" className="text-2xl font-semibold">At working sizes</h2>
-          <p className="mt-2 text-[#a1a1a6]">Chat avatar, email signature and favicon sizes, on dark and on paper.</p>
+          <p className="mt-2 text-[#a1a1a6]">The full forms at small sizes, on dark and on paper.</p>
           <div className="mt-6 grid gap-6 sm:grid-cols-2">
             {["#0a0a0a", "#f7f5f2"].map((bg) => (
               <div key={bg} className="flex items-center justify-around rounded-2xl p-6" style={{ background: bg }}>
-                <DexOrb size={64} /><DexOrb size={40} /><DexOrb size={24} /><DexMark size={40} /><RatiMark size={40} />
+                <DexMark size={64} /><DexMark size={40} /><DexMark size={24} /><RatiMark size={48} /><RatiMark size={28} />
               </div>
             ))}
           </div>
@@ -70,7 +92,7 @@ export function MascotsConcept(): JSX.Element {
           <h2 id="chat" className="text-2xl font-semibold">In a conversation</h2>
           <div className="mt-6 max-w-xl space-y-4">
             <div className="flex items-start gap-3">
-              <DexOrb size={40} state="speaking" />
+              <DexMark size={36} state="speaking" />
               <p className="rounded-2xl rounded-tl-sm bg-white px-4 py-3 text-[#121212]">Hi, I&rsquo;m Dex. I&rsquo;ve opened ticket 4821 and a technician is reviewing it now.</p>
             </div>
             <div className="flex items-start gap-3 opacity-90">
