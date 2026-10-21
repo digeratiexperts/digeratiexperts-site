@@ -51,6 +51,9 @@ export function isStickyCtaRouteAllowed(path: string): boolean {
     // with sticky chrome the real homepage never shows: at 1440 the bar sits
     // across the middle of the hero, cutting the headline.
     !pathname.startsWith("/version-") &&
+    // The homepage concepts (/concepts/home-chapters, /concepts/home-mesh) are the homepage under
+    // review too, with their own close; the same reasoning applies.
+    !pathname.startsWith("/concepts/home-") &&
     // The contact page is itself the conversion step. At 1440 the bar sat over
     // the email and phone, the very details a visitor came for.
     pathname !== "/contact" &&

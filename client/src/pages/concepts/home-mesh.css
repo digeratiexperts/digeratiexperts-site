@@ -1,0 +1,114 @@
+/* /concepts/home-mesh (Exploration, 2026-10-21): the joins between the live homepage's styling
+   (v8.css + v8-dashboard.css, "v8" bands) and the chapter concept's skin (home-chapters.css, ".hc"
+   bands). Section-by-section decisions: scrollcraft/builds/home-mesh/MESH.md. Everything here is
+   scoped to .hm, so nothing reaches the live homepage. */
+
+/* ---------- 1. Frame ---------- */
+.hm { background: #0a0a0a; }
+.hm .hm-chrome { display: contents; }
+.hm .hm-band { position: relative; }
+/* The concept's chapters breathe at up to 160px; beside the live bands that reads as gaps. */
+.hm .hc { --section: clamp(72px, 8vw, 112px); }
+/* Where two bands of the same family meet (two darks, or two lights by day), a hairline marks the turn. */
+.hm .hm-band--hc { border-top: 1px solid rgba(255, 255, 255, 0.06); }
+.hm .hm-band--hc[data-theme="light"] { border-top-color: rgba(18, 18, 18, 0.06); }
+
+/* ---------- 2. One type system across both skins ---------- */
+/* Section headlines: between the live 2.5rem and the concept's 4.2rem, the same in every band. */
+.hm .hm-band .v8-h2 {
+  font-size: clamp(2.1rem, 3.6vw, 3.25rem) !important;
+  line-height: 1.05 !important;
+  letter-spacing: -0.03em !important;
+  text-wrap: balance;
+}
+.hm .hc .v8-h2 { max-width: 20ch; }
+
+/* The live page's accent words and magenta eyebrows come back on the concept's bands. */
+.hm .hc .v8-accent,
+.hm .hc .v8-h2 .v8-accent {
+  background-image: linear-gradient(90deg, #9a8bff, #7b6cff 45%, #d3126a) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+}
+/* By day the light end of that gradient would sit under 3:1 on #fafafa; take its deep end. */
+.hm .hc[data-theme="light"] .v8-accent,
+.hm .hc[data-theme="light"] .v8-h2 .v8-accent {
+  background-image: linear-gradient(90deg, #5b45e0, #7b3fd0 45%, #b50f5a) !important;
+}
+.hm .hc .v8-eyebrow {
+  display: flex !important; align-items: center; gap: 12px;
+  font-size: 13px !important; font-weight: 600 !important;
+  letter-spacing: 0.18em !important; text-transform: uppercase !important;
+  color: var(--accent-ink) !important;
+}
+.hm .hc .v8-eyebrow::before { display: block !important; content: ""; width: 24px; height: 1px; background: currentColor; flex-shrink: 0; }
+.hm .hc .v8-eyebrow .sep { display: inline !important; }
+.hm .hc .v8-colon { display: inline !important; color: var(--accent) !important; -webkit-text-fill-color: var(--accent) !important; }
+
+/* ---------- 3. Hero: the live hero, with the founder from the concept ---------- */
+.hm .v8s-01 .hero__stage { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; }
+.hm .hm-portrait {
+  position: relative; justify-self: end; width: min(60%, 380px); margin: 0;
+  aspect-ratio: 3 / 4; border-radius: 28px; overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 40px 90px -40px rgba(0, 0, 0, 0.9);
+}
+.hm .hm-portrait img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 0%; display: block; }
+.hm .hm-portrait figcaption {
+  position: absolute; top: 14px; left: 14px; display: grid; gap: 2px; padding: 10px 14px;
+  border-radius: 14px; background: rgba(10, 10, 10, 0.62);
+  backdrop-filter: blur(12px) saturate(160%); -webkit-backdrop-filter: blur(12px) saturate(160%);
+  color: #f5f5f5; font-size: 12px; line-height: 1.3;
+}
+.hm .hm-portrait figcaption > :first-child { font-size: 14px; font-weight: 600; }
+.hm .hm-portrait figcaption > :last-child { color: rgba(245, 245, 245, 0.8); }
+/* The assessment preview is laid over the portrait's lower corner, clear of the face: the person,
+   then what they review. */
+.hm .v8s-01 .hero__stage .win { position: relative; z-index: 1; justify-self: start; width: min(84%, 520px); margin: -34% 0 26px; }
+@media (max-width: 1023px) {
+  .hm .hm-portrait { width: min(56%, 340px); }
+  .hm .v8s-01 .hero__stage .win { width: 100%; max-width: 680px; margin-top: -16%; }
+}
+@media (max-width: 767px) {
+  .hm .hm-portrait { width: 66%; border-radius: 22px; }
+  .hm .v8s-01 .hero__stage .win { margin-top: -14%; }
+}
+
+/* ---------- 4. Objects inside the live light cards ---------- */
+.hm .hm-band--v8 .hc-obj {
+  display: block; width: auto; height: clamp(60px, 5.2vw, 84px); max-width: 100%;
+  object-fit: contain; object-position: left center; margin: 0 0 14px; pointer-events: none;
+  filter: drop-shadow(0 14px 18px rgba(18, 18, 18, 0.16));
+  transition: transform 900ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.hm .hm-band--v8 .hc-has-obj:hover .hc-obj { transform: translateY(-3px) rotate(-2deg); }
+/* "Why we exist" cards are a 12px | text | chevron grid: give the object the text column's first row. */
+.hm .v8s-02 .claim.hc-has-obj > .hc-obj { grid-column: 2 / -1; grid-row: 1; }
+.hm .v8s-02 .claim.hc-has-obj > .v8-dash { grid-row: 2; }
+.hm .v8s-02 .claim.hc-has-obj > .claim__title { grid-row: 2; }
+.hm .v8s-02 .claim.hc-has-obj > .claim__body { grid-row: 3; }
+.hm .v8s-02 .claim.hc-has-obj > .claim__chev { grid-row: 2 / span 2; }
+/* Concept cards get the same smaller object, so a card reads as one family in both skins. */
+.hm .hc .hc-obj { height: clamp(68px, 6vw, 96px) !important; }
+
+/* ---------- 5. The concept's bands, adjusted to sit in the live page ---------- */
+/* Pricing and proof: four and three across, as on the live page (no rail at desktop). */
+@media (min-width: 900px) {
+  .hm .hc .pricing-grid { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
+  .hm .hc .proof-cells { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+}
+/* Contact: no photographic plate behind the copy (the warm plate washed the heading out). */
+.hm .v8s-16 .contact { background-image: none !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  .hm .hc-obj { transition: none !important; }
+  .hm .hc-has-obj:hover .hc-obj { transform: none !important; }
+}
+
+/* The concept sets body copy to its ink through `.hc.v8 main ...`, which needs .hc around <main>.
+   Here each band is its own .hc, so the same rule is restated per band; :where() keeps it below the
+   white-card rules, which must still win inside cards. */
+:where(.hm) .hc.v8 .v8-body,
+:where(.hm) .hc.v8 .v8-section p { color: var(--ink-2) !important; }

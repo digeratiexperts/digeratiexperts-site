@@ -5,19 +5,33 @@ type Theme = "dark" | "light";
 
 function readInitialTheme(): Theme {
   if (typeof window === "undefined") return "dark";
-  const stored = window.localStorage.getItem("hc-theme");
+  let stored: string | null = null;
+  try {
+    stored = window.localStorage.getItem("hc-theme");
+  } catch {
+    stored = null;
+  }
   if (stored === "light" || stored === "dark") return stored;
   return window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
 }
 
-export function useTheme() {
+export type { Theme };
+
+/** `applyToRoot: false` leaves the page's own `.hc` elements alone (the mesh themes each band itself). */
+export function useTheme({ applyToRoot = true }: { applyToRoot?: boolean } = {}) {
   const [theme, setTheme] = useState<Theme>(readInitialTheme);
   useEffect(() => {
     document.documentElement.dataset.hcTheme = theme;
-    const root = document.querySelector<HTMLElement>(".hc");
-    if (root) root.dataset.theme = theme;
-    window.localStorage.setItem("hc-theme", theme);
-  }, [theme]);
+    if (applyToRoot) {
+      const root = document.querySelector<HTMLElement>(".hc");
+      if (root) root.dataset.theme = theme;
+    }
+    try {
+      window.localStorage.setItem("hc-theme", theme);
+    } catch {
+      // Storage can be blocked (private window); the toggle still works for this visit.
+    }
+  }, [theme, applyToRoot]);
   return { theme, setTheme, toggle: () => setTheme((t) => (t === "dark" ? "light" : "dark")) };
 }
 
