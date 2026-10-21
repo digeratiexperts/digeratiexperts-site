@@ -3172,6 +3172,7 @@ html.d2-reveal-ready .d2-fcard[data-d2-reveal="in"]:hover {
   list-style: none;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
+  scroll-padding: 1.25rem;
   scrollbar-width: none;
 }
 .d2-why::-webkit-scrollbar {

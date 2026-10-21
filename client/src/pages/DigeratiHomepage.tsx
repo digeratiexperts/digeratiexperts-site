@@ -54,7 +54,8 @@ const homepageSections: { id: string; label: string; theme: 'dark' | 'light'; sh
  */
 export const DigeratiHomepage = ({ structuredData = true }: { structuredData?: boolean } = {}): JSX.Element => {
   useSEO({
-    title: 'Managed Security Service Provider',
+    // Must match shared/routeMeta.json "/" (Joe-approved, 2026-10-20). Guarded by DigeratiHomepage.title.test.ts.
+    title: 'Managed IT Services & Cybersecurity in Arizona',
     description: "Arizona MSP/MSSP. Cybersecurity-first managed IT, 24/7 emergency incident response, and a Cyber Risk Assessment that matches the operating model to your environment.",
     canonical: '/',
   });

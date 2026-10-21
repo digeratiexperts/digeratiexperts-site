@@ -30,6 +30,25 @@
 
 version: 2
 claims:
+  - id: de-bug-hunt-2026-10-21
+    owner: claude
+    subsystem: server-platform, homepage-seo
+    branch: claude/bug-hunt-2026-10-21
+    base_sha: 946824a3
+    files:
+      - server/index.ts (express-async-errors import; unhandledRejection logs error type only)
+      - server/asyncRouteErrors.test.ts
+      - client/src/pages/DigeratiHomepage.tsx (homepage useSEO title matches routeMeta "/")
+      - client/src/pages/DigeratiHomepage.title.test.ts
+      - package.json, package-lock.json (express-async-errors only)
+    status: active
+    started: 2026-10-21
+    note: >-
+      Bug hunt on current main. Fixed: async route throws never reached error
+      middleware under Express 4, so ~39 routes hung and dropped the reason;
+      unhandled rejections were logged without a reason; the homepage client
+      useSEO overwrote the Joe-approved title (2026-10-20) with an older one
+      after hydration.
   - id: db-dropout-deadlines
     owner: claude
     subsystem: platform-health
@@ -45,7 +64,7 @@ claims:
       - server/zoho/oauth/db-store.ts, server/zoho/oauth/db-store.test.ts (token-store deadlines and memory fallback, ported from PR 659)
       - server/healthProbe.ts, server/healthProbe.test.ts (SELECT 1 round trip and release-with-error on top of PR 665)
       - .github/workflows/production-health.yml (/healthz read in the probe step and its issue text)
-    status: active
+    status: verified-live
     started: 2026-10-20
     note: >-
       Hardening after #657 and #656 (2026-10-19 23:36 to 2026-10-20 13:43 UTC):
@@ -64,7 +83,46 @@ claims:
       14:10Z; markDatabaseDown and the bounded probe) is the base this builds
       on; PR 659 (same session as the #657 diagnosis) conflicted with 665 on
       db.ts and healthProbe.ts, so its unique pieces were ported here with
-      credit and 659 closed as superseded.
+      credit and 659 closed as superseded. PR 663 merged 2026-10-20 19:21Z
+      (8f718800). Main was red at the production dependency audit
+      (follow-redirects advisory, PR 671/672) and at the build (PR 669's
+      unclosed CSS block, PR 671); live 2026-10-20 20:21Z on release
+      ac218ba3: /healthz 200, /ready 200, /api/health database connected
+      with CRM, Desk, Books and Payments connected, /api/zoho/desk/status
+      connected, process uptime 427 s, read-only checks only.
+  - id: db-hardening-round2
+    owner: claude
+    subsystem: platform-health
+    branch: claude/sleepy-archimedes-mccoav
+    base_sha: ac218ba3
+    files:
+      - "server/db.ts (initInFlight guard: markDatabaseDown and reconnectDatabase during a connect attempt; late-connect guard in the boot path)"
+      - server/db.test.ts (new)
+      - server/healthProbe.ts, server/healthProbe.test.ts (one deadline for connect + SELECT 1; late client released with an error)
+      - server/zoho/oauth/db-store.ts, server/zoho/oauth/db-store.test.ts (outage classification through DrizzleQueryError cause / AggregateError errors / pg codes; error-chain messages; pool generation)
+      - "server/storage.ts (resolveStorage and DatabaseStorage.getDb: 503 instead of a TypeError after a post-boot drop)"
+      - server/storage.droppedDb.test.ts (new)
+      - scripts/qa/portal-layout-closeout.mjs (pre-bundle the fixture's lazy deps)
+    status: verified-live
+    started: 2026-10-20
+    note: >-
+      Round two of the #657 hardening, from the adversarial review of the PR
+      663 port (2026-10-20). PR 676 merged 2026-10-20 21:17Z (4f1b483d),
+      deploy job green 21:33Z, live 21:43Z: release.txt 4f1b483d, /healthz
+      200, /ready 200, /api/health database connected with the Zoho map
+      connected, /api/zoho/desk/status connected, process uptime 591 s
+      (read-only checks). Three defects: drizzle 0.44+ wraps every driver
+      error in DrizzleQueryError ("Failed query: …", pg error as cause), so
+      looksLikeDatabaseOutage only ever matched the deadline path;
+      markDatabaseDown() during a connect attempt (boot, or the probe's
+      reconnect) ended the pool that attempt was building, and the late
+      success then set dbReady with pool null and db bound to nothing; the
+      probe gave the connect and the query a deadline each (up to 28 s per
+      /healthz call) and leaked a client that connected after the deadline.
+      Joe, 2026-10-20: "All approved, merge, tell me what you need."
+      Overlap check: de-db-dead-pool-recovery (PR 665, merged) owned
+      server/db.ts markDatabaseDown and healthProbe.ts; this builds on it.
+      No open PR touches these files.
   - id: de-db-dead-pool-recovery
     owner: claude
     subsystem: server-database
@@ -4159,13 +4217,17 @@ claims:
       - server/index.ts (production SPA catch-all only)
       - package.json (route-meta scripts only)
       - .github/workflows/ci.yml (one check step after the public smoke)
-    status: implemented
+      - client/src/pages/concepts/home-chapters.css (one missing closing brace; unblocks the build)
+      - package-lock.json (follow-redirects 1.16.1, same change as PRs 671-673)
+    status: verified-live
+    released: 2026-10-20
+    pr: "661, 674"
     started: 2026-10-20
     note: >-
       Joe picked "Snapshot file" (2026-10-20): every route sent the same title,
       description and no canonical before JavaScript ran, so Google saw 118
       identical pages. The snapshot records what each page already sets in the
-      browser; the server sends it. No page wording changes.
+      browser; the server sends it. No page wording changes. Follow-up 2026-10-20: "/" was served by express.static and skipped the snapshot (live release 72c176ff); static index is off and the check now also reads the raw HTML title.
 
   - id: search-title-wording
     owner: claude
@@ -4180,7 +4242,9 @@ claims:
       - client/src/pages/routes/servicePages.tsx (managed-it-support and vcio-strategy seoTitle / metaDescription)
       - shared/routeMeta.json (regenerated)
       - docs/CONTENT-TOOLING-PLAN.md (Step 3 item 4 note)
-    status: in-progress
+    status: verified-live
+    released: 2026-10-20
+    pr: "667"
     started: 2026-10-20
     note: >-
       Joe, 2026-10-20, on the status page's search section: "All approved and

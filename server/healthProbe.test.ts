@@ -1,12 +1,15 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { databaseAcceptsConnections, memoryOnlySmokeAllowed, probeStatus } from "./healthProbe";
 
 const ORIGINAL = process.env.DE_SMOKE_ALLOW_MEMORY_ONLY;
 
 afterEach(() => {
+  vi.useRealTimers();
   if (ORIGINAL === undefined) delete process.env.DE_SMOKE_ALLOW_MEMORY_ONLY;
   else process.env.DE_SMOKE_ALLOW_MEMORY_ONLY = ORIGINAL;
 });
+
+const okQuery = async () => ({ rows: [{ "?column?": 1 }] });
 
 describe("health probes", () => {
   it("fails when Postgres is down", () => {
@@ -33,7 +36,7 @@ describe("health probes", () => {
     const mod: any = {
       pool: null,
       reconnectDatabase: async () => {
-        mod.pool = { connect: async () => ({ release: () => released.push("ok") }) };
+        mod.pool = { connect: async () => ({ release: () => released.push("ok"), query: okQuery }) };
         return true;
       },
     };
@@ -57,7 +60,7 @@ describe("health probes", () => {
       markDatabaseDown: (reason: string) => { log.push(`down:${reason}`); mod.pool = null; },
       reconnectDatabase: async () => {
         log.push("reconnect");
-        mod.pool = { connect: async () => ({ release: () => log.push("released") }) };
+        mod.pool = { connect: async () => ({ release: () => log.push("released"), query: okQuery }) };
         return true;
       },
     };
@@ -124,10 +127,71 @@ describe("health probes", () => {
     expect(downReasons).toEqual(["database probe timed out after 20ms"]);
   });
 
+  it("releases, with an error, a connection that arrives after the probe gave up", async () => {
+    // Nobody is waiting for that client any more; released silently it would
+    // sit in the pool as a live checkout, or come back as a socket nobody proved.
+    const releasedWith: unknown[] = [];
+    let resolveConnect!: (client: unknown) => void;
+    const mod: any = {
+      pool: { connect: () => new Promise((resolve) => { resolveConnect = resolve; }) },
+      markDatabaseDown: () => { mod.pool = null; },
+      reconnectDatabase: async () => false,
+    };
+    expect(await databaseAcceptsConnections(async () => mod, 20)).toBe(false);
+    resolveConnect({ release: (error?: Error) => releasedWith.push(error), query: okQuery });
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    expect(releasedWith).toHaveLength(1);
+    expect(releasedWith[0]).toBeInstanceOf(Error);
+    expect((releasedWith[0] as Error).message).toMatch(/after the 20ms deadline/);
+  });
+
+  it("gives the connect and the query one deadline between them, not one each", async () => {
+    // Connect answers at 30 ms, the query never does, deadline 50 ms: the
+    // probe must be settled by 55 ms, not at 80 ms (30 + a fresh 50).
+    vi.useFakeTimers();
+    const mod: any = {
+      pool: {
+        connect: () => new Promise((resolve) => {
+          setTimeout(() => resolve({ release() {}, query: () => new Promise<never>(() => {}) }), 30);
+        }),
+      },
+      markDatabaseDown: () => { mod.pool = null; },
+      reconnectDatabase: async () => false,
+    };
+    let settled: boolean | null = null;
+    const probe = databaseAcceptsConnections(async () => mod, 50).then((value) => { settled = value; return value; });
+    await vi.advanceTimersByTimeAsync(55);
+    expect(settled).toBe(false);
+    await probe;
+  });
+
+  it("does not mark a saturated pool down: a deadline there means busy, not dead", async () => {
+    let marked = false;
+    const mod: any = {
+      pool: { connect: () => new Promise(() => {}), totalCount: 5, idleCount: 0, waitingCount: 3, options: { max: 5 } },
+      markDatabaseDown: () => { marked = true; },
+      reconnectDatabase: async () => { throw new Error("must not reconnect a busy pool"); },
+    };
+    expect(await databaseAcceptsConnections(async () => mod, 20)).toBe(false);
+    expect(marked).toBe(false);
+  });
+
+  it("passes the pool generation it probed to markDatabaseDown", async () => {
+    const calls: unknown[][] = [];
+    const mod: any = {
+      dbGeneration: 7,
+      pool: { connect: async () => { throw new Error("Connection terminated unexpectedly"); } },
+      markDatabaseDown: (...args: unknown[]) => { calls.push(args); mod.pool = null; },
+      reconnectDatabase: async () => false,
+    };
+    expect(await databaseAcceptsConnections(async () => mod)).toBe(false);
+    expect(calls).toEqual([["Connection terminated unexpectedly", 7]]);
+  });
+
   it("does not reconnect when a pool already exists", async () => {
     let attempts = 0;
     const mod = {
-      pool: { connect: async () => ({ release() {} }) },
+      pool: { connect: async () => ({ release() {}, query: okQuery }) },
       reconnectDatabase: async () => (attempts++, true),
     };
     expect(await databaseAcceptsConnections(async () => mod)).toBe(true);

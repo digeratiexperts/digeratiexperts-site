@@ -1,6 +1,12 @@
 import dotenv from "dotenv";
 dotenv.config();
 
+// Express 4 does not forward a rejected promise from an async handler to error
+// middleware, so a throw inside an async route left the request hanging with
+// the reason lost. This patches Express to route async errors to next(err).
+// Must load before any route is registered.
+import "express-async-errors";
+
 import { enforceProductionConfig } from "./production.config";
 // Fail closed before serving traffic: missing/unsafe required production
 // config (JWT_SECRET, DATABASE_URL) terminates startup with a clear error.
@@ -49,7 +55,10 @@ process.on('unhandledRejection', (reason, promise) => {
     console.warn('⚠️ Unhandled rejection (database connection, tolerated)');
     return;
   }
-  console.error('Unhandled Rejection');
+  // Log the error type only. Messages and objects can carry request data, so the
+  // raw reason is never logged (see requestTelemetry.test.ts).
+  const kind = reason instanceof Error ? reason.name : typeof reason;
+  console.error('Unhandled Rejection:', kind);
 });
 
 process.on('uncaughtException', (error) => {
@@ -600,6 +609,8 @@ function listEndpoints(): Array<{ method: string; path: string }> {
     const indexPath = path.join(distPath, "index.html");
     
     app.use(express.static(distPath, {
+      // "/" must reach the catch-all below like every other route, so it gets its own head tags (server/routeMeta.ts).
+      index: false,
       // Every file gets an explicit header below; only Vite's hashed output is cached forever.
       cacheControl: false,
       etag: true,
@@ -619,8 +630,8 @@ function listEndpoints(): Array<{ method: string; path: string }> {
         const known = isKnownSpaPath(req.path);
         const shell = readIndexShell(indexPath);
         res.status(known ? 200 : 404);
-        // Same caching as the sendFile this replaced: revalidate every time, keyed on the build's mtime.
-        res.setHeader("Cache-Control", "public, max-age=0");
+        // The shell is HTML: never stored (staticCacheControl), revalidated against the build's mtime.
+        res.setHeader("Cache-Control", cacheControlFor("index.html"));
         res.setHeader("Last-Modified", shell.lastModified);
         res.type("html").send(known ? applyRouteMeta(shell.html, routeMetaFor(req.path)) : shell.html);
       } else {
