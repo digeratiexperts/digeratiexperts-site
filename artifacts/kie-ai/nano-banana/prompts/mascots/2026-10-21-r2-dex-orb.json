@@ -1,0 +1,9 @@
+{
+  "prompt": "Studio product photograph on a seamless dark charcoal floor and backdrop (#0a0a0a), soft key light from the upper left, a faint violet rim light from behind, gentle contact shadows, 85mm lens, f/4, premium Apple-style product photography. One character, centered: a frosted white glass orb about the size of a grapefruit resting on the floor, two calm vertical dark eye-ovals on its front surface. Deep inside the orb, four small horizontal rounded gold bars stacked like a logo mark (wide, short, short, wide) glow softly through the frosted glass like a warm core, with a faint magenta halo around them, subtle subsurface scattering. No text.",
+  "negative_prompt": "text, letters, words, watermark, logo text, people, human faces, hands, mouths, cartoon outlines, childish toy look, neon cyberpunk, clutter, extra characters, scratches, split or broken bars",
+  "api_parameters": {
+    "aspect_ratio": "16:9",
+    "resolution": "2K",
+    "output_format": "png"
+  }
+}
