@@ -37,6 +37,9 @@ claims:
     base_sha: 8ea622a6
     files:
       - client/src/pages/concepts/home-chapters.css (appended blocks only; concept route)
+      - client/src/pages/concepts/HomeChapters.tsx (nav docking, close signature, hand-off peak)
+      - scrollcraft/builds/home-mesh/BRIEF.md (new)
+      - scrollcraft/FINGERPRINTS.md (one appended row)
     status: active
     pr: "follow-up to 669"
     started: 2026-10-21

@@ -495,3 +495,55 @@
 .hc-theme-toggle { color: var(--card-ink); }
 /* Figures are paragraphs too; keep them at full card ink after the body rule above. */
 .hc.v8 :is(.stats-cell, .stats-cells > li, .pricing-card) :is(.v8-stat, .v8-num) { color: var(--card-ink) !important; }
+
+/* ---------- Scrollcraft layer (scrollcraft/builds/home-mesh/BRIEF.md) ---------- */
+/* Signature: the pill becomes the principal. The chapter links close in toward the
+   centre and one assessment button, with Joe's portrait, takes their place. */
+.hc-nav { position: sticky; }
+.hc-nav ul { transition: clip-path var(--t-mid) var(--ease), opacity var(--t-mid) var(--ease); clip-path: inset(0 0 0 0 round 999px); }
+.hc-nav.is-closing ul { clip-path: inset(0 50% 0 50% round 999px); opacity: 0; visibility: hidden; transition: clip-path var(--t-mid) var(--ease), opacity var(--t-mid) var(--ease), visibility 0s linear var(--t-mid); }
+.hc-nav__principal {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%) scale(0.94);
+  display: inline-flex; align-items: center; gap: 10px; min-height: 44px; padding: 4px 16px 4px 4px;
+  border-radius: 999px; background: var(--accent); color: #fff; text-decoration: none; white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.3), 0 12px 28px -14px rgba(211,18,106,0.7);
+  opacity: 0; visibility: hidden; pointer-events: none;
+  transition: opacity var(--t-mid) var(--ease), transform var(--t-mid) var(--ease), visibility 0s linear var(--t-mid);
+}
+.hc-nav.is-closing .hc-nav__principal { opacity: 1; visibility: visible; pointer-events: auto; transform: translate(-50%, -50%) scale(1); transition: opacity var(--t-mid) var(--ease) 80ms, transform var(--t-mid) var(--ease) 80ms; }
+.hc-nav__principal img { width: 36px; height: 36px; border-radius: 999px; object-fit: cover; object-position: 50% 20%; }
+.hc-nav__principal-copy { display: grid; line-height: 1.15; }
+.hc-nav__principal-copy > :first-child { font-size: 14px; font-weight: 600; }
+.hc-nav__principal-copy > :last-child { font-size: 12px; }
+.hc-nav__principal:hover { background: #b50f5a; }
+.hc-nav__principal:focus-visible { outline: 2px solid #fff; outline-offset: 2px; box-shadow: 0 0 0 4px var(--accent); }
+@media (max-width: 520px) { .hc-nav__principal-copy > :last-child { display: none; } .hc-nav__principal { left: var(--gutter); transform: translate(0, -50%) scale(0.94); } .hc-nav.is-closing .hc-nav__principal { transform: translate(0, -50%); } }
+
+/* Peak: the hand-off. A magenta line runs from Signal through human triage and
+   lands on the named owner, which lights. Scroll writes --hc-handoff. */
+.hc .v8s-12 .dg { position: relative; }
+.hc .v8s-12 .dg::before {
+  content: ""; position: absolute; left: 12px; top: 10px; bottom: 30px; width: 2px; border-radius: 2px;
+  background: var(--accent); transform-origin: top; transform: scaleY(var(--hc-handoff, 0)); z-index: 1;
+}
+.hc .v8s-12 .dg-step:last-child .v8-seq { transition: color var(--t-mid) var(--ease); }
+.hc .v8s-12 .dg-step:last-child .dg-label { transition: color var(--t-mid) var(--ease); }
+.hc .v8s-12 .dg.is-owned .dg-step:last-child .v8-seq,
+.hc .v8s-12 .dg.is-owned .dg-step:last-child .dg-label { color: #b50f5a !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  .hc-nav ul, .hc-nav.is-closing ul, .hc-nav__principal, .hc-nav.is-closing .hc-nav__principal { transition: none !important; }
+}
+.hc-nav { top: var(--hc-nav-top, 0px); }
+.hc-section { scroll-margin-top: calc(var(--hc-nav-top, 0px) + 64px); }
+.hc .v8s-12 .dg::before { top: 28px; bottom: auto; height: var(--hc-handoff-len, 0px); }
+/* The step numbers sit above the line, on the card's own white, so it passes behind them. */
+.hc.v8 .v8s-12 .dg-step .v8-seq { position: relative; z-index: 2; background: var(--card) !important; padding: 0 0 6px !important; }
+/* On a phone the button needs the whole row; the theme toggle steps out while it shows. */
+@media (max-width: 520px) {
+  .hc-nav__toggle { transition: opacity var(--t-mid) var(--ease); }
+  .hc-nav.is-closing .hc-nav__toggle { opacity: 0; visibility: hidden; }
+}
+/* Contact footer: the copy buttons and the newsletter field are white here too. */
+.hc .v8-copy__no, .hc #footer-newsletter-email { color: var(--card-ink) !important; }
+.hc #footer-newsletter-email::placeholder { color: var(--card-ink-3) !important; }
