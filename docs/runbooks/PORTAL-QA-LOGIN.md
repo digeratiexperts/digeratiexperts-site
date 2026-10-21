@@ -11,16 +11,14 @@ Secrets never go in chat, in git, in an issue, or in a PR description.
 
 ## 1. Create the test account
 
-What the code does today (checked against `server/routes.ts` and
-`client/src/pages/portal/`):
+What the code does today (checked against `server/portalUserInvite.ts` and
+`client/src/pages/portal/AdminCompanies.tsx`, 2026-10-21):
 
 - Manage Companies (`/portal/admin/companies`, DE admin only) has **Add
-  Company** and a company detail view with a user list. It does **not** create
-  portal users, and it has no edit or deactivate control.
-- Portal users come from self-signup at `/portal/signup` (email, username,
-  password) or Zoho sign-in for allow-listed emails. Signup creates a user with
-  role `user`, org role `staff` (a non-admin, non-IT-contact client user) and
-  its own company named after the username with "(Prospect)" appended.
+  Company**, and each company's details window has **Add user** (PR 538). Add
+  user creates a plain client user (role `user`, org role `staff`) inside that
+  company and emails a single-use link, valid for 7 days, to choose a password.
+  Nobody else sees or sets the password.
 - The portal server does not read `PORTAL_QA_EMAIL` or `PORTAL_QA_PASSWORD`.
   Setting them on the VPS does not create an account. They are only read by
   `scripts/qa/portal-prod-check.mjs`.
@@ -29,30 +27,24 @@ Steps:
 
 1. Pick a mailbox you control for the test user, for example
    `qa+portal@digeratiexperts.com` (a plus-address or alias that lands in a DE
-   inbox). The verification email goes there.
-2. Open `https://digeratiexperts.com/portal/signup`. Use that email, username
-   `de-qa-test` (the company will then show as "de-qa-test (Prospect)"; there
-   is no screen to rename it, so that name is the closest to "DE QA (test)"
-   available today) and a long random password (at least 8 characters, one
-   capital, one number; use a password manager).
-3. Click the verification link in the email. Password sign-in is refused for
-   non-admin users until the email is verified.
-4. Keep the role as it is. Do not make this user a DE admin and do not mark it
+   inbox).
+2. In Manage Companies, click **Add Company** and create `DE QA (test)`, or
+   open an existing internal company. Do not use a real client's company.
+3. Open the company's details, click **Add user**, and enter `DE QA Test` and
+   the mailbox from step 1. The toast says either that the link was emailed or
+   that the email could not be sent (then use **Forgot password** on the
+   sign-in page with the same address).
+4. Open the email and set a long random password (at least 8 characters, one
+   capital, one number; use a password manager). The link already proves the
+   address, so there is no separate verification step.
+5. Keep the role as it is. Do not make this user a DE admin and do not mark it
    a Company IT Contact. Non-admin means the check sees what a real client
    sees. Expect a few client pages (People, Approvals queue) to answer 403 for
    a plain staff user; the check only fails on page errors and HTTP 5xx.
-5. Leave MFA **off**. The check script cannot answer an MFA prompt, and the
+6. Leave MFA **off**. The check script cannot answer an MFA prompt, and the
    server only asks for MFA when that user has switched it on in Settings; it
    is not forced for any role. Do not enable it on this account.
-6. In Manage Companies, find "de-qa-test (Prospect)" and confirm the user is
-   listed and Active.
-
-Known gap to check on first use: `/portal/signup` posts no Cloudflare
-Turnstile token, while the server requires one when `TURNSTILE_SECRET_KEY` is
-set. If signup answers "Bot verification required", create the user another
-way (a developer can add one, or sign in once through Zoho SSO if the email is
-on `PORTAL_OAUTH_EMAIL_ALLOWLIST`) and tell the dev team so signup can be
-fixed.
+7. Reopen the company's details and confirm the user is listed and Active.
 
 ## 2. Store the values
 
