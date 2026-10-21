@@ -30,6 +30,25 @@
 
 version: 2
 claims:
+  - id: de-bug-hunt-2026-10-21
+    owner: claude
+    subsystem: server-platform, homepage-seo
+    branch: claude/bug-hunt-2026-10-21
+    base_sha: 946824a3
+    files:
+      - server/index.ts (express-async-errors import; unhandledRejection logs error type only)
+      - server/asyncRouteErrors.test.ts
+      - client/src/pages/DigeratiHomepage.tsx (homepage useSEO title matches routeMeta "/")
+      - client/src/pages/DigeratiHomepage.title.test.ts
+      - package.json, package-lock.json (express-async-errors only)
+    status: active
+    started: 2026-10-21
+    note: >-
+      Bug hunt on current main. Fixed: async route throws never reached error
+      middleware under Express 4, so ~39 routes hung and dropped the reason;
+      unhandled rejections were logged without a reason; the homepage client
+      useSEO overwrote the Joe-approved title (2026-10-20) with an older one
+      after hydration.
   - id: db-dropout-deadlines
     owner: claude
     subsystem: platform-health
