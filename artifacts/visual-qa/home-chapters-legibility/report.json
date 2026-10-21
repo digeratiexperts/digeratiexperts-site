@@ -1,0 +1,1186 @@
+{
+  "url": "http://localhost:5180/concepts/home-chapters",
+  "widths": {
+    "dark-390": {
+      "axe": {
+        "violations": [
+          {
+            "id": "color-contrast",
+            "impact": "serious",
+            "nodes": 9,
+            "help": "Elements must meet minimum color contrast ratio thresholds",
+            "targets": [
+              {
+                "target": [
+                  "#lead-name"
+                ],
+                "html": "<input class=\"v8-input\" id=\"lead-name\" type=\"text\" placeholder=\" \" autocomplete=\"name\" required=\"\" data-testid=\"input-lead-full-name\" name=\"",
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 1.09 (foreground color: #f5f5f5, background color: #ffffff, font size: 11.3pt (15px), fon"
+              },
+              {
+                "target": [
+                  "#lead-email"
+                ],
+                "html": "<input class=\"v8-input\" id=\"lead-email\" type=\"email\" placeholder=\" \" autocomplete=\"email\" required=\"\" data-testid=\"input-lead-email\" name=\"e",
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 1.09 (foreground color: #f5f5f5, background color: #ffffff, font size: 11.3pt (15px), fon"
+              },
+              {
+                "target": [
+                  "#c-name"
+                ],
+                "html": "<input class=\"v8-input\" id=\"c-name\" type=\"text\" placeholder=\" \" autocomplete=\"name\" required=\"\" data-testid=\"input-contact-name\" name=\"name\"",
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 1.09 (foreground color: #f5f5f5, background color: #ffffff, font size: 11.3pt (15px), fon"
+              },
+              {
+                "target": [
+                  "#c-email"
+                ],
+                "html": "<input class=\"v8-input\" id=\"c-email\" type=\"email\" placeholder=\" \" autocomplete=\"email\" required=\"\" data-testid=\"input-contact-email\" name=\"e",
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 1.09 (foreground color: #f5f5f5, background color: #ffffff, font size: 11.3pt (15px), fon"
+              },
+              {
+                "target": [
+                  "#c-phone"
+                ],
+                "html": "<input class=\"v8-input\" id=\"c-phone\" type=\"tel\" placeholder=\" \" autocomplete=\"tel\" required=\"\" data-testid=\"input-contact-phone\" name=\"phone",
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 1.09 (foreground color: #f5f5f5, background color: #ffffff, font size: 11.3pt (15px), fon"
+              },
+              {
+                "target": [
+                  "#c-company"
+                ],
+                "html": "<input class=\"v8-input\" id=\"c-company\" type=\"text\" placeholder=\" \" autocomplete=\"organization\" data-testid=\"input-contact-company\" name=\"com",
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 1.09 (foreground color: #f5f5f5, background color: #ffffff, font size: 11.3pt (15px), fon"
+              }
+            ]
+          }
+        ],
+        "incomplete": [
+          "color-contrast",
+          "duplicate-id-aria"
+        ]
+      },
+      "overflow": 0,
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "sections": 14,
+      "cards": 21,
+      "links": 182,
+      "forms": 3,
+      "theme": "dark",
+      "textNodes": [],
+      "consoleErrors": [
+        "Warning: React does not recognize the `%s` prop on a DOM element. If you intentionally want it to appear in the DOM as a custom attribute, spell it as lowercase `%s` instead. If you accidentally passed it from a parent component, remove it from the DOM element.%s fetchPriority fetchpriority \n    at img\n    at figure\n    at div\n    at section\n    at main\n    at div\n    at HomeChapters (http://localhost:5180/src/pages/concepts/HomeChapters.tsx?t=1792534428216:220:19)\n    at Suspense\n    at component\n    at Route (http://localhost:5180/@fs/C:/Users/Joe/DE/Repos/digeratiexperts-site-wt-home-exploration/node_modules/.vite/deps/wouter.js?v=819543d3:265:16)\n    at Switch (http://localhost:5180/@fs/C:/Users/Joe/DE/Repos/digeratiexperts-site-wt-home-exploration/node_modules/.vite/deps/wouter.js?v=819543d3:321:17)\n    at Router\n    at div\n    at AnnouncerProvider (http://localhost:5180/src/components/AccessibleAnnouncer.tsx:29:37)\n    at AppContent (http://localhost:5180/src/App.tsx?t=1792534428216:3418:3)\n    at Provider (http://localhost:5180/@fs/C:/Users/Joe/DE/Repos/digeratiexperts-site-wt-home-exploration/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=d84b8d70:38:15)\n    at TooltipProvider (http://localhost:5180/@fs/C:/Users/Joe/DE/Repos/digeratiexperts-site-wt-home-exploration/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=0549a986:968:5)\n    at BookingProvider (http://localhost:5180/src/contexts/BookingContext.tsx:22:35)\n    at QueryClientProvider (http://localhost:5180/@fs/C:/Users/Joe/DE/Repos/digeratiexperts-site-wt-home-exploration/node_modules/.vite/deps/@tanstack_react-query.js?v=4298d5ba:2805:3)\n    at _a (http://localhost:5180/@fs/C:/Users/Joe/DE/Repos/digeratiexperts-site-wt-home-exploration/node_modules/.vite/deps/react-helmet-async.js?v=7cd5b8fe:624:5)\n    at ErrorBoundary (http://localhost:5180/src/components/ErrorBoundary.tsx:9:5)\n    at App"
+      ]
+    },
+    "dark-768": {
+      "axe": {
+        "violations": [
+          {
+            "id": "color-contrast",
+            "impact": "serious",
+            "nodes": 10,
+            "help": "Elements must meet minimum color contrast ratio thresholds",
+            "targets": [
+              {
+                "target": [
+                  "#lead-name"
+                ],
+                "html": "<input class=\"v8-input\" id=\"lead-name\" type=\"text\" placeholder=\" \" autocomplete=\"name\" required=\"\" data-testid=\"input-lead-full-name\" name=\"",
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 1.09 (foreground color: #f5f5f5, background color: #ffffff, font size: 11.3pt (15px), fon"
+              },
+              {
+                "target": [
+                  "#lead-email"
+                ],
+                "html": "<input class=\"v8-input\" id=\"lead-email\" type=\"email\" placeholder=\" \" autocomplete=\"email\" required=\"\" data-testid=\"input-lead-email\" name=\"e",
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 1.09 (foreground color: #f5f5f5, background color: #ffffff, font size: 11.3pt (15px), fon"
+              },
+              {
+                "target": [
+                  "#lead-phone"
+                ],
+                "html": "<input class=\"v8-input\" id=\"lead-phone\" type=\"tel\" placeholder=\" \" autocomplete=\"tel\" data-testid=\"input-lead-phone\" name=\"phone\">",
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 1.09 (foreground color: #f5f5f5, background color: #ffffff, font size: 11.3pt (15px), fon"
+              },
+              {
+                "target": [
+                  "#c-name"
+                ],
+                "html": "<input class=\"v8-input\" id=\"c-name\" type=\"text\" placeholder=\" \" autocomplete=\"name\" required=\"\" data-testid=\"input-contact-name\" name=\"name\"",
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 1.09 (foreground color: #f5f5f5, background color: #ffffff, font size: 11.3pt (15px), fon"
+              },
+              {
+                "target": [
+                  "#c-email"
+                ],
+                "html": "<input class=\"v8-input\" id=\"c-email\" type=\"email\" placeholder=\" \" autocomplete=\"email\" required=\"\" data-testid=\"input-contact-email\" name=\"e",
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 1.09 (foreground color: #f5f5f5, background color: #ffffff, font size: 11.3pt (15px), fon"
+              },
+              {
+                "target": [
+                  "#c-phone"
+                ],
+                "html": "<input class=\"v8-input\" id=\"c-phone\" type=\"tel\" placeholder=\" \" autocomplete=\"tel\" required=\"\" data-testid=\"input-contact-phone\" name=\"phone",
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 1.09 (foreground color: #f5f5f5, background color: #ffffff, font size: 11.3pt (15px), fon"
+              }
+            ]
+          }
+        ],
+        "incomplete": [
+          "color-contrast",
+          "duplicate-id-aria"
+        ]
+      },
+      "overflow": 0,
+      "scrollWidth": 768,
+      "clientWidth": 768,
+      "sections": 14,
+      "cards": 21,
+      "links": 182,
+      "forms": 3,
+      "theme": "dark",
+      "textNodes": [],
+      "consoleErrors": [
+        "Warning: React does not recognize the `%s` prop on a DOM element. If you intentionally want it to appear in the DOM as a custom attribute, spell it as lowercase `%s` instead. If you accidentally passed it from a parent component, remove it from the DOM element.%s fetchPriority fetchpriority \n    at img\n    at figure\n    at div\n    at section\n    at main\n    at div\n    at HomeChapters (http://localhost:5180/src/pages/concepts/HomeChapters.tsx?t=1792534428216:220:19)\n    at Suspense\n    at component\n    at Route (http://localhost:5180/@fs/C:/Users/Joe/DE/Repos/digeratiexperts-site-wt-home-exploration/node_modules/.vite/deps/wouter.js?v=819543d3:265:16)\n    at Switch (http://localhost:5180/@fs/C:/Users/Joe/DE/Repos/digeratiexperts-site-wt-home-exploration/node_modules/.vite/deps/wouter.js?v=819543d3:321:17)\n    at Router\n    at div\n    at AnnouncerProvider (http://localhost:5180/src/components/AccessibleAnnouncer.tsx:29:37)\n    at AppContent (http://localhost:5180/src/App.tsx?t=1792534428216:3418:3)\n    at Provider (http://localhost:5180/@fs/C:/Users/Joe/DE/Repos/digeratiexperts-site-wt-home-exploration/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=d84b8d70:38:15)\n    at TooltipProvider (http://localhost:5180/@fs/C:/Users/Joe/DE/Repos/digeratiexperts-site-wt-home-exploration/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=0549a986:968:5)\n    at BookingProvider (http://localhost:5180/src/contexts/BookingContext.tsx:22:35)\n    at QueryClientProvider (http://localhost:5180/@fs/C:/Users/Joe/DE/Repos/digeratiexperts-site-wt-home-exploration/node_modules/.vite/deps/@tanstack_react-query.js?v=4298d5ba:2805:3)\n    at _a (http://localhost:5180/@fs/C:/Users/Joe/DE/Repos/digeratiexperts-site-wt-home-exploration/node_modules/.vite/deps/react-helmet-async.js?v=7cd5b8fe:624:5)\n    at ErrorBoundary (http://localhost:5180/src/components/ErrorBoundary.tsx:9:5)\n    at App"
+      ]
+    },
+    "dark-1440": {
+      "axe": {
+        "violations": [
+          {
+            "id": "color-contrast",
+            "impact": "serious",
+            "nodes": 9,
+            "help": "Elements must meet minimum color contrast ratio thresholds",
+            "targets": [
+              {
+                "target": [
+                  "#lead-name"
+                ],
+                "html": "<input class=\"v8-input\" id=\"lead-name\" type=\"text\" placeholder=\" \" autocomplete=\"name\" required=\"\" data-testid=\"input-lead-full-name\" name=\"",
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 1.09 (foreground color: #f5f5f5, background color: #ffffff, font size: 11.3pt (15px), fon"
+              },
+              {
+                "target": [
+                  "#lead-email"
+                ],
+                "html": "<input class=\"v8-input\" id=\"lead-email\" type=\"email\" placeholder=\" \" autocomplete=\"email\" required=\"\" data-testid=\"input-lead-email\" name=\"e",
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 1.09 (foreground color: #f5f5f5, background color: #ffffff, font size: 11.3pt (15px), fon"
+              },
+              {
+                "target": [
+                  "#c-name"
+                ],
+                "html": "<input class=\"v8-input\" id=\"c-name\" type=\"text\" placeholder=\" \" autocomplete=\"name\" required=\"\" data-testid=\"input-contact-name\" name=\"name\"",
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 1.09 (foreground color: #f5f5f5, background color: #ffffff, font size: 11.3pt (15px), fon"
+              },
+              {
+                "target": [
+                  "#c-email"
+                ],
+                "html": "<input class=\"v8-input\" id=\"c-email\" type=\"email\" placeholder=\" \" autocomplete=\"email\" required=\"\" data-testid=\"input-contact-email\" name=\"e",
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 1.09 (foreground color: #f5f5f5, background color: #ffffff, font size: 11.3pt (15px), fon"
+              },
+              {
+                "target": [
+                  "#c-phone"
+                ],
+                "html": "<input class=\"v8-input\" id=\"c-phone\" type=\"tel\" placeholder=\" \" autocomplete=\"tel\" required=\"\" data-testid=\"input-contact-phone\" name=\"phone",
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 1.09 (foreground color: #f5f5f5, background color: #ffffff, font size: 11.3pt (15px), fon"
+              },
+              {
+                "target": [
+                  "#c-company"
+                ],
+                "html": "<input class=\"v8-input\" id=\"c-company\" type=\"text\" placeholder=\" \" autocomplete=\"organization\" data-testid=\"input-contact-company\" name=\"com",
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 1.09 (foreground color: #f5f5f5, background color: #ffffff, font size: 11.3pt (15px), fon"
+              }
+            ]
+          }
+        ],
+        "incomplete": [
+          "color-contrast",
+          "duplicate-id-aria"
+        ]
+      },
+      "overflow": 0,
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "sections": 14,
+      "cards": 21,
+      "links": 182,
+      "forms": 3,
+      "theme": "dark",
+      "textNodes": [],
+      "consoleErrors": [
+        "Warning: React does not recognize the `%s` prop on a DOM element. If you intentionally want it to appear in the DOM as a custom attribute, spell it as lowercase `%s` instead. If you accidentally passed it from a parent component, remove it from the DOM element.%s fetchPriority fetchpriority \n    at img\n    at figure\n    at div\n    at section\n    at main\n    at div\n    at HomeChapters (http://localhost:5180/src/pages/concepts/HomeChapters.tsx?t=1792534428216:220:19)\n    at Suspense\n    at component\n    at Route (http://localhost:5180/@fs/C:/Users/Joe/DE/Repos/digeratiexperts-site-wt-home-exploration/node_modules/.vite/deps/wouter.js?v=819543d3:265:16)\n    at Switch (http://localhost:5180/@fs/C:/Users/Joe/DE/Repos/digeratiexperts-site-wt-home-exploration/node_modules/.vite/deps/wouter.js?v=819543d3:321:17)\n    at Router\n    at div\n    at AnnouncerProvider (http://localhost:5180/src/components/AccessibleAnnouncer.tsx:29:37)\n    at AppContent (http://localhost:5180/src/App.tsx?t=1792534428216:3418:3)\n    at Provider (http://localhost:5180/@fs/C:/Users/Joe/DE/Repos/digeratiexperts-site-wt-home-exploration/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=d84b8d70:38:15)\n    at TooltipProvider (http://localhost:5180/@fs/C:/Users/Joe/DE/Repos/digeratiexperts-site-wt-home-exploration/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=0549a986:968:5)\n    at BookingProvider (http://localhost:5180/src/contexts/BookingContext.tsx:22:35)\n    at QueryClientProvider (http://localhost:5180/@fs/C:/Users/Joe/DE/Repos/digeratiexperts-site-wt-home-exploration/node_modules/.vite/deps/@tanstack_react-query.js?v=4298d5ba:2805:3)\n    at _a (http://localhost:5180/@fs/C:/Users/Joe/DE/Repos/digeratiexperts-site-wt-home-exploration/node_modules/.vite/deps/react-helmet-async.js?v=7cd5b8fe:624:5)\n    at ErrorBoundary (http://localhost:5180/src/components/ErrorBoundary.tsx:9:5)\n    at App"
+      ]
+    },
+    "light-390": {
+      "axe": {
+        "violations": [
+          {
+            "id": "color-contrast",
+            "impact": "serious",
+            "nodes": 1,
+            "help": "Elements must meet minimum color contrast ratio thresholds",
+            "targets": [
+              {
+                "target": [
+                  ".doc__name"
+                ],
+                "html": "<p class=\"doc__name\">Cyber Risk Assessment — findings</p>",
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 1.09 (foreground color: #f5f5f5, background color: #ffffff, font size: 12.0pt (16px), fon"
+              }
+            ]
+          }
+        ],
+        "incomplete": [
+          "color-contrast",
+          "duplicate-id-aria"
+        ]
+      },
+      "overflow": 0,
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "sections": 14,
+      "cards": 21,
+      "links": 182,
+      "forms": 3,
+      "theme": "light",
+      "textNodes": [
+        {
+          "text": "Cyber Risk Assessment — findings",
+          "tag": "P",
+          "cls": "doc__name",
+          "color": "rgb(245, 245, 245)",
+          "fill": "rgb(245, 245, 245)",
+          "bg": "rgb(255, 255, 255)",
+          "ratio": 1.09,
+          "required": 4.5,
+          "size": 16,
+          "weight": 600,
+          "section": "trust"
+        },
+        {
+          "kind": "light-on-light",
+          "text": "Cyber Risk Assessment — findings",
+          "tag": "P",
+          "cls": "doc__name",
+          "color": "rgb(245, 245, 245)",
+          "fill": "rgb(245, 245, 245)",
+          "bg": "rgb(255, 255, 255)",
+          "section": "trust"
+        },
+        {
+          "text": "Law Firms",
+          "tag": "SPAN",
+          "cls": "ind-card__name",
+          "color": "rgb(255, 255, 255)",
+          "fill": "rgb(255, 255, 255)",
+          "bg": "rgb(250, 250, 250)",
+          "ratio": 1.04,
+          "required": 4.5,
+          "size": 19,
+          "weight": 600,
+          "section": "industries"
+        },
+        {
+          "kind": "light-on-light",
+          "text": "Law Firms",
+          "tag": "SPAN",
+          "cls": "ind-card__name",
+          "color": "rgb(255, 255, 255)",
+          "fill": "rgb(255, 255, 255)",
+          "bg": "rgb(250, 250, 250)",
+          "section": "industries"
+        },
+        {
+          "text": "Protect client privilege and meet ABA compliance",
+          "tag": "SPAN",
+          "cls": "ind-card__desc",
+          "color": "rgb(255, 255, 255)",
+          "fill": "rgb(255, 255, 255)",
+          "bg": "rgb(250, 250, 250)",
+          "ratio": 1.04,
+          "required": 4.5,
+          "size": 15,
+          "weight": 400,
+          "section": "industries"
+        },
+        {
+          "kind": "light-on-light",
+          "text": "Protect client privilege and meet ABA compliance",
+          "tag": "SPAN",
+          "cls": "ind-card__desc",
+          "color": "rgb(255, 255, 255)",
+          "fill": "rgb(255, 255, 255)",
+          "bg": "rgb(250, 250, 250)",
+          "section": "industries"
+        },
+        {
+          "text": "CPA Firms",
+          "tag": "SPAN",
+          "cls": "ind-card__name",
+          "color": "rgb(255, 255, 255)",
+          "fill": "rgb(255, 255, 255)",
+          "bg": "rgb(250, 250, 250)",
+          "ratio": 1.04,
+          "required": 4.5,
+          "size": 19,
+          "weight": 600,
+          "section": "industries"
+        },
+        {
+          "kind": "light-on-light",
+          "text": "CPA Firms",
+          "tag": "SPAN",
+          "cls": "ind-card__name",
+          "color": "rgb(255, 255, 255)",
+          "fill": "rgb(255, 255, 255)",
+          "bg": "rgb(250, 250, 250)",
+          "section": "industries"
+        },
+        {
+          "text": "Secure tax data and ensure IRS/FTC compliance",
+          "tag": "SPAN",
+          "cls": "ind-card__desc",
+          "color": "rgb(255, 255, 255)",
+          "fill": "rgb(255, 255, 255)",
+          "bg": "rgb(250, 250, 250)",
+          "ratio": 1.04,
+          "required": 4.5,
+          "size": 15,
+          "weight": 400,
+          "section": "industries"
+        },
+        {
+          "kind": "light-on-light",
+          "text": "Secure tax data and ensure IRS/FTC compliance",
+          "tag": "SPAN",
+          "cls": "ind-card__desc",
+          "color": "rgb(255, 255, 255)",
+          "fill": "rgb(255, 255, 255)",
+          "bg": "rgb(250, 250, 250)",
+          "section": "industries"
+        },
+        {
+          "text": "Medical Practices",
+          "tag": "SPAN",
+          "cls": "ind-card__name",
+          "color": "rgb(255, 255, 255)",
+          "fill": "rgb(255, 255, 255)",
+          "bg": "rgb(250, 250, 250)",
+          "ratio": 1.04,
+          "required": 4.5,
+          "size": 19,
+          "weight": 600,
+          "section": "industries"
+        },
+        {
+          "kind": "light-on-light",
+          "text": "Medical Practices",
+          "tag": "SPAN",
+          "cls": "ind-card__name",
+          "color": "rgb(255, 255, 255)",
+          "fill": "rgb(255, 255, 255)",
+          "bg": "rgb(250, 250, 250)",
+          "section": "industries"
+        },
+        {
+          "text": "HIPAA compliance and patient data protection",
+          "tag": "SPAN",
+          "cls": "ind-card__desc",
+          "color": "rgb(255, 255, 255)",
+          "fill": "rgb(255, 255, 255)",
+          "bg": "rgb(250, 250, 250)",
+          "ratio": 1.04,
+          "required": 4.5,
+          "size": 15,
+          "weight": 400,
+          "section": "industries"
+        },
+        {
+          "kind": "light-on-light",
+          "text": "HIPAA compliance and patient data protection",
+          "tag": "SPAN",
+          "cls": "ind-card__desc",
+          "color": "rgb(255, 255, 255)",
+          "fill": "rgb(255, 255, 255)",
+          "bg": "rgb(250, 250, 250)",
+          "section": "industries"
+        },
+        {
+          "text": "Real Estate Firms",
+          "tag": "SPAN",
+          "cls": "ind-card__name",
+          "color": "rgb(255, 255, 255)",
+          "fill": "rgb(255, 255, 255)",
+          "bg": "rgb(250, 250, 250)",
+          "ratio": 1.04,
+          "required": 4.5,
+          "size": 19,
+          "weight": 600,
+          "section": "industries"
+        },
+        {
+          "kind": "light-on-light",
+          "text": "Real Estate Firms",
+          "tag": "SPAN",
+          "cls": "ind-card__name",
+          "color": "rgb(255, 255, 255)",
+          "fill": "rgb(255, 255, 255)",
+          "bg": "rgb(250, 250, 250)",
+          "section": "industries"
+        },
+        {
+          "text": "Wire fraud prevention and transaction security",
+          "tag": "SPAN",
+          "cls": "ind-card__desc",
+          "color": "rgb(255, 255, 255)",
+          "fill": "rgb(255, 255, 255)",
+          "bg": "rgb(250, 250, 250)",
+          "ratio": 1.04,
+          "required": 4.5,
+          "size": 15,
+          "weight": 400,
+          "section": "industries"
+        },
+        {
+          "kind": "light-on-light",
+          "text": "Wire fraud prevention and transaction security",
+          "tag": "SPAN",
+          "cls": "ind-card__desc",
+          "color": "rgb(255, 255, 255)",
+          "fill": "rgb(255, 255, 255)",
+          "bg": "rgb(250, 250, 250)",
+          "section": "industries"
+        },
+        {
+          "text": "Animal Hospitals",
+          "tag": "SPAN",
+          "cls": "ind-card__name",
+          "color": "rgb(255, 255, 255)",
+          "fill": "rgb(255, 255, 255)",
+          "bg": "rgb(250, 250, 250)",
+          "ratio": 1.04,
+          "required": 4.5,
+          "size": 19,
+          "weight": 600,
+          "section": "industries"
+        },
+        {
+          "kind": "light-on-light",
+          "text": "Animal Hospitals",
+          "tag": "SPAN",
+          "cls": "ind-card__name",
+          "color": "rgb(255, 255, 255)",
+          "fill": "rgb(255, 255, 255)",
+          "bg": "rgb(250, 250, 250)",
+          "section": "industries"
+        },
+        {
+          "text": "Veterinary practice and client data protection",
+          "tag": "SPAN",
+          "cls": "ind-card__desc",
+          "color": "rgb(255, 255, 255)",
+          "fill": "rgb(255, 255, 255)",
+          "bg": "rgb(250, 250, 250)",
+          "ratio": 1.04,
+          "required": 4.5,
+          "size": 15,
+          "weight": 400,
+          "section": "industries"
+        },
+        {
+          "kind": "light-on-light",
+          "text": "Veterinary practice and client data protection",
+          "tag": "SPAN",
+          "cls": "ind-card__desc",
+          "color": "rgb(255, 255, 255)",
+          "fill": "rgb(255, 255, 255)",
+          "bg": "rgb(250, 250, 250)",
+          "section": "industries"
+        }
+      ],
+      "consoleErrors": [
+        "Warning: React does not recognize the `%s` prop on a DOM element. If you intentionally want it to appear in the DOM as a custom attribute, spell it as lowercase `%s` instead. If you accidentally passed it from a parent component, remove it from the DOM element.%s fetchPriority fetchpriority \n    at img\n    at figure\n    at div\n    at section\n    at main\n    at div\n    at HomeChapters (http://localhost:5180/src/pages/concepts/HomeChapters.tsx?t=1792534428216:220:19)\n    at Suspense\n    at component\n    at Route (http://localhost:5180/@fs/C:/Users/Joe/DE/Repos/digeratiexperts-site-wt-home-exploration/node_modules/.vite/deps/wouter.js?v=819543d3:265:16)\n    at Switch (http://localhost:5180/@fs/C:/Users/Joe/DE/Repos/digeratiexperts-site-wt-home-exploration/node_modules/.vite/deps/wouter.js?v=819543d3:321:17)\n    at Router\n    at div\n    at AnnouncerProvider (http://localhost:5180/src/components/AccessibleAnnouncer.tsx:29:37)\n    at AppContent (http://localhost:5180/src/App.tsx?t=1792534428216:3418:3)\n    at Provider (http://localhost:5180/@fs/C:/Users/Joe/DE/Repos/digeratiexperts-site-wt-home-exploration/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=d84b8d70:38:15)\n    at TooltipProvider (http://localhost:5180/@fs/C:/Users/Joe/DE/Repos/digeratiexperts-site-wt-home-exploration/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=0549a986:968:5)\n    at BookingProvider (http://localhost:5180/src/contexts/BookingContext.tsx:22:35)\n    at QueryClientProvider (http://localhost:5180/@fs/C:/Users/Joe/DE/Repos/digeratiexperts-site-wt-home-exploration/node_modules/.vite/deps/@tanstack_react-query.js?v=4298d5ba:2805:3)\n    at _a (http://localhost:5180/@fs/C:/Users/Joe/DE/Repos/digeratiexperts-site-wt-home-exploration/node_modules/.vite/deps/react-helmet-async.js?v=7cd5b8fe:624:5)\n    at ErrorBoundary (http://localhost:5180/src/components/ErrorBoundary.tsx:9:5)\n    at App"
+      ]
+    },
+    "light-768": {
+      "axe": {
+        "violations": [
+          {
+            "id": "color-contrast",
+            "impact": "serious",
+            "nodes": 1,
+            "help": "Elements must meet minimum color contrast ratio thresholds",
+            "targets": [
+              {
+                "target": [
+                  ".doc__name"
+                ],
+                "html": "<p class=\"doc__name\">Cyber Risk Assessment — findings</p>",
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 1.09 (foreground color: #f5f5f5, background color: #ffffff, font size: 12.0pt (16px), fon"
+              }
+            ]
+          }
+        ],
+        "incomplete": [
+          "color-contrast",
+          "duplicate-id-aria"
+        ]
+      },
+      "overflow": 0,
+      "scrollWidth": 768,
+      "clientWidth": 768,
+      "sections": 14,
+      "cards": 21,
+      "links": 182,
+      "forms": 3,
+      "theme": "light",
+      "textNodes": [
+        {
+          "text": "Ask DE",
+          "tag": "SPAN",
+          "cls": "block text-base font-semibold leading-4 tracking-tight",
+          "color": "rgb(255, 255, 255)",
+          "fill": "rgb(255, 255, 255)",
+          "bg": "rgb(250, 250, 250)",
+          "ratio": 1.04,
+          "required": 4.5,
+          "size": 16,
+          "weight": 400,
+          "section": ""
+        },
+        {
+          "kind": "light-on-light",
+          "text": "Ask DE",
+          "tag": "SPAN",
+          "cls": "block text-base font-semibold leading-4 tracking-tight",
+          "color": "rgb(255, 255, 255)",
+          "fill": "rgb(255, 255, 255)",
+          "bg": "rgb(250, 250, 250)",
+          "section": ""
+        },
+        {
+          "text": "We're here to help.",
+          "tag": "SPAN",
+          "cls": "block text-base leading-4 text-white/70",
+          "color": "rgba(255, 255, 255, 0.7)",
+          "fill": "rgba(255, 255, 255, 0.7)",
+          "bg": "rgb(250, 250, 250)",
+          "ratio": 1.03,
+          "required": 4.5,
+          "size": 16,
+          "weight": 400,
+          "section": ""
+        },
+        {
+          "kind": "light-on-light",
+          "text": "We're here to help.",
+          "tag": "SPAN",
+          "cls": "block text-base leading-4 text-white/70",
+          "color": "rgba(255, 255, 255, 0.7)",
+          "fill": "rgba(255, 255, 255, 0.7)",
+          "bg": "rgb(250, 250, 250)",
+          "section": ""
+        },
+        {
+          "text": "Cyber Risk Assessment — findings",
+          "tag": "P",
+          "cls": "doc__name",
+          "color": "rgb(245, 245, 245)",
+          "fill": "rgb(245, 245, 245)",
+          "bg": "rgb(255, 255, 255)",
+          "ratio": 1.09,
+          "required": 4.5,
+          "size": 16,
+          "weight": 600,
+          "section": "trust"
+        },
+        {
+          "kind": "light-on-light",
+          "text": "Cyber Risk Assessment — findings",
+          "tag": "P",
+          "cls": "doc__name",
+          "color": "rgb(245, 245, 245)",
+          "fill": "rgb(245, 245, 245)",
+          "bg": "rgb(255, 255, 255)",
+          "section": "trust"
+        },
+        {
+          "text": "Law Firms",
+          "tag": "SPAN",
+          "cls": "ind-card__name",
+          "color": "rgb(255, 255, 255)",
+          "fill": "rgb(255, 255, 255)",
+          "bg": "rgb(250, 250, 250)",
+          "ratio": 1.04,
+          "required": 4.5,
+          "size": 19,
+          "weight": 600,
+          "section": "industries"
+        },
+        {
+          "kind": "light-on-light",
+          "text": "Law Firms",
+          "tag": "SPAN",
+          "cls": "ind-card__name",
+          "color": "rgb(255, 255, 255)",
+          "fill": "rgb(255, 255, 255)",
+          "bg": "rgb(250, 250, 250)",
+          "section": "industries"
+        },
+        {
+          "text": "Protect client privilege and meet ABA compliance",
+          "tag": "SPAN",
+          "cls": "ind-card__desc",
+          "color": "rgb(255, 255, 255)",
+          "fill": "rgb(255, 255, 255)",
+          "bg": "rgb(250, 250, 250)",
+          "ratio": 1.04,
+          "required": 4.5,
+          "size": 15,
+          "weight": 400,
+          "section": "industries"
+        },
+        {
+          "kind": "light-on-light",
+          "text": "Protect client privilege and meet ABA compliance",
+          "tag": "SPAN",
+          "cls": "ind-card__desc",
+          "color": "rgb(255, 255, 255)",
+          "fill": "rgb(255, 255, 255)",
+          "bg": "rgb(250, 250, 250)",
+          "section": "industries"
+        },
+        {
+          "text": "CPA Firms",
+          "tag": "SPAN",
+          "cls": "ind-card__name",
+          "color": "rgb(255, 255, 255)",
+          "fill": "rgb(255, 255, 255)",
+          "bg": "rgb(250, 250, 250)",
+          "ratio": 1.04,
+          "required": 4.5,
+          "size": 19,
+          "weight": 600,
+          "section": "industries"
+        },
+        {
+          "kind": "light-on-light",
+          "text": "CPA Firms",
+          "tag": "SPAN",
+          "cls": "ind-card__name",
+          "color": "rgb(255, 255, 255)",
+          "fill": "rgb(255, 255, 255)",
+          "bg": "rgb(250, 250, 250)",
+          "section": "industries"
+        },
+        {
+          "text": "Secure tax data and ensure IRS/FTC compliance",
+          "tag": "SPAN",
+          "cls": "ind-card__desc",
+          "color": "rgb(255, 255, 255)",
+          "fill": "rgb(255, 255, 255)",
+          "bg": "rgb(250, 250, 250)",
+          "ratio": 1.04,
+          "required": 4.5,
+          "size": 15,
+          "weight": 400,
+          "section": "industries"
+        },
+        {
+          "kind": "light-on-light",
+          "text": "Secure tax data and ensure IRS/FTC compliance",
+          "tag": "SPAN",
+          "cls": "ind-card__desc",
+          "color": "rgb(255, 255, 255)",
+          "fill": "rgb(255, 255, 255)",
+          "bg": "rgb(250, 250, 250)",
+          "section": "industries"
+        },
+        {
+          "text": "Medical Practices",
+          "tag": "SPAN",
+          "cls": "ind-card__name",
+          "color": "rgb(255, 255, 255)",
+          "fill": "rgb(255, 255, 255)",
+          "bg": "rgb(250, 250, 250)",
+          "ratio": 1.04,
+          "required": 4.5,
+          "size": 19,
+          "weight": 600,
+          "section": "industries"
+        },
+        {
+          "kind": "light-on-light",
+          "text": "Medical Practices",
+          "tag": "SPAN",
+          "cls": "ind-card__name",
+          "color": "rgb(255, 255, 255)",
+          "fill": "rgb(255, 255, 255)",
+          "bg": "rgb(250, 250, 250)",
+          "section": "industries"
+        },
+        {
+          "text": "HIPAA compliance and patient data protection",
+          "tag": "SPAN",
+          "cls": "ind-card__desc",
+          "color": "rgb(255, 255, 255)",
+          "fill": "rgb(255, 255, 255)",
+          "bg": "rgb(250, 250, 250)",
+          "ratio": 1.04,
+          "required": 4.5,
+          "size": 15,
+          "weight": 400,
+          "section": "industries"
+        },
+        {
+          "kind": "light-on-light",
+          "text": "HIPAA compliance and patient data protection",
+          "tag": "SPAN",
+          "cls": "ind-card__desc",
+          "color": "rgb(255, 255, 255)",
+          "fill": "rgb(255, 255, 255)",
+          "bg": "rgb(250, 250, 250)",
+          "section": "industries"
+        },
+        {
+          "text": "Real Estate Firms",
+          "tag": "SPAN",
+          "cls": "ind-card__name",
+          "color": "rgb(255, 255, 255)",
+          "fill": "rgb(255, 255, 255)",
+          "bg": "rgb(250, 250, 250)",
+          "ratio": 1.04,
+          "required": 4.5,
+          "size": 19,
+          "weight": 600,
+          "section": "industries"
+        },
+        {
+          "kind": "light-on-light",
+          "text": "Real Estate Firms",
+          "tag": "SPAN",
+          "cls": "ind-card__name",
+          "color": "rgb(255, 255, 255)",
+          "fill": "rgb(255, 255, 255)",
+          "bg": "rgb(250, 250, 250)",
+          "section": "industries"
+        },
+        {
+          "text": "Wire fraud prevention and transaction security",
+          "tag": "SPAN",
+          "cls": "ind-card__desc",
+          "color": "rgb(255, 255, 255)",
+          "fill": "rgb(255, 255, 255)",
+          "bg": "rgb(250, 250, 250)",
+          "ratio": 1.04,
+          "required": 4.5,
+          "size": 15,
+          "weight": 400,
+          "section": "industries"
+        },
+        {
+          "kind": "light-on-light",
+          "text": "Wire fraud prevention and transaction security",
+          "tag": "SPAN",
+          "cls": "ind-card__desc",
+          "color": "rgb(255, 255, 255)",
+          "fill": "rgb(255, 255, 255)",
+          "bg": "rgb(250, 250, 250)",
+          "section": "industries"
+        },
+        {
+          "text": "Animal Hospitals",
+          "tag": "SPAN",
+          "cls": "ind-card__name",
+          "color": "rgb(255, 255, 255)",
+          "fill": "rgb(255, 255, 255)",
+          "bg": "rgb(250, 250, 250)",
+          "ratio": 1.04,
+          "required": 4.5,
+          "size": 19,
+          "weight": 600,
+          "section": "industries"
+        },
+        {
+          "kind": "light-on-light",
+          "text": "Animal Hospitals",
+          "tag": "SPAN",
+          "cls": "ind-card__name",
+          "color": "rgb(255, 255, 255)",
+          "fill": "rgb(255, 255, 255)",
+          "bg": "rgb(250, 250, 250)",
+          "section": "industries"
+        },
+        {
+          "text": "Veterinary practice and client data protection",
+          "tag": "SPAN",
+          "cls": "ind-card__desc",
+          "color": "rgb(255, 255, 255)",
+          "fill": "rgb(255, 255, 255)",
+          "bg": "rgb(250, 250, 250)",
+          "ratio": 1.04,
+          "required": 4.5,
+          "size": 15,
+          "weight": 400,
+          "section": "industries"
+        },
+        {
+          "kind": "light-on-light",
+          "text": "Veterinary practice and client data protection",
+          "tag": "SPAN",
+          "cls": "ind-card__desc",
+          "color": "rgb(255, 255, 255)",
+          "fill": "rgb(255, 255, 255)",
+          "bg": "rgb(250, 250, 250)",
+          "section": "industries"
+        }
+      ],
+      "consoleErrors": [
+        "Warning: React does not recognize the `%s` prop on a DOM element. If you intentionally want it to appear in the DOM as a custom attribute, spell it as lowercase `%s` instead. If you accidentally passed it from a parent component, remove it from the DOM element.%s fetchPriority fetchpriority \n    at img\n    at figure\n    at div\n    at section\n    at main\n    at div\n    at HomeChapters (http://localhost:5180/src/pages/concepts/HomeChapters.tsx?t=1792534428216:220:19)\n    at Suspense\n    at component\n    at Route (http://localhost:5180/@fs/C:/Users/Joe/DE/Repos/digeratiexperts-site-wt-home-exploration/node_modules/.vite/deps/wouter.js?v=819543d3:265:16)\n    at Switch (http://localhost:5180/@fs/C:/Users/Joe/DE/Repos/digeratiexperts-site-wt-home-exploration/node_modules/.vite/deps/wouter.js?v=819543d3:321:17)\n    at Router\n    at div\n    at AnnouncerProvider (http://localhost:5180/src/components/AccessibleAnnouncer.tsx:29:37)\n    at AppContent (http://localhost:5180/src/App.tsx?t=1792534428216:3418:3)\n    at Provider (http://localhost:5180/@fs/C:/Users/Joe/DE/Repos/digeratiexperts-site-wt-home-exploration/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=d84b8d70:38:15)\n    at TooltipProvider (http://localhost:5180/@fs/C:/Users/Joe/DE/Repos/digeratiexperts-site-wt-home-exploration/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=0549a986:968:5)\n    at BookingProvider (http://localhost:5180/src/contexts/BookingContext.tsx:22:35)\n    at QueryClientProvider (http://localhost:5180/@fs/C:/Users/Joe/DE/Repos/digeratiexperts-site-wt-home-exploration/node_modules/.vite/deps/@tanstack_react-query.js?v=4298d5ba:2805:3)\n    at _a (http://localhost:5180/@fs/C:/Users/Joe/DE/Repos/digeratiexperts-site-wt-home-exploration/node_modules/.vite/deps/react-helmet-async.js?v=7cd5b8fe:624:5)\n    at ErrorBoundary (http://localhost:5180/src/components/ErrorBoundary.tsx:9:5)\n    at App"
+      ]
+    },
+    "light-1440": {
+      "axe": {
+        "violations": [
+          {
+            "id": "color-contrast",
+            "impact": "serious",
+            "nodes": 1,
+            "help": "Elements must meet minimum color contrast ratio thresholds",
+            "targets": [
+              {
+                "target": [
+                  ".doc__name"
+                ],
+                "html": "<p class=\"doc__name\">Cyber Risk Assessment — findings</p>",
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 1.09 (foreground color: #f5f5f5, background color: #ffffff, font size: 12.0pt (16px), fon"
+              }
+            ]
+          }
+        ],
+        "incomplete": [
+          "color-contrast",
+          "duplicate-id-aria"
+        ]
+      },
+      "overflow": 0,
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "sections": 14,
+      "cards": 21,
+      "links": 182,
+      "forms": 3,
+      "theme": "light",
+      "textNodes": [
+        {
+          "text": "Ask DE",
+          "tag": "SPAN",
+          "cls": "block text-base font-semibold leading-4 tracking-tight",
+          "color": "rgb(255, 255, 255)",
+          "fill": "rgb(255, 255, 255)",
+          "bg": "rgb(250, 250, 250)",
+          "ratio": 1.04,
+          "required": 4.5,
+          "size": 16,
+          "weight": 400,
+          "section": ""
+        },
+        {
+          "kind": "light-on-light",
+          "text": "Ask DE",
+          "tag": "SPAN",
+          "cls": "block text-base font-semibold leading-4 tracking-tight",
+          "color": "rgb(255, 255, 255)",
+          "fill": "rgb(255, 255, 255)",
+          "bg": "rgb(250, 250, 250)",
+          "section": ""
+        },
+        {
+          "text": "We're here to help.",
+          "tag": "SPAN",
+          "cls": "block text-base leading-4 text-white/70",
+          "color": "rgba(255, 255, 255, 0.7)",
+          "fill": "rgba(255, 255, 255, 0.7)",
+          "bg": "rgb(250, 250, 250)",
+          "ratio": 1.03,
+          "required": 4.5,
+          "size": 16,
+          "weight": 400,
+          "section": ""
+        },
+        {
+          "kind": "light-on-light",
+          "text": "We're here to help.",
+          "tag": "SPAN",
+          "cls": "block text-base leading-4 text-white/70",
+          "color": "rgba(255, 255, 255, 0.7)",
+          "fill": "rgba(255, 255, 255, 0.7)",
+          "bg": "rgb(250, 250, 250)",
+          "section": ""
+        },
+        {
+          "text": "Cyber Risk Assessment — findings",
+          "tag": "P",
+          "cls": "doc__name",
+          "color": "rgb(245, 245, 245)",
+          "fill": "rgb(245, 245, 245)",
+          "bg": "rgb(255, 255, 255)",
+          "ratio": 1.09,
+          "required": 4.5,
+          "size": 16,
+          "weight": 600,
+          "section": "trust"
+        },
+        {
+          "kind": "light-on-light",
+          "text": "Cyber Risk Assessment — findings",
+          "tag": "P",
+          "cls": "doc__name",
+          "color": "rgb(245, 245, 245)",
+          "fill": "rgb(245, 245, 245)",
+          "bg": "rgb(255, 255, 255)",
+          "section": "trust"
+        },
+        {
+          "text": "Law Firms",
+          "tag": "SPAN",
+          "cls": "ind-card__name",
+          "color": "rgb(255, 255, 255)",
+          "fill": "rgb(255, 255, 255)",
+          "bg": "rgb(250, 250, 250)",
+          "ratio": 1.04,
+          "required": 4.5,
+          "size": 19,
+          "weight": 600,
+          "section": "industries"
+        },
+        {
+          "kind": "light-on-light",
+          "text": "Law Firms",
+          "tag": "SPAN",
+          "cls": "ind-card__name",
+          "color": "rgb(255, 255, 255)",
+          "fill": "rgb(255, 255, 255)",
+          "bg": "rgb(250, 250, 250)",
+          "section": "industries"
+        },
+        {
+          "text": "Protect client privilege and meet ABA compliance",
+          "tag": "SPAN",
+          "cls": "ind-card__desc",
+          "color": "rgb(255, 255, 255)",
+          "fill": "rgb(255, 255, 255)",
+          "bg": "rgb(250, 250, 250)",
+          "ratio": 1.04,
+          "required": 4.5,
+          "size": 15,
+          "weight": 400,
+          "section": "industries"
+        },
+        {
+          "kind": "light-on-light",
+          "text": "Protect client privilege and meet ABA compliance",
+          "tag": "SPAN",
+          "cls": "ind-card__desc",
+          "color": "rgb(255, 255, 255)",
+          "fill": "rgb(255, 255, 255)",
+          "bg": "rgb(250, 250, 250)",
+          "section": "industries"
+        },
+        {
+          "text": "CPA Firms",
+          "tag": "SPAN",
+          "cls": "ind-card__name",
+          "color": "rgb(255, 255, 255)",
+          "fill": "rgb(255, 255, 255)",
+          "bg": "rgb(250, 250, 250)",
+          "ratio": 1.04,
+          "required": 4.5,
+          "size": 19,
+          "weight": 600,
+          "section": "industries"
+        },
+        {
+          "kind": "light-on-light",
+          "text": "CPA Firms",
+          "tag": "SPAN",
+          "cls": "ind-card__name",
+          "color": "rgb(255, 255, 255)",
+          "fill": "rgb(255, 255, 255)",
+          "bg": "rgb(250, 250, 250)",
+          "section": "industries"
+        },
+        {
+          "text": "Secure tax data and ensure IRS/FTC compliance",
+          "tag": "SPAN",
+          "cls": "ind-card__desc",
+          "color": "rgb(255, 255, 255)",
+          "fill": "rgb(255, 255, 255)",
+          "bg": "rgb(250, 250, 250)",
+          "ratio": 1.04,
+          "required": 4.5,
+          "size": 15,
+          "weight": 400,
+          "section": "industries"
+        },
+        {
+          "kind": "light-on-light",
+          "text": "Secure tax data and ensure IRS/FTC compliance",
+          "tag": "SPAN",
+          "cls": "ind-card__desc",
+          "color": "rgb(255, 255, 255)",
+          "fill": "rgb(255, 255, 255)",
+          "bg": "rgb(250, 250, 250)",
+          "section": "industries"
+        },
+        {
+          "text": "Medical Practices",
+          "tag": "SPAN",
+          "cls": "ind-card__name",
+          "color": "rgb(255, 255, 255)",
+          "fill": "rgb(255, 255, 255)",
+          "bg": "rgb(250, 250, 250)",
+          "ratio": 1.04,
+          "required": 4.5,
+          "size": 19,
+          "weight": 600,
+          "section": "industries"
+        },
+        {
+          "kind": "light-on-light",
+          "text": "Medical Practices",
+          "tag": "SPAN",
+          "cls": "ind-card__name",
+          "color": "rgb(255, 255, 255)",
+          "fill": "rgb(255, 255, 255)",
+          "bg": "rgb(250, 250, 250)",
+          "section": "industries"
+        },
+        {
+          "text": "HIPAA compliance and patient data protection",
+          "tag": "SPAN",
+          "cls": "ind-card__desc",
+          "color": "rgb(255, 255, 255)",
+          "fill": "rgb(255, 255, 255)",
+          "bg": "rgb(250, 250, 250)",
+          "ratio": 1.04,
+          "required": 4.5,
+          "size": 15,
+          "weight": 400,
+          "section": "industries"
+        },
+        {
+          "kind": "light-on-light",
+          "text": "HIPAA compliance and patient data protection",
+          "tag": "SPAN",
+          "cls": "ind-card__desc",
+          "color": "rgb(255, 255, 255)",
+          "fill": "rgb(255, 255, 255)",
+          "bg": "rgb(250, 250, 250)",
+          "section": "industries"
+        },
+        {
+          "text": "Real Estate Firms",
+          "tag": "SPAN",
+          "cls": "ind-card__name",
+          "color": "rgb(255, 255, 255)",
+          "fill": "rgb(255, 255, 255)",
+          "bg": "rgb(250, 250, 250)",
+          "ratio": 1.04,
+          "required": 4.5,
+          "size": 19,
+          "weight": 600,
+          "section": "industries"
+        },
+        {
+          "kind": "light-on-light",
+          "text": "Real Estate Firms",
+          "tag": "SPAN",
+          "cls": "ind-card__name",
+          "color": "rgb(255, 255, 255)",
+          "fill": "rgb(255, 255, 255)",
+          "bg": "rgb(250, 250, 250)",
+          "section": "industries"
+        },
+        {
+          "text": "Wire fraud prevention and transaction security",
+          "tag": "SPAN",
+          "cls": "ind-card__desc",
+          "color": "rgb(255, 255, 255)",
+          "fill": "rgb(255, 255, 255)",
+          "bg": "rgb(250, 250, 250)",
+          "ratio": 1.04,
+          "required": 4.5,
+          "size": 15,
+          "weight": 400,
+          "section": "industries"
+        },
+        {
+          "kind": "light-on-light",
+          "text": "Wire fraud prevention and transaction security",
+          "tag": "SPAN",
+          "cls": "ind-card__desc",
+          "color": "rgb(255, 255, 255)",
+          "fill": "rgb(255, 255, 255)",
+          "bg": "rgb(250, 250, 250)",
+          "section": "industries"
+        },
+        {
+          "text": "Animal Hospitals",
+          "tag": "SPAN",
+          "cls": "ind-card__name",
+          "color": "rgb(255, 255, 255)",
+          "fill": "rgb(255, 255, 255)",
+          "bg": "rgb(250, 250, 250)",
+          "ratio": 1.04,
+          "required": 4.5,
+          "size": 19,
+          "weight": 600,
+          "section": "industries"
+        },
+        {
+          "kind": "light-on-light",
+          "text": "Animal Hospitals",
+          "tag": "SPAN",
+          "cls": "ind-card__name",
+          "color": "rgb(255, 255, 255)",
+          "fill": "rgb(255, 255, 255)",
+          "bg": "rgb(250, 250, 250)",
+          "section": "industries"
+        },
+        {
+          "text": "Veterinary practice and client data protection",
+          "tag": "SPAN",
+          "cls": "ind-card__desc",
+          "color": "rgb(255, 255, 255)",
+          "fill": "rgb(255, 255, 255)",
+          "bg": "rgb(250, 250, 250)",
+          "ratio": 1.04,
+          "required": 4.5,
+          "size": 15,
+          "weight": 400,
+          "section": "industries"
+        },
+        {
+          "kind": "light-on-light",
+          "text": "Veterinary practice and client data protection",
+          "tag": "SPAN",
+          "cls": "ind-card__desc",
+          "color": "rgb(255, 255, 255)",
+          "fill": "rgb(255, 255, 255)",
+          "bg": "rgb(250, 250, 250)",
+          "section": "industries"
+        }
+      ],
+      "consoleErrors": [
+        "Warning: React does not recognize the `%s` prop on a DOM element. If you intentionally want it to appear in the DOM as a custom attribute, spell it as lowercase `%s` instead. If you accidentally passed it from a parent component, remove it from the DOM element.%s fetchPriority fetchpriority \n    at img\n    at figure\n    at div\n    at section\n    at main\n    at div\n    at HomeChapters (http://localhost:5180/src/pages/concepts/HomeChapters.tsx?t=1792534428216:220:19)\n    at Suspense\n    at component\n    at Route (http://localhost:5180/@fs/C:/Users/Joe/DE/Repos/digeratiexperts-site-wt-home-exploration/node_modules/.vite/deps/wouter.js?v=819543d3:265:16)\n    at Switch (http://localhost:5180/@fs/C:/Users/Joe/DE/Repos/digeratiexperts-site-wt-home-exploration/node_modules/.vite/deps/wouter.js?v=819543d3:321:17)\n    at Router\n    at div\n    at AnnouncerProvider (http://localhost:5180/src/components/AccessibleAnnouncer.tsx:29:37)\n    at AppContent (http://localhost:5180/src/App.tsx?t=1792534428216:3418:3)\n    at Provider (http://localhost:5180/@fs/C:/Users/Joe/DE/Repos/digeratiexperts-site-wt-home-exploration/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=d84b8d70:38:15)\n    at TooltipProvider (http://localhost:5180/@fs/C:/Users/Joe/DE/Repos/digeratiexperts-site-wt-home-exploration/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=0549a986:968:5)\n    at BookingProvider (http://localhost:5180/src/contexts/BookingContext.tsx:22:35)\n    at QueryClientProvider (http://localhost:5180/@fs/C:/Users/Joe/DE/Repos/digeratiexperts-site-wt-home-exploration/node_modules/.vite/deps/@tanstack_react-query.js?v=4298d5ba:2805:3)\n    at _a (http://localhost:5180/@fs/C:/Users/Joe/DE/Repos/digeratiexperts-site-wt-home-exploration/node_modules/.vite/deps/react-helmet-async.js?v=7cd5b8fe:624:5)\n    at ErrorBoundary (http://localhost:5180/src/components/ErrorBoundary.tsx:9:5)\n    at App"
+      ]
+    }
+  }
+}
