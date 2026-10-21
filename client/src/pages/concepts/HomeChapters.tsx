@@ -255,7 +255,7 @@ export function HomeChapters(): JSX.Element {
               </div>
             </div>
             <figure className="hc-poster__figure">
-              <img src="/images/founder/joe-petro-studio-blazer-white.jpg" alt="Joseph Petro, Founder of Digerati Experts" width={900} height={1100} fetchPriority="high" />
+              <img src="/images/founder/joe-petro-studio-blazer-white.jpg" alt="Joseph Petro, Founder of Digerati Experts" width={900} height={1100} {...({ fetchpriority: "high" } as Record<string, string>)} />
               <figcaption><span>Joseph Petro</span><span>Founder &amp; Chief Technology Strategist</span></figcaption>
             </figure>
           </div>

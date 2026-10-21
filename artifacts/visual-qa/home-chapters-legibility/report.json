@@ -1,0 +1,119 @@
+{
+  "url": "http://localhost:5180/concepts/home-chapters",
+  "widths": {
+    "dark-390": {
+      "axe": {
+        "violations": [],
+        "incomplete": [
+          "color-contrast",
+          "duplicate-id-aria"
+        ]
+      },
+      "overflow": 0,
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "sections": 14,
+      "cards": 21,
+      "links": 183,
+      "forms": 3,
+      "theme": "dark",
+      "textNodes": [],
+      "consoleErrors": []
+    },
+    "dark-768": {
+      "axe": {
+        "violations": [],
+        "incomplete": [
+          "color-contrast",
+          "duplicate-id-aria"
+        ]
+      },
+      "overflow": 0,
+      "scrollWidth": 768,
+      "clientWidth": 768,
+      "sections": 14,
+      "cards": 21,
+      "links": 183,
+      "forms": 3,
+      "theme": "dark",
+      "textNodes": [],
+      "consoleErrors": []
+    },
+    "dark-1440": {
+      "axe": {
+        "violations": [],
+        "incomplete": [
+          "color-contrast",
+          "duplicate-id-aria"
+        ]
+      },
+      "overflow": 0,
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "sections": 14,
+      "cards": 21,
+      "links": 183,
+      "forms": 3,
+      "theme": "dark",
+      "textNodes": [],
+      "consoleErrors": []
+    },
+    "light-390": {
+      "axe": {
+        "violations": [],
+        "incomplete": [
+          "color-contrast",
+          "duplicate-id-aria"
+        ]
+      },
+      "overflow": 0,
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "sections": 14,
+      "cards": 21,
+      "links": 183,
+      "forms": 3,
+      "theme": "light",
+      "textNodes": [],
+      "consoleErrors": []
+    },
+    "light-768": {
+      "axe": {
+        "violations": [],
+        "incomplete": [
+          "color-contrast",
+          "duplicate-id-aria"
+        ]
+      },
+      "overflow": 0,
+      "scrollWidth": 768,
+      "clientWidth": 768,
+      "sections": 14,
+      "cards": 21,
+      "links": 183,
+      "forms": 3,
+      "theme": "light",
+      "textNodes": [],
+      "consoleErrors": []
+    },
+    "light-1440": {
+      "axe": {
+        "violations": [],
+        "incomplete": [
+          "color-contrast",
+          "duplicate-id-aria"
+        ]
+      },
+      "overflow": 0,
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "sections": 14,
+      "cards": 21,
+      "links": 183,
+      "forms": 3,
+      "theme": "light",
+      "textNodes": [],
+      "consoleErrors": []
+    }
+  }
+}
