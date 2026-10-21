@@ -574,11 +574,12 @@
   color: #4a4a4f !important;
   -webkit-text-fill-color: #4a4a4f !important;
 }
-/* The document sheet is theme-dependent (dark plate in dark mode, paper in light mode),
-   so its header line flips with the theme: */
-.hc.v8 .doc .doc__name { color: inherit !important; -webkit-text-fill-color: inherit !important; }
-.hc:not([data-theme="light"]) .doc .doc__name { color: #f5f5f5 !important; -webkit-text-fill-color: #f5f5f5 !important; }
-.hc[data-theme="light"] .doc .doc__name { color: #121212 !important; -webkit-text-fill-color: #121212 !important; }
+/* The document sheet renders as white paper in both themes on the merged build
+   (the paper scope above re-points it), so its header line just needs dark ink.
+   The color/fill pair must agree or axe still reads a ghosted light fill. */
+.hc.v8 .v8s-08 .doc {
+  background: var(--card) !important;
+}
 
 /* Copy buttons inherit a light text fill from global rules */
 .hc .v8-copy__no { -webkit-text-fill-color: currentColor !important; }
@@ -707,3 +708,8 @@
 /* Contact footer: the copy buttons and the newsletter field are white here too. */
 .hc .v8-copy__no, .hc #footer-newsletter-email { color: var(--card-ink) !important; }
 .hc #footer-newsletter-email::placeholder { color: var(--card-ink-3) !important; }
+
+/* Document header: final word in the cascade (doubled class beats the paper scope's
+   headings rule; var(--card-ink) = #121212 on the white sheet in both themes). */
+.hc.v8 .doc .doc__name.doc__name { color: var(--card-ink) !important; -webkit-text-fill-color: var(--card-ink) !important; }
+
