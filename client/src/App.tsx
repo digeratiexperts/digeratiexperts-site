@@ -192,6 +192,7 @@ const HomepageV9 = lazy(() => import("@/pages/versions/v9/HomepageV9"));
 const HomepageV10 = lazy(() => import("@/pages/versions/v10/HomepageV10"));
 const HomeChapters = lazy(() => import("@/pages/concepts/HomeChapters").then((m) => ({ default: m.HomeChapters })));
 const HomeMesh = lazy(() => import("@/pages/concepts/HomeMesh").then((m) => ({ default: m.HomeMesh })));
+const MascotsConcept = lazy(() => import("@/pages/concepts/MascotsConcept").then((m) => ({ default: m.MascotsConcept })));
 
 const WarehouseGate = lazy(() => import("@/pages/store/WarehouseGate"));
 const PublicStoreCheckout = lazy(() => import("@/pages/store/PublicStoreCheckout"));
@@ -222,6 +223,13 @@ function Router() {
       <Route path="/concepts/home-mesh" component={() => (
         <Suspense fallback={<PageLoadingSkeleton />}>
           <HomeMesh />
+        </Suspense>
+      )} />
+
+      {/* Concept: Dex and Rati mascots (Exploration, 2026-10-21) - review only, noindex, not in navigation */}
+      <Route path="/concepts/mascots" component={() => (
+        <Suspense fallback={<PageLoadingSkeleton />}>
+          <MascotsConcept />
         </Suspense>
       )} />
 

@@ -1,0 +1,48 @@
+/* Dex and Rati motion. Every animation is off under prefers-reduced-motion: the characters then
+   sit in their resting pose (bars level, eyes open, scan dot on the top bar). */
+.mascot { display: inline-block; overflow: visible; }
+.mascot .dex-mark__bar, .mascot .dex-eye, .mascot .dex-orb__core { transform-box: fill-box; transform-origin: center; }
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Dex idle: the bars breathe in turn, like the pronunciation meter. */
+  .dex-mark.is-idle .dex-mark__bar { animation: dex-breathe 3.6s ease-in-out infinite; }
+  .dex-mark.is-idle .b1 { animation-delay: .15s; }
+  .dex-mark.is-idle .b2 { animation-delay: .3s; }
+  .dex-mark.is-idle .b3 { animation-delay: .45s; }
+  @keyframes dex-breathe { 0%, 100% { transform: scaleX(1); } 50% { transform: scaleX(.9); } }
+
+  /* Thinking: the bars sway in a slow wave and the eyes look up. */
+  .dex-mark.is-thinking .dex-mark__bar { animation: dex-wave 1.8s ease-in-out infinite; }
+  .dex-mark.is-thinking .b1 { animation-delay: .12s; }
+  .dex-mark.is-thinking .b2 { animation-delay: .24s; }
+  .dex-mark.is-thinking .b3 { animation-delay: .36s; }
+  .dex-mark.is-thinking .dex-mark__eyes { transform: translateY(-1.2px); }
+  @keyframes dex-wave { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(2.2px); } }
+
+  /* Speaking: the bars open slightly, in rhythm. */
+  .dex-mark.is-speaking .dex-mark__bar { animation: dex-speak .9s ease-in-out infinite; }
+  .dex-mark.is-speaking .b1, .dex-mark.is-speaking .b2 { animation-delay: .1s; }
+  @keyframes dex-speak { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(1.12) scaleX(1.03); } }
+
+  /* Blink, every few seconds, in every state. */
+  .dex-eye { animation: dex-blink 5.2s infinite; }
+  @keyframes dex-blink { 0%, 93%, 100% { transform: scaleY(1); } 96% { transform: scaleY(.1); } }
+
+  /* Orb: the core glows; brighter and faster while speaking or thinking. */
+  .dex-orb .dex-orb__core { animation: dex-glow 3.6s ease-in-out infinite; }
+  .dex-orb.is-speaking .dex-orb__core, .dex-orb.is-thinking .dex-orb__core { animation-duration: 1.2s; }
+  @keyframes dex-glow { 0%, 100% { opacity: .75; transform: scale(1); } 50% { opacity: 1; transform: scale(1.12); } }
+  /* Rati: the scan dot walks each bar, top to bottom, then returns. */
+  .rati-mark__scan { animation: rati-scan 6s ease-in-out infinite; }
+  @keyframes rati-scan {
+    0% { transform: translate(-14px, 0); }
+    12% { transform: translate(14px, 0); }
+    25% { transform: translate(10px, 15.67px); }
+    37% { transform: translate(-10px, 15.67px); }
+    50% { transform: translate(-10px, 31.33px); }
+    62% { transform: translate(10px, 31.33px); }
+    75% { transform: translate(14px, 47px); }
+    87% { transform: translate(-14px, 47px); }
+    100% { transform: translate(-14px, 0); }
+  }
+}

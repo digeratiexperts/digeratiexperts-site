@@ -20,6 +20,7 @@ const EXACT = new Set([
   "/version-10",
   "/concepts/home-chapters",
   "/concepts/home-mesh",
+  "/concepts/mascots",
   "/solutions",
   "/solutions/managed-it-support",
   "/solutions/managed-workplace",
