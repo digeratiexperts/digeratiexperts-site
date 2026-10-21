@@ -56,6 +56,13 @@ describe("resolveInvoicePayAmount", () => {
     }
   });
 
+  it("refuses the live Zoho shapes that still carry a balance (Books org check, 2026-10-21)", () => {
+    // DE's own invoices: a void invoice still lists $180 owed and a draft lists $540.
+    // Without the status guard both would open a payment session.
+    expect(resolveInvoicePayAmount(180, undefined, EMAIL, "void")).toMatchObject({ ok: false, reason: "invoice_not_payable" });
+    expect(resolveInvoicePayAmount(540, 54000, EMAIL, "draft")).toMatchObject({ ok: false, reason: "invoice_not_payable" });
+  });
+
   it("still accepts open states and a missing status, and a tampered amount stays rejected", () => {
     for (const status of ["sent", "overdue", "unpaid", "partially_paid", undefined]) {
       expect(resolveInvoicePayAmount("100", undefined, EMAIL, status)).toEqual({ ok: true, payAmount: 100 });

@@ -2381,6 +2381,11 @@ export async function registerRoutes(app: Express) {
       // Redirect to portal login with success message
       return res.redirect('/portal/login?verified=true&message=Email verified successfully! You can now log in.');
     } catch (error: any) {
+      if (error instanceof PortalPersistenceError) {
+        // The link was released above, so the same email link works on a retry.
+        logger.error("Email verification could not be saved", error);
+        return res.redirect('/portal/login?error=verification_unavailable&message=We could not confirm your email just now. Your link still works; please try it again in a moment.');
+      }
       console.error("[ERROR] Email verification failed:", error);
       return res.redirect('/portal/login?error=verification_failed&message=Email verification failed');
     }
@@ -2695,6 +2700,13 @@ export async function registerRoutes(app: Express) {
 
       return completeLoginRedirect(user, req, res, verified.returnTo);
     } catch (error: any) {
+      if (error instanceof PortalPersistenceError) {
+        // The Zoho step worked; the portal account could not be saved. Nothing was created.
+        logger.error("Zoho sign-in could not save the portal account", error);
+        return res.redirect(
+          portalLoginErrorRedirect("zoho_unavailable", "We could not finish signing you in just now. Please try again in a moment."),
+        );
+      }
       console.error("[ERROR] Portal Zoho SSO failed:", error?.message || error);
       return res.redirect(portalLoginErrorRedirect("zoho_failed", "Zoho sign-in failed. Please try again."));
     }

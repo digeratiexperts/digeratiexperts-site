@@ -582,3 +582,128 @@
 
 /* Copy buttons inherit a light text fill from global rules */
 .hc .v8-copy__no { -webkit-text-fill-color: currentColor !important; }
+/* ---------- Dark-mode card text and objects (2026-10-21) ----------
+   White cards keep dark text in both themes. A title is often a link, and the
+   page link colour (--ink, near white in dark mode) was winning over the
+   heading colour, so card titles vanished on white. Links inside cards now
+   inherit the card ink; accent links (.v8-link) and buttons keep their own. */
+.hc.v8 :is(.v8s-02 .claims > *, .v8s-04 .problem, .v8s-05 .v8-card, .v8s-08 .why__pillars li, .v8s-11 .v8-card, .v8s-12 .feed-card, .v8s-14 .faq-item, .v8s-15 .next__standards li, .v8-card, .pricing-card, .step, .svc-path, .proof-cells > li, .faq-item)
+  a:not(.v8-link):not(.v8-btn):not([class*="btn"]) { color: var(--card-ink) !important; }
+.hc.v8 .problem__link { color: var(--card-ink) !important; }
+.hc.v8 .problem__arrow, .hc.v8 .v8s-02 .claim__chev { color: var(--card-ink-2) !important; }
+.hc.v8 .v8s-02 .claim__title a { text-decoration-color: rgba(18, 18, 18, 0.28) !important; }
+
+/* The soft spot behind each object read as a smudge on white; the object's own
+   drop shadow is enough. */
+.hc .hc-has-obj::before, .hc[data-theme="light"] .hc-has-obj::before { content: none; }
+
+/* "Why we exist" cards are a 12px | text | chevron grid; the object was landing
+   in the 12px column and shrinking to an icon. Give it the text column's full
+   first row and move the rest of the card down one row. */
+.hc .v8s-02 .claim.hc-has-obj > .hc-obj { grid-column: 2 / -1; grid-row: 1; margin: 0 0 16px; }
+.hc .v8s-02 .claim.hc-has-obj > .v8-dash { grid-row: 2; }
+.hc .v8s-02 .claim.hc-has-obj > .claim__title { grid-row: 2; }
+.hc .v8s-02 .claim.hc-has-obj > .claim__body { grid-row: 3; }
+.hc .v8s-02 .claim.hc-has-obj > .claim__chev { grid-row: 2 / span 2; }
+
+/* ---------- Paper scope (2026-10-21) ----------
+   Every white surface re-points the ink tokens for everything inside it, so
+   headings, numbers, body, small and meta text read dark on white in both
+   themes without naming each text class. Accent links and filled buttons keep
+   their own colours. */
+.hc.v8 :is(.v8-card, .v8-card--paper, .stats-cell, .stats-cells > li, .problem, .svc-path,
+  .proof-cells > li, .proof-rail > li, .proof-panel, .pricing-card, .feed-card,
+  .claim, .claims > *, .why__pillars > li, .lead__form, .tackle__ask, .faq-item,
+  .tstrip__items > li, .next__standards > li, .doc, .portrait figcaption, .contact__card) {
+  --ink: var(--card-ink);
+  --ink-2: var(--card-ink-2);
+  --ink-3: var(--card-ink-3);
+  --line: var(--card-line);
+  --v8-fg: #121212;
+  --v8-ink: #121212;
+  --v8-ink-body: #4a4a4f;
+  --v8-ink-muted: #5c5c63;
+  --v8-muted: #4a4a4f;
+  --v8-muted-soft: #5c5c63;
+  --v8-muted-quiet: #5c5c63;
+  --v8-magenta-ink: #b50f5a;
+  --v8-magenta-paper-ink: #b50f5a;
+  color: var(--card-ink);
+}
+.hc.v8 :is(.v8-card, .v8-card--paper, .stats-cell, .stats-cells > li, .proof-cells > li, .proof-panel, .pricing-card, .tstrip__items > li, .doc, .portrait figcaption, .contact__card, .lead__form, .tackle__ask)
+  :is(h2, h3, h4, .v8-h2, .v8-h3, .v8-h4, .v8-num, .v8-stat, .stats-cell__statement, .doc__name, .portrait__name) { color: var(--card-ink) !important; }
+.hc.v8 :is(.v8-card, .v8-card--paper, .stats-cell, .stats-cells > li, .proof-cells > li, .proof-panel, .pricing-card, .tstrip__items > li, .doc, .portrait figcaption, .contact__card, .lead__form, .tackle__ask)
+  :is(p, li, .v8-body, .v8-small, .v8-lede, .v8-meta, .stats-source__text, .stats-source__pdf, .doc__label, .portrait__role, .portrait__loc, .lead__call, label) { color: var(--card-ink-2) !important; }
+.hc.v8 :is(.v8-card, .v8-card--paper, .stats-cell, .proof-panel, .pricing-card, .doc, .contact__card, .lead__form, .tackle__ask) .v8-link { color: #b50f5a !important; }
+/* Outline buttons sit on white in this concept, so they take card ink. */
+.hc .v8-btn--outline, .hc .v8-btn--outline-paper, .hc .v8-btn--ghost { color: var(--card-ink) !important; border-color: var(--card-line) !important; background: var(--card) !important; }
+.hc .v8-btn--outline:hover, .hc .v8-btn--outline-paper:hover { border-color: var(--card-ink) !important; }
+/* The submit face is a filled dark button; its label stays white on it. */
+.hc .v8-submit:not([data-state="sent"]) { background: var(--card-ink) !important; color: #fff !important; }
+.hc .v8-submit__lbl { color: #fff !important; }
+/* The flag on white needs the deeper magenta. */
+.hc .pricing-flag { color: #b50f5a !important; }
+/* Active chapter pill is white, so its label is card ink. */
+.hc-nav__link.is-active { color: var(--card-ink); }
+/* Greys that sit on the dark ground were below 4.5:1; lift them. */
+.hc:not([data-theme="light"]) :is(.tstrip__label, .v8-seq, .v8-meta) { color: var(--ink-2) !important; }
+.hc.v8:not([data-theme="light"]) .v8s-11 .pricing-close .pricing-fitnote { color: #a1a1a6 !important; }
+.hc.v8:not([data-theme="light"]) .v8s-09 .ops .v8-seq { color: #a1a1a6 !important; }
+/* The signal steps sit on a white card here; their labels were hard-coded white. */
+.hc .v8s-12 .dg-label { color: var(--ink) !important; }
+.hc[data-theme="light"] .v8-seq { color: inherit !important; }
+.hc-theme-toggle { color: var(--card-ink); }
+/* Figures are paragraphs too; keep them at full card ink after the body rule above. */
+.hc.v8 :is(.stats-cell, .stats-cells > li, .pricing-card) :is(.v8-stat, .v8-num) { color: var(--card-ink) !important; }
+
+/* ---------- Scrollcraft layer (scrollcraft/builds/home-mesh/BRIEF.md) ---------- */
+/* Signature: the pill becomes the principal. The chapter links close in toward the
+   centre and one assessment button, with Joe's portrait, takes their place. */
+.hc-nav { position: sticky; }
+.hc-nav ul { transition: clip-path var(--t-mid) var(--ease), opacity var(--t-mid) var(--ease); clip-path: inset(0 0 0 0 round 999px); }
+.hc-nav.is-closing ul { clip-path: inset(0 50% 0 50% round 999px); opacity: 0; visibility: hidden; transition: clip-path var(--t-mid) var(--ease), opacity var(--t-mid) var(--ease), visibility 0s linear var(--t-mid); }
+.hc-nav__principal {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%) scale(0.94);
+  display: inline-flex; align-items: center; gap: 10px; min-height: 44px; padding: 4px 16px 4px 4px;
+  border-radius: 999px; background: var(--accent); color: #fff; text-decoration: none; white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.3), 0 12px 28px -14px rgba(211,18,106,0.7);
+  opacity: 0; visibility: hidden; pointer-events: none;
+  transition: opacity var(--t-mid) var(--ease), transform var(--t-mid) var(--ease), visibility 0s linear var(--t-mid);
+}
+.hc-nav.is-closing .hc-nav__principal { opacity: 1; visibility: visible; pointer-events: auto; transform: translate(-50%, -50%) scale(1); transition: opacity var(--t-mid) var(--ease) 80ms, transform var(--t-mid) var(--ease) 80ms; }
+.hc-nav__principal img { width: 36px; height: 36px; border-radius: 999px; object-fit: cover; object-position: 50% 20%; }
+.hc-nav__principal-copy { display: grid; line-height: 1.15; }
+.hc-nav__principal-copy > :first-child { font-size: 14px; font-weight: 600; }
+.hc-nav__principal-copy > :last-child { font-size: 12px; }
+.hc-nav__principal:hover { background: #b50f5a; }
+.hc-nav__principal:focus-visible { outline: 2px solid #fff; outline-offset: 2px; box-shadow: 0 0 0 4px var(--accent); }
+@media (max-width: 520px) { .hc-nav__principal-copy > :last-child { display: none; } .hc-nav__principal { left: var(--gutter); transform: translate(0, -50%) scale(0.94); } .hc-nav.is-closing .hc-nav__principal { transform: translate(0, -50%); } }
+
+/* Peak: the hand-off. A magenta line runs from Signal through human triage and
+   lands on the named owner, which lights. Scroll writes --hc-handoff. */
+.hc .v8s-12 .dg { position: relative; }
+.hc .v8s-12 .dg::before {
+  content: ""; position: absolute; left: 12px; top: 10px; bottom: 30px; width: 2px; border-radius: 2px;
+  background: var(--accent); transform-origin: top; transform: scaleY(var(--hc-handoff, 0)); z-index: 1;
+}
+.hc .v8s-12 .dg-step:last-child .v8-seq { transition: color var(--t-mid) var(--ease); }
+.hc .v8s-12 .dg-step:last-child .dg-label { transition: color var(--t-mid) var(--ease); }
+.hc .v8s-12 .dg.is-owned .dg-step:last-child .v8-seq,
+.hc .v8s-12 .dg.is-owned .dg-step:last-child .dg-label { color: #b50f5a !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  .hc-nav ul, .hc-nav.is-closing ul, .hc-nav__principal, .hc-nav.is-closing .hc-nav__principal { transition: none !important; }
+}
+.hc-nav { top: var(--hc-nav-top, 0px); }
+.hc-section { scroll-margin-top: calc(var(--hc-nav-top, 0px) + 64px); }
+.hc .v8s-12 .dg::before { top: 28px; bottom: auto; height: var(--hc-handoff-len, 0px); }
+/* The step numbers sit above the line, on the card's own white, so it passes behind them. */
+.hc.v8 .v8s-12 .dg-step .v8-seq { position: relative; z-index: 2; background: var(--card) !important; padding: 0 0 6px !important; }
+/* On a phone the button needs the whole row; the theme toggle steps out while it shows. */
+@media (max-width: 520px) {
+  .hc-nav__toggle { transition: opacity var(--t-mid) var(--ease); }
+  .hc-nav.is-closing .hc-nav__toggle { opacity: 0; visibility: hidden; }
+}
+/* Contact footer: the copy buttons and the newsletter field are white here too. */
+.hc .v8-copy__no, .hc #footer-newsletter-email { color: var(--card-ink) !important; }
+.hc #footer-newsletter-email::placeholder { color: var(--card-ink-3) !important; }

@@ -30,6 +30,25 @@
 
 version: 2
 claims:
+  - id: home-chapters-dark-contrast
+    owner: claude
+    subsystem: homepage-concept
+    branch: claude/lucid-dijkstra-s3v2s3
+    base_sha: 8ea622a6
+    files:
+      - client/src/pages/concepts/home-chapters.css (appended blocks only; concept route)
+      - client/src/pages/concepts/HomeChapters.tsx (nav docking, close signature, hand-off peak)
+      - scrollcraft/builds/home-mesh/BRIEF.md (new)
+      - scrollcraft/FINGERPRINTS.md (one appended row)
+    status: active
+    pr: "follow-up to 669"
+    started: 2026-10-21
+    note: >-
+      Joe's screenshot (2026-10-21): on /concepts/home-chapters in dark mode,
+      white card titles were near-white on white, the card object sat in a 12px
+      grid column and a soft blob showed behind it. White surfaces now re-point
+      the ink tokens for everything inside them; the audit at 390 and 1440 in
+      both themes covers the rest. Live / (HomepageV8) is not touched.
   - id: home-chapters-legibility-ink
     owner: opencode
     subsystem: concepts-homepage
@@ -45,10 +64,12 @@ claims:
     note: >-
       Computed-style legibility audit on /concepts/home-chapters: axe 0,
       contrast issues 0, 0px overflow, 0 console errors at 390/768/1440 in both
-      themes. The pending promotion of the concept into / (App.tsx route swap +
-      SEO + spaKnownPaths) is deliberately NOT in this PR — held until the
-      concurrent Claude session (Joe heads-up, 2026-10-21) finishes its page
-      work to avoid a collision.
+      themes. Reconciled with PR #681 (dark-mode card text + Scrollcraft layer):
+      both layers kept, #681 last (its paper-scope wins overlaps), then
+      re-audited to see which findings #681 already covers. The pending
+      promotion of the concept into / (App.tsx route swap + SEO +
+      spaKnownPaths) is deliberately NOT in this PR — held until concurrent
+      sessions with page work are done to avoid a collision.
   - id: de-bug-hunt-2026-10-21
     owner: claude
     subsystem: server-platform, homepage-seo
@@ -1097,6 +1118,27 @@ claims:
       every width (phones only before). The scrolled main nav goes from 95%
       to fully opaque black so the hero's call button no longer shows
       through faintly.
+
+  - id: issue-395-backend-followups
+    owner: claude
+    subsystem: portal-auth-and-billing
+    branch: claude/client-portal-access-ukxrnn
+    base_sha: 8ea622a6
+    files:
+      - server/routes.ts (verify-email and Zoho SSO catch blocks only)
+      - server/portalPersistenceRedirects.test.ts (new)
+      - server/portalInvoicePayment.test.ts (live-shape case only)
+      - docs/runbooks/PORTAL-QA-LOGIN.md (section 1 only)
+    status: active
+    started: 2026-10-21
+    note: >-
+      Joe, 2026-10-21 ("do the backend fixes"), issue 395 residuals. The
+      email-verification link and Zoho sign-in now say a failed save is
+      temporary instead of "failed". The invoice status guard gets a test
+      pinned to DE's live Zoho shapes (a void invoice with $180 and a draft
+      with $540 still carry a balance). The QA runbook uses Add user. The
+      orphan-prospect residual was already fixed on main by a single
+      transaction.
   - id: tenant-files-durable
     issue: 259
     owner: claude

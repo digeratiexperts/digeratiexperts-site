@@ -72,6 +72,7 @@ export function HomeChapters(): JSX.Element {
   const rootRef = useRef<HTMLDivElement>(null);
   const { theme, toggle } = useTheme();
   const [active, setActive] = useState("hero");
+  const [closing, setClosing] = useState(false);
   const sectionRefs = useRef<Record<string, RefObject<HTMLElement>>>(
     Object.fromEntries(chapters.map((c) => [c.id, createRef<HTMLElement>()])),
   );
@@ -130,6 +131,83 @@ export function HomeChapters(): JSX.Element {
     return () => observer.disconnect();
   }, []);
 
+  // The site menu is fixed above this page; dock the chapter pill under its bottom edge, wherever that is.
+  useEffect(() => {
+    const nav = document.querySelector<HTMLElement>(".hc-nav");
+    if (!nav) return;
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const menu = document.querySelector<HTMLElement>(".mega-menu-container");
+      const bottom = menu ? Math.max(0, Math.round(menu.getBoundingClientRect().bottom)) : 0;
+      (nav.closest<HTMLElement>(".hc") ?? nav).style.setProperty("--hc-nav-top", `${bottom}px`);
+    };
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      if (frame) cancelAnimationFrame(frame);
+    };
+  }, []);
+
+  // Scrollcraft signature (scrollcraft/builds/home-mesh/BRIEF.md): once the close is on screen the
+  // chapter pill folds into one assessment button with the principal's face. Scroll back and it unfolds.
+  useEffect(() => {
+    const close = document.getElementById("cta");
+    if (!close || !("IntersectionObserver" in window)) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setClosing(entry.isIntersecting || entry.boundingClientRect.top < 0),
+      { rootMargin: "0px 0px -35% 0px" },
+    );
+    observer.observe(close);
+    return () => observer.disconnect();
+  }, []);
+
+  // Scrollcraft peak: the monitoring hand-off (Signal, human triage, named owner) is drawn by scroll.
+  // Writes --hc-handoff (0 to 1) on the list; the named owner lights at the end. Static under reduced motion.
+  useEffect(() => {
+    const list = document.querySelector<HTMLElement>(".v8s-12 .dg");
+    if (!list) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      list.style.setProperty("--hc-handoff", "1");
+      const last = list.lastElementChild as HTMLElement | null;
+      if (last) list.style.setProperty("--hc-handoff-len", `${Math.max(0, last.offsetTop - 36)}px`);
+      list.classList.add("is-owned");
+      return;
+    }
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const vh = window.innerHeight || 1;
+      const rect = list.getBoundingClientRect();
+      // 0 when the list's top reaches 80% of the viewport, 1 when its bottom reaches 45%.
+      const start = vh * 0.8;
+      const end = vh * 0.45;
+      const span = rect.height + (start - end);
+      const p = Math.max(0, Math.min(1, (start - rect.top) / span));
+      list.style.setProperty("--hc-handoff", p.toFixed(3));
+      const last = list.lastElementChild as HTMLElement | null;
+      if (last) list.style.setProperty("--hc-handoff-len", `${Math.max(0, last.offsetTop - 36)}px`);
+      list.classList.toggle("is-owned", p >= 0.98);
+    };
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      if (frame) cancelAnimationFrame(frame);
+    };
+  }, []);
+
   return (
     <div className="v8 hc min-h-screen" ref={rootRef} data-theme={theme}>
       <OrganizationJsonLd />
@@ -137,19 +215,27 @@ export function HomeChapters(): JSX.Element {
       <MegaMenu />
       <SiteBottomBar autohide />
       <main id="home-main" className="contents">
-        <nav className="hc-nav" aria-label="Sections">
-          <ul>
+        <nav className={`hc-nav${closing ? " is-closing" : ""}`} aria-label="Sections">
+          <ul aria-hidden={closing || undefined}>
             {navItems.map((id) => {
               const c = chapters.find((x) => x.id === id);
               return (
                 <li key={id}>
-                  <a href={`#${id}`} className={`hc-nav__link${active === id ? " is-active" : ""}`} aria-current={active === id ? "location" : undefined}>
+                  <a href={`#${id}`} tabIndex={closing ? -1 : undefined} className={`hc-nav__link${active === id ? " is-active" : ""}`} aria-current={active === id ? "location" : undefined}>
                     {c?.label}
                   </a>
                 </li>
               );
             })}
           </ul>
+          <Link href="/book" className="hc-nav__principal" aria-hidden={!closing || undefined} tabIndex={closing ? undefined : -1}>
+            <img src="/images/founder/joe-petro-studio-blazer-white.webp" alt="" width={32} height={32} />
+            <span className="hc-nav__principal-copy">
+              <span>Get a Cyber Risk Assessment</span>
+              <span>Principal-led · Joseph Petro</span>
+            </span>
+            <ArrowRight className="h-4 w-4" aria-hidden="true" />
+          </Link>
           <div className="hc-nav__toggle">
             <ThemeToggle theme={theme} onToggle={toggle} />
           </div>
