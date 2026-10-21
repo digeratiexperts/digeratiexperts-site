@@ -319,6 +319,7 @@ export default function BusinessNeedsIndex() {
   const [goalFilter, setGoalFilter] = useState<BusinessGoalId | "all">("all");
   const [groupFilter, setGroupFilter] = useState<ScenarioGroupId | "all">("all");
   const galleryRef = useRef<HTMLUListElement>(null);
+  const whyRef = useRef<HTMLUListElement>(null);
   const [scenarioMoment, setScenarioMoment] = useState<ScenarioMoment | null>(null);
   const [familyUndo, setFamilyUndo] = useState<FamilyUndo | null>(null);
   const [pulseKey, setPulseKey] = useState(0);
@@ -529,6 +530,12 @@ export default function BusinessNeedsIndex() {
     const gallery = galleryRef.current;
     if (!gallery) return;
     gallery.scrollBy({ left: direction * Math.max(320, gallery.clientWidth * 0.8), behavior: reducedMotion ? "auto" : "smooth" });
+  };
+
+  const pageWhy = (direction: 1 | -1) => {
+    const row = whyRef.current;
+    if (!row) return;
+    row.scrollBy({ left: direction * Math.max(320, row.clientWidth * 0.8), behavior: reducedMotion ? "auto" : "smooth" });
   };
 
   /* ---------------------------------------------------------------------- */
@@ -890,7 +897,7 @@ export default function BusinessNeedsIndex() {
                 Why DE is the place to solve it. <span>No catalog games.</span>
               </h2>
             </div>
-            <ul className="d2-why" aria-label="Why DE" tabIndex={0}>
+            <ul className="d2-why" ref={whyRef} aria-label="Why DE" tabIndex={0}>
               {WHY_DE.map((item, index) => (
                 <li key={item.title} className={`d2-why__card${item.feature ? " d2-why__card--feature" : ""}`} data-d2-reveal="" style={{ "--d2-delay": `${(index % 3) * 70}ms` } as CSSProperties}>
                   <span className="d2-why__icon" aria-hidden="true">
@@ -901,6 +908,14 @@ export default function BusinessNeedsIndex() {
                 </li>
               ))}
             </ul>
+            <div className="d2-flag-paddles">
+              <button type="button" className="d2-flag-paddle" aria-label="Previous reasons" onClick={() => pageWhy(-1)}>
+                <ChevronLeft className="h-5 w-5" aria-hidden="true" />
+              </button>
+              <button type="button" className="d2-flag-paddle" aria-label="Next reasons" onClick={() => pageWhy(1)}>
+                <ChevronRight className="h-5 w-5" aria-hidden="true" />
+              </button>
+            </div>
           </div>
         </section>
 
