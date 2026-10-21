@@ -30,6 +30,25 @@
 
 version: 2
 claims:
+  - id: home-chapters-dark-contrast
+    owner: claude
+    subsystem: homepage-concept
+    branch: claude/lucid-dijkstra-s3v2s3
+    base_sha: 8ea622a6
+    files:
+      - client/src/pages/concepts/home-chapters.css (appended blocks only; concept route)
+      - client/src/pages/concepts/HomeChapters.tsx (nav docking, close signature, hand-off peak)
+      - scrollcraft/builds/home-mesh/BRIEF.md (new)
+      - scrollcraft/FINGERPRINTS.md (one appended row)
+    status: active
+    pr: "follow-up to 669"
+    started: 2026-10-21
+    note: >-
+      Joe's screenshot (2026-10-21): on /concepts/home-chapters in dark mode,
+      white card titles were near-white on white, the card object sat in a 12px
+      grid column and a soft blob showed behind it. White surfaces now re-point
+      the ink tokens for everything inside them; the audit at 390 and 1440 in
+      both themes covers the rest. Live / (HomepageV8) is not touched.
   - id: de-bug-hunt-2026-10-21
     owner: claude
     subsystem: server-platform, homepage-seo
