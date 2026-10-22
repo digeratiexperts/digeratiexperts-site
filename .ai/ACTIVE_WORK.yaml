@@ -329,7 +329,9 @@ claims:
       - scripts/de-events/build.ts (html() moved out; exports Item/Kind/Who types)
       - docs/marketing/de-event-calendar.html (generated)
       - artifacts/visual-qa/de-event-calendar-2026-10-22/ (evidence)
-    status: active
+    status: merged
+    pr: 693
+    merge_sha: 9aa7278148400af94dfbaec99d93512d5eeabce5
     started: 2026-10-22
     note: >-
       Joe, 2026-10-22: "Is the calendar cool and fun looking?" then "Use really
@@ -338,6 +340,8 @@ claims:
       season bars, live-session blocks, filter chips, details dialog, light/dark
       toggle, phone agenda, one dry line per month. Markdown and .ics outputs
       unchanged. axe 0 at 390/1440 both themes, 0px overflow at 390/768/1440.
+      PR 693 merged 2026-10-22 after green CI; internal docs page, no
+      production release involved. Files released.
   - id: de-marketing-kits
     owner: claude
     subsystem: marketing-events
