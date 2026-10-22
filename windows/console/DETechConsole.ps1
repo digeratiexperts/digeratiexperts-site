@@ -1882,7 +1882,7 @@ if ($SmokeTest) {
 
 # ============================================================== start
 if ($Settings.dryRun) { Set-DEMode -Mode Audit -DryRun } else { Set-DEMode -Mode Apply }
-$Win.Add_Closing({ param($sender, $e)
+$Win.Add_Closing({ param($closing, $e)
     if ($S.Job -and $S.Job.noCancel -and -not $S.Job.handle.IsCompleted) {
         $e.Cancel = $true; Set-Status 'Windows servicing is running. Wait for its result before closing DE Tech Tool.'
     }
