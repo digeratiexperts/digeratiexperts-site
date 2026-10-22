@@ -31,6 +31,8 @@ with options, and show the work before and after.
 
 `estimate` costs nothing and is the right way to price step 2 before asking.
 
+**Enforced:** `open` refuses unless you pass `--brief-ok "<Joe, date>"`, recorded in the ledger. Joe's approval is the only thing that clears it. `estimate` and `--dry-run` stay free.
+
 ## Running a job
 
 ```bash

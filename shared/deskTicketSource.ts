@@ -131,11 +131,10 @@ export type DeskPriority = (typeof DESK_PRIORITIES)[number];
  * "Critical" on the support form, and the form maps that straight onto Desk's
  * Urgent — which hands a spammer the emergency queue.
  *
- * High, not Medium, on purpose: a genuine emergency from a prospect who is not
- * a client yet still has to stand out. This caps the ceiling rather than
- * burying the ticket.
+ * Medium, chosen by DE on 2026-10-21 (previously High). An unverified sender
+ * can still raise a ticket above Low, but cannot take it to High or Urgent.
  */
-export const UNVERIFIED_PRIORITY_CEILING: DeskPriority = "High";
+export const UNVERIFIED_PRIORITY_CEILING: DeskPriority = "Medium";
 
 function priorityRank(priority: string): number {
   const i = (DESK_PRIORITIES as readonly string[]).indexOf(priority);

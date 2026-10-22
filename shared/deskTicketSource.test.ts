@@ -116,14 +116,15 @@ describe("Desk ticket provenance", () => {
     it("stops an anonymous submitter reaching Urgent", () => {
       // The public form offers "Critical", which maps onto Desk's Urgent — the
       // band that pages someone out of hours. That is the spam lever.
-      expect(clampPriorityForSource("Urgent", "website-widget")).toBe("High");
-      expect(clampPriorityForSource("Urgent", "advisor-chat")).toBe("High");
-      expect(UNVERIFIED_PRIORITY_CEILING).toBe("High");
+      expect(clampPriorityForSource("Urgent", "website-widget")).toBe("Medium");
+      expect(clampPriorityForSource("Urgent", "advisor-chat")).toBe("Medium");
+      expect(UNVERIFIED_PRIORITY_CEILING).toBe("Medium");
     });
 
     it("leaves a genuine emergency from a public visitor visible", () => {
-      // Capped, not buried: High still stands out from the Medium default.
-      expect(clampPriorityForSource("High", "website-widget")).toBe("High");
+      // Capped at Medium (DE, 2026-10-21): a public visitor can still raise a
+      // ticket above Low, but no further.
+      expect(clampPriorityForSource("High", "website-widget")).toBe("Medium");
       expect(clampPriorityForSource("Medium", "website-widget")).toBe("Medium");
       expect(clampPriorityForSource("Low", "website-widget")).toBe("Low");
     });
@@ -143,7 +144,8 @@ describe("Desk ticket provenance", () => {
 
     it("reports only a real downgrade, so the log is not noise", () => {
       expect(wasPriorityClamped("Urgent", "website-widget")).toBe(true);
-      expect(wasPriorityClamped("High", "website-widget")).toBe(false);
+      expect(wasPriorityClamped("High", "website-widget")).toBe(true);
+      expect(wasPriorityClamped("Medium", "website-widget")).toBe(false);
       expect(wasPriorityClamped("Urgent", "client-portal")).toBe(false);
       expect(wasPriorityClamped(undefined, "website-widget")).toBe(false);
     });

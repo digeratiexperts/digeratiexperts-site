@@ -8,7 +8,7 @@
  *
  *   node .claude/kie-budget/budget.mjs status
  *   node .claude/kie-budget/budget.mjs estimate --model nano-banana-2 --count 6 [--resolution 2K] [--seconds 8]
- *   node .claude/kie-budget/budget.mjs open  --job <name> --model <id> --count <n> [--resolution 2K] [--seconds s] [--soft-ok "<Joe, date>"] [--note "..."]
+ *   node .claude/kie-budget/budget.mjs open  --job <name> --model <id> --count <n> [--resolution 2K] [--seconds s] [--soft-ok "<Joe, date>"] [--brief-ok "<Joe, date>"] [--note "..."]
  *   node .claude/kie-budget/budget.mjs gate  --job <name> --model <id> [--resolution 2K] [--seconds s]
  *   node .claude/kie-budget/budget.mjs record --job <name> --model <id> --credits <n> [--task <id>] [--file <path>]
  *   node .claude/kie-budget/budget.mjs close --job <name>
@@ -132,11 +132,13 @@ try {
       process.exit(0);
     }
     if (!a.job) throw new Error("--job <name> is required");
+    // Joe's brief rule (2026-10-08): options chosen, prompt shown, before any spend.
+    if (!a["brief-ok"]) refuse(`open needs --brief-ok "<Joe, date>" once Joe has picked a direction and seen the prompt (see README: "Before you open a job"). Run estimate first; it costs nothing.`);
     if (overHard) refuse(`projection ${money(cost)} is over ${overHard}. Raise it in limits.json or shrink the job.`);
     if (overSoft && !a["soft-ok"]) refuse(`projection ${money(cost)} is over ${overSoft}. Re-run with --soft-ok "<Joe, date>" once Joe approves.`);
     const st = jobState(ledger, a.job);
     if (st && !st.closed) throw new Error(`job "${a.job}" is already open (spent ${money(st.spent)}); close it first or use another name`);
-    append({ type: "open", job: a.job, model, count, resolution: res, seconds: a.seconds ? Number(a.seconds) : undefined, projectedCredits: credits, projectedUsd: cost, softOk: a["soft-ok"] || undefined, note: a.note || undefined });
+    append({ type: "open", job: a.job, model, count, resolution: res, seconds: a.seconds ? Number(a.seconds) : undefined, projectedCredits: credits, projectedUsd: cost, softOk: a["soft-ok"] || undefined, briefOk: a["brief-ok"], note: a.note || undefined });
     console.log(`Opened job "${a.job}".`);
     process.exit(0);
   }
