@@ -114,7 +114,11 @@ export function MascotsConcept(): JSX.Element {
                   <DexMark size={72} mode={p.mode} state={p.state} />
                   <figcaption className="min-w-0 text-sm">
                     <span className="block text-base font-semibold">{i.situation}</span>
-                    <span className="mt-1 block text-[#f5f5f5]">&ldquo;{DEX_EMOTIONS[p.mode].line}&rdquo;</span>
+                    {i.signals.surface === "email" ? (
+                      <span className="mt-1 block text-[#a1a1a6]">No line: in a signature or profile Dex is the mark only.</span>
+                    ) : (
+                      <span className="mt-1 block text-[#f5f5f5]">&ldquo;{DEX_EMOTIONS[p.mode].line}&rdquo;</span>
+                    )}
                     <span className="mt-2 block text-[#a1a1a6]">
                       Emotion: {DEX_MODES[p.mode].label} · Form: {p.form ?? "none"} · Person needed: {p.mustHandOff ? "yes" : "no"}
                     </span>
