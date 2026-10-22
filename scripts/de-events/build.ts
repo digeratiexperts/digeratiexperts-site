@@ -17,6 +17,7 @@ import { DE_EVENT_SESSIONS } from "../../client/src/data/deEvents";
 import { CAMPAIGNS } from "../../client/src/data/campaigns";
 import { buildIcs, type IcsEvent } from "../../client/src/lib/ics";
 import { DATED, SERIES, SESSION_PREP, type Audience, type Recurrence, type Weekday } from "./program";
+import { calendarHtml } from "./calendar-html";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const OUT = resolve(ROOT, "docs/marketing");
@@ -26,10 +27,10 @@ const RANGE_END = "2027-12-31";
 const STAMP = new Date("2026-10-10T00:00:00Z");
 const SITE = "https://digeratiexperts.com";
 
-type Kind = "session" | "prep" | "series" | "dated";
-type Who = Audience | "prospects-and-clients";
+export type Kind = "session" | "prep" | "series" | "dated";
+export type Who = Audience | "prospects-and-clients";
 
-interface Item {
+export interface Item {
   date: string; // YYYY-MM-DD
   time?: string; // HH:MM
   days?: number;
@@ -283,88 +284,13 @@ function md(): string {
 }
 
 // ---------------------------------------------------------------------- html
-const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-
-function html(): string {
-  const monthBlocks = months
-    .map((m) => {
-      const [y, mm] = m.split("-").map(Number);
-      const first = new Date(Date.UTC(y, mm - 1, 1));
-      const daysIn = new Date(Date.UTC(y, mm, 0)).getUTCDate();
-      const lead = (first.getUTCDay() + 6) % 7; // Monday-first grid
-      const cells: string[] = [];
-      for (let i = 0; i < lead; i++) cells.push(`<div class="c empty"></div>`);
-      for (let day = 1; day <= daysIn; day++) {
-        const date = `${m}-${String(day).padStart(2, "0")}`;
-        const dayItems = items.filter((it) => {
-          if (it.kind === "series" && it.cadence === "weekly") return false;
-          const end = it.days ? addDays(it.date, it.days - 1) : it.date;
-          return date >= it.date && date <= end && (it.date === date || day === 1 || new Date(`${date}T00:00:00Z`).getUTCDay() === 1);
-        });
-        const pills = dayItems
-          .map(
-            (it) =>
-              `<span class="p ${it.kind === "prep" ? "prep" : it.audience}${it.kind === "session" ? " session" : ""}" title="${esc(
-                `${it.title}${it.time ? ` · ${to12h(it.time)}` : ""}${it.note ? ` — ${it.note}` : ""}`,
-              )}">${esc(it.kind === "session" ? `★ ${it.title.split(":")[0]}` : it.title.split(":")[0])}</span>`,
-          )
-          .join("");
-        cells.push(`<div class="c"><b>${day}</b>${pills}</div>`);
-      }
-      const camps = monthCampaigns(m)
-        .map((c) => `<a href="${SITE}/go/${c}">${esc(campaignName(c) ?? c)}</a>`)
-        .join(" · ");
-      return `<section class="month"><header><h2>${monthLabel(m)}</h2>${camps ? `<p class="camp">Campaigns: ${camps}</p>` : ""}</header>
-<div class="grid">${["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => `<div class="h">${d}</div>`).join("")}${cells.join("")}</div></section>`;
-    })
-    .join("\n");
-
-  const weekly = SERIES.filter((s) => s.cadence === "weekly")
-    .map((s) => `<li><b>${["", "Mon", "Tue", "Wed", "Thu", "Fri"][DOW[(s.recurrence as { weekday: Weekday }).weekday]]} ${to12h(s.time)}</b> ${esc(s.title)} <i>${AUD[s.audience]}</i></li>`)
-    .join("");
-
-  return `<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>DE Event Calendar</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Oxanium:wght@500;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
-<style>
-:root{--bg:#050312;--raised:#151217;--line:rgba(255,255,255,.1);--ink:#fff;--muted:#a1a1aa;--pop:#D3126A;--violet:#8B5CF6;--client:#38bdf8;--internal:#a1a1aa;--prep:#52525b}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 Inter,system-ui,sans-serif}
-.wrap{max-width:1200px;margin:0 auto;padding:32px 16px 64px}
-h1{font:700 clamp(28px,4vw,44px)/1.05 "Space Grotesk",sans-serif;letter-spacing:-.03em;margin:0}
-h1 span{color:var(--pop)}h2{font:600 22px "Space Grotesk",sans-serif;margin:0}
-.lede{color:var(--muted);max-width:70ch}.status{font:500 12px Oxanium,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--pop)}
-.legend{display:flex;flex-wrap:wrap;gap:12px;margin:20px 0;font-size:12px}.legend span{display:inline-flex;align-items:center;gap:6px}
-.legend i{width:10px;height:10px;border-radius:3px;display:inline-block}
-.weekly{background:var(--raised);border:1px solid var(--line);border-radius:16px;padding:16px 20px;margin:20px 0}
-.weekly ul{margin:8px 0 0;padding-left:18px}.weekly i{color:var(--muted);font-style:normal;font-size:12px}
-.month{background:var(--raised);border:1px solid var(--line);border-radius:20px;padding:20px;margin:20px 0}
-.month header{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:baseline;margin-bottom:12px}
-.camp{margin:0;color:var(--muted);font-size:13px}.camp a{color:#fff;text-decoration-color:var(--pop)}
-.grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
-.h{font:500 11px Oxanium,monospace;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;padding:4px}
-.c{min-height:84px;border:1px solid var(--line);border-radius:8px;padding:4px;display:flex;flex-direction:column;gap:3px;min-width:0}
-.c.empty{border-color:transparent}.c b{font:500 12px Oxanium,monospace;color:var(--muted)}
-.p{display:block;font-size:11px;line-height:1.25;padding:2px 5px;border-radius:4px;border-left:3px solid;background:rgba(255,255,255,.04);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:help}
-.prospects,.prospects-and-clients{border-color:var(--pop)}.clients{border-color:var(--client)}.internal{border-color:var(--internal)}.prep{border-color:var(--prep);color:var(--muted)}
-.session{background:rgba(211,18,106,.18);font-weight:600}
-@media (max-width:720px){.grid{grid-template-columns:1fr}.h,.c.empty{display:none}.c{min-height:0}.c:not(:has(.p)){display:none}.p{white-space:normal}}
-</style></head><body><div class="wrap">
-<p class="status">Proposed · Oct 2026 – Dec 2027 · America/Phoenix</p>
-<h1>DE event <span>&amp;</span> campaign calendar</h1>
-<p class="lede">Every event Digerati Experts schedules and preps for: live sessions for prospects, the client rhythm, and the internal operating cadence. Each month names the campaign pages it feeds. Hover any entry for details. Generated from <code>scripts/de-events/program.ts</code>; import <code>de-event-calendar.ics</code> into Zoho Calendar.</p>
-<div class="legend"><span><i style="background:var(--pop)"></i>Prospects / public</span><span><i style="background:var(--client)"></i>Clients</span><span><i style="background:var(--internal)"></i>Internal</span><span><i style="background:var(--prep)"></i>Session prep</span><span>★ Live session</span></div>
-<div class="weekly"><h2>Every week</h2><ul>${weekly}</ul></div>
-${monthBlocks}
-</div></body></html>
-`;
-}
+// The year view lives in ./calendar-html.ts (Joe, 2026-10-22: "Use really good UI design on it").
 
 // --------------------------------------------------------------------- write
 const outputs: Record<string, string> = {
   "DE-EVENT-CALENDAR.md": md(),
   "de-event-calendar.ics": buildIcs(ics, { calendarName: "DE Events", stamp: STAMP }),
-  "de-event-calendar.html": html(),
+  "de-event-calendar.html": calendarHtml({ items, months, series: SERIES, sessions: DE_EVENT_SESSIONS, campaignName, site: SITE }),
 };
 
 const check = process.argv.includes("--check");

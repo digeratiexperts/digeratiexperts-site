@@ -319,6 +319,25 @@ claims:
       version (server refuses with 409; nobody is held); the gate follows every
       portal theme; the tour auto-starts only after the person signs; the three
       routes log errors and return a plain 500; CSS budget 300k to 315k.
+  - id: de-event-calendar-ui
+    owner: claude
+    subsystem: marketing-events
+    branch: claude/inspiring-franklin-1o69vr
+    base_sha: db25a27
+    files:
+      - scripts/de-events/calendar-html.ts (new)
+      - scripts/de-events/build.ts (html() moved out; exports Item/Kind/Who types)
+      - docs/marketing/de-event-calendar.html (generated)
+      - artifacts/visual-qa/de-event-calendar-2026-10-22/ (evidence)
+    status: active
+    started: 2026-10-22
+    note: >-
+      Joe, 2026-10-22: "Is the calendar cool and fun looking?" then "Use really
+      good UI design on it". Redesign of the internal year view to the
+      premium-web-design rules: poster hero, bento Up next with countdown,
+      season bars, live-session blocks, filter chips, details dialog, light/dark
+      toggle, phone agenda, one dry line per month. Markdown and .ics outputs
+      unchanged. axe 0 at 390/1440 both themes, 0px overflow at 390/768/1440.
   - id: de-marketing-kits
     owner: claude
     subsystem: marketing-events
