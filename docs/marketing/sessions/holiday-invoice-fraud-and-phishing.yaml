@@ -1,0 +1,153 @@
+# Copy source for the 19 Nov session. Edit here, then run:
+#   npx tsx scripts/de-marketing/build.ts           (kit, emails, posts, preview)
+#   npx tsx scripts/de-marketing/build.ts --cards   (also the social card images)
+# Dates, times, presenter and links come from client/src/data/deEvents.ts:
+# write {date_long}, {time}, {page} etc., never the literal value.
+# Tokens: title date_long date_short time end_time tz minutes presenter
+#         platform page campaign agenda other_zones
+# Voice: docs/marketing/VOICE.md. Claims: docs/CLAIMS-REGISTER.md.
+slug: holiday-invoice-fraud-and-phishing
+slides: "[Zoho Show deck, 7 slides with presenter notes](https://show.zoho.com/show/open/wkjyyd4be374b73bd4afab84ff7c0f49777ee), filed in WorkDrive `0. Digerati Experts / 4. Event & Strategic Planning / event`. Every example in it is constructed; no client email, form or data appears."
+status: |
+  **Status: CONFIRMED (Joe, 16 Oct 2026), page live.** {presenter} presents on {platform}. Every draft below is copy for DE to review and send from its own tools; nothing is sent automatically.
+  Rules applied: no statistics, no client names, no "we stop all phishing" promise, no real fraud email from a client shown on screen.
+decided:
+  - "Joe, 16 Oct 2026: **{presenter}** presents. Zoho Webinar for the session (registration, recording, Q&A); Zoho Meeting for the internal dry run."
+  - "Joe, 22 Oct 2026: copy is serious underneath and dry on top (`docs/marketing/VOICE.md`); visuals are branded editorial, no generated imagery."
+open:
+  - item: Create the Zoho Webinar and its join link
+    by: Thu 22 Oct (T-28)
+    notes: The join link goes only in Email D (T-1), never on the public page
+  - item: Book the Zoho Meeting dry run
+    by: Fri 13 Nov
+    notes: Internal, 30 min
+track:
+  - { date: 2026-10-22, step: "Zoho Webinar created; Email B to prospects; LinkedIn post 1 with the invite card", owner: "{presenter} + Marketing" }
+  - { date: 2026-11-05, step: "Mention at the end of the 5 Nov insurance session (same audience); Email A in the client newsletter (first Thursday); Email B resend to non-openers; LinkedIn post 2 with the reminder card", owner: Marketing }
+  - { date: 2026-11-09, step: "Call list: clients' accounts-payable and office managers", owner: Account management }
+  - { date: 2026-11-12, step: "Email C reminder to registrants", owner: Marketing }
+  - { date: 2026-11-13, step: "Dry run on Zoho Meeting (internal, 30 min)", owner: "{presenter}" }
+  - { date: 2026-11-18, step: "Email D (T-1) with the join link", owner: Marketing }
+  - { date: 2026-11-19, step: "Run of show, section 5", owner: "{presenter} + host" }
+  - { date: 2026-11-23, step: "Email E follow-up; log attendance in Zoho CRM. The 24 Nov holiday shopping-scam advisory follows the next day.", owner: Marketing + Sales }
+registrations: >-
+  Registrations arrive as Zoho CRM leads with Service `Event registration: holiday-invoice-fraud-and-phishing`.
+
+emails:
+  - id: A
+    to: Clients (newsletter block)
+    kind: newsletter-block
+    send: 2026-11-05
+    subject: "Newsletter block: holiday invoice fraud, {date_short}"
+    heading: "Holiday invoice fraud: {minutes} minutes on {date_long}"
+    body: |
+      Late in the year, invoices pile up, people are out, and an email asking to "update our bank details before the holiday" can look like routine admin. It isn't.
+
+      On **{date_long} at {time} {tz}** we'll walk through what payment-change and gift-card requests look like, which email protections catch what, and a call-back rule your accounts-payable team can adopt the same week.
+
+      Forward this to whoever pays your bills. They'll thank you in January.
+    cta: Register
+
+  - id: B
+    to: Prospects
+    send: 2026-10-22
+    resend: 2026-11-05
+    subject: "Please update our bank details before the holidays (please don't)"
+    preview: "What payment-change fraud looks like, and the free rule that catches it."
+    body: |
+      Year-end is the season scammers pick. Invoices pile up, half the team is out, and an email asking you to "update our bank details before the holiday" looks, to a tired accounts-payable inbox, exactly like a Tuesday.
+
+      On **{date_long} at {time} {tz}** we're running a free {minutes}-minute session for the people who approve payments: accounts-payable staff, office managers and the owners who sign off on changes.
+
+      - what a payment-change or gift-card request actually looks like
+      - SPF, DKIM and DMARC in plain language: what each one catches, and what none of them do
+      - a call-back rule your team can adopt this week, no new software required
+
+      One honest note: no filter catches everything. The call-back rule is the part that still works on a Friday afternoon, and we'll say so on the call.
+    cta: Register
+
+  - id: C
+    to: Registrants
+    send: 2026-11-12
+    subject: "One week: holiday invoice fraud, {date_short} {time} AZ"
+    preview: "Bring the questions. Leave the suspicious email where it is."
+    body: |
+      You're registered for *{title}* next **{date_long}, {time} to {end_time} {tz}**.
+
+      If your team has had a suspicious payment-change request, bring the questions it raised. Please don't forward the email itself; describe it instead. Your inbox has had enough excitement.
+
+      The join link comes the day before.
+    cta: See the session page
+
+  - id: D
+    to: Registrants
+    send: 2026-11-18
+    subject: "Tomorrow {time} AZ: your join link"
+    preview: "{date_short}. Bring whoever approves payments."
+    body: |
+      See you tomorrow, **{date_long} at {time} {tz}** ({other_zones}).
+
+      **Join:** [JOIN LINK]
+
+      Agenda ({minutes} min): {agenda}.
+
+      Bring whoever approves payments. And whoever approves them when that person is on holiday.
+
+  - id: E
+    to: Registrants and attendees
+    send: 2026-11-23
+    subject: "Recording, and the one rule worth printing"
+    preview: "The call-back rule in one line, and an offer to check your email setup."
+    body: |
+      Thank you for [joining us / registering] for *{title}*.
+
+      - **Recording and slides:** [LINK]
+      - **The call-back rule, in one line:** any change to payment details is confirmed by phone, on a number you already had on file, never one from the email asking for the change.
+
+      Print it, tape it to the monitor. We won't judge.
+
+      If you want your own email setup checked (SPF, DKIM, DMARC, filtering), that's the next step below.
+    cta: Check my email security
+    cta_url: "{campaign}"
+
+linkedin:
+  - send: 2026-10-22
+    text: |
+      "Please update our bank details before the holidays."
+
+      Payment-change fraud doesn't need malware. It needs a believable email, a busy accounts-payable inbox, and nobody picking up the phone to check.
+
+      Free {minutes}-minute session, {date_short}, {time} {tz}: what these requests look like, what SPF, DKIM and DMARC actually catch, and a call-back rule your team can adopt this week. No software purchase required, which we realise is an odd thing for an IT company to say.
+      {page}
+  - send: 2026-11-05
+    text: |
+      A fraud control that needs no install, no licence and no training budget: confirm every payment change by phone, on a number you already had.
+
+      Two weeks until our session on holiday payment-change and gift-card scams. {date_short}, {time} {tz}. Bring whoever pays the bills.
+      {page}
+
+cards:
+  - id: invite
+    kicker: Free live session
+    headline: “Please update our bank details before the holidays.”
+    quip: Before you do, {minutes} minutes on how payment-change fraud works and the rule that catches it.
+  - id: reminder
+    kicker: Two weeks to go
+    headline: The fraud control that needs no install.
+    quip: It's a phone call. We'll explain which number to dial.
+
+run_of_show:
+  - { time: "10:45", min: "—", segment: "Host and presenter join, check audio and screen share", notes: "" }
+  - { time: "11:00", min: "10", segment: "What a payment-change attempt looks like", notes: "Use a constructed example, never a client's real email" }
+  - { time: "11:10", min: "15", segment: "Email authentication and filtering: what each layer catches", notes: "SPF, DKIM, DMARC, filtering, external-sender banners. Be plain that no filter catches everything" }
+  - { time: "11:25", min: "10", segment: "The process controls that matter more than any tool", notes: "The call-back rule; two-person approval for changes; gift-card requests always verified in person or by phone" }
+  - { time: "11:35", min: "10", segment: "Open questions", notes: "Client-specific setups move to a follow-up call" }
+  - { time: "11:45", min: "—", segment: "Close: the follow-up email has the recording and the /go/email-security next step", notes: "" }
+
+calls:
+  when: Mon 9 Nov
+  who: Clients' accounts-payable contacts and office managers.
+  script: >-
+    "Hi [name], it's [caller] at Digerati Experts. Year-end is when a fake 'update our bank details' email is easiest
+    to miss in accounts payable. We're doing a {minutes}-minute session on {date_short} on spotting them and a simple
+    call-back rule. Want me to send the link to you, or to whoever pays the bills?"

@@ -1,0 +1,6 @@
+"Please update our bank details before the holidays."
+
+Payment-change fraud doesn't need malware. It needs a believable email, a busy accounts-payable inbox, and nobody picking up the phone to check.
+
+Free 45-minute session, Thu 19 Nov, 11:00 AM Arizona time: what these requests look like, what SPF, DKIM and DMARC actually catch, and a call-back rule your team can adopt this week. No software purchase required, which we realise is an odd thing for an IT company to say.
+https://digeratiexperts.com/events/holiday-invoice-fraud-and-phishing

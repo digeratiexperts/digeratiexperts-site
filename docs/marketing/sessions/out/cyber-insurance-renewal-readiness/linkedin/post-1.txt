@@ -1,0 +1,6 @@
+Cyber insurance applications read more like IT audits every year. MFA, endpoint protection, email authentication, tested backups, awareness training: they're questions now, not extras. And "mostly" isn't one of the checkboxes.
+
+On Thu 5 Nov (11:00 AM Arizona time) Joseph Petro is running a free working hour on what those questions mean, and how to tell a missing control from missing evidence of one you already run.
+
+We don't sell insurance and can't promise coverage. This is the technical side, in plain language, with fewer acronyms than the form.
+https://digeratiexperts.com/events/cyber-insurance-renewal-readiness

@@ -1,0 +1,18 @@
+Subject: Recording, and the one rule worth printing
+Preview: The call-back rule in one line, and an offer to check your email setup.
+
+Hi [First name],
+
+Thank you for [joining us / registering] for Holiday Invoice Fraud: How Payment-Change Emails Get Past Busy Teams.
+
+- Recording and slides: [LINK]
+- The call-back rule, in one line: any change to payment details is confirmed by phone, on a number you already had on file, never one from the email asking for the change.
+
+Print it, tape it to the monitor. We won't judge.
+
+If you want your own email setup checked (SPF, DKIM, DMARC, filtering), that's the next step below.
+
+Check my email security: https://digeratiexperts.com/go/email-security
+
+[Sender name]
+Digerati Experts · Chandler, Arizona
