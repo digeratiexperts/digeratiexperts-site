@@ -331,7 +331,9 @@ claims:
       - docs/marketing/sessions/*.md (now generated from the YAML)
       - docs/marketing/sessions/out/ (generated emails, posts, card PNGs)
       - docs/marketing/sessions/preview.html (generated)
-    status: active
+    status: merged
+    pr: 690
+    merge_sha: 262048ec97ce95a6caf8b00ce01d7607b197aa02
     started: 2026-10-22
     note: >-
       Joe, 2026-10-22: marketing "serious but also funny ... wise-ass", "visuals
@@ -341,7 +343,9 @@ claims:
       plain-text emails, LinkedIn posts, 1200x627 and 1080x1080 cards and a
       preview page. Facts come from deEvents.ts; a lint enforces the claims
       register and the join-link rule; render.test.ts fails CI on stale outputs.
-      Docs and scripts only: nothing is bundled into the site.
+      Docs and scripts only: nothing is bundled into the site. PR 690 merged
+      2026-10-22 after green CI; no production release involved (MERGED is final
+      for docs tooling). Files released.
   - id: de-events-calendar
     owner: claude
     subsystem: marketing-events
