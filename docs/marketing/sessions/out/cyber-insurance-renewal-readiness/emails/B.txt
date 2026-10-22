@@ -1,0 +1,19 @@
+Subject: Your cyber insurance form is an exam. Study session: Thu 5 Nov
+Preview: A free working hour on what underwriters ask, and how to answer honestly.
+
+Hi [First name],
+
+Your cyber insurance renewal form now reads like an IT audit, because it is one. MFA, endpoint protection, email authentication, tested backups, staff training. Each one is a yes-or-no box, and "we think so" is not an answer the box accepts.
+
+On Thursday 5 November at 11:00 AM Arizona time we're running a free one-hour session for owners, finance and the IT people who have to fill the thing in. Bring your form if you have one. We'll go through it question by question and sort each answer into the two piles that matter: controls you have, and controls you have but can't prove.
+
+- what each control area is, and why carriers keep asking about it
+- missing control or missing evidence: how to tell which one you've got
+- a sensible order for the fixes when renewal is close, not when it's on fire
+
+Two honest notes before you register. We don't sell insurance, and we can't promise coverage. Carriers decide that, and counsel reads the policy. We can only help with the technical answers.
+
+Save your seat: https://digeratiexperts.com/events/cyber-insurance-renewal-readiness
+
+[Sender name]
+Digerati Experts · Chandler, Arizona

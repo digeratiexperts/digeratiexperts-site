@@ -1,0 +1,1211 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Session Kit Preview</title>
+<style>
+:root{--bg:#050312;--raised:#151217;--line:rgba(255,255,255,.1);--muted:rgba(255,255,255,.78);--pop:#D3126A;--ink:#F04C97}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:#fff;font:15px/1.55 Inter,system-ui,sans-serif}
+.wrap{max-width:1080px;margin:0 auto;padding:24px 16px 64px}
+h1{font:600 28px/1.2 'Space Grotesk',system-ui,sans-serif;margin:8px 0}h2{font:600 24px/1.25 'Space Grotesk',system-ui,sans-serif;margin:4px 0 6px}
+h3{font:500 12px/1 Oxanium,monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--ink);margin:28px 0 12px}
+.kicker{font:500 12px/1 Oxanium,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--ink);margin:0}
+.lede,.meta{color:var(--muted);max-width:72ch}a{color:var(--ink)}code{font:13px Oxanium,monospace;color:#fff}
+nav{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 8px}nav a{border:1px solid var(--line);border-radius:999px;padding:6px 12px;text-decoration:none;color:#fff}
+section{border-top:1px solid var(--line);padding-top:24px;margin-top:32px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+figure{margin:0}figure img{width:100%;height:auto;border-radius:10px;border:1px solid var(--line);display:block}figcaption{color:var(--muted);font-size:13px;margin-top:6px}
+.item{background:var(--raised);border:1px solid var(--line);border-radius:12px;padding:16px;margin:0 0 16px}
+.item header{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.when{color:var(--muted);font-size:13px}
+.chip{background:var(--pop);border-radius:6px;padding:2px 8px;font:600 12px/1.4 Oxanium,monospace}
+.subj{font-weight:600;margin:10px 0}
+iframe{width:100%;height:560px;border:0;border-radius:10px;background:#f3f1f6}
+pre{white-space:pre-wrap;word-break:break-word;background:#0b0914;border:1px solid var(--line);border-radius:8px;padding:12px;font:13px/1.55 ui-monospace,monospace;color:#fff}
+details summary{cursor:pointer;color:var(--muted);margin:10px 0 0}
+.actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}
+button{min-height:40px;padding:0 14px;border-radius:8px;border:1px solid var(--line);background:#0b0914;color:#fff;font:600 13px Inter,system-ui,sans-serif;cursor:pointer}
+button:hover{border-color:var(--pop)}button:focus-visible,a:focus-visible{outline:2px solid #ec4899;outline-offset:2px}
+</style></head>
+<body><div class="wrap">
+<p class="kicker">Digerati Experts · internal · generated</p>
+<h1>Session kit preview</h1>
+<p class="lede">Every email, post and card for the live sessions, built from one YAML file per session. To change anything, edit the YAML and run <code>npx tsx scripts/de-marketing/build.ts</code> (add <code>--cards</code> to re-render the images). Nothing here is sent; DE sends from its own tools.</p>
+<nav><a href="#cyber-insurance-renewal-readiness">Thu 5 Nov: Before Your Cyber Insurance Renewal</a><a href="#holiday-invoice-fraud-and-phishing">Thu 19 Nov: Holiday Invoice Fraud</a></nav>
+<section id="cyber-insurance-renewal-readiness">
+<p class="kicker">Thu 5 Nov · 11:00 AM Arizona time · Joseph Petro</p>
+<h2>Before Your Cyber Insurance Renewal: The Controls Underwriters Ask About</h2>
+<p class="meta"><a href="https://digeratiexperts.com/events/cyber-insurance-renewal-readiness">https://digeratiexperts.com/events/cyber-insurance-renewal-readiness</a> · edit <code>docs/marketing/sessions/cyber-insurance-renewal-readiness.yaml</code></p>
+<h3>Social cards</h3><div class="cards"><figure><img src="out/cyber-insurance-renewal-readiness/cards/invite-1200x627.png" alt="Free live session: Your cyber insurance form is an exam." width="600" height="314" loading="lazy">
+<figcaption>invite · <a href="out/cyber-insurance-renewal-readiness/cards/invite-1200x627.png">1200×627</a> · <a href="out/cyber-insurance-renewal-readiness/cards/invite-1080x1080.png">1080×1080</a></figcaption></figure>
+<figure><img src="out/cyber-insurance-renewal-readiness/cards/reminder-1200x627.png" alt="One week to go: “Mostly” isn’t a checkbox." width="600" height="314" loading="lazy">
+<figcaption>reminder · <a href="out/cyber-insurance-renewal-readiness/cards/reminder-1200x627.png">1200×627</a> · <a href="out/cyber-insurance-renewal-readiness/cards/reminder-1080x1080.png">1080×1080</a></figcaption></figure></div>
+<h3>Emails</h3><article class="item">
+<header><span class="chip">A</span> <strong>Clients</strong> <span class="when">Thu 22 Oct</span></header>
+<p class="subj">Your renewal questionnaire has questions. We have an hour.</p>
+<iframe title="Email A" loading="lazy" srcdoc="&lt;!doctype html&gt;
+&lt;html lang=&quot;en&quot;&gt;&lt;head&gt;&lt;meta charset=&quot;utf-8&quot;&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width,initial-scale=1&quot;&gt;&lt;meta name=&quot;color-scheme&quot; content=&quot;light&quot;&gt;
+&lt;title&gt;Your renewal questionnaire has questions. We have an hour.&lt;/title&gt;&lt;/head&gt;
+&lt;body style=&quot;margin:0;padding:0;background:#f3f1f6&quot;&gt;
+&lt;div style=&quot;display:none;max-height:0;overflow:hidden;opacity:0&quot;&gt;Thu 5 Nov, 11:00 AM Arizona time. Bring the form; we'll bring the answers you can back up.&lt;/div&gt;
+&lt;table role=&quot;presentation&quot; width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; bgcolor=&quot;#f3f1f6&quot;&gt;&lt;tr&gt;&lt;td align=&quot;center&quot; style=&quot;padding:24px 12px&quot;&gt;
+&lt;table role=&quot;presentation&quot; width=&quot;600&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;width:100%;max-width:600px;background:#ffffff;border-radius:12px;overflow:hidden&quot;&gt;
+&lt;tr&gt;&lt;td bgcolor=&quot;#050312&quot; style=&quot;padding:24px 28px&quot;&gt;
+  &lt;table role=&quot;presentation&quot; width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot;&gt;&lt;tr&gt;
+    &lt;td style=&quot;font:700 13px/1 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;letter-spacing:.22em;color:#ffffff&quot;&gt;DIGERATI&amp;nbsp;EXPERTS&lt;/td&gt;
+    &lt;td align=&quot;right&quot; style=&quot;font:500 11px/1 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;letter-spacing:.16em;color:#F04C97&quot;&gt;LIVE SESSION&lt;/td&gt;
+  &lt;/tr&gt;&lt;/table&gt;
+  &lt;table role=&quot;presentation&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;margin-top:20px&quot;&gt;&lt;tr&gt;
+    &lt;td bgcolor=&quot;#D3126A&quot; width=&quot;72&quot; align=&quot;center&quot; style=&quot;padding:10px 0;border-radius:8px 0 0 8px&quot;&gt;
+      &lt;div style=&quot;font:700 28px/1 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff&quot;&gt;5&lt;/div&gt;
+      &lt;div style=&quot;font:600 11px/1.6 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;letter-spacing:.1em;color:#ffffff&quot;&gt;NOV&lt;/div&gt;
+    &lt;/td&gt;
+    &lt;td bgcolor=&quot;#151217&quot; style=&quot;padding:10px 16px;border-radius:0 8px 8px 0&quot;&gt;
+      &lt;div style=&quot;font:600 17px/1.3 'Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff&quot;&gt;11:00 AM – 12:00 PM&lt;/div&gt;
+      &lt;div style=&quot;font:400 13px/1.4 Inter,Arial,Helvetica,sans-serif;color:rgba(255,255,255,.78)&quot;&gt;Thursday 5 November · Arizona time&lt;/div&gt;
+    &lt;/td&gt;
+  &lt;/tr&gt;&lt;/table&gt;
+  &lt;div style=&quot;margin-top:16px;font:600 20px/1.3 'Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff&quot;&gt;Before Your Cyber Insurance Renewal: The Controls Underwriters Ask About&lt;/div&gt;
+&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style=&quot;padding:28px 28px 8px&quot;&gt;
+&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;Hi [First name],&lt;/p&gt;&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;Cyber insurance applications don't ask what you bought any more. They ask how you operate: MFA, endpoint protection, email authentication, backups, awareness training. If your renewal is coming up, the time to find a gap is before the questionnaire, not halfway through underwriting.&lt;/p&gt;
+&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;On &lt;strong&gt;Thursday 5 November at 11:00 AM Arizona time&lt;/strong&gt;, Joseph Petro is running a one-hour working session on exactly that:&lt;/p&gt;
+&lt;ul style=&quot;margin:0 0 16px;padding:0 0 0 20px&quot;&gt;&lt;li style=&quot;margin:0 0 8px;font:400 16px/1.55 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;the control areas carrier questionnaires typically ask about, in plain language&lt;/li&gt;&lt;li style=&quot;margin:0 0 8px;font:400 16px/1.55 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;how to tell a missing control from missing evidence of one you already run&lt;/li&gt;&lt;li style=&quot;margin:0 0 8px;font:400 16px/1.55 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;what to do first when renewal is weeks away, not months&lt;/li&gt;&lt;/ul&gt;
+&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;Bring the questionnaire if you have one. Highlighters optional.&lt;/p&gt;
+&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;The boring-but-important part: carriers decide coverage and counsel interprets the policy. We can't promise either. We can help you implement and document the technical side.&lt;/p&gt;
+&lt;table role=&quot;presentation&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;margin:8px 0 24px&quot;&gt;&lt;tr&gt;&lt;td bgcolor=&quot;#D3126A&quot; style=&quot;border-radius:8px&quot;&gt;&lt;a href=&quot;https://digeratiexperts.com/events/cyber-insurance-renewal-readiness&quot; style=&quot;display:inline-block;padding:14px 24px;font:600 16px/1 'Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff;text-decoration:none;border-radius:8px&quot;&gt;Save your seat &amp;rarr;&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;[Sender name]&lt;br&gt;Digerati Experts · Chandler, Arizona&lt;/p&gt;
+&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style=&quot;padding:16px 28px 24px;border-top:1px solid #ece8f1;font:400 12px/1.5 Inter,Arial,Helvetica,sans-serif;color:#5f5a68&quot;&gt;
+  Digerati Experts · Chandler, Arizona · &lt;a href=&quot;https://digeratiexperts.com&quot; style=&quot;color:#A30E52&quot;&gt;digeratiexperts.com&lt;/a&gt;&lt;br&gt;[Unsubscribe link: added by the sending tool]
+&lt;/td&gt;&lt;/tr&gt;
+&lt;/table&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/body&gt;&lt;/html&gt;
+"></iframe>
+<details><summary>Plain text</summary><pre>Subject: Your renewal questionnaire has questions. We have an hour.
+Preview: Thu 5 Nov, 11:00 AM Arizona time. Bring the form; we'll bring the answers you can back up.
+
+Hi [First name],
+
+Cyber insurance applications don't ask what you bought any more. They ask how you operate: MFA, endpoint protection, email authentication, backups, awareness training. If your renewal is coming up, the time to find a gap is before the questionnaire, not halfway through underwriting.
+
+On Thursday 5 November at 11:00 AM Arizona time, Joseph Petro is running a one-hour working session on exactly that:
+
+- the control areas carrier questionnaires typically ask about, in plain language
+- how to tell a missing control from missing evidence of one you already run
+- what to do first when renewal is weeks away, not months
+
+Bring the questionnaire if you have one. Highlighters optional.
+
+The boring-but-important part: carriers decide coverage and counsel interprets the policy. We can't promise either. We can help you implement and document the technical side.
+
+Save your seat: https://digeratiexperts.com/events/cyber-insurance-renewal-readiness
+
+[Sender name]
+Digerati Experts · Chandler, Arizona
+</pre></details>
+<div class="actions"><button data-copy="Subject: Your renewal questionnaire has questions. We have an hour.
+Preview: Thu 5 Nov, 11:00 AM Arizona time. Bring the form; we'll bring the answers you can back up.
+
+Hi [First name],
+
+Cyber insurance applications don't ask what you bought any more. They ask how you operate: MFA, endpoint protection, email authentication, backups, awareness training. If your renewal is coming up, the time to find a gap is before the questionnaire, not halfway through underwriting.
+
+On Thursday 5 November at 11:00 AM Arizona time, Joseph Petro is running a one-hour working session on exactly that:
+
+- the control areas carrier questionnaires typically ask about, in plain language
+- how to tell a missing control from missing evidence of one you already run
+- what to do first when renewal is weeks away, not months
+
+Bring the questionnaire if you have one. Highlighters optional.
+
+The boring-but-important part: carriers decide coverage and counsel interprets the policy. We can't promise either. We can help you implement and document the technical side.
+
+Save your seat: https://digeratiexperts.com/events/cyber-insurance-renewal-readiness
+
+[Sender name]
+Digerati Experts · Chandler, Arizona
+">Copy text</button> <button data-copy="&lt;!doctype html&gt;
+&lt;html lang=&quot;en&quot;&gt;&lt;head&gt;&lt;meta charset=&quot;utf-8&quot;&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width,initial-scale=1&quot;&gt;&lt;meta name=&quot;color-scheme&quot; content=&quot;light&quot;&gt;
+&lt;title&gt;Your renewal questionnaire has questions. We have an hour.&lt;/title&gt;&lt;/head&gt;
+&lt;body style=&quot;margin:0;padding:0;background:#f3f1f6&quot;&gt;
+&lt;div style=&quot;display:none;max-height:0;overflow:hidden;opacity:0&quot;&gt;Thu 5 Nov, 11:00 AM Arizona time. Bring the form; we'll bring the answers you can back up.&lt;/div&gt;
+&lt;table role=&quot;presentation&quot; width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; bgcolor=&quot;#f3f1f6&quot;&gt;&lt;tr&gt;&lt;td align=&quot;center&quot; style=&quot;padding:24px 12px&quot;&gt;
+&lt;table role=&quot;presentation&quot; width=&quot;600&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;width:100%;max-width:600px;background:#ffffff;border-radius:12px;overflow:hidden&quot;&gt;
+&lt;tr&gt;&lt;td bgcolor=&quot;#050312&quot; style=&quot;padding:24px 28px&quot;&gt;
+  &lt;table role=&quot;presentation&quot; width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot;&gt;&lt;tr&gt;
+    &lt;td style=&quot;font:700 13px/1 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;letter-spacing:.22em;color:#ffffff&quot;&gt;DIGERATI&amp;nbsp;EXPERTS&lt;/td&gt;
+    &lt;td align=&quot;right&quot; style=&quot;font:500 11px/1 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;letter-spacing:.16em;color:#F04C97&quot;&gt;LIVE SESSION&lt;/td&gt;
+  &lt;/tr&gt;&lt;/table&gt;
+  &lt;table role=&quot;presentation&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;margin-top:20px&quot;&gt;&lt;tr&gt;
+    &lt;td bgcolor=&quot;#D3126A&quot; width=&quot;72&quot; align=&quot;center&quot; style=&quot;padding:10px 0;border-radius:8px 0 0 8px&quot;&gt;
+      &lt;div style=&quot;font:700 28px/1 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff&quot;&gt;5&lt;/div&gt;
+      &lt;div style=&quot;font:600 11px/1.6 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;letter-spacing:.1em;color:#ffffff&quot;&gt;NOV&lt;/div&gt;
+    &lt;/td&gt;
+    &lt;td bgcolor=&quot;#151217&quot; style=&quot;padding:10px 16px;border-radius:0 8px 8px 0&quot;&gt;
+      &lt;div style=&quot;font:600 17px/1.3 'Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff&quot;&gt;11:00 AM – 12:00 PM&lt;/div&gt;
+      &lt;div style=&quot;font:400 13px/1.4 Inter,Arial,Helvetica,sans-serif;color:rgba(255,255,255,.78)&quot;&gt;Thursday 5 November · Arizona time&lt;/div&gt;
+    &lt;/td&gt;
+  &lt;/tr&gt;&lt;/table&gt;
+  &lt;div style=&quot;margin-top:16px;font:600 20px/1.3 'Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff&quot;&gt;Before Your Cyber Insurance Renewal: The Controls Underwriters Ask About&lt;/div&gt;
+&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style=&quot;padding:28px 28px 8px&quot;&gt;
+&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;Hi [First name],&lt;/p&gt;&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;Cyber insurance applications don't ask what you bought any more. They ask how you operate: MFA, endpoint protection, email authentication, backups, awareness training. If your renewal is coming up, the time to find a gap is before the questionnaire, not halfway through underwriting.&lt;/p&gt;
+&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;On &lt;strong&gt;Thursday 5 November at 11:00 AM Arizona time&lt;/strong&gt;, Joseph Petro is running a one-hour working session on exactly that:&lt;/p&gt;
+&lt;ul style=&quot;margin:0 0 16px;padding:0 0 0 20px&quot;&gt;&lt;li style=&quot;margin:0 0 8px;font:400 16px/1.55 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;the control areas carrier questionnaires typically ask about, in plain language&lt;/li&gt;&lt;li style=&quot;margin:0 0 8px;font:400 16px/1.55 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;how to tell a missing control from missing evidence of one you already run&lt;/li&gt;&lt;li style=&quot;margin:0 0 8px;font:400 16px/1.55 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;what to do first when renewal is weeks away, not months&lt;/li&gt;&lt;/ul&gt;
+&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;Bring the questionnaire if you have one. Highlighters optional.&lt;/p&gt;
+&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;The boring-but-important part: carriers decide coverage and counsel interprets the policy. We can't promise either. We can help you implement and document the technical side.&lt;/p&gt;
+&lt;table role=&quot;presentation&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;margin:8px 0 24px&quot;&gt;&lt;tr&gt;&lt;td bgcolor=&quot;#D3126A&quot; style=&quot;border-radius:8px&quot;&gt;&lt;a href=&quot;https://digeratiexperts.com/events/cyber-insurance-renewal-readiness&quot; style=&quot;display:inline-block;padding:14px 24px;font:600 16px/1 'Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff;text-decoration:none;border-radius:8px&quot;&gt;Save your seat &amp;rarr;&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;[Sender name]&lt;br&gt;Digerati Experts · Chandler, Arizona&lt;/p&gt;
+&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style=&quot;padding:16px 28px 24px;border-top:1px solid #ece8f1;font:400 12px/1.5 Inter,Arial,Helvetica,sans-serif;color:#5f5a68&quot;&gt;
+  Digerati Experts · Chandler, Arizona · &lt;a href=&quot;https://digeratiexperts.com&quot; style=&quot;color:#A30E52&quot;&gt;digeratiexperts.com&lt;/a&gt;&lt;br&gt;[Unsubscribe link: added by the sending tool]
+&lt;/td&gt;&lt;/tr&gt;
+&lt;/table&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/body&gt;&lt;/html&gt;
+">Copy HTML</button> <a href="out/cyber-insurance-renewal-readiness/emails/A.html">Open HTML</a></div>
+</article>
+<article class="item">
+<header><span class="chip">B</span> <strong>Prospects</strong> <span class="when">Thu 22 Oct · resend Thu 29 Oct</span></header>
+<p class="subj">Your cyber insurance form is an exam. Study session: Thu 5 Nov</p>
+<iframe title="Email B" loading="lazy" srcdoc="&lt;!doctype html&gt;
+&lt;html lang=&quot;en&quot;&gt;&lt;head&gt;&lt;meta charset=&quot;utf-8&quot;&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width,initial-scale=1&quot;&gt;&lt;meta name=&quot;color-scheme&quot; content=&quot;light&quot;&gt;
+&lt;title&gt;Your cyber insurance form is an exam. Study session: Thu 5 Nov&lt;/title&gt;&lt;/head&gt;
+&lt;body style=&quot;margin:0;padding:0;background:#f3f1f6&quot;&gt;
+&lt;div style=&quot;display:none;max-height:0;overflow:hidden;opacity:0&quot;&gt;A free working hour on what underwriters ask, and how to answer honestly.&lt;/div&gt;
+&lt;table role=&quot;presentation&quot; width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; bgcolor=&quot;#f3f1f6&quot;&gt;&lt;tr&gt;&lt;td align=&quot;center&quot; style=&quot;padding:24px 12px&quot;&gt;
+&lt;table role=&quot;presentation&quot; width=&quot;600&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;width:100%;max-width:600px;background:#ffffff;border-radius:12px;overflow:hidden&quot;&gt;
+&lt;tr&gt;&lt;td bgcolor=&quot;#050312&quot; style=&quot;padding:24px 28px&quot;&gt;
+  &lt;table role=&quot;presentation&quot; width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot;&gt;&lt;tr&gt;
+    &lt;td style=&quot;font:700 13px/1 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;letter-spacing:.22em;color:#ffffff&quot;&gt;DIGERATI&amp;nbsp;EXPERTS&lt;/td&gt;
+    &lt;td align=&quot;right&quot; style=&quot;font:500 11px/1 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;letter-spacing:.16em;color:#F04C97&quot;&gt;LIVE SESSION&lt;/td&gt;
+  &lt;/tr&gt;&lt;/table&gt;
+  &lt;table role=&quot;presentation&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;margin-top:20px&quot;&gt;&lt;tr&gt;
+    &lt;td bgcolor=&quot;#D3126A&quot; width=&quot;72&quot; align=&quot;center&quot; style=&quot;padding:10px 0;border-radius:8px 0 0 8px&quot;&gt;
+      &lt;div style=&quot;font:700 28px/1 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff&quot;&gt;5&lt;/div&gt;
+      &lt;div style=&quot;font:600 11px/1.6 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;letter-spacing:.1em;color:#ffffff&quot;&gt;NOV&lt;/div&gt;
+    &lt;/td&gt;
+    &lt;td bgcolor=&quot;#151217&quot; style=&quot;padding:10px 16px;border-radius:0 8px 8px 0&quot;&gt;
+      &lt;div style=&quot;font:600 17px/1.3 'Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff&quot;&gt;11:00 AM – 12:00 PM&lt;/div&gt;
+      &lt;div style=&quot;font:400 13px/1.4 Inter,Arial,Helvetica,sans-serif;color:rgba(255,255,255,.78)&quot;&gt;Thursday 5 November · Arizona time&lt;/div&gt;
+    &lt;/td&gt;
+  &lt;/tr&gt;&lt;/table&gt;
+  &lt;div style=&quot;margin-top:16px;font:600 20px/1.3 'Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff&quot;&gt;Before Your Cyber Insurance Renewal: The Controls Underwriters Ask About&lt;/div&gt;
+&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style=&quot;padding:28px 28px 8px&quot;&gt;
+&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;Hi [First name],&lt;/p&gt;&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;Your cyber insurance renewal form now reads like an IT audit, because it is one. MFA, endpoint protection, email authentication, tested backups, staff training. Each one is a yes-or-no box, and &amp;quot;we think so&amp;quot; is not an answer the box accepts.&lt;/p&gt;
+&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;On &lt;strong&gt;Thursday 5 November at 11:00 AM Arizona time&lt;/strong&gt; we're running a free one-hour session for owners, finance and the IT people who have to fill the thing in. Bring your form if you have one. We'll go through it question by question and sort each answer into the two piles that matter: controls you have, and controls you have but can't prove.&lt;/p&gt;
+&lt;ul style=&quot;margin:0 0 16px;padding:0 0 0 20px&quot;&gt;&lt;li style=&quot;margin:0 0 8px;font:400 16px/1.55 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;what each control area is, and why carriers keep asking about it&lt;/li&gt;&lt;li style=&quot;margin:0 0 8px;font:400 16px/1.55 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;missing control or missing evidence: how to tell which one you've got&lt;/li&gt;&lt;li style=&quot;margin:0 0 8px;font:400 16px/1.55 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;a sensible order for the fixes when renewal is close, not when it's on fire&lt;/li&gt;&lt;/ul&gt;
+&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;Two honest notes before you register. We don't sell insurance, and we can't promise coverage. Carriers decide that, and counsel reads the policy. We can only help with the technical answers.&lt;/p&gt;
+&lt;table role=&quot;presentation&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;margin:8px 0 24px&quot;&gt;&lt;tr&gt;&lt;td bgcolor=&quot;#D3126A&quot; style=&quot;border-radius:8px&quot;&gt;&lt;a href=&quot;https://digeratiexperts.com/events/cyber-insurance-renewal-readiness&quot; style=&quot;display:inline-block;padding:14px 24px;font:600 16px/1 'Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff;text-decoration:none;border-radius:8px&quot;&gt;Save your seat &amp;rarr;&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;[Sender name]&lt;br&gt;Digerati Experts · Chandler, Arizona&lt;/p&gt;
+&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style=&quot;padding:16px 28px 24px;border-top:1px solid #ece8f1;font:400 12px/1.5 Inter,Arial,Helvetica,sans-serif;color:#5f5a68&quot;&gt;
+  Digerati Experts · Chandler, Arizona · &lt;a href=&quot;https://digeratiexperts.com&quot; style=&quot;color:#A30E52&quot;&gt;digeratiexperts.com&lt;/a&gt;&lt;br&gt;[Unsubscribe link: added by the sending tool]
+&lt;/td&gt;&lt;/tr&gt;
+&lt;/table&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/body&gt;&lt;/html&gt;
+"></iframe>
+<details><summary>Plain text</summary><pre>Subject: Your cyber insurance form is an exam. Study session: Thu 5 Nov
+Preview: A free working hour on what underwriters ask, and how to answer honestly.
+
+Hi [First name],
+
+Your cyber insurance renewal form now reads like an IT audit, because it is one. MFA, endpoint protection, email authentication, tested backups, staff training. Each one is a yes-or-no box, and &quot;we think so&quot; is not an answer the box accepts.
+
+On Thursday 5 November at 11:00 AM Arizona time we're running a free one-hour session for owners, finance and the IT people who have to fill the thing in. Bring your form if you have one. We'll go through it question by question and sort each answer into the two piles that matter: controls you have, and controls you have but can't prove.
+
+- what each control area is, and why carriers keep asking about it
+- missing control or missing evidence: how to tell which one you've got
+- a sensible order for the fixes when renewal is close, not when it's on fire
+
+Two honest notes before you register. We don't sell insurance, and we can't promise coverage. Carriers decide that, and counsel reads the policy. We can only help with the technical answers.
+
+Save your seat: https://digeratiexperts.com/events/cyber-insurance-renewal-readiness
+
+[Sender name]
+Digerati Experts · Chandler, Arizona
+</pre></details>
+<div class="actions"><button data-copy="Subject: Your cyber insurance form is an exam. Study session: Thu 5 Nov
+Preview: A free working hour on what underwriters ask, and how to answer honestly.
+
+Hi [First name],
+
+Your cyber insurance renewal form now reads like an IT audit, because it is one. MFA, endpoint protection, email authentication, tested backups, staff training. Each one is a yes-or-no box, and &quot;we think so&quot; is not an answer the box accepts.
+
+On Thursday 5 November at 11:00 AM Arizona time we're running a free one-hour session for owners, finance and the IT people who have to fill the thing in. Bring your form if you have one. We'll go through it question by question and sort each answer into the two piles that matter: controls you have, and controls you have but can't prove.
+
+- what each control area is, and why carriers keep asking about it
+- missing control or missing evidence: how to tell which one you've got
+- a sensible order for the fixes when renewal is close, not when it's on fire
+
+Two honest notes before you register. We don't sell insurance, and we can't promise coverage. Carriers decide that, and counsel reads the policy. We can only help with the technical answers.
+
+Save your seat: https://digeratiexperts.com/events/cyber-insurance-renewal-readiness
+
+[Sender name]
+Digerati Experts · Chandler, Arizona
+">Copy text</button> <button data-copy="&lt;!doctype html&gt;
+&lt;html lang=&quot;en&quot;&gt;&lt;head&gt;&lt;meta charset=&quot;utf-8&quot;&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width,initial-scale=1&quot;&gt;&lt;meta name=&quot;color-scheme&quot; content=&quot;light&quot;&gt;
+&lt;title&gt;Your cyber insurance form is an exam. Study session: Thu 5 Nov&lt;/title&gt;&lt;/head&gt;
+&lt;body style=&quot;margin:0;padding:0;background:#f3f1f6&quot;&gt;
+&lt;div style=&quot;display:none;max-height:0;overflow:hidden;opacity:0&quot;&gt;A free working hour on what underwriters ask, and how to answer honestly.&lt;/div&gt;
+&lt;table role=&quot;presentation&quot; width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; bgcolor=&quot;#f3f1f6&quot;&gt;&lt;tr&gt;&lt;td align=&quot;center&quot; style=&quot;padding:24px 12px&quot;&gt;
+&lt;table role=&quot;presentation&quot; width=&quot;600&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;width:100%;max-width:600px;background:#ffffff;border-radius:12px;overflow:hidden&quot;&gt;
+&lt;tr&gt;&lt;td bgcolor=&quot;#050312&quot; style=&quot;padding:24px 28px&quot;&gt;
+  &lt;table role=&quot;presentation&quot; width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot;&gt;&lt;tr&gt;
+    &lt;td style=&quot;font:700 13px/1 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;letter-spacing:.22em;color:#ffffff&quot;&gt;DIGERATI&amp;nbsp;EXPERTS&lt;/td&gt;
+    &lt;td align=&quot;right&quot; style=&quot;font:500 11px/1 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;letter-spacing:.16em;color:#F04C97&quot;&gt;LIVE SESSION&lt;/td&gt;
+  &lt;/tr&gt;&lt;/table&gt;
+  &lt;table role=&quot;presentation&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;margin-top:20px&quot;&gt;&lt;tr&gt;
+    &lt;td bgcolor=&quot;#D3126A&quot; width=&quot;72&quot; align=&quot;center&quot; style=&quot;padding:10px 0;border-radius:8px 0 0 8px&quot;&gt;
+      &lt;div style=&quot;font:700 28px/1 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff&quot;&gt;5&lt;/div&gt;
+      &lt;div style=&quot;font:600 11px/1.6 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;letter-spacing:.1em;color:#ffffff&quot;&gt;NOV&lt;/div&gt;
+    &lt;/td&gt;
+    &lt;td bgcolor=&quot;#151217&quot; style=&quot;padding:10px 16px;border-radius:0 8px 8px 0&quot;&gt;
+      &lt;div style=&quot;font:600 17px/1.3 'Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff&quot;&gt;11:00 AM – 12:00 PM&lt;/div&gt;
+      &lt;div style=&quot;font:400 13px/1.4 Inter,Arial,Helvetica,sans-serif;color:rgba(255,255,255,.78)&quot;&gt;Thursday 5 November · Arizona time&lt;/div&gt;
+    &lt;/td&gt;
+  &lt;/tr&gt;&lt;/table&gt;
+  &lt;div style=&quot;margin-top:16px;font:600 20px/1.3 'Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff&quot;&gt;Before Your Cyber Insurance Renewal: The Controls Underwriters Ask About&lt;/div&gt;
+&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style=&quot;padding:28px 28px 8px&quot;&gt;
+&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;Hi [First name],&lt;/p&gt;&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;Your cyber insurance renewal form now reads like an IT audit, because it is one. MFA, endpoint protection, email authentication, tested backups, staff training. Each one is a yes-or-no box, and &amp;quot;we think so&amp;quot; is not an answer the box accepts.&lt;/p&gt;
+&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;On &lt;strong&gt;Thursday 5 November at 11:00 AM Arizona time&lt;/strong&gt; we're running a free one-hour session for owners, finance and the IT people who have to fill the thing in. Bring your form if you have one. We'll go through it question by question and sort each answer into the two piles that matter: controls you have, and controls you have but can't prove.&lt;/p&gt;
+&lt;ul style=&quot;margin:0 0 16px;padding:0 0 0 20px&quot;&gt;&lt;li style=&quot;margin:0 0 8px;font:400 16px/1.55 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;what each control area is, and why carriers keep asking about it&lt;/li&gt;&lt;li style=&quot;margin:0 0 8px;font:400 16px/1.55 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;missing control or missing evidence: how to tell which one you've got&lt;/li&gt;&lt;li style=&quot;margin:0 0 8px;font:400 16px/1.55 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;a sensible order for the fixes when renewal is close, not when it's on fire&lt;/li&gt;&lt;/ul&gt;
+&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;Two honest notes before you register. We don't sell insurance, and we can't promise coverage. Carriers decide that, and counsel reads the policy. We can only help with the technical answers.&lt;/p&gt;
+&lt;table role=&quot;presentation&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;margin:8px 0 24px&quot;&gt;&lt;tr&gt;&lt;td bgcolor=&quot;#D3126A&quot; style=&quot;border-radius:8px&quot;&gt;&lt;a href=&quot;https://digeratiexperts.com/events/cyber-insurance-renewal-readiness&quot; style=&quot;display:inline-block;padding:14px 24px;font:600 16px/1 'Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff;text-decoration:none;border-radius:8px&quot;&gt;Save your seat &amp;rarr;&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;[Sender name]&lt;br&gt;Digerati Experts · Chandler, Arizona&lt;/p&gt;
+&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style=&quot;padding:16px 28px 24px;border-top:1px solid #ece8f1;font:400 12px/1.5 Inter,Arial,Helvetica,sans-serif;color:#5f5a68&quot;&gt;
+  Digerati Experts · Chandler, Arizona · &lt;a href=&quot;https://digeratiexperts.com&quot; style=&quot;color:#A30E52&quot;&gt;digeratiexperts.com&lt;/a&gt;&lt;br&gt;[Unsubscribe link: added by the sending tool]
+&lt;/td&gt;&lt;/tr&gt;
+&lt;/table&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/body&gt;&lt;/html&gt;
+">Copy HTML</button> <a href="out/cyber-insurance-renewal-readiness/emails/B.html">Open HTML</a></div>
+</article>
+<article class="item">
+<header><span class="chip">C</span> <strong>Registrants</strong> <span class="when">Thu 29 Oct</span></header>
+<p class="subj">One week. Your questionnaire is invited too.</p>
+<iframe title="Email C" loading="lazy" srcdoc="&lt;!doctype html&gt;
+&lt;html lang=&quot;en&quot;&gt;&lt;head&gt;&lt;meta charset=&quot;utf-8&quot;&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width,initial-scale=1&quot;&gt;&lt;meta name=&quot;color-scheme&quot; content=&quot;light&quot;&gt;
+&lt;title&gt;One week. Your questionnaire is invited too.&lt;/title&gt;&lt;/head&gt;
+&lt;body style=&quot;margin:0;padding:0;background:#f3f1f6&quot;&gt;
+&lt;div style=&quot;display:none;max-height:0;overflow:hidden;opacity:0&quot;&gt;Thu 5 Nov, 11:00 AM to 12:00 PM Arizona time. Join link arrives the day before.&lt;/div&gt;
+&lt;table role=&quot;presentation&quot; width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; bgcolor=&quot;#f3f1f6&quot;&gt;&lt;tr&gt;&lt;td align=&quot;center&quot; style=&quot;padding:24px 12px&quot;&gt;
+&lt;table role=&quot;presentation&quot; width=&quot;600&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;width:100%;max-width:600px;background:#ffffff;border-radius:12px;overflow:hidden&quot;&gt;
+&lt;tr&gt;&lt;td bgcolor=&quot;#050312&quot; style=&quot;padding:24px 28px&quot;&gt;
+  &lt;table role=&quot;presentation&quot; width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot;&gt;&lt;tr&gt;
+    &lt;td style=&quot;font:700 13px/1 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;letter-spacing:.22em;color:#ffffff&quot;&gt;DIGERATI&amp;nbsp;EXPERTS&lt;/td&gt;
+    &lt;td align=&quot;right&quot; style=&quot;font:500 11px/1 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;letter-spacing:.16em;color:#F04C97&quot;&gt;LIVE SESSION&lt;/td&gt;
+  &lt;/tr&gt;&lt;/table&gt;
+  &lt;table role=&quot;presentation&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;margin-top:20px&quot;&gt;&lt;tr&gt;
+    &lt;td bgcolor=&quot;#D3126A&quot; width=&quot;72&quot; align=&quot;center&quot; style=&quot;padding:10px 0;border-radius:8px 0 0 8px&quot;&gt;
+      &lt;div style=&quot;font:700 28px/1 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff&quot;&gt;5&lt;/div&gt;
+      &lt;div style=&quot;font:600 11px/1.6 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;letter-spacing:.1em;color:#ffffff&quot;&gt;NOV&lt;/div&gt;
+    &lt;/td&gt;
+    &lt;td bgcolor=&quot;#151217&quot; style=&quot;padding:10px 16px;border-radius:0 8px 8px 0&quot;&gt;
+      &lt;div style=&quot;font:600 17px/1.3 'Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff&quot;&gt;11:00 AM – 12:00 PM&lt;/div&gt;
+      &lt;div style=&quot;font:400 13px/1.4 Inter,Arial,Helvetica,sans-serif;color:rgba(255,255,255,.78)&quot;&gt;Thursday 5 November · Arizona time&lt;/div&gt;
+    &lt;/td&gt;
+  &lt;/tr&gt;&lt;/table&gt;
+  &lt;div style=&quot;margin-top:16px;font:600 20px/1.3 'Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff&quot;&gt;Before Your Cyber Insurance Renewal: The Controls Underwriters Ask About&lt;/div&gt;
+&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style=&quot;padding:28px 28px 8px&quot;&gt;
+&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;Hi [First name],&lt;/p&gt;&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;You're registered for &lt;em&gt;Before Your Cyber Insurance Renewal: The Controls Underwriters Ask About&lt;/em&gt; next &lt;strong&gt;Thursday 5 November, 11:00 AM to 12:00 PM Arizona time&lt;/strong&gt;.&lt;/p&gt;
+&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;If you have your carrier's questionnaire, have it to hand. The last 15 minutes are for your questions, including the awkward ones.&lt;/p&gt;
+&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;The join link arrives the day before. Add the session to your calendar from the page, so Future You can't say nobody mentioned it.&lt;/p&gt;
+&lt;table role=&quot;presentation&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;margin:8px 0 24px&quot;&gt;&lt;tr&gt;&lt;td bgcolor=&quot;#D3126A&quot; style=&quot;border-radius:8px&quot;&gt;&lt;a href=&quot;https://digeratiexperts.com/events/cyber-insurance-renewal-readiness&quot; style=&quot;display:inline-block;padding:14px 24px;font:600 16px/1 'Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff;text-decoration:none;border-radius:8px&quot;&gt;Add it to your calendar &amp;rarr;&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;[Sender name]&lt;br&gt;Digerati Experts · Chandler, Arizona&lt;/p&gt;
+&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style=&quot;padding:16px 28px 24px;border-top:1px solid #ece8f1;font:400 12px/1.5 Inter,Arial,Helvetica,sans-serif;color:#5f5a68&quot;&gt;
+  Digerati Experts · Chandler, Arizona · &lt;a href=&quot;https://digeratiexperts.com&quot; style=&quot;color:#A30E52&quot;&gt;digeratiexperts.com&lt;/a&gt;&lt;br&gt;[Unsubscribe link: added by the sending tool]
+&lt;/td&gt;&lt;/tr&gt;
+&lt;/table&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/body&gt;&lt;/html&gt;
+"></iframe>
+<details><summary>Plain text</summary><pre>Subject: One week. Your questionnaire is invited too.
+Preview: Thu 5 Nov, 11:00 AM to 12:00 PM Arizona time. Join link arrives the day before.
+
+Hi [First name],
+
+You're registered for Before Your Cyber Insurance Renewal: The Controls Underwriters Ask About next Thursday 5 November, 11:00 AM to 12:00 PM Arizona time.
+
+If you have your carrier's questionnaire, have it to hand. The last 15 minutes are for your questions, including the awkward ones.
+
+The join link arrives the day before. Add the session to your calendar from the page, so Future You can't say nobody mentioned it.
+
+Add it to your calendar: https://digeratiexperts.com/events/cyber-insurance-renewal-readiness
+
+[Sender name]
+Digerati Experts · Chandler, Arizona
+</pre></details>
+<div class="actions"><button data-copy="Subject: One week. Your questionnaire is invited too.
+Preview: Thu 5 Nov, 11:00 AM to 12:00 PM Arizona time. Join link arrives the day before.
+
+Hi [First name],
+
+You're registered for Before Your Cyber Insurance Renewal: The Controls Underwriters Ask About next Thursday 5 November, 11:00 AM to 12:00 PM Arizona time.
+
+If you have your carrier's questionnaire, have it to hand. The last 15 minutes are for your questions, including the awkward ones.
+
+The join link arrives the day before. Add the session to your calendar from the page, so Future You can't say nobody mentioned it.
+
+Add it to your calendar: https://digeratiexperts.com/events/cyber-insurance-renewal-readiness
+
+[Sender name]
+Digerati Experts · Chandler, Arizona
+">Copy text</button> <button data-copy="&lt;!doctype html&gt;
+&lt;html lang=&quot;en&quot;&gt;&lt;head&gt;&lt;meta charset=&quot;utf-8&quot;&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width,initial-scale=1&quot;&gt;&lt;meta name=&quot;color-scheme&quot; content=&quot;light&quot;&gt;
+&lt;title&gt;One week. Your questionnaire is invited too.&lt;/title&gt;&lt;/head&gt;
+&lt;body style=&quot;margin:0;padding:0;background:#f3f1f6&quot;&gt;
+&lt;div style=&quot;display:none;max-height:0;overflow:hidden;opacity:0&quot;&gt;Thu 5 Nov, 11:00 AM to 12:00 PM Arizona time. Join link arrives the day before.&lt;/div&gt;
+&lt;table role=&quot;presentation&quot; width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; bgcolor=&quot;#f3f1f6&quot;&gt;&lt;tr&gt;&lt;td align=&quot;center&quot; style=&quot;padding:24px 12px&quot;&gt;
+&lt;table role=&quot;presentation&quot; width=&quot;600&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;width:100%;max-width:600px;background:#ffffff;border-radius:12px;overflow:hidden&quot;&gt;
+&lt;tr&gt;&lt;td bgcolor=&quot;#050312&quot; style=&quot;padding:24px 28px&quot;&gt;
+  &lt;table role=&quot;presentation&quot; width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot;&gt;&lt;tr&gt;
+    &lt;td style=&quot;font:700 13px/1 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;letter-spacing:.22em;color:#ffffff&quot;&gt;DIGERATI&amp;nbsp;EXPERTS&lt;/td&gt;
+    &lt;td align=&quot;right&quot; style=&quot;font:500 11px/1 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;letter-spacing:.16em;color:#F04C97&quot;&gt;LIVE SESSION&lt;/td&gt;
+  &lt;/tr&gt;&lt;/table&gt;
+  &lt;table role=&quot;presentation&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;margin-top:20px&quot;&gt;&lt;tr&gt;
+    &lt;td bgcolor=&quot;#D3126A&quot; width=&quot;72&quot; align=&quot;center&quot; style=&quot;padding:10px 0;border-radius:8px 0 0 8px&quot;&gt;
+      &lt;div style=&quot;font:700 28px/1 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff&quot;&gt;5&lt;/div&gt;
+      &lt;div style=&quot;font:600 11px/1.6 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;letter-spacing:.1em;color:#ffffff&quot;&gt;NOV&lt;/div&gt;
+    &lt;/td&gt;
+    &lt;td bgcolor=&quot;#151217&quot; style=&quot;padding:10px 16px;border-radius:0 8px 8px 0&quot;&gt;
+      &lt;div style=&quot;font:600 17px/1.3 'Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff&quot;&gt;11:00 AM – 12:00 PM&lt;/div&gt;
+      &lt;div style=&quot;font:400 13px/1.4 Inter,Arial,Helvetica,sans-serif;color:rgba(255,255,255,.78)&quot;&gt;Thursday 5 November · Arizona time&lt;/div&gt;
+    &lt;/td&gt;
+  &lt;/tr&gt;&lt;/table&gt;
+  &lt;div style=&quot;margin-top:16px;font:600 20px/1.3 'Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff&quot;&gt;Before Your Cyber Insurance Renewal: The Controls Underwriters Ask About&lt;/div&gt;
+&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style=&quot;padding:28px 28px 8px&quot;&gt;
+&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;Hi [First name],&lt;/p&gt;&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;You're registered for &lt;em&gt;Before Your Cyber Insurance Renewal: The Controls Underwriters Ask About&lt;/em&gt; next &lt;strong&gt;Thursday 5 November, 11:00 AM to 12:00 PM Arizona time&lt;/strong&gt;.&lt;/p&gt;
+&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;If you have your carrier's questionnaire, have it to hand. The last 15 minutes are for your questions, including the awkward ones.&lt;/p&gt;
+&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;The join link arrives the day before. Add the session to your calendar from the page, so Future You can't say nobody mentioned it.&lt;/p&gt;
+&lt;table role=&quot;presentation&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;margin:8px 0 24px&quot;&gt;&lt;tr&gt;&lt;td bgcolor=&quot;#D3126A&quot; style=&quot;border-radius:8px&quot;&gt;&lt;a href=&quot;https://digeratiexperts.com/events/cyber-insurance-renewal-readiness&quot; style=&quot;display:inline-block;padding:14px 24px;font:600 16px/1 'Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff;text-decoration:none;border-radius:8px&quot;&gt;Add it to your calendar &amp;rarr;&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;[Sender name]&lt;br&gt;Digerati Experts · Chandler, Arizona&lt;/p&gt;
+&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style=&quot;padding:16px 28px 24px;border-top:1px solid #ece8f1;font:400 12px/1.5 Inter,Arial,Helvetica,sans-serif;color:#5f5a68&quot;&gt;
+  Digerati Experts · Chandler, Arizona · &lt;a href=&quot;https://digeratiexperts.com&quot; style=&quot;color:#A30E52&quot;&gt;digeratiexperts.com&lt;/a&gt;&lt;br&gt;[Unsubscribe link: added by the sending tool]
+&lt;/td&gt;&lt;/tr&gt;
+&lt;/table&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/body&gt;&lt;/html&gt;
+">Copy HTML</button> <a href="out/cyber-insurance-renewal-readiness/emails/C.html">Open HTML</a></div>
+</article>
+<article class="item">
+<header><span class="chip">D</span> <strong>Registrants</strong> <span class="when">Wed 4 Nov</span></header>
+<p class="subj">Tomorrow, 11:00 AM Arizona time: your join link</p>
+<iframe title="Email D" loading="lazy" srcdoc="&lt;!doctype html&gt;
+&lt;html lang=&quot;en&quot;&gt;&lt;head&gt;&lt;meta charset=&quot;utf-8&quot;&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width,initial-scale=1&quot;&gt;&lt;meta name=&quot;color-scheme&quot; content=&quot;light&quot;&gt;
+&lt;title&gt;Tomorrow, 11:00 AM Arizona time: your join link&lt;/title&gt;&lt;/head&gt;
+&lt;body style=&quot;margin:0;padding:0;background:#f3f1f6&quot;&gt;
+&lt;div style=&quot;display:none;max-height:0;overflow:hidden;opacity:0&quot;&gt;Thu 5 Nov. Coffee recommended, cameras optional.&lt;/div&gt;
+&lt;table role=&quot;presentation&quot; width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; bgcolor=&quot;#f3f1f6&quot;&gt;&lt;tr&gt;&lt;td align=&quot;center&quot; style=&quot;padding:24px 12px&quot;&gt;
+&lt;table role=&quot;presentation&quot; width=&quot;600&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;width:100%;max-width:600px;background:#ffffff;border-radius:12px;overflow:hidden&quot;&gt;
+&lt;tr&gt;&lt;td bgcolor=&quot;#050312&quot; style=&quot;padding:24px 28px&quot;&gt;
+  &lt;table role=&quot;presentation&quot; width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot;&gt;&lt;tr&gt;
+    &lt;td style=&quot;font:700 13px/1 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;letter-spacing:.22em;color:#ffffff&quot;&gt;DIGERATI&amp;nbsp;EXPERTS&lt;/td&gt;
+    &lt;td align=&quot;right&quot; style=&quot;font:500 11px/1 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;letter-spacing:.16em;color:#F04C97&quot;&gt;LIVE SESSION&lt;/td&gt;
+  &lt;/tr&gt;&lt;/table&gt;
+  &lt;table role=&quot;presentation&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;margin-top:20px&quot;&gt;&lt;tr&gt;
+    &lt;td bgcolor=&quot;#D3126A&quot; width=&quot;72&quot; align=&quot;center&quot; style=&quot;padding:10px 0;border-radius:8px 0 0 8px&quot;&gt;
+      &lt;div style=&quot;font:700 28px/1 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff&quot;&gt;5&lt;/div&gt;
+      &lt;div style=&quot;font:600 11px/1.6 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;letter-spacing:.1em;color:#ffffff&quot;&gt;NOV&lt;/div&gt;
+    &lt;/td&gt;
+    &lt;td bgcolor=&quot;#151217&quot; style=&quot;padding:10px 16px;border-radius:0 8px 8px 0&quot;&gt;
+      &lt;div style=&quot;font:600 17px/1.3 'Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff&quot;&gt;11:00 AM – 12:00 PM&lt;/div&gt;
+      &lt;div style=&quot;font:400 13px/1.4 Inter,Arial,Helvetica,sans-serif;color:rgba(255,255,255,.78)&quot;&gt;Thursday 5 November · Arizona time&lt;/div&gt;
+    &lt;/td&gt;
+  &lt;/tr&gt;&lt;/table&gt;
+  &lt;div style=&quot;margin-top:16px;font:600 20px/1.3 'Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff&quot;&gt;Before Your Cyber Insurance Renewal: The Controls Underwriters Ask About&lt;/div&gt;
+&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style=&quot;padding:28px 28px 8px&quot;&gt;
+&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;Hi [First name],&lt;/p&gt;&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;See you tomorrow, &lt;strong&gt;Thursday 5 November at 11:00 AM Arizona time&lt;/strong&gt; (10:00 AM Pacific / 11:00 AM Mountain / 12:00 PM Central / 1:00 PM Eastern).&lt;/p&gt;
+&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;&lt;strong&gt;Join:&lt;/strong&gt; [JOIN LINK]&lt;/p&gt;
+&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;Agenda (60 min): Why the application now asks how you operate · The control areas, one by one: identity, endpoint, email, backup, awareness · Missing control or missing evidence? Working a sample questionnaire · Open questions — bring the questionnaire you were sent.&lt;/p&gt;
+&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;Coffee recommended. Cameras optional. Questionnaire encouraged.&lt;/p&gt;
+&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;[Sender name]&lt;br&gt;Digerati Experts · Chandler, Arizona&lt;/p&gt;
+&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style=&quot;padding:16px 28px 24px;border-top:1px solid #ece8f1;font:400 12px/1.5 Inter,Arial,Helvetica,sans-serif;color:#5f5a68&quot;&gt;
+  Digerati Experts · Chandler, Arizona · &lt;a href=&quot;https://digeratiexperts.com&quot; style=&quot;color:#A30E52&quot;&gt;digeratiexperts.com&lt;/a&gt;&lt;br&gt;[Unsubscribe link: added by the sending tool]
+&lt;/td&gt;&lt;/tr&gt;
+&lt;/table&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/body&gt;&lt;/html&gt;
+"></iframe>
+<details><summary>Plain text</summary><pre>Subject: Tomorrow, 11:00 AM Arizona time: your join link
+Preview: Thu 5 Nov. Coffee recommended, cameras optional.
+
+Hi [First name],
+
+See you tomorrow, Thursday 5 November at 11:00 AM Arizona time (10:00 AM Pacific / 11:00 AM Mountain / 12:00 PM Central / 1:00 PM Eastern).
+
+Join: [JOIN LINK]
+
+Agenda (60 min): Why the application now asks how you operate · The control areas, one by one: identity, endpoint, email, backup, awareness · Missing control or missing evidence? Working a sample questionnaire · Open questions — bring the questionnaire you were sent.
+
+Coffee recommended. Cameras optional. Questionnaire encouraged.
+
+[Sender name]
+Digerati Experts · Chandler, Arizona
+</pre></details>
+<div class="actions"><button data-copy="Subject: Tomorrow, 11:00 AM Arizona time: your join link
+Preview: Thu 5 Nov. Coffee recommended, cameras optional.
+
+Hi [First name],
+
+See you tomorrow, Thursday 5 November at 11:00 AM Arizona time (10:00 AM Pacific / 11:00 AM Mountain / 12:00 PM Central / 1:00 PM Eastern).
+
+Join: [JOIN LINK]
+
+Agenda (60 min): Why the application now asks how you operate · The control areas, one by one: identity, endpoint, email, backup, awareness · Missing control or missing evidence? Working a sample questionnaire · Open questions — bring the questionnaire you were sent.
+
+Coffee recommended. Cameras optional. Questionnaire encouraged.
+
+[Sender name]
+Digerati Experts · Chandler, Arizona
+">Copy text</button> <button data-copy="&lt;!doctype html&gt;
+&lt;html lang=&quot;en&quot;&gt;&lt;head&gt;&lt;meta charset=&quot;utf-8&quot;&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width,initial-scale=1&quot;&gt;&lt;meta name=&quot;color-scheme&quot; content=&quot;light&quot;&gt;
+&lt;title&gt;Tomorrow, 11:00 AM Arizona time: your join link&lt;/title&gt;&lt;/head&gt;
+&lt;body style=&quot;margin:0;padding:0;background:#f3f1f6&quot;&gt;
+&lt;div style=&quot;display:none;max-height:0;overflow:hidden;opacity:0&quot;&gt;Thu 5 Nov. Coffee recommended, cameras optional.&lt;/div&gt;
+&lt;table role=&quot;presentation&quot; width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; bgcolor=&quot;#f3f1f6&quot;&gt;&lt;tr&gt;&lt;td align=&quot;center&quot; style=&quot;padding:24px 12px&quot;&gt;
+&lt;table role=&quot;presentation&quot; width=&quot;600&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;width:100%;max-width:600px;background:#ffffff;border-radius:12px;overflow:hidden&quot;&gt;
+&lt;tr&gt;&lt;td bgcolor=&quot;#050312&quot; style=&quot;padding:24px 28px&quot;&gt;
+  &lt;table role=&quot;presentation&quot; width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot;&gt;&lt;tr&gt;
+    &lt;td style=&quot;font:700 13px/1 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;letter-spacing:.22em;color:#ffffff&quot;&gt;DIGERATI&amp;nbsp;EXPERTS&lt;/td&gt;
+    &lt;td align=&quot;right&quot; style=&quot;font:500 11px/1 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;letter-spacing:.16em;color:#F04C97&quot;&gt;LIVE SESSION&lt;/td&gt;
+  &lt;/tr&gt;&lt;/table&gt;
+  &lt;table role=&quot;presentation&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;margin-top:20px&quot;&gt;&lt;tr&gt;
+    &lt;td bgcolor=&quot;#D3126A&quot; width=&quot;72&quot; align=&quot;center&quot; style=&quot;padding:10px 0;border-radius:8px 0 0 8px&quot;&gt;
+      &lt;div style=&quot;font:700 28px/1 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff&quot;&gt;5&lt;/div&gt;
+      &lt;div style=&quot;font:600 11px/1.6 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;letter-spacing:.1em;color:#ffffff&quot;&gt;NOV&lt;/div&gt;
+    &lt;/td&gt;
+    &lt;td bgcolor=&quot;#151217&quot; style=&quot;padding:10px 16px;border-radius:0 8px 8px 0&quot;&gt;
+      &lt;div style=&quot;font:600 17px/1.3 'Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff&quot;&gt;11:00 AM – 12:00 PM&lt;/div&gt;
+      &lt;div style=&quot;font:400 13px/1.4 Inter,Arial,Helvetica,sans-serif;color:rgba(255,255,255,.78)&quot;&gt;Thursday 5 November · Arizona time&lt;/div&gt;
+    &lt;/td&gt;
+  &lt;/tr&gt;&lt;/table&gt;
+  &lt;div style=&quot;margin-top:16px;font:600 20px/1.3 'Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff&quot;&gt;Before Your Cyber Insurance Renewal: The Controls Underwriters Ask About&lt;/div&gt;
+&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style=&quot;padding:28px 28px 8px&quot;&gt;
+&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;Hi [First name],&lt;/p&gt;&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;See you tomorrow, &lt;strong&gt;Thursday 5 November at 11:00 AM Arizona time&lt;/strong&gt; (10:00 AM Pacific / 11:00 AM Mountain / 12:00 PM Central / 1:00 PM Eastern).&lt;/p&gt;
+&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;&lt;strong&gt;Join:&lt;/strong&gt; [JOIN LINK]&lt;/p&gt;
+&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;Agenda (60 min): Why the application now asks how you operate · The control areas, one by one: identity, endpoint, email, backup, awareness · Missing control or missing evidence? Working a sample questionnaire · Open questions — bring the questionnaire you were sent.&lt;/p&gt;
+&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;Coffee recommended. Cameras optional. Questionnaire encouraged.&lt;/p&gt;
+&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;[Sender name]&lt;br&gt;Digerati Experts · Chandler, Arizona&lt;/p&gt;
+&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style=&quot;padding:16px 28px 24px;border-top:1px solid #ece8f1;font:400 12px/1.5 Inter,Arial,Helvetica,sans-serif;color:#5f5a68&quot;&gt;
+  Digerati Experts · Chandler, Arizona · &lt;a href=&quot;https://digeratiexperts.com&quot; style=&quot;color:#A30E52&quot;&gt;digeratiexperts.com&lt;/a&gt;&lt;br&gt;[Unsubscribe link: added by the sending tool]
+&lt;/td&gt;&lt;/tr&gt;
+&lt;/table&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/body&gt;&lt;/html&gt;
+">Copy HTML</button> <a href="out/cyber-insurance-renewal-readiness/emails/D.html">Open HTML</a></div>
+</article>
+<article class="item">
+<header><span class="chip">E</span> <strong>Registrants and attendees</strong> <span class="when">Mon 9 Nov</span></header>
+<p class="subj">The recording, and a next step if you want one</p>
+<iframe title="Email E" loading="lazy" srcdoc="&lt;!doctype html&gt;
+&lt;html lang=&quot;en&quot;&gt;&lt;head&gt;&lt;meta charset=&quot;utf-8&quot;&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width,initial-scale=1&quot;&gt;&lt;meta name=&quot;color-scheme&quot; content=&quot;light&quot;&gt;
+&lt;title&gt;The recording, and a next step if you want one&lt;/title&gt;&lt;/head&gt;
+&lt;body style=&quot;margin:0;padding:0;background:#f3f1f6&quot;&gt;
+&lt;div style=&quot;display:none;max-height:0;overflow:hidden;opacity:0&quot;&gt;Slides, recording, and an offer to read your questionnaire with you.&lt;/div&gt;
+&lt;table role=&quot;presentation&quot; width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; bgcolor=&quot;#f3f1f6&quot;&gt;&lt;tr&gt;&lt;td align=&quot;center&quot; style=&quot;padding:24px 12px&quot;&gt;
+&lt;table role=&quot;presentation&quot; width=&quot;600&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;width:100%;max-width:600px;background:#ffffff;border-radius:12px;overflow:hidden&quot;&gt;
+&lt;tr&gt;&lt;td bgcolor=&quot;#050312&quot; style=&quot;padding:24px 28px&quot;&gt;
+  &lt;table role=&quot;presentation&quot; width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot;&gt;&lt;tr&gt;
+    &lt;td style=&quot;font:700 13px/1 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;letter-spacing:.22em;color:#ffffff&quot;&gt;DIGERATI&amp;nbsp;EXPERTS&lt;/td&gt;
+    &lt;td align=&quot;right&quot; style=&quot;font:500 11px/1 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;letter-spacing:.16em;color:#F04C97&quot;&gt;LIVE SESSION&lt;/td&gt;
+  &lt;/tr&gt;&lt;/table&gt;
+  &lt;table role=&quot;presentation&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;margin-top:20px&quot;&gt;&lt;tr&gt;
+    &lt;td bgcolor=&quot;#D3126A&quot; width=&quot;72&quot; align=&quot;center&quot; style=&quot;padding:10px 0;border-radius:8px 0 0 8px&quot;&gt;
+      &lt;div style=&quot;font:700 28px/1 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff&quot;&gt;5&lt;/div&gt;
+      &lt;div style=&quot;font:600 11px/1.6 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;letter-spacing:.1em;color:#ffffff&quot;&gt;NOV&lt;/div&gt;
+    &lt;/td&gt;
+    &lt;td bgcolor=&quot;#151217&quot; style=&quot;padding:10px 16px;border-radius:0 8px 8px 0&quot;&gt;
+      &lt;div style=&quot;font:600 17px/1.3 'Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff&quot;&gt;11:00 AM – 12:00 PM&lt;/div&gt;
+      &lt;div style=&quot;font:400 13px/1.4 Inter,Arial,Helvetica,sans-serif;color:rgba(255,255,255,.78)&quot;&gt;Thursday 5 November · Arizona time&lt;/div&gt;
+    &lt;/td&gt;
+  &lt;/tr&gt;&lt;/table&gt;
+  &lt;div style=&quot;margin-top:16px;font:600 20px/1.3 'Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff&quot;&gt;Before Your Cyber Insurance Renewal: The Controls Underwriters Ask About&lt;/div&gt;
+&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style=&quot;padding:28px 28px 8px&quot;&gt;
+&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;Hi [First name],&lt;/p&gt;&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;Thank you for [joining us / registering] for &lt;em&gt;Before Your Cyber Insurance Renewal: The Controls Underwriters Ask About&lt;/em&gt;.&lt;/p&gt;
+&lt;ul style=&quot;margin:0 0 16px;padding:0 0 0 20px&quot;&gt;&lt;li style=&quot;margin:0 0 8px;font:400 16px/1.55 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;&lt;strong&gt;Recording and slides:&lt;/strong&gt; [LINK]&lt;/li&gt;&lt;li style=&quot;margin:0 0 8px;font:400 16px/1.55 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;&lt;strong&gt;Your next step, if you want one:&lt;/strong&gt; we go through your questionnaire against your actual environment and sort what's missing from what just needs writing down.&lt;/li&gt;&lt;/ul&gt;
+&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;As we said on the call: carriers decide coverage, so treat anything we said as the technical side only. We're IT people. We know our lane.&lt;/p&gt;
+&lt;table role=&quot;presentation&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;margin:8px 0 24px&quot;&gt;&lt;tr&gt;&lt;td bgcolor=&quot;#D3126A&quot; style=&quot;border-radius:8px&quot;&gt;&lt;a href=&quot;https://digeratiexperts.com/go/cyber-insurance&quot; style=&quot;display:inline-block;padding:14px 24px;font:600 16px/1 'Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff;text-decoration:none;border-radius:8px&quot;&gt;See the renewal readiness review &amp;rarr;&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;[Sender name]&lt;br&gt;Digerati Experts · Chandler, Arizona&lt;/p&gt;
+&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style=&quot;padding:16px 28px 24px;border-top:1px solid #ece8f1;font:400 12px/1.5 Inter,Arial,Helvetica,sans-serif;color:#5f5a68&quot;&gt;
+  Digerati Experts · Chandler, Arizona · &lt;a href=&quot;https://digeratiexperts.com&quot; style=&quot;color:#A30E52&quot;&gt;digeratiexperts.com&lt;/a&gt;&lt;br&gt;[Unsubscribe link: added by the sending tool]
+&lt;/td&gt;&lt;/tr&gt;
+&lt;/table&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/body&gt;&lt;/html&gt;
+"></iframe>
+<details><summary>Plain text</summary><pre>Subject: The recording, and a next step if you want one
+Preview: Slides, recording, and an offer to read your questionnaire with you.
+
+Hi [First name],
+
+Thank you for [joining us / registering] for Before Your Cyber Insurance Renewal: The Controls Underwriters Ask About.
+
+- Recording and slides: [LINK]
+- Your next step, if you want one: we go through your questionnaire against your actual environment and sort what's missing from what just needs writing down.
+
+As we said on the call: carriers decide coverage, so treat anything we said as the technical side only. We're IT people. We know our lane.
+
+See the renewal readiness review: https://digeratiexperts.com/go/cyber-insurance
+
+[Sender name]
+Digerati Experts · Chandler, Arizona
+</pre></details>
+<div class="actions"><button data-copy="Subject: The recording, and a next step if you want one
+Preview: Slides, recording, and an offer to read your questionnaire with you.
+
+Hi [First name],
+
+Thank you for [joining us / registering] for Before Your Cyber Insurance Renewal: The Controls Underwriters Ask About.
+
+- Recording and slides: [LINK]
+- Your next step, if you want one: we go through your questionnaire against your actual environment and sort what's missing from what just needs writing down.
+
+As we said on the call: carriers decide coverage, so treat anything we said as the technical side only. We're IT people. We know our lane.
+
+See the renewal readiness review: https://digeratiexperts.com/go/cyber-insurance
+
+[Sender name]
+Digerati Experts · Chandler, Arizona
+">Copy text</button> <button data-copy="&lt;!doctype html&gt;
+&lt;html lang=&quot;en&quot;&gt;&lt;head&gt;&lt;meta charset=&quot;utf-8&quot;&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width,initial-scale=1&quot;&gt;&lt;meta name=&quot;color-scheme&quot; content=&quot;light&quot;&gt;
+&lt;title&gt;The recording, and a next step if you want one&lt;/title&gt;&lt;/head&gt;
+&lt;body style=&quot;margin:0;padding:0;background:#f3f1f6&quot;&gt;
+&lt;div style=&quot;display:none;max-height:0;overflow:hidden;opacity:0&quot;&gt;Slides, recording, and an offer to read your questionnaire with you.&lt;/div&gt;
+&lt;table role=&quot;presentation&quot; width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; bgcolor=&quot;#f3f1f6&quot;&gt;&lt;tr&gt;&lt;td align=&quot;center&quot; style=&quot;padding:24px 12px&quot;&gt;
+&lt;table role=&quot;presentation&quot; width=&quot;600&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;width:100%;max-width:600px;background:#ffffff;border-radius:12px;overflow:hidden&quot;&gt;
+&lt;tr&gt;&lt;td bgcolor=&quot;#050312&quot; style=&quot;padding:24px 28px&quot;&gt;
+  &lt;table role=&quot;presentation&quot; width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot;&gt;&lt;tr&gt;
+    &lt;td style=&quot;font:700 13px/1 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;letter-spacing:.22em;color:#ffffff&quot;&gt;DIGERATI&amp;nbsp;EXPERTS&lt;/td&gt;
+    &lt;td align=&quot;right&quot; style=&quot;font:500 11px/1 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;letter-spacing:.16em;color:#F04C97&quot;&gt;LIVE SESSION&lt;/td&gt;
+  &lt;/tr&gt;&lt;/table&gt;
+  &lt;table role=&quot;presentation&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;margin-top:20px&quot;&gt;&lt;tr&gt;
+    &lt;td bgcolor=&quot;#D3126A&quot; width=&quot;72&quot; align=&quot;center&quot; style=&quot;padding:10px 0;border-radius:8px 0 0 8px&quot;&gt;
+      &lt;div style=&quot;font:700 28px/1 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff&quot;&gt;5&lt;/div&gt;
+      &lt;div style=&quot;font:600 11px/1.6 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;letter-spacing:.1em;color:#ffffff&quot;&gt;NOV&lt;/div&gt;
+    &lt;/td&gt;
+    &lt;td bgcolor=&quot;#151217&quot; style=&quot;padding:10px 16px;border-radius:0 8px 8px 0&quot;&gt;
+      &lt;div style=&quot;font:600 17px/1.3 'Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff&quot;&gt;11:00 AM – 12:00 PM&lt;/div&gt;
+      &lt;div style=&quot;font:400 13px/1.4 Inter,Arial,Helvetica,sans-serif;color:rgba(255,255,255,.78)&quot;&gt;Thursday 5 November · Arizona time&lt;/div&gt;
+    &lt;/td&gt;
+  &lt;/tr&gt;&lt;/table&gt;
+  &lt;div style=&quot;margin-top:16px;font:600 20px/1.3 'Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff&quot;&gt;Before Your Cyber Insurance Renewal: The Controls Underwriters Ask About&lt;/div&gt;
+&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style=&quot;padding:28px 28px 8px&quot;&gt;
+&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;Hi [First name],&lt;/p&gt;&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;Thank you for [joining us / registering] for &lt;em&gt;Before Your Cyber Insurance Renewal: The Controls Underwriters Ask About&lt;/em&gt;.&lt;/p&gt;
+&lt;ul style=&quot;margin:0 0 16px;padding:0 0 0 20px&quot;&gt;&lt;li style=&quot;margin:0 0 8px;font:400 16px/1.55 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;&lt;strong&gt;Recording and slides:&lt;/strong&gt; [LINK]&lt;/li&gt;&lt;li style=&quot;margin:0 0 8px;font:400 16px/1.55 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;&lt;strong&gt;Your next step, if you want one:&lt;/strong&gt; we go through your questionnaire against your actual environment and sort what's missing from what just needs writing down.&lt;/li&gt;&lt;/ul&gt;
+&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;As we said on the call: carriers decide coverage, so treat anything we said as the technical side only. We're IT people. We know our lane.&lt;/p&gt;
+&lt;table role=&quot;presentation&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;margin:8px 0 24px&quot;&gt;&lt;tr&gt;&lt;td bgcolor=&quot;#D3126A&quot; style=&quot;border-radius:8px&quot;&gt;&lt;a href=&quot;https://digeratiexperts.com/go/cyber-insurance&quot; style=&quot;display:inline-block;padding:14px 24px;font:600 16px/1 'Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff;text-decoration:none;border-radius:8px&quot;&gt;See the renewal readiness review &amp;rarr;&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;[Sender name]&lt;br&gt;Digerati Experts · Chandler, Arizona&lt;/p&gt;
+&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style=&quot;padding:16px 28px 24px;border-top:1px solid #ece8f1;font:400 12px/1.5 Inter,Arial,Helvetica,sans-serif;color:#5f5a68&quot;&gt;
+  Digerati Experts · Chandler, Arizona · &lt;a href=&quot;https://digeratiexperts.com&quot; style=&quot;color:#A30E52&quot;&gt;digeratiexperts.com&lt;/a&gt;&lt;br&gt;[Unsubscribe link: added by the sending tool]
+&lt;/td&gt;&lt;/tr&gt;
+&lt;/table&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/body&gt;&lt;/html&gt;
+">Copy HTML</button> <a href="out/cyber-insurance-renewal-readiness/emails/E.html">Open HTML</a></div>
+</article>
+<h3>LinkedIn</h3><article class="item"><header><span class="chip">Post 1</span> <span class="when">Thu 22 Oct · 623 characters</span></header><pre>Cyber insurance applications read more like IT audits every year. MFA, endpoint protection, email authentication, tested backups, awareness training: they're questions now, not extras. And &quot;mostly&quot; isn't one of the checkboxes.
+
+On Thu 5 Nov (11:00 AM Arizona time) Joseph Petro is running a free working hour on what those questions mean, and how to tell a missing control from missing evidence of one you already run.
+
+We don't sell insurance and can't promise coverage. This is the technical side, in plain language, with fewer acronyms than the form.
+https://digeratiexperts.com/events/cyber-insurance-renewal-readiness
+</pre><div class="actions"><button data-copy="Cyber insurance applications read more like IT audits every year. MFA, endpoint protection, email authentication, tested backups, awareness training: they're questions now, not extras. And &quot;mostly&quot; isn't one of the checkboxes.
+
+On Thu 5 Nov (11:00 AM Arizona time) Joseph Petro is running a free working hour on what those questions mean, and how to tell a missing control from missing evidence of one you already run.
+
+We don't sell insurance and can't promise coverage. This is the technical side, in plain language, with fewer acronyms than the form.
+https://digeratiexperts.com/events/cyber-insurance-renewal-readiness
+">Copy post</button></div></article>
+<article class="item"><header><span class="chip">Post 2</span> <span class="when">Thu 29 Oct · 367 characters</span></header><pre>&quot;Do you enforce MFA for all remote access?&quot; is a yes/no box on a lot of renewal forms. The honest answer is often &quot;mostly&quot;, and &quot;mostly&quot; is not a box.
+
+One week until our working hour on the controls underwriters ask about: Thu 5 Nov, 11:00 AM Arizona time. Free, and the questionnaire is welcome.
+https://digeratiexperts.com/events/cyber-insurance-renewal-readiness
+</pre><div class="actions"><button data-copy="&quot;Do you enforce MFA for all remote access?&quot; is a yes/no box on a lot of renewal forms. The honest answer is often &quot;mostly&quot;, and &quot;mostly&quot; is not a box.
+
+One week until our working hour on the controls underwriters ask about: Thu 5 Nov, 11:00 AM Arizona time. Free, and the questionnaire is welcome.
+https://digeratiexperts.com/events/cyber-insurance-renewal-readiness
+">Copy post</button></div></article>
+</section>
+<section id="holiday-invoice-fraud-and-phishing">
+<p class="kicker">Thu 19 Nov · 11:00 AM Arizona time · Joseph Petro</p>
+<h2>Holiday Invoice Fraud: How Payment-Change Emails Get Past Busy Teams</h2>
+<p class="meta"><a href="https://digeratiexperts.com/events/holiday-invoice-fraud-and-phishing">https://digeratiexperts.com/events/holiday-invoice-fraud-and-phishing</a> · edit <code>docs/marketing/sessions/holiday-invoice-fraud-and-phishing.yaml</code></p>
+<h3>Social cards</h3><div class="cards"><figure><img src="out/holiday-invoice-fraud-and-phishing/cards/invite-1200x627.png" alt="Free live session: “Please update our bank details before the holidays.”" width="600" height="314" loading="lazy">
+<figcaption>invite · <a href="out/holiday-invoice-fraud-and-phishing/cards/invite-1200x627.png">1200×627</a> · <a href="out/holiday-invoice-fraud-and-phishing/cards/invite-1080x1080.png">1080×1080</a></figcaption></figure>
+<figure><img src="out/holiday-invoice-fraud-and-phishing/cards/reminder-1200x627.png" alt="Two weeks to go: The fraud control that needs no install." width="600" height="314" loading="lazy">
+<figcaption>reminder · <a href="out/holiday-invoice-fraud-and-phishing/cards/reminder-1200x627.png">1200×627</a> · <a href="out/holiday-invoice-fraud-and-phishing/cards/reminder-1080x1080.png">1080×1080</a></figcaption></figure></div>
+<h3>Emails</h3><article class="item">
+<header><span class="chip">A</span> <strong>Clients (newsletter block)</strong> <span class="when">Thu 5 Nov</span></header>
+<p class="subj">Newsletter block: holiday invoice fraud, Thu 19 Nov</p>
+<iframe title="Email A" loading="lazy" srcdoc="&lt;!doctype html&gt;
+&lt;html lang=&quot;en&quot;&gt;&lt;head&gt;&lt;meta charset=&quot;utf-8&quot;&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width,initial-scale=1&quot;&gt;&lt;meta name=&quot;color-scheme&quot; content=&quot;light&quot;&gt;
+&lt;title&gt;Newsletter block: holiday invoice fraud, Thu 19 Nov&lt;/title&gt;&lt;/head&gt;
+&lt;body style=&quot;margin:0;padding:0;background:#f3f1f6&quot;&gt;
+&lt;div style=&quot;display:none;max-height:0;overflow:hidden;opacity:0&quot;&gt;&lt;/div&gt;
+&lt;table role=&quot;presentation&quot; width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; bgcolor=&quot;#f3f1f6&quot;&gt;&lt;tr&gt;&lt;td align=&quot;center&quot; style=&quot;padding:24px 12px&quot;&gt;
+&lt;table role=&quot;presentation&quot; width=&quot;600&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;width:100%;max-width:600px;background:#ffffff;border-radius:12px;overflow:hidden&quot;&gt;
+&lt;tr&gt;&lt;td bgcolor=&quot;#050312&quot; style=&quot;padding:24px 28px&quot;&gt;
+  &lt;table role=&quot;presentation&quot; width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot;&gt;&lt;tr&gt;
+    &lt;td style=&quot;font:700 13px/1 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;letter-spacing:.22em;color:#ffffff&quot;&gt;DIGERATI&amp;nbsp;EXPERTS&lt;/td&gt;
+    &lt;td align=&quot;right&quot; style=&quot;font:500 11px/1 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;letter-spacing:.16em;color:#F04C97&quot;&gt;LIVE SESSION&lt;/td&gt;
+  &lt;/tr&gt;&lt;/table&gt;
+  &lt;table role=&quot;presentation&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;margin-top:20px&quot;&gt;&lt;tr&gt;
+    &lt;td bgcolor=&quot;#D3126A&quot; width=&quot;72&quot; align=&quot;center&quot; style=&quot;padding:10px 0;border-radius:8px 0 0 8px&quot;&gt;
+      &lt;div style=&quot;font:700 28px/1 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff&quot;&gt;19&lt;/div&gt;
+      &lt;div style=&quot;font:600 11px/1.6 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;letter-spacing:.1em;color:#ffffff&quot;&gt;NOV&lt;/div&gt;
+    &lt;/td&gt;
+    &lt;td bgcolor=&quot;#151217&quot; style=&quot;padding:10px 16px;border-radius:0 8px 8px 0&quot;&gt;
+      &lt;div style=&quot;font:600 17px/1.3 'Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff&quot;&gt;11:00 AM – 11:45 AM&lt;/div&gt;
+      &lt;div style=&quot;font:400 13px/1.4 Inter,Arial,Helvetica,sans-serif;color:rgba(255,255,255,.78)&quot;&gt;Thursday 19 November · Arizona time&lt;/div&gt;
+    &lt;/td&gt;
+  &lt;/tr&gt;&lt;/table&gt;
+  &lt;div style=&quot;margin-top:16px;font:600 20px/1.3 'Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff&quot;&gt;Holiday Invoice Fraud: How Payment-Change Emails Get Past Busy Teams&lt;/div&gt;
+&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style=&quot;padding:28px 28px 8px&quot;&gt;
+&lt;h1 style=&quot;margin:0 0 16px;font:700 24px/1.25 'Space Grotesk',Arial,Helvetica,sans-serif;color:#0b0914&quot;&gt;Holiday invoice fraud: 45 minutes on Thursday 19 November&lt;/h1&gt;&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;Late in the year, invoices pile up, people are out, and an email asking to &amp;quot;update our bank details before the holiday&amp;quot; can look like routine admin. It isn't.&lt;/p&gt;
+&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;On &lt;strong&gt;Thursday 19 November at 11:00 AM Arizona time&lt;/strong&gt; we'll walk through what payment-change and gift-card requests look like, which email protections catch what, and a call-back rule your accounts-payable team can adopt the same week.&lt;/p&gt;
+&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;Forward this to whoever pays your bills. They'll thank you in January.&lt;/p&gt;
+&lt;table role=&quot;presentation&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;margin:8px 0 24px&quot;&gt;&lt;tr&gt;&lt;td bgcolor=&quot;#D3126A&quot; style=&quot;border-radius:8px&quot;&gt;&lt;a href=&quot;https://digeratiexperts.com/events/holiday-invoice-fraud-and-phishing&quot; style=&quot;display:inline-block;padding:14px 24px;font:600 16px/1 'Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff;text-decoration:none;border-radius:8px&quot;&gt;Register &amp;rarr;&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style=&quot;padding:16px 28px 24px;border-top:1px solid #ece8f1;font:400 12px/1.5 Inter,Arial,Helvetica,sans-serif;color:#5f5a68&quot;&gt;
+  Digerati Experts · Chandler, Arizona · &lt;a href=&quot;https://digeratiexperts.com&quot; style=&quot;color:#A30E52&quot;&gt;digeratiexperts.com&lt;/a&gt;&lt;br&gt;[Unsubscribe link: added by the sending tool]
+&lt;/td&gt;&lt;/tr&gt;
+&lt;/table&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/body&gt;&lt;/html&gt;
+"></iframe>
+<details><summary>Plain text</summary><pre>Subject: Newsletter block: holiday invoice fraud, Thu 19 Nov
+
+Holiday invoice fraud: 45 minutes on Thursday 19 November
+
+Late in the year, invoices pile up, people are out, and an email asking to &quot;update our bank details before the holiday&quot; can look like routine admin. It isn't.
+
+On Thursday 19 November at 11:00 AM Arizona time we'll walk through what payment-change and gift-card requests look like, which email protections catch what, and a call-back rule your accounts-payable team can adopt the same week.
+
+Forward this to whoever pays your bills. They'll thank you in January.
+
+Register: https://digeratiexperts.com/events/holiday-invoice-fraud-and-phishing
+</pre></details>
+<div class="actions"><button data-copy="Subject: Newsletter block: holiday invoice fraud, Thu 19 Nov
+
+Holiday invoice fraud: 45 minutes on Thursday 19 November
+
+Late in the year, invoices pile up, people are out, and an email asking to &quot;update our bank details before the holiday&quot; can look like routine admin. It isn't.
+
+On Thursday 19 November at 11:00 AM Arizona time we'll walk through what payment-change and gift-card requests look like, which email protections catch what, and a call-back rule your accounts-payable team can adopt the same week.
+
+Forward this to whoever pays your bills. They'll thank you in January.
+
+Register: https://digeratiexperts.com/events/holiday-invoice-fraud-and-phishing
+">Copy text</button> <button data-copy="&lt;!doctype html&gt;
+&lt;html lang=&quot;en&quot;&gt;&lt;head&gt;&lt;meta charset=&quot;utf-8&quot;&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width,initial-scale=1&quot;&gt;&lt;meta name=&quot;color-scheme&quot; content=&quot;light&quot;&gt;
+&lt;title&gt;Newsletter block: holiday invoice fraud, Thu 19 Nov&lt;/title&gt;&lt;/head&gt;
+&lt;body style=&quot;margin:0;padding:0;background:#f3f1f6&quot;&gt;
+&lt;div style=&quot;display:none;max-height:0;overflow:hidden;opacity:0&quot;&gt;&lt;/div&gt;
+&lt;table role=&quot;presentation&quot; width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; bgcolor=&quot;#f3f1f6&quot;&gt;&lt;tr&gt;&lt;td align=&quot;center&quot; style=&quot;padding:24px 12px&quot;&gt;
+&lt;table role=&quot;presentation&quot; width=&quot;600&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;width:100%;max-width:600px;background:#ffffff;border-radius:12px;overflow:hidden&quot;&gt;
+&lt;tr&gt;&lt;td bgcolor=&quot;#050312&quot; style=&quot;padding:24px 28px&quot;&gt;
+  &lt;table role=&quot;presentation&quot; width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot;&gt;&lt;tr&gt;
+    &lt;td style=&quot;font:700 13px/1 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;letter-spacing:.22em;color:#ffffff&quot;&gt;DIGERATI&amp;nbsp;EXPERTS&lt;/td&gt;
+    &lt;td align=&quot;right&quot; style=&quot;font:500 11px/1 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;letter-spacing:.16em;color:#F04C97&quot;&gt;LIVE SESSION&lt;/td&gt;
+  &lt;/tr&gt;&lt;/table&gt;
+  &lt;table role=&quot;presentation&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;margin-top:20px&quot;&gt;&lt;tr&gt;
+    &lt;td bgcolor=&quot;#D3126A&quot; width=&quot;72&quot; align=&quot;center&quot; style=&quot;padding:10px 0;border-radius:8px 0 0 8px&quot;&gt;
+      &lt;div style=&quot;font:700 28px/1 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff&quot;&gt;19&lt;/div&gt;
+      &lt;div style=&quot;font:600 11px/1.6 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;letter-spacing:.1em;color:#ffffff&quot;&gt;NOV&lt;/div&gt;
+    &lt;/td&gt;
+    &lt;td bgcolor=&quot;#151217&quot; style=&quot;padding:10px 16px;border-radius:0 8px 8px 0&quot;&gt;
+      &lt;div style=&quot;font:600 17px/1.3 'Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff&quot;&gt;11:00 AM – 11:45 AM&lt;/div&gt;
+      &lt;div style=&quot;font:400 13px/1.4 Inter,Arial,Helvetica,sans-serif;color:rgba(255,255,255,.78)&quot;&gt;Thursday 19 November · Arizona time&lt;/div&gt;
+    &lt;/td&gt;
+  &lt;/tr&gt;&lt;/table&gt;
+  &lt;div style=&quot;margin-top:16px;font:600 20px/1.3 'Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff&quot;&gt;Holiday Invoice Fraud: How Payment-Change Emails Get Past Busy Teams&lt;/div&gt;
+&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style=&quot;padding:28px 28px 8px&quot;&gt;
+&lt;h1 style=&quot;margin:0 0 16px;font:700 24px/1.25 'Space Grotesk',Arial,Helvetica,sans-serif;color:#0b0914&quot;&gt;Holiday invoice fraud: 45 minutes on Thursday 19 November&lt;/h1&gt;&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;Late in the year, invoices pile up, people are out, and an email asking to &amp;quot;update our bank details before the holiday&amp;quot; can look like routine admin. It isn't.&lt;/p&gt;
+&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;On &lt;strong&gt;Thursday 19 November at 11:00 AM Arizona time&lt;/strong&gt; we'll walk through what payment-change and gift-card requests look like, which email protections catch what, and a call-back rule your accounts-payable team can adopt the same week.&lt;/p&gt;
+&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;Forward this to whoever pays your bills. They'll thank you in January.&lt;/p&gt;
+&lt;table role=&quot;presentation&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;margin:8px 0 24px&quot;&gt;&lt;tr&gt;&lt;td bgcolor=&quot;#D3126A&quot; style=&quot;border-radius:8px&quot;&gt;&lt;a href=&quot;https://digeratiexperts.com/events/holiday-invoice-fraud-and-phishing&quot; style=&quot;display:inline-block;padding:14px 24px;font:600 16px/1 'Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff;text-decoration:none;border-radius:8px&quot;&gt;Register &amp;rarr;&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style=&quot;padding:16px 28px 24px;border-top:1px solid #ece8f1;font:400 12px/1.5 Inter,Arial,Helvetica,sans-serif;color:#5f5a68&quot;&gt;
+  Digerati Experts · Chandler, Arizona · &lt;a href=&quot;https://digeratiexperts.com&quot; style=&quot;color:#A30E52&quot;&gt;digeratiexperts.com&lt;/a&gt;&lt;br&gt;[Unsubscribe link: added by the sending tool]
+&lt;/td&gt;&lt;/tr&gt;
+&lt;/table&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/body&gt;&lt;/html&gt;
+">Copy HTML</button> <a href="out/holiday-invoice-fraud-and-phishing/emails/A.html">Open HTML</a></div>
+</article>
+<article class="item">
+<header><span class="chip">B</span> <strong>Prospects</strong> <span class="when">Thu 22 Oct · resend Thu 5 Nov</span></header>
+<p class="subj">Please update our bank details before the holidays (please don't)</p>
+<iframe title="Email B" loading="lazy" srcdoc="&lt;!doctype html&gt;
+&lt;html lang=&quot;en&quot;&gt;&lt;head&gt;&lt;meta charset=&quot;utf-8&quot;&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width,initial-scale=1&quot;&gt;&lt;meta name=&quot;color-scheme&quot; content=&quot;light&quot;&gt;
+&lt;title&gt;Please update our bank details before the holidays (please don't)&lt;/title&gt;&lt;/head&gt;
+&lt;body style=&quot;margin:0;padding:0;background:#f3f1f6&quot;&gt;
+&lt;div style=&quot;display:none;max-height:0;overflow:hidden;opacity:0&quot;&gt;What payment-change fraud looks like, and the free rule that catches it.&lt;/div&gt;
+&lt;table role=&quot;presentation&quot; width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; bgcolor=&quot;#f3f1f6&quot;&gt;&lt;tr&gt;&lt;td align=&quot;center&quot; style=&quot;padding:24px 12px&quot;&gt;
+&lt;table role=&quot;presentation&quot; width=&quot;600&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;width:100%;max-width:600px;background:#ffffff;border-radius:12px;overflow:hidden&quot;&gt;
+&lt;tr&gt;&lt;td bgcolor=&quot;#050312&quot; style=&quot;padding:24px 28px&quot;&gt;
+  &lt;table role=&quot;presentation&quot; width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot;&gt;&lt;tr&gt;
+    &lt;td style=&quot;font:700 13px/1 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;letter-spacing:.22em;color:#ffffff&quot;&gt;DIGERATI&amp;nbsp;EXPERTS&lt;/td&gt;
+    &lt;td align=&quot;right&quot; style=&quot;font:500 11px/1 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;letter-spacing:.16em;color:#F04C97&quot;&gt;LIVE SESSION&lt;/td&gt;
+  &lt;/tr&gt;&lt;/table&gt;
+  &lt;table role=&quot;presentation&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;margin-top:20px&quot;&gt;&lt;tr&gt;
+    &lt;td bgcolor=&quot;#D3126A&quot; width=&quot;72&quot; align=&quot;center&quot; style=&quot;padding:10px 0;border-radius:8px 0 0 8px&quot;&gt;
+      &lt;div style=&quot;font:700 28px/1 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff&quot;&gt;19&lt;/div&gt;
+      &lt;div style=&quot;font:600 11px/1.6 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;letter-spacing:.1em;color:#ffffff&quot;&gt;NOV&lt;/div&gt;
+    &lt;/td&gt;
+    &lt;td bgcolor=&quot;#151217&quot; style=&quot;padding:10px 16px;border-radius:0 8px 8px 0&quot;&gt;
+      &lt;div style=&quot;font:600 17px/1.3 'Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff&quot;&gt;11:00 AM – 11:45 AM&lt;/div&gt;
+      &lt;div style=&quot;font:400 13px/1.4 Inter,Arial,Helvetica,sans-serif;color:rgba(255,255,255,.78)&quot;&gt;Thursday 19 November · Arizona time&lt;/div&gt;
+    &lt;/td&gt;
+  &lt;/tr&gt;&lt;/table&gt;
+  &lt;div style=&quot;margin-top:16px;font:600 20px/1.3 'Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff&quot;&gt;Holiday Invoice Fraud: How Payment-Change Emails Get Past Busy Teams&lt;/div&gt;
+&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style=&quot;padding:28px 28px 8px&quot;&gt;
+&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;Hi [First name],&lt;/p&gt;&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;Year-end is the season scammers pick. Invoices pile up, half the team is out, and an email asking you to &amp;quot;update our bank details before the holiday&amp;quot; looks, to a tired accounts-payable inbox, exactly like a Tuesday.&lt;/p&gt;
+&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;On &lt;strong&gt;Thursday 19 November at 11:00 AM Arizona time&lt;/strong&gt; we're running a free 45-minute session for the people who approve payments: accounts-payable staff, office managers and the owners who sign off on changes.&lt;/p&gt;
+&lt;ul style=&quot;margin:0 0 16px;padding:0 0 0 20px&quot;&gt;&lt;li style=&quot;margin:0 0 8px;font:400 16px/1.55 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;what a payment-change or gift-card request actually looks like&lt;/li&gt;&lt;li style=&quot;margin:0 0 8px;font:400 16px/1.55 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;SPF, DKIM and DMARC in plain language: what each one catches, and what none of them do&lt;/li&gt;&lt;li style=&quot;margin:0 0 8px;font:400 16px/1.55 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;a call-back rule your team can adopt this week, no new software required&lt;/li&gt;&lt;/ul&gt;
+&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;One honest note: no filter catches everything. The call-back rule is the part that still works on a Friday afternoon, and we'll say so on the call.&lt;/p&gt;
+&lt;table role=&quot;presentation&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;margin:8px 0 24px&quot;&gt;&lt;tr&gt;&lt;td bgcolor=&quot;#D3126A&quot; style=&quot;border-radius:8px&quot;&gt;&lt;a href=&quot;https://digeratiexperts.com/events/holiday-invoice-fraud-and-phishing&quot; style=&quot;display:inline-block;padding:14px 24px;font:600 16px/1 'Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff;text-decoration:none;border-radius:8px&quot;&gt;Register &amp;rarr;&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;[Sender name]&lt;br&gt;Digerati Experts · Chandler, Arizona&lt;/p&gt;
+&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style=&quot;padding:16px 28px 24px;border-top:1px solid #ece8f1;font:400 12px/1.5 Inter,Arial,Helvetica,sans-serif;color:#5f5a68&quot;&gt;
+  Digerati Experts · Chandler, Arizona · &lt;a href=&quot;https://digeratiexperts.com&quot; style=&quot;color:#A30E52&quot;&gt;digeratiexperts.com&lt;/a&gt;&lt;br&gt;[Unsubscribe link: added by the sending tool]
+&lt;/td&gt;&lt;/tr&gt;
+&lt;/table&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/body&gt;&lt;/html&gt;
+"></iframe>
+<details><summary>Plain text</summary><pre>Subject: Please update our bank details before the holidays (please don't)
+Preview: What payment-change fraud looks like, and the free rule that catches it.
+
+Hi [First name],
+
+Year-end is the season scammers pick. Invoices pile up, half the team is out, and an email asking you to &quot;update our bank details before the holiday&quot; looks, to a tired accounts-payable inbox, exactly like a Tuesday.
+
+On Thursday 19 November at 11:00 AM Arizona time we're running a free 45-minute session for the people who approve payments: accounts-payable staff, office managers and the owners who sign off on changes.
+
+- what a payment-change or gift-card request actually looks like
+- SPF, DKIM and DMARC in plain language: what each one catches, and what none of them do
+- a call-back rule your team can adopt this week, no new software required
+
+One honest note: no filter catches everything. The call-back rule is the part that still works on a Friday afternoon, and we'll say so on the call.
+
+Register: https://digeratiexperts.com/events/holiday-invoice-fraud-and-phishing
+
+[Sender name]
+Digerati Experts · Chandler, Arizona
+</pre></details>
+<div class="actions"><button data-copy="Subject: Please update our bank details before the holidays (please don't)
+Preview: What payment-change fraud looks like, and the free rule that catches it.
+
+Hi [First name],
+
+Year-end is the season scammers pick. Invoices pile up, half the team is out, and an email asking you to &quot;update our bank details before the holiday&quot; looks, to a tired accounts-payable inbox, exactly like a Tuesday.
+
+On Thursday 19 November at 11:00 AM Arizona time we're running a free 45-minute session for the people who approve payments: accounts-payable staff, office managers and the owners who sign off on changes.
+
+- what a payment-change or gift-card request actually looks like
+- SPF, DKIM and DMARC in plain language: what each one catches, and what none of them do
+- a call-back rule your team can adopt this week, no new software required
+
+One honest note: no filter catches everything. The call-back rule is the part that still works on a Friday afternoon, and we'll say so on the call.
+
+Register: https://digeratiexperts.com/events/holiday-invoice-fraud-and-phishing
+
+[Sender name]
+Digerati Experts · Chandler, Arizona
+">Copy text</button> <button data-copy="&lt;!doctype html&gt;
+&lt;html lang=&quot;en&quot;&gt;&lt;head&gt;&lt;meta charset=&quot;utf-8&quot;&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width,initial-scale=1&quot;&gt;&lt;meta name=&quot;color-scheme&quot; content=&quot;light&quot;&gt;
+&lt;title&gt;Please update our bank details before the holidays (please don't)&lt;/title&gt;&lt;/head&gt;
+&lt;body style=&quot;margin:0;padding:0;background:#f3f1f6&quot;&gt;
+&lt;div style=&quot;display:none;max-height:0;overflow:hidden;opacity:0&quot;&gt;What payment-change fraud looks like, and the free rule that catches it.&lt;/div&gt;
+&lt;table role=&quot;presentation&quot; width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; bgcolor=&quot;#f3f1f6&quot;&gt;&lt;tr&gt;&lt;td align=&quot;center&quot; style=&quot;padding:24px 12px&quot;&gt;
+&lt;table role=&quot;presentation&quot; width=&quot;600&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;width:100%;max-width:600px;background:#ffffff;border-radius:12px;overflow:hidden&quot;&gt;
+&lt;tr&gt;&lt;td bgcolor=&quot;#050312&quot; style=&quot;padding:24px 28px&quot;&gt;
+  &lt;table role=&quot;presentation&quot; width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot;&gt;&lt;tr&gt;
+    &lt;td style=&quot;font:700 13px/1 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;letter-spacing:.22em;color:#ffffff&quot;&gt;DIGERATI&amp;nbsp;EXPERTS&lt;/td&gt;
+    &lt;td align=&quot;right&quot; style=&quot;font:500 11px/1 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;letter-spacing:.16em;color:#F04C97&quot;&gt;LIVE SESSION&lt;/td&gt;
+  &lt;/tr&gt;&lt;/table&gt;
+  &lt;table role=&quot;presentation&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;margin-top:20px&quot;&gt;&lt;tr&gt;
+    &lt;td bgcolor=&quot;#D3126A&quot; width=&quot;72&quot; align=&quot;center&quot; style=&quot;padding:10px 0;border-radius:8px 0 0 8px&quot;&gt;
+      &lt;div style=&quot;font:700 28px/1 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff&quot;&gt;19&lt;/div&gt;
+      &lt;div style=&quot;font:600 11px/1.6 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;letter-spacing:.1em;color:#ffffff&quot;&gt;NOV&lt;/div&gt;
+    &lt;/td&gt;
+    &lt;td bgcolor=&quot;#151217&quot; style=&quot;padding:10px 16px;border-radius:0 8px 8px 0&quot;&gt;
+      &lt;div style=&quot;font:600 17px/1.3 'Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff&quot;&gt;11:00 AM – 11:45 AM&lt;/div&gt;
+      &lt;div style=&quot;font:400 13px/1.4 Inter,Arial,Helvetica,sans-serif;color:rgba(255,255,255,.78)&quot;&gt;Thursday 19 November · Arizona time&lt;/div&gt;
+    &lt;/td&gt;
+  &lt;/tr&gt;&lt;/table&gt;
+  &lt;div style=&quot;margin-top:16px;font:600 20px/1.3 'Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff&quot;&gt;Holiday Invoice Fraud: How Payment-Change Emails Get Past Busy Teams&lt;/div&gt;
+&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style=&quot;padding:28px 28px 8px&quot;&gt;
+&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;Hi [First name],&lt;/p&gt;&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;Year-end is the season scammers pick. Invoices pile up, half the team is out, and an email asking you to &amp;quot;update our bank details before the holiday&amp;quot; looks, to a tired accounts-payable inbox, exactly like a Tuesday.&lt;/p&gt;
+&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;On &lt;strong&gt;Thursday 19 November at 11:00 AM Arizona time&lt;/strong&gt; we're running a free 45-minute session for the people who approve payments: accounts-payable staff, office managers and the owners who sign off on changes.&lt;/p&gt;
+&lt;ul style=&quot;margin:0 0 16px;padding:0 0 0 20px&quot;&gt;&lt;li style=&quot;margin:0 0 8px;font:400 16px/1.55 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;what a payment-change or gift-card request actually looks like&lt;/li&gt;&lt;li style=&quot;margin:0 0 8px;font:400 16px/1.55 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;SPF, DKIM and DMARC in plain language: what each one catches, and what none of them do&lt;/li&gt;&lt;li style=&quot;margin:0 0 8px;font:400 16px/1.55 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;a call-back rule your team can adopt this week, no new software required&lt;/li&gt;&lt;/ul&gt;
+&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;One honest note: no filter catches everything. The call-back rule is the part that still works on a Friday afternoon, and we'll say so on the call.&lt;/p&gt;
+&lt;table role=&quot;presentation&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;margin:8px 0 24px&quot;&gt;&lt;tr&gt;&lt;td bgcolor=&quot;#D3126A&quot; style=&quot;border-radius:8px&quot;&gt;&lt;a href=&quot;https://digeratiexperts.com/events/holiday-invoice-fraud-and-phishing&quot; style=&quot;display:inline-block;padding:14px 24px;font:600 16px/1 'Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff;text-decoration:none;border-radius:8px&quot;&gt;Register &amp;rarr;&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;[Sender name]&lt;br&gt;Digerati Experts · Chandler, Arizona&lt;/p&gt;
+&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style=&quot;padding:16px 28px 24px;border-top:1px solid #ece8f1;font:400 12px/1.5 Inter,Arial,Helvetica,sans-serif;color:#5f5a68&quot;&gt;
+  Digerati Experts · Chandler, Arizona · &lt;a href=&quot;https://digeratiexperts.com&quot; style=&quot;color:#A30E52&quot;&gt;digeratiexperts.com&lt;/a&gt;&lt;br&gt;[Unsubscribe link: added by the sending tool]
+&lt;/td&gt;&lt;/tr&gt;
+&lt;/table&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/body&gt;&lt;/html&gt;
+">Copy HTML</button> <a href="out/holiday-invoice-fraud-and-phishing/emails/B.html">Open HTML</a></div>
+</article>
+<article class="item">
+<header><span class="chip">C</span> <strong>Registrants</strong> <span class="when">Thu 12 Nov</span></header>
+<p class="subj">One week: holiday invoice fraud, Thu 19 Nov 11:00 AM AZ</p>
+<iframe title="Email C" loading="lazy" srcdoc="&lt;!doctype html&gt;
+&lt;html lang=&quot;en&quot;&gt;&lt;head&gt;&lt;meta charset=&quot;utf-8&quot;&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width,initial-scale=1&quot;&gt;&lt;meta name=&quot;color-scheme&quot; content=&quot;light&quot;&gt;
+&lt;title&gt;One week: holiday invoice fraud, Thu 19 Nov 11:00 AM AZ&lt;/title&gt;&lt;/head&gt;
+&lt;body style=&quot;margin:0;padding:0;background:#f3f1f6&quot;&gt;
+&lt;div style=&quot;display:none;max-height:0;overflow:hidden;opacity:0&quot;&gt;Bring the questions. Leave the suspicious email where it is.&lt;/div&gt;
+&lt;table role=&quot;presentation&quot; width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; bgcolor=&quot;#f3f1f6&quot;&gt;&lt;tr&gt;&lt;td align=&quot;center&quot; style=&quot;padding:24px 12px&quot;&gt;
+&lt;table role=&quot;presentation&quot; width=&quot;600&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;width:100%;max-width:600px;background:#ffffff;border-radius:12px;overflow:hidden&quot;&gt;
+&lt;tr&gt;&lt;td bgcolor=&quot;#050312&quot; style=&quot;padding:24px 28px&quot;&gt;
+  &lt;table role=&quot;presentation&quot; width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot;&gt;&lt;tr&gt;
+    &lt;td style=&quot;font:700 13px/1 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;letter-spacing:.22em;color:#ffffff&quot;&gt;DIGERATI&amp;nbsp;EXPERTS&lt;/td&gt;
+    &lt;td align=&quot;right&quot; style=&quot;font:500 11px/1 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;letter-spacing:.16em;color:#F04C97&quot;&gt;LIVE SESSION&lt;/td&gt;
+  &lt;/tr&gt;&lt;/table&gt;
+  &lt;table role=&quot;presentation&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;margin-top:20px&quot;&gt;&lt;tr&gt;
+    &lt;td bgcolor=&quot;#D3126A&quot; width=&quot;72&quot; align=&quot;center&quot; style=&quot;padding:10px 0;border-radius:8px 0 0 8px&quot;&gt;
+      &lt;div style=&quot;font:700 28px/1 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff&quot;&gt;19&lt;/div&gt;
+      &lt;div style=&quot;font:600 11px/1.6 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;letter-spacing:.1em;color:#ffffff&quot;&gt;NOV&lt;/div&gt;
+    &lt;/td&gt;
+    &lt;td bgcolor=&quot;#151217&quot; style=&quot;padding:10px 16px;border-radius:0 8px 8px 0&quot;&gt;
+      &lt;div style=&quot;font:600 17px/1.3 'Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff&quot;&gt;11:00 AM – 11:45 AM&lt;/div&gt;
+      &lt;div style=&quot;font:400 13px/1.4 Inter,Arial,Helvetica,sans-serif;color:rgba(255,255,255,.78)&quot;&gt;Thursday 19 November · Arizona time&lt;/div&gt;
+    &lt;/td&gt;
+  &lt;/tr&gt;&lt;/table&gt;
+  &lt;div style=&quot;margin-top:16px;font:600 20px/1.3 'Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff&quot;&gt;Holiday Invoice Fraud: How Payment-Change Emails Get Past Busy Teams&lt;/div&gt;
+&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style=&quot;padding:28px 28px 8px&quot;&gt;
+&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;Hi [First name],&lt;/p&gt;&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;You're registered for &lt;em&gt;Holiday Invoice Fraud: How Payment-Change Emails Get Past Busy Teams&lt;/em&gt; next &lt;strong&gt;Thursday 19 November, 11:00 AM to 11:45 AM Arizona time&lt;/strong&gt;.&lt;/p&gt;
+&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;If your team has had a suspicious payment-change request, bring the questions it raised. Please don't forward the email itself; describe it instead. Your inbox has had enough excitement.&lt;/p&gt;
+&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;The join link comes the day before.&lt;/p&gt;
+&lt;table role=&quot;presentation&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;margin:8px 0 24px&quot;&gt;&lt;tr&gt;&lt;td bgcolor=&quot;#D3126A&quot; style=&quot;border-radius:8px&quot;&gt;&lt;a href=&quot;https://digeratiexperts.com/events/holiday-invoice-fraud-and-phishing&quot; style=&quot;display:inline-block;padding:14px 24px;font:600 16px/1 'Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff;text-decoration:none;border-radius:8px&quot;&gt;See the session page &amp;rarr;&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;[Sender name]&lt;br&gt;Digerati Experts · Chandler, Arizona&lt;/p&gt;
+&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style=&quot;padding:16px 28px 24px;border-top:1px solid #ece8f1;font:400 12px/1.5 Inter,Arial,Helvetica,sans-serif;color:#5f5a68&quot;&gt;
+  Digerati Experts · Chandler, Arizona · &lt;a href=&quot;https://digeratiexperts.com&quot; style=&quot;color:#A30E52&quot;&gt;digeratiexperts.com&lt;/a&gt;&lt;br&gt;[Unsubscribe link: added by the sending tool]
+&lt;/td&gt;&lt;/tr&gt;
+&lt;/table&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/body&gt;&lt;/html&gt;
+"></iframe>
+<details><summary>Plain text</summary><pre>Subject: One week: holiday invoice fraud, Thu 19 Nov 11:00 AM AZ
+Preview: Bring the questions. Leave the suspicious email where it is.
+
+Hi [First name],
+
+You're registered for Holiday Invoice Fraud: How Payment-Change Emails Get Past Busy Teams next Thursday 19 November, 11:00 AM to 11:45 AM Arizona time.
+
+If your team has had a suspicious payment-change request, bring the questions it raised. Please don't forward the email itself; describe it instead. Your inbox has had enough excitement.
+
+The join link comes the day before.
+
+See the session page: https://digeratiexperts.com/events/holiday-invoice-fraud-and-phishing
+
+[Sender name]
+Digerati Experts · Chandler, Arizona
+</pre></details>
+<div class="actions"><button data-copy="Subject: One week: holiday invoice fraud, Thu 19 Nov 11:00 AM AZ
+Preview: Bring the questions. Leave the suspicious email where it is.
+
+Hi [First name],
+
+You're registered for Holiday Invoice Fraud: How Payment-Change Emails Get Past Busy Teams next Thursday 19 November, 11:00 AM to 11:45 AM Arizona time.
+
+If your team has had a suspicious payment-change request, bring the questions it raised. Please don't forward the email itself; describe it instead. Your inbox has had enough excitement.
+
+The join link comes the day before.
+
+See the session page: https://digeratiexperts.com/events/holiday-invoice-fraud-and-phishing
+
+[Sender name]
+Digerati Experts · Chandler, Arizona
+">Copy text</button> <button data-copy="&lt;!doctype html&gt;
+&lt;html lang=&quot;en&quot;&gt;&lt;head&gt;&lt;meta charset=&quot;utf-8&quot;&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width,initial-scale=1&quot;&gt;&lt;meta name=&quot;color-scheme&quot; content=&quot;light&quot;&gt;
+&lt;title&gt;One week: holiday invoice fraud, Thu 19 Nov 11:00 AM AZ&lt;/title&gt;&lt;/head&gt;
+&lt;body style=&quot;margin:0;padding:0;background:#f3f1f6&quot;&gt;
+&lt;div style=&quot;display:none;max-height:0;overflow:hidden;opacity:0&quot;&gt;Bring the questions. Leave the suspicious email where it is.&lt;/div&gt;
+&lt;table role=&quot;presentation&quot; width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; bgcolor=&quot;#f3f1f6&quot;&gt;&lt;tr&gt;&lt;td align=&quot;center&quot; style=&quot;padding:24px 12px&quot;&gt;
+&lt;table role=&quot;presentation&quot; width=&quot;600&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;width:100%;max-width:600px;background:#ffffff;border-radius:12px;overflow:hidden&quot;&gt;
+&lt;tr&gt;&lt;td bgcolor=&quot;#050312&quot; style=&quot;padding:24px 28px&quot;&gt;
+  &lt;table role=&quot;presentation&quot; width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot;&gt;&lt;tr&gt;
+    &lt;td style=&quot;font:700 13px/1 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;letter-spacing:.22em;color:#ffffff&quot;&gt;DIGERATI&amp;nbsp;EXPERTS&lt;/td&gt;
+    &lt;td align=&quot;right&quot; style=&quot;font:500 11px/1 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;letter-spacing:.16em;color:#F04C97&quot;&gt;LIVE SESSION&lt;/td&gt;
+  &lt;/tr&gt;&lt;/table&gt;
+  &lt;table role=&quot;presentation&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;margin-top:20px&quot;&gt;&lt;tr&gt;
+    &lt;td bgcolor=&quot;#D3126A&quot; width=&quot;72&quot; align=&quot;center&quot; style=&quot;padding:10px 0;border-radius:8px 0 0 8px&quot;&gt;
+      &lt;div style=&quot;font:700 28px/1 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff&quot;&gt;19&lt;/div&gt;
+      &lt;div style=&quot;font:600 11px/1.6 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;letter-spacing:.1em;color:#ffffff&quot;&gt;NOV&lt;/div&gt;
+    &lt;/td&gt;
+    &lt;td bgcolor=&quot;#151217&quot; style=&quot;padding:10px 16px;border-radius:0 8px 8px 0&quot;&gt;
+      &lt;div style=&quot;font:600 17px/1.3 'Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff&quot;&gt;11:00 AM – 11:45 AM&lt;/div&gt;
+      &lt;div style=&quot;font:400 13px/1.4 Inter,Arial,Helvetica,sans-serif;color:rgba(255,255,255,.78)&quot;&gt;Thursday 19 November · Arizona time&lt;/div&gt;
+    &lt;/td&gt;
+  &lt;/tr&gt;&lt;/table&gt;
+  &lt;div style=&quot;margin-top:16px;font:600 20px/1.3 'Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff&quot;&gt;Holiday Invoice Fraud: How Payment-Change Emails Get Past Busy Teams&lt;/div&gt;
+&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style=&quot;padding:28px 28px 8px&quot;&gt;
+&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;Hi [First name],&lt;/p&gt;&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;You're registered for &lt;em&gt;Holiday Invoice Fraud: How Payment-Change Emails Get Past Busy Teams&lt;/em&gt; next &lt;strong&gt;Thursday 19 November, 11:00 AM to 11:45 AM Arizona time&lt;/strong&gt;.&lt;/p&gt;
+&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;If your team has had a suspicious payment-change request, bring the questions it raised. Please don't forward the email itself; describe it instead. Your inbox has had enough excitement.&lt;/p&gt;
+&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;The join link comes the day before.&lt;/p&gt;
+&lt;table role=&quot;presentation&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;margin:8px 0 24px&quot;&gt;&lt;tr&gt;&lt;td bgcolor=&quot;#D3126A&quot; style=&quot;border-radius:8px&quot;&gt;&lt;a href=&quot;https://digeratiexperts.com/events/holiday-invoice-fraud-and-phishing&quot; style=&quot;display:inline-block;padding:14px 24px;font:600 16px/1 'Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff;text-decoration:none;border-radius:8px&quot;&gt;See the session page &amp;rarr;&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;[Sender name]&lt;br&gt;Digerati Experts · Chandler, Arizona&lt;/p&gt;
+&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style=&quot;padding:16px 28px 24px;border-top:1px solid #ece8f1;font:400 12px/1.5 Inter,Arial,Helvetica,sans-serif;color:#5f5a68&quot;&gt;
+  Digerati Experts · Chandler, Arizona · &lt;a href=&quot;https://digeratiexperts.com&quot; style=&quot;color:#A30E52&quot;&gt;digeratiexperts.com&lt;/a&gt;&lt;br&gt;[Unsubscribe link: added by the sending tool]
+&lt;/td&gt;&lt;/tr&gt;
+&lt;/table&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/body&gt;&lt;/html&gt;
+">Copy HTML</button> <a href="out/holiday-invoice-fraud-and-phishing/emails/C.html">Open HTML</a></div>
+</article>
+<article class="item">
+<header><span class="chip">D</span> <strong>Registrants</strong> <span class="when">Wed 18 Nov</span></header>
+<p class="subj">Tomorrow 11:00 AM AZ: your join link</p>
+<iframe title="Email D" loading="lazy" srcdoc="&lt;!doctype html&gt;
+&lt;html lang=&quot;en&quot;&gt;&lt;head&gt;&lt;meta charset=&quot;utf-8&quot;&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width,initial-scale=1&quot;&gt;&lt;meta name=&quot;color-scheme&quot; content=&quot;light&quot;&gt;
+&lt;title&gt;Tomorrow 11:00 AM AZ: your join link&lt;/title&gt;&lt;/head&gt;
+&lt;body style=&quot;margin:0;padding:0;background:#f3f1f6&quot;&gt;
+&lt;div style=&quot;display:none;max-height:0;overflow:hidden;opacity:0&quot;&gt;Thu 19 Nov. Bring whoever approves payments.&lt;/div&gt;
+&lt;table role=&quot;presentation&quot; width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; bgcolor=&quot;#f3f1f6&quot;&gt;&lt;tr&gt;&lt;td align=&quot;center&quot; style=&quot;padding:24px 12px&quot;&gt;
+&lt;table role=&quot;presentation&quot; width=&quot;600&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;width:100%;max-width:600px;background:#ffffff;border-radius:12px;overflow:hidden&quot;&gt;
+&lt;tr&gt;&lt;td bgcolor=&quot;#050312&quot; style=&quot;padding:24px 28px&quot;&gt;
+  &lt;table role=&quot;presentation&quot; width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot;&gt;&lt;tr&gt;
+    &lt;td style=&quot;font:700 13px/1 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;letter-spacing:.22em;color:#ffffff&quot;&gt;DIGERATI&amp;nbsp;EXPERTS&lt;/td&gt;
+    &lt;td align=&quot;right&quot; style=&quot;font:500 11px/1 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;letter-spacing:.16em;color:#F04C97&quot;&gt;LIVE SESSION&lt;/td&gt;
+  &lt;/tr&gt;&lt;/table&gt;
+  &lt;table role=&quot;presentation&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;margin-top:20px&quot;&gt;&lt;tr&gt;
+    &lt;td bgcolor=&quot;#D3126A&quot; width=&quot;72&quot; align=&quot;center&quot; style=&quot;padding:10px 0;border-radius:8px 0 0 8px&quot;&gt;
+      &lt;div style=&quot;font:700 28px/1 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff&quot;&gt;19&lt;/div&gt;
+      &lt;div style=&quot;font:600 11px/1.6 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;letter-spacing:.1em;color:#ffffff&quot;&gt;NOV&lt;/div&gt;
+    &lt;/td&gt;
+    &lt;td bgcolor=&quot;#151217&quot; style=&quot;padding:10px 16px;border-radius:0 8px 8px 0&quot;&gt;
+      &lt;div style=&quot;font:600 17px/1.3 'Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff&quot;&gt;11:00 AM – 11:45 AM&lt;/div&gt;
+      &lt;div style=&quot;font:400 13px/1.4 Inter,Arial,Helvetica,sans-serif;color:rgba(255,255,255,.78)&quot;&gt;Thursday 19 November · Arizona time&lt;/div&gt;
+    &lt;/td&gt;
+  &lt;/tr&gt;&lt;/table&gt;
+  &lt;div style=&quot;margin-top:16px;font:600 20px/1.3 'Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff&quot;&gt;Holiday Invoice Fraud: How Payment-Change Emails Get Past Busy Teams&lt;/div&gt;
+&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style=&quot;padding:28px 28px 8px&quot;&gt;
+&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;Hi [First name],&lt;/p&gt;&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;See you tomorrow, &lt;strong&gt;Thursday 19 November at 11:00 AM Arizona time&lt;/strong&gt; (10:00 AM Pacific / 11:00 AM Mountain / 12:00 PM Central / 1:00 PM Eastern).&lt;/p&gt;
+&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;&lt;strong&gt;Join:&lt;/strong&gt; [JOIN LINK]&lt;/p&gt;
+&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;Agenda (45 min): What a payment-change attempt looks like · Email authentication and filtering — what each layer catches · The process controls that matter more than any tool · Open questions.&lt;/p&gt;
+&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;Bring whoever approves payments. And whoever approves them when that person is on holiday.&lt;/p&gt;
+&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;[Sender name]&lt;br&gt;Digerati Experts · Chandler, Arizona&lt;/p&gt;
+&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style=&quot;padding:16px 28px 24px;border-top:1px solid #ece8f1;font:400 12px/1.5 Inter,Arial,Helvetica,sans-serif;color:#5f5a68&quot;&gt;
+  Digerati Experts · Chandler, Arizona · &lt;a href=&quot;https://digeratiexperts.com&quot; style=&quot;color:#A30E52&quot;&gt;digeratiexperts.com&lt;/a&gt;&lt;br&gt;[Unsubscribe link: added by the sending tool]
+&lt;/td&gt;&lt;/tr&gt;
+&lt;/table&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/body&gt;&lt;/html&gt;
+"></iframe>
+<details><summary>Plain text</summary><pre>Subject: Tomorrow 11:00 AM AZ: your join link
+Preview: Thu 19 Nov. Bring whoever approves payments.
+
+Hi [First name],
+
+See you tomorrow, Thursday 19 November at 11:00 AM Arizona time (10:00 AM Pacific / 11:00 AM Mountain / 12:00 PM Central / 1:00 PM Eastern).
+
+Join: [JOIN LINK]
+
+Agenda (45 min): What a payment-change attempt looks like · Email authentication and filtering — what each layer catches · The process controls that matter more than any tool · Open questions.
+
+Bring whoever approves payments. And whoever approves them when that person is on holiday.
+
+[Sender name]
+Digerati Experts · Chandler, Arizona
+</pre></details>
+<div class="actions"><button data-copy="Subject: Tomorrow 11:00 AM AZ: your join link
+Preview: Thu 19 Nov. Bring whoever approves payments.
+
+Hi [First name],
+
+See you tomorrow, Thursday 19 November at 11:00 AM Arizona time (10:00 AM Pacific / 11:00 AM Mountain / 12:00 PM Central / 1:00 PM Eastern).
+
+Join: [JOIN LINK]
+
+Agenda (45 min): What a payment-change attempt looks like · Email authentication and filtering — what each layer catches · The process controls that matter more than any tool · Open questions.
+
+Bring whoever approves payments. And whoever approves them when that person is on holiday.
+
+[Sender name]
+Digerati Experts · Chandler, Arizona
+">Copy text</button> <button data-copy="&lt;!doctype html&gt;
+&lt;html lang=&quot;en&quot;&gt;&lt;head&gt;&lt;meta charset=&quot;utf-8&quot;&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width,initial-scale=1&quot;&gt;&lt;meta name=&quot;color-scheme&quot; content=&quot;light&quot;&gt;
+&lt;title&gt;Tomorrow 11:00 AM AZ: your join link&lt;/title&gt;&lt;/head&gt;
+&lt;body style=&quot;margin:0;padding:0;background:#f3f1f6&quot;&gt;
+&lt;div style=&quot;display:none;max-height:0;overflow:hidden;opacity:0&quot;&gt;Thu 19 Nov. Bring whoever approves payments.&lt;/div&gt;
+&lt;table role=&quot;presentation&quot; width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; bgcolor=&quot;#f3f1f6&quot;&gt;&lt;tr&gt;&lt;td align=&quot;center&quot; style=&quot;padding:24px 12px&quot;&gt;
+&lt;table role=&quot;presentation&quot; width=&quot;600&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;width:100%;max-width:600px;background:#ffffff;border-radius:12px;overflow:hidden&quot;&gt;
+&lt;tr&gt;&lt;td bgcolor=&quot;#050312&quot; style=&quot;padding:24px 28px&quot;&gt;
+  &lt;table role=&quot;presentation&quot; width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot;&gt;&lt;tr&gt;
+    &lt;td style=&quot;font:700 13px/1 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;letter-spacing:.22em;color:#ffffff&quot;&gt;DIGERATI&amp;nbsp;EXPERTS&lt;/td&gt;
+    &lt;td align=&quot;right&quot; style=&quot;font:500 11px/1 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;letter-spacing:.16em;color:#F04C97&quot;&gt;LIVE SESSION&lt;/td&gt;
+  &lt;/tr&gt;&lt;/table&gt;
+  &lt;table role=&quot;presentation&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;margin-top:20px&quot;&gt;&lt;tr&gt;
+    &lt;td bgcolor=&quot;#D3126A&quot; width=&quot;72&quot; align=&quot;center&quot; style=&quot;padding:10px 0;border-radius:8px 0 0 8px&quot;&gt;
+      &lt;div style=&quot;font:700 28px/1 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff&quot;&gt;19&lt;/div&gt;
+      &lt;div style=&quot;font:600 11px/1.6 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;letter-spacing:.1em;color:#ffffff&quot;&gt;NOV&lt;/div&gt;
+    &lt;/td&gt;
+    &lt;td bgcolor=&quot;#151217&quot; style=&quot;padding:10px 16px;border-radius:0 8px 8px 0&quot;&gt;
+      &lt;div style=&quot;font:600 17px/1.3 'Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff&quot;&gt;11:00 AM – 11:45 AM&lt;/div&gt;
+      &lt;div style=&quot;font:400 13px/1.4 Inter,Arial,Helvetica,sans-serif;color:rgba(255,255,255,.78)&quot;&gt;Thursday 19 November · Arizona time&lt;/div&gt;
+    &lt;/td&gt;
+  &lt;/tr&gt;&lt;/table&gt;
+  &lt;div style=&quot;margin-top:16px;font:600 20px/1.3 'Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff&quot;&gt;Holiday Invoice Fraud: How Payment-Change Emails Get Past Busy Teams&lt;/div&gt;
+&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style=&quot;padding:28px 28px 8px&quot;&gt;
+&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;Hi [First name],&lt;/p&gt;&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;See you tomorrow, &lt;strong&gt;Thursday 19 November at 11:00 AM Arizona time&lt;/strong&gt; (10:00 AM Pacific / 11:00 AM Mountain / 12:00 PM Central / 1:00 PM Eastern).&lt;/p&gt;
+&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;&lt;strong&gt;Join:&lt;/strong&gt; [JOIN LINK]&lt;/p&gt;
+&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;Agenda (45 min): What a payment-change attempt looks like · Email authentication and filtering — what each layer catches · The process controls that matter more than any tool · Open questions.&lt;/p&gt;
+&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;Bring whoever approves payments. And whoever approves them when that person is on holiday.&lt;/p&gt;
+&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;[Sender name]&lt;br&gt;Digerati Experts · Chandler, Arizona&lt;/p&gt;
+&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style=&quot;padding:16px 28px 24px;border-top:1px solid #ece8f1;font:400 12px/1.5 Inter,Arial,Helvetica,sans-serif;color:#5f5a68&quot;&gt;
+  Digerati Experts · Chandler, Arizona · &lt;a href=&quot;https://digeratiexperts.com&quot; style=&quot;color:#A30E52&quot;&gt;digeratiexperts.com&lt;/a&gt;&lt;br&gt;[Unsubscribe link: added by the sending tool]
+&lt;/td&gt;&lt;/tr&gt;
+&lt;/table&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/body&gt;&lt;/html&gt;
+">Copy HTML</button> <a href="out/holiday-invoice-fraud-and-phishing/emails/D.html">Open HTML</a></div>
+</article>
+<article class="item">
+<header><span class="chip">E</span> <strong>Registrants and attendees</strong> <span class="when">Mon 23 Nov</span></header>
+<p class="subj">Recording, and the one rule worth printing</p>
+<iframe title="Email E" loading="lazy" srcdoc="&lt;!doctype html&gt;
+&lt;html lang=&quot;en&quot;&gt;&lt;head&gt;&lt;meta charset=&quot;utf-8&quot;&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width,initial-scale=1&quot;&gt;&lt;meta name=&quot;color-scheme&quot; content=&quot;light&quot;&gt;
+&lt;title&gt;Recording, and the one rule worth printing&lt;/title&gt;&lt;/head&gt;
+&lt;body style=&quot;margin:0;padding:0;background:#f3f1f6&quot;&gt;
+&lt;div style=&quot;display:none;max-height:0;overflow:hidden;opacity:0&quot;&gt;The call-back rule in one line, and an offer to check your email setup.&lt;/div&gt;
+&lt;table role=&quot;presentation&quot; width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; bgcolor=&quot;#f3f1f6&quot;&gt;&lt;tr&gt;&lt;td align=&quot;center&quot; style=&quot;padding:24px 12px&quot;&gt;
+&lt;table role=&quot;presentation&quot; width=&quot;600&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;width:100%;max-width:600px;background:#ffffff;border-radius:12px;overflow:hidden&quot;&gt;
+&lt;tr&gt;&lt;td bgcolor=&quot;#050312&quot; style=&quot;padding:24px 28px&quot;&gt;
+  &lt;table role=&quot;presentation&quot; width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot;&gt;&lt;tr&gt;
+    &lt;td style=&quot;font:700 13px/1 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;letter-spacing:.22em;color:#ffffff&quot;&gt;DIGERATI&amp;nbsp;EXPERTS&lt;/td&gt;
+    &lt;td align=&quot;right&quot; style=&quot;font:500 11px/1 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;letter-spacing:.16em;color:#F04C97&quot;&gt;LIVE SESSION&lt;/td&gt;
+  &lt;/tr&gt;&lt;/table&gt;
+  &lt;table role=&quot;presentation&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;margin-top:20px&quot;&gt;&lt;tr&gt;
+    &lt;td bgcolor=&quot;#D3126A&quot; width=&quot;72&quot; align=&quot;center&quot; style=&quot;padding:10px 0;border-radius:8px 0 0 8px&quot;&gt;
+      &lt;div style=&quot;font:700 28px/1 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff&quot;&gt;19&lt;/div&gt;
+      &lt;div style=&quot;font:600 11px/1.6 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;letter-spacing:.1em;color:#ffffff&quot;&gt;NOV&lt;/div&gt;
+    &lt;/td&gt;
+    &lt;td bgcolor=&quot;#151217&quot; style=&quot;padding:10px 16px;border-radius:0 8px 8px 0&quot;&gt;
+      &lt;div style=&quot;font:600 17px/1.3 'Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff&quot;&gt;11:00 AM – 11:45 AM&lt;/div&gt;
+      &lt;div style=&quot;font:400 13px/1.4 Inter,Arial,Helvetica,sans-serif;color:rgba(255,255,255,.78)&quot;&gt;Thursday 19 November · Arizona time&lt;/div&gt;
+    &lt;/td&gt;
+  &lt;/tr&gt;&lt;/table&gt;
+  &lt;div style=&quot;margin-top:16px;font:600 20px/1.3 'Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff&quot;&gt;Holiday Invoice Fraud: How Payment-Change Emails Get Past Busy Teams&lt;/div&gt;
+&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style=&quot;padding:28px 28px 8px&quot;&gt;
+&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;Hi [First name],&lt;/p&gt;&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;Thank you for [joining us / registering] for &lt;em&gt;Holiday Invoice Fraud: How Payment-Change Emails Get Past Busy Teams&lt;/em&gt;.&lt;/p&gt;
+&lt;ul style=&quot;margin:0 0 16px;padding:0 0 0 20px&quot;&gt;&lt;li style=&quot;margin:0 0 8px;font:400 16px/1.55 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;&lt;strong&gt;Recording and slides:&lt;/strong&gt; [LINK]&lt;/li&gt;&lt;li style=&quot;margin:0 0 8px;font:400 16px/1.55 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;&lt;strong&gt;The call-back rule, in one line:&lt;/strong&gt; any change to payment details is confirmed by phone, on a number you already had on file, never one from the email asking for the change.&lt;/li&gt;&lt;/ul&gt;
+&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;Print it, tape it to the monitor. We won't judge.&lt;/p&gt;
+&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;If you want your own email setup checked (SPF, DKIM, DMARC, filtering), that's the next step below.&lt;/p&gt;
+&lt;table role=&quot;presentation&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;margin:8px 0 24px&quot;&gt;&lt;tr&gt;&lt;td bgcolor=&quot;#D3126A&quot; style=&quot;border-radius:8px&quot;&gt;&lt;a href=&quot;https://digeratiexperts.com/go/email-security&quot; style=&quot;display:inline-block;padding:14px 24px;font:600 16px/1 'Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff;text-decoration:none;border-radius:8px&quot;&gt;Check my email security &amp;rarr;&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;[Sender name]&lt;br&gt;Digerati Experts · Chandler, Arizona&lt;/p&gt;
+&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style=&quot;padding:16px 28px 24px;border-top:1px solid #ece8f1;font:400 12px/1.5 Inter,Arial,Helvetica,sans-serif;color:#5f5a68&quot;&gt;
+  Digerati Experts · Chandler, Arizona · &lt;a href=&quot;https://digeratiexperts.com&quot; style=&quot;color:#A30E52&quot;&gt;digeratiexperts.com&lt;/a&gt;&lt;br&gt;[Unsubscribe link: added by the sending tool]
+&lt;/td&gt;&lt;/tr&gt;
+&lt;/table&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/body&gt;&lt;/html&gt;
+"></iframe>
+<details><summary>Plain text</summary><pre>Subject: Recording, and the one rule worth printing
+Preview: The call-back rule in one line, and an offer to check your email setup.
+
+Hi [First name],
+
+Thank you for [joining us / registering] for Holiday Invoice Fraud: How Payment-Change Emails Get Past Busy Teams.
+
+- Recording and slides: [LINK]
+- The call-back rule, in one line: any change to payment details is confirmed by phone, on a number you already had on file, never one from the email asking for the change.
+
+Print it, tape it to the monitor. We won't judge.
+
+If you want your own email setup checked (SPF, DKIM, DMARC, filtering), that's the next step below.
+
+Check my email security: https://digeratiexperts.com/go/email-security
+
+[Sender name]
+Digerati Experts · Chandler, Arizona
+</pre></details>
+<div class="actions"><button data-copy="Subject: Recording, and the one rule worth printing
+Preview: The call-back rule in one line, and an offer to check your email setup.
+
+Hi [First name],
+
+Thank you for [joining us / registering] for Holiday Invoice Fraud: How Payment-Change Emails Get Past Busy Teams.
+
+- Recording and slides: [LINK]
+- The call-back rule, in one line: any change to payment details is confirmed by phone, on a number you already had on file, never one from the email asking for the change.
+
+Print it, tape it to the monitor. We won't judge.
+
+If you want your own email setup checked (SPF, DKIM, DMARC, filtering), that's the next step below.
+
+Check my email security: https://digeratiexperts.com/go/email-security
+
+[Sender name]
+Digerati Experts · Chandler, Arizona
+">Copy text</button> <button data-copy="&lt;!doctype html&gt;
+&lt;html lang=&quot;en&quot;&gt;&lt;head&gt;&lt;meta charset=&quot;utf-8&quot;&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width,initial-scale=1&quot;&gt;&lt;meta name=&quot;color-scheme&quot; content=&quot;light&quot;&gt;
+&lt;title&gt;Recording, and the one rule worth printing&lt;/title&gt;&lt;/head&gt;
+&lt;body style=&quot;margin:0;padding:0;background:#f3f1f6&quot;&gt;
+&lt;div style=&quot;display:none;max-height:0;overflow:hidden;opacity:0&quot;&gt;The call-back rule in one line, and an offer to check your email setup.&lt;/div&gt;
+&lt;table role=&quot;presentation&quot; width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; bgcolor=&quot;#f3f1f6&quot;&gt;&lt;tr&gt;&lt;td align=&quot;center&quot; style=&quot;padding:24px 12px&quot;&gt;
+&lt;table role=&quot;presentation&quot; width=&quot;600&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;width:100%;max-width:600px;background:#ffffff;border-radius:12px;overflow:hidden&quot;&gt;
+&lt;tr&gt;&lt;td bgcolor=&quot;#050312&quot; style=&quot;padding:24px 28px&quot;&gt;
+  &lt;table role=&quot;presentation&quot; width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot;&gt;&lt;tr&gt;
+    &lt;td style=&quot;font:700 13px/1 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;letter-spacing:.22em;color:#ffffff&quot;&gt;DIGERATI&amp;nbsp;EXPERTS&lt;/td&gt;
+    &lt;td align=&quot;right&quot; style=&quot;font:500 11px/1 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;letter-spacing:.16em;color:#F04C97&quot;&gt;LIVE SESSION&lt;/td&gt;
+  &lt;/tr&gt;&lt;/table&gt;
+  &lt;table role=&quot;presentation&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;margin-top:20px&quot;&gt;&lt;tr&gt;
+    &lt;td bgcolor=&quot;#D3126A&quot; width=&quot;72&quot; align=&quot;center&quot; style=&quot;padding:10px 0;border-radius:8px 0 0 8px&quot;&gt;
+      &lt;div style=&quot;font:700 28px/1 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff&quot;&gt;19&lt;/div&gt;
+      &lt;div style=&quot;font:600 11px/1.6 'Oxanium','Space Grotesk',Arial,Helvetica,sans-serif;letter-spacing:.1em;color:#ffffff&quot;&gt;NOV&lt;/div&gt;
+    &lt;/td&gt;
+    &lt;td bgcolor=&quot;#151217&quot; style=&quot;padding:10px 16px;border-radius:0 8px 8px 0&quot;&gt;
+      &lt;div style=&quot;font:600 17px/1.3 'Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff&quot;&gt;11:00 AM – 11:45 AM&lt;/div&gt;
+      &lt;div style=&quot;font:400 13px/1.4 Inter,Arial,Helvetica,sans-serif;color:rgba(255,255,255,.78)&quot;&gt;Thursday 19 November · Arizona time&lt;/div&gt;
+    &lt;/td&gt;
+  &lt;/tr&gt;&lt;/table&gt;
+  &lt;div style=&quot;margin-top:16px;font:600 20px/1.3 'Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff&quot;&gt;Holiday Invoice Fraud: How Payment-Change Emails Get Past Busy Teams&lt;/div&gt;
+&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style=&quot;padding:28px 28px 8px&quot;&gt;
+&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;Hi [First name],&lt;/p&gt;&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;Thank you for [joining us / registering] for &lt;em&gt;Holiday Invoice Fraud: How Payment-Change Emails Get Past Busy Teams&lt;/em&gt;.&lt;/p&gt;
+&lt;ul style=&quot;margin:0 0 16px;padding:0 0 0 20px&quot;&gt;&lt;li style=&quot;margin:0 0 8px;font:400 16px/1.55 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;&lt;strong&gt;Recording and slides:&lt;/strong&gt; [LINK]&lt;/li&gt;&lt;li style=&quot;margin:0 0 8px;font:400 16px/1.55 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;&lt;strong&gt;The call-back rule, in one line:&lt;/strong&gt; any change to payment details is confirmed by phone, on a number you already had on file, never one from the email asking for the change.&lt;/li&gt;&lt;/ul&gt;
+&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;Print it, tape it to the monitor. We won't judge.&lt;/p&gt;
+&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;If you want your own email setup checked (SPF, DKIM, DMARC, filtering), that's the next step below.&lt;/p&gt;
+&lt;table role=&quot;presentation&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;margin:8px 0 24px&quot;&gt;&lt;tr&gt;&lt;td bgcolor=&quot;#D3126A&quot; style=&quot;border-radius:8px&quot;&gt;&lt;a href=&quot;https://digeratiexperts.com/go/email-security&quot; style=&quot;display:inline-block;padding:14px 24px;font:600 16px/1 'Space Grotesk',Arial,Helvetica,sans-serif;color:#ffffff;text-decoration:none;border-radius:8px&quot;&gt;Check my email security &amp;rarr;&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;p style=&quot;margin:0 0 16px;font:400 16px/1.6 Inter,Arial,Helvetica,sans-serif;color:#1d1a24&quot;&gt;[Sender name]&lt;br&gt;Digerati Experts · Chandler, Arizona&lt;/p&gt;
+&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style=&quot;padding:16px 28px 24px;border-top:1px solid #ece8f1;font:400 12px/1.5 Inter,Arial,Helvetica,sans-serif;color:#5f5a68&quot;&gt;
+  Digerati Experts · Chandler, Arizona · &lt;a href=&quot;https://digeratiexperts.com&quot; style=&quot;color:#A30E52&quot;&gt;digeratiexperts.com&lt;/a&gt;&lt;br&gt;[Unsubscribe link: added by the sending tool]
+&lt;/td&gt;&lt;/tr&gt;
+&lt;/table&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/body&gt;&lt;/html&gt;
+">Copy HTML</button> <a href="out/holiday-invoice-fraud-and-phishing/emails/E.html">Open HTML</a></div>
+</article>
+<h3>LinkedIn</h3><article class="item"><header><span class="chip">Post 1</span> <span class="when">Thu 22 Oct · 544 characters</span></header><pre>&quot;Please update our bank details before the holidays.&quot;
+
+Payment-change fraud doesn't need malware. It needs a believable email, a busy accounts-payable inbox, and nobody picking up the phone to check.
+
+Free 45-minute session, Thu 19 Nov, 11:00 AM Arizona time: what these requests look like, what SPF, DKIM and DMARC actually catch, and a call-back rule your team can adopt this week. No software purchase required, which we realise is an odd thing for an IT company to say.
+https://digeratiexperts.com/events/holiday-invoice-fraud-and-phishing
+</pre><div class="actions"><button data-copy="&quot;Please update our bank details before the holidays.&quot;
+
+Payment-change fraud doesn't need malware. It needs a believable email, a busy accounts-payable inbox, and nobody picking up the phone to check.
+
+Free 45-minute session, Thu 19 Nov, 11:00 AM Arizona time: what these requests look like, what SPF, DKIM and DMARC actually catch, and a call-back rule your team can adopt this week. No software purchase required, which we realise is an odd thing for an IT company to say.
+https://digeratiexperts.com/events/holiday-invoice-fraud-and-phishing
+">Copy post</button></div></article>
+<article class="item"><header><span class="chip">Post 2</span> <span class="when">Thu 5 Nov · 353 characters</span></header><pre>A fraud control that needs no install, no licence and no training budget: confirm every payment change by phone, on a number you already had.
+
+Two weeks until our session on holiday payment-change and gift-card scams. Thu 19 Nov, 11:00 AM Arizona time. Bring whoever pays the bills.
+https://digeratiexperts.com/events/holiday-invoice-fraud-and-phishing
+</pre><div class="actions"><button data-copy="A fraud control that needs no install, no licence and no training budget: confirm every payment change by phone, on a number you already had.
+
+Two weeks until our session on holiday payment-change and gift-card scams. Thu 19 Nov, 11:00 AM Arizona time. Bring whoever pays the bills.
+https://digeratiexperts.com/events/holiday-invoice-fraud-and-phishing
+">Copy post</button></div></article>
+</section>
+</div>
+<script>
+document.addEventListener("click",function(e){var b=e.target.closest("button[data-copy]");if(!b)return;
+navigator.clipboard.writeText(b.getAttribute("data-copy")).then(function(){var o=b.textContent;b.textContent="Copied";setTimeout(function(){b.textContent=o},1200)});});
+</script>
+</body></html>

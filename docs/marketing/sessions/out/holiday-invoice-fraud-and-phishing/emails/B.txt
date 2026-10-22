@@ -1,0 +1,19 @@
+Subject: Please update our bank details before the holidays (please don't)
+Preview: What payment-change fraud looks like, and the free rule that catches it.
+
+Hi [First name],
+
+Year-end is the season scammers pick. Invoices pile up, half the team is out, and an email asking you to "update our bank details before the holiday" looks, to a tired accounts-payable inbox, exactly like a Tuesday.
+
+On Thursday 19 November at 11:00 AM Arizona time we're running a free 45-minute session for the people who approve payments: accounts-payable staff, office managers and the owners who sign off on changes.
+
+- what a payment-change or gift-card request actually looks like
+- SPF, DKIM and DMARC in plain language: what each one catches, and what none of them do
+- a call-back rule your team can adopt this week, no new software required
+
+One honest note: no filter catches everything. The call-back rule is the part that still works on a Friday afternoon, and we'll say so on the call.
+
+Register: https://digeratiexperts.com/events/holiday-invoice-fraud-and-phishing
+
+[Sender name]
+Digerati Experts · Chandler, Arizona

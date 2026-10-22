@@ -1,0 +1,156 @@
+# Copy source for the 5 Nov session. Edit here, then run:
+#   npx tsx scripts/de-marketing/build.ts           (kit, emails, posts, preview)
+#   npx tsx scripts/de-marketing/build.ts --cards   (also the social card images)
+# Dates, times, presenter and links come from client/src/data/deEvents.ts:
+# write {date_long}, {time}, {page} etc., never the literal value.
+# Tokens: title date_long date_short time end_time tz minutes presenter
+#         platform page campaign agenda other_zones
+# Voice: docs/marketing/VOICE.md. Claims: docs/CLAIMS-REGISTER.md.
+slug: cyber-insurance-renewal-readiness
+slides: "[Zoho Show deck, 13 slides with presenter notes](https://show.zoho.com/show/open/wkjyye5e4524447114edf875f938b1f27cf60), filed in WorkDrive `0. Digerati Experts / 4. Event & Strategic Planning / event`. Every example in it is constructed."
+status: |
+  **Status: CONFIRMED (Joe, 16 Oct 2026), page live.** {presenter} presents on {platform}. Every draft below is copy for DE to review and send from its own tools; nothing is sent automatically.
+  Rules applied: no statistics, no client names, no guarantee of coverage, approval or claim outcome; framework and insurer names are the attendee's requirements, never DE certifications.
+decided:
+  - "Joe, 15 Oct 2026: the session runs **{date_long}**. **Thu 29 Oct is the internal preparation milestone.**"
+  - "Joe, 16 Oct 2026: **{presenter}** presents. Zoho Webinar for the session (registration, recording, Q&A); Zoho Meeting for the internal dry run."
+  - "Joe, 22 Oct 2026: copy is serious underneath and dry on top (`docs/marketing/VOICE.md`); visuals are branded editorial, no generated imagery."
+open:
+  - item: Create the Zoho Webinar and its join link
+    by: Thu 22 Oct
+    notes: The join link goes only in Email D (T-1), never on the public page
+  - item: Book the Zoho Meeting dry run
+    by: Thu 29 Oct
+    notes: Internal, at the prep milestone
+track:
+  - { date: 2026-10-22, step: "Zoho Webinar created; Email A to clients, Email B to prospects, LinkedIn post 1 with the invite card", owner: "{presenter} + Marketing" }
+  - { date: 2026-10-26, step: "Call list: clients with a renewal in the next six months", owner: Account management }
+  - { date: 2026-10-29, step: "**Prep milestone:** slides dry-run on Zoho Meeting; Email C to registrants; Email B resend to non-openers; LinkedIn post 2 with the reminder card", owner: "{presenter} + Marketing" }
+  - { date: 2026-11-04, step: "Email D (T-1) with the join link", owner: Marketing }
+  - { date: 2026-11-05, step: "Run of show, section 5. The client newsletter goes out the same morning with a one-line reminder.", owner: "{presenter} + host" }
+  - { date: 2026-11-09, step: "Email E follow-up; log attendance in Zoho CRM", owner: Marketing + Sales }
+registrations: >-
+  Registrations arrive as Zoho CRM leads with Service `Event registration: cyber-insurance-renewal-readiness`.
+  The Tuesday pipeline review checks they all got a reply.
+
+emails:
+  - id: A
+    to: Clients
+    send: 2026-10-22
+    subject: "Your renewal questionnaire has questions. We have an hour."
+    preview: "{date_short}, {time} {tz}. Bring the form; we'll bring the answers you can back up."
+    body: |
+      Cyber insurance applications don't ask what you bought any more. They ask how you operate: MFA, endpoint protection, email authentication, backups, awareness training. If your renewal is coming up, the time to find a gap is before the questionnaire, not halfway through underwriting.
+
+      On **{date_long} at {time} {tz}**, {presenter} is running a one-hour working session on exactly that:
+
+      - the control areas carrier questionnaires typically ask about, in plain language
+      - how to tell a missing control from missing evidence of one you already run
+      - what to do first when renewal is weeks away, not months
+
+      Bring the questionnaire if you have one. Highlighters optional.
+
+      The boring-but-important part: carriers decide coverage and counsel interprets the policy. We can't promise either. We can help you implement and document the technical side.
+    cta: Save your seat
+
+  - id: B
+    to: Prospects
+    send: 2026-10-22
+    resend: 2026-10-29
+    subject: "Your cyber insurance form is an exam. Study session: {date_short}"
+    preview: "A free working hour on what underwriters ask, and how to answer honestly."
+    body: |
+      Your cyber insurance renewal form now reads like an IT audit, because it is one. MFA, endpoint protection, email authentication, tested backups, staff training. Each one is a yes-or-no box, and "we think so" is not an answer the box accepts.
+
+      On **{date_long} at {time} {tz}** we're running a free one-hour session for owners, finance and the IT people who have to fill the thing in. Bring your form if you have one. We'll go through it question by question and sort each answer into the two piles that matter: controls you have, and controls you have but can't prove.
+
+      - what each control area is, and why carriers keep asking about it
+      - missing control or missing evidence: how to tell which one you've got
+      - a sensible order for the fixes when renewal is close, not when it's on fire
+
+      Two honest notes before you register. We don't sell insurance, and we can't promise coverage. Carriers decide that, and counsel reads the policy. We can only help with the technical answers.
+    cta: Save your seat
+
+  - id: C
+    to: Registrants
+    send: 2026-10-29
+    subject: "One week. Your questionnaire is invited too."
+    preview: "{date_short}, {time} to {end_time} {tz}. Join link arrives the day before."
+    body: |
+      You're registered for *{title}* next **{date_long}, {time} to {end_time} {tz}**.
+
+      If you have your carrier's questionnaire, have it to hand. The last 15 minutes are for your questions, including the awkward ones.
+
+      The join link arrives the day before. Add the session to your calendar from the page, so Future You can't say nobody mentioned it.
+    cta: Add it to your calendar
+
+  - id: D
+    to: Registrants
+    send: 2026-11-04
+    subject: "Tomorrow, {time} {tz}: your join link"
+    preview: "{date_short}. Coffee recommended, cameras optional."
+    body: |
+      See you tomorrow, **{date_long} at {time} {tz}** ({other_zones}).
+
+      **Join:** [JOIN LINK]
+
+      Agenda ({minutes} min): {agenda}.
+
+      Coffee recommended. Cameras optional. Questionnaire encouraged.
+
+  - id: E
+    to: Registrants and attendees
+    send: 2026-11-09
+    subject: "The recording, and a next step if you want one"
+    preview: "Slides, recording, and an offer to read your questionnaire with you."
+    body: |
+      Thank you for [joining us / registering] for *{title}*.
+
+      - **Recording and slides:** [LINK]
+      - **Your next step, if you want one:** we go through your questionnaire against your actual environment and sort what's missing from what just needs writing down.
+
+      As we said on the call: carriers decide coverage, so treat anything we said as the technical side only. We're IT people. We know our lane.
+    cta: See the renewal readiness review
+    cta_url: "{campaign}"
+
+linkedin:
+  - send: 2026-10-22
+    text: |
+      Cyber insurance applications read more like IT audits every year. MFA, endpoint protection, email authentication, tested backups, awareness training: they're questions now, not extras. And "mostly" isn't one of the checkboxes.
+
+      On {date_short} ({time} {tz}) {presenter} is running a free working hour on what those questions mean, and how to tell a missing control from missing evidence of one you already run.
+
+      We don't sell insurance and can't promise coverage. This is the technical side, in plain language, with fewer acronyms than the form.
+      {page}
+  - send: 2026-10-29
+    text: |
+      "Do you enforce MFA for all remote access?" is a yes/no box on a lot of renewal forms. The honest answer is often "mostly", and "mostly" is not a box.
+
+      One week until our working hour on the controls underwriters ask about: {date_short}, {time} {tz}. Free, and the questionnaire is welcome.
+      {page}
+
+cards:
+  - id: invite
+    kicker: Free live session
+    headline: Your cyber insurance form is an exam.
+    quip: One working hour on what underwriters ask, and how to answer it honestly.
+  - id: reminder
+    kicker: One week to go
+    headline: “Mostly” isn’t a checkbox.
+    quip: The controls underwriters ask about, in plain language. Bring the form.
+
+run_of_show:
+  - { time: "10:45", min: "—", segment: "Host and presenter join, check audio and screen share", notes: "" }
+  - { time: "11:00", min: "10", segment: "Why the application now asks how you operate", notes: "Say the boundary early: carriers decide coverage, counsel reads the policy" }
+  - { time: "11:10", min: "20", segment: "The control areas, one by one: identity, endpoint, email, backup, awareness", notes: "One slide each: what it is, what the question usually looks like, what evidence looks like" }
+  - { time: "11:30", min: "15", segment: "Missing control or missing evidence? Working a sample questionnaire", notes: "Use a blank or anonymised sample, never a client's real form" }
+  - { time: "11:45", min: "15", segment: "Open questions", notes: "Host reads chat questions; anything client-specific moves to a follow-up call" }
+  - { time: "12:00", min: "—", segment: "Close: the follow-up email has the recording and the /go/cyber-insurance next step", notes: "" }
+
+calls:
+  when: Mon 26 Oct
+  who: Clients whose cyber insurance renews in the next six months (from the QBR notes and the November license audit).
+  script: >-
+    "Hi [name], it's [caller] at Digerati Experts. Your cyber insurance renewal is coming up in [month].
+    We're running a working hour on {date_short} on what the questionnaire asks and how to show the controls
+    you already have. Want me to send the link? If you've already got the questionnaire, bring it. We'll bring the highlighters."
