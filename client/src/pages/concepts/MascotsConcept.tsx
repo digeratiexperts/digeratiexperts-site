@@ -6,6 +6,11 @@
 import { useSEO } from "@/hooks/useSEO";
 import { DEX_MODES, DexMark, RatiMark, type DexMode, type DexState } from "@/components/mascots/Mascots";
 import { DEX_EMOTIONS, DEX_INTERACTIONS, chooseDexPresence } from "@/components/mascots/dexPresence";
+import { HOLIDAYS, occurrences } from "@/components/mascots/holidays";
+import { useState } from "react";
+
+const cycleOrder = Object.keys(DEX_MODES) as DexMode[];
+const shortDate = (ms: number) => new Date(ms).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
 
 const states: { state: DexState; label: string; note: string }[] = [
   { state: "idle", label: "Idle", note: "Bars breathe in turn, like the pronunciation meter." },
@@ -28,6 +33,8 @@ const card = "rounded-3xl border border-white/10 bg-[#151217] p-6";
 
 export function MascotsConcept(): JSX.Element {
   useSEO({ title: "Concept: Dex and Rati", description: "Review concept. Not a live page.", canonical: "/concepts/mascots", noIndex: true });
+  const [cycle, setCycle] = useState(0);
+  const holidayYear = new Date().getFullYear();
   return (
     <main className="min-h-screen bg-[#0a0a0a] px-4 py-16 text-[#f5f5f5] sm:px-8">
       <div className="mx-auto max-w-6xl space-y-10">
@@ -68,6 +75,16 @@ export function MascotsConcept(): JSX.Element {
             can tween between them later. States (above) are how he moves; modes are what he is doing. The rule: Dex changes
             shape only for a specific reason, and each change answers one situation. He never shifts for decoration.
           </p>
+          <div className="mt-6 flex flex-wrap items-center gap-6">
+            <DexMark size={160} mode={cycleOrder[cycle]} title={`Dex, ${DEX_MODES[cycleOrder[cycle]].label}`} />
+            <button
+              type="button"
+              onClick={() => setCycle((c) => (c + 1) % cycleOrder.length)}
+              className="rounded-full border border-white/20 px-5 py-2 text-sm font-semibold hover:border-[#ff4d8d]"
+            >
+              Next emotion: {DEX_MODES[cycleOrder[(cycle + 1) % cycleOrder.length]].label} (now {DEX_MODES[cycleOrder[cycle]].label})
+            </button>
+          </div>
           <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {(Object.keys(DEX_MODES) as DexMode[]).map((m) => (
               <figure key={m} className="rounded-2xl border border-white/10 bg-[#0d0d10] p-5 text-center">
@@ -102,6 +119,31 @@ export function MascotsConcept(): JSX.Element {
                       Emotion: {DEX_MODES[p.mode].label} · Form: {p.form ?? "none"} · Person needed: {p.mustHandOff ? "yes" : "no"}
                     </span>
                     <span className="mt-1 block text-[#a1a1a6]">Why: {p.reason}</span>
+                  </figcaption>
+                </figure>
+              );
+            })}
+          </div>
+        </section>
+
+        <section className={card} aria-labelledby="holidays">
+          <h2 id="holidays" className="text-2xl font-semibold">Dex&rsquo;s holiday sets</h2>
+          <p className="mt-2 max-w-3xl text-[#a1a1a6]">
+            One set per holiday: a glyph in the top-right corner, in its own colour. The set switches on for its window and off after
+            it, from the date rules, so nothing needs editing each year. A holiday never changes Dex&rsquo;s emotion, and it is off in
+            security, outage, billing and handoff situations. Dates below are {holidayYear}. These glyphs are first drafts for review.
+          </p>
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {HOLIDAYS.map((h) => {
+              const occ = occurrences(holidayYear).find((o) => o.holiday.id === h.id)!;
+              return (
+                <figure key={h.id} className="flex items-center gap-4 rounded-2xl border border-white/10 bg-[#0d0d10] p-4">
+                  <DexMark size={72} holiday={h} />
+                  <figcaption className="min-w-0 text-sm">
+                    <span className="block font-semibold text-base">{h.name}</span>
+                    <span className="block text-[#a1a1a6]">
+                      {shortDate(occ.day)} · shows {shortDate(occ.day - h.before * 86_400_000)} to {shortDate(occ.day + h.after * 86_400_000)}
+                    </span>
                   </figcaption>
                 </figure>
               );

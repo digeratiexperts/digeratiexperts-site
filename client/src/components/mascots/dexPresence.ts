@@ -2,7 +2,8 @@
 // Written ahead of time so the choice is fast and needs no lookup at runtime. The rules read only the
 // signals passed in, never notes or documents, so the same situation always gets the same presence.
 // Rules are ordered: the first match wins. DEX_RULES_VERSION changes when a rule's meaning changes.
-import type { DexMode, DexState } from "./Mascots";
+import { activeHoliday, type Holiday } from "./holidays";
+import type { DexMode, DexState } from "./dexGeometry";
 
 export const DEX_RULES_VERSION = 1;
 
@@ -100,6 +101,23 @@ export function chooseDexPresence(s: DexSignals): DexPresence {
     return present("normal", "listening", chatForm("bubble"), "First contact: calm, listening.", s);
 
   return present("normal", "idle", s.surface === "email" ? "tile" : null, "No specific reason to change shape: resting pose.", s);
+}
+
+export interface DexLook {
+  presence: DexPresence;
+  /** The holiday set showing on this day, or null. Never shown when a person must step in or urgency is 2 or more. */
+  holiday: Holiday | null;
+  holidayReason: string;
+}
+
+/** The one call other apps make: presence plus, when it is safe and the date falls in a holiday window, the holiday set. */
+export function resolveDexLook(s: DexSignals, now: Date): DexLook {
+  const presence = chooseDexPresence(s);
+  if (presence.mustHandOff || s.urgency >= 2)
+    return { presence, holiday: null, holidayReason: "Holiday sets are off while a person must step in or urgency is high." };
+  const active = activeHoliday(now);
+  if (!active) return { presence, holiday: null, holidayReason: "No holiday window on this date." };
+  return { presence, holiday: active.holiday, holidayReason: `${active.holiday.name} window.` };
 }
 
 /**

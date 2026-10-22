@@ -2,40 +2,24 @@
 // behind the scenes. Both are drawn from the exact geometry of the DE logo mark (the four bars the
 // homepage pronunciation row draws: viewBox 0 0 44 56.5, bar height 9.5, gold #E3B23C), so the
 // shape never drifts the way generated images did. Decorative unless a title is passed.
-// Motion lives in mascots.css and stops under prefers-reduced-motion.
+// Shape data lives in dexGeometry.ts; motion lives in mascots.css and stops under prefers-reduced-motion.
 import "./mascots.css";
+import {
+  BAR_H,
+  DEX_MODES,
+  DEX_VIEWBOX,
+  EYE_RX,
+  EYE_RY,
+  GLYPHS,
+  GLYPH_TRANSFORM,
+  MARK_BARS,
+  eyePoses,
+  type DexMode,
+  type DexState,
+} from "./dexGeometry";
+import type { Holiday } from "./holidays";
 
-export const MARK_BARS = [
-  { x: 0, y: 0, w: 44 },
-  { x: 6.5, y: 15.67, w: 31 },
-  { x: 6.5, y: 31.33, w: 31 },
-  { x: 0, y: 47, w: 44 },
-] as const;
-const BAR_H = 9.5;
-
-export type DexState = "idle" | "listening" | "thinking" | "speaking";
-
-export type DexMode = "normal" | "alert" | "curious" | "focused" | "extreme" | "reassuring" | "concerned" | "done" | "resting";
-
-/**
- * Dex's modes: a fixed pose per mode, held as numbers so the coming animation can tween between them.
- * eyeRy scales eye height, eyeDy moves both eyes (negative is up), eyeSpread is each eye's distance from
- * centre (22), barX shifts each bar sideways in viewBox units (bar 0 is the top).
- */
-export const DEX_MODES: Record<
-  DexMode,
-  { label: string; note: string; eyeRy: number; eyeDy: number; eyeSpread: number; barX: readonly [number, number, number, number] }
-> = {
-  normal: { label: "Normal", note: "Level bars, eyes open. The resting pose.", eyeRy: 1, eyeDy: 0, eyeSpread: 5, barX: [0, 0, 0, 0] },
-  alert: { label: "Alert", note: "Eyes wide and raised. Something needs attention.", eyeRy: 1.3, eyeDy: -0.6, eyeSpread: 5, barX: [0, 0, 0, 0] },
-  curious: { label: "Curious", note: "Eyes look up and apart; the bars tilt a touch.", eyeRy: 1.05, eyeDy: -1.2, eyeSpread: 5.6, barX: [-1, 0, 0, 1] },
-  focused: { label: "Focused", note: "Narrowed eyes looking down. Working through a ticket.", eyeRy: 0.72, eyeDy: 0.7, eyeSpread: 4.6, barX: [0, 0, 0, 0] },
-  extreme: { label: "Extreme", note: "Hard alert: eyes wide, bars jolted apart. Reserved for incidents.", eyeRy: 1.45, eyeDy: -0.4, eyeSpread: 6, barX: [-1.6, 1.6, -1.6, 1.6] },
-  reassuring: { label: "Reassuring", note: "Soft, level eyes. Someone is taking it from here.", eyeRy: 0.9, eyeDy: 0.4, eyeSpread: 5, barX: [0, 0, 0, 0] },
-  concerned: { label: "Concerned", note: "Eyes lowered and a little narrow. Something did not go to plan.", eyeRy: 0.85, eyeDy: 0.5, eyeSpread: 4.8, barX: [0, 0, 0, 0] },
-  done: { label: "Done", note: "Eyes squint into a content line. Only once the outcome is confirmed.", eyeRy: 0.3, eyeDy: 0, eyeSpread: 5, barX: [0, 0, 0, 0] },
-  resting: { label: "Resting", note: "Eyes closed to a line. Outside working hours, or paused.", eyeRy: 0.08, eyeDy: 0, eyeSpread: 5, barX: [0, 0, 0, 0] },
-};
+export { DEX_MODES, MARK_BARS, type DexMode, type DexState } from "./dexGeometry";
 
 type Common = { size?: number; title?: string; className?: string };
 
@@ -43,21 +27,28 @@ function a11y(title?: string) {
   return title ? { role: "img" as const, "aria-label": title } : { "aria-hidden": true as const };
 }
 
-/** Dex, full form: the four gold bars with two eyes in the third bar. */
+/**
+ * Dex, full form: the four gold bars with two eyes in the third bar. Changing `mode` tweens the bars and
+ * eyes to the new pose (CSS transition, off under reduced motion). `holiday` adds that day's glyph.
+ */
 export function DexMark({
   size = 96,
   title,
   className = "",
   state = "idle",
   mode = "normal",
-}: Common & { state?: DexState; mode?: DexMode }): JSX.Element {
+  holiday = null,
+}: Common & { state?: DexState; mode?: DexMode; holiday?: Holiday | null }): JSX.Element {
   const pose = DEX_MODES[mode];
+  const glyph = holiday ? GLYPHS[holiday.glyph] : null;
   return (
     <svg
-      viewBox="-6 -6 56 68.5"
+      viewBox={DEX_VIEWBOX}
       width={size}
       height={(size * 68.5) / 56}
       className={`mascot dex-mark is-${state} ${className}`}
+      data-mode={mode}
+      data-holiday={holiday?.id}
       {...a11y(title)}
     >
       <defs>
@@ -67,10 +58,10 @@ export function DexMark({
           <stop offset="1" stopColor="#B9862A" />
         </linearGradient>
       </defs>
+      {/* Each mode shift sits on a wrapper <g>, so the CSS state animation on each rect is left alone. */}
       <g className="dex-mark__bars" fill="url(#dex-gold)">
-        {/* The mode shift sits on a wrapper <g>, so the CSS state animation on each rect is left alone. */}
         {MARK_BARS.map((b, i) => (
-          <g key={b.y} transform={`translate(${pose.barX[i]} 0)`}>
+          <g key={b.y} className="dex-mark__tween" style={{ transform: `translate(${pose.barX[i]}px, 0px)` }}>
             <rect className={`dex-mark__bar b${i}`} x={b.x} y={b.y} width={b.w} height={BAR_H} rx={BAR_H / 2} />
           </g>
         ))}
@@ -78,15 +69,29 @@ export function DexMark({
       {/* Highlights: one soft line along the top of each bar, the "glaze". */}
       <g fill="#fff" opacity=".35">
         {MARK_BARS.map((b, i) => (
-          <g key={b.y} transform={`translate(${pose.barX[i]} 0)`}>
+          <g key={b.y} className="dex-mark__tween" style={{ transform: `translate(${pose.barX[i]}px, 0px)` }}>
             <rect className={`dex-mark__bar b${i}`} x={b.x + 3} y={b.y + 1.3} width={b.w - 6} height={1.6} rx={0.8} />
           </g>
         ))}
       </g>
       <g className="dex-mark__eyes" fill="#121212">
-        <ellipse className="dex-eye" cx={22 - pose.eyeSpread} cy={36.08 + pose.eyeDy} rx={1.9} ry={2.1 * pose.eyeRy} />
-        <ellipse className="dex-eye" cx={22 + pose.eyeSpread} cy={36.08 + pose.eyeDy} rx={1.9} ry={2.1 * pose.eyeRy} />
+        {eyePoses(pose).map((e, i) => (
+          <g key={i} className="dex-mark__tween" style={{ transform: `translate(${e.x}px, ${e.y}px) scale(1, ${e.sy})` }}>
+            <ellipse className="dex-eye" cx={0} cy={0} rx={EYE_RX} ry={EYE_RY} />
+          </g>
+        ))}
       </g>
+      {holiday && glyph && (
+        <g className="dex-mark__holiday" transform={GLYPH_TRANSFORM} aria-hidden="true">
+          <path
+            d={glyph.d}
+            fill={glyph.paint === "fill" ? holiday.accent : "none"}
+            stroke={glyph.paint === "stroke" ? holiday.accent : undefined}
+            strokeWidth={glyph.paint === "stroke" ? 1.1 : undefined}
+            strokeLinecap="round"
+          />
+        </g>
+      )}
     </svg>
   );
 }
