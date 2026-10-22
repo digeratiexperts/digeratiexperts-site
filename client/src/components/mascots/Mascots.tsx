@@ -15,7 +15,7 @@ const BAR_H = 9.5;
 
 export type DexState = "idle" | "listening" | "thinking" | "speaking";
 
-export type DexMode = "normal" | "alert" | "curious" | "focused" | "extreme";
+export type DexMode = "normal" | "alert" | "curious" | "focused" | "extreme" | "reassuring" | "concerned" | "done" | "resting";
 
 /**
  * Dex's modes: a fixed pose per mode, held as numbers so the coming animation can tween between them.
@@ -31,6 +31,10 @@ export const DEX_MODES: Record<
   curious: { label: "Curious", note: "Eyes look up and apart; the bars tilt a touch.", eyeRy: 1.05, eyeDy: -1.2, eyeSpread: 5.6, barX: [-1, 0, 0, 1] },
   focused: { label: "Focused", note: "Narrowed eyes looking down. Working through a ticket.", eyeRy: 0.72, eyeDy: 0.7, eyeSpread: 4.6, barX: [0, 0, 0, 0] },
   extreme: { label: "Extreme", note: "Hard alert: eyes wide, bars jolted apart. Reserved for incidents.", eyeRy: 1.45, eyeDy: -0.4, eyeSpread: 6, barX: [-1.6, 1.6, -1.6, 1.6] },
+  reassuring: { label: "Reassuring", note: "Soft, level eyes. Someone is taking it from here.", eyeRy: 0.9, eyeDy: 0.4, eyeSpread: 5, barX: [0, 0, 0, 0] },
+  concerned: { label: "Concerned", note: "Eyes lowered and a little narrow. Something did not go to plan.", eyeRy: 0.85, eyeDy: 0.5, eyeSpread: 4.8, barX: [0, 0, 0, 0] },
+  done: { label: "Done", note: "Eyes squint into a content line. Only once the outcome is confirmed.", eyeRy: 0.3, eyeDy: 0, eyeSpread: 5, barX: [0, 0, 0, 0] },
+  resting: { label: "Resting", note: "Eyes closed to a line. Outside working hours, or paused.", eyeRy: 0.08, eyeDy: 0, eyeSpread: 5, barX: [0, 0, 0, 0] },
 };
 
 type Common = { size?: number; title?: string; className?: string };
