@@ -1,0 +1,979 @@
+{
+  "kitVersion": 1,
+  "rulesVersion": 1,
+  "geometry": {
+    "viewBox": "-6 -6 56 68.5",
+    "barHeight": 9.5,
+    "bars": [
+      {
+        "x": 0,
+        "y": 0,
+        "w": 44
+      },
+      {
+        "x": 6.5,
+        "y": 15.67,
+        "w": 31
+      },
+      {
+        "x": 6.5,
+        "y": 31.33,
+        "w": 31
+      },
+      {
+        "x": 0,
+        "y": 47,
+        "w": 44
+      }
+    ],
+    "glyphs": {
+      "star": {
+        "paint": "fill",
+        "d": "M0.00 -5.00 L1.29 -1.78 L4.76 -1.55 L2.09 0.68 L2.94 4.05 L0.00 2.20 L-2.94 4.05 L-2.09 0.68 L-4.76 -1.55 L-1.29 -1.78 Z"
+      },
+      "heart": {
+        "paint": "fill",
+        "d": "M0 3.4 C-5.2 -0.4 -3.2 -4.6 0 -1.7 C3.2 -4.6 5.2 -0.4 0 3.4 Z"
+      },
+      "leaf": {
+        "paint": "fill",
+        "d": "M0 -5 C4 -2 4 3 0 5 C-4 3 -4 -2 0 -5 Z"
+      },
+      "sun": {
+        "paint": "stroke",
+        "d": "M-2.2 0 a2.2 2.2 0 1 0 4.4 0 a2.2 2.2 0 1 0 -4.4 0 M0 -3.6 L0 -5.2 M0 3.6 L0 5.2 M-3.6 0 L-5.2 0 M3.6 0 L5.2 0 M-2.5 -2.5 L-3.7 -3.7 M2.5 2.5 L3.7 3.7 M-2.5 2.5 L-3.7 3.7 M2.5 -2.5 L3.7 -3.7"
+      },
+      "moon": {
+        "paint": "fill",
+        "d": "M1 -5 A5 5 0 1 0 5 1 A4 4 0 1 1 1 -5 Z"
+      },
+      "snowflake": {
+        "paint": "stroke",
+        "d": "M0 -5 L0 5 M-4.33 -2.5 L4.33 2.5 M-4.33 2.5 L4.33 -2.5"
+      },
+      "clover": {
+        "paint": "fill",
+        "d": "M-4.6 -1.8 a2.4 2.4 0 1 0 4.8 0 a2.4 2.4 0 1 0 -4.8 0 M-0.19999999999999973 -1.8 a2.4 2.4 0 1 0 4.8 0 a2.4 2.4 0 1 0 -4.8 0 M-2.4 2.2 a2.4 2.4 0 1 0 4.8 0 a2.4 2.4 0 1 0 -4.8 0"
+      }
+    }
+  },
+  "modes": {
+    "normal": {
+      "label": "Normal",
+      "note": "Level bars, eyes open. The resting pose.",
+      "eyeRy": 1,
+      "eyeDy": 0,
+      "eyeSpread": 5,
+      "barX": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "alert": {
+      "label": "Alert",
+      "note": "Eyes wide and raised. Something needs attention.",
+      "eyeRy": 1.3,
+      "eyeDy": -0.6,
+      "eyeSpread": 5,
+      "barX": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "curious": {
+      "label": "Curious",
+      "note": "Eyes look up and apart; the bars tilt a touch.",
+      "eyeRy": 1.05,
+      "eyeDy": -1.2,
+      "eyeSpread": 5.6,
+      "barX": [
+        -1,
+        0,
+        0,
+        1
+      ]
+    },
+    "focused": {
+      "label": "Focused",
+      "note": "Narrowed eyes looking down. Working through a ticket.",
+      "eyeRy": 0.72,
+      "eyeDy": 0.7,
+      "eyeSpread": 4.6,
+      "barX": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "extreme": {
+      "label": "Extreme",
+      "note": "Hard alert: eyes wide, bars jolted apart. Reserved for incidents.",
+      "eyeRy": 1.45,
+      "eyeDy": -0.4,
+      "eyeSpread": 6,
+      "barX": [
+        -1.6,
+        1.6,
+        -1.6,
+        1.6
+      ]
+    },
+    "reassuring": {
+      "label": "Reassuring",
+      "note": "Soft, level eyes. Someone is taking it from here.",
+      "eyeRy": 0.9,
+      "eyeDy": 0.4,
+      "eyeSpread": 5,
+      "barX": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "concerned": {
+      "label": "Concerned",
+      "note": "Eyes lowered and a little narrow. Something did not go to plan.",
+      "eyeRy": 0.85,
+      "eyeDy": 0.5,
+      "eyeSpread": 4.8,
+      "barX": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "done": {
+      "label": "Done",
+      "note": "Eyes squint into a content line. Only once the outcome is confirmed.",
+      "eyeRy": 0.3,
+      "eyeDy": 0,
+      "eyeSpread": 5,
+      "barX": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "resting": {
+      "label": "Resting",
+      "note": "Eyes closed to a line. Outside working hours, or paused.",
+      "eyeRy": 0.08,
+      "eyeDy": 0,
+      "eyeSpread": 5,
+      "barX": [
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  },
+  "emotions": {
+    "normal": {
+      "when": "Greeting and idle presence.",
+      "never": "Never as a stand-in for real urgency.",
+      "line": "Hi, I'm Dex. What can I help you with?"
+    },
+    "curious": {
+      "when": "Asking one clear question.",
+      "never": "Never to probe for details the client already gave.",
+      "line": "Quick question so we route this right: which site is affected?"
+    },
+    "focused": {
+      "when": "Work is in progress on the client's request.",
+      "never": "Never to suggest a result before the work is done.",
+      "line": "Working on it now."
+    },
+    "alert": {
+      "when": "Needs attention soon, not yet an incident.",
+      "never": "Never for routine or resolved items.",
+      "line": "This needs a person's attention soon. I've flagged it."
+    },
+    "extreme": {
+      "when": "Live security incident or outage (urgency 3 only).",
+      "never": "Never for billing, sales or a routine alert.",
+      "line": "This is urgent. A technician is being brought in now."
+    },
+    "reassuring": {
+      "when": "Handing to a person, or easing a worried client.",
+      "never": "Never promise a fix time or outcome.",
+      "line": "I've passed this to a DE technician. They have the details."
+    },
+    "concerned": {
+      "when": "A step failed or went wrong.",
+      "never": "Never claim a fix is in place.",
+      "line": "That step didn't go through. I've let a person know."
+    },
+    "done": {
+      "when": "A routine outcome is confirmed.",
+      "never": "Never for security, billing or anything not yet verified.",
+      "line": "That's sorted."
+    },
+    "resting": {
+      "when": "Outside working hours, or paused.",
+      "never": "Never to hide an open urgent item.",
+      "line": "We're closed right now. Leave your details and we'll follow up."
+    }
+  },
+  "interactions": [
+    {
+      "id": "first-greeting",
+      "situation": "A prospect opens the chat for the first time.",
+      "signals": {
+        "audience": "prospect",
+        "phase": "greeting",
+        "topic": "general",
+        "urgency": 0
+      },
+      "presence": {
+        "mode": "normal",
+        "state": "listening",
+        "form": "bubble",
+        "mustHandOff": false,
+        "reason": "First contact: calm, listening."
+      }
+    },
+    {
+      "id": "after-hours-visit",
+      "situation": "Someone writes in outside working hours.",
+      "signals": {
+        "audience": "public",
+        "phase": "idle",
+        "topic": "general",
+        "urgency": 0,
+        "afterHours": true
+      },
+      "presence": {
+        "mode": "resting",
+        "state": "idle",
+        "form": "pebble",
+        "mustHandOff": false,
+        "reason": "Outside working hours: resting, leave details."
+      }
+    },
+    {
+      "id": "client-ticket-working",
+      "situation": "A client's routine request is being worked.",
+      "signals": {
+        "audience": "client",
+        "phase": "working",
+        "topic": "general",
+        "urgency": 1
+      },
+      "presence": {
+        "mode": "focused",
+        "state": "thinking",
+        "form": "capsule",
+        "mustHandOff": false,
+        "reason": "Work in progress on the client's request."
+      }
+    },
+    {
+      "id": "dex-composing",
+      "situation": "Dex is writing a reply in the chat.",
+      "signals": {
+        "audience": "client",
+        "phase": "working",
+        "topic": "general",
+        "urgency": 1,
+        "composing": true
+      },
+      "presence": {
+        "mode": "focused",
+        "state": "speaking",
+        "form": "beads",
+        "mustHandOff": false,
+        "reason": "Work in progress on the client's request."
+      }
+    },
+    {
+      "id": "waiting-on-client",
+      "situation": "Dex needs one answer from the client to continue.",
+      "signals": {
+        "audience": "client",
+        "phase": "waiting",
+        "topic": "general",
+        "urgency": 1
+      },
+      "presence": {
+        "mode": "curious",
+        "state": "speaking",
+        "form": "bubble",
+        "mustHandOff": false,
+        "reason": "Waiting on the client: ask one clear question."
+      }
+    },
+    {
+      "id": "routine-ticket-closed",
+      "situation": "A routine request is confirmed done.",
+      "signals": {
+        "audience": "client",
+        "phase": "resolved",
+        "topic": "general",
+        "urgency": 0
+      },
+      "presence": {
+        "mode": "done",
+        "state": "speaking",
+        "form": null,
+        "mustHandOff": false,
+        "reason": "Routine outcome confirmed: a quiet done, no celebration."
+      }
+    },
+    {
+      "id": "billing-question",
+      "situation": "A client asks about an invoice or payment.",
+      "signals": {
+        "audience": "client",
+        "phase": "handoff",
+        "topic": "billing",
+        "urgency": 1
+      },
+      "presence": {
+        "mode": "reassuring",
+        "state": "speaking",
+        "form": "bubble",
+        "mustHandOff": true,
+        "reason": "Handing to a DE technician: calm, and say a person is taking over."
+      }
+    },
+    {
+      "id": "security-alert-open",
+      "situation": "A security alert is open and needs a person soon.",
+      "signals": {
+        "audience": "client",
+        "phase": "working",
+        "topic": "security",
+        "urgency": 2
+      },
+      "presence": {
+        "mode": "alert",
+        "state": "listening",
+        "form": "ring",
+        "mustHandOff": true,
+        "reason": "Needs attention soon, not yet an incident."
+      }
+    },
+    {
+      "id": "security-fixed-unverified",
+      "situation": "A security fix is reported but not yet verified.",
+      "signals": {
+        "audience": "client",
+        "phase": "resolved",
+        "topic": "security",
+        "urgency": 1
+      },
+      "presence": {
+        "mode": "reassuring",
+        "state": "speaking",
+        "form": null,
+        "mustHandOff": true,
+        "reason": "Resolved, but security and billing are not celebrated until a person verifies them."
+      }
+    },
+    {
+      "id": "outage-incident",
+      "situation": "A live outage is affecting a client.",
+      "signals": {
+        "audience": "client",
+        "phase": "working",
+        "topic": "outage",
+        "urgency": 3
+      },
+      "presence": {
+        "mode": "extreme",
+        "state": "thinking",
+        "form": "ring",
+        "mustHandOff": true,
+        "reason": "Live security or outage at urgency 3: full alert, attention ring, a person takes it."
+      }
+    },
+    {
+      "id": "automation-failed",
+      "situation": "An automated step failed.",
+      "signals": {
+        "audience": "client",
+        "phase": "failed",
+        "topic": "general",
+        "urgency": 1
+      },
+      "presence": {
+        "mode": "concerned",
+        "state": "listening",
+        "form": "bubble",
+        "mustHandOff": true,
+        "reason": "A step failed: show concern, say so, hand to a person. Never claim a fix."
+      }
+    },
+    {
+      "id": "hand-to-technician",
+      "situation": "The request needs a DE technician.",
+      "signals": {
+        "audience": "client",
+        "phase": "handoff",
+        "topic": "general",
+        "urgency": 1,
+        "surface": "chat"
+      },
+      "presence": {
+        "mode": "reassuring",
+        "state": "speaking",
+        "form": "bubble",
+        "mustHandOff": true,
+        "reason": "Handing to a DE technician: calm, and say a person is taking over."
+      }
+    },
+    {
+      "id": "email-signature",
+      "situation": "Dex's mark in an email signature or profile.",
+      "signals": {
+        "audience": "public",
+        "phase": "idle",
+        "topic": "general",
+        "urgency": 0,
+        "surface": "email"
+      },
+      "presence": {
+        "mode": "normal",
+        "state": "idle",
+        "form": "tile",
+        "mustHandOff": false,
+        "reason": "No specific reason to change shape: resting pose."
+      }
+    }
+  ],
+  "holidays": [
+    {
+      "id": "new-years-day",
+      "name": "New Year's Day",
+      "glyph": "star",
+      "accent": "#F6D27A",
+      "before": 2,
+      "after": 1
+    },
+    {
+      "id": "mlk-day",
+      "name": "Martin Luther King Jr. Day",
+      "glyph": "sun",
+      "accent": "#F2A541",
+      "before": 2,
+      "after": 1
+    },
+    {
+      "id": "valentines-day",
+      "name": "Valentine's Day",
+      "glyph": "heart",
+      "accent": "#E0457B",
+      "before": 2,
+      "after": 0
+    },
+    {
+      "id": "presidents-day",
+      "name": "Presidents' Day",
+      "glyph": "star",
+      "accent": "#3B5BA9",
+      "before": 2,
+      "after": 1
+    },
+    {
+      "id": "st-patricks-day",
+      "name": "St. Patrick's Day",
+      "glyph": "clover",
+      "accent": "#2E9E5B",
+      "before": 2,
+      "after": 0
+    },
+    {
+      "id": "easter",
+      "name": "Easter",
+      "glyph": "sun",
+      "accent": "#F3B6D0",
+      "before": 2,
+      "after": 1
+    },
+    {
+      "id": "cinco-de-mayo",
+      "name": "Cinco de Mayo",
+      "glyph": "sun",
+      "accent": "#E8702A",
+      "before": 2,
+      "after": 0
+    },
+    {
+      "id": "mothers-day",
+      "name": "Mother's Day",
+      "glyph": "heart",
+      "accent": "#C77DBA",
+      "before": 2,
+      "after": 1
+    },
+    {
+      "id": "memorial-day",
+      "name": "Memorial Day",
+      "glyph": "star",
+      "accent": "#5A6B8C",
+      "before": 2,
+      "after": 1
+    },
+    {
+      "id": "juneteenth",
+      "name": "Juneteenth",
+      "glyph": "leaf",
+      "accent": "#2B8A6E",
+      "before": 2,
+      "after": 1
+    },
+    {
+      "id": "fathers-day",
+      "name": "Father's Day",
+      "glyph": "leaf",
+      "accent": "#46607A",
+      "before": 2,
+      "after": 1
+    },
+    {
+      "id": "independence-day",
+      "name": "Independence Day",
+      "glyph": "star",
+      "accent": "#B3202C",
+      "before": 2,
+      "after": 1
+    },
+    {
+      "id": "labor-day",
+      "name": "Labor Day",
+      "glyph": "leaf",
+      "accent": "#3C7A4A",
+      "before": 2,
+      "after": 1
+    },
+    {
+      "id": "indigenous-peoples-day",
+      "name": "Indigenous Peoples' Day",
+      "glyph": "leaf",
+      "accent": "#A0522D",
+      "before": 2,
+      "after": 1
+    },
+    {
+      "id": "halloween",
+      "name": "Halloween",
+      "glyph": "moon",
+      "accent": "#F07A1F",
+      "before": 2,
+      "after": 0
+    },
+    {
+      "id": "veterans-day",
+      "name": "Veterans Day",
+      "glyph": "star",
+      "accent": "#4B5D3A",
+      "before": 2,
+      "after": 0
+    },
+    {
+      "id": "thanksgiving",
+      "name": "Thanksgiving",
+      "glyph": "leaf",
+      "accent": "#B5652A",
+      "before": 2,
+      "after": 1
+    },
+    {
+      "id": "christmas",
+      "name": "Christmas",
+      "glyph": "snowflake",
+      "accent": "#7FC8E8",
+      "before": 5,
+      "after": 1
+    }
+  ],
+  "schedule": [
+    {
+      "year": 2026,
+      "holiday": "new-years-day",
+      "day": "2026-01-01",
+      "showsFrom": "2025-12-30",
+      "showsUntil": "2026-01-02"
+    },
+    {
+      "year": 2026,
+      "holiday": "mlk-day",
+      "day": "2026-01-19",
+      "showsFrom": "2026-01-17",
+      "showsUntil": "2026-01-20"
+    },
+    {
+      "year": 2026,
+      "holiday": "valentines-day",
+      "day": "2026-02-14",
+      "showsFrom": "2026-02-12",
+      "showsUntil": "2026-02-14"
+    },
+    {
+      "year": 2026,
+      "holiday": "presidents-day",
+      "day": "2026-02-16",
+      "showsFrom": "2026-02-14",
+      "showsUntil": "2026-02-17"
+    },
+    {
+      "year": 2026,
+      "holiday": "st-patricks-day",
+      "day": "2026-03-17",
+      "showsFrom": "2026-03-15",
+      "showsUntil": "2026-03-17"
+    },
+    {
+      "year": 2026,
+      "holiday": "easter",
+      "day": "2026-04-05",
+      "showsFrom": "2026-04-03",
+      "showsUntil": "2026-04-06"
+    },
+    {
+      "year": 2026,
+      "holiday": "cinco-de-mayo",
+      "day": "2026-05-05",
+      "showsFrom": "2026-05-03",
+      "showsUntil": "2026-05-05"
+    },
+    {
+      "year": 2026,
+      "holiday": "mothers-day",
+      "day": "2026-05-10",
+      "showsFrom": "2026-05-08",
+      "showsUntil": "2026-05-11"
+    },
+    {
+      "year": 2026,
+      "holiday": "memorial-day",
+      "day": "2026-05-25",
+      "showsFrom": "2026-05-23",
+      "showsUntil": "2026-05-26"
+    },
+    {
+      "year": 2026,
+      "holiday": "juneteenth",
+      "day": "2026-06-19",
+      "showsFrom": "2026-06-17",
+      "showsUntil": "2026-06-20"
+    },
+    {
+      "year": 2026,
+      "holiday": "fathers-day",
+      "day": "2026-06-21",
+      "showsFrom": "2026-06-19",
+      "showsUntil": "2026-06-22"
+    },
+    {
+      "year": 2026,
+      "holiday": "independence-day",
+      "day": "2026-07-04",
+      "showsFrom": "2026-07-02",
+      "showsUntil": "2026-07-05"
+    },
+    {
+      "year": 2026,
+      "holiday": "labor-day",
+      "day": "2026-09-07",
+      "showsFrom": "2026-09-05",
+      "showsUntil": "2026-09-08"
+    },
+    {
+      "year": 2026,
+      "holiday": "indigenous-peoples-day",
+      "day": "2026-10-12",
+      "showsFrom": "2026-10-10",
+      "showsUntil": "2026-10-13"
+    },
+    {
+      "year": 2026,
+      "holiday": "halloween",
+      "day": "2026-10-31",
+      "showsFrom": "2026-10-29",
+      "showsUntil": "2026-10-31"
+    },
+    {
+      "year": 2026,
+      "holiday": "veterans-day",
+      "day": "2026-11-11",
+      "showsFrom": "2026-11-09",
+      "showsUntil": "2026-11-11"
+    },
+    {
+      "year": 2026,
+      "holiday": "thanksgiving",
+      "day": "2026-11-26",
+      "showsFrom": "2026-11-24",
+      "showsUntil": "2026-11-27"
+    },
+    {
+      "year": 2026,
+      "holiday": "christmas",
+      "day": "2026-12-25",
+      "showsFrom": "2026-12-20",
+      "showsUntil": "2026-12-26"
+    },
+    {
+      "year": 2027,
+      "holiday": "new-years-day",
+      "day": "2027-01-01",
+      "showsFrom": "2026-12-30",
+      "showsUntil": "2027-01-02"
+    },
+    {
+      "year": 2027,
+      "holiday": "mlk-day",
+      "day": "2027-01-18",
+      "showsFrom": "2027-01-16",
+      "showsUntil": "2027-01-19"
+    },
+    {
+      "year": 2027,
+      "holiday": "valentines-day",
+      "day": "2027-02-14",
+      "showsFrom": "2027-02-12",
+      "showsUntil": "2027-02-14"
+    },
+    {
+      "year": 2027,
+      "holiday": "presidents-day",
+      "day": "2027-02-15",
+      "showsFrom": "2027-02-13",
+      "showsUntil": "2027-02-16"
+    },
+    {
+      "year": 2027,
+      "holiday": "st-patricks-day",
+      "day": "2027-03-17",
+      "showsFrom": "2027-03-15",
+      "showsUntil": "2027-03-17"
+    },
+    {
+      "year": 2027,
+      "holiday": "easter",
+      "day": "2027-03-28",
+      "showsFrom": "2027-03-26",
+      "showsUntil": "2027-03-29"
+    },
+    {
+      "year": 2027,
+      "holiday": "cinco-de-mayo",
+      "day": "2027-05-05",
+      "showsFrom": "2027-05-03",
+      "showsUntil": "2027-05-05"
+    },
+    {
+      "year": 2027,
+      "holiday": "mothers-day",
+      "day": "2027-05-09",
+      "showsFrom": "2027-05-07",
+      "showsUntil": "2027-05-10"
+    },
+    {
+      "year": 2027,
+      "holiday": "memorial-day",
+      "day": "2027-05-31",
+      "showsFrom": "2027-05-29",
+      "showsUntil": "2027-06-01"
+    },
+    {
+      "year": 2027,
+      "holiday": "juneteenth",
+      "day": "2027-06-19",
+      "showsFrom": "2027-06-17",
+      "showsUntil": "2027-06-20"
+    },
+    {
+      "year": 2027,
+      "holiday": "fathers-day",
+      "day": "2027-06-20",
+      "showsFrom": "2027-06-18",
+      "showsUntil": "2027-06-21"
+    },
+    {
+      "year": 2027,
+      "holiday": "independence-day",
+      "day": "2027-07-04",
+      "showsFrom": "2027-07-02",
+      "showsUntil": "2027-07-05"
+    },
+    {
+      "year": 2027,
+      "holiday": "labor-day",
+      "day": "2027-09-06",
+      "showsFrom": "2027-09-04",
+      "showsUntil": "2027-09-07"
+    },
+    {
+      "year": 2027,
+      "holiday": "indigenous-peoples-day",
+      "day": "2027-10-11",
+      "showsFrom": "2027-10-09",
+      "showsUntil": "2027-10-12"
+    },
+    {
+      "year": 2027,
+      "holiday": "halloween",
+      "day": "2027-10-31",
+      "showsFrom": "2027-10-29",
+      "showsUntil": "2027-10-31"
+    },
+    {
+      "year": 2027,
+      "holiday": "veterans-day",
+      "day": "2027-11-11",
+      "showsFrom": "2027-11-09",
+      "showsUntil": "2027-11-11"
+    },
+    {
+      "year": 2027,
+      "holiday": "thanksgiving",
+      "day": "2027-11-25",
+      "showsFrom": "2027-11-23",
+      "showsUntil": "2027-11-26"
+    },
+    {
+      "year": 2027,
+      "holiday": "christmas",
+      "day": "2027-12-25",
+      "showsFrom": "2027-12-20",
+      "showsUntil": "2027-12-26"
+    },
+    {
+      "year": 2028,
+      "holiday": "new-years-day",
+      "day": "2028-01-01",
+      "showsFrom": "2027-12-30",
+      "showsUntil": "2028-01-02"
+    },
+    {
+      "year": 2028,
+      "holiday": "mlk-day",
+      "day": "2028-01-17",
+      "showsFrom": "2028-01-15",
+      "showsUntil": "2028-01-18"
+    },
+    {
+      "year": 2028,
+      "holiday": "valentines-day",
+      "day": "2028-02-14",
+      "showsFrom": "2028-02-12",
+      "showsUntil": "2028-02-14"
+    },
+    {
+      "year": 2028,
+      "holiday": "presidents-day",
+      "day": "2028-02-21",
+      "showsFrom": "2028-02-19",
+      "showsUntil": "2028-02-22"
+    },
+    {
+      "year": 2028,
+      "holiday": "st-patricks-day",
+      "day": "2028-03-17",
+      "showsFrom": "2028-03-15",
+      "showsUntil": "2028-03-17"
+    },
+    {
+      "year": 2028,
+      "holiday": "easter",
+      "day": "2028-04-16",
+      "showsFrom": "2028-04-14",
+      "showsUntil": "2028-04-17"
+    },
+    {
+      "year": 2028,
+      "holiday": "cinco-de-mayo",
+      "day": "2028-05-05",
+      "showsFrom": "2028-05-03",
+      "showsUntil": "2028-05-05"
+    },
+    {
+      "year": 2028,
+      "holiday": "mothers-day",
+      "day": "2028-05-14",
+      "showsFrom": "2028-05-12",
+      "showsUntil": "2028-05-15"
+    },
+    {
+      "year": 2028,
+      "holiday": "memorial-day",
+      "day": "2028-05-29",
+      "showsFrom": "2028-05-27",
+      "showsUntil": "2028-05-30"
+    },
+    {
+      "year": 2028,
+      "holiday": "juneteenth",
+      "day": "2028-06-19",
+      "showsFrom": "2028-06-17",
+      "showsUntil": "2028-06-20"
+    },
+    {
+      "year": 2028,
+      "holiday": "fathers-day",
+      "day": "2028-06-18",
+      "showsFrom": "2028-06-16",
+      "showsUntil": "2028-06-19"
+    },
+    {
+      "year": 2028,
+      "holiday": "independence-day",
+      "day": "2028-07-04",
+      "showsFrom": "2028-07-02",
+      "showsUntil": "2028-07-05"
+    },
+    {
+      "year": 2028,
+      "holiday": "labor-day",
+      "day": "2028-09-04",
+      "showsFrom": "2028-09-02",
+      "showsUntil": "2028-09-05"
+    },
+    {
+      "year": 2028,
+      "holiday": "indigenous-peoples-day",
+      "day": "2028-10-09",
+      "showsFrom": "2028-10-07",
+      "showsUntil": "2028-10-10"
+    },
+    {
+      "year": 2028,
+      "holiday": "halloween",
+      "day": "2028-10-31",
+      "showsFrom": "2028-10-29",
+      "showsUntil": "2028-10-31"
+    },
+    {
+      "year": 2028,
+      "holiday": "veterans-day",
+      "day": "2028-11-11",
+      "showsFrom": "2028-11-09",
+      "showsUntil": "2028-11-11"
+    },
+    {
+      "year": 2028,
+      "holiday": "thanksgiving",
+      "day": "2028-11-23",
+      "showsFrom": "2028-11-21",
+      "showsUntil": "2028-11-24"
+    },
+    {
+      "year": 2028,
+      "holiday": "christmas",
+      "day": "2028-12-25",
+      "showsFrom": "2028-12-20",
+      "showsUntil": "2028-12-26"
+    }
+  ]
+}

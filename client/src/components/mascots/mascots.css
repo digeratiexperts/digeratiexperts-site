@@ -3,6 +3,11 @@
 .mascot { display: inline-block; overflow: visible; }
 .mascot .dex-mark__bar, .mascot .dex-eye { transform-box: fill-box; transform-origin: center; }
 
+/* A mode change tweens the bars and eyes to the new pose. Off under reduced motion: the pose snaps. */
+@media (prefers-reduced-motion: no-preference) {
+  .mascot .dex-mark__tween { transition: transform 420ms cubic-bezier(0.2, 0.7, 0.2, 1); }
+}
+
 @media (prefers-reduced-motion: no-preference) {
   /* Dex idle: the bars breathe in turn, like the pronunciation meter. */
   .dex-mark.is-idle .dex-mark__bar { animation: dex-breathe 3.6s ease-in-out infinite; }
