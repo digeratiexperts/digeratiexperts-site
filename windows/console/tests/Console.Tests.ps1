@@ -719,9 +719,9 @@ Describe 'Security provider selection' {
     BeforeAll { . (Join-Path $PSScriptRoot 'TestHelpers.ps1'); $null = Initialize-TestConsole }
 
     It 'does not install Guardz or request its key for a Blackpoint-only client' {
-        $profile = ConvertTo-DEHashtable (Get-DEClientProfile -Id 'alamo')
-        $profile.security.mdr.deploy = @('blackpoint')
-        Register-DESecurityActions -ClientProfile $profile
+        $clientProfile = ConvertTo-DEHashtable (Get-DEClientProfile -Id 'alamo')
+        $clientProfile.security.mdr.deploy = @('blackpoint')
+        Register-DESecurityActions -ClientProfile $clientProfile
         $guardz = Get-DEAction -Id 'security.guardz'
         @($guardz.RequiresSecrets).Count | Should -Be 0
         [bool]$guardz.Apply | Should -Be $false
@@ -729,9 +729,9 @@ Describe 'Security provider selection' {
     }
 
     It 'retains the Guardz install action when Guardz is selected' {
-        $profile = ConvertTo-DEHashtable (Get-DEClientProfile -Id 'alamo')
-        $profile.security.mdr.deploy = @('guardz')
-        Register-DESecurityActions -ClientProfile $profile
+        $clientProfile = ConvertTo-DEHashtable (Get-DEClientProfile -Id 'alamo')
+        $clientProfile.security.mdr.deploy = @('guardz')
+        Register-DESecurityActions -ClientProfile $clientProfile
         $guardz = Get-DEAction -Id 'security.guardz'
         ($guardz.RequiresSecrets -contains 'GUARDZ_ORG_KEY') | Should -Be $true
         [bool]$guardz.Apply | Should -Be $true
