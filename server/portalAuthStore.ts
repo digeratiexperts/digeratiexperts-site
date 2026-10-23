@@ -31,6 +31,8 @@ export type PortalAuthUser = {
   departmentId?: string | null;
   managerUserId?: string | null;
   isCompanyItContact?: boolean;
+  /** Client hats (portal_client_role values); empty = legacy org-role derivation only. */
+  clientRoles?: string[];
   emailVerified?: boolean;
   isActive?: boolean;
   mfaEnabled?: boolean;
@@ -72,6 +74,7 @@ const committedClients = new Map<string, PortalAuthClient>();
 function cloneUser(user: PortalAuthUser): PortalAuthUser {
   return {
     ...user,
+    clientRoles: user.clientRoles ? [...user.clientRoles] : user.clientRoles,
     mfaBackupCodes: user.mfaBackupCodes ? [...user.mfaBackupCodes] : user.mfaBackupCodes,
     mfaPasskeys: user.mfaPasskeys ? user.mfaPasskeys.map((p) => ({ ...p, transports: [...p.transports] })) : user.mfaPasskeys,
   };
@@ -120,6 +123,7 @@ function rowToUser(row: typeof portalUsersTable.$inferSelect): PortalAuthUser {
     departmentId: (row as any).departmentId || null,
     managerUserId: (row as any).managerUserId || null,
     isCompanyItContact: !!(row as any).isCompanyItContact,
+    clientRoles: Array.isArray((row as any).clientRoles) ? (row as any).clientRoles : [],
     emailVerified: row.emailVerified ?? false,
     isActive: row.isActive ?? true,
     mfaEnabled: row.mfaEnabled ?? false,
@@ -167,6 +171,7 @@ async function ensureSchema() {
     await db.execute(sql`ALTER TABLE portal_users ADD COLUMN IF NOT EXISTS mfa_totp_secret text`);
     await db.execute(sql`ALTER TABLE portal_users ADD COLUMN IF NOT EXISTS mfa_backup_codes jsonb DEFAULT '[]'::jsonb`);
     await db.execute(sql`ALTER TABLE portal_users ADD COLUMN IF NOT EXISTS mfa_passkeys jsonb DEFAULT '[]'::jsonb`);
+    await db.execute(sql`ALTER TABLE portal_users ADD COLUMN IF NOT EXISTS client_roles jsonb DEFAULT '[]'::jsonb`);
     await db.execute(sql`
       CREATE TABLE IF NOT EXISTS portal_order_forms (
         id varchar PRIMARY KEY DEFAULT gen_random_uuid()::text,
@@ -208,13 +213,14 @@ async function writeUserDb(user: PortalAuthUser, executor = db): Promise<void> {
       username: user.username || null,
       password: user.password,
       fullName: user.fullName,
-      role: (user.role as "admin" | "user" | "viewer") || "user",
+      role: (user.role as "admin" | "user" | "viewer" | "staff") || "user",
       storeRole: (user.storeRole as StoreRole) || "prospect",
       clientId: user.clientId || null,
       orgRole: (user.orgRole as "staff" | "manager" | "dept_it_contact" | "company_it_contact") || "staff",
       departmentId: user.departmentId || null,
       managerUserId: user.managerUserId || null,
       isCompanyItContact: user.isCompanyItContact ?? false,
+      clientRoles: user.clientRoles || [],
       emailVerified: user.emailVerified ?? false,
       isActive: user.isActive ?? true,
       mfaEnabled: user.mfaEnabled ?? false,
@@ -242,6 +248,7 @@ async function writeUserDb(user: PortalAuthUser, executor = db): Promise<void> {
           departmentId: values.departmentId,
           managerUserId: values.managerUserId,
           isCompanyItContact: values.isCompanyItContact,
+          clientRoles: values.clientRoles,
           emailVerified: values.emailVerified,
           isActive: values.isActive,
           mfaEnabled: values.mfaEnabled,
