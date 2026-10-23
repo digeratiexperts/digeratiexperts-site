@@ -4507,3 +4507,26 @@ claims:
       Joe picked option A for the word appearing twice: the Why card drops
       its big "dig·er·a·ti" headword and keeps the meaning, so the word is
       shown large only once (the hero).
+  - id: portal-admin-company-picker
+    owner: claude
+    subsystem: portal
+    branch: claude/sleepy-johnson-bkojbp
+    base_sha: 8cdb120
+    started: 2026-10-23
+    files:
+      - client/src/components/portal/CompanyReadiness.tsx (inline company picker for DE admins)
+      - client/src/components/portal/AdminModeSwitch.tsx (View as stays on the current client page)
+      - client/src/components/portal/viewAsDestination.test.ts (new)
+      - client/src/pages/portal/requests/PortalServiceRequests.tsx (My Requests shows the picker, not an error)
+    status: in-review
+    note: >-
+      Joe, 2026-10-23: Service Requests showed "Your requests couldn't be
+      loaded. Open a company (impersonate) before filing a request for it",
+      and the licence form only showed options after Manage Companies -> View
+      Portal -> back button. A DE admin with no company open now gets a
+      company picker on the page itself; picking opens that company and
+      reloads the same page. "View as" from the admin bar also stays on the
+      client page you were on instead of jumping to the dashboard.
+      Verified locally in Chromium with the dev bootstrap admin: requests
+      page and licence form both show the picker, picking stays on the page,
+      and the error is gone.
