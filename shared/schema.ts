@@ -359,6 +359,31 @@ export const portalStatusNotices = pgTable("portal_status_notices", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
+/** IT Roadmap items (migrations/0022_portal_roadmap_items.sql; shared/roadmap.ts). */
+export const portalRoadmapItems = pgTable("portal_roadmap_items", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  clientId: varchar("client_id")
+    .notNull()
+    .references(() => portalClients.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  rationale: text("rationale").notNull().default(""),
+  category: text("category").notNull(),
+  priority: text("priority").notNull(),
+  targetQuarter: text("target_quarter").notNull(),
+  estimateLow: integer("estimate_low"),
+  estimateHigh: integer("estimate_high"),
+  costBasis: text("cost_basis").notNull().default("one_time"),
+  status: text("status").notNull().default("proposed"),
+  decisionNote: text("decision_note").notNull().default(""),
+  decidedByName: text("decided_by_name"),
+  decidedAt: timestamp("decided_at", { withTimezone: true }),
+  comments: jsonb("comments").notNull().default([]),
+  createdBy: varchar("created_by"),
+  createdByName: text("created_by_name").notNull().default(""),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
 /**
  * Group-level requests filed by a Hub-defined representative on behalf of the
  * group they represent (migrations/0019_portal_group_requests.sql;
