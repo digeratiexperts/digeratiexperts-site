@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import { ArticleJsonLd, BreadcrumbJsonLd } from "@/components/JsonLd";
 import { BlogAudioPlayer } from "@/components/BlogAudioPlayer";
+import { narrationTextFor, narrationPath } from "@/lib/narrationText";
 import { blogs, blogBySlug, blogBodies } from "@/data/resourceRegistry";
 
 const LEGACY_SLUG_REDIRECTS: Record<string, string> = {
@@ -129,24 +130,12 @@ export default function BlogPost() {
       body?.readTime
     : body?.readTime;
 
-  const audioText = useMemo(() => {
-    const blocks = activeBlocks;
-    return blocks
-      .map((b) => {
-        if (b.kind === "p") {
-          const raw = b.text.trim();
-          if (raw.startsWith("> ")) return raw.slice(2);
-          return raw;
-        }
-        if (b.kind === "h2") return b.text;
-        if (b.kind === "ul") return b.items.join(". ");
-        if (b.kind === "callout") return `${b.title ?? ""}: ${b.text}`.trim();
-        if (b.kind === "quote") return b.text;
-        return "";
-      })
-      .filter(Boolean)
-      .join(". ");
-  }, [activeBlocks]);
+  const audioText = useMemo(() => narrationTextFor(activeBlocks), [activeBlocks]);
+
+  // Static pre-rendered narration key: same view rule the renderer uses.
+  const audioView: "overview" | "extended" =
+    hasDualVersion && view === "extended" ? "extended" : "overview";
+  const audioSrc = slug ? narrationPath(slug, audioView) : undefined;
 
   const totalWords = useMemo(() => countWords(audioText), [audioText]);
 
@@ -471,6 +460,7 @@ export default function BlogPost() {
                   <BlogAudioPlayer
                     title={post.title}
                     text={audioText}
+                    audioSrc={audioSrc}
                     wordCount={totalWords}
                     onWordChange={setCurrentWordIdx}
                   />

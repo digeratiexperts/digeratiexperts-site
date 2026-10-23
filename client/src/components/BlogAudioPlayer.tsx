@@ -1,36 +1,33 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Play, Pause, Square, Volume2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
 
-let fallbackToastShown = false;
+/*
+ * Listen button. Source order, always the same:
+ *   1. Pre-rendered static MP3 (audioSrc). No API, no key, cannot go down.
+ *   2. Live /api/tts, only if the static file is missing (e.g. a new post
+ *      not yet rendered). Quota or server errors are logged, not shown.
+ *   3. Device voice, silently. Word highlighting still works.
+ * There is no error banner for source 2 or 3. Readers should never be told
+ * the premium voice is "temporarily unavailable".
+ */
 
-type OpenAIVoice = "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer";
-
-const VOICES: { label: string; value: OpenAIVoice }[] = [
-  { label: "Nova (warm)", value: "nova" },
-  { label: "Alloy (neutral)", value: "alloy" },
-  { label: "Echo (male)", value: "echo" },
-  { label: "Fable (expressive)", value: "fable" },
-  { label: "Onyx (deep)", value: "onyx" },
-  { label: "Shimmer (bright)", value: "shimmer" },
-];
+type Mode = "static" | "live" | "browser";
 
 interface BlogAudioPlayerProps {
   title: string;
   text: string;
+  audioSrc?: string;
   wordCount?: number;
   onWordChange?: (idx: number) => void;
 }
-
-type Mode = "openai" | "browser";
 
 function computeWordCharOffsets(text: string): number[] {
   const offsets: number[] = [];
   const tokens = text.split(/(\s+)/);
   let pos = 0;
   for (const tok of tokens) {
-    if (tok && !/^\s+$/.test(tok) && /[A-Za-z0-9\u00C0-\u024F]/.test(tok)) {
+    if (tok && !/^\s+$/.test(tok) && /[A-Za-z0-9À-ɏ]/.test(tok)) {
       offsets.push(pos);
     }
     pos += tok.length;
@@ -51,49 +48,44 @@ function pickPreferredBrowserVoice(): SpeechSynthesisVoice | null {
   return preferred || null;
 }
 
+function logQuiet(label: string, err: unknown) {
+  // Visible to developers in the console, never to readers.
+  if (typeof console !== "undefined") console.info(`[listen] ${label}`, err);
+}
+
 export function BlogAudioPlayer({
   title: _title,
   text,
+  audioSrc,
   wordCount = 0,
   onWordChange,
 }: BlogAudioPlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [voice, setVoice] = useState<OpenAIVoice>("nova");
-  const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [mode, setMode] = useState<Mode>("openai");
+  const [mode, setMode] = useState<Mode>("static");
   const [rate, setRate] = useState(1);
+  // null = probe not finished yet; we still try the static file first.
+  const [hasSource, setHasSource] = useState<boolean | null>(null);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const rateRef = useRef(rate);
   rateRef.current = rate;
+  const blobUrlRef = useRef<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
   const wordOffsetsRef = useRef<number[]>([]);
   const onWordChangeRef = useRef(onWordChange);
+  onWordChangeRef.current = onWordChange;
   const wordCountRef = useRef(wordCount);
-  const { toast } = useToast();
+  wordCountRef.current = wordCount;
+
   const browserSupportsSpeech =
     typeof window !== "undefined" && "speechSynthesis" in window;
 
-  const notifyFallbackOnce = useCallback(() => {
-    if (fallbackToastShown) return;
-    fallbackToastShown = true;
-    toast({
-      title: "Using your device's voice",
-      description:
-        "Premium narration is temporarily unavailable. Word highlighting still works.",
-      duration: 5000,
-    });
-  }, [toast]);
-
-  onWordChangeRef.current = onWordChange;
-  wordCountRef.current = wordCount;
-
-  // Preload voices in some browsers (Chrome lazy-loads them).
+  // Chrome lazy-loads voices; touching getVoices() early avoids a silent first click.
   useEffect(() => {
     if (!browserSupportsSpeech) return;
     const sv = window.speechSynthesis;
@@ -103,44 +95,42 @@ export function BlogAudioPlayer({
     return () => sv.removeEventListener?.("voiceschanged", trigger);
   }, [browserSupportsSpeech]);
 
+  // Probe whether the static file exists, so the button is never dead.
+  useEffect(() => {
+    let cancelled = false;
+    if (!audioSrc) {
+      setHasSource(false);
+      return;
+    }
+    setHasSource(null);
+    fetch(audioSrc, { method: "HEAD" })
+      .then((r) => {
+        if (!cancelled) setHasSource(r.ok);
+      })
+      .catch(() => {
+        if (!cancelled) setHasSource(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [audioSrc]);
+
   const stopBrowserSpeech = useCallback(() => {
     if (!browserSupportsSpeech) return;
     try {
       window.speechSynthesis.cancel();
-    } catch {}
+    } catch (e) {
+      logQuiet("cancel", e);
+    }
     utteranceRef.current = null;
   }, [browserSupportsSpeech]);
 
-  // Mobile browsers (especially iOS Safari and Android Chrome) require
-  // speechSynthesis.speak() to be invoked from a user gesture. Our OpenAI
-  // fetch is async, so by the time we'd want to fall back, the gesture is
-  // gone and synthesis silently errors with "not-allowed" / "audio-busy".
-  // Solution: prime the engine on the first click with a tiny silent
-  // utterance so the audio context is unlocked for later fallback use.
-  const synthPrimedRef = useRef(false);
-  const primeSpeechSynthesis = useCallback(() => {
-    if (!browserSupportsSpeech || synthPrimedRef.current) return;
-    try {
-      const sv = window.speechSynthesis;
-      const u = new SpeechSynthesisUtterance(" ");
-      u.volume = 0;
-      u.rate = 10;
-      // Only mark as primed once the engine actually accepts the utterance.
-      // If the browser rejects (mobile quirks), allow re-priming on next click.
-      u.onstart = () => {
-        synthPrimedRef.current = true;
-      };
-      u.onend = () => {
-        synthPrimedRef.current = true;
-      };
-      u.onerror = () => {
-        synthPrimedRef.current = false;
-      };
-      sv.speak(u);
-    } catch {
-      synthPrimedRef.current = false;
+  const releaseBlob = useCallback(() => {
+    if (blobUrlRef.current) {
+      URL.revokeObjectURL(blobUrlRef.current);
+      blobUrlRef.current = null;
     }
-  }, [browserSupportsSpeech]);
+  }, []);
 
   const stop = useCallback(() => {
     const audio = audioRef.current;
@@ -155,32 +145,18 @@ export function BlogAudioPlayer({
     onWordChangeRef.current?.(-1);
   }, [stopBrowserSpeech]);
 
-  const cleanup = useCallback(() => {
-    if (audioUrl) {
-      URL.revokeObjectURL(audioUrl);
-      setAudioUrl(null);
-    }
-    if (abortRef.current) {
-      abortRef.current.abort();
-      abortRef.current = null;
-    }
-    stopBrowserSpeech();
-  }, [audioUrl, stopBrowserSpeech]);
-
-  const playBrowserFallback = useCallback(() => {
+  const playBrowserVoice = useCallback(() => {
     if (!browserSupportsSpeech) {
-      setError("Audio not supported on this device");
-      return false;
+      setError("Audio is not supported on this device");
+      return;
     }
     stopBrowserSpeech();
-
     const offsets = computeWordCharOffsets(text);
     wordOffsetsRef.current = offsets;
     const total = Math.max(1, offsets.length);
 
     const utt = new SpeechSynthesisUtterance(text);
     utteranceRef.current = utt;
-
     const preferred = pickPreferredBrowserVoice();
     if (preferred) utt.voice = preferred;
     utt.rate = rateRef.current;
@@ -195,7 +171,6 @@ export function BlogAudioPlayer({
       setError(null);
     };
     utt.onboundary = (e: SpeechSynthesisEvent) => {
-      // Some engines fire char-level boundaries; only act on word-level
       if (e.name && e.name !== "word") return;
       const offs = wordOffsetsRef.current;
       let idx = offs.length - 1;
@@ -217,14 +192,9 @@ export function BlogAudioPlayer({
       utteranceRef.current = null;
     };
     utt.onerror = (e: SpeechSynthesisErrorEvent) => {
-      // Benign / transient errors that recover on next user click:
-      //   canceled, interrupted — we stopped or switched voices
-      //   not-allowed — gesture context was lost; next click re-primes
-      //   audio-busy — engine momentarily contended; retry recovers
+      // Benign interruptions are not failures. Anything else gets a quiet retry hint.
       const benign = ["canceled", "interrupted", "not-allowed", "audio-busy"];
-      if (!benign.includes(e.error)) {
-        setError("Tap play again to retry");
-      }
+      if (!benign.includes(e.error)) setError("Tap play to try again");
       setIsPlaying(false);
       setIsPaused(false);
       utteranceRef.current = null;
@@ -232,47 +202,15 @@ export function BlogAudioPlayer({
 
     try {
       window.speechSynthesis.speak(utt);
-      return true;
     } catch (err) {
-      setError("Tap play again to retry");
-      return false;
+      logQuiet("speak", err);
+      setError("Tap play to try again");
     }
   }, [text, browserSupportsSpeech, stopBrowserSpeech]);
 
-  const fetchAudio = useCallback(async () => {
-    if (!text) return;
-    setLoading(true);
-    setError(null);
-    cleanup();
-
-    const controller = new AbortController();
-    abortRef.current = controller;
-
-    try {
-      const res = await fetch("/api/tts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, voice }),
-        signal: controller.signal,
-      });
-
-      if (!res.ok) {
-        // Auto-fall back to browser speech on quota / server errors.
-        if (res.status === 429 || res.status >= 500) {
-          if (playBrowserFallback()) {
-            notifyFallbackOnce();
-            return;
-          }
-        }
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error || "Failed to generate audio");
-      }
-
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      setAudioUrl(url);
-      setMode("openai");
-
+  // Plays an audio URL through HTML5 audio. Resolves false if it cannot start.
+  const playUrl = useCallback(
+    async (url: string, nextMode: Mode): Promise<boolean> => {
       const audio = new Audio(url);
       audio.playbackRate = rateRef.current;
       audioRef.current = audio;
@@ -284,58 +222,89 @@ export function BlogAudioPlayer({
         onWordChangeRef.current?.(-1);
       });
       audio.addEventListener("timeupdate", () => {
-        if (audio.duration) {
-          const ratio = audio.currentTime / audio.duration;
-          setProgress(Math.round(ratio * 100));
-          if (wordCountRef.current > 0 && onWordChangeRef.current) {
-            const idx = Math.min(
-              wordCountRef.current - 1,
-              Math.floor(ratio * wordCountRef.current),
-            );
-            onWordChangeRef.current(idx);
-          }
-        }
-      });
-      audio.addEventListener("error", () => {
-        // Try browser fallback if HTML5 audio also fails
-        if (playBrowserFallback()) {
-          notifyFallbackOnce();
-        } else {
-          setError("Audio playback error");
-          setIsPlaying(false);
+        if (!audio.duration) return;
+        const ratio = audio.currentTime / audio.duration;
+        setProgress(Math.round(ratio * 100));
+        if (wordCountRef.current > 0 && onWordChangeRef.current) {
+          const idx = Math.min(
+            wordCountRef.current - 1,
+            Math.floor(ratio * wordCountRef.current),
+          );
+          onWordChangeRef.current(idx);
         }
       });
 
-      await audio.play();
-      setIsPlaying(true);
-      setIsPaused(false);
+      try {
+        await audio.play();
+        setMode(nextMode);
+        setIsPlaying(true);
+        setIsPaused(false);
+        return true;
+      } catch (e) {
+        logQuiet(`play ${nextMode}`, e);
+        return false;
+      }
+    },
+    [],
+  );
+
+  // Click handler for a fresh start. Tries static, then live, then device voice.
+  const startFromSource = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    stop();
+    releaseBlob();
+
+    // 1. Pre-rendered file (normal path).
+    if (audioSrc && hasSource !== false) {
+      const ok = await playUrl(audioSrc, "static");
+      setLoading(false);
+      if (ok) return;
+    }
+
+    // 2. Live route, only for posts without a rendered file.
+    try {
+      const controller = new AbortController();
+      abortRef.current = controller;
+      const res = await fetch("/api/tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, voice: "nova" }),
+        signal: controller.signal,
+      });
+      if (res.ok) {
+        const blob = await res.blob();
+        blobUrlRef.current = URL.createObjectURL(blob);
+        const ok = await playUrl(blobUrlRef.current, "live");
+        setLoading(false);
+        if (ok) return;
+      } else {
+        logQuiet(`/api/tts ${res.status}`, await res.text().catch(() => ""));
+      }
     } catch (e: any) {
-      if (e.name === "AbortError") return;
-      // Last-ditch: try browser fallback if we haven't already.
-      if (mode !== "browser" && playBrowserFallback()) {
-        notifyFallbackOnce();
+      if (e?.name === "AbortError") {
+        setLoading(false);
         return;
       }
-      setError(e.message || "Audio unavailable");
-    } finally {
-      setLoading(false);
+      logQuiet("/api/tts", e);
     }
-  }, [text, voice, cleanup, playBrowserFallback, mode, notifyFallbackOnce]);
+
+    // 3. Device voice, silently.
+    setLoading(false);
+    playBrowserVoice();
+  }, [audioSrc, hasSource, text, stop, releaseBlob, playUrl, playBrowserVoice]);
 
   const togglePlay = useCallback(() => {
-    // Always clear any stale error from a prior attempt and prime the
-    // speech engine on this fresh user gesture so fallback works later.
     setError(null);
-    primeSpeechSynthesis();
 
-    // Browser speech mode controls
+    // Device voice controls.
     if (mode === "browser" && (isPlaying || isPaused)) {
       const sv = window.speechSynthesis;
       if (isPaused) {
         sv.resume();
         setIsPaused(false);
         setIsPlaying(true);
-      } else if (isPlaying) {
+      } else {
         sv.pause();
         setIsPaused(true);
         setIsPlaying(false);
@@ -343,47 +312,44 @@ export function BlogAudioPlayer({
       return;
     }
 
-    // OpenAI audio mode controls
     const audio = audioRef.current;
-    if (!audioUrl && !isPlaying && !isPaused) {
-      fetchAudio();
+    if (!audio || (!isPlaying && !isPaused && audio.ended)) {
+      void startFromSource();
       return;
     }
-    if (audio) {
-      if (isPaused) {
-        audio.play();
-        setIsPaused(false);
-        setIsPlaying(true);
-        return;
-      }
-      if (isPlaying) {
-        audio.pause();
-        setIsPaused(true);
-        setIsPlaying(false);
-        return;
-      }
-      audio.currentTime = 0;
-      audio.play();
-      setIsPlaying(true);
+    if (isPaused) {
+      void audio.play();
       setIsPaused(false);
-      setProgress(0);
+      setIsPlaying(true);
+      return;
     }
-  }, [audioUrl, isPaused, isPlaying, mode, fetchAudio, primeSpeechSynthesis]);
+    if (isPlaying) {
+      audio.pause();
+      setIsPaused(true);
+      setIsPlaying(false);
+      return;
+    }
+    audio.currentTime = 0;
+    void audio.play();
+    setIsPlaying(true);
+    setIsPaused(false);
+    setProgress(0);
+  }, [mode, isPlaying, isPaused, startFromSource]);
 
   useEffect(() => {
     return () => {
       stop();
-      cleanup();
+      releaseBlob();
+      abortRef.current?.abort();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [stop, releaseBlob]);
 
   const statusLabel = loading
     ? "Loading…"
-    : error
-      ? "Error"
-      : mode === "browser" && (isPlaying || isPaused)
-        ? "Device voice"
+    : mode === "browser" && (isPlaying || isPaused)
+      ? "Device voice"
+      : error
+        ? "Error"
         : "Listen";
 
   return (
@@ -392,14 +358,7 @@ export function BlogAudioPlayer({
       data-testid="blog-audio-player"
     >
       <Volume2 className="h-4 w-4 shrink-0 text-de-accent-ink" aria-hidden="true" />
-      <span
-        className="text-xs text-white/60 hidden sm:inline"
-        title={
-          mode === "browser"
-            ? "Using your device's built-in voice"
-            : "Premium narration"
-        }
-      >
+      <span className="text-xs text-white/60 hidden sm:inline" aria-live="polite">
         {statusLabel}
       </span>
 
@@ -407,17 +366,14 @@ export function BlogAudioPlayer({
         size="sm"
         className="h-11 w-11 rounded-full bg-de-accent hover:bg-de-accent p-0 disabled:opacity-50"
         onClick={togglePlay}
-        disabled={loading}
+        disabled={loading || !text}
         aria-label={isPlaying && !isPaused ? "Pause audio" : "Play audio"}
         data-testid="button-audio-play"
       >
         {isPlaying && !isPaused ? (
           <Pause className="h-3.5 w-3.5 text-white" />
         ) : (
-          <Play
-            className="h-3.5 w-3.5 text-white ml-px"
-            fill="currentColor"
-          />
+          <Play className="h-3.5 w-3.5 text-white ml-px" fill="currentColor" />
         )}
       </Button>
 
@@ -426,7 +382,7 @@ export function BlogAudioPlayer({
         variant="ghost"
         className="h-11 w-11 rounded-full p-0 text-white/60 hover:text-white hover:bg-white/10"
         onClick={stop}
-        disabled={!isPlaying && !isPaused && !audioUrl}
+        disabled={!isPlaying && !isPaused}
         aria-label="Stop audio"
         data-testid="button-audio-stop"
       >
@@ -451,10 +407,8 @@ export function BlogAudioPlayer({
           const next = Number(e.target.value) || 1;
           setRate(next);
           if (audioRef.current) audioRef.current.playbackRate = next;
-          // Browser speech rate only applies on the next utterance.
-          if (mode === "browser" && (isPlaying || isPaused)) {
-            stop();
-          }
+          // Device-voice rate only applies to the next utterance.
+          if (mode === "browser" && (isPlaying || isPaused)) stop();
         }}
         className="hidden min-h-11 cursor-pointer border-none bg-transparent text-sm text-white/60 outline-none hover:text-white/80 focus-visible:ring-2 focus-visible:ring-[#ec4899] sm:block"
         data-testid="select-audio-rate"
@@ -467,51 +421,11 @@ export function BlogAudioPlayer({
           { label: "1.25×", value: "1.25" },
           { label: "1.5×", value: "1.5" },
         ].map((r) => (
-          <option
-            key={r.value}
-            value={r.value}
-            className="bg-[#1a1a2e] text-white"
-          >
+          <option key={r.value} value={r.value} className="bg-[#1a1a2e] text-white">
             {r.label}
           </option>
         ))}
       </select>
-
-      <select
-        value={voice}
-        onChange={(e) => {
-          const v = e.target.value as OpenAIVoice;
-          setVoice(v);
-          if (isPlaying || isPaused || audioUrl || mode === "browser") {
-            stop();
-            cleanup();
-            setMode("openai");
-          }
-        }}
-        className="hidden min-h-11 max-w-[120px] cursor-pointer border-none bg-transparent text-sm text-white/60 outline-none hover:text-white/80 focus-visible:ring-2 focus-visible:ring-[#ec4899] md:block"
-        data-testid="select-audio-voice"
-        title={
-          mode === "browser"
-            ? "Voice selection applies to premium narration only"
-            : "Choose narration voice"
-        }
-      >
-        {VOICES.map((v) => (
-          <option
-            key={v.value}
-            value={v.value}
-            className="bg-[#1a1a2e] text-white"
-          >
-            {v.label}
-          </option>
-        ))}
-      </select>
-
-      {error && !isPlaying && !isPaused && (
-        <span className="text-xs text-amber-300/90 hidden sm:inline">
-          {error}
-        </span>
-      )}
     </div>
   );
 }
