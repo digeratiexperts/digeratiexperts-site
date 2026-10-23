@@ -58,3 +58,62 @@
 ## Status
 
 - 2026-10-22: claim opened (issue #696), Phase 0 report written, implementation in progress.
+
+## Delivered (2026-10-22)
+
+### Section map before → after (live `/`)
+
+| Before (16 blocks / 14 scroll sections) | After (16 blocks / 11 scroll sections) |
+|---|---|
+| 01-hero | **hero**: 01-hero (unchanged concept; type/card density trimmed for first-viewport fit) |
+| 02-why-we-exist · 03-threats-are-real | **stats** (credibility strip): 02 tight narrative + 03 sourced facts, both `--tight` |
+| 04-what-we-tackle | **challenges**: 04 (unchanged content) |
+| 05-services | **services**: 05 (canonical names, visitor copy) |
+| 06-eight-blocks | **protection**: 06 (eight blocks, Risk & Exposure #8; unchanged) |
+| 07-client-proof · 08-why-arizona · 09-team | **testimonials** (proof & trust): 07 + 08 (`#trust`) + 09 (`#team`) |
+| 10-industries | **industries**: 10 (moved after the blocks, per the spine) |
+| 11-pricing | **pricing**: 11 (moved before the blocks, per the spine) |
+| 12-threats-insights (feed + monitor) | **insights**: 12 Security Updates link band + monitor block |
+| 13-lead-form | **cta** (closing): 15 + 13 + 16 (`#contact`) |
+| 14-faq | **faq**: 14 (+ assessment-price TODO for Joe) |
+| 15-next-step · 16-contact-footer | **cta** (closing): see above |
+
+### Moved content (nothing deleted outright)
+
+| Piece | Was | Now |
+|---|---|---|
+| Threat feed cards, live caption, attribution, loading/empty shells | homepage 12 | `/resources/security-updates` (route + `SecurityUpdates.tsx` unchanged; `useThreatFeed("all")` keeps the full stream) |
+| "Checking CISA, FIRST, NVD, and Microsoft MSRC. Nothing is invented while this loads." (dev copy) | homepage feed loading shell | removed with the feed; the Security Updates page keeps its own visitor loading copy ("Loading the live threat stream…") |
+| 02's "Ready to Secure Your Business?" CTA band ("Schedule Consultation" + "Call …") | homepage 02 | the closing block's CTA pair (primary assessment + "Talk to an Expert" + phone) — same actions, one CTA system |
+| "Get Industry-Specific Protection", "Discuss Your Security Needs", "Schedule Consultation" labels | homepage CTAs | unified to the primary CTA label (context stays in each section's copy) |
+| Ids `#trust`, `#team`, `#contact`, `#why-we-exist`, `#insights`, `#stats`, `#challenges` | section wrappers | kept working (chapter ids + alias wrappers); the duplicate `stats`/`challenges` ids are gone |
+
+### CTA replacement list (homepage)
+
+| Surface | Before | After |
+|---|---|---|
+| hero primary (button-hero-schedule) | "Get My Cyber Risk Assessment" (violet `--hero` style) | **"Schedule Your Cyber Risk Assessment"** (magenta primary) |
+| 05 assessment path card | "Get My Cyber Risk Assessment" | "Schedule Your Cyber Risk Assessment" |
+| 04 challenge CTA (tackle-cta) | "Discuss Your Security Needs" | "Schedule Your Cyber Risk Assessment" |
+| 10 industries CTAs ×2 | "Get Industry-Specific Protection" | "Schedule Your Cyber Risk Assessment" |
+| 07 proof CTA | "Get My Cyber Risk Assessment" | "Schedule Your Cyber Risk Assessment" |
+| 08 trust CTA | "Get My Cyber Risk Assessment" | "Schedule Your Cyber Risk Assessment" |
+| 12 monitor CTA | "Get My Cyber Risk Assessment" | "Schedule Your Cyber Risk Assessment" |
+| 15 heading + button | "Start with a Cyber Risk Assessment" + "Get My Cyber Risk Assessment" | "Schedule Your Cyber Risk Assessment" (heading) + primary label (button) + new secondary **"Talk to an Expert"** |
+| 13 form | heading "Request a Cyber Risk Assessment", button "Get My Cyber Risk Assessment" | heading "Request your assessment here", button **"Request Assessment"** |
+| 09 team | "Talk to an Expert" in primary style | "Talk to an Expert" in secondary style + "or call 325-480-9870" |
+| 16 contact | text link "Get My Cyber Risk Assessment" + "Call 325-480-9870" | primary button "Schedule Your Cyber Risk Assessment" + secondary "Talk to an Expert · 325-480-9870" (tel) |
+| 02 band | "Schedule Consultation" + "Call …" | removed (moved to the closing pair) |
+| hero secondary (button-hero-pricing) | "See Plans & Pricing" | unchanged label (navigation CTA in the secondary style; test id is CI-gated) |
+| Contact form submit | "Send Message" in the third style (`--dark`) | unchanged label, now the one primary style |
+| Compact surfaces (nav, floating) | "Risk Assessment" / "Cyber Risk Assessment" (`ctaCopy.ts`) | **not changed here** — `.cursorrules` §7 still sets the site-wide labels; the plan's "Schedule Assessment" needs Joe's ratification site-wide (one line in `client/src/lib/ctaCopy.ts` + §7) |
+
+### Verification (2026-10-22)
+
+- `npm run check` (tsc) → clean. `npm run build` → clean.
+- `npm test` → homepage tests green (`01-hero.phone.test.ts`, `teamProfile.test.ts`, `footerContact.test.ts`, `useDockAutohide.test.ts`, `focusVisible.test.ts`, plus the v8 suites). The remaining suite failures are pre-existing on this Windows checkout and none read homepage files: CRLF-sensitive literal matches (`portalConsoleTheme.test.ts`, `de-marketing/render.test.ts`), Windows file-permission semantics (`publicSolutionSpool`, `deskTicketFallback`, `portalSessionRevocation`, `portalUserInvite`, `storeQuoteFallback`, `stagingReviewGuard`, `deployScripts`) and source-tree scans that time out under full-suite load but pass alone (`publicPhone`, `credentials`, `brandRuntime`, `adminCompanyMetrics`, `licenseBoardRoutes`, `portalDeskAgentRoutes`).
+- `npm run smoke:public` → OK (incl. the `/` h1 + test-id gate). `npm run smoke:a11y` → axe 0 violation groups, 31 routes × 2 viewports (only the known Zoho `/book` iframe, report-only).
+- Browser audit at 390 / 768 / 1024 / 1280 / 1440 (`scripts/qa/lane-h-homepage-audit.mjs`): **0px horizontal overflow at every width** (before and after); hero first-viewport fit achieved at 1280/1440 (assessment card bottom 884/860 in a 900px fold, was 962/939); every section id resolves (no duplicate ids left); spy row and dock show the new spine order and land on the right chapters.
+- Floating layers: the cookie banner and the Ask DE bar overlap hero content in the arrival state at 768+ — **identical measurements on production before this change** (fixed chrome stack, pre-existing). Not introduced here; not fixable from a homepage lane (chrome coordination lives in `SiteBottomBar` / cookie components).
+- Evidence: `artifacts/visual-qa/lane-h-homepage/{before,after}` (before = production baseline, same day), reports in each `report.json`.
+
