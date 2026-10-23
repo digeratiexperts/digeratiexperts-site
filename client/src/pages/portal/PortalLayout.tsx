@@ -68,6 +68,9 @@ function firstName(user: PortalUserSession | null): string {
   return user?.fullName?.split(" ")[0] || user?.email || "user";
 }
 
+/** One-shot carrier for the "not available for your account" note across the guard's redirect. */
+const NAV_NOTE_KEY = "portalNavNote";
+
 export function PortalLayout({
   children,
   title,
@@ -109,7 +112,17 @@ export function PortalLayout({
   const current = findNavItem(location, navView);
   // Lane A route guard: a hidden route visited directly redirects to Home with a
   // short note. No route is deleted; the guard reads the same rule as the menu.
-  const [navNote, setNavNote] = useState<string | null>(null);
+  // The note survives the redirect: it is parked in sessionStorage and consumed
+  // by the next PortalLayout mount (the redirect remounts this shell).
+  const [navNote, setNavNote] = useState<string | null>(() => {
+    try {
+      const parked = sessionStorage.getItem(NAV_NOTE_KEY);
+      if (parked) sessionStorage.removeItem(NAV_NOTE_KEY);
+      return parked;
+    } catch {
+      return null;
+    }
+  });
   const deniedLabel = useMemo(() => {
     if (!ready || !user || gateBlocks || !current) return null;
     const allowed = isNavAllowed(current.item, {
@@ -123,7 +136,11 @@ export function PortalLayout({
   }, [current?.item.href, ready, gateBlocks, user?.id, user?.role, user?.orgRole, user?.isCompanyItContact, user?.navContext?.data?.sharedFiles, integrations.vpn.mode, integrations.phone.mode, integrations.shipping.mode]);
   useEffect(() => {
     if (!deniedLabel) return;
-    setNavNote(`${deniedLabel} is not available for your account.`);
+    try {
+      sessionStorage.setItem(NAV_NOTE_KEY, `${deniedLabel} is not available for your account.`);
+    } catch {
+      /* storage unavailable: the redirect still happens */
+    }
     setLocation("/portal/dashboard", { replace: true });
   }, [deniedLabel, setLocation]);
   const sidebarNav = useRef<HTMLElement>(null);

@@ -102,6 +102,38 @@ of it and hold client-manager rights across all companies.
    the action proceeds. Whether break-glass actions should ever be blocked when their audit
    row cannot be written is Joe's decision.
 
+## Verification (2026-10-22)
+
+- **Tests:** `npx vitest run` — 2052 passed, 22 failed. The 22 failures are **identical to the
+  `origin/main` baseline** (run in a clean worktree at `398f4d6f`, 1999 passed / 22 failed):
+  `portalConsoleTheme` (4), `de-marketing/render` (1), `deployScripts` (1), `adminCompanyMetrics`
+  (1), `deskTicketFallback` (1), `portalSessionRevocation` (3), `portalUserInvite` (1),
+  `publicSolutionSpool` (6), `stagingReviewGuard` (1), `storeQuoteFallback` (1), `publicPhone` (2)
+  — all Windows-environment issues (CRLF regexes, `chmod` modes, slow-runner timeouts) and all
+  outside this lane's files. New tests added here: 53.
+- **Typecheck / build / smokes:** `npm run check` clean, `npm run build` clean,
+  `npm run smoke:public` OK, `npm run smoke:a11y` OK (gate critical/serious; the listed
+  `/book` items are the known third-party Zoho Bookings iframe, report-only),
+  `npm run check:route-meta` OK (118 routes), `npm run check:active-work` OK.
+- **Browser (real render, 390 / 768 / 1024 / 1440):** `node scripts/qa/lane-a-roles-nav.mjs`
+  renders the real `PortalLayout` with isolated EXAMPLE responses and asserts every account
+  type's menu plus the hidden-route redirect. Evidence:
+  `artifacts/visual-qa/lane-a-roles-nav/{before,after}/` (before = the same script run on
+  `origin/main`). The break-glass menu is byte-for-byte today's menu in both.
+  The browser pass found and fixed one real bug: the "not available for your account" note
+  was lost when the guard's redirect remounted the shell; it is now parked in
+  `sessionStorage` for the next mount.
+- **Guardrail:** `npm run check:sample-data` — 41 findings, report-only, exit 0 (as designed).
+
+## Notes added during verification
+
+- The dashboard's "Do something" quick actions still link to routes that are now DE-only
+  (e.g. Report an outage → Infrastructure Issues). Clients who click one get the guard's
+  redirect + note; the dashboard's own action list is content for whoever owns it next
+  (logged here rather than changed in this lane).
+- `navContext.data.sharedFiles` counts live `portal_tenant_files` rows for the acting company.
+  When Lane B adds per-user sharing, narrow it to the signed-in user.
+
 ## Notes for other lanes
 
 - **Lane B (file delivery):** `files.share` (de_staff + super_admin) and `files.read` exist in
