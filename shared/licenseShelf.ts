@@ -1,4 +1,5 @@
 import type { PoolItemKind } from "./licenseBoard";
+import { VENDOR_SKU_DEFAULTS } from "./vendorPush";
 import { LICENSE_CATALOG } from "./licensing";
 
 /**
@@ -79,6 +80,7 @@ export function catalogShelf(): ShelfEntry[] {
     product: c.name,
     category: "Productivity" as const,
     catalogKey: c.key,
+    sku: VENDOR_SKU_DEFAULTS[`catalog:${c.key}`],
     source: "catalog" as const,
   }));
 }
@@ -106,6 +108,6 @@ export function hubShelf(skus: unknown): ShelfEntry[] {
 }
 
 export function starterShelf(): ShelfEntry[] {
-  return STARTER;
+  return STARTER.map((e) => (VENDOR_SKU_DEFAULTS[e.key] && !e.sku ? { ...e, sku: VENDOR_SKU_DEFAULTS[e.key] } : e));
 }
 

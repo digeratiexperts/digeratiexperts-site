@@ -30,6 +30,34 @@
 
 version: 2
 claims:
+  - id: license-kit-vault-docs
+    owner: claude
+    subsystem: licensing
+    branch: claude/exciting-cannon-ttx8m8
+    base_sha: 398f4d6f
+    files:
+      - migrations/0021_company_kits_and_vault_requirements.sql (new)
+      - shared/starterKits.ts, shared/clientVault.ts, shared/jumpcloudPlan.test.ts
+      - server/licenseBoardStore.ts, server/licenseBoardRoutes.ts, server/licenseBoardRoutes.test.ts
+      - server/portalClientVault.ts, server/portalClientVault.test.ts (list response gains requirements)
+      - server/routes.ts (licence board vaultTitles dep, vault requirements dep)
+      - client/src/pages/portal/AdminLicenseBoard.tsx, client/src/components/portal/licensing/CompanyTools.tsx, client/src/lib/licenseBoardApi.ts
+      - client/src/pages/portal/AdminClientWorkspace.tsx (needed-documents checklist)
+      - migrations/0022_license_vendor_push.sql (new), shared/vendorPush.ts (+ test), shared/licenseShelf.ts (default SKUs)
+      - server/integrations/msGraph.ts, server/integrations/googleLicensing.ts (new, + vendorLicensing.test.ts)
+      - client/src/components/portal/licensing/VendorTools.tsx (new), .env.example, docs/SECRETS-REQUIRED.md
+    status: active
+    started: 2026-10-23
+    note: >-
+      Joe, 2026-10-23 ("I want all these"): slice A of four. The License
+      Patch Bay records which starter kit each company has (header chip,
+      company list) and applying a kit adds its document checklist to the
+      client vault (Regulated: BAA or engagement terms, WISP, incident
+      response plan; GCC High: CUI handling agreement, SSP reference, tool
+      review record). Slice B in the same PR: a Microsoft & Google tab that
+      assigns person-held licences in the client's Microsoft 365 tenant
+      (Graph) or Google Workspace (Licensing API) on Send, with per-client
+      links, default SKU codes and a send log. Next: Hub Pax8 vendor SKUs.
   - id: lane-a-roles-nav
     issue: 697
     pr: 700

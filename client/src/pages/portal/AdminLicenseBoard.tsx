@@ -19,6 +19,7 @@ import { PartsBin } from "@/components/portal/licensing/PartsBin";
 import { JumpCloudTab, StarterKitTab, jumpcloudKey, jumpcloudState, useJumpCloud } from "@/components/portal/licensing/CompanyTools";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { VendorPushTab, vendorsKey } from "@/components/portal/licensing/VendorTools";
 import { EVERY_MACHINE_ID, deviceTargetId } from "@shared/licenseBoard";
 
 /**
@@ -173,6 +174,7 @@ function CompanyCard({
         <span className="line-clamp-2 min-w-0 flex-1 break-words text-sm font-semibold leading-snug text-white group-hover:text-[#F04C97]">{company.name}</span>
         <ChevronRight className="h-4 w-4 shrink-0 text-white/40 group-hover:text-white" aria-hidden />
       </button>
+      {company.kit ? <p className="text-xs text-white/50">Kit: {company.kit}</p> : null}
       {company.seats.length ? (
         <ul className="mt-2 flex flex-wrap gap-1.5">
           {company.seats.map((s) => {
@@ -418,6 +420,7 @@ function CompanyLevel({ clientId, onBack }: { clientId: string; onBack: () => vo
     void qc.invalidateQueries({ queryKey: companyKey(clientId) });
     void qc.invalidateQueries({ queryKey: BOARD_KEY });
     void qc.invalidateQueries({ queryKey: jumpcloudKey(clientId) });
+    void qc.invalidateQueries({ queryKey: vendorsKey(clientId) });
   };
   const data = q.data;
 
@@ -713,6 +716,19 @@ function CompanyLevel({ clientId, onBack }: { clientId: string; onBack: () => vo
         <button type="button" onClick={() => setTab("jumpcloud")} className={`${chip} ${chipTone[jcState.tone]} hover:bg-white/10`}>
           {jcState.label}
         </button>
+        <button type="button" onClick={() => setTab("kit")} className={`${chip} ${data.kit ? chipTone.muted : chipTone.warn} hover:bg-white/10`}>
+          {data.kit ? `Kit: ${data.kit.name}` : "No starter kit yet"}
+        </button>
+        {data.vaultDocs?.needed ? (
+          <a
+            href={`/portal/admin/clients/${encodeURIComponent(clientId)}`}
+            className={`${chip} ${data.vaultDocs.onFile === data.vaultDocs.needed ? chipTone.good : chipTone.warn} hover:bg-white/10`}
+          >
+            {data.vaultDocs.onFile === null
+              ? `${data.vaultDocs.needed} vault documents needed`
+              : `${data.vaultDocs.onFile} of ${data.vaultDocs.needed} vault documents on file`}
+          </a>
+        ) : null}
       </div>
 
       <Tabs value={tab} onValueChange={setTab} className="mt-5">
@@ -725,6 +741,9 @@ function CompanyLevel({ clientId, onBack }: { clientId: string; onBack: () => vo
           </TabsTrigger>
           <TabsTrigger value="jumpcloud" className={tabTrigger}>
             JumpCloud installs
+          </TabsTrigger>
+          <TabsTrigger value="vendors" className={tabTrigger}>
+            Microsoft &amp; Google
           </TabsTrigger>
         </TabsList>
         <TabsContent value="patch" className="mt-5">
@@ -748,10 +767,13 @@ function CompanyLevel({ clientId, onBack }: { clientId: string; onBack: () => vo
           </PatchBay>
         </TabsContent>
         <TabsContent value="kit" className="mt-5">
-          <StarterKitTab clientId={clientId} companyName={data.company.name} onApplied={refresh} />
+          <StarterKitTab clientId={clientId} companyName={data.company.name} currentKit={data.kit?.key ?? null} onApplied={refresh} />
         </TabsContent>
         <TabsContent value="jumpcloud" className="mt-5">
           <JumpCloudTab clientId={clientId} />
+        </TabsContent>
+        <TabsContent value="vendors" className="mt-5">
+          <VendorPushTab clientId={clientId} />
         </TabsContent>
       </Tabs>
     </div>

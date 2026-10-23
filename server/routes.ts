@@ -137,6 +137,8 @@ import { registerQuestionnaireRoutes } from "./questionnaireRoutes";
 import { registerLicensingRoutes } from "./licensingRoutes";
 import { registerPortalAgreementRoutes } from "./portalAgreementRoutes";
 import { registerLicenseBoardRoutes } from "./licenseBoardRoutes";
+import { msAssignLicense, msGraphConfigured, msSubscribedSkus } from "./integrations/msGraph";
+import { googleAssignLicense, googleLicensingConfigured } from "./integrations/googleLicensing";
 import {
   jumpcloudAssociateSoftware,
   jumpcloudConfigured,
@@ -1426,6 +1428,22 @@ export async function registerRoutes(app: Express) {
       ensureChocoApp: (name, pkg, orgId) => jumpcloudEnsureChocoApp(name, pkg, orgId),
       associate: (appId, target, orgId) => jumpcloudAssociateSoftware(appId, target, orgId),
       findSystem: (name, orgId) => jumpcloudFindSystem(name, orgId),
+    },
+    vendors: {
+      microsoft: {
+        configured: (cloud) => msGraphConfigured(cloud),
+        subscribedSkus: (tenant, cloud) => msSubscribedSkus(tenant, cloud),
+        assign: (tenant, cloud, upn, skuId) => msAssignLicense(tenant, cloud, upn, skuId),
+      },
+      google: {
+        configured: () => googleLicensingConfigured(),
+        assign: (adminEmail, productId, skuId, userEmail) => googleAssignLicense(adminEmail, productId, skuId, userEmail),
+      },
+    },
+    vaultTitles: async (clientId) => {
+      const meta = await createDbVaultMetaStore();
+      if (!meta.ready()) return null;
+      return (await meta.list(clientId)).map((i) => ({ kind: i.kind, title: i.title }));
     },
   });
 
@@ -4893,6 +4911,7 @@ export async function registerRoutes(app: Express) {
     meta: createDbVaultMetaStore,
     blobs: createConfiguredVaultBlobStore,
     logSecurityEvent,
+    requirements: async (clientId) => (await import("./licenseBoardStore")).listVaultRequirements(clientId),
   });
 
   // Get company metrics/stats (admin only)
