@@ -1,4 +1,5 @@
 import { portalFetch } from "@/lib/portalApi";
+import type { MicrosoftCloud, PushStep, PushVendor, VendorLink } from "@shared/vendorPush";
 import type { CompanySeatSummary, PoolItemSummary } from "@shared/licenseBoard";
 import type { CatalogLicense } from "@shared/licensing";
 import type { SHELF_CATEGORIES, ShelfEntry } from "@shared/licenseShelf";
@@ -83,7 +84,32 @@ export type KitResult = {
   note: string | null;
 };
 
+export type VendorPushLog = {
+  id: string;
+  itemId: string;
+  product: string;
+  sku: string;
+  userEmail: string;
+  ok: boolean;
+  detail: string | null;
+  createdAt: string;
+};
+export type VendorPanel = {
+  configured: boolean;
+  link: VendorLink | null;
+  steps: PushStep[];
+  parkedInDepartments: number;
+  pushes: VendorPushLog[];
+};
+export type VendorsView = { microsoft: VendorPanel; google: VendorPanel };
+
 export const licenseBoardApi = {
+  vendors: (clientId: string) => request<VendorsView>(`${BASE}/clients/${encodeURIComponent(clientId)}/vendors`),
+  linkVendor: (clientId: string, vendor: PushVendor, body: { tenant?: string; cloud?: MicrosoftCloud; adminEmail?: string }) =>
+    send(`${BASE}/clients/${encodeURIComponent(clientId)}/vendors/${vendor}`, "PUT", body),
+  pushVendor: (clientId: string, vendor: PushVendor) =>
+    send<{ sent: number; failed: number }>(`${BASE}/clients/${encodeURIComponent(clientId)}/vendors/${vendor}/push`, "POST", {}),
+  setSku: (itemId: string, sku: string) => send(`${BASE}/items/${encodeURIComponent(itemId)}`, "PUT", { sku }),
   kits: () => request<{ kits: Kit[] }>(`${BASE}/kits`),
   applyKit: (clientId: string, kit: string) =>
     send<KitResult>(`${BASE}/clients/${encodeURIComponent(clientId)}/kit`, "POST", { kit }),

@@ -130,6 +130,8 @@ import { registerPortalAssistRoutes } from "./portalAssistRoutes";
 import { registerLicensingRoutes } from "./licensingRoutes";
 import { registerPortalAgreementRoutes } from "./portalAgreementRoutes";
 import { registerLicenseBoardRoutes } from "./licenseBoardRoutes";
+import { msAssignLicense, msGraphConfigured, msSubscribedSkus } from "./integrations/msGraph";
+import { googleAssignLicense, googleLicensingConfigured } from "./integrations/googleLicensing";
 import {
   jumpcloudAssociateSoftware,
   jumpcloudConfigured,
@@ -1329,6 +1331,17 @@ export async function registerRoutes(app: Express) {
       ensureChocoApp: (name, pkg, orgId) => jumpcloudEnsureChocoApp(name, pkg, orgId),
       associate: (appId, target, orgId) => jumpcloudAssociateSoftware(appId, target, orgId),
       findSystem: (name, orgId) => jumpcloudFindSystem(name, orgId),
+    },
+    vendors: {
+      microsoft: {
+        configured: (cloud) => msGraphConfigured(cloud),
+        subscribedSkus: (tenant, cloud) => msSubscribedSkus(tenant, cloud),
+        assign: (tenant, cloud, upn, skuId) => msAssignLicense(tenant, cloud, upn, skuId),
+      },
+      google: {
+        configured: () => googleLicensingConfigured(),
+        assign: (adminEmail, productId, skuId, userEmail) => googleAssignLicense(adminEmail, productId, skuId, userEmail),
+      },
     },
     vaultTitles: async (clientId) => {
       const meta = await createDbVaultMetaStore();

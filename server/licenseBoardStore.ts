@@ -10,6 +10,7 @@ import type {
 } from "@shared/licenseBoard";
 import type { JumpCloudLink } from "@shared/jumpcloudPlan";
 import type { ClientVaultKind, ClientVaultRequirement } from "@shared/clientVault";
+import type { PushVendor, VendorLink } from "@shared/vendorPush";
 
 export type JumpCloudPush = {
   id: string;
@@ -39,6 +40,21 @@ const mem = {
   pushes: [] as JumpCloudPush[],
   kits: new Map<string, CompanyKit>(),
   vaultReqs: [] as ClientVaultRequirement[],
+  vendorLinks: new Map<string, VendorLink>(),
+  vendorPushes: [] as VendorPush[],
+};
+
+export type VendorPush = {
+  id: string;
+  clientId: string;
+  vendor: PushVendor;
+  itemId: string;
+  product: string;
+  sku: string;
+  userEmail: string;
+  ok: boolean;
+  detail: string | null;
+  createdAt: string;
 };
 
 export type CompanyKit = { clientId: string; kitKey: string; appliedAt: string };
@@ -51,6 +67,8 @@ export function _resetLicenseBoardMemory() {
   mem.pushes.length = 0;
   mem.kits.clear();
   mem.vaultReqs.length = 0;
+  mem.vendorLinks.clear();
+  mem.vendorPushes.length = 0;
 }
 
 let verified = false;
@@ -134,14 +152,17 @@ export async function createPoolItem(input: Omit<LicensePoolItem, "id" | "create
   return item;
 }
 
-export async function updatePoolItem(id: string, patch: Partial<Pick<LicensePoolItem, "vendor" | "product" | "quantity" | "chocoPackage">>): Promise<LicensePoolItem | null> {
+export async function updatePoolItem(
+  id: string,
+  patch: Partial<Pick<LicensePoolItem, "vendor" | "product" | "quantity" | "chocoPackage" | "sku">>,
+): Promise<LicensePoolItem | null> {
   const current = await getPoolItem(id);
   if (!current) return null;
   const next = { ...current, ...patch };
   if (await ensureSchema()) {
     await db.execute(sql`
       UPDATE license_pool_items SET vendor = ${next.vendor}, product = ${next.product}, quantity = ${next.quantity},
-        choco_package = ${next.chocoPackage}
+        choco_package = ${next.chocoPackage}, sku = ${next.sku}
       WHERE id = ${id}
     `);
   } else {
@@ -422,4 +443,96 @@ export async function addVaultRequirements(
     added++;
   }
   return added;
+}
+
+/* Microsoft 365 / Google Workspace links and the push log (migrations/0021_license_vendor_push.sql). */
+
+let vendorVerified = false;
+async function vendorTablesReady(): Promise<boolean> {
+  if (!(await ensureSchema())) return false;
+  if (vendorVerified) return true;
+  try {
+    const [row] = rows(await db.execute(sql`SELECT to_regclass('public.license_vendor_links') AS present`));
+    if (row && !row.present) {
+      console.error("[license-board] table license_vendor_links is missing; run `npm run db:migrate` (migrations/0021).");
+      return false;
+    }
+    vendorVerified = true;
+    return true;
+  } catch (error: any) {
+    console.warn("[license-board] could not verify vendor tables:", error?.message || error);
+    return false;
+  }
+}
+
+const linkKey = (clientId: string, vendor: PushVendor) => `${clientId}|${vendor}`;
+
+export async function getVendorLink(clientId: string, vendor: PushVendor): Promise<VendorLink | null> {
+  if (await vendorTablesReady()) {
+    const [r] = rows(
+      await db.execute(sql`SELECT * FROM license_vendor_links WHERE client_id = ${clientId} AND vendor = ${vendor} LIMIT 1`),
+    );
+    if (!r) return null;
+    return vendor === "microsoft"
+      ? r.tenant
+        ? { vendor, tenant: String(r.tenant), cloud: (r.cloud || "commercial") as any }
+        : null
+      : r.admin_email
+        ? { vendor, adminEmail: String(r.admin_email) }
+        : null;
+  }
+  return mem.vendorLinks.get(linkKey(clientId, vendor)) ?? null;
+}
+
+export async function setVendorLink(clientId: string, link: VendorLink, updatedBy: string | null): Promise<void> {
+  if (await vendorTablesReady()) {
+    const tenant = link.vendor === "microsoft" ? link.tenant : null;
+    const cloud = link.vendor === "microsoft" ? link.cloud : null;
+    const adminEmail = link.vendor === "google" ? link.adminEmail : null;
+    await db.execute(sql`
+      INSERT INTO license_vendor_links (client_id, vendor, tenant, cloud, admin_email, updated_by, updated_at)
+      VALUES (${clientId}, ${link.vendor}, ${tenant}, ${cloud}, ${adminEmail}, ${updatedBy}, now())
+      ON CONFLICT (client_id, vendor) DO UPDATE SET tenant = EXCLUDED.tenant, cloud = EXCLUDED.cloud,
+        admin_email = EXCLUDED.admin_email, updated_by = EXCLUDED.updated_by, updated_at = now()
+    `);
+    return;
+  }
+  mem.vendorLinks.set(linkKey(clientId, link.vendor), link);
+}
+
+export async function recordVendorPush(p: Omit<VendorPush, "id" | "createdAt">, createdBy: string | null): Promise<VendorPush> {
+  const push: VendorPush = { ...p, id: randomUUID(), createdAt: new Date().toISOString() };
+  if (await vendorTablesReady()) {
+    await db.execute(sql`
+      INSERT INTO license_vendor_pushes (id, client_id, vendor, item_id, product, sku, user_email, ok, detail, created_by, created_at)
+      VALUES (${push.id}, ${push.clientId}, ${push.vendor}, ${push.itemId}, ${push.product}, ${push.sku}, ${push.userEmail},
+              ${push.ok}, ${push.detail}, ${createdBy}, ${new Date(push.createdAt)})
+    `);
+  } else {
+    mem.vendorPushes.unshift(push);
+  }
+  return push;
+}
+
+export async function listVendorPushes(clientId: string, vendor: PushVendor, limit = 30): Promise<VendorPush[]> {
+  if (await vendorTablesReady()) {
+    return rows(
+      await db.execute(sql`
+        SELECT * FROM license_vendor_pushes WHERE client_id = ${clientId} AND vendor = ${vendor}
+        ORDER BY created_at DESC LIMIT ${limit}
+      `),
+    ).map((r: any) => ({
+      id: String(r.id),
+      clientId: String(r.client_id),
+      vendor: String(r.vendor) as PushVendor,
+      itemId: String(r.item_id),
+      product: String(r.product),
+      sku: String(r.sku),
+      userEmail: String(r.user_email),
+      ok: Boolean(r.ok),
+      detail: r.detail ? String(r.detail) : null,
+      createdAt: new Date(r.created_at).toISOString(),
+    }));
+  }
+  return mem.vendorPushes.filter((p) => p.clientId === clientId && p.vendor === vendor).slice(0, limit);
 }

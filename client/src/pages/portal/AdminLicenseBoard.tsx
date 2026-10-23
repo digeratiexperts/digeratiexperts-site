@@ -19,6 +19,7 @@ import { PartsBin } from "@/components/portal/licensing/PartsBin";
 import { JumpCloudTab, StarterKitTab, jumpcloudKey, jumpcloudState, useJumpCloud } from "@/components/portal/licensing/CompanyTools";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { VendorPushTab, vendorsKey } from "@/components/portal/licensing/VendorTools";
 import { EVERY_MACHINE_ID, deviceTargetId } from "@shared/licenseBoard";
 
 /**
@@ -419,6 +420,7 @@ function CompanyLevel({ clientId, onBack }: { clientId: string; onBack: () => vo
     void qc.invalidateQueries({ queryKey: companyKey(clientId) });
     void qc.invalidateQueries({ queryKey: BOARD_KEY });
     void qc.invalidateQueries({ queryKey: jumpcloudKey(clientId) });
+    void qc.invalidateQueries({ queryKey: vendorsKey(clientId) });
   };
   const data = q.data;
 
@@ -740,6 +742,9 @@ function CompanyLevel({ clientId, onBack }: { clientId: string; onBack: () => vo
           <TabsTrigger value="jumpcloud" className={tabTrigger}>
             JumpCloud installs
           </TabsTrigger>
+          <TabsTrigger value="vendors" className={tabTrigger}>
+            Microsoft &amp; Google
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="patch" className="mt-5">
           <PatchBay
@@ -766,6 +771,9 @@ function CompanyLevel({ clientId, onBack }: { clientId: string; onBack: () => vo
         </TabsContent>
         <TabsContent value="jumpcloud" className="mt-5">
           <JumpCloudTab clientId={clientId} />
+        </TabsContent>
+        <TabsContent value="vendors" className="mt-5">
+          <VendorPushTab clientId={clientId} />
         </TabsContent>
       </Tabs>
     </div>
