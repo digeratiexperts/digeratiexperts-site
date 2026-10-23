@@ -1,3 +1,4 @@
+import { GOOGLE_MAPS_CID_URL, GOOGLE_REVIEW_QR_SRC, GOOGLE_REVIEW_URL } from "@/data/reviewsCatalog";
 import { objectIcon } from "../content";
 
 const OUTCOMES = [
@@ -48,10 +49,14 @@ export function ProofSection(): JSX.Element {
           </a>
         </div>
         <div className="card qr" style={{ marginTop: 20 }}>
-          <img src="/images/reviews/google-review-qr.svg" alt="QR code to leave Digerati Experts a Google review" />
+          <img src={GOOGLE_REVIEW_QR_SRC} alt="QR code to leave Digerati Experts a Google review" />
           <div>
             <h3>Worked with us?</h3>
             <p className="muted" style={{ marginBottom: 10 }}>Scan with your phone, or use the link, to leave a Google review.</p>
+            <div className="row" style={{ gap: 24 }}>
+              <a className="link" href={GOOGLE_REVIEW_URL} target="_blank" rel="noopener noreferrer">Leave a Google review</a>
+              <a className="link" href={GOOGLE_MAPS_CID_URL} target="_blank" rel="noopener noreferrer">Read us on Google</a>
+            </div>
           </div>
         </div>
       </div>

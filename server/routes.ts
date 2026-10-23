@@ -5273,12 +5273,21 @@ export async function registerRoutes(app: Express) {
         return res.status(400).json({ error: "Invalid request" });
       }
 
+      // Optional homepage v2 fields; capped so a long paste can't bloat the lead record.
+      const interest = typeof req.body?.interest === "string" ? req.body.interest.trim().slice(0, 120) : "";
+      const visitorMessage = typeof req.body?.message === "string" ? req.body.message.trim().slice(0, 2000) : "";
+      const visitorDetails = [
+        interest ? `Interested in: ${interest}` : "",
+        visitorMessage ? `Message: ${visitorMessage}` : "",
+      ].filter(Boolean).join("\n");
+      const withVisitorDetails = (base: string) => (visitorDetails ? `${base}\n${visitorDetails}` : base);
+
       const leadId = randomId();
       logger.info("[ASSESSMENT] Form submitted", { fullName, email, company, source, timestamp: new Date().toISOString() });
       logSecurityEvent("ASSESSMENT_SUBMITTED", req, { email, source: source || "hero_form" });
 
       const assessmentNote = appendSituationToDescription(
-        `Assessment request from ${source || "hero_form"}`,
+        withVisitorDetails(`Assessment request from ${source || "hero_form"}`),
         situation,
       );
 
@@ -5307,7 +5316,7 @@ export async function registerRoutes(app: Express) {
           Lead_Source: taxonomy.leadSource,
           Lead_Status: taxonomy.leadStatus,
           Description: appendSituationToDescription(
-            `Free assessment request submitted from ${source || "homepage hero"}`,
+            withVisitorDetails(`Free assessment request submitted from ${source || "homepage hero"}`),
             situation,
           ),
         });

@@ -1761,3 +1761,8 @@
 /* Selected protection tab: solid white caption on the pink tab. */
 .hv2 .tab[aria-selected="true"] small{color:#fff}
 @media (max-width:680px){.hv2 .hero{padding-top:88px}}
+
+/* Hand-maintained override (the generator script is not committed). Insights is a slim
+   link strip with no feed on the homepage. Carry this into the generator if it is added. */
+.hv2 #insights.sec{padding:64px 0}
+.hv2 #insights .head{margin-bottom:0}

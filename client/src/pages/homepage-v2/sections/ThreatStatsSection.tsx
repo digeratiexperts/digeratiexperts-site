@@ -1,7 +1,12 @@
+import { cyberAwarenessFacts } from "@/data/cyberAwarenessFacts";
+
+const MFA_SOURCE_URL =
+  cyberAwarenessFacts.find((fact) => fact.id === "microsoft-mfa-blocks-2025")?.sourceUrl ?? null;
+
 const STATS = [
   { figure: "48%", text: "of breaches involve ransomware", source: "Verizon DBIR 2026", href: "https://www.verizon.com/business/resources/reports/dbir/" },
   { figure: "$11.5M", text: "average cost of a data breach in the United States", source: "IBM Cost of a Data Breach 2026", href: "https://www.ibm.com/reports/data-breach" },
-  { figure: "99%+", text: "of unauthorized access attempts are blocked by MFA", source: "Microsoft Digital Defense Report 2025", href: null },
+  { figure: "99%+", text: "of unauthorized access attempts are blocked by MFA", source: "Microsoft Digital Defense Report 2025", href: MFA_SOURCE_URL },
   { figure: "$392M", text: "in internet crime losses reported from Arizona in 2024", source: "FBI IC3 Annual Report 2024 (PDF)", href: "https://www.ic3.gov/AnnualReport/Reports/2024_IC3Report.pdf" },
 ];
 

@@ -1,6 +1,7 @@
 /**
  * The live threat feed no longer sits on the homepage (Lane H, 2026-10-22): it was often empty
- * at the homepage threshold and repeated threat messaging. The full stream lives at Security Updates.
+ * at the homepage threshold and repeated threat messaging. The full stream, with its sources note,
+ * lives at Security Updates; this section is a slim link strip (Joe review, 2026-10-23).
  */
 export function InsightsSection(): JSX.Element {
   return (
@@ -16,7 +17,6 @@ export function InsightsSection(): JSX.Element {
             <a className="link" href="/resources/blog">Read the Digerati Journal</a>
           </div>
         </div>
-        <p className="note">Sources: CISA, NIST NVD, FIRST, Microsoft MSRC. Prioritized by active exploitation, exploit probability, and SMB relevance.</p>
       </div>
     </section>
   );

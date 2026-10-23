@@ -6,9 +6,8 @@ import { EMAIL_ADDRESS, INTEREST_OPTIONS, PHONE_DISPLAY, PHONE_HREF, THIRD_LANE_
 type SubmitState = "idle" | "sending" | "sent";
 
 /**
- * Posts the same payload the current homepage form posts to /api/assessment. The "Interested in"
- * and "Message" fields are shown per the approved layout, but the handler only reads
- * fullName, email, phone, company and source, so those two are not sent yet.
+ * Posts to /api/assessment. "Interested in" and "Message" are sent as optional `interest` and
+ * `message`; the handler adds them to the lead note and the Zoho lead description.
  */
 function AssessmentForm(): JSX.Element {
   const { toast } = useToast();
@@ -28,6 +27,8 @@ function AssessmentForm(): JSX.Element {
           email: String(data.get("email") ?? "").trim(),
           phone: String(data.get("phone") ?? "").trim(),
           company: String(data.get("company") ?? "").trim(),
+          interest: String(data.get("interest") ?? "").trim(),
+          message: String(data.get("message") ?? "").trim(),
           source: "lead_form",
         }),
       });
