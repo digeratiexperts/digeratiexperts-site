@@ -4545,3 +4545,18 @@ claims:
       continue your work and jump in." Plan only, no feature code: inventory
       of the 10 SAMPLE nav items, the build pattern, per-feature slices,
       order of work and the decisions Joe needs to make.
+  - id: zod4-security-upgrade
+    owner: claude
+    subsystem: dependencies
+    branch: claude/zod4-security-upgrade
+    base_sha: 8cdb120
+    started: 2026-10-23
+    files:
+      - package.json, package-lock.json (zod ^4.6.7, drizzle-zod ^0.8.3, zod-validation-error ^5.0.0)
+      - shared/serviceRequests.ts (z.enum errorMap -> message)
+      - server/integrations/deSyncContract.ts (z.record key schema; z.guid for DE-Sync ids)
+    status: in-review
+    note: >-
+      GHSA-mrhx-c7xc-m3w5 (zod < 4.6.6, high) turned the CI audit step red on
+      every branch on 2026-10-23. Joe: "own PR for zod, go ahead do the
+      upgrade". No 3.x fix exists; this is the major upgrade.
