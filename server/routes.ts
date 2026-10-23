@@ -1361,7 +1361,8 @@ export async function registerRoutes(app: Express) {
   // System Status notices (server/statusNoticeRoutes.ts).
   registerStatusNoticeRoutes(app, {
     guards: [authMiddleware, validateInput],
-    adminGuards: [authMiddleware, requireAdmin, validateInput],
+    // DE staff manage notices too, matching the Status notices menu item (deOnly).
+    adminGuards: [authMiddleware, requirePermission("status.manage"), validateInput],
     getClient: serviceRequestDeps.getClient,
     findUser: serviceRequestDeps.findUser,
   });
