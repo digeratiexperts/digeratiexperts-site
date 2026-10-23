@@ -184,3 +184,14 @@ describe("nav data gates", () => {
     expect(ruleAllows(rule, { principal: plainUser, data: null })).toBe(false);
   });
 });
+
+describe("lane D: status.manage", () => {
+  it("lets DE staff and the break-glass account manage System Status notices, never a client", () => {
+    expect(can(superAdmin, "status.manage")).toBe(true);
+    expect(can(deStaff, "status.manage")).toBe(true);
+    for (const client of [plainUser, manager, itContact]) {
+      expect(can(client, "status.manage"), client.orgRole ?? "").toBe(false);
+      expect(can(client, "status.manage", client.clientId)).toBe(false);
+    }
+  });
+});
