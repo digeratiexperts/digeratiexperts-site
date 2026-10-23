@@ -389,7 +389,9 @@
 /* Trust strip: the live homepage's layout, on the white band. */
 .v8 .v8s-01 .tstrip { padding: 26px 0; border-bottom: 1px solid #e4e4e7; }
 .v8 .v8s-01 .tstrip__row { display: flex; align-items: center; gap: 32px; }
-.v8 .v8s-01 .tstrip__label { flex: none; width: 184px; margin: 0; padding-left: 16px; border-left: 2px solid var(--v8-magenta);
+/* Lane H: the label keeps "for Arizona businesses" on one line (Joe's one-line rule), so the
+   box grows to the longest line instead of wrapping to four. */
+.v8 .v8s-01 .tstrip__label { flex: none; min-width: 184px; margin: 0; padding-left: 16px; border-left: 2px solid var(--v8-magenta); white-space: nowrap;
   font: 600 12px/20px var(--v8-font-body); letter-spacing: 0.18em; text-transform: uppercase; color: #5c5c66; }
 .v8 .v8s-01 .tstrip__label span { display: block; color: var(--v8-ink); }
 .v8 .v8s-01 .tstrip__items { flex: 1; min-width: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 0; padding: 0; list-style: none; }
