@@ -120,7 +120,7 @@ export const PORTAL_NAV_ITEMS: PortalNavItem[] = [
     section: "support",
     rule: { featureReady: true },
     target: { group: "portal", label: "Home", order: 1 },
-    children: ["/portal/self-service", "/portal/surveys"],
+    children: ["/portal/self-service", "/portal/surveys", "/portal/my-questionnaires"],
   },
   {
     href: "/portal/self-service",
@@ -318,11 +318,21 @@ export const PORTAL_NAV_ITEMS: PortalNavItem[] = [
     label: "DE Questionnaires",
     icon: Calendar,
     key: "other",
-    hint: "Scheduled reviews",
-    sample: true,
+    hint: "Assign and review client questionnaires",
     section: "programs",
-    rule: { deOnly: true, sample: true, featureReady: false },
+    rule: { deOnly: true, featureReady: true },
     target: { group: "de", label: "DE Questionnaires", order: 5 },
+  },
+  {
+    href: "/portal/my-questionnaires",
+    label: "My questionnaires",
+    icon: ClipboardList,
+    key: "surveys",
+    hint: "Questions DE asked you to answer",
+    section: "programs",
+    // Everyone signed in; the server shows each person only their own (lane C).
+    rule: { featureReady: true },
+    target: { group: "portal", label: "My questionnaires", order: 1, hub: "/portal/dashboard" },
   },
   {
     href: "/portal/surveys",

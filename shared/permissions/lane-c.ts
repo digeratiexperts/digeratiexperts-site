@@ -15,4 +15,6 @@ export const laneCPermissions: Record<string, AccessRule> = {
   "reviews.manage": { deOnly: true },
   /** Read published business reviews: the company's owners. */
   "reviews.read": { roles: ["owner"] },
+  /** Assign questionnaires, see every assignment and its answers, mark reviewed: DE staff + break-glass. */
+  "questionnaires.manage": { deOnly: true },
 };

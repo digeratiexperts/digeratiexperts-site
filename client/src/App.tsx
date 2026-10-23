@@ -129,6 +129,7 @@ const PortalSatisfactionSurvey = lazy(() => import("@/pages/portal/PortalSatisfa
 const PortalApprovals = lazy(() => import("@/pages/portal/PortalApprovals").then(m => ({ default: m.PortalApprovals })));
 const PortalPeople = lazy(() => import("@/pages/portal/PortalPeople").then(m => ({ default: m.PortalPeople })));
 const PortalInfrastructure = lazy(() => import("@/pages/portal/PortalInfrastructure").then(m => ({ default: m.PortalInfrastructure })));
+const PortalMyQuestionnaires = lazy(() => import("@/pages/portal/PortalMyQuestionnaires"));
 const PortalQuestionnaireCalendar = lazy(() => import("@/pages/portal/PortalQuestionnaireCalendar").then(m => ({ default: m.PortalQuestionnaireCalendar })));
 const PortalVPN = lazy(() => import("@/pages/portal/PortalVPN"));
 const PortalCytracom = lazy(() => import("@/pages/portal/PortalCytracom"));
@@ -997,6 +998,11 @@ function Router() {
       <Route path="/portal/admin/roadmap" component={() => (
         <Suspense fallback={<PageLoadingSkeleton />}>
           <AdminRoadmap />
+        </Suspense>
+      )} />
+      <Route path="/portal/my-questionnaires" component={() => (
+        <Suspense fallback={<PageLoadingSkeleton />}>
+          <PortalMyQuestionnaires />
         </Suspense>
       )} />
       <Route path="/portal/admin/import" component={() => (
