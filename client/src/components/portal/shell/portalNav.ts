@@ -725,9 +725,9 @@ function targetItemsIn(group: PortalTargetGroupId): PortalNavItem[] {
 }
 
 /**
- * Groups visible to this user, empty groups dropped. `sample` items reach DE
- * staff and the break-glass account with their badge; a client role never sees
- * one (lane-a-update-1.md §2).
+ * Groups visible to this user, empty groups dropped. `sample` items reach only
+ * the break-glass account, with their badge. DE staff and client roles never see
+ * one (lane-a-update-3.md §3).
  */
 export function navGroupsFor(
   user: PortalUserSession | null,

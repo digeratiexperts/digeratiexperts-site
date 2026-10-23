@@ -9,8 +9,10 @@
  * Rule semantics (AccessRule):
  *   superAdminOnly  — break-glass (`role === "admin"`) only. Never widened.
  *   deOnly          — DE staff + break-glass only (hidden from client roles).
- *   sample          — page shows sample content; client roles never see it (update 1 §2).
- *   featureReady    — false while the feature behind the item is unfinished (clients hidden).
+ *   sample          — page shows sample content; only the break-glass account sees it
+ *                     (lane-a-update-3.md §3).
+ *   featureReady    — false while the feature behind the item is unfinished; hidden from
+ *                     DE staff and client roles, visible to break-glass (lane-a-update-3.md §3).
  *   roles           — which client hats hold it. `[]` = no client hat. Undefined = every hat.
  *   entitlement     — the company must hold this entitlement (clients only; DE classes bypass).
  *   requiresData    — nav only: hide until the named datum exists (honest empty menu).
