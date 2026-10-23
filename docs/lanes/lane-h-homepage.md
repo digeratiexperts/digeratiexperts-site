@@ -117,3 +117,8 @@
 - Floating layers: the cookie banner and the Ask DE bar overlap hero content in the arrival state at 768+ — **identical measurements on production before this change** (fixed chrome stack, pre-existing). Not introduced here; not fixable from a homepage lane (chrome coordination lives in `SiteBottomBar` / cookie components).
 - Evidence: `artifacts/visual-qa/lane-h-homepage/{before,after}` (before = production baseline, same day), reports in each `report.json`.
 
+## Handover
+
+- 2026-10-22: PR [#698](https://github.com/digeratiexperts/digeratiexperts-site/pull/698) opened with the section map, moved-content list, CTA replacement list, before/after evidence and the concurrency report; issue [#696](https://github.com/digeratiexperts/digeratiexperts-site/issues/696) updated to match. Lane H is complete on the opencode side.
+- 2026-10-22: **Joe told Claude (Code, lead integrator) about this lane / PR #698**, so the review-and-merge step is Claude's to take under `docs/AI-ENGINEERING-GOVERNANCE.md` (exact wording not captured here). Merge and deploy remain separate states: Joe deploys, then this lane's claim flips to `verified-live` in `.ai/ACTIVE_WORK.yaml` and issue #696 closes.
+
