@@ -101,6 +101,7 @@ import {
   initPortalSurveyStore,
   listSurveysForUser,
   getSurveyById,
+  validateAnswers,
   getUserResponseForSurvey,
   submitSurveyResponse,
   getSurveyStoreStatus,
@@ -132,6 +133,7 @@ import { envReleaseSource } from "./agentRelease";
 import { registerStatusNoticeRoutes } from "./statusNoticeRoutes";
 import { companyHasRoadmap, registerRoadmapRoutes } from "./roadmapRoutes";
 import { companyHasPublishedReview, registerBusinessReviewRoutes } from "./businessReviewRoutes";
+import { registerQuestionnaireRoutes } from "./questionnaireRoutes";
 import { registerLicensingRoutes } from "./licensingRoutes";
 import { registerPortalAgreementRoutes } from "./portalAgreementRoutes";
 import { registerLicenseBoardRoutes } from "./licenseBoardRoutes";
@@ -1379,6 +1381,20 @@ export async function registerRoutes(app: Express) {
     findUser: serviceRequestDeps.findUser,
     listCompanyFiles: (clientId) => storage.getTenantFilesByClientId(clientId),
   });
+  // DE Questionnaires on the Surveys engine (server/questionnaireRoutes.ts).
+  registerQuestionnaireRoutes(app, {
+    guards: [authMiddleware, validateInput],
+    adminGuards: [authMiddleware, requirePermission("questionnaires.manage"), validateInput],
+    getClient: serviceRequestDeps.getClient,
+    findUser: (id) => {
+      const u: any = findUserById(id);
+      return u ? { id: u.id, clientId: u.clientId ?? null, fullName: u.fullName, email: u.email, isActive: u.isActive } : undefined;
+    },
+    listClientUsers: serviceRequestDeps.listClientUsers,
+    getSurvey: (id) => getSurveyById(id),
+    listSurveys: () => listSurveysForUser(""),
+    validateAnswers: (survey, answers) => validateAnswers(survey as any, answers),
+  });
   // Licensing: account types and the company licence policy (server/licensingRoutes.ts).
   registerLicensingRoutes(app, {
     guards: [authMiddleware, validateInput],
@@ -1694,15 +1710,6 @@ export async function registerRoutes(app: Express) {
     } catch (error: any) {
       const status = /Forbidden|not the current/i.test(error.message) ? 403 : 400;
       res.status(status).json({ error: error.message });
-    }
-  });
-
-  app.get("/api/portal/questionnaires/events", [authMiddleware], async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      res.json({ success: true, configured: false, events: [] });
-      logSecurityEvent("QUESTIONNAIRES_FETCHED", req, {});
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
     }
   });
 

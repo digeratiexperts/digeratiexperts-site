@@ -1,384 +1,283 @@
-import { useState } from "react";
+import { useMemo, useState, type FormEvent } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { format } from "date-fns";
+import { CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Callout, EmptyState, Field, Panel } from "@/components/portal/ui";
+import { portalGet } from "@/lib/portalApi";
+import { ADMIN_QUESTIONNAIRES_KEY, QuestionnaireApiError, formatAnswer, questionnairesApi, type AdminAssignment } from "@/lib/questionnairesApi";
+import { ASSIGNMENT_STATUSES, ASSIGNMENT_STATUS_LABELS, formatDueDay, type AssignmentStatus } from "@shared/questionnaires";
+import { QuestionnaireStatus } from "./PortalMyQuestionnaires";
 import { PortalLayout } from "./PortalLayout";
-import { Calendar, CheckCircle, AlertCircle, Clock, X } from "lucide-react";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, startOfWeek, endOfWeek } from "date-fns";
-import { cn } from "@/lib/utils";
-import { Callout, EmptyState, Panel, Token, type TokenTone } from "@/components/portal/ui";
 
-interface CalendarEvent {
-  id: string;
-  date: Date;
-  type: "deployment" | "project" | "tbr" | "cyber-assessment" | "site-assessment" | "risk-assessment" | "questionnaire";
-  title: string;
-  description: string;
-  status: "scheduled" | "in-progress" | "completed";
-  dueDate?: Date;
+/**
+ * DE Questionnaires: assign a portal survey to a person at a client company,
+ * see every assignment by due month, read the answers, mark them reviewed or
+ * send them back (server/questionnaireRoutes.ts).
+ */
+
+type Tenant = { id: string; companyName: string; type: "msp" | "client" };
+const selectClass = "h-10 w-full rounded-md border border-border bg-card px-2 text-sm text-foreground";
+const monthKey = (d: Date) => format(d, "yyyy-MM");
+
+function AssignForm() {
+  const qc = useQueryClient();
+  const [clientId, setClientId] = useState("");
+  const [surveyId, setSurveyId] = useState("");
+  const [userId, setUserId] = useState("");
+  const [dueOn, setDueOn] = useState(() => format(new Date(Date.now() + 14 * 86400000), "yyyy-MM-dd"));
+  const [note, setNote] = useState("");
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [msg, setMsg] = useState<{ tone: "ok" | "bad"; text: string } | null>(null);
+  const tenants = useQuery<{ tenants: Tenant[] }>({ queryKey: ["/api/portal/admin/tenants"], queryFn: () => portalGet("/api/portal/admin/tenants"), staleTime: 60_000 });
+  const clients = (tenants.data?.tenants ?? []).filter((t) => t.type === "client");
+  const options = useQuery({ queryKey: [...ADMIN_QUESTIONNAIRES_KEY, "options"], queryFn: questionnairesApi.options });
+  const people = useQuery({ queryKey: [...ADMIN_QUESTIONNAIRES_KEY, "people", clientId], queryFn: () => questionnairesApi.people(clientId), enabled: Boolean(clientId) });
+  const assign = useMutation({
+    mutationFn: () => questionnairesApi.assign({ clientId, surveyId, assignedToUserId: userId, dueOn, note }),
+    onSuccess: (r) => {
+      void qc.invalidateQueries({ queryKey: ADMIN_QUESTIONNAIRES_KEY });
+      setErrors({});
+      setNote("");
+      setUserId("");
+      setMsg({ tone: "ok", text: `Assigned to ${r.assignment.assignedToName}. They see it on Home and in My questionnaires.` });
+    },
+    onError: (e) => {
+      setErrors(e instanceof QuestionnaireApiError ? e.fieldErrors : {});
+      setMsg({ tone: "bad", text: e instanceof Error ? e.message : "Could not assign" });
+    },
+  });
+  const submit = (e: FormEvent) => {
+    e.preventDefault();
+    setMsg(null);
+    assign.mutate();
+  };
+  return (
+    <Panel id="assign-form" title="Assign a questionnaire" description="The person fills it in from their portal; you review the answers here.">
+      <form className="grid gap-4 md:grid-cols-2" onSubmit={submit} noValidate>
+        <Field label="Company" htmlFor="qa-company" required error={errors.clientId}>
+          <select id="qa-company" className={selectClass} value={clientId} onChange={(e) => { setClientId(e.target.value); setUserId(""); }}>
+            <option value="">{tenants.isPending ? "Loading…" : "Choose a company…"}</option>
+            {clients.map((c) => (
+              <option key={c.id} value={c.id}>{c.companyName}</option>
+            ))}
+          </select>
+        </Field>
+        <Field label="Person" htmlFor="qa-person" required error={errors.assignedToUserId}>
+          <select id="qa-person" className={selectClass} value={userId} disabled={!clientId} onChange={(e) => setUserId(e.target.value)}>
+            <option value="">{!clientId ? "Choose a company first" : people.isPending ? "Loading…" : (people.data?.people ?? []).length === 0 ? "No active people at this company" : "Choose a person…"}</option>
+            {(people.data?.people ?? []).map((p) => (
+              <option key={p.id} value={p.id}>{p.name}{p.email ? ` (${p.email})` : ""}</option>
+            ))}
+          </select>
+        </Field>
+        <Field label="Questionnaire" htmlFor="qa-survey" required error={errors.surveyId}>
+          <select id="qa-survey" className={selectClass} value={surveyId} onChange={(e) => setSurveyId(e.target.value)}>
+            <option value="">{options.isPending ? "Loading…" : "Choose a questionnaire…"}</option>
+            {(options.data?.surveys ?? []).map((s) => (
+              <option key={s.id} value={s.id}>{s.title} ({s.questionCount} questions)</option>
+            ))}
+          </select>
+        </Field>
+        <Field label="Due" htmlFor="qa-due" required error={errors.dueOn}>
+          <Input id="qa-due" type="date" value={dueOn} onChange={(e) => setDueOn(e.target.value)} />
+        </Field>
+        <Field label="Note to the person" htmlFor="qa-note" error={errors.note} className="md:col-span-2">
+          <Textarea id="qa-note" rows={2} value={note} maxLength={2000} onChange={(e) => setNote(e.target.value)} />
+        </Field>
+        {msg && <Callout tone={msg.tone} title={msg.text} className="md:col-span-2" />}
+        <div className="md:col-span-2">
+          <Button type="submit" disabled={assign.isPending} data-testid="questionnaire-assign">
+            {assign.isPending ? "Assigning…" : "Assign"}
+          </Button>
+        </div>
+      </form>
+    </Panel>
+  );
 }
 
-/** Colour carries the event family; the label and icon always travel with it. */
-const eventTypeConfig: Record<CalendarEvent["type"], { label: string; tone: TokenTone; toneClass: string; icon: string }> = {
-  deployment: { label: "Deployment", tone: "info", toneClass: "pt-tone-info", icon: "🚀" },
-  project: { label: "Project", tone: "neutral", toneClass: "", icon: "📋" },
-  tbr: { label: "Technology Business Review", tone: "brand", toneClass: "pt-tone-brand", icon: "📊" },
-  "cyber-assessment": { label: "Cyber Assessment", tone: "bad", toneClass: "pt-tone-bad", icon: "🔐" },
-  "site-assessment": { label: "Site Assessment", tone: "ok", toneClass: "pt-tone-ok", icon: "🏢" },
-  "risk-assessment": { label: "Cyber Risk Assessment", tone: "warn", toneClass: "pt-tone-warn", icon: "⚠️" },
-  questionnaire: { label: "Questionnaire", tone: "brand", toneClass: "pt-tone-brand", icon: "📝" },
-};
-
-const STATUS: Record<CalendarEvent["status"], { label: string; tone: TokenTone; Icon: typeof Clock }> = {
-  scheduled: { label: "Scheduled", tone: "neutral", Icon: Clock },
-  "in-progress": { label: "In progress", tone: "info", Icon: AlertCircle },
-  completed: { label: "Completed", tone: "ok", Icon: CheckCircle },
-};
-
-const FILTERS: { value: "all" | CalendarEvent["status"]; label: string }[] = [
-  { value: "all", label: "All Events" },
-  { value: "scheduled", label: "Scheduled" },
-  { value: "in-progress", label: "In Progress" },
-  { value: "completed", label: "Completed" },
-];
-
-const mockEvents: CalendarEvent[] = [
-  {
-    id: "1",
-    date: new Date(2025, 10, 25),
-    type: "deployment",
-    title: "Q4 Security Update Deployment",
-    description: "Deploy latest security patches and firewall updates",
-    status: "scheduled",
-    dueDate: new Date(2025, 10, 25),
-  },
-  {
-    id: "2",
-    date: new Date(2025, 11, 5),
-    type: "tbr",
-    title: "Q4 Technology Business Review",
-    description: "Quarterly review of IT infrastructure and strategic planning",
-    status: "scheduled",
-    dueDate: new Date(2025, 11, 5),
-  },
-  {
-    id: "3",
-    date: new Date(2025, 11, 10),
-    type: "cyber-assessment",
-    title: "Annual Cyber Security Assessment",
-    description: "Comprehensive cybersecurity posture evaluation",
-    status: "in-progress",
-    dueDate: new Date(2025, 11, 10),
-  },
-  {
-    id: "4",
-    date: new Date(2025, 11, 15),
-    type: "questionnaire",
-    title: "DE Security Questionnaire - Annual",
-    description: "Complete annual security and compliance questionnaire",
-    status: "scheduled",
-    dueDate: new Date(2025, 11, 20),
-  },
-  {
-    id: "5",
-    date: new Date(2025, 11, 1),
-    type: "project",
-    title: "Network Infrastructure Upgrade",
-    description: "Upgrade network switches and routing equipment",
-    status: "in-progress",
-    dueDate: new Date(2025, 11, 15),
-  },
-  {
-    id: "6",
-    date: new Date(2025, 10, 28),
-    type: "site-assessment",
-    title: "Physical Site Security Assessment",
-    description: "On-site evaluation of security measures",
-    status: "scheduled",
-    dueDate: new Date(2025, 10, 28),
-  },
-  {
-    id: "7",
-    date: new Date(2025, 11, 18),
-    type: "risk-assessment",
-    title: "Cyber Risk Assessment - Vendor Review",
-    description: "Evaluate security of third-party vendors",
-    status: "scheduled",
-    dueDate: new Date(2025, 11, 25),
-  },
-];
-
-function StatusToken({ status }: { status: CalendarEvent["status"] }) {
-  const s = STATUS[status];
-  return <Token label={s.label} tone={s.tone} dot />;
+function Detail({ id, onClose }: { id: string; onClose: () => void }) {
+  const qc = useQueryClient();
+  const q = useQuery({ queryKey: [...ADMIN_QUESTIONNAIRES_KEY, id], queryFn: () => questionnairesApi.adminGet(id) });
+  const [note, setNote] = useState("");
+  const [confirm, setConfirm] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const done = () => {
+    void qc.invalidateQueries({ queryKey: ADMIN_QUESTIONNAIRES_KEY });
+    setError(null);
+  };
+  const onError = (e: unknown) => setError(e instanceof Error ? e.message : "Could not save");
+  const edit = useMutation({ mutationFn: (patch: Parameters<typeof questionnairesApi.edit>[1]) => questionnairesApi.edit(id, patch), onSuccess: done, onError });
+  const remove = useMutation({ mutationFn: () => questionnairesApi.remove(id), onSuccess: () => { done(); onClose(); }, onError });
+  if (q.isPending) return <Skeleton className="h-40 rounded-xl" />;
+  if (!q.data) return <Callout tone="bad" title="This assignment couldn't be loaded" />;
+  const a = q.data.assignment;
+  const submitted = a.status === "submitted" || a.status === "reviewed";
+  return (
+    <Panel
+      id="assignment-detail"
+      title={`${a.title} · ${a.assignedToName}`}
+      description={`${a.companyName} · due ${formatDueDay(a.dueOn)} · assigned by ${a.assignedByName || "DE"}`}
+      actions={<Button type="button" size="sm" variant="outline" onClick={onClose}>Close</Button>}
+    >
+      <div className="space-y-4">
+        <QuestionnaireStatus q={a} />
+        {submitted ? (
+          <dl className="space-y-3">
+            {a.questions.map((question) => (
+              <div key={question.id}>
+                <dt className="text-sm font-medium">{question.label}</dt>
+                <dd className="mt-0.5 whitespace-pre-line text-sm text-muted-foreground">{formatAnswer(a.answers[question.id])}</dd>
+              </div>
+            ))}
+          </dl>
+        ) : (
+          <p className="text-sm text-muted-foreground">Answers appear here once {a.assignedToName} submits.</p>
+        )}
+        {a.status === "submitted" && (
+          <div className="space-y-2 rounded-lg border border-border bg-background p-3">
+            <label htmlFor="qa-back-note" className="text-sm font-medium">Send back with a note (optional)</label>
+            <Textarea id="qa-back-note" rows={2} value={note} maxLength={2000} onChange={(e) => setNote(e.target.value)} />
+            <div className="flex flex-wrap gap-2">
+              <Button type="button" size="sm" disabled={edit.isPending} onClick={() => edit.mutate({ status: "reviewed" })} data-testid="questionnaire-reviewed">Mark reviewed</Button>
+              <Button type="button" size="sm" variant="outline" disabled={edit.isPending} onClick={() => edit.mutate({ status: "draft", ...(note.trim() ? { note } : {}) })}>Send back</Button>
+            </div>
+          </div>
+        )}
+        <div className="flex flex-wrap gap-2">
+          {confirm ? (
+            <>
+              <Button type="button" size="sm" variant="destructive" disabled={remove.isPending} onClick={() => remove.mutate()}>Delete for good</Button>
+              <Button type="button" size="sm" variant="outline" onClick={() => setConfirm(false)}>Keep</Button>
+            </>
+          ) : (
+            <Button type="button" size="sm" variant="outline" onClick={() => setConfirm(true)}>Delete assignment</Button>
+          )}
+        </div>
+        {error && <p className="pt-ink pt-tone-bad text-xs" role="alert">{error}</p>}
+      </div>
+    </Panel>
+  );
 }
 
 export function PortalQuestionnaireCalendar() {
-  const [currentDate, setCurrentDate] = useState(() => new Date());
-  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
-  const [filterStatus, setFilterStatus] = useState<"all" | "scheduled" | "in-progress" | "completed">("all");
-
-  const monthStart = startOfMonth(currentDate);
-  const monthEnd = endOfMonth(currentDate);
-  const days = eachDayOfInterval({ start: startOfWeek(monthStart), end: endOfWeek(monthEnd) });
-
-  const filteredEvents =
-    filterStatus === "all" ? mockEvents : mockEvents.filter((e) => e.status === filterStatus);
-  const monthEvents = filteredEvents.filter(event => isSameMonth(event.date, currentDate));
-
-  const getEventsForDate = (date: Date) => {
-    return filteredEvents.filter((event) => isSameDay(event.date, date));
-  };
+  const [month, setMonth] = useState(() => new Date());
+  const [status, setStatus] = useState<"all" | "open" | AssignmentStatus>("open");
+  const [selected, setSelected] = useState<string | null>(null);
+  const list = useQuery({ queryKey: ADMIN_QUESTIONNAIRES_KEY, queryFn: questionnairesApi.adminList });
+  const all = list.data?.assignments ?? [];
+  const overdue = all.filter((a) => a.overdue);
+  const toReview = all.filter((a) => a.status === "submitted");
+  const shown = useMemo(() => {
+    const key = monthKey(month);
+    return all.filter(
+      (a) =>
+        a.dueOn.startsWith(key) &&
+        (status === "all" || (status === "open" ? a.status === "assigned" || a.status === "draft" : a.status === status)),
+    );
+  }, [all, month, status]);
+  const byDay = useMemo(() => {
+    const groups = new Map<string, AdminAssignment[]>();
+    for (const a of shown) groups.set(a.dueOn, [...(groups.get(a.dueOn) ?? []), a]);
+    return [...groups.entries()];
+  }, [shown]);
 
   return (
-    <PortalLayout title="DE Questionnaires & Calendar" description="Important dates, assessments, and questionnaires">
+    <PortalLayout title="DE Questionnaires" description="Assign questionnaires to client contacts, track due dates and review the answers.">
       <div className="space-y-4">
-        <Callout tone="warn" title="Sample preview." testId="questionnaire-sample-banner">
-          Events below are illustrative until your live assessment calendar is connected.
-          <button type="button" className="ml-1 underline underline-offset-2" onClick={() => setCurrentDate(new Date(mockEvents[0].date))} data-testid="button-sample-month">View sample dates</button>
-        </Callout>
-
-        <Tabs defaultValue="calendar" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 sm:inline-grid sm:w-auto">
-            <TabsTrigger value="calendar">Calendar View</TabsTrigger>
-            <TabsTrigger value="timeline">Timeline</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="calendar" className="mt-4 space-y-4">
-            <div role="group" aria-label="Filter by status" className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 lg:mx-0 lg:flex-wrap lg:px-0 lg:pb-0">
-              {FILTERS.map((f) => {
-                const active = filterStatus === f.value;
-                return (
+        <AssignForm />
+        {selected && <Detail id={selected} onClose={() => setSelected(null)} />}
+        {toReview.length > 0 && (
+          <Panel id="to-review" title="Waiting for your review" description="Submitted, any due month" flush>
+            <ul className="divide-y divide-border">
+              {toReview.map((a) => (
+                <li key={a.id} className="px-4 py-2 md:px-5">
                   <button
-                    key={f.value}
                     type="button"
-                    onClick={() => setFilterStatus(f.value)}
-                    aria-pressed={active}
-                    className={cn(
-                      "inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-3 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                      active ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-muted-foreground hover:bg-accent hover:text-foreground",
-                    )}
-                    data-testid={`button-filter-${f.value}`}
+                    onClick={() => {
+                      setSelected(a.id);
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                    className="flex w-full flex-wrap items-center gap-2 rounded-md px-1 py-1 text-left text-sm hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    data-testid={`review-${a.id}`}
                   >
-                    {f.label}
+                    <span className="min-w-0 flex-1">
+                      <span className="font-medium">{a.title}</span>
+                      <span className="block text-xs text-muted-foreground">
+                        {a.assignedToName} · {a.companyName} · due {formatDueDay(a.dueOn)}
+                      </span>
+                    </span>
+                    <QuestionnaireStatus q={a} />
                   </button>
-                );
-              })}
-            </div>
-
-            <Panel
-              id="calendar-grid"
-              title={format(currentDate, "MMMM yyyy")}
-              actions={
-                <>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="border-border bg-card hover:bg-accent"
-                    aria-label="Previous month"
-                    onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1))}
-                    data-testid="button-prev-month"
-                  >
-                    ←
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="border-border bg-card hover:bg-accent"
-                    onClick={() => setCurrentDate(new Date())}
-                    data-testid="button-today"
-                  >
-                    Today
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="border-border bg-card hover:bg-accent"
-                    aria-label="Next month"
-                    onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1))}
-                    data-testid="button-next-month"
-                  >
-                    →
-                  </Button>
-                </>
-              }
-            >
-              <div className="space-y-2 sm:hidden" data-testid="calendar-mobile-agenda">
-                {monthEvents.length === 0 ? (
-                  <p className="py-3 text-sm text-muted-foreground">No sample events in this month.</p>
-                ) : monthEvents.map(event => (
-                  <button key={event.id} type="button" onClick={() => setSelectedEvent(event)} data-testid={`agenda-event-${event.id}`} className="block w-full rounded-lg border border-border bg-background p-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                    <span className="pt-num block text-xs text-muted-foreground">{format(event.date, "EEE, MMM d")}</span>
-                    <span className="mt-1 block font-medium">{event.title}</span>
-                    <span className="mt-2 block"><StatusToken status={event.status} /></span>
-                  </button>
-                ))}
-              </div>
-              <div className="hidden grid-cols-7 gap-1.5 sm:grid md:gap-2" data-testid="calendar-month-grid">
-                {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-                  <div key={day} className="p-1 text-center text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground md:p-2">
-                    {day}
-                  </div>
-                ))}
-
-                {days.map((day, idx) => {
-                  const dayEvents = getEventsForDate(day);
-                  const isCurrentMonth = isSameMonth(day, currentDate);
-
-                  return (
-                    <div
-                      key={idx}
-                      className={cn(
-                        "min-h-20 rounded-lg border p-1.5 md:min-h-24 md:p-2",
-                        isCurrentMonth ? "border-border bg-background" : "border-border bg-muted opacity-60",
-                      )}
-                      data-testid={`calendar-day-${format(day, "yyyy-MM-dd")}`}
-                    >
-                      <div className="pt-num mb-1 text-sm font-semibold">
-                        {format(day, "d")}
-                      </div>
-                      <div className="space-y-1">
-                        {dayEvents.slice(0, 2).map((event) => {
-                          const config = eventTypeConfig[event.type];
-                          return (
-                            <button
-                              key={event.id}
-                              type="button"
-                              className={cn(
-                                "block w-full rounded border px-1 py-0.5 text-left text-xs transition-colors hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                                config.tone === "neutral" ? "border-border bg-secondary text-foreground" : cn("pt-token", config.toneClass),
-                              )}
-                              onClick={() => setSelectedEvent(event)}
-                              data-testid={`event-${event.id}`}
-                            >
-                              <span className="block truncate font-medium">{config.icon} {event.title}</span>
-                            </button>
-                          );
-                        })}
-                        {dayEvents.length > 2 && (
-                          <div className="px-1 text-xs text-muted-foreground">
-                            +{dayEvents.length - 2} more
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </Panel>
-
-            <Panel id="event-types" title="Event types">
-              <ul className="grid grid-cols-2 gap-3 md:grid-cols-4">
-                {(Object.keys(eventTypeConfig) as CalendarEvent["type"][]).map((key) => {
-                  const config = eventTypeConfig[key];
-                  return (
-                    <li key={key} className="flex items-center gap-2 text-sm">
-                      <span
-                        className={cn(
-                          "h-3 w-3 shrink-0 rounded-sm border",
-                          config.tone === "neutral" ? "border-border bg-secondary" : cn("pt-token", config.toneClass),
-                        )}
-                        aria-hidden="true"
-                      />
-                      <span>{config.icon} {config.label}</span>
-                    </li>
-                  );
-                })}
-              </ul>
-            </Panel>
-          </TabsContent>
-
-          <TabsContent value="timeline" className="mt-4">
-            <Panel id="timeline" title="Timeline" description={`${filteredEvents.length} event${filteredEvents.length === 1 ? "" : "s"}`} flush>
-              {filteredEvents.length === 0 ? (
-                <EmptyState
-                  icon={Calendar}
-                  title="No events found for the selected filter."
-                  description="Try another status."
-                  action={
-                    <Button variant="outline" size="sm" className="border-border bg-card hover:bg-accent" onClick={() => setFilterStatus("all")}>
-                      Show all events
-                    </Button>
-                  }
-                />
-              ) : (
-                <ul className="divide-y divide-border">
-                  {filteredEvents
-                    .sort((a, b) => a.date.getTime() - b.date.getTime())
-                    .map((event) => {
-                      const config = eventTypeConfig[event.type];
-                      return (
-                        <li key={event.id} data-testid={`timeline-event-${event.id}`}>
-                          <button
-                            type="button"
-                            onClick={() => setSelectedEvent(event)}
-                            className="flex w-full items-start justify-between gap-4 px-4 py-3.5 text-left transition-colors hover:bg-accent/60 focus-visible:bg-accent/60 focus-visible:outline-none md:px-5"
-                          >
-                            <div className="flex min-w-0 flex-1 items-start gap-3">
-                              <div className="text-2xl leading-none" aria-hidden="true">{config.icon}</div>
-                              <div className="min-w-0 flex-1">
-                                <div className="flex flex-wrap items-center gap-2">
-                                  <h3 className="font-medium">{event.title}</h3>
-                                  <StatusToken status={event.status} />
-                                </div>
-                                <p className="mt-1 text-sm text-muted-foreground">{event.description}</p>
-                                <div className="pt-num mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                                  <span>📅 {format(event.date, "MMM dd, yyyy")}</span>
-                                  {event.dueDate && (
-                                    <span>⏰ Due: {format(event.dueDate, "MMM dd, yyyy")}</span>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                            <Token label={config.label} tone={config.tone} className="hidden shrink-0 sm:inline-flex" />
-                          </button>
-                        </li>
-                      );
-                    })}
-                </ul>
-              )}
-            </Panel>
-          </TabsContent>
-        </Tabs>
-
-        {selectedEvent && (
-          <Panel
-            id="event-details"
-            title={<span>{eventTypeConfig[selectedEvent.type].icon} {selectedEvent.title}</span>}
-            description={eventTypeConfig[selectedEvent.type].label}
-            actions={
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-9 w-9 p-0 text-muted-foreground hover:text-foreground"
-                aria-label="Close details"
-                onClick={() => setSelectedEvent(null)}
-                data-testid="button-close-details"
-              >
-                <X aria-hidden="true" />
-              </Button>
-            }
-          >
-            <div className="space-y-4">
-              <dl className="grid gap-4 text-sm sm:grid-cols-2">
-                <div className="sm:col-span-2">
-                  <dt className="text-muted-foreground">Description</dt>
-                  <dd className="mt-0.5 font-medium">{selectedEvent.description}</dd>
-                </div>
-                <div>
-                  <dt className="text-muted-foreground">Date</dt>
-                  <dd className="pt-num mt-0.5 font-medium">{format(selectedEvent.date, "MMMM dd, yyyy")}</dd>
-                </div>
-                <div>
-                  <dt className="text-muted-foreground">Status</dt>
-                  <dd className="mt-1"><StatusToken status={selectedEvent.status} /></dd>
-                </div>
-              </dl>
-
-              <p className="text-sm text-muted-foreground">This is a sample event. Live questionnaires and status changes will be available when your assessment calendar is connected.</p>
-            </div>
+                </li>
+              ))}
+            </ul>
           </Panel>
         )}
+        {overdue.length > 0 && (
+          <Callout tone="warn" title={`${overdue.length} overdue`}>
+            {overdue.slice(0, 5).map((a) => `${a.assignedToName} (${a.companyName}): ${a.title}`).join(" · ")}
+            {overdue.length > 5 ? " · …" : ""}
+          </Callout>
+        )}
+        <Panel
+          id="questionnaire-calendar"
+          title={format(month, "MMMM yyyy")}
+          description="By due date"
+          actions={
+            <div className="flex flex-wrap gap-1.5">
+              <Button variant="outline" size="sm" className="border-border bg-card hover:bg-accent" aria-label="Previous month" onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1))}>←</Button>
+              <Button variant="outline" size="sm" className="border-border bg-card hover:bg-accent" onClick={() => setMonth(new Date())}>Today</Button>
+              <Button variant="outline" size="sm" className="border-border bg-card hover:bg-accent" aria-label="Next month" onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1))}>→</Button>
+            </div>
+          }
+          flush
+        >
+          <div className="border-b border-border px-4 py-3 md:px-5">
+            <label htmlFor="qa-filter" className="sr-only">Filter by status</label>
+            <select id="qa-filter" className="h-9 rounded-md border border-border bg-card px-3 text-sm" value={status} onChange={(e) => setStatus(e.target.value as typeof status)}>
+              <option value="open">Not submitted yet</option>
+              <option value="all">All</option>
+              {ASSIGNMENT_STATUSES.map((s) => (
+                <option key={s} value={s}>{ASSIGNMENT_STATUS_LABELS[s]}</option>
+              ))}
+            </select>
+          </div>
+          {list.isError ? (
+            <div className="p-4"><Callout tone="bad" title="Assignments couldn't be loaded">{list.error instanceof Error ? list.error.message : ""}</Callout></div>
+          ) : list.isPending ? (
+            <div className="p-4"><Skeleton className="h-24 rounded-xl" /></div>
+          ) : byDay.length === 0 ? (
+            <EmptyState icon={CalendarDays} title="Nothing due this month" description="Assign a questionnaire above, or look at another month." compact />
+          ) : (
+            <ul className="divide-y divide-border">
+              {byDay.map(([day, items]) => (
+                <li key={day} className="px-4 py-3 md:px-5">
+                  <p className="text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground">{formatDueDay(day)}</p>
+                  <ul className="mt-2 space-y-2">
+                    {items.map((a) => (
+                      <li key={a.id}>
+                        <button type="button" onClick={() => { setSelected(a.id); window.scrollTo({ top: 0, behavior: "smooth" }); }} className="flex w-full flex-wrap items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-left text-sm hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" data-testid={`assignment-${a.id}`}>
+                          <span className="min-w-0 flex-1">
+                            <span className="font-medium">{a.title}</span>
+                            <span className="block text-xs text-muted-foreground">{a.assignedToName} · {a.companyName}</span>
+                          </span>
+                          <QuestionnaireStatus q={a} />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Panel>
       </div>
     </PortalLayout>
   );
 }
+
+export default PortalQuestionnaireCalendar;

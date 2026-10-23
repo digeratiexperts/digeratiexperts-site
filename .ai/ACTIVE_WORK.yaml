@@ -4657,6 +4657,32 @@ claims:
       a review per client meeting (date, summary, decisions, linked roadmap
       items, report file); owners see published ones. The invented QBR
       reports, recommendations and "88" security score are gone.
+  - id: portal-questionnaires
+    owner: claude
+    subsystem: portal
+    branch: claude/portal-questionnaires
+    base_sha: f0ccfac
+    started: 2026-10-23
+    files:
+      - migrations/0024_portal_questionnaire_assignments.sql (new)
+      - shared/schema.ts (portalQuestionnaireAssignments only), shared/questionnaires.ts (new)
+      - shared/permissions/lane-c.ts (questionnaires.manage)
+      - server/questionnaireStore.ts, server/questionnaireRoutes.ts, server/questionnaireRoutes.test.ts (new)
+      - server/routes.ts (one registration block; stub /api/portal/questionnaires/events removed; validateAnswers import)
+      - client/src/lib/questionnairesApi.ts, client/src/components/portal/QuestionnaireTasks.tsx, client/src/pages/portal/PortalMyQuestionnaires.tsx (new)
+      - client/src/pages/portal/PortalQuestionnaireCalendar.tsx (rewritten on real data)
+      - client/src/pages/portal/PortalDashboard.tsx (Home task card only)
+      - client/src/components/portal/shell/portalNav.ts, portalNav.test.ts (DE Questionnaires real; My questionnaires in the Home hub)
+      - client/src/App.tsx (one route)
+    status: in-review
+    note: >-
+      Slice E of docs/PORTAL-SAMPLE-BUILDOUT-PLAN.md, stacked on
+      portal-business-reviews (#710). Joe, 2026-10-23: "yes to all, do it".
+      DE assigns a portal survey to a person at a client company with a due
+      date; that person sees it on Home and in My questionnaires, saves a
+      draft and submits (validated by the survey's own rules); DE reviews or
+      sends it back. The mock calendar events are gone. Answers live on the
+      assignment so the same questionnaire can be assigned again.
   - id: portal-status-staff-access
     owner: claude
     subsystem: portal

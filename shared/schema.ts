@@ -405,6 +405,27 @@ export const portalBusinessReviews = pgTable("portal_business_reviews", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
+/** DE Questionnaires (migrations/0024_portal_questionnaire_assignments.sql; shared/questionnaires.ts). */
+export const portalQuestionnaireAssignments = pgTable("portal_questionnaire_assignments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  clientId: varchar("client_id")
+    .notNull()
+    .references(() => portalClients.id, { onDelete: "cascade" }),
+  surveyId: varchar("survey_id").notNull(),
+  assignedToUserId: varchar("assigned_to_user_id").notNull(),
+  dueOn: date("due_on", { mode: "string" }).notNull(),
+  status: text("status").notNull().default("assigned"),
+  note: text("note").notNull().default(""),
+  answers: jsonb("answers").notNull().default({}),
+  assignedBy: varchar("assigned_by"),
+  assignedByName: text("assigned_by_name").notNull().default(""),
+  submittedAt: timestamp("submitted_at", { withTimezone: true }),
+  reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+  reviewedByName: text("reviewed_by_name"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
 /**
  * Group-level requests filed by a Hub-defined representative on behalf of the
  * group they represent (migrations/0019_portal_group_requests.sql;
