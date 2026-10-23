@@ -1,0 +1,1013 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Digerati Experts Homepage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* =====================================================================
+   DE HOMEPAGE — MERGED (Store restyle + home-mesh assets)
+   One page, four scoped token sets applied per section by role.
+   The logo appears only in the nav and footer. No logo-bar patterns or markers.
+   ===================================================================== */
+:root{
+  --font:"Space Grotesk",system-ui,sans-serif;
+  --r-lg:26px; --r-md:18px; --r-sm:12px; --pill:9999px;
+  --max:1200px; --gutter:24px;
+  --gold:#E3B23C; --pink:#D3126A; --pink-hover:#B30F5A;
+}
+/* ---- Section tokens: Store (everyday reading; also the page default) ---- */
+:root,.t-store{
+  --page:#F5F5F6; --alt:#FFFFFF; --card:#FFFFFF; --line:#E6E6E9;
+  --ink:#191725; --ink-2:#55535F; --ink-3:#8A8893;
+  --band:#050312; --band-card:#191725; --band-line:rgba(255,255,255,.10);
+  --on-band:#F5F5F6; --on-band-2:rgba(255,255,255,.66);
+  --accent:#1D6FF2; --accent-hover:#1859C5; --accent-on-band:#6FB3FF; --tint:#EAF2FE;
+  --shadow:0 1px 2px rgba(25,23,37,.08);
+  --pattern:none; --hero-img:none; --logo-light:block; --logo-dark:none;
+}
+/* ---- Section tokens: Sonoran Dusk (Arizona/local: hero photo, light stone sections) ---- */
+.t-sonoran{
+  --page:#ECEEF1; --alt:#F7F8F9; --card:#FFFFFF; --line:#DCE0E5;
+  --ink:#16202C; --ink-2:#4E5968; --ink-3:#7E8896;
+  --band:#121821; --band-card:#1D2532; --band-line:rgba(255,255,255,.10);
+  --on-band:#F3F4F6; --on-band-2:rgba(243,244,246,.68);
+  --accent:#8A5F10; --accent-hover:#6E4B0B; --accent-on-band:#F2C866; --tint:#F8EDD3;
+  --shadow:0 1px 2px rgba(22,32,44,.08);
+  --pattern:none; --hero-img:url("https://digeratiexperts.com/assets/de-hero-arizona-dusk-1600-DoiuZdBo.webp");
+}
+/* ---- Section tokens: Ink & Gold (proof and decision sections; gold approved here only) ---- */
+.t-ink{
+  --page:#0E1526; --alt:#111A2E; --card:#172138; --line:rgba(255,255,255,.09);
+  --ink:#EEF1F7; --ink-2:#A6AFC2; --ink-3:#7D879C;
+  --band:#0B1222; --band-card:#1C2742; --band-line:rgba(255,255,255,.09);
+  --on-band:#EEF1F7; --on-band-2:rgba(238,241,247,.66);
+  --accent:#F2C866; --accent-hover:#FFE09A; --accent-on-band:#F2C866; --tint:rgba(242,200,102,.12);
+  --shadow:0 1px 0 rgba(255,255,255,.04) inset;
+  --pattern:none; --hero-img:none;
+}
+/* ---- Section tokens: Signal Blue (how-it-works sections; fine dot grid, no logo pattern) ---- */
+.t-signal{
+  --page:#FFFFFF; --alt:#F1F5FC; --card:#FFFFFF; --line:#E0E6EF;
+  --ink:#0F1B2D; --ink-2:#4A5668; --ink-3:#7C8797;
+  --band:#0B1E42; --band-card:#13295A; --band-line:rgba(255,255,255,.12);
+  --on-band:#F2F6FC; --on-band-2:rgba(242,246,252,.70);
+  --accent:#1D6FF2; --accent-hover:#1557C7; --accent-on-band:#8EC2FF; --tint:#E3EDFD;
+  --shadow:0 1px 2px rgba(15,27,45,.06);
+  --pattern:radial-gradient(rgba(29,111,242,.16) 1px,transparent 1.3px); --hero-img:none;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;overflow-x:clip}
+body{font-family:var(--font);background:var(--page);color:var(--ink);font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased;transition:background-color .25s,color .25s}
+a{color:inherit;text-decoration:none}
+img,svg{display:block;max-width:100%}
+button{font:inherit;cursor:pointer;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:6px}
+.wrap{max-width:var(--max);margin:0 auto;padding:0 var(--gutter)}
+
+/* ---------- section rhythm (one selector owns padding) ---------- */
+.sec{padding:104px 0}
+.sec{background-color:var(--page);color:var(--ink)}
+.sec.alt{background-color:var(--alt);background-image:var(--pattern);background-size:22px 22px}
+.sec.band,.band{background-color:var(--band);color:var(--on-band)}
+
+/* ---------- type ---------- */
+h1,h2,h3{font-weight:700;letter-spacing:-.03em;line-height:1.06}
+h1{font-size:clamp(42px,6.2vw,76px);letter-spacing:-.045em}
+h2{font-size:clamp(32px,4.2vw,48px);max-width:16ch}
+h3{font-size:20px;letter-spacing:-.015em;line-height:1.25}
+p{max-width:68ch}
+.lede{font-size:19px;color:var(--ink-2);max-width:56ch}
+.band .lede,.band .muted{color:var(--on-band-2)}
+.muted{color:var(--ink-2)}
+.small{font-size:14px}
+
+/* section marker: the logo's bars instead of an all-caps eyebrow */
+.mark{font-size:15px;font-weight:600;color:var(--accent);margin-bottom:16px}
+.band .mark{color:var(--accent-on-band)}
+
+.head{display:grid;grid-template-columns:1fr minmax(0,440px);gap:48px;align-items:end;margin-bottom:52px}
+.head .lede{margin:0}
+.head .links{display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+
+/* ---------- actions ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;height:54px;padding:0 28px;border-radius:var(--pill);font-weight:600;font-size:16px;border:1px solid transparent;transition:background-color .15s,border-color .15s,color .15s;white-space:nowrap}
+.btn-cta{background:var(--pink);color:#fff}
+.btn-cta:hover{background:var(--pink-hover)}
+.btn-line{border-color:var(--line);background:var(--card);color:var(--ink)}
+.btn-line:hover{border-color:var(--ink)}
+.band .btn-line,.on-photo .btn-line{background:transparent;border-color:rgba(255,255,255,.28);color:#fff}
+.band .btn-line:hover,.on-photo .btn-line:hover{border-color:#fff}
+.link{color:var(--accent);font-weight:600;text-decoration:underline;text-decoration-color:transparent;text-underline-offset:4px;transition:text-decoration-color .15s,color .15s}
+.link:hover{color:var(--accent-hover);text-decoration-color:currentColor}
+.band .link{color:var(--accent-on-band)}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+
+/* ---------- surfaces: one card, two weights ---------- */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);padding:32px;box-shadow:var(--shadow)}
+.card.deep{background:var(--band-card);border-color:var(--band-card);color:var(--on-band)}
+.t-ink .card.deep{border-color:rgba(242,200,102,.35)}
+.card.deep .muted{color:var(--on-band-2)}
+.card.deep .link{color:var(--accent-on-band)}
+a.card{display:block;transition:border-color .15s}
+a.card:hover{border-color:var(--ink)}
+a.card.deep:hover{border-color:var(--accent-on-band)}
+.card h3{margin-bottom:8px}
+.chip{display:inline-block;white-space:nowrap;font-size:13px;font-weight:600;padding:6px 12px;border-radius:var(--pill);background:var(--tint);color:var(--accent)}
+.card.deep .chip,.band .chip{background:rgba(255,255,255,.08);color:var(--accent-on-band)}
+.obj{width:84px;height:84px;object-fit:contain;margin:-6px 0 18px -6px}
+.obj.sm{width:64px;height:64px;margin-bottom:12px}
+.grid{display:grid;gap:20px}
+.g2{grid-template-columns:repeat(2,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g4{grid-template-columns:repeat(4,1fr)}
+.g5{grid-template-columns:repeat(5,1fr)}
+.check{list-style:none;display:grid;gap:12px}
+.check li{display:grid;grid-template-columns:20px 1fr;gap:12px}
+.check svg{width:18px;height:18px;margin-top:4px;color:var(--accent)}
+.band .check svg,.card.deep .check svg{color:var(--accent-on-band)}
+
+/* ---------- top bar + nav ---------- */
+.topbar{background:#000;color:rgba(255,255,255,.66);font-size:13px}
+.topbar .wrap{display:flex;justify-content:space-between;align-items:center;height:38px;gap:16px}
+.topbar a:hover{color:#fff}
+.topbar u{color:#fff;text-underline-offset:3px}
+.topbar .right{display:flex;gap:22px}
+nav.main{position:sticky;top:0;z-index:30;background:color-mix(in srgb,var(--band) 94%,transparent);backdrop-filter:saturate(1.4) blur(10px);-webkit-backdrop-filter:saturate(1.4) blur(10px);border-bottom:1px solid var(--band-line)}
+nav.main .wrap{display:flex;align-items:center;justify-content:space-between;height:76px;gap:24px}
+.logo img{height:40px;width:auto}
+.navlinks{display:flex;gap:30px;color:var(--on-band-2);font-size:15px;font-weight:500}
+.navlinks a:hover{color:#fff}
+nav.main .btn{height:44px;padding:0 22px;font-size:15px}
+
+/* ---------- hero ---------- */
+.hero{position:relative;overflow:hidden;padding:96px 0 112px}
+.hero::before{content:"";position:absolute;inset:0;background-image:var(--hero-img);background-size:cover;background-position:center 65%;opacity:var(--hero-op,.55)}
+.hero::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,var(--band) 0%,color-mix(in srgb,var(--band) 82%,transparent) 48%,color-mix(in srgb,var(--band) 35%,transparent) 100%);display:var(--hero-shade,none)}
+.hero.t-sonoran{--hero-shade:block;--hero-op:1}
+.hero .wrap{position:relative;z-index:1;display:grid;grid-template-columns:1.15fr .85fr;gap:64px;align-items:center}
+.hero h1{margin-bottom:26px}
+.hero .lede{margin-bottom:38px;font-size:20px}
+.facts{display:flex;flex-wrap:wrap;gap:10px 26px;margin-top:30px;font-size:15px;color:var(--on-band-2)}
+.facts span{display:inline-flex;gap:8px;align-items:center}
+.facts svg{width:16px;height:16px;color:var(--accent-on-band)}
+.facts a{color:#fff;text-decoration:underline;text-underline-offset:3px}
+.word{display:flex;align-items:center;gap:16px;margin-top:36px;padding-top:26px;border-top:1px solid var(--band-line);font-size:15px;color:var(--on-band-2);flex-wrap:wrap}
+.word b{color:#fff;letter-spacing:.06em}
+.word .say{color:var(--accent-on-band);font-weight:600}
+.word button{border:1px solid var(--band-line);background:transparent;border-radius:var(--pill);padding:6px 14px;font-size:14px;font-weight:600;display:inline-flex;align-items:center;gap:6px;color:#fff}
+.word button:hover{border-color:#fff}
+.word button svg{width:14px;height:14px}
+
+.assess{position:relative;padding:30px;margin-top:56px}
+.dex-perch{position:absolute;top:-70px;right:28px;width:66px;height:auto;filter:drop-shadow(0 8px 14px rgba(0,0,0,.35))}
+.assess-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;font-size:14px;color:var(--on-band-2)}
+.areas{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:18px 0 22px}
+.areas div{border:1px solid var(--band-line);border-radius:var(--r-sm);padding:11px 14px;font-size:14px;display:flex;gap:10px;align-items:center}
+.areas img{width:26px;height:26px;object-fit:contain}
+.score{display:flex;justify-content:space-between;align-items:baseline;border-top:1px solid var(--band-line);padding-top:18px;margin-bottom:12px}
+.score b{font-size:44px;letter-spacing:-.04em;line-height:1}
+.score b small{font-size:16px;color:var(--on-band-2);font-weight:500;letter-spacing:0}
+.bar{display:grid;grid-template-columns:86px 1fr 30px;gap:12px;align-items:center;font-size:14px;color:var(--on-band-2);margin:7px 0}
+.bar i{height:6px;border-radius:var(--pill);background:rgba(255,255,255,.08);overflow:hidden}
+.bar i::after{content:"";display:block;height:100%;width:var(--v);background:var(--accent-on-band);border-radius:inherit}
+.bar span:last-child{color:#fff;text-align:right;font-weight:600}
+
+/* ---------- pillars ---------- */
+.pillars{background:var(--card);border-bottom:1px solid var(--line);padding:52px 0}
+.pillars .grid{gap:40px}
+.pillars .item{display:grid;grid-template-columns:56px 1fr;gap:16px;align-items:start}
+.pillars img{width:56px;height:56px;object-fit:contain}
+.pillars h3{font-size:17px;margin-bottom:2px}
+.pillars p{font-size:15px;color:var(--ink-2)}
+
+/* ---------- why ---------- */
+.why{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:start}
+.why-list{display:grid;gap:16px}
+.why-list .card{display:grid;grid-template-columns:72px 1fr;gap:20px;align-items:center;padding:24px 28px}
+.why-list .obj{margin:0;width:72px;height:72px}
+.why .lede{margin:18px 0 32px}
+.define{padding:26px 28px;display:grid;gap:8px}
+.define .w{font-size:26px;font-weight:700;letter-spacing:.03em}
+.define .p{color:var(--ink-2);font-size:15px}
+.define p{font-size:15px;color:var(--ink-2)}
+
+/* ---------- stats band ---------- */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--band-line)}
+.stat{padding:40px 28px 6px;border-right:1px solid var(--band-line)}
+.stat:first-child{padding-left:0}
+.stat:last-child{border-right:0}
+.stat b{display:block;font-size:clamp(44px,5vw,60px);letter-spacing:-.045em;line-height:1;margin-bottom:16px}
+.stat p{color:var(--on-band-2);font-size:15px;margin-bottom:14px}
+.stat a{font-size:14px;color:var(--accent-on-band)}
+.stat a:hover{color:#fff}
+
+/* ---------- tackle ---------- */
+.tackle .card{display:grid;grid-template-columns:64px 1fr;gap:18px;align-items:start;padding:26px}
+.tackle .obj{margin:0;width:64px;height:64px}
+.strip{margin-top:20px;display:flex;justify-content:space-between;align-items:center;gap:24px;flex-wrap:wrap;padding:24px 32px}
+
+/* ---------- paths + ecosystem ---------- */
+.lanes{display:grid;grid-template-columns:2fr 1fr;gap:20px;align-items:stretch}
+.managed{border:1px solid var(--line);border-radius:calc(var(--r-lg) + 8px);padding:12px;display:grid;gap:12px;background:color-mix(in srgb,var(--card) 45%,transparent)}
+.step1{display:grid;grid-template-columns:64px 1fr auto;gap:20px;align-items:center;padding:22px 26px;border-radius:var(--r-lg);background:var(--tint);border:1px solid color-mix(in srgb,var(--accent) 25%,transparent)}
+.step1 .obj{width:64px;height:64px;margin:0}
+.step1 b{display:block;font-size:19px;letter-spacing:-.015em;margin:6px 0 2px}
+.step1 p{font-size:15px;color:var(--ink-2);margin:0}
+.step1 .btn{height:46px;padding:0 20px;font-size:15px}
+.then{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:600;color:var(--ink-2);padding:0 14px}
+.then::after{content:"";flex:1;height:1px;background:var(--line)}
+.managed .g2{gap:12px}
+.direct{display:flex;flex-direction:column}
+.direct .check{margin:4px 0 20px;font-size:15px}
+.direct .who{font-size:14px;color:var(--ink-2);border-top:1px solid var(--line);padding-top:14px;margin-bottom:18px}
+.direct .link{margin-top:auto}
+.paths .card{display:flex;flex-direction:column}
+.paths .card p{flex:1;margin:0 0 22px}
+.paths .chip{align-self:flex-start;margin-bottom:16px}
+.eco{margin-top:56px;padding:8px 0;overflow:hidden}
+.eco-h{display:flex;justify-content:space-between;align-items:baseline;gap:16px;flex-wrap:wrap;padding:24px 32px 8px}
+.eco-h h3{font-size:22px}
+.eco-grid{display:grid;grid-template-columns:repeat(3,1fr)}
+.eco-grid a{padding:24px 32px;border-top:1px solid var(--line);display:grid;grid-template-columns:44px 1fr;gap:14px;align-items:start}
+.eco-grid a:not(:nth-child(3n)){border-right:1px solid var(--line)}
+.eco-grid a:hover h4{color:var(--accent)}
+.eco-grid img{width:44px;height:44px;object-fit:contain}
+.eco-grid h4{font-size:16px;letter-spacing:-.01em;margin-bottom:2px;transition:color .15s}
+.eco-grid p{font-size:14px;color:var(--ink-2)}
+
+/* ---------- protect model (from mesh, quieter) ---------- */
+.model{display:grid;grid-template-columns:290px 1fr;overflow:hidden;padding:0}
+.model > *{min-width:0}
+.tabs{padding:14px;border-right:1px solid var(--band-line);display:flex;flex-direction:column;gap:2px}
+.tab{all:unset;cursor:pointer;display:grid;gap:1px;padding:12px 16px;border-radius:var(--r-sm);color:var(--on-band-2)}
+.tab b{font-weight:600;font-size:15px;color:var(--on-band)}
+.tab small{font-size:13px}
+.tab:hover{background:rgba(255,255,255,.05)}
+.tab[aria-selected="true"]{background:var(--pink);color:rgba(255,255,255,.82)}
+.tab[aria-selected="true"] b{color:#fff}
+.tab:focus-visible{outline:2px solid var(--accent-on-band);outline-offset:1px}
+.tab.cont{margin-top:10px;border-top:1px dashed var(--band-line);border-radius:0;padding-top:16px}
+.tab.cont[aria-selected="true"]{border-radius:var(--r-sm)}
+.panel{padding:44px 48px}
+.panel h3{font-size:32px;letter-spacing:-.03em;margin:14px 0 12px}
+.panel > p{color:var(--on-band-2);margin-bottom:30px}
+.panel .qh{font-size:14px;font-weight:600;color:var(--on-band-2);margin-bottom:12px}
+.qs{list-style:none;display:grid;gap:10px}
+.qs li{display:grid;grid-template-columns:20px 1fr;gap:12px;padding:15px 18px;border:1px solid var(--band-line);border-radius:var(--r-sm)}
+.qs svg{width:18px;height:18px;margin-top:3px;color:var(--accent-on-band)}
+.note{margin-top:14px;font-size:14px;color:var(--ink-3)}
+
+/* ---------- steps (a real sequence, so it gets numbers) ---------- */
+.steps{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line)}
+.step{padding:32px 28px 0 0}
+.step + .step{padding-left:28px;border-left:1px solid var(--line)}
+.step em{font-style:normal;display:block;font-size:44px;font-weight:700;letter-spacing:-.04em;line-height:1;color:var(--accent);margin-bottom:18px}
+.step h3{margin-bottom:8px}
+.step p{color:var(--ink-2);font-size:15px}
+
+/* ---------- proof ---------- */
+.proof .card{padding:28px}
+.proof .obj{width:76px;height:76px}
+.qr{display:grid;grid-template-columns:104px 1fr;gap:22px;align-items:center}
+.qr img{width:104px;height:104px;background:#fff;border-radius:14px;padding:8px;border:1px solid var(--line)}
+.trust{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:20px}
+.trust .card{display:grid;grid-template-columns:64px 1fr;gap:18px}
+.trust .obj{width:64px;height:64px;margin:0}
+
+/* ---------- fit (photo + findings, from mesh) ---------- */
+.fit{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center}
+.fit-list{display:grid;gap:12px;margin:30px 0 32px}
+.fit-list .card{padding:20px 24px}
+.fit-list h3{font-size:17px;margin-bottom:2px}
+.fit-list p{font-size:15px}
+.photo{position:relative;border-radius:var(--r-lg);overflow:hidden;aspect-ratio:4/3.3}
+.photo > img{width:100%;height:100%;object-fit:cover}
+.findings{position:absolute;left:22px;right:22px;bottom:22px;background:var(--card);color:var(--ink);border-radius:var(--r-md);padding:20px 22px;border:1px solid var(--line)}
+.findings h4{font-size:16px;margin-bottom:10px}
+.findings li{list-style:none;display:grid;grid-template-columns:1fr auto;gap:10px;font-size:14px;padding:8px 0;border-top:1px solid var(--line)}
+.findings li span:last-child{color:var(--ink-3)}
+
+/* ---------- team ---------- */
+.team{display:grid;grid-template-columns:380px 1fr;gap:56px;align-items:start}
+.portrait{padding:14px}
+.portrait img{width:100%;aspect-ratio:3/3.6;object-fit:cover;object-position:center 22%;border-radius:calc(var(--r-lg) - 8px)}
+.portrait .cap{padding:18px 10px 8px}
+.portrait h3{font-size:24px;margin-bottom:2px}
+.portrait .role{font-size:15px;color:var(--ink-2)}
+.portrait .loc{display:flex;gap:8px;align-items:center;margin-top:12px;padding-top:12px;border-top:1px solid var(--line);font-size:14px;color:var(--ink-2)}
+.portrait .loc svg{width:16px;height:16px;color:var(--pink)}
+.team h3.big{font-size:26px;margin:4px 0 12px}
+.owners{margin:28px 0 32px;border-top:1px solid var(--line)}
+.owners div{display:grid;grid-template-columns:220px 1fr;gap:24px;padding:18px 0;border-bottom:1px solid var(--line)}
+.owners b{font-size:17px}
+.owners p{color:var(--ink-2);font-size:15px}
+
+/* ---------- industries (photo cards from mesh) ---------- */
+.ind{display:grid;grid-template-columns:repeat(5,1fr);gap:16px}
+.ind a{position:relative;border-radius:var(--r-md);overflow:hidden;min-height:300px;display:flex;flex-direction:column;justify-content:flex-end;padding:22px;color:#fff;isolation:isolate}
+.ind a img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:-2;filter:grayscale(1) contrast(1.05);transition:filter .3s}
+.ind a::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(5,3,18,.05) 20%,rgba(5,3,18,.88) 78%)}
+.ind a:hover img{filter:grayscale(0)}
+.ind h3{font-size:19px;margin-bottom:6px}
+.ind p{font-size:14px;color:rgba(255,255,255,.78);margin-bottom:12px}
+.ind span{font-size:14px;font-weight:600;color:#fff;text-decoration:underline;text-underline-offset:4px;text-decoration-color:rgba(255,255,255,.4)}
+
+/* ---------- pricing ---------- */
+.tier{display:flex;flex-direction:column;padding:28px}
+.tier .obj{width:72px;height:72px;margin:-4px 0 14px -4px}
+.tier .top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px}
+.tier .name{font-size:22px;font-weight:700;letter-spacing:-.02em}
+.tier .price{font-size:46px;font-weight:700;letter-spacing:-.045em;line-height:1;margin-top:8px}
+.tier .price small{font-size:15px;font-weight:500;color:var(--ink-2);letter-spacing:0}
+.card.deep .price small{color:var(--on-band-2)}
+.tier .min{font-size:14px;color:var(--ink-2);margin:8px 0 16px}
+.card.deep .min{color:var(--on-band-2)}
+.tier > p{font-size:15px;margin-bottom:18px}
+.tier ul{flex:1;border-top:1px solid var(--line);padding-top:18px;margin-bottom:24px;font-size:15px}
+.card.deep ul{border-color:var(--band-line)}
+.tier .btn{width:100%}
+.pnote{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:20px}
+
+/* ---------- detection ---------- */
+.detect{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center}
+.detect .check{margin:28px 0 34px}
+.flow{padding:34px}
+.flow-step{display:grid;grid-template-columns:46px 1fr;gap:18px;padding:18px 0;border-bottom:1px solid var(--band-line)}
+.flow-step b{width:46px;height:46px;border-radius:13px;display:grid;place-items:center;background:rgba(255,255,255,.07);color:var(--accent-on-band);font-size:15px}
+.flow-step strong{display:block;font-size:16px}
+.flow-step span{font-size:14px;color:var(--on-band-2)}
+.flow{position:relative}
+.rati-corner{position:absolute;right:34px;bottom:30px;width:30px;height:auto}
+.flow-step:last-of-type{border-bottom:0;padding-right:56px}
+
+/* ---------- feed ---------- */
+.feed{padding:6px 32px}
+.item{display:grid;grid-template-columns:150px 1fr auto;gap:28px;padding:24px 0;border-bottom:1px solid var(--line);align-items:start}
+.item:last-child{border-bottom:0}
+.sev{display:inline-block;font-size:13px;font-weight:700;color:var(--pink)}
+.date{font-size:14px;color:var(--ink-2);margin-top:2px}
+.item h3{font-size:17px;margin-bottom:6px}
+.item p{font-size:15px;color:var(--ink-2)}
+.item .meta{font-size:13px;color:var(--ink-3);margin-top:8px}
+.item .link{font-size:14px;white-space:nowrap}
+
+/* ---------- faq ---------- */
+.faq{display:grid;grid-template-columns:1.4fr 1fr;gap:20px;align-items:start}
+.faq > .card{padding:6px 32px}
+details{border-bottom:1px solid var(--line)}
+details:last-child{border-bottom:0}
+summary{list-style:none;cursor:pointer;padding:22px 0;font-weight:600;font-size:17px;display:flex;justify-content:space-between;gap:16px;align-items:center}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";font-size:26px;font-weight:400;color:var(--accent);line-height:1}
+details[open] summary::after{content:"\2013"}
+details p{padding:0 0 22px;color:var(--ink-2)}
+.side{display:grid;gap:20px}
+.side .card{padding:28px}
+.side .check{margin-top:16px;font-size:15px}
+.cities{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.cities a{border:1px solid var(--line);border-radius:var(--pill);padding:8px 16px;font-size:14px;font-weight:600}
+.cities a:hover{border-color:var(--ink)}
+
+/* ---------- contact ---------- */
+.contact .wrap{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:start}
+.contact .lede{margin:16px 0 30px}
+.info{display:grid;grid-template-columns:1fr 1fr;gap:26px;margin-top:40px;border-top:1px solid var(--band-line);padding-top:30px}
+.info span{display:block;font-size:14px;color:var(--on-band-2);margin-bottom:4px}
+.live{display:inline-flex;gap:10px;align-items:center;margin-top:28px;padding:10px 16px;border:1px solid var(--band-line);border-radius:var(--pill);font-size:14px}
+.live i{width:8px;height:8px;border-radius:50%;background:#2BD67B}
+form.card{padding:36px}
+form h3{font-size:24px;margin-bottom:6px}
+form > p{color:var(--ink-2);font-size:15px;margin-bottom:24px}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.full{grid-column:1/-1}
+label{display:block;font-size:14px;font-weight:600;margin-bottom:6px}
+input,select,textarea{width:100%;font:inherit;font-size:16px;padding:13px 16px;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--page);color:var(--ink)}
+textarea{min-height:110px;resize:vertical}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--tint)}
+form .btn{width:100%;margin-top:20px}
+.assure{display:flex;gap:6px 20px;flex-wrap:wrap;justify-content:center;margin-top:14px;font-size:13px;color:var(--ink-2)}
+
+/* ---------- footer ---------- */
+footer{background:#000;color:rgba(255,255,255,.62);padding:72px 0 30px;font-size:15px}
+.fgrid{display:grid;grid-template-columns:1.6fr repeat(4,1fr);gap:40px;margin-bottom:56px}
+footer h4{font-size:15px;color:#fff;margin-bottom:14px;font-weight:600}
+footer ul{list-style:none;display:grid;gap:9px}
+footer a:hover{color:#fff}
+footer .logo img{height:36px}
+.news{display:flex;gap:8px;margin-top:20px;max-width:320px}
+.news input{background:transparent;border-color:rgba(255,255,255,.14);color:#fff;padding:10px 14px;font-size:14px}
+.news button{border:0;border-radius:var(--r-sm);padding:0 16px;background:#fff;color:#191725;font-weight:600;font-size:14px}
+.fbase{border-top:1px solid rgba(255,255,255,.1);padding-top:22px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;font-size:13px}
+
+/* ---------- Ask DE launcher (matches live site) ---------- */
+.ask{position:fixed;right:20px;bottom:20px;z-index:40;display:flex;align-items:center;gap:10px;background:#0b0b0d;color:#fff;border:1px solid rgba(255,255,255,.10);border-radius:var(--pill);padding:6px 18px 6px 6px;box-shadow:0 8px 24px rgba(0,0,0,.28)}
+.ask:hover{background:#16161a}
+.ask-ic{width:40px;height:40px;border-radius:50%;border:2px solid var(--gold);display:grid;place-items:center;color:#f5f5f4}
+.ask:hover .ask-ic{background:rgba(227,178,60,.10)}
+.ask-ic svg{width:28px;height:28px}
+.ask-t b{display:block;font-size:15px;line-height:1.1}
+.ask-t span{display:block;font-size:14px;line-height:1.2;color:rgba(255,255,255,.7)}
+
+/* ---------- Dex idle (respects reduced motion) ---------- */
+@keyframes blink{0%,94%,100%{transform:scaleY(1)}97%{transform:scaleY(.1)}}
+.dex-eye{transform-box:fill-box;transform-origin:center;animation:blink 6s infinite}
+
+/* ---------- responsive ---------- */
+@media (max-width:1080px){
+  .lanes{grid-template-columns:1fr}
+  .navlinks{display:none}
+  .hero .wrap,.why,.detect,.faq,.contact .wrap,.fit,.team{grid-template-columns:1fr}
+  .head{grid-template-columns:1fr;gap:16px}
+  .g4,.g5,.ind{grid-template-columns:repeat(2,1fr)}
+  .ind a:last-child{grid-column:1/-1;min-height:240px}
+  .stats-grid,.steps{grid-template-columns:1fr 1fr}
+  .stat:nth-child(2){border-right:0}
+  .stat:nth-child(3){padding-left:0}
+  .step:nth-child(3){padding-left:0;border-left:0}
+  .model{grid-template-columns:1fr}
+  .tabs{flex-direction:row;overflow-x:auto;border-right:0;border-bottom:1px solid var(--band-line)}
+  .tab{white-space:nowrap}
+  .tab small{display:none}
+  .tab.cont{margin:0;border:0;padding-top:12px}
+  .eco-grid{grid-template-columns:1fr 1fr}
+  .eco-grid a:not(:nth-child(3n)){border-right:0}
+  .eco-grid a:nth-child(odd){border-right:1px solid var(--line)}
+  .team .portrait{max-width:380px}
+  .fgrid{grid-template-columns:1fr 1fr}
+}
+@media (max-width:680px){
+  .step1{grid-template-columns:1fr;gap:12px}
+  .managed .g2{grid-template-columns:1fr}
+  :root{--gutter:16px}
+  body{font-size:16px}
+  .sec{padding:72px 0}
+  .hero{padding:64px 0 80px}
+  .g2,.g3,.g4,.g5,.pnote,.fields,.info,.trust,.ind,.stats-grid,.steps,.eco-grid{grid-template-columns:1fr}
+  .stat,.step,.step + .step{padding-left:0;border-left:0;border-right:0;border-bottom:1px solid var(--band-line);padding-bottom:24px}
+  .step,.step + .step{border-bottom-color:var(--line)}
+  .eco-grid a,.eco-grid a:nth-child(odd){border-right:0}
+  .item{grid-template-columns:1fr;gap:8px}
+  .owners div{grid-template-columns:1fr;gap:4px}
+  .panel{padding:28px 22px}
+  .card{padding:24px}
+  .topbar .wrap > span,.topbar .right a:not(:first-child){display:none}
+  .topbar .wrap{justify-content:flex-end}
+  nav.main .btn{display:none}
+  .pillars .grid{grid-template-columns:1fr 1fr;gap:28px 16px}
+  .pillars .item{grid-template-columns:1fr;gap:10px}
+  .ask-t{display:none}
+  .ask{padding:6px}
+  .areas{grid-template-columns:1fr}
+  .findings{position:static;margin-top:-1px;border-radius:0 0 var(--r-lg) var(--r-lg)}
+  .photo{aspect-ratio:auto}
+  .photo > img{aspect-ratio:4/3}
+}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .dex-eye{animation:none}
+  *{transition:none!important}
+}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></symbol>
+    <symbol id="i-phone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></symbol>
+    <symbol id="i-sound" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s7-6.2 7-12a7 7 0 0 0-14 0c0 5.8 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></symbol>
+    <!-- Dex: the exact four bars of the DE logo (from /concepts/mascots) -->
+    <symbol id="dex" viewBox="-6 -6 56 68.5">
+      <g fill="url(#dex-gold)"><rect x="0" y="0" width="44" height="9.5" rx="4.75"/><rect x="6.5" y="15.67" width="31" height="9.5" rx="4.75"/><rect x="6.5" y="31.33" width="31" height="9.5" rx="4.75"/><rect x="0" y="47" width="44" height="9.5" rx="4.75"/></g>
+      <g fill="#fff" opacity=".35"><rect x="3" y="1.3" width="38" height="1.6" rx=".8"/><rect x="9.5" y="16.97" width="25" height="1.6" rx=".8"/><rect x="9.5" y="32.63" width="25" height="1.6" rx=".8"/><rect x="3" y="48.3" width="38" height="1.6" rx=".8"/></g>
+      <g fill="#121212"><ellipse class="dex-eye" cx="17" cy="36.08" rx="1.9" ry="2.1"/><ellipse class="dex-eye" cx="27" cy="36.08" rx="1.9" ry="2.1"/></g>
+    </symbol>
+    <linearGradient id="dex-gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F6D27A"/><stop offset=".45" stop-color="#E3B23C"/><stop offset="1" stop-color="#B9862A"/></linearGradient>
+  </defs>
+</svg>
+
+<!-- ============ TOP BAR + NAV ============ -->
+<div class="topbar">
+  <div class="wrap">
+    <span>Understand your cyber risk and choose a practical next step. <a href="#contact"><u>Book a conversation</u></a></span>
+    <div class="right"><a href="tel:3254809870">325-480-9870</a><a href="#">Support</a><a href="#">Client Portal</a></div>
+  </div>
+</div>
+<nav class="main" aria-label="Primary">
+  <div class="wrap">
+    <a href="#" class="logo" aria-label="Digerati Experts home"><img src="https://digeratiexperts.com/assets/digerati-logo-reverse-CRz8trYf.svg" alt="Digerati Experts"></a>
+    <div class="navlinks"><a href="#">Solutions</a><a href="#">Industries</a><a href="#">Resources</a><a href="#pricing">Pricing</a><a href="#">About</a><a href="#">Store</a><a href="#contact">Contact</a></div>
+    <a href="#contact" class="btn btn-cta">Cyber Risk Assessment</a>
+  </div>
+</nav>
+
+<!-- ============ HERO (no founder photo here; it lives in Team) ============ -->
+<header class="hero band on-photo t-sonoran">
+  <div class="wrap">
+    <div>
+      <p class="mark">Arizona MSP for cybersecurity and managed IT</p>
+      <h1>Cybersecurity-first IT that powers your business.</h1>
+      <p class="lede">Managed IT, security, and compliance — built for Arizona businesses that can't afford downtime.</p>
+      <div class="row">
+        <a href="#contact" class="btn btn-cta">Get My Cyber Risk Assessment</a>
+        <a href="#pricing" class="btn btn-line">See Plans &amp; Pricing</a>
+      </div>
+      <div class="facts">
+        <span><svg><use href="#i-check"/></svg>No obligation</span>
+        <span><svg><use href="#i-check"/></svg>Response within one business day</span>
+        <span><svg><use href="#i-phone"/></svg><a href="tel:3254809870">325-480-9870</a></span>
+      </div>
+      <div class="word">
+        <b>DIG·ER·A·TI</b><span>\ ˌdi-jə-ˈrä-tē \</span><span class="say">dij-uh-RAH-tee</span>
+        <button type="button" id="hear"><svg><use href="#i-sound"/></svg>Hear it</button>
+      </div>
+    </div>
+
+    <div class="card deep assess" aria-label="Illustrative Cyber Risk Assessment preview">
+      <svg class="dex-perch" viewBox="-6 -6 56 68.5" role="img" aria-label="Dex"><use href="#dex"/></svg>
+      <div class="assess-top"><span>Cyber Risk Assessment overview</span><span class="chip">Illustrative</span></div>
+      <h3>What the assessment reviews</h3>
+      <p class="muted small">Identity, endpoints, email, backups, and foundational security controls.</p>
+      <div class="areas">
+        <div><img src="https://digeratiexperts.com/concepts/objects/obj-lock.webp" alt="">Identity &amp; access</div>
+        <div><img src="https://digeratiexperts.com/concepts/objects/obj-laptop.webp" alt="">Endpoints &amp; devices</div>
+        <div><img src="https://digeratiexperts.com/concepts/objects/obj-email.webp" alt="">Email security</div>
+        <div><img src="https://digeratiexperts.com/concepts/objects/obj-backup.webp" alt="">Backups &amp; recovery</div>
+      </div>
+      <div class="score"><span class="muted small">Overall posture</span><b>69 <small>/ 100</small></b></div>
+      <div class="bar"><span>Identity</span><i style="--v:68%"></i><span>68</span></div>
+      <div class="bar"><span>Endpoints</span><i style="--v:77%"></i><span>77</span></div>
+      <div class="bar"><span>Email</span><i style="--v:61%"></i><span>61</span></div>
+      <div class="bar"><span>Backups</span><i style="--v:84%"></i><span>84</span></div>
+      <div class="bar"><span>Controls</span><i style="--v:56%"></i><span>56</span></div>
+    </div>
+  </div>
+</header>
+
+<!-- ============ PILLARS ============ -->
+<div class="pillars">
+  <div class="wrap grid g4">
+    <div class="item"><img src="https://digeratiexperts.com/concepts/objects/obj-shield.webp" alt=""><div><h3>Cybersecurity first</h3><p>We secure your business from the inside out.</p></div></div>
+    <div class="item"><img src="https://digeratiexperts.com/concepts/objects/obj-bell.webp" alt=""><div><h3>Proactive IT</h3><p>Prevent issues before they impact your business.</p></div></div>
+    <div class="item"><img src="https://digeratiexperts.com/concepts/objects/obj-clipboard.webp" alt=""><div><h3>Compliance ready</h3><p>Stay aligned with industry standards and regulations.</p></div></div>
+    <div class="item"><img src="https://digeratiexperts.com/concepts/objects/obj-building.webp" alt=""><div><h3>Local &amp; responsive</h3><p>Arizona-based team, here when you need us.</p></div></div>
+  </div>
+</div>
+
+<!-- ============ WHY WE EXIST ============ -->
+<section class="sec" id="why">
+  <div class="wrap why">
+    <div>
+      <p class="mark">Why we exist</p>
+      <h2>We exist to protect and enable your business.</h2>
+      <p class="lede">You don't want another vendor. You want a security-first partner who reduces risk, improves uptime, and keeps your team moving.</p>
+      <div class="card define">
+        <span class="w">dig·er·a·ti</span>
+        <span class="p">plural noun · a blend of <em>digital</em> and <em>literati</em>, in use since the early 1990s</span>
+        <p>People with deep expertise in computers and digital technology — the ones who actually know how the machinery works.</p>
+      </div>
+    </div>
+    <div class="why-list">
+      <div class="card"><img class="obj" src="https://digeratiexperts.com/concepts/objects/obj-shield.webp" alt=""><div><h3>Security-first operations</h3><p class="muted">Every system, endpoint, and user is protected — by design, not by reaction.</p></div></div>
+      <div class="card"><img class="obj" src="https://digeratiexperts.com/concepts/objects/obj-people.webp" alt=""><div><h3>Co-managed or fully managed</h3><p class="muted">We support your internal IT or serve as your outsourced technology team.</p></div></div>
+      <div class="card"><img class="obj" src="https://digeratiexperts.com/concepts/objects/obj-chart.webp" alt=""><div><h3>Executive-level transparency</h3><p class="muted">Reports, KPIs, and compliance insights that make sense — and drive decisions.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ THREAT STATS ============ -->
+<section class="sec band t-ink" id="stats">
+  <div class="wrap">
+    <div class="head">
+      <div><p class="mark">The threats are real</p><h2>Don't become a statistic.</h2></div>
+      <div class="links"><p class="lede">Endpoint, identity, and recovery discipline have to be owned, not assumed.</p><a class="link" href="#">See the full sourced facts</a></div>
+    </div>
+    <div class="stats-grid">
+      <div class="stat"><b>48%</b><p>of breaches involve ransomware</p><a href="#" target="_blank" rel="noopener">Verizon DBIR 2026 ↗</a></div>
+      <div class="stat"><b>$11.5M</b><p>average cost of a data breach in the United States</p><a href="#" target="_blank" rel="noopener">IBM Cost of a Data Breach 2026 ↗</a></div>
+      <div class="stat"><b>99%+</b><p>of unauthorized access attempts are blocked by MFA</p><a href="#" target="_blank" rel="noopener">Microsoft Digital Defense Report 2025 ↗</a></div>
+      <div class="stat"><b>$392M</b><p>in internet crime losses reported from Arizona in 2024</p><a href="#" target="_blank" rel="noopener">FBI IC3 Annual Report 2024 (PDF) ↗</a></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ WHAT WE TACKLE ============ -->
+<section class="sec alt t-signal" id="challenges">
+  <div class="wrap">
+    <div class="head">
+      <div><p class="mark">Problems we solve</p><h2>What we tackle.</h2></div>
+      <div class="links"><p class="lede">The problems we own with you. Detail lives on Solutions and Cyber Facts.</p><a class="link" href="#">Full threat context</a></div>
+    </div>
+    <div class="grid g3 tackle">
+      <div class="card"><img class="obj" src="https://digeratiexperts.com/concepts/objects/obj-lock.webp" alt=""><div><h3>Ransomware &amp; malware</h3><p class="muted">Threat detection and rapid response to stop attacks before damage occurs.</p></div></div>
+      <div class="card"><img class="obj" src="https://digeratiexperts.com/concepts/objects/obj-backup.webp" alt=""><div><h3>Data loss</h3><p class="muted">Backup strategies with tested disaster recovery to keep the business running.</p></div></div>
+      <div class="card"><img class="obj" src="https://digeratiexperts.com/concepts/objects/obj-clipboard.webp" alt=""><div><h3>Compliance gaps</h3><p class="muted">Navigate HIPAA, PCI DSS, and SOC 2 requirements with continuous monitoring and reporting.</p></div></div>
+      <div class="card"><img class="obj" src="https://digeratiexperts.com/concepts/objects/obj-email.webp" alt=""><div><h3>Phishing &amp; social engineering</h3><p class="muted">Layered email security plus ongoing security awareness training.</p></div></div>
+      <div class="card"><img class="obj" src="https://digeratiexperts.com/concepts/objects/obj-bell.webp" alt=""><div><h3>Zero-day vulnerabilities</h3><p class="muted">Proactive patching and assessments to close gaps before they're exploited.</p></div></div>
+      <div class="card"><img class="obj" src="https://digeratiexperts.com/concepts/objects/obj-eye.webp" alt=""><div><h3>Insider threats</h3><p class="muted">Behavior analytics and access controls to prevent internal breaches.</p></div></div>
+    </div>
+    <div class="card strip">
+      <p><b>Don't see your challenge?</b> <span class="muted">We handle custom threat profiles across Arizona.</span></p>
+      <a href="#contact" class="btn btn-cta">Discuss your security needs</a>
+    </div>
+  </div>
+</section>
+
+<!-- ============ HOW TO WORK WITH US ============ -->
+<section class="sec t-store" id="services">
+  <div class="wrap">
+    <div class="head">
+      <div><p class="mark">How to work with us</p><h2>Three ways to work with us.</h2></div>
+      <div class="links"><p class="lede">Managed IT always starts with a Cyber Risk Assessment. Small teams that just need equipment and licenses can order ready-to-work setups directly.</p><a class="link" href="#">View standalone services</a></div>
+    </div>
+    <div class="lanes paths">
+      <div class="managed">
+        <div class="step1">
+          <img class="obj" src="https://digeratiexperts.com/concepts/objects/obj-clipboard.webp" alt="">
+          <div><span class="chip">Required first step</span><b>Cyber Risk Assessment</b><p>We review identity, endpoints, email, backups, and security posture. Then you choose fully managed or co-managed.</p></div>
+          <a href="#contact" class="btn btn-cta">Get my assessment</a>
+        </div>
+        <div class="then">Then choose how much we own</div>
+        <div class="grid g2">
+          <a href="#" class="card deep"><img class="obj" src="https://digeratiexperts.com/concepts/objects/obj-server.webp" alt=""><span class="chip">Full operations</span><h3>Fully managed IT &amp; cybersecurity</h3><p class="muted">One accountable team for support, identity, endpoints, email, backup, and security operations — delivered through the ProActive Ecosystem.</p><span class="link">Explore managed services</span></a>
+          <a href="#" class="card"><img class="obj" src="https://digeratiexperts.com/concepts/objects/obj-people.webp" alt=""><span class="chip">Your team plus ours</span><h3>Co-managed IT</h3><p class="muted">Add DE security operations, monitoring, and specialized coverage — without replacing your team.</p><span class="link">See co-managed</span></a>
+        </div>
+      </div>
+      <a href="#contact" class="card direct">
+        <img class="obj" src="https://digeratiexperts.com/concepts/objects/obj-laptop.webp" alt="">
+        <span class="chip">Under 30 users</span>
+        <h3>Ready-to-Work IT</h3>
+        <p class="muted" style="margin-bottom:16px">Devices and licenses, set up before they reach you. No assessment needed.</p>
+        <ul class="check">
+          <li><svg><use href="#i-check"/></svg>We buy the devices</li>
+          <li><svg><use href="#i-check"/></svg>We set them up and test them</li>
+          <li><svg><use href="#i-check"/></svg>We ship them ready to use</li>
+          <li><svg><use href="#i-check"/></svg>Per-user licenses, like Microsoft 365, through DE</li>
+        </ul>
+        <p class="who">For business owners and IT departments, in Arizona and beyond.</p>
+        <span class="link">Order devices and licenses</span>
+      </a>
+    </div>
+
+    <div class="card eco">
+      <div class="eco-h"><h3>The ProActive Ecosystem</h3><a class="link" href="#">How the ecosystem works</a></div>
+      <div class="eco-grid">
+        <a href="#"><img src="https://digeratiexperts.com/concepts/objects/obj-eye.webp" alt=""><div><h4>SOC / MDR monitoring</h4><p>24/7 detection and response on Business and Enterprise.</p></div></a>
+        <a href="#"><img src="https://digeratiexperts.com/concepts/objects/obj-laptop.webp" alt=""><div><h4>Endpoint security (EDR)</h4><p>Protect devices across the environment.</p></div></a>
+        <a href="#"><img src="https://digeratiexperts.com/concepts/objects/obj-people.webp" alt=""><div><h4>SMART Identity (MFA + SSO)</h4><p>Stronger access without user chaos.</p></div></a>
+        <a href="#"><img src="https://digeratiexperts.com/concepts/objects/obj-lock.webp" alt=""><div><h4>Privileged access controls</h4><p>Admin controls and audit visibility.</p></div></a>
+        <a href="#"><img src="https://digeratiexperts.com/concepts/objects/obj-backup.webp" alt=""><div><h4>Backup &amp; disaster recovery</h4><p>Recovery planning and restore discipline.</p></div></a>
+        <a href="#"><img src="https://digeratiexperts.com/concepts/objects/obj-email.webp" alt=""><div><h4>Email protection</h4><p>Anti-phishing and mailbox defenses.</p></div></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ WHAT WE PROTECT ============ -->
+<section class="sec t-ink" id="protection">
+  <div class="wrap">
+    <div class="head">
+      <div><p class="mark">What we protect</p><h2>Eight blocks. One accountable operating model.</h2></div>
+      <p class="lede">Each block answers a specific class of threat. Risk and exposure runs continuously beneath the other seven.</p>
+    </div>
+    <div class="card deep model">
+      <div class="tabs" role="tablist" aria-label="Protection blocks" id="tabs"></div>
+      <div class="panel" role="tabpanel" id="panel" aria-live="polite"></div>
+    </div>
+    <p class="note">Illustrative model. Scope, controls, monitoring, and vendors depend on the operating model and your environment.</p>
+  </div>
+</section>
+
+<!-- ============ HOW PROTECTION WORKS ============ -->
+<section class="sec alt t-signal" id="how">
+  <div class="wrap">
+    <div class="head">
+      <div><p class="mark">How protection works</p><h2>Assess, plan, build, then run it.</h2></div>
+      <a class="link" href="#">Full methodology</a>
+    </div>
+    <div class="steps">
+      <div class="step"><em>1</em><h3>Assessment</h3><p>Review identity, endpoints, email, backups, network, and operating reality.</p></div>
+      <div class="step"><em>2</em><h3>Roadmap</h3><p>Match the operating model to the environment — fit, not a ranking ladder.</p></div>
+      <div class="step"><em>3</em><h3>Implementation</h3><p>Documented credentials you own. Controls sized to the model we matched.</p></div>
+      <div class="step"><em>4</em><h3>Continuous</h3><p>Day-to-day support and the DE Security Foundation at every tier; detection, response, recovery, and governance deepen with the plan.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CLIENT PROOF ============ -->
+<section class="sec proof t-store" id="proof">
+  <div class="wrap">
+    <div class="head">
+      <div><p class="mark">Client proof</p><h2>Outcomes Arizona businesses hire us for.</h2></div>
+      <div class="links"><p class="lede">Fewer vendors, clearer visibility, and accountable support when something breaks.</p><a class="link" href="#">View case studies</a></div>
+    </div>
+    <div class="grid g3">
+      <div class="card"><img class="obj" src="https://digeratiexperts.com/concepts/objects/obj-network.webp" alt=""><h3>Fewer vendors to manage</h3><p class="muted">One accountable team for IT support and security operations.</p></div>
+      <div class="card"><img class="obj" src="https://digeratiexperts.com/concepts/objects/obj-eye.webp" alt=""><h3>Clearer security visibility</h3><p class="muted">Identity, endpoint, email, and backup posture you can actually explain.</p></div>
+      <div class="card"><img class="obj" src="https://digeratiexperts.com/concepts/objects/obj-headset.webp" alt=""><h3>Faster triage when something breaks</h3><p class="muted">Named ownership and documented standards — not ticket roulette.</p></div>
+    </div>
+    <div class="trust">
+      <a href="#" class="card"><img class="obj" src="https://digeratiexperts.com/concepts/objects/obj-lock.webp" alt=""><div><h3>Client Bill of Rights</h3><p class="muted" style="margin-bottom:12px">Your credentials, tenants, and licenses stay yours — with access transparency and a clear exit path.</p><span class="link">Read the Bill of Rights</span></div></a>
+      <a href="#" class="card"><img class="obj" src="https://digeratiexperts.com/concepts/objects/obj-shield.webp" alt=""><div><h3>Trust Center</h3><p class="muted" style="margin-bottom:12px">Security documentation and operating expectations for diligence and cyber-insurance conversations.</p><span class="link">Open the Trust Center</span></div></a>
+    </div>
+    <div class="card qr" style="margin-top:20px">
+      <img src="https://digeratiexperts.com/images/reviews/google-review-qr.svg" alt="QR code to leave Digerati Experts a Google review">
+      <div><h3>Worked with us?</h3><p class="muted" style="margin-bottom:10px">Scan with your phone, or use the link, to leave a Google review.</p><div class="row" style="gap:24px"><a class="link" href="#">Leave a Google review</a><a class="link" href="#">Read us on Google</a></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FIT (photo + findings card from mesh) ============ -->
+<section class="sec t-sonoran" id="fit">
+  <div class="wrap fit">
+    <div>
+      <p class="mark">Why Arizona businesses work with us</p>
+      <h2>Protection that fits how you actually operate.</h2>
+      <p class="lede" style="margin-top:16px">From medical practices to law firms to family-owned offices — the businesses Arizona runs on, that can't afford downtime, a breach, or lost client data.</p>
+      <div class="fit-list">
+        <div class="card"><h3>Arizona-based</h3><p class="muted">Local principal support — a real person, not a ticket queue.</p></div>
+        <div class="card"><h3>Principal-led</h3><p class="muted">Recommendations come from the people who stand behind the work.</p></div>
+        <div class="card"><h3>Sized to your business</h3><p class="muted">Controls matched to your risk — not an enterprise stack you won't use.</p></div>
+      </div>
+      <a href="#contact" class="btn btn-cta">Get My Cyber Risk Assessment</a>
+    </div>
+    <div class="photo">
+      <img src="https://digeratiexperts.com/assets/de-trust-assessment-desk-960-6lHaQmEq.webp" alt="Principal-led cyber risk assessment work for an Arizona business">
+      <div class="findings">
+        <h4>Cyber Risk Assessment findings <span class="chip" style="margin-left:6px">Example format</span></h4>
+        <ul>
+          <li><span>Prioritized findings — urgent vs later</span><span>not a product dump</span></li>
+          <li><span>Business-impact context</span><span>evidence &amp; ownership</span></li>
+          <li><span>Right-sized recommendations</span><span>by risk &amp; dependency</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ TEAM (the only place Joe's photo appears) ============ -->
+<section class="sec t-ink" id="team">
+  <div class="wrap">
+    <div class="head">
+      <div><p class="mark">Human trust and ownership</p><h2>The people behind your technology.</h2></div>
+      <div class="links"><p class="lede">When something happens, you should know who owns it — not wonder which queue picked up your ticket.</p><a class="link" href="#">Meet the team</a></div>
+    </div>
+    <div class="team">
+      <div class="card portrait">
+        <img src="https://digeratiexperts.com/images/founder/joe-petro-studio-blazer-white.webp" alt="Joseph Petro, Founder of Digerati Experts">
+        <div class="cap"><h3>Joseph Petro</h3><p class="role">Founder &amp; Chief Technology Strategist</p><p class="loc"><svg><use href="#i-pin"/></svg>Chandler, Arizona HQ</p></div>
+      </div>
+      <div>
+        <h3 class="big">Principal-led managed security operations</h3>
+        <p class="muted">Based right here in Chandler. Joe stays directly involved in risk assessments, infrastructure architecture, and key client milestones — so growing organizations get cybersecurity-first managed IT without becoming account number four thousand.</p>
+        <div class="owners">
+          <div><b>Security operations</b><p>Monitoring, detection, and response ownership when threats appear.</p></div>
+          <div><b>Technical operations</b><p>Day-to-day support, identity, endpoints, and environment stability.</p></div>
+          <div><b>Client success</b><p>QBRs, roadmaps, and a named relationship — not a rotating queue.</p></div>
+        </div>
+        <a href="#contact" class="btn btn-cta">Talk to an expert</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ INDUSTRIES (photo cards from mesh) ============ -->
+<section class="sec t-store" id="industries">
+  <div class="wrap">
+    <div class="head">
+      <div><p class="mark">Specialized solutions</p><h2>Industries we serve.</h2></div>
+      <div class="links"><p class="lede">Cybersecurity built around how Arizona's essential sectors actually work.</p><a class="link" href="#">Browse all industries</a></div>
+    </div>
+    <div class="ind">
+      <a href="#"><img src="https://digeratiexperts.com/assets/Rectangle-152058-1_1767027918697-DA8TdSSK.webp" alt=""><h3>Law firms</h3><p>Protect client privilege and meet ABA requirements.</p><span>View law firms</span></a>
+      <a href="#"><img src="https://digeratiexperts.com/assets/cpa-calculator-2026-10-06-Da4nNtTy.webp" alt=""><h3>CPA firms</h3><p>Secure tax data and meet IRS/FTC requirements.</p><span>View CPA firms</span></a>
+      <a href="#"><img src="https://digeratiexperts.com/assets/Rectangle-152058-2_1767027918698-COgHw6UF.webp" alt=""><h3>Medical practices</h3><p>HIPAA-aligned controls and patient data protection.</p><span>View medical practices</span></a>
+      <a href="#"><img src="https://digeratiexperts.com/assets/Rectangle-152058-3_1767027918698-BIx9yIqT.webp" alt=""><h3>Real estate firms</h3><p>Wire fraud prevention and transaction security.</p><span>View real estate firms</span></a>
+      <a href="#"><img src="https://digeratiexperts.com/assets/Rectangle-152058-4_1767027918698-xOmqAd3Y.webp" alt=""><h3>Animal hospitals</h3><p>Veterinary practice and client data protection.</p><span>View animal hospitals</span></a>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PRICING ============ -->
+<section class="sec t-ink" id="pricing">
+  <div class="wrap">
+    <div class="head">
+      <div><p class="mark">ProActive Ecosystem</p><h2>Four operating models. One matched to you.</h2></div>
+      <p class="lede">We don't start with a package and pile on add-ons. If Office would need heavy modification, Business is the right fit for that environment — not universally "better."</p>
+    </div>
+    <div class="grid g4">
+      <div class="card tier">
+        <img class="obj" src="https://digeratiexperts.com/concepts/objects/obj-laptop.webp" alt="">
+        <div class="top"><span class="name">IT</span></div>
+        <div class="price">$125<small> /user/mo</small></div><div class="min">$1,600 monthly minimum</div>
+        <p class="muted">Smaller, less complex environments that need essential protection and a documented baseline.</p>
+        <ul class="check"><li><svg><use href="#i-check"/></svg>Managed IT &amp; help desk</li><li><svg><use href="#i-check"/></svg>Baseline identity &amp; endpoint</li><li><svg><use href="#i-check"/></svg>Entry cybersecurity</li></ul>
+        <a href="#contact" class="btn btn-line">ProActive IT</a>
+      </div>
+      <div class="card tier">
+        <img class="obj" src="https://digeratiexperts.com/concepts/objects/obj-network.webp" alt="">
+        <div class="top"><span class="name">Office</span></div>
+        <div class="price">$165<small> /user/mo</small></div><div class="min">$2,400 monthly minimum</div>
+        <p class="muted">A broader managed workplace — more users, devices, and a professionally operated network.</p>
+        <ul class="check"><li><svg><use href="#i-check"/></svg>Everything in IT</li><li><svg><use href="#i-check"/></svg>Managed network</li><li><svg><use href="#i-check"/></svg>Endpoint backup</li></ul>
+        <a href="#contact" class="btn btn-line">ProActive Office</a>
+      </div>
+      <div class="card deep tier">
+        <img class="obj" src="https://digeratiexperts.com/concepts/objects/obj-shield.webp" alt="">
+        <div class="top"><span class="name">Business</span><span class="chip">Flagship cyber</span></div>
+        <div class="price">$245<small> /user/mo</small></div><div class="min">$5,400 monthly minimum</div>
+        <p class="muted">Deeper infrastructure, cyber operations, recovery, governance, and strategy.</p>
+        <ul class="check"><li><svg><use href="#i-check"/></svg>Identity, endpoint, and email</li><li><svg><use href="#i-check"/></svg>24/7 SOC / MDR</li><li><svg><use href="#i-check"/></svg>BCDR and strategy reviews</li></ul>
+        <a href="#contact" class="btn btn-cta">ProActive Business</a>
+      </div>
+      <div class="card tier">
+        <img class="obj" src="https://digeratiexperts.com/concepts/objects/obj-building.webp" alt="">
+        <div class="top"><span class="name">Enterprise</span></div>
+        <div class="price">$345<small> /user/mo</small></div><div class="min">$9,000 monthly minimum</div>
+        <p class="muted">Multi-site, regulated, or security-sensitive environments that need the greatest depth.</p>
+        <ul class="check"><li><svg><use href="#i-check"/></svg>Advanced governance</li><li><svg><use href="#i-check"/></svg>Audit-ready reporting</li><li><svg><use href="#i-check"/></svg>Quarterly strategy</li></ul>
+        <a href="#contact" class="btn btn-line">ProActive Enterprise</a>
+      </div>
+    </div>
+    <div class="pnote">
+      <div class="card"><h3>Every managed plan starts with an assessment</h3><p class="muted">Your Cyber Risk Assessment comes first. We assess users, devices, locations, infrastructure, security, compliance, recovery, and whether you need fully or co-managed operations — then match the model. User count is a signal, never the sole criterion.</p><p class="small muted" style="margin-top:12px">Under 30 users and only need devices and licenses? <a class="link" href="#services">See Ready-to-Work IT</a></p></div>
+      <div class="card"><h3>Not just IT support — one operating model</h3><p class="muted">ProActive Business consolidates what organizations often buy separately: managed IT, identity, endpoint, email, network, backup, security operations, and strategy.</p><p class="small muted" style="margin-top:12px">Estimates are not quotes. Your Cyber Risk Assessment confirms final scope. <a class="link" href="#">Compare everything</a></p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ DETECTION & RESPONSE ============ -->
+<section class="sec alt t-signal" id="detect">
+  <div class="wrap detect">
+    <div>
+      <p class="mark">Detection and response</p>
+      <h2>Monitoring that ends with a person who owns the outcome.</h2>
+      <p class="lede" style="margin-top:16px">Modern detection tooling surfaces signals immediately. Our team investigates, prioritizes, and acts. Technology scales coverage; accountability stays human.</p>
+      <ul class="check">
+        <li><svg><use href="#i-check"/></svg>Partner-backed detection across endpoints and identity</li>
+        <li><svg><use href="#i-check"/></svg>Human triage — analysts decide what matters before you get a false alarm</li>
+        <li><svg><use href="#i-check"/></svg>Prioritized remediation tied to your environment</li>
+        <li><svg><use href="#i-check"/></svg>Documented response paths when something needs escalation</li>
+      </ul>
+      <a href="#contact" class="btn btn-cta">Get My Cyber Risk Assessment</a>
+    </div>
+    <div class="card deep flow">
+      <div class="assess-top"><span>Arizona operations</span><span class="chip">Illustrative</span></div>
+      <div class="flow-step"><b>1</b><div><strong>Signal</strong><span>Signals surface immediately</span></div></div>
+      <div class="flow-step"><b>2</b><div><strong>Human triage</strong><span>Our team investigates and prioritizes</span></div></div>
+      <div class="flow-step"><b>3</b><div><strong>Named owner</strong><span>A person owns the outcome, with documented next steps</span></div></div>
+      <svg class="rati-corner" viewBox="-8 -6 60 68.5" aria-hidden="true" id="rati"></svg>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SECURITY UPDATES ============ -->
+<section class="sec t-store" id="insights">
+  <div class="wrap">
+    <div class="head">
+      <div><p class="mark">Security updates, captured Oct 22, 2026</p><h2>Recent threats and insights.</h2></div>
+      <div class="links"><a class="link" href="#">View all security updates</a><a class="link" href="#">Read the Digerati Journal</a></div>
+    </div>
+    <div class="card feed">
+      <div class="item"><div><span class="sev">Critical, actively exploited</span><div class="date">Oct 8, 2026</div></div><div><h3>Apache Struts added to CISA KEV</h3><p>Command injection via the method: prefix when Dynamic Method Invocation is enabled. Exploitation confirmed in the wild.</p><div class="meta">CISA KEV, Apache, CVE-2016-3081</div></div><a class="link" href="#">Read source ↗</a></div>
+      <div class="item"><div><span class="sev">Critical, actively exploited</span><div class="date">Sep 24, 2026</div></div><div><h3>Adobe Commerce and Magento added to CISA KEV</h3><p>Incorrect authorization flaw allows elevated access to sensitive resources without user interaction.</p><div class="meta">CISA KEV, Adobe, CVE-2026-71362</div></div><a class="link" href="#">Read source ↗</a></div>
+      <div class="item"><div><span class="sev">Critical, actively exploited</span><div class="date">Sep 11, 2026</div></div><div><h3>GitLab CE/EE added to CISA KEV</h3><p>Path traversal in the repository commits API lets an unauthenticated user read arbitrary files.</p><div class="meta">CISA KEV, GitLab, CVE-2026-85706</div></div><a class="link" href="#">Read source ↗</a></div>
+      <div class="item"><div><span class="sev">Critical, actively exploited</span><div class="date">Sep 9, 2026</div></div><div><h3>Cisco Secure FMC and SCC Firewall Management added to CISA KEV</h3><p>Authentication bypass could let an unauthenticated remote attacker gain access.</p><div class="meta">CISA KEV, Cisco, CVE-2026-20079</div></div><a class="link" href="#">Read source ↗</a></div>
+    </div>
+    <p class="note">Sources: CISA, NIST NVD, FIRST, Microsoft MSRC. Prioritized by active exploitation, exploit probability, and SMB relevance.</p>
+  </div>
+</section>
+
+<!-- ============ FAQ ============ -->
+<section class="sec t-sonoran" id="faq">
+  <div class="wrap">
+    <div class="head"><div><p class="mark">Common questions</p><h2>Straight answers.</h2></div></div>
+    <div class="faq">
+      <div class="card">
+        <details open><summary>What is your best service?</summary><p>There isn't a universally "best" package. ProActive is four operating models — IT, Office, Business, and Enterprise — matched to users, devices, locations, infrastructure, security, compliance, and whether you need fully or co-managed coverage.</p></details>
+        <details><summary>How do I choose the right plan?</summary><p>Every fully managed or co-managed plan starts with a required Cyber Risk Assessment. User count is a signal, never the sole criterion. After the assessment we match IT, Office, Business, or Enterprise. We don't start with a package and pile on add-ons.</p></details>
+        <details><summary>Can I customize the solutions?</summary><p>Yes — within the operating model that fits. Scope is matched to your environment, and we offer fully managed or co-managed coverage to fit your existing IT structure. Specific needs can also be handled through standalone services.</p></details>
+        <details><summary>Do you work with businesses outside Arizona?</summary><p>Yes, through Ready-to-Work IT. For businesses under 30 users, we buy the devices, set them up, test them, and ship them ready to use, and we provide per-user licenses like Microsoft 365. It's built for business owners and IT departments, in Arizona and beyond.</p></details>
+        <details><summary>Is my data secure?</summary><p>Yes. We use enterprise-grade controls and documented security protocols, with monitoring matched to your plan — 24/7 SOC/MDR on Business and Enterprise. We help Arizona businesses prepare for HIPAA, PCI DSS, SOC 2, and cyber-insurance reviews, with clear ownership of credentials, policies, and evidence.</p></details>
+      </div>
+      <div class="side">
+        <div class="card"><h3>Security and compliance support</h3><p class="small muted">Framework names describe requirements we help you address — not certifications DE holds.</p>
+          <ul class="check"><li><svg><use href="#i-check"/></svg>HIPAA-aligned security and compliance support</li><li><svg><use href="#i-check"/></svg>SOC 2 readiness and control alignment</li><li><svg><use href="#i-check"/></svg>Cyber insurance readiness</li><li><svg><use href="#i-check"/></svg>Security and compliance reporting</li></ul></div>
+        <div class="card"><h3>Serving Greater Phoenix</h3><p class="small muted">On-site and remote support across the Valley. Ready-to-Work IT ships beyond Arizona.</p>
+          <div class="cities"><a href="#">Chandler</a><a href="#">Phoenix</a><a href="#">Gilbert</a><a href="#">Tempe</a><a href="#">Mesa</a><a href="#">Scottsdale</a></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ONE ASSESSMENT + CONTACT ============ -->
+<section class="sec band t-ink contact" id="contact">
+  <div class="wrap">
+    <div>
+      <p class="mark">Cyber Risk Assessment</p>
+      <h2>Start with a Cyber Risk Assessment.</h2>
+      <p class="lede">Every fully managed and co-managed plan starts here. We find identity, endpoint, email, backup, and operating gaps, then confirm scope after we see the environment.</p><p class="small" style="color:var(--on-band-2);margin:-14px 0 28px">Only need devices and licenses for a team under 30? Choose Ready-to-Work IT in the form.</p>
+      <a href="tel:3254809870" class="btn btn-line"><svg width="18" height="18"><use href="#i-phone"/></svg>Call 325-480-9870</a>
+      <div class="info">
+        <div><span>Email</span><a href="mailto:info@digeratiexperts.com">info@digeratiexperts.com</a></div>
+        <div><span>Office</span>Chandler, AZ</div>
+        <div><span>Hours</span>Mon–Fri, 7:00 AM – 6:00 PM MST</div>
+        <div><span>Weekends</span>Emergency support only</div>
+      </div>
+      <div class="live"><i></i>24/7/365 emergency incident response</div>
+    </div>
+    <form class="card" id="lead">
+      <h3>Request your assessment</h3>
+      <p>Tell us about the environment. No hard sell.</p>
+      <div class="fields">
+        <div><label for="f-name">Full name *</label><input id="f-name" required autocomplete="name"></div>
+        <div><label for="f-email">Work email *</label><input id="f-email" type="email" required autocomplete="email"></div>
+        <div><label for="f-phone">Phone</label><input id="f-phone" type="tel" autocomplete="tel"></div>
+        <div><label for="f-co">Company</label><input id="f-co" autocomplete="organization"></div>
+        <div class="full"><label for="f-svc">Interested in</label><select id="f-svc"><option>Cyber Risk Assessment (required for managed IT)</option><option>Fully managed IT &amp; cybersecurity</option><option>Co-managed IT</option><option>Ready-to-Work IT (devices + licenses, under 30 users)</option><option>Managed Security Services</option><option>Compliance &amp; Governance</option><option>Incident Response</option></select></div>
+        <div class="full"><label for="f-msg">Message</label><textarea id="f-msg" placeholder="Users, locations, what's worrying you"></textarea></div>
+      </div>
+      <button class="btn btn-cta" type="submit">Get My Cyber Risk Assessment</button>
+      <div class="assure"><span>Scope and fees confirmed before work begins</span><span>No obligation</span><span>No switch required</span></div>
+    </form>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="fgrid">
+      <div>
+        <a href="#" class="logo"><img src="https://digeratiexperts.com/assets/digerati-logo-reverse-CRz8trYf.svg" alt="Digerati Experts"></a>
+        <p style="margin-top:18px">Cybersecurity and managed IT<br>Chandler, Arizona</p>
+        <p style="margin-top:12px"><a href="tel:3254809870">325-480-9870</a><br><a href="mailto:info@digeratiexperts.com">info@digeratiexperts.com</a></p>
+        <form class="news" onsubmit="event.preventDefault()"><label for="nl" style="position:absolute;left:-9999px">Email address</label><input id="nl" type="email" placeholder="Your email"><button>Subscribe</button></form>
+      </div>
+      <div><h4>Client</h4><ul><li><a href="#">Client Portal</a></li><li><a href="#">Submit Ticket</a></li><li><a href="#">Remote Support</a></li><li><a href="#">Pay Invoice</a></li></ul></div>
+      <div><h4>Services</h4><ul><li><a href="#">Managed IT</a></li><li><a href="#">Cybersecurity</a></li><li><a href="#">Compliance &amp; Risk</a></li><li><a href="#">Backup &amp; DR</a></li></ul></div>
+      <div><h4>Resources</h4><ul><li><a href="#">Digerati Journal</a></li><li><a href="#">Cyber Facts</a></li><li><a href="#">Knowledge Base</a></li><li><a href="#contact">Contact</a></li></ul></div>
+      <div><h4>Trust &amp; legal</h4><ul><li><a href="#">Trust Center</a></li><li><a href="#">Status</a></li><li><a href="#">Vulnerability Disclosure</a></li><li><a href="#">Privacy</a> &nbsp; <a href="#">Terms</a></li><li><a href="#">MSA</a> &nbsp; <a href="#">SLA</a></li></ul></div>
+    </div>
+    <div class="fbase"><span>© 2026 Digerati Experts, Chandler, Arizona</span><span><a href="#">Accessibility</a> &nbsp; <a href="#">Security</a></span></div>
+  </div>
+</footer>
+
+<!-- Ask DE launcher (original DE Desk icon) -->
+<button type="button" class="ask" aria-label="Open Ask DE">
+  <span class="ask-ic"><svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M10 5.6h12.4a5.6 5.6 0 0 1 5.6 5.6v5.2a5.6 5.6 0 0 1-5.6 5.6h-7.9c-1.2 3.1-3.7 5-7.9 5.7 1.9-1.6 2.8-3.5 2.9-5.8a5.6 5.6 0 0 1-5.1-5.5v-5.2A5.6 5.6 0 0 1 10 5.6Z" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/><text x="14.6" y="14.2" text-anchor="middle" dominant-baseline="central" font-family="'Space Grotesk', Arial, sans-serif" font-size="9.4" font-weight="700" letter-spacing="-0.3" fill="currentColor">DE</text><circle cx="22.9" cy="17.4" r="1.75" fill="currentColor"/></svg></span>
+  <span class="ask-t"><b>Ask DE</b><span>We're here to help.</span></span>
+</button>
+
+
+<script>
+
+/* ---- Rati: outlined bars with ruler ticks (from /concepts/mascots) ---- */
+(function(){
+  const s=document.getElementById('rati'); if(!s) return;
+  const bars=[[0,0,44],[6.5,15.67,31],[6.5,31.33,31],[0,47,44]];
+  let h='<g fill="rgba(211,18,106,0.06)" stroke="#D3126A" stroke-width="1.1">'+bars.map(([x,y,w])=>`<rect x="${x}" y="${y}" width="${w}" height="9.5" rx="4.75"/>`).join('')+'</g><g stroke="#a1a1a6" stroke-width=".3">';
+  bars.forEach(([x,y,w])=>{let i=0;for(let t=x+4;t<x+w-3;t+=2,i++){h+=`<line x1="${t}" y1="${y+1.6}" x2="${t}" y2="${y+(i%5===0?3.4:2.5)}"/>`}});
+  h+='</g><g stroke="#a1a1a6" stroke-width=".4"><line x1="-4.5" y1="0" x2="-4.5" y2="56.5"/><line x1="-6" y1="0" x2="-3" y2="0"/><line x1="-6" y1="56.5" x2="-3" y2="56.5"/></g><circle cx="22" cy="4.75" r="1.5" fill="#FF4D8D"/>';
+  s.innerHTML=h;
+})();
+
+/* ---- What We Protect ---- */
+const blocks=[
+ {k:"Identity & access",a:"Answers credential theft",d:"Control who can access business systems, how access is verified, and how accounts are changed or removed over time.",q:["Is MFA appropriate and enforced where required?","Are privileged accounts separated and reviewed?","Does offboarding remove access consistently?"]},
+ {k:"Endpoint",a:"Answers malware",d:"Keep managed devices visible, maintained, and protected with controls matched to device ownership, user role, and business risk.",q:["Which devices are actually in scope?","Are security and patch states visible?","What happens when a device needs containment or rebuild?"]},
+ {k:"Email & collaboration",a:"Answers phishing",d:"Reduce email-driven risk while keeping authentication, filtering, user behavior, and account settings understandable and supportable.",q:["Are domain-authentication records configured correctly?","Are risky mailbox rules or forwarding visible?","How are users trained and supported after suspicious messages?"]},
+ {k:"Browser & web",a:"Answers web-borne compromise",d:"Reduce web-borne risk on managed devices: filtering, browser policy, and safe access to the SaaS the business actually runs on.",q:["Is web or DNS filtering enforced on managed devices?","Which browser settings and extensions are controlled?","How is business SaaS access separated from personal browsing?"]},
+ {k:"Network",a:"Answers lateral movement",d:"Document and manage the business network so internet edge, switching, Wi-Fi, segmentation, and remote access match the operating model.",q:["Who owns and administers the network equipment?","Are guest, IoT, and business networks separated appropriately?","Is the configuration documented and recoverable?"]},
+ {k:"Detection & response",a:"Answers persistence",d:"Watch the environment continuously and act on what matters: detection, triage, containment, and escalation through a documented path.",q:["Who is watching, and around the clock?","What is the containment authority and the escalation path?","Are detections tuned to this environment or generic?"]},
+ {k:"Human risk",a:"Answers social engineering",d:"Make people a managed control: awareness, simulation, and a reporting path that fit the organization rather than a checkbox.",q:["Do users know how to report a suspicious message?","Is training matched to role and risk?","Are results used to adjust controls, not to assign blame?"]},
+ {k:"Risk & exposure",a:"Runs continuously under all seven",d:"The visibility layer beneath the other seven: what is exposed, what is unpatched, what changed, and what that means for the business.",q:["What is exposed to the internet right now?","Which findings are open, and who owns them?","How is risk reported in business terms?"],cont:true}
+];
+const tabs=document.getElementById('tabs'),panel=document.getElementById('panel');
+function show(i){
+  const b=blocks[i];
+  panel.innerHTML=`<span class="chip">${b.a}</span><h3>${b.k}</h3><p>${b.d}</p><div class="qh">Questions the assessment should answer</div><ul class="qs">${b.q.map(x=>`<li><svg><use href="#i-check"/></svg><span>${x}</span></li>`).join('')}</ul>`;
+  [...tabs.children].forEach((t,j)=>{t.setAttribute('aria-selected',j===i);t.tabIndex=j===i?0:-1});
+}
+blocks.forEach((b,i)=>{
+  const t=document.createElement('button');
+  t.className='tab'+(b.cont?' cont':'');t.setAttribute('role','tab');
+  t.innerHTML=`<b>${b.k}</b><small>${b.a}</small>`;
+  t.onclick=()=>show(i);
+  t.onkeydown=e=>{const n=blocks.length;let j=null;if(['ArrowDown','ArrowRight'].includes(e.key))j=(i+1)%n;if(['ArrowUp','ArrowLeft'].includes(e.key))j=(i-1+n)%n;if(j!==null){e.preventDefault();show(j);tabs.children[j].focus()}};
+  tabs.appendChild(t);
+});
+show(0);
+
+/* ---- Hear it ---- */
+document.getElementById('hear').onclick=()=>{try{const u=new SpeechSynthesisUtterance('dij uh RAH tee');u.rate=.8;speechSynthesis.cancel();speechSynthesis.speak(u)}catch(e){}};
+
+/* ---- form (mockup) ---- */
+document.getElementById('lead').onsubmit=e=>{e.preventDefault();e.target.querySelector('button').textContent='Request received — we respond within one business day'};
+</script>
+</body>
+</html>
