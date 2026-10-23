@@ -30,6 +30,28 @@
 
 version: 2
 claims:
+  - id: lane-h-homepage-refinement
+    issue: 696
+    owner: opencode
+    subsystem: homepage
+    branch: opencode/lane-h-homepage-20261022
+    base_sha: 398f4d6f
+    files:
+      - client/src/pages/versions/v8/** (homepage V8 only: one CTA system, canonical names, visitor copy, section consolidation)
+      - docs/lanes/lane-h-homepage.md, docs/lanes/lane-h-phase0.md (log and Phase 0 report)
+    status: active
+    started: 2026-10-22
+    note: >-
+      Lane H, Wave 1 (docs/plans/opencode/lane-h-homepage.md + lane-h-update-1.md).
+      V8 at / refined in place: nothing ported from /version-3, V8 hero kept, threat
+      feed moved off the homepage to a Security Updates link (route and component
+      kept), 02 folded into a thin credibility strip, 07+08+09 merged into
+      proof-and-trust, 15+16 merged into one closing block, story-spine order, every
+      section id kept working with aliases. Homepage-scoped CTA labels live in
+      versions/v8/cta.ts; shared chrome (MegaMenu, StickyCTABar) is NOT edited and
+      its compact labels are a cross-lane follow-up. Assessment price (FAQ) and a
+      client testimonial stay unpublished with TODO (Joe) comments. No deploy;
+      production lags main until Joe deploys.
   - id: dex-presence
     owner: claude
     subsystem: mascots-concept
