@@ -627,11 +627,6 @@
   display:grid;
   gap:8px;
 }
-.hv2 .define .w {
-  font-size:26px;
-  font-weight:700;
-  letter-spacing:.03em;
-}
 .hv2 .define .p {
   color:var(--ink-2);
   font-size:15px;

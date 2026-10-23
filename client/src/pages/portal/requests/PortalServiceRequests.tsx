@@ -7,7 +7,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { LicenseIcon, LoanerComputerIcon, MobileServiceIcon, ReturnComputerIcon } from "@/components/portal/requests/icons";
 import { RequestStatusToken } from "@/components/portal/requests/RequestStatusToken";
 import { isFavoriteRequest } from "@/components/portal/requests/ServiceRequestShell";
-import { srApi } from "@/lib/serviceRequestsApi";
+import { CompanyReadiness } from "@/components/portal/CompanyReadiness";
+import { srApi, ServiceRequestApiError } from "@/lib/serviceRequestsApi";
 import { BASKET_STATUS, TYPE_LABELS, TYPE_ROUTES, type ServiceRequestType } from "@shared/serviceRequests";
 
 const SOFTWARE: Array<{ type: ServiceRequestType; blurb: string; Icon: typeof LoanerComputerIcon }> = [
@@ -48,6 +49,9 @@ export default function PortalServiceRequests() {
   const team = useQuery({ queryKey: ["/api/portal/service-requests/team"], queryFn: srApi.team, retry: false });
   const mine = new Set(requests.map((r) => r.id));
   const teamRequests = (team.data?.requests ?? []).filter((r) => !mine.has(r.id));
+  // A DE admin with no company open gets a picker here, not an error.
+  const listCode = list.error instanceof ServiceRequestApiError ? list.error.body.code : undefined;
+  const noCompany = listCode === "COMPANY_CONTEXT_REQUIRED";
 
   return (
     <PortalLayout
@@ -104,12 +108,13 @@ export default function PortalServiceRequests() {
           <h2 id="my-requests" className="mb-3 text-base font-semibold">
             My Requests
           </h2>
-          {list.isError && (
+          {noCompany && <CompanyReadiness missing />}
+          {list.isError && !noCompany && (
             <Callout tone="bad" title="Your requests couldn't be loaded">
               {list.error instanceof Error ? list.error.message : "Unknown error"}
             </Callout>
           )}
-          {list.isLoading ? (
+          {noCompany ? null : list.isLoading ? (
             <Skeleton className="h-40 rounded-xl" />
           ) : requests.length === 0 ? (
             <Panel id="requests-empty" flush>

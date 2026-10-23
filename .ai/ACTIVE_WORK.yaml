@@ -4486,6 +4486,65 @@ claims:
       fix anything in yellow or red." Search-facing titles and snippets now
       use the Arizona search terms DataForSEO measured. No visible page text
       changes (checked at 390 and 1440: headings unchanged).
+  - id: hero-pronunciation-audio
+    owner: claude
+    subsystem: homepage
+    branch: claude/sleepy-johnson-bkojbp
+    base_sha: 8cdb120
+    started: 2026-10-23
+    files:
+      - client/src/pages/homepage-v2/sections/HeroSection.tsx (speakName only)
+      - client/src/pages/homepage-v2/sections/WhySection.tsx (define card copy only)
+      - client/src/pages/homepage-v2/homepage-v2.css (.define .w removed)
+    status: in-review
+    note: >-
+      Joe, 2026-10-23: the hero "Hear it" "doesn't even sound good or sound
+      like the word Digerati". The v2 hero spoke "dij uh RAH tee" through
+      browser speech synthesis (four separate syllables, voice varies by
+      device) and never used client/public/audio/digerati-pronunciation.wav.
+      Now it plays that file, with synthesis only as the fallback. The file
+      itself is still synthetic; a human recording is pending Joe.
+      Joe picked option A for the word appearing twice: the Why card drops
+      its big "dig·er·a·ti" headword and keeps the meaning, so the word is
+      shown large only once (the hero).
+  - id: portal-admin-company-picker
+    owner: claude
+    subsystem: portal
+    branch: claude/sleepy-johnson-bkojbp
+    base_sha: 8cdb120
+    started: 2026-10-23
+    files:
+      - client/src/components/portal/CompanyReadiness.tsx (inline company picker for DE admins)
+      - client/src/components/portal/AdminModeSwitch.tsx (View as stays on the current client page)
+      - client/src/components/portal/viewAsDestination.test.ts (new)
+      - client/src/pages/portal/requests/PortalServiceRequests.tsx (My Requests shows the picker, not an error)
+    status: in-review
+    note: >-
+      Joe, 2026-10-23: Service Requests showed "Your requests couldn't be
+      loaded. Open a company (impersonate) before filing a request for it",
+      and the licence form only showed options after Manage Companies -> View
+      Portal -> back button. A DE admin with no company open now gets a
+      company picker on the page itself; picking opens that company and
+      reloads the same page. "View as" from the admin bar also stays on the
+      client page you were on instead of jumping to the dashboard.
+      Verified locally in Chromium with the dev bootstrap admin: requests
+      page and licence form both show the picker, picking stays on the page,
+      and the error is gone.
+  - id: portal-sample-buildout-plan
+    owner: claude
+    subsystem: portal
+    branch: claude/sleepy-johnson-bkojbp
+    base_sha: 8cdb120
+    started: 2026-10-23
+    files:
+      - docs/PORTAL-SAMPLE-BUILDOUT-PLAN.md (new)
+    status: in-review
+    note: >-
+      Joe, 2026-10-23: "nothing should be a mere sample … plan it all out fully
+      and document how its built from a high level technically so others can
+      continue your work and jump in." Plan only, no feature code: inventory
+      of the 10 SAMPLE nav items, the build pattern, per-feature slices,
+      order of work and the decisions Joe needs to make.
   - id: zod4-security-upgrade
     owner: claude
     subsystem: dependencies

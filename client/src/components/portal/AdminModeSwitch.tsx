@@ -27,6 +27,10 @@ export const adminClientIdFromPath = (path: string): string | null => {
   return m ? decodeURIComponent(m[1]) : null;
 };
 
+/** Where "View as" lands: the current page unless it is a DE admin page. */
+export const viewAsDestination = (path: string): string =>
+  path.startsWith("/portal/") && !path.startsWith("/portal/admin") ? path : "/portal/dashboard";
+
 async function stopViewAs(): Promise<void> {
   const token = localStorage.getItem("portalToken");
   const res = await fetch("/api/portal/admin/stop-impersonation", {
@@ -79,7 +83,9 @@ export function AdminModeSwitch({ viewingAs }: { viewingAs: { id?: string; compa
       } else {
         if (viewingAs?.id === clientId) return;
         await startViewAs(clientId);
-        window.location.href = "/portal/dashboard";
+        // Stay on the client page you were on (a request form, say) so its
+        // company-scoped data loads in place; admin pages go to the dashboard.
+        window.location.href = viewAsDestination(location);
         return;
       }
     } catch (e: any) {
