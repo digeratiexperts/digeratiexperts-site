@@ -43,19 +43,19 @@ export function HeroSection(): JSX.Element {
           <h1>Cybersecurity-first IT that powers your business.</h1>
           <p className="lede">Managed IT, security, and compliance — built for Arizona businesses that can't afford downtime.</p>
           <div className="row">
-            <a href="#contact" className="btn btn-cta">Get My Cyber Risk Assessment</a>
-            <a href="/pricing" className="btn btn-line">See Plans &amp; Pricing</a>
+            <a href="#contact" className="btn btn-cta" data-testid="button-hero-schedule">Get My Cyber Risk Assessment</a>
+            <a href="/pricing" className="btn btn-line" data-testid="button-hero-pricing">See Plans &amp; Pricing</a>
           </div>
           <div className="facts">
             <span><CheckIcon />No obligation</span>
             <span><CheckIcon />Response within one business day</span>
             <span><PhoneIcon /><a href={PHONE_HREF}>{PHONE_DISPLAY}</a></span>
           </div>
-          <div className="word">
+          <div className="word" data-testid="digerati-pronunciation-card">
             <b>DIG·ER·A·TI</b>
             <span>\ ˌdi-jə-ˈrä-tē \</span>
             <span className="say">dij-uh-RAH-tee</span>
-            <button type="button" onClick={speakName}><SoundIcon />Hear it</button>
+            <button type="button" onClick={speakName} data-testid="button-play-digerati-pronunciation"><SoundIcon />Hear it</button>
           </div>
         </div>
 
