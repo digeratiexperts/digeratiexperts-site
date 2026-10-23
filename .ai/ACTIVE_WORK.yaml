@@ -4496,7 +4496,9 @@ claims:
       - client/src/pages/homepage-v2/sections/HeroSection.tsx (speakName only)
       - client/src/pages/homepage-v2/sections/WhySection.tsx (define card copy only)
       - client/src/pages/homepage-v2/homepage-v2.css (.define .w removed)
-    status: in-review
+    status: verified-live
+    released: 2026-10-23
+    pr: "703"
     note: >-
       Joe, 2026-10-23: the hero "Hear it" "doesn't even sound good or sound
       like the word Digerati". The v2 hero spoke "dij uh RAH tee" through
@@ -4518,7 +4520,9 @@ claims:
       - client/src/components/portal/AdminModeSwitch.tsx (View as stays on the current client page)
       - client/src/components/portal/viewAsDestination.test.ts (new)
       - client/src/pages/portal/requests/PortalServiceRequests.tsx (My Requests shows the picker, not an error)
-    status: in-review
+    status: verified-live
+    released: 2026-10-23
+    pr: "703"
     note: >-
       Joe, 2026-10-23: Service Requests showed "Your requests couldn't be
       loaded. Open a company (impersonate) before filing a request for it",
@@ -4538,7 +4542,9 @@ claims:
     started: 2026-10-23
     files:
       - docs/PORTAL-SAMPLE-BUILDOUT-PLAN.md (new)
-    status: in-review
+    status: verified-live
+    released: 2026-10-23
+    pr: "703"
     note: >-
       Joe, 2026-10-23: "nothing should be a mere sample … plan it all out fully
       and document how its built from a high level technically so others can
@@ -4555,7 +4561,9 @@ claims:
       - package.json, package-lock.json (zod ^4.6.7, drizzle-zod ^0.8.3, zod-validation-error ^5.0.0)
       - shared/serviceRequests.ts (z.enum errorMap -> message)
       - server/integrations/deSyncContract.ts (z.record key schema; z.guid for DE-Sync ids)
-    status: in-review
+    status: verified-live
+    released: 2026-10-23
+    pr: "705"
     note: >-
       GHSA-mrhx-c7xc-m3w5 (zod < 4.6.6, high) turned the CI audit step red on
       every branch on 2026-10-23. Joe: "own PR for zod, go ahead do the
@@ -4572,7 +4580,9 @@ claims:
       - client/src/pages/portal/PortalAgent.tsx, client/src/pages/portal/AdminAgents.tsx (rewritten on real data)
       - client/src/components/portal/shell/portalNav.ts (Manage Agents loses its sample flags)
       - docs/SECRETS-REQUIRED.md (DE_AGENT_RELEASE_MANIFEST, DE_AGENT_RELEASE_KEYS)
-    status: in-review
+    status: verified-live
+    released: 2026-10-23
+    pr: "707"
     note: >-
       Slice G of docs/PORTAL-SAMPLE-BUILDOUT-PLAN.md. Joe, 2026-10-23: "yes to
       all, do it". The Desktop agent page advertised a v1.0.0 installer that
@@ -4599,7 +4609,9 @@ claims:
       - client/src/pages/portal/PortalDashboard.tsx (status line only)
       - client/src/App.tsx (one route)
       - client/src/components/portal/shell/portalNav.ts, portalNav.test.ts (System Status + Status Notices items)
-    status: in-review
+    status: verified-live
+    released: 2026-10-23
+    pr: "706"
     note: >-
       Slice A of docs/PORTAL-SAMPLE-BUILDOUT-PLAN.md. Joe, 2026-10-23: "yes to
       all, do it" (D1 portal owns the data; D2 clients see System Status).
@@ -4626,7 +4638,9 @@ claims:
       - client/src/components/portal/shell/PortalHub.tsx (hub cards filtered by access)
       - client/src/components/portal/shell/portalNav.ts, portalNav.test.ts (IT Roadmap, IT plan hub, Roadmaps admin)
       - client/src/App.tsx (one route)
-    status: in-review
+    status: verified-live
+    released: 2026-10-23
+    pr: "709"
     note: >-
       Slice B (with the itPlan part of D) of docs/PORTAL-SAMPLE-BUILDOUT-PLAN.md.
       Joe, 2026-10-23: "yes to all, do it". DE writes each company's roadmap
@@ -4650,7 +4664,9 @@ claims:
       - client/src/pages/portal/PortalQBR.tsx (rewritten on real data)
       - client/src/components/portal/shell/portalNav.ts, portalNav.test.ts (Business Reviews + admin item)
       - client/src/App.tsx (one route)
-    status: in-review
+    status: verified-live
+    released: 2026-10-23
+    pr: "710"
     note: >-
       Slice C of docs/PORTAL-SAMPLE-BUILDOUT-PLAN.md, stacked on
       portal-it-roadmap (#709). Joe, 2026-10-23: "yes to all, do it". DE writes
@@ -4692,7 +4708,9 @@ claims:
     files:
       - shared/permissions/lane-d.ts (new), shared/permissions/index.ts (one import + one spread), shared/permissions/permissions.test.ts
       - server/routes.ts (status notice admin guard only)
-    status: in-review
+    status: verified-live
+    released: 2026-10-23
+    pr: "708"
     note: >-
       Follow-up to #706. The Status notices menu item is deOnly (DE staff +
       break-glass) but its admin API used requireAdmin (break-glass only), so
@@ -4706,8 +4724,23 @@ claims:
     started: 2026-10-23
     files:
       - package-lock.json (body-parser 1.20.8 -> 1.20.9, ip-address 10.7.3 -> 10.7.4; npm audit fix)
-    status: in-review
+    status: verified-live
+    released: 2026-10-23
+    pr: "712"
     note: >-
       GHSA-27r3-jxmh-p828 (body-parser < 1.20.9, high) turned the CI audit
       step red on 2026-10-23. Lockfile-only patch bumps; express 4.22.3 already
       allows 1.20.9. Same pattern as zod4-security-upgrade.
+  - id: portal-buildout-progress-log
+    owner: claude
+    subsystem: docs
+    branch: claude/sleepy-johnson-bkojbp
+    base_sha: cbac30f
+    started: 2026-10-23
+    files:
+      - docs/PORTAL-SAMPLE-BUILDOUT-PLAN.md (section 7 progress log and open items)
+      - .ai/ACTIVE_WORK.yaml (retire the merged slices as verified-live)
+    status: in-review
+    note: >-
+      Docs-only follow-up after slices A, B, C, D, E and G merged and were
+      checked in production on 2026-10-23. Joe: "Approved".
