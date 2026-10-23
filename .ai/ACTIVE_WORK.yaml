@@ -53,6 +53,36 @@ claims:
       its compact labels are a cross-lane follow-up. Assessment price (FAQ) and a
       client testimonial stay unpublished with TODO (Joe) comments. No deploy;
       production lags main until Joe deploys.
+  - id: lane-a-roles-nav
+    issue: 697
+    pr: 700
+    owner: opencode
+    subsystem: portal-roles-nav
+    branch: opencode/lane-a-roles-nav-20261022
+    base_sha: 398f4d6f
+    files:
+      - docs/plans/opencode/* (shared lane files; landed unchanged)
+      - tools/signcheck/* (shared tool; landed unchanged)
+      - docs/lanes/* (lane log, Phase 0 report, nav registry docs)
+      - shared/portalAccess.ts (can() permission helper + role/permission model; new)
+      - client/src/lib/portalRoles.ts (role keys extended)
+      - client/src/components/portal/shell/portalNav.ts and registry folder (nav config)
+      - server/ (route guards / permission enforcement)
+      - migrations/ (additive only: DE company record, role model)
+      - scripts/sampleDataGuard.mjs + .github/workflows (report-only guardrail)
+    status: merged
+    started: 2026-10-22
+    note: >-
+      Lane A of the approved portal/homepage build (docs/plans/opencode/).
+      Wave 1 foundation: role model (break-glass super admin, DE staff two-hats,
+      client roles), one server-side can() helper, nav registry other lanes
+      extend with their own files, route guards redirecting hidden routes to
+      Home, "Digerati Experts" company record, report-only sample-data CI
+      guardrail. Specialist agent: opens a PR only, never merges.
+      Continuity (Joe, 2026-10-23): opencode lane sessions own this work
+      operationally and any session may continue it from the lane files and
+      this claim if Joe's account cannot work; account access, secrets and
+      legal rights are not transferred by this note and stay Joe's to grant.
   - id: dex-presence
     owner: claude
     subsystem: mascots-concept
