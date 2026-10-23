@@ -87,7 +87,10 @@ try {
     try {
     await visit('company');
     await page.getByText('Choose a company to continue', { exact: true }).waitFor();
-    assert.equal(await page.getByRole('link', { name: 'Choose a company', exact: true }).getAttribute('href'), '/portal/admin/companies');
+    // DE admins pick the company in place (CompanyPicker); with no client
+    // companies yet, the picker points at Manage Companies instead.
+    await page.getByRole('combobox', { name: 'Company', exact: true }).waitFor();
+    assert.equal(await page.getByRole('link', { name: 'Manage Companies', exact: true }).getAttribute('href'), '/portal/admin/companies');
     assert.equal(await page.getByText('CRM not connected yet').count(), 0);
     state = 'unavailable'; await visit('company');
     await page.getByText('Company record unavailable', { exact: true }).waitFor();
