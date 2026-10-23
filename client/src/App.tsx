@@ -192,7 +192,7 @@ const HomepageV4 = lazy(() => import("@/pages/versions/v4/HomepageV4"));
 const HomepageV5 = lazy(() => import("@/pages/versions/v5/HomepageV5"));
 const HomepageV6 = lazy(() => import("@/pages/versions/v6/HomepageV6"));
 const HomepageV7 = lazy(() => import("@/pages/versions/v7/HomepageV7"));
-const HomepageV8 = lazy(() => import("@/pages/versions/v8/HomepageV8"));
+const HomepageV2 = lazy(() => import("@/pages/homepage-v2/HomepageV2"));
 const HomeClassic = lazy(() => import("@/pages/concepts/HomeClassic"));
 const HomepageV9 = lazy(() => import("@/pages/versions/v9/HomepageV9"));
 const HomepageV10 = lazy(() => import("@/pages/versions/v10/HomepageV10"));
@@ -211,10 +211,10 @@ import { servicePageData, industryPageData, supportPageData } from "@/pages/rout
 function Router() {
   return (
     <Switch>
-      {/* Homepage: Version 8 (Joe, 2026-10-03: "its approved. do it."). The previous homepage is kept at /version-0, Version 7 at /version-7. */}
+      {/* Homepage: v2 (Joe, 2026-10-22: approved). The previous homepage is kept at /concepts/home-classic (noindex). */}
       <Route path="/" component={() => (
         <Suspense fallback={<PageLoadingSkeleton />}>
-          <HomepageV8 />
+          <HomepageV2 />
         </Suspense>
       )} />
 

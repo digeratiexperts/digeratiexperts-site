@@ -100,10 +100,14 @@ claims:
       - client/src/App.tsx (lazy import, route, bottom-bar list)
       - client/src/lib/stickyCtaVisibility.test.ts (one expectation)
       - server/spaKnownPaths.ts (one path)
+      - client/src/pages/homepage-v2/ (new; Step 2 build at /, from design/reference/homepage-v2)
+      - design/reference/homepage-v2/ (approved reference copied in, sha256 7d9bbfe4e81d)
+      - design/DESIGN-AUTHORITY.md (gold exception inside t-ink sections, Joe 2026-10-22)
     status: active
     notes: |
-      Step 1 of Homepage v2 swap (Joe, 2026-10-23). Current / unchanged. Step 2
-      (new / from homepage-v2-reference.html) is not started; waits for the reference file.
+      Homepage v2 swap (Joe, 2026-10-22). Step 1: current / kept at /concepts/home-classic.
+      Step 2: v2 at / built as components; PR stays a draft; Joe merges and deploys.
+      PR #698 (Lane H) stays on hold; its cta.ts labels and threat-feed change are borrowed here.
   - id: home-mesh-concept
     owner: claude
     subsystem: homepage-concept
