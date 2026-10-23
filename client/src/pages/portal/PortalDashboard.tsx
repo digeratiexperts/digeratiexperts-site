@@ -21,10 +21,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PortalLayout, portalFirstName } from "./PortalLayout";
+import { PortalHubPanel } from "@/components/portal/shell/PortalHub";
 import { portalGet } from "@/lib/portalApi";
 import { AccountTeamCard } from "@/components/AccountTeamCard";
 import { usePortalAccountTeam } from "@/hooks/usePortalAccountTeam";
 import { readPortalUser } from "@/lib/portalRoles";
+import { findNavItem, isNavAllowed, navViewFor } from "@/components/portal/shell/portalNav";
+import { usePortalIntegrations } from "@/lib/portalIntegrations";
 import { formatDeskTimestamp } from "@/lib/deskTimestamp";
 import { Callout, EmptyState, Panel, Priority, StatTile, TicketStatus, GenericStatus } from "@/components/portal/ui";
 import { GOOGLE_REVIEW_QR_SRC, GOOGLE_REVIEW_URL } from "@/data/reviewsCatalog";
@@ -114,6 +117,16 @@ const todayLabel = new Intl.DateTimeFormat("en-US", { weekday: "long", month: "l
 export default function PortalDashboard() {
   const portalUser = readPortalUser();
   const isAdmin = portalUser?.role === "admin";
+  const integrations = usePortalIntegrations();
+  // Lane A: never offer a quick link to a route this account cannot open — the
+  // same rule the menu and the route guard use (hidden routes redirect to Home).
+  const navView = navViewFor(portalUser);
+  const mayOpen = (href: string): boolean => {
+    const owner = findNavItem(href, navView);
+    return owner
+      ? isNavAllowed(owner.item, { user: portalUser, integrations, navContext: portalUser?.navContext, view: navView })
+      : true;
+  };
   const { data: stats, isLoading, isError } = useQuery<DashboardStats>({
     queryKey: ["/api/portal/dashboard"],
     queryFn: () => portalGet<DashboardStats>("/api/portal/dashboard"),
@@ -274,9 +287,11 @@ export default function PortalDashboard() {
               description="Currently active"
               flush
               actions={
-                <Link href="/portal/services" className="text-sm font-medium pt-link hover:underline">
-                  All services →
-                </Link>
+                mayOpen("/portal/services") ? (
+                  <Link href="/portal/services" className="text-sm font-medium pt-link hover:underline">
+                    All services →
+                  </Link>
+                ) : undefined
               }
             >
               {isLoading ? (
@@ -316,7 +331,7 @@ export default function PortalDashboard() {
                   { href: "/portal/forms", icon: KeyRound, label: "Request access or a device", hint: "Routed for approval" },
                   { href: "/portal/kb", icon: BookOpen, label: "Browse the knowledge base", hint: "Fix it yourself in minutes", testId: "button-view-kb" },
                   { href: "/portal/invoices", icon: FileText, label: "View or pay an invoice", hint: "Zoho Payments", testId: "button-view-invoices" },
-                ].map((a) => {
+                ].filter((a) => mayOpen(a.href)).map((a) => {
                   const Icon = a.icon;
                   return (
                     <li key={a.href}>
@@ -360,6 +375,13 @@ export default function PortalDashboard() {
                 </div>
               </div>
             </Panel>
+
+            {/* Lane A: Home merges Self-Service and Surveys (plan Phase 2). The
+                break-glass account keeps today's page exactly, with both as
+                separate menu items. */}
+            {navViewFor(portalUser) === "target" && (
+              <PortalHubPanel hubHref="/portal/dashboard" title="Self-service and surveys" />
+            )}
           </div>
         </div>
       </div>

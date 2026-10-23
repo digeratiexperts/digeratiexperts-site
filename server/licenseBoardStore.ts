@@ -338,7 +338,7 @@ export async function listJumpCloudPushes(clientId: string, limit = 20): Promise
 }
 
 
-/* Company starter kits and vault requirements (migrations/0020_company_kits_and_vault_requirements.sql). */
+/* Company starter kits and vault requirements (migrations/0021_company_kits_and_vault_requirements.sql). */
 
 let kitsVerified = false;
 async function kitsTablesReady(): Promise<boolean> {
@@ -347,7 +347,7 @@ async function kitsTablesReady(): Promise<boolean> {
   try {
     const [row] = rows(await db.execute(sql`SELECT to_regclass('public.license_company_kits') AS present`));
     if (row && !row.present) {
-      console.error("[license-board] table license_company_kits is missing; run `npm run db:migrate` (migrations/0020).");
+      console.error("[license-board] table license_company_kits is missing; run `npm run db:migrate` (migrations/0021).");
       return false;
     }
     kitsVerified = true;
@@ -445,7 +445,7 @@ export async function addVaultRequirements(
   return added;
 }
 
-/* Microsoft 365 / Google Workspace links and the push log (migrations/0021_license_vendor_push.sql). */
+/* Microsoft 365 / Google Workspace links and the push log (migrations/0022_license_vendor_push.sql). */
 
 let vendorVerified = false;
 async function vendorTablesReady(): Promise<boolean> {
@@ -454,7 +454,7 @@ async function vendorTablesReady(): Promise<boolean> {
   try {
     const [row] = rows(await db.execute(sql`SELECT to_regclass('public.license_vendor_links') AS present`));
     if (row && !row.present) {
-      console.error("[license-board] table license_vendor_links is missing; run `npm run db:migrate` (migrations/0021).");
+      console.error("[license-board] table license_vendor_links is missing; run `npm run db:migrate` (migrations/0022).");
       return false;
     }
     vendorVerified = true;
