@@ -103,6 +103,13 @@ beforeAll(async () => {
     meta: metaStore,
     blobs: blobStore,
     rateLimit: { windowMs: 60_000, max: 1000 },
+    requirements: async (clientId) =>
+      clientId === "alamo"
+        ? [
+            { id: "r1", clientId, kind: "contract", title: "msa", hint: null, source: "kit:regular", createdAt: "" },
+            { id: "r2", clientId, kind: "contract", title: "Incident response plan", hint: "Who to call", source: "kit:regulated", createdAt: "" },
+          ]
+        : [],
   });
   server = createServer(app);
   await new Promise<void>((r) => server.listen(0, "127.0.0.1", () => r()));
@@ -155,6 +162,12 @@ describe("client vault access", () => {
     expect(dl.headers.get("content-disposition")).toMatch(/^attachment;/);
     expect(Buffer.from(await dl.arrayBuffer()).equals(SECRET)).toBe(true);
     expect(audit.map((a) => `${a.action}:${a.outcome}`)).toEqual(["upload:ok", "list:ok", "download:ok"]);
+  });
+
+  it("lists the kit's document checklist with what is already on file", async () => {
+    expect((await upload()).status).toBe(201);
+    const body = await (await fetch(`${baseUrl}/api/portal/admin/clients/alamo/vault`, { headers: hdr(ADMIN) })).json();
+    expect(body.requirements.map((r: any) => `${r.title}:${r.onFile}`)).toEqual(["msa:true", "Incident response plan:false"]);
   });
 
   it("refuses the vault while viewing as a client", async () => {

@@ -99,6 +99,9 @@ Optional; each portal page shows "not connected" without its provider.
 | Name | Kind | Where used | Notes |
 |---|---|---|---|
 | `JUMPCLOUD_API_KEY` | secret | `server/lifecycleOrchestrator.ts`, `server/integrations/jumpcloud.ts` | Identity lifecycle (`/portal/admin/lifecycle`). |
+| `MS_GRAPH_CLIENT_ID` / `MS_GRAPH_CLIENT_SECRET` | secret | `server/integrations/msGraph.ts` | License Patch Bay → Microsoft 365 licence push (Commercial and GCC). Multi-tenant app consented in each client tenant. |
+| `MS_GRAPH_GOV_CLIENT_ID` / `MS_GRAPH_GOV_CLIENT_SECRET` | secret | `server/integrations/msGraph.ts` | Same, for GCC High tenants (app in Azure Government). |
+| `GOOGLE_LICENSING_SERVICE_ACCOUNT` | secret | `server/integrations/googleLicensing.ts` | License Patch Bay → Google Workspace licence push. Service account JSON with domain-wide delegation per client. |
 | `JUMPCLOUD_ORG_ID` | config | `server/integrations/jumpcloud.ts`, `client/src/pages/portal/AdminLifecycle.tsx` | JumpCloud organization. |
 | `JUMPCLOUD_API_BASE` | config | `server/integrations/jumpcloud.ts` | API base override. |
 | `BLACKPOINT_API_KEY` | secret | `server/lifecycleOrchestrator.ts`, `server/integrations/blackpoint.ts` | Blackpoint (also accepts `BLACKPOINT_API_TOKEN`). |

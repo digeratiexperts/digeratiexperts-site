@@ -42,4 +42,36 @@ export type ClientVaultAuditEntry = {
 export type ClientVaultListResponse = {
   items: ClientVaultItem[];
   audit: ClientVaultAuditEntry[];
+  /** Documents the client's business type needs (from its starter kit), with on-file status. */
+  requirements?: ClientVaultRequirementStatus[];
 };
+
+/**
+ * A document the client should have in the vault, added by a business-type
+ * starter kit (shared/starterKits.ts). It counts as on file once a vault item
+ * of the same kind has the same title (case and spacing ignored).
+ */
+export type ClientVaultRequirement = {
+  id: string;
+  clientId: string;
+  kind: ClientVaultKind;
+  title: string;
+  hint: string | null;
+  /** Where it came from, e.g. "kit:regulated". */
+  source: string;
+  createdAt: string;
+};
+
+export type ClientVaultRequirementStatus = ClientVaultRequirement & { onFile: boolean };
+
+const normTitle = (t: string) => t.trim().toLowerCase().replace(/\s+/g, " ");
+
+export function requirementStatus(
+  requirements: ClientVaultRequirement[],
+  items: Array<Pick<ClientVaultItem, "kind" | "title">>,
+): ClientVaultRequirementStatus[] {
+  const onFile = new Set(items.map((i) => `${i.kind}|${normTitle(i.title)}`));
+  return requirements.map((r) => ({ ...r, onFile: onFile.has(`${r.kind}|${normTitle(r.title)}`) }));
+}
+
+export const sameRequirementTitle = (a: string, b: string) => normTitle(a) === normTitle(b);

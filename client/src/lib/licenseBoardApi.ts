@@ -1,4 +1,5 @@
 import { portalFetch } from "@/lib/portalApi";
+import type { MicrosoftCloud, PushStep, PushVendor, VendorLink } from "@shared/vendorPush";
 import type { CompanySeatSummary, PoolItemSummary } from "@shared/licenseBoard";
 import type { CatalogLicense } from "@shared/licensing";
 import type { SHELF_CATEGORIES, ShelfEntry } from "@shared/licenseShelf";
@@ -18,7 +19,7 @@ async function request<T>(url: string, init: RequestInit = {}): Promise<T> {
 const send = <T>(url: string, method: string, data?: unknown) =>
   request<T>(url, { method, body: data === undefined ? undefined : JSON.stringify(data) });
 
-export type BoardCompany = { id: string; name: string; seats: CompanySeatSummary[] };
+export type BoardCompany = { id: string; name: string; kit?: string | null; seats: CompanySeatSummary[] };
 export type Board = { items: PoolItemSummary[]; clients: BoardCompany[]; catalog: CatalogLicense[] };
 
 export type HeldLicense = { assignmentId: string; itemId: string; viaDepartmentId: string | null };
@@ -41,6 +42,10 @@ export type NewPoolItem = {
 
 export type CompanyBoard = {
   company: { id: string; name: string };
+  /** The starter kit (business type) applied to this company, if any. */
+  kit?: { key: string; name: string; appliedAt: string } | null;
+  /** Vault documents its kit needs; onFile is null when the vault can't be read. */
+  vaultDocs?: { needed: number; onFile: number | null };
   pool: Array<
     CompanySeatSummary & { kind: "license" | "app"; vendor: string; product: string; category: string; chocoPackage: string | null }
   >;
@@ -67,6 +72,7 @@ export type Kit = {
   note?: string;
   apps: ShelfEntry[];
   licenses: ShelfEntry[];
+  vaultDocs?: Array<{ kind: string; title: string; hint: string }>;
 };
 export type KitResult = {
   kit: string;
@@ -74,10 +80,36 @@ export type KitResult = {
   appsOn: number;
   onEveryMachine: number;
   recommended: Array<{ itemId: string; product: string }>;
+  vaultDocsAdded?: number;
   note: string | null;
 };
 
+export type VendorPushLog = {
+  id: string;
+  itemId: string;
+  product: string;
+  sku: string;
+  userEmail: string;
+  ok: boolean;
+  detail: string | null;
+  createdAt: string;
+};
+export type VendorPanel = {
+  configured: boolean;
+  link: VendorLink | null;
+  steps: PushStep[];
+  parkedInDepartments: number;
+  pushes: VendorPushLog[];
+};
+export type VendorsView = { microsoft: VendorPanel; google: VendorPanel };
+
 export const licenseBoardApi = {
+  vendors: (clientId: string) => request<VendorsView>(`${BASE}/clients/${encodeURIComponent(clientId)}/vendors`),
+  linkVendor: (clientId: string, vendor: PushVendor, body: { tenant?: string; cloud?: MicrosoftCloud; adminEmail?: string }) =>
+    send(`${BASE}/clients/${encodeURIComponent(clientId)}/vendors/${vendor}`, "PUT", body),
+  pushVendor: (clientId: string, vendor: PushVendor) =>
+    send<{ sent: number; failed: number }>(`${BASE}/clients/${encodeURIComponent(clientId)}/vendors/${vendor}/push`, "POST", {}),
+  setSku: (itemId: string, sku: string) => send(`${BASE}/items/${encodeURIComponent(itemId)}`, "PUT", { sku }),
   kits: () => request<{ kits: Kit[] }>(`${BASE}/kits`),
   applyKit: (clientId: string, kit: string) =>
     send<KitResult>(`${BASE}/clients/${encodeURIComponent(clientId)}/kit`, "POST", { kit }),

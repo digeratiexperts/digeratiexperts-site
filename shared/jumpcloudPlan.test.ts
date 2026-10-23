@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { planJumpCloudInstalls } from "./jumpcloudPlan";
 import { STARTER_KITS, shelfEntry } from "./starterKits";
+import { CLIENT_VAULT_KINDS, requirementStatus } from "./clientVault";
 
 const input = {
   pool: [
@@ -45,5 +46,22 @@ describe("starter kits", () => {
       for (const key of kit.apps) expect(shelfEntry(key)?.kind).toBe("app");
       for (const key of kit.licenses) expect(shelfEntry(key)?.kind).toBe("license");
     }
+  });
+});
+
+describe("kit vault checklists", () => {
+  it("every kit asks for at least the signed agreement, using real vault kinds", () => {
+    for (const kit of STARTER_KITS) {
+      expect(kit.vaultDocs.length, kit.key).toBeGreaterThan(0);
+      for (const d of kit.vaultDocs) expect(CLIENT_VAULT_KINDS).toContain(d.kind);
+      expect(kit.vaultDocs.some((d) => /managed services agreement/i.test(d.title)), kit.key).toBe(true);
+    }
+  });
+
+  it("counts a requirement on file only for the same kind and title", () => {
+    const req = { id: "r1", clientId: "c", kind: "contract" as const, title: "Incident response plan", hint: null, source: "kit:regulated", createdAt: "" };
+    expect(requirementStatus([req], [{ kind: "contract", title: "incident  response PLAN" }])[0].onFile).toBe(true);
+    expect(requirementStatus([req], [{ kind: "script", title: "Incident response plan" }])[0].onFile).toBe(false);
+    expect(requirementStatus([req], [{ kind: "contract", title: "Incident response plan v2" }])[0].onFile).toBe(false);
   });
 });
