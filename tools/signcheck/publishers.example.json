@@ -1,0 +1,13 @@
+{
+  "publishers": [
+    {
+      "label": "Digerati Experts (Artifact Signing)",
+      "organization": "REPLACE with the O= value on DE's Artifact Signing certificate",
+      "eku": "REPLACE with DE's identity EKU, 1.3.6.1.4.1.311.97.x.x.x.x (shown in the Azure portal on the certificate profile)"
+    },
+    {
+      "label": "Microsoft",
+      "organization": "Microsoft Corporation"
+    }
+  ]
+}

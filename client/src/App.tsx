@@ -162,6 +162,11 @@ const PortalKbArticle = lazy(() => import("@/pages/portal/kb/PortalKbArticle"));
 const AdminKb = lazy(() => import("@/pages/portal/kb/AdminKb"));
 const AdminOrderRequests = lazy(() => import("@/pages/portal/AdminOrderRequests"));
 const PortalServiceRequests = lazy(() => import("@/pages/portal/requests/PortalServiceRequests"));
+const PortalHubHelp = lazy(() => import("@/components/portal/shell/PortalHub").then(m => ({ default: m.HelpHub })));
+const PortalHubPeopleDevices = lazy(() => import("@/components/portal/shell/PortalHub").then(m => ({ default: m.PeopleDevicesHub })));
+const PortalHubBillingContracts = lazy(() => import("@/components/portal/shell/PortalHub").then(m => ({ default: m.BillingContractsHub })));
+const PortalHubOrderEquipment = lazy(() => import("@/components/portal/shell/PortalHub").then(m => ({ default: m.OrderEquipmentHub })));
+const PortalHubItPlan = lazy(() => import("@/components/portal/shell/PortalHub").then(m => ({ default: m.ItPlanHub })));
 const PortalLoanerComputerRequest = lazy(() => import("@/pages/portal/requests/PortalLoanerComputerRequest"));
 const PortalReturnComputerRequest = lazy(() => import("@/pages/portal/requests/PortalReturnComputerRequest"));
 const PortalMobileRequest = lazy(() => import("@/pages/portal/requests/PortalMobileRequest"));
@@ -797,6 +802,32 @@ function Router() {
       <Route path="/portal/dashboard" component={() => (
         <Suspense fallback={<PageLoadingSkeleton />}>
           <PortalDashboard />
+        </Suspense>
+      )} />
+      {/* Target-menu hubs (lane A: merged routes stay mounted at their own paths) */}
+      <Route path="/portal/help" component={() => (
+        <Suspense fallback={<PageLoadingSkeleton />}>
+          <PortalHubHelp />
+        </Suspense>
+      )} />
+      <Route path="/portal/people-devices" component={() => (
+        <Suspense fallback={<PageLoadingSkeleton />}>
+          <PortalHubPeopleDevices />
+        </Suspense>
+      )} />
+      <Route path="/portal/billing-contracts" component={() => (
+        <Suspense fallback={<PageLoadingSkeleton />}>
+          <PortalHubBillingContracts />
+        </Suspense>
+      )} />
+      <Route path="/portal/order-equipment" component={() => (
+        <Suspense fallback={<PageLoadingSkeleton />}>
+          <PortalHubOrderEquipment />
+        </Suspense>
+      )} />
+      <Route path="/portal/it-plan" component={() => (
+        <Suspense fallback={<PageLoadingSkeleton />}>
+          <PortalHubItPlan />
         </Suspense>
       )} />
       <Route path="/portal/tickets" component={() => (

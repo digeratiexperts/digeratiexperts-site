@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "wouter";
 import { Building2, ShieldCheck, Users, Plus, Eye, Loader, Search, ArrowRight, Building, FileText, Upload, Trash2, BarChart3, Ticket, Activity } from "lucide-react";
 import { portalGet } from "@/lib/portalApi";
+import { CompanyAccessPanel } from "@/components/portal/CompanyAccessPanel";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useUpload } from "@/hooks/use-upload";
@@ -659,6 +660,9 @@ export function AdminCompanies() {
                       )}
                     </div>
                   </Panel>
+
+                  {/* Lane A: DE staff grant entitlements and client hats here. */}
+                  {selectedCompanyId && <CompanyAccessPanel companyId={selectedCompanyId} />}
                 </div>
               ) : null}
             </TabsContent>
