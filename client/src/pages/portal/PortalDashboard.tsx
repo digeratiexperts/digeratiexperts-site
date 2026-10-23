@@ -21,6 +21,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PortalLayout, portalFirstName } from "./PortalLayout";
+import { PortalHubPanel } from "@/components/portal/shell/PortalHub";
+import { navViewFor } from "@/components/portal/shell/portalNav";
 import { portalGet } from "@/lib/portalApi";
 import { AccountTeamCard } from "@/components/AccountTeamCard";
 import { usePortalAccountTeam } from "@/hooks/usePortalAccountTeam";
@@ -360,6 +362,13 @@ export default function PortalDashboard() {
                 </div>
               </div>
             </Panel>
+
+            {/* Lane A: Home merges Self-Service and Surveys (plan Phase 2). The
+                break-glass account keeps today's page exactly, with both as
+                separate menu items. */}
+            {navViewFor(portalUser) === "target" && (
+              <PortalHubPanel hubHref="/portal/dashboard" title="Self-service and surveys" />
+            )}
           </div>
         </div>
       </div>

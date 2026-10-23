@@ -78,6 +78,13 @@ jobs:
         if: env.DE_LIGHT != 'true'
         run: npm run check
 
+      # Lane A/F (docs/plans/opencode/): SAMPLE badges, mock/sample/demo data
+      # imports and sample-data flags in production code. Report-only until
+      # Lane F switches the guardrail to enforce.
+      - name: Sample-data guardrail (report-only)
+        if: env.DE_LIGHT != 'true'
+        run: npm run check:sample-data
+
       - name: Portal session-expiry browser regression
         if: env.DE_LIGHT != 'true'
         run: node scripts/qa/portal-session-expiry.mjs

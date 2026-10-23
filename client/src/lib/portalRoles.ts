@@ -1,5 +1,7 @@
 /** Client-side portal org role helpers (mirrors server portalOrg capabilities). */
 
+import type { AccountClass, ClientRole, EntitlementKey, NavDataKey } from "@shared/permissions";
+
 export type OrgRole = "staff" | "manager" | "dept_it_contact" | "company_it_contact";
 
 export type PortalUserSession = {
@@ -14,6 +16,15 @@ export type PortalUserSession = {
   manager?: { id: string; email: string; fullName: string } | null;
   companyDomains?: string[];
   isCompanyItContact?: boolean;
+  /** Lane A: super_admin | de_staff | client, derived from the live role value. */
+  accountClass?: AccountClass;
+  /** Lane A: effective client hats (explicit rows + legacy org-role derivation). */
+  clientRoles?: ClientRole[];
+  /** Lane A: entitlements + data gates for the acting company (GET /api/portal/me). */
+  navContext?: {
+    entitlements?: EntitlementKey[] | null;
+    data?: Partial<Record<NavDataKey, boolean>> | null;
+  };
   capabilities?: {
     chat?: boolean;
     approvals?: boolean;

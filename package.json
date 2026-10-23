@@ -27,6 +27,8 @@
     "test:advisor": "tsx --test server/services/msp-advisor/*.test.ts",
     "eval:advisor": "tsx server/services/msp-advisor/eval/score.ts",
     "check:active-work": "node scripts/check-active-work.mjs",
+    "check:sample-data": "node scripts/sampleDataGuard.mjs",
+    "check:sample-data:enforce": "node scripts/sampleDataGuard.mjs --enforce",
     "test:recraft-icons": "node --test .claude/skills/recraft-icons/scripts/recraft.test.mjs",
     "check:store-pdfs": "tsx scripts/qa/store-pdf-check.mts",
     "test:msp-ai-kit": "node --test .claude/skills/msp-ai-kit/scripts/build.test.mjs && node .claude/skills/msp-ai-kit/scripts/build.mjs --check && node .claude/skills/msp-ai-kit/scripts/build.mjs --verify .claude/skills/msp-ai-kit/examples/digerati-experts && node .claude/skills/msp-ai-kit/scripts/eval.mjs --score-golden && node .claude/skills/msp-ai-kit/scripts/sync-facts.mjs --check"

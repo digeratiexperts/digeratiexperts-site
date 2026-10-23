@@ -25,7 +25,8 @@ import { useSEO } from "@/hooks/useSEO";
 import { readImpersonatingCompany, type PortalUserSession } from "@/lib/portalRoles";
 import { usePortalHubEvents } from "@/hooks/usePortalHubEvents";
 import { cn } from "@/lib/utils";
-import { findNavItem, isNavItemActive, navGroupsFor } from "@/components/portal/shell/portalNav";
+import { findNavItem, isNavItemActive, isNavAllowed, navGroupsFor, navViewFor } from "@/components/portal/shell/portalNav";
+import { isDeStaff } from "@shared/permissions";
 import { usePortalIntegrations } from "@/lib/portalIntegrations";
 import { resetPortalSession, signOutOfPortal, usePortalSession } from "@/components/portal/shell/portalSession";
 import { PortalTour } from "@/components/portal/shell/PortalTour";
@@ -100,11 +101,31 @@ export function PortalLayout({
 
   const integrations = usePortalIntegrations(ready && !!user);
   const groups = useMemo(
-    () => navGroupsFor(user, integrations),
+    () => navGroupsFor(user, integrations, user?.navContext),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [user?.id, user?.orgRole, user?.role, user?.isCompanyItContact, integrations.vpn.mode, integrations.phone.mode, integrations.shipping.mode],
+    [user?.id, user?.orgRole, user?.role, user?.isCompanyItContact, user?.accountClass, user?.clientRoles, user?.navContext?.entitlements, user?.navContext?.data?.sharedFiles, integrations.vpn.mode, integrations.phone.mode, integrations.shipping.mode],
   );
-  const current = findNavItem(location);
+  const navView = navViewFor(user);
+  const current = findNavItem(location, navView);
+  // Lane A route guard: a hidden route visited directly redirects to Home with a
+  // short note. No route is deleted; the guard reads the same rule as the menu.
+  const [navNote, setNavNote] = useState<string | null>(null);
+  const deniedLabel = useMemo(() => {
+    if (!ready || !user || gateBlocks || !current) return null;
+    const allowed = isNavAllowed(current.item, {
+      user,
+      integrations,
+      navContext: user.navContext,
+      view: navView,
+    });
+    return allowed ? null : current.item.label;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [current?.item.href, ready, gateBlocks, user?.id, user?.role, user?.orgRole, user?.isCompanyItContact, user?.navContext?.data?.sharedFiles, integrations.vpn.mode, integrations.phone.mode, integrations.shipping.mode]);
+  useEffect(() => {
+    if (!deniedLabel) return;
+    setNavNote(`${deniedLabel} is not available for your account.`);
+    setLocation("/portal/dashboard", { replace: true });
+  }, [deniedLabel, setLocation]);
   const sidebarNav = useRef<HTMLElement>(null);
   useEffect(() => {
     if (!ready || gateBlocks) return;
@@ -166,8 +187,8 @@ export function PortalLayout({
                 <span className="truncate">{companyName}</span>
               </div>
             )}
-            {user?.role === "admin" && (
-              // Below 1024px the topbar switcher is hidden; admins switch company here.
+            {isDeStaff(user) && (
+              // Below 1024px the topbar switcher is hidden; DE staff switch company here.
               <div className="mt-2 lg:hidden group-data-[collapsible=icon]:hidden" data-testid="sidebar-tenant-selector">
                 <TenantSelector currentTenant={impersonatingCompany ? { id: impersonatingCompany.id ?? "", companyName: impersonatingCompany.companyName ?? "" } : null} />
               </div>
@@ -257,7 +278,7 @@ export function PortalLayout({
               <Button variant="outline" size="icon" onClick={() => setPaletteOpen(true)} className="h-9 w-9 border-border bg-card hover:bg-accent md:hidden" aria-label="Search or jump to a page" data-tour="search">
                 <Search className="h-4 w-4" aria-hidden="true" />
               </Button>
-              {user?.role === "admin" && (
+              {isDeStaff(user) && (
                 <div className="hidden lg:block">
                   <TenantSelector currentTenant={impersonatingCompany ? { id: impersonatingCompany.id ?? "", companyName: impersonatingCompany.companyName ?? "" } : null} />
                 </div>
@@ -272,12 +293,19 @@ export function PortalLayout({
             </div>
           </header>
 
-          {user?.role === "admin" && <AdminModeSwitch viewingAs={impersonatingCompany} />}
+          {isDeStaff(user) && <AdminModeSwitch viewingAs={impersonatingCompany} />}
 
           {impersonatingCompany && (
             <div className="pt-warn-strip border-b px-4 py-1.5 text-xs" role="status">
               Viewing as <strong>{impersonatingCompany.companyName || "a client company"}</strong>.{" "}
               <button type="button" onClick={handleStopImpersonation} className="underline underline-offset-2">Exit</button>
+            </div>
+          )}
+
+          {navNote && (
+            <div className="border-b border-border bg-muted/40 px-4 py-1.5 text-xs text-muted-foreground" role="status" data-testid="nav-not-available">
+              <span>{navNote}</span>{" "}
+              <button type="button" onClick={() => setNavNote(null)} className="underline underline-offset-2">Dismiss</button>
             </div>
           )}
 
