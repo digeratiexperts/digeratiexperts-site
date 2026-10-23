@@ -64,7 +64,7 @@ import {
 } from "./portalZohoAuth";
 import { verifyTurnstile } from "./middleware/security";
 import { eventBus, EventTypes } from "./eventBus";
-import { notificationService } from "./services/notificationService";
+import { notificationService, sendEmail } from "./services/notificationService";
 import { logger } from "./logger";
 import { newPasswordError } from "./passwordBreach";
 import { passwordPolicyError, type PasswordContext } from "@shared/passwordPolicy";
@@ -206,6 +206,17 @@ import { registerRetiredLegacyAuthRoutes } from "./legacyAuthRetired";
 import { registerAddressLookupRoutes } from "./addressLookup";
 import { registerRetiredLegacyGenericRoutes } from "./legacyGenericRetired";
 import { loginRateLimiter, loginKnockRateLimiter, formSubmissionRateLimiter, apiGeneralRateLimiter, paymentRateLimiter } from "./middleware/rateLimiter";
+import { actingCompanyId, auditMutation, requirePermission } from "./portalAccess";
+import { registerPortalAccessRoutes } from "./portalAccessRoutes";
+import {
+  accountClassOf,
+  can,
+  effectiveClientRoles,
+  isDeStaff,
+  type ClientRole,
+  type EntitlementKey,
+} from "@shared/permissions";
+import { getEntitlements, hasSharedFiles } from "./portalAccessStore";
 import { enqueueOutbox } from "./integrations/deSyncStore";
 import { COMPANY, PRIMARY_PHONE } from "@shared/companyContact";
 import {
@@ -313,7 +324,7 @@ const SESSION_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
 // ========== MIDDLEWARE ==========
 
 // JWT-based auth: Authorization Bearer and/or httpOnly portalAuth cookie
-export function authMiddleware(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+export async function authMiddleware(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   const authHeader = req.headers.authorization;
   const bearer =
     authHeader && authHeader.startsWith("Bearer ")
@@ -380,6 +391,9 @@ export function authMiddleware(req: AuthenticatedRequest, res: Response, next: N
     // authorization and tenancy on every request.
     const liveRole = live.role || "user";
     const isLiveAdmin = liveRole === "admin";
+    // DE staff (role=staff) is a client manager across all companies and uses the
+    // same company switcher; the break-glass class is unchanged (lane A D8).
+    const isLiveDe = isLiveAdmin || liveRole === "staff";
 
     req.user = {
       id: live.id,
@@ -389,6 +403,8 @@ export function authMiddleware(req: AuthenticatedRequest, res: Response, next: N
         (live as any).storeRole ??
         (isLiveAdmin ? "admin" : "public"),
       clientId: live.clientId ?? null,
+      /** Client hats for can(); empty = legacy org-role derivation only (lane A). */
+      clientRoles: Array.isArray((live as any).clientRoles) ? (live as any).clientRoles : [],
       orgRole:
         live.orgRole ??
         (isLiveAdmin ? "company_it_contact" : "staff"),
@@ -397,14 +413,18 @@ export function authMiddleware(req: AuthenticatedRequest, res: Response, next: N
       isCompanyItContact:
         live.isCompanyItContact ?? isLiveAdmin,
       fullName: live.fullName,
-      impersonatingCompanyId: isLiveAdmin
+      impersonatingCompanyId: isLiveDe
         ? (decoded as any).impersonatingCompanyId || null
         : null,
-      impersonatingCompanyName: isLiveAdmin
+      impersonatingCompanyName: isLiveDe
         ? (decoded as any).impersonatingCompanyName || null
         : null,
     };
     req.userId = live.id;
+
+    // Break-glass / DE staff action audit (lane A): written before the handler so
+    // a break-glass action with no audit row does not run.
+    if (!(await auditMutation(req, res))) return;
     
     // Optional session validation from cookies
     const sessionId = req.cookies?.sessionId;
@@ -454,12 +474,14 @@ export function requireRole(...allowedRoles: StoreRole[]) {
   };
 }
 
-// Middleware that requires admin role for portal admin routes
+// Middleware that requires admin role for portal admin routes.
+// Lane A: enforced through the one permission helper (can() → "portal.admin",
+// super-admin-only), so behaviour is identical to `role !== 'admin'` before it.
 export function requireAdmin(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   if (!req.user) {
     return res.status(401).json({ error: 'Authentication required' });
   }
-  if (req.user.role !== 'admin') {
+  if (!can(req.user, "portal.admin", actingCompanyId(req))) {
     return res.status(403).json({ error: 'Admin access required' });
   }
   next();
@@ -602,6 +624,12 @@ const SECURITY_KNOCK_MAP: Record<string, KnockKind> = {
   MFA_VERIFICATION_SUCCESS: "mfa_success",
   MFA_LOCKED_OUT: "locked_out",
   TURNSTILE_FAILED: "turnstile_failed",
+};
+
+/** Lane A: break-glass strong-MFA enforcement — built, default OFF, waiting on Joe. */
+const requireStrongMfa = (): boolean => {
+  const v = (process.env.PORTAL_BREAK_GLASS_REQUIRE_STRONG_MFA || "").trim().toLowerCase();
+  return v === "1" || v === "true" || v === "yes" || v === "on";
 };
 
 const logSecurityEvent = (event: string, req: AuthenticatedRequest, data: any) => {
@@ -1126,6 +1154,13 @@ export async function registerRoutes(app: Express) {
       if (live.role === "admin") storeRole = "admin";
       const user = publicPortalUser(live, storeRole);
       const mgr = managerSummaryForUser(live as OrgUserFields);
+      // Lane A: account class, effective client hats, and the nav context the
+      // target menu is built from (entitlements + honest data gates).
+      const actingCompany = (req.user as any)?.impersonatingCompanyId || live.clientId || null;
+      const [entitlements, sharedFiles] = await Promise.all([
+        getEntitlements(actingCompany),
+        hasSharedFiles(actingCompany),
+      ]);
       res.json({
         success: true,
         user: {
@@ -1133,6 +1168,13 @@ export async function registerRoutes(app: Express) {
           managerUserId: mgr.managerUserId,
           manager: mgr.manager,
           companyDomains: mgr.companyDomains,
+          accountClass: accountClassOf(req.user),
+          clientRoles: effectiveClientRoles(req.user),
+          navContext: {
+            entitlements,
+            // itPlan stays false until a real roadmap/review source exists (Lane C).
+            data: { sharedFiles, itPlan: false },
+          },
         },
         accountTeam: accountTeamForClient(live.clientId),
       });
@@ -2531,6 +2573,36 @@ export async function registerRoutes(app: Express) {
 
   // Portal Login Endpoint
   // Helper: complete login and return token + session
+  //
+  // Break-glass login alert (lane A, additive — lane-a-update-2.md §1): every
+  // successful login by the break-glass account emails Joe. It is an alert, never
+  // a second factor. Recipient: PORTAL_BREAK_GLASS_ALERT_EMAIL (default below).
+  const breakGlassAlertEsc = (value: unknown): string =>
+    String(value ?? "").replace(/[&<>"']/g, (ch) =>
+      (({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }) as Record<string, string>)[ch]!,
+    );
+  function alertBreakGlassLogin(user: any, req: AuthenticatedRequest): void {
+    if (user?.role !== "admin") return;
+    const to = (process.env.PORTAL_BREAK_GLASS_ALERT_EMAIL || "admin@digeratiexperts.com").trim();
+    const at = new Date().toISOString();
+    const ip = clientIpFromReq(req) || "unknown";
+    const ua = typeof req.headers?.["user-agent"] === "string" ? req.headers["user-agent"] : "unknown";
+    const lines = [
+      `Account: ${user.email}`,
+      `When: ${at}`,
+      `IP: ${ip}`,
+      `Agent: ${ua}`,
+    ];
+    void sendEmail({
+      to,
+      subject: "Break-glass portal login",
+      htmlBody: `<p>A break-glass portal login just completed.</p><ul>${lines
+        .map((line) => `<li>${breakGlassAlertEsc(line)}</li>`)
+        .join("")}</ul><p>If this was not you, sign out everywhere and rotate the account.</p>`,
+      textBody: `A break-glass portal login just completed.\n${lines.join("\n")}\nIf this was not you, sign out everywhere and rotate the account.`,
+    }).catch((err: unknown) => logger.warn("Break-glass login alert failed", { error: String(err) }));
+  }
+
   function completeLogin(user: any, req: AuthenticatedRequest, res: Response) {
     const sessionId = randomId();
     const now = Date.now();
@@ -2553,6 +2625,7 @@ export async function registerRoutes(app: Express) {
     setPortalAuthCookie(res, token);
 
     logSecurityEvent("PORTAL_USER_LOGIN", req, { userId: user.id, email: user.email, role: user.role, storeRole, sessionId });
+    alertBreakGlassLogin(user, req);
 
     return res.json({
       success: true,
@@ -2591,6 +2664,7 @@ export async function registerRoutes(app: Express) {
       sessionId,
       method: "zoho_sso",
     });
+    alertBreakGlassLogin(user, req);
 
     const params = new URLSearchParams({
       zoho_sso: "1",
@@ -2858,6 +2932,27 @@ export async function registerRoutes(app: Express) {
       if (!passwordValid) {
         logSecurityEvent("PORTAL_LOGIN_FAILED", req, { email });
         return res.status(401).json({ message: "Invalid email or password" });
+      }
+
+      // Break-glass strong-MFA enforcement (lane A). Built but OFF by default:
+      // waiting on Joe (docs/lanes/lane-a-roles-nav.md → "Waiting on Joe"). When
+      // PORTAL_BREAK_GLASS_REQUIRE_STRONG_MFA is set, the break-glass account may
+      // only sign in with an enrolled passkey / hardware key — no email or code
+      // fallback counts as a second factor (lane-a-update-2.md §1).
+      if (user.role === "admin" && requireStrongMfa()) {
+        const passkeys = Array.isArray(user.mfaPasskeys) ? user.mfaPasskeys : [];
+        const strong = Boolean(user.mfaEnabled && user.mfaMethod === "passkey" && passkeys.length > 0);
+        if (!strong) {
+          logSecurityEvent("PORTAL_LOGIN_FAILED", req, {
+            email,
+            reason: "break_glass_strong_mfa_required",
+          });
+          return res.status(403).json({
+            code: "STRONG_MFA_REQUIRED",
+            message:
+              "This account needs a passkey or hardware security key. Enroll one from your profile before signing in.",
+          });
+        }
       }
 
       if (user.role !== 'admin' && user.emailVerified === false) {
@@ -4545,8 +4640,8 @@ export async function registerRoutes(app: Express) {
     res.json({ accountManagers: ACCOUNT_MANAGERS, defaultId: DEFAULT_ACCOUNT_MANAGER_ID, sales: SALES_DEPARTMENT });
   });
 
-  // Admin tenant selector - quick list for dropdown
-  app.get("/api/portal/admin/tenants", [authMiddleware, requireAdmin], async (req: AuthenticatedRequest, res: Response) => {
+  // Admin tenant selector - quick list for dropdown (DE staff + break-glass: company.switch)
+  app.get("/api/portal/admin/tenants", [authMiddleware, requirePermission("company.switch")], async (req: AuthenticatedRequest, res: Response) => {
     try {
       // Get MSP company first, then clients sorted by name
       const allCompanies = Array.from(portalClients.values());
@@ -4667,8 +4762,8 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  // Admin impersonation - switch to view a company's portal
-  app.post("/api/portal/admin/impersonate", [authMiddleware, requireAdmin, validateInput], async (req: AuthenticatedRequest, res: Response) => {
+  // Company switcher (impersonation) - DE staff + break-glass (lane A D8)
+  app.post("/api/portal/admin/impersonate", [authMiddleware, requirePermission("company.switch"), validateInput], async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { companyId } = req.body;
       
@@ -4686,7 +4781,7 @@ export async function registerRoutes(app: Express) {
         { 
           userId: req.userId, 
           email: req.user?.email, 
-          role: "admin",
+          role: req.user?.role || "admin",
           impersonatingCompanyId: companyId,
           impersonatingCompanyName: company.companyName,
         }, 
@@ -4710,15 +4805,15 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  // Stop impersonation - return to admin view
-  app.post("/api/portal/admin/stop-impersonation", [authMiddleware, requireAdmin], async (req: AuthenticatedRequest, res: Response) => {
+  // Stop impersonation - return to the unswitched view (DE staff + break-glass)
+  app.post("/api/portal/admin/stop-impersonation", [authMiddleware, requirePermission("company.switch")], async (req: AuthenticatedRequest, res: Response) => {
     try {
-      // Generate a regular admin token without impersonation
+      // Generate a regular token without impersonation
       const adminToken = jwt.sign(
         { 
           userId: req.userId, 
           email: req.user?.email, 
-          role: "admin",
+          role: req.user?.role || "admin",
         }, 
         jwtSecret(), 
         { expiresIn: '24h' }
@@ -4742,6 +4837,15 @@ export async function registerRoutes(app: Express) {
     getCompany: (id) => portalClients.get(id),
     getUserByEmail: (email) => portalUsers.get(email),
     logSecurityEvent,
+  });
+
+  // Lane A: entitlements + client hats management (DE staff + break-glass).
+  registerPortalAccessRoutes(app, {
+    auth: authMiddleware as any,
+    validateInput: validateInput as any,
+    findUserById: (id) => findUserById(id),
+    listClientUsers: (clientId) => Array.from(portalUsers.values()).filter((u) => u.clientId === clientId),
+    commitUser: (user) => portalUsers.commit(user as any),
   });
 
   // Client vault: contracts, scripts, agent installers, PII (DE admin + MFA, never via View as)
