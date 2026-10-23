@@ -339,9 +339,9 @@ export const PORTAL_NAV_ITEMS: PortalNavItem[] = [
     icon: Map,
     key: "other",
     hint: "Strategic plan",
-    sample: true,
     section: "programs",
-    rule: { sample: true, featureReady: false },
+    // Owners read, comment and approve (shared/permissions/lane-c.ts roadmap.read).
+    rule: { roles: ["owner" as ClientRole], featureReady: true },
   },
   {
     href: "/portal/qbr",
@@ -500,7 +500,8 @@ export const PORTAL_NAV_ITEMS: PortalNavItem[] = [
     icon: Map,
     key: "other",
     hint: "Roadmap and business reviews",
-    rule: { roles: ["owner" as ClientRole], sample: true, featureReady: false, requiresData: "itPlan" },
+    // Appears once DE has written a roadmap for the company (navContext.data.itPlan).
+    rule: { roles: ["owner" as ClientRole], featureReady: true, requiresData: "itPlan" },
     target: { group: "manage", label: "IT plan and reviews", order: 5 },
     children: ["/portal/roadmap", "/portal/qbr"],
   },
@@ -573,6 +574,16 @@ export const PORTAL_NAV_ITEMS: PortalNavItem[] = [
     section: "admin",
     rule: { deOnly: true, featureReady: true },
     target: { group: "admin", label: "Status notices", order: 8 },
+  },
+  {
+    href: "/portal/admin/roadmap",
+    label: "Roadmaps",
+    icon: Map,
+    key: "other",
+    hint: "Write client IT roadmaps",
+    section: "admin",
+    rule: { deOnly: true, featureReady: true },
+    target: { group: "admin", label: "Roadmaps", order: 9 },
   },
   {
     href: "/portal/admin/data-sources",

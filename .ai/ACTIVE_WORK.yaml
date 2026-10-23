@@ -4550,6 +4550,31 @@ claims:
       guaranteed" line are gone; no device health until an RMM integration
       exists. Hub sync is a follow-up: the Hub has no ingest endpoint for
       status notices yet.
+  - id: portal-it-roadmap
+    owner: claude
+    subsystem: portal
+    branch: claude/portal-it-roadmap
+    base_sha: d798421
+    started: 2026-10-23
+    files:
+      - migrations/0022_portal_roadmap_items.sql (new)
+      - shared/schema.ts (portalRoadmapItems only), shared/roadmap.ts (new)
+      - shared/permissions/lane-c.ts (new), shared/permissions/index.ts (one import + one spread)
+      - server/roadmapStore.ts, server/roadmapRoutes.ts, server/roadmapRoutes.test.ts (new)
+      - server/routes.ts (one registration block; /api/portal/me itPlan)
+      - client/src/lib/roadmapApi.ts, client/src/components/portal/roadmap/RoadmapItemCard.tsx, client/src/pages/portal/AdminRoadmap.tsx (new)
+      - client/src/pages/portal/PortalRoadmap.tsx (rewritten on real data)
+      - client/src/components/portal/shell/PortalHub.tsx (hub cards filtered by access)
+      - client/src/components/portal/shell/portalNav.ts, portalNav.test.ts (IT Roadmap, IT plan hub, Roadmaps admin)
+      - client/src/App.tsx (one route)
+    status: in-review
+    note: >-
+      Slice B (with the itPlan part of D) of docs/PORTAL-SAMPLE-BUILDOUT-PLAN.md.
+      Joe, 2026-10-23: "yes to all, do it". DE writes each company's roadmap
+      (title, why it matters, priority, target quarter, estimate, status);
+      the company's owners see it, comment, and approve or decline proposals.
+      The sample items, "Reduces breach risk by 85%"-style claims and invented
+      budget are gone; figures are summed from the rows.
   - id: portal-status-staff-access
     owner: claude
     subsystem: portal
@@ -4565,3 +4590,16 @@ claims:
       break-glass) but its admin API used requireAdmin (break-glass only), so
       a DE staff account would see the page and get 403 on every action. Adds
       lane D's `status.manage` permission and guards the routes with it.
+  - id: body-parser-security-patch
+    owner: claude
+    subsystem: dependencies
+    branch: claude/deps-body-parser
+    base_sha: dc665cd
+    started: 2026-10-23
+    files:
+      - package-lock.json (body-parser 1.20.8 -> 1.20.9, ip-address 10.7.3 -> 10.7.4; npm audit fix)
+    status: in-review
+    note: >-
+      GHSA-27r3-jxmh-p828 (body-parser < 1.20.9, high) turned the CI audit
+      step red on 2026-10-23. Lockfile-only patch bumps; express 4.22.3 already
+      allows 1.20.9. Same pattern as zod4-security-upgrade.

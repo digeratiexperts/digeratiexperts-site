@@ -130,6 +130,7 @@ import { registerPortalAssistRoutes } from "./portalAssistRoutes";
 import { registerAgentReleaseRoutes } from "./agentReleaseRoutes";
 import { envReleaseSource } from "./agentRelease";
 import { registerStatusNoticeRoutes } from "./statusNoticeRoutes";
+import { companyHasRoadmap, registerRoadmapRoutes } from "./roadmapRoutes";
 import { registerLicensingRoutes } from "./licensingRoutes";
 import { registerPortalAgreementRoutes } from "./portalAgreementRoutes";
 import { registerLicenseBoardRoutes } from "./licenseBoardRoutes";
@@ -1160,9 +1161,10 @@ export async function registerRoutes(app: Express) {
       // Lane A: account class, effective client hats, and the nav context the
       // target menu is built from (entitlements + honest data gates).
       const actingCompany = (req.user as any)?.impersonatingCompanyId || live.clientId || null;
-      const [entitlements, sharedFiles] = await Promise.all([
+      const [entitlements, sharedFiles, itPlan] = await Promise.all([
         getEntitlements(actingCompany),
         hasSharedFiles(actingCompany),
+        actingCompany ? companyHasRoadmap(actingCompany).catch(() => false) : Promise.resolve(false),
       ]);
       res.json({
         success: true,
@@ -1175,8 +1177,8 @@ export async function registerRoutes(app: Express) {
           clientRoles: effectiveClientRoles(req.user),
           navContext: {
             entitlements,
-            // itPlan stays false until a real roadmap/review source exists (Lane C).
-            data: { sharedFiles, itPlan: false },
+            // itPlan: the company has roadmap items (Lane C). Business reviews join this when they ship.
+            data: { sharedFiles, itPlan },
           },
         },
         accountTeam: accountTeamForClient(live.clientId),
@@ -1354,6 +1356,13 @@ export async function registerRoutes(app: Express) {
     guards: [authMiddleware, validateInput],
     // DE staff manage notices too, matching the Status notices menu item (deOnly).
     adminGuards: [authMiddleware, requirePermission("status.manage"), validateInput],
+    getClient: serviceRequestDeps.getClient,
+    findUser: serviceRequestDeps.findUser,
+  });
+  // IT Roadmap (server/roadmapRoutes.ts). DE side: roadmap.manage on the company in the path.
+  registerRoadmapRoutes(app, {
+    guards: [authMiddleware, validateInput],
+    adminGuards: [authMiddleware, requirePermission("roadmap.manage", (req) => req.params.companyId || null), validateInput],
     getClient: serviceRequestDeps.getClient,
     findUser: serviceRequestDeps.findUser,
   });
