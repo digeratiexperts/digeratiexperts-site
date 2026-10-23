@@ -440,7 +440,7 @@ export type LoanerFields = z.infer<typeof loanerFieldsSchema>;
 
 export const returnFieldsSchema = z.object({
   ...shared,
-  returnReason: z.enum(RETURN_REASON_KEYS, { errorMap: () => ({ message: "Reason for PC return is required" }) }),
+  returnReason: z.enum(RETURN_REASON_KEYS, { message: "Reason for PC return is required" }),
   assetId: z.string().trim().max(80).optional().nullable(),
   assetNotListed: z.boolean().default(false),
   manualAsset: z
@@ -472,7 +472,7 @@ export const licenseFieldsSchema = z.object({
   accountKind: z.enum(["person", "admin", "service", "shared"]).default("person"),
   requestedForUserId: z.string().trim().min(1, "Requested for is required").max(80),
   accountName: z.string().trim().max(200).optional().default(""),
-  platform: z.enum(PLATFORM_KEYS, { errorMap: () => ({ message: "Choose a platform" }) }),
+  platform: z.enum(PLATFORM_KEYS, { message: "Choose a platform" }),
   licenseKey: z.string().trim().min(1, "Choose a licence").max(60),
   operation: z.enum(["add", "remove"]).default("add"),
   businessJustification: z.string().trim().min(1, "Business justification is required").max(2000),
@@ -481,7 +481,7 @@ export type LicenseFields = z.infer<typeof licenseFieldsSchema>;
 
 export const mobileFieldsSchema = z.object({
   requestedForUserId: z.string().trim().min(1, "Requested for is required").max(80),
-  activity: z.enum(MOBILE_ACTIVITY_KEYS, { errorMap: () => ({ message: "Choose a mobile activity" }) }),
+  activity: z.enum(MOBILE_ACTIVITY_KEYS, { message: "Choose a mobile activity" }),
   mobileNumber: z.string().trim().max(40).optional().default(""),
   carrier: z.string().trim().max(120).optional().default(""),
   deviceIdentifier: z.string().trim().max(200).optional().default(""),

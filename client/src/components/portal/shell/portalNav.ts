@@ -339,9 +339,9 @@ export const PORTAL_NAV_ITEMS: PortalNavItem[] = [
     icon: Map,
     key: "other",
     hint: "Strategic plan",
-    sample: true,
     section: "programs",
-    rule: { sample: true, featureReady: false },
+    // Owners read, comment and approve (shared/permissions/lane-c.ts roadmap.read).
+    rule: { roles: ["owner" as ClientRole], featureReady: true },
   },
   {
     href: "/portal/qbr",
@@ -349,9 +349,9 @@ export const PORTAL_NAV_ITEMS: PortalNavItem[] = [
     icon: BarChart3,
     key: "other",
     hint: "Quarterly reviews",
-    sample: true,
     section: "programs",
-    rule: { sample: true, featureReady: false },
+    // Owners read published reviews (shared/permissions/lane-c.ts reviews.read).
+    rule: { roles: ["owner" as ClientRole], featureReady: true },
   },
   {
     href: "/portal/learning",
@@ -368,11 +368,13 @@ export const PORTAL_NAV_ITEMS: PortalNavItem[] = [
     label: "System Status",
     icon: Activity,
     key: "other",
-    hint: "Uptime and incidents",
-    sample: true,
+    hint: "Incidents and maintenance",
     section: "programs",
-    rule: { deOnly: true, sample: true, featureReady: false },
-    target: { group: "de", label: "System Status", order: 4 },
+    // Every signed-in user may open it: from the status line on Home and from
+    // the Get help hub, not as its own menu entry (lane-d-status-shipping.md).
+    // DE staff post notices from DE Admin → Status notices.
+    rule: { featureReady: true },
+    target: { group: "portal", label: "Service status", order: 2, hub: "/portal/help" },
   },
 
   // ── Tools ──
@@ -460,7 +462,7 @@ export const PORTAL_NAV_ITEMS: PortalNavItem[] = [
     hint: "Tickets, DE Desk chat and request forms",
     rule: { featureReady: true },
     target: { group: "portal", label: "Get help", order: 2 },
-    children: ["/portal/tickets", "/portal/chat", "/portal/forms"],
+    children: ["/portal/tickets", "/portal/chat", "/portal/forms", "/portal/status"],
   },
   {
     href: "/portal/people-devices",
@@ -498,7 +500,8 @@ export const PORTAL_NAV_ITEMS: PortalNavItem[] = [
     icon: Map,
     key: "other",
     hint: "Roadmap and business reviews",
-    rule: { roles: ["owner" as ClientRole], sample: true, featureReady: false, requiresData: "itPlan" },
+    // Appears once DE has written a roadmap for the company (navContext.data.itPlan).
+    rule: { roles: ["owner" as ClientRole], featureReady: true, requiresData: "itPlan" },
     target: { group: "manage", label: "IT plan and reviews", order: 5 },
     children: ["/portal/roadmap", "/portal/qbr"],
   },
@@ -563,6 +566,36 @@ export const PORTAL_NAV_ITEMS: PortalNavItem[] = [
     target: { group: "admin", label: "Contracts", order: 4 },
   },
   {
+    href: "/portal/admin/status",
+    label: "Status Notices",
+    icon: Activity,
+    key: "other",
+    hint: "Post incidents and maintenance",
+    section: "admin",
+    rule: { deOnly: true, featureReady: true },
+    target: { group: "admin", label: "Status notices", order: 8 },
+  },
+  {
+    href: "/portal/admin/roadmap",
+    label: "Roadmaps",
+    icon: Map,
+    key: "other",
+    hint: "Write client IT roadmaps",
+    section: "admin",
+    rule: { deOnly: true, featureReady: true },
+    target: { group: "admin", label: "Roadmaps", order: 9 },
+  },
+  {
+    href: "/portal/admin/business-reviews",
+    label: "Business Reviews (DE)",
+    icon: BarChart3,
+    key: "other",
+    hint: "Write client business reviews",
+    section: "admin",
+    rule: { deOnly: true, featureReady: true },
+    target: { group: "admin", label: "Business reviews", order: 10 },
+  },
+  {
     href: "/portal/admin/data-sources",
     label: "Data Sources",
     icon: Plug,
@@ -586,10 +619,9 @@ export const PORTAL_NAV_ITEMS: PortalNavItem[] = [
     label: "Manage Agents",
     icon: Download,
     key: "other",
-    hint: "Desktop agents",
-    sample: true,
+    hint: "Endpoint agent release",
     section: "admin",
-    rule: { superAdminOnly: true, sample: true, featureReady: false },
+    rule: { superAdminOnly: true, featureReady: true },
   },
   {
     href: "/portal/admin/openai",

@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PortalLayout, portalFirstName } from "./PortalLayout";
 import { PortalHubPanel } from "@/components/portal/shell/PortalHub";
+import { StatusLine } from "@/components/portal/StatusLine";
 import { portalGet } from "@/lib/portalApi";
 import { AccountTeamCard } from "@/components/AccountTeamCard";
 import { usePortalAccountTeam } from "@/hooks/usePortalAccountTeam";
@@ -195,6 +196,8 @@ export default function PortalDashboard() {
             </Button>
           )}
         </section>
+
+        <StatusLine />
 
         {isAdmin && knocks?.summary && (
           <Callout

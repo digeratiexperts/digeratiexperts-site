@@ -15,9 +15,8 @@ export function WhySection(): JSX.Element {
           <h2>We exist to protect and enable your business.</h2>
           <p className="lede">You don't want another vendor. You want a security-first partner who reduces risk, improves uptime, and keeps your team moving.</p>
           <div className="card define">
-            <span className="w">dig·er·a·ti</span>
-            <span className="p">plural noun · a blend of <em>digital</em> and <em>literati</em>, in use since the early 1990s</span>
-            <p>People with deep expertise in computers and digital technology — the ones who actually know how the machinery works.</p>
+            <span className="p">Our name, <em>digerati</em>, is a blend of <em>digital</em> and <em>literati</em>, in use since the early 1990s.</span>
+            <p>It means people with deep expertise in computers and digital technology — the ones who actually know how the machinery works.</p>
           </div>
         </div>
         <div className="why-list">

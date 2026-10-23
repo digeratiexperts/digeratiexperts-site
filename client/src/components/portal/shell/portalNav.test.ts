@@ -86,7 +86,7 @@ describe("update-2 acceptance: the break-glass account reaches everything today"
 
   it("keeps sample badges and is never gated by role, entitlement or data", () => {
     const shown = items(breakGlass, SAMPLE_INT, NO_DATA);
-    expect(shown.find((i) => i.href === "/portal/status")?.sample).toBe(true);
+    expect(shown.find((i) => i.href === "/portal/questionnaires")?.sample).toBe(true);
     for (const item of PORTAL_NAV_ITEMS.filter((i) => i.section)) {
       expect(isNavAllowed(item, { user: breakGlass, integrations: SAMPLE_INT, navContext: NO_DATA, view: "legacy" }), item.href).toBe(true);
     }
@@ -143,7 +143,8 @@ describe("target client menu", () => {
     const shown = labels(deStaff);
     expect(shown).toEqual(expect.arrayContaining(["Home", "Get help", "Infrastructure Issues", "Structure & IDs", "Companies"]));
     // Samples stay out of the daily DE staff menu (update 3 §3): Ship Center is
-    // still in sample mode here, and System Status / DE Questionnaires never left it.
+    // still in sample mode here, and DE Questionnaires never left it. System Status
+    // is real now but lives in the Get help hub, not as its own menu entry.
     expect(shown).not.toContain("Ship Center");
     expect(shown).not.toContain("System Status");
     expect(shown).not.toContain("DE Questionnaires");
@@ -191,11 +192,14 @@ describe("route guard (hidden route → Home with a note)", () => {
 
   it("denies a client the route behind a hidden item and allows the menu's own routes", () => {
     const ctx = { integrations: SAMPLE_INT, navContext: NO_DATA, view: "target" as const };
+    // The IT plan hub is real now (lane C): owners only, once the company has a roadmap.
     const roadmapOwner = findNavItem("/portal/roadmap", "target")!.item;
     expect(isNavAllowed(roadmapOwner, { ...ctx, user: standardUser })).toBe(false);
+    expect(isNavAllowed(roadmapOwner, { ...ctx, user: deStaff })).toBe(true);
     // Update 3 §3: unfinished features are hidden from DE staff too — only the
     // break-glass account still reaches them.
-    expect(isNavAllowed(roadmapOwner, { ...ctx, user: deStaff })).toBe(false);
+    const questionnaires = findNavItem("/portal/questionnaires", "legacy")!.item;
+    expect(isNavAllowed(questionnaires, { ...ctx, user: deStaff })).toBe(false);
 
     const infraOwner = findNavItem("/portal/infrastructure", "target")!.item;
     expect(isNavAllowed(infraOwner, { ...ctx, user: clientItContact })).toBe(false);
@@ -205,5 +209,57 @@ describe("route guard (hidden route → Home with a note)", () => {
     expect(isNavAllowed(homeOwner, { ...ctx, user: standardUser })).toBe(true);
     // The break-glass account is never redirected away.
     expect(isNavAllowed(roadmapOwner, { ...ctx, user: breakGlass, view: "legacy" })).toBe(true);
+  });
+});
+
+describe("System Status (real, in the Get help hub)", () => {
+  const ctx = { integrations: SAMPLE_INT, navContext: NO_DATA, view: "target" as const };
+
+  it("lets every client role open the status page, which folds into Get help", () => {
+    const status = findNavItem("/portal/status", "legacy")!.item;
+    expect(status.sample).toBeFalsy();
+    for (const user of [standardUser, clientItContact, clientViewer, deStaff]) {
+      expect(isNavAllowed(status, { ...ctx, user }), user.id ?? "").toBe(true);
+    }
+    expect(findNavItem("/portal/status", "target")?.item.href).toBe("/portal/help");
+    expect(PORTAL_NAV_HUBS["/portal/help"]).toContain("/portal/status");
+  });
+
+  it("gives Status notices to DE staff only", () => {
+    const admin = findNavItem("/portal/admin/status", "legacy")!.item;
+    expect(isNavAllowed(admin, { ...ctx, user: deStaff })).toBe(true);
+    for (const user of [standardUser, clientItContact, clientViewer]) {
+      expect(isNavAllowed(admin, { ...ctx, user }), user.id ?? "").toBe(false);
+    }
+  });
+});
+
+describe("IT Roadmap (real, owners, in the IT plan hub)", () => {
+  const owner: PortalUserSession = { ...standardUser, clientRoles: ["owner"] };
+  const withPlan = { entitlements: [], data: { sharedFiles: false, itPlan: true } };
+
+  it("shows IT plan and reviews to owners once the company has a roadmap, never to standard users", () => {
+    expect(labels(owner, SAMPLE_INT, NO_DATA)).not.toContain("IT plan and reviews");
+    expect(labels(owner, SAMPLE_INT, withPlan)).toContain("IT plan and reviews");
+    expect(labels(standardUser, SAMPLE_INT, withPlan)).not.toContain("IT plan and reviews");
+  });
+
+  it("lets owners open the roadmap and Business Reviews pages, not standard users", () => {
+    const roadmap = findNavItem("/portal/roadmap", "legacy")!.item;
+    const qbr = findNavItem("/portal/qbr", "legacy")!.item;
+    const ctx = { integrations: SAMPLE_INT, navContext: withPlan, view: "target" as const };
+    expect(isNavAllowed(roadmap, { ...ctx, user: owner })).toBe(true);
+    expect(isNavAllowed(roadmap, { ...ctx, user: standardUser })).toBe(false);
+    expect(isNavAllowed(qbr, { ...ctx, user: owner })).toBe(true);
+    expect(isNavAllowed(qbr, { ...ctx, user: standardUser })).toBe(false);
+  });
+
+  it("gives Roadmaps and Business reviews (DE Admin) to DE staff only", () => {
+    const ctx = { integrations: SAMPLE_INT, navContext: NO_DATA, view: "target" as const };
+    for (const href of ["/portal/admin/roadmap", "/portal/admin/business-reviews"]) {
+      const admin = findNavItem(href, "legacy")!.item;
+      expect(isNavAllowed(admin, { ...ctx, user: deStaff }), href).toBe(true);
+      for (const user of [standardUser, clientItContact, owner]) expect(isNavAllowed(admin, { ...ctx, user }), href).toBe(false);
+    }
   });
 });
