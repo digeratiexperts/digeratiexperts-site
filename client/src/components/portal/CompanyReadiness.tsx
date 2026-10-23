@@ -58,6 +58,11 @@ export function CompanyPicker() {
         ))}
       </select>
       {busy && <span className="text-xs text-muted-foreground" role="status">Opening…</span>}
+      {tenants.isSuccess && clients.length === 0 && (
+        <span className="text-xs text-muted-foreground">
+          No client companies yet. Add one in <Link href="/portal/admin/companies" className="font-semibold underline">Manage Companies</Link>.
+        </span>
+      )}
       {(error || tenants.isError) && (
         <span role="alert" className="text-xs text-destructive">
           {error || "Companies couldn't be loaded."}{" "}
