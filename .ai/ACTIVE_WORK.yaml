@@ -4624,3 +4624,16 @@ claims:
       break-glass) but its admin API used requireAdmin (break-glass only), so
       a DE staff account would see the page and get 403 on every action. Adds
       lane D's `status.manage` permission and guards the routes with it.
+  - id: body-parser-security-patch
+    owner: claude
+    subsystem: dependencies
+    branch: claude/deps-body-parser
+    base_sha: dc665cd
+    started: 2026-10-23
+    files:
+      - package-lock.json (body-parser 1.20.8 -> 1.20.9, ip-address 10.7.3 -> 10.7.4; npm audit fix)
+    status: in-review
+    note: >-
+      GHSA-27r3-jxmh-p828 (body-parser < 1.20.9, high) turned the CI audit
+      step red on 2026-10-23. Lockfile-only patch bumps; express 4.22.3 already
+      allows 1.20.9. Same pattern as zod4-security-upgrade.
