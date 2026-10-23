@@ -4486,3 +4486,19 @@ claims:
       fix anything in yellow or red." Search-facing titles and snippets now
       use the Arizona search terms DataForSEO measured. No visible page text
       changes (checked at 390 and 1440: headings unchanged).
+  - id: hero-pronunciation-audio
+    owner: claude
+    subsystem: homepage
+    branch: claude/sleepy-johnson-bkojbp
+    base_sha: 8cdb120
+    started: 2026-10-23
+    files:
+      - client/src/pages/homepage-v2/sections/HeroSection.tsx (speakName only)
+    status: in-review
+    note: >-
+      Joe, 2026-10-23: the hero "Hear it" "doesn't even sound good or sound
+      like the word Digerati". The v2 hero spoke "dij uh RAH tee" through
+      browser speech synthesis (four separate syllables, voice varies by
+      device) and never used client/public/audio/digerati-pronunciation.wav.
+      Now it plays that file, with synthesis only as the fallback. The file
+      itself is still synthetic; a human recording is pending Joe.
