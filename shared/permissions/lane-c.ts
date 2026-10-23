@@ -11,4 +11,8 @@ export const laneCPermissions: Record<string, AccessRule> = {
   /** Read the roadmap, comment, approve or decline: the company's owners (IT contacts hold every hat). */
   "roadmap.read": { roles: ["owner"] },
   "roadmap.decide": { roles: ["owner"] },
+  /** Write, publish and delete a company's business reviews: DE staff + break-glass. */
+  "reviews.manage": { deOnly: true },
+  /** Read published business reviews: the company's owners. */
+  "reviews.read": { roles: ["owner"] },
 };

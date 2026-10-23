@@ -4575,3 +4575,26 @@ claims:
       the company's owners see it, comment, and approve or decline proposals.
       The sample items, "Reduces breach risk by 85%"-style claims and invented
       budget are gone; figures are summed from the rows.
+  - id: portal-business-reviews
+    owner: claude
+    subsystem: portal
+    branch: claude/portal-business-reviews
+    base_sha: 81c9463
+    started: 2026-10-23
+    files:
+      - migrations/0023_portal_business_reviews.sql (new)
+      - shared/schema.ts (portalBusinessReviews only), shared/businessReviews.ts (new)
+      - shared/permissions/lane-c.ts (reviews.manage, reviews.read)
+      - server/businessReviewStore.ts, server/businessReviewRoutes.ts, server/businessReviewRoutes.test.ts (new)
+      - server/routes.ts (one registration block; itPlan counts published reviews)
+      - client/src/lib/reviewsApi.ts, client/src/pages/portal/AdminBusinessReviews.tsx (new)
+      - client/src/pages/portal/PortalQBR.tsx (rewritten on real data)
+      - client/src/components/portal/shell/portalNav.ts, portalNav.test.ts (Business Reviews + admin item)
+      - client/src/App.tsx (one route)
+    status: in-review
+    note: >-
+      Slice C of docs/PORTAL-SAMPLE-BUILDOUT-PLAN.md, stacked on
+      portal-it-roadmap (#709). Joe, 2026-10-23: "yes to all, do it". DE writes
+      a review per client meeting (date, summary, decisions, linked roadmap
+      items, report file); owners see published ones. The invented QBR
+      reports, recommendations and "88" security score are gone.

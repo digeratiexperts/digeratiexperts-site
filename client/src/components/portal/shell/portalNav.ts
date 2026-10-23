@@ -349,9 +349,9 @@ export const PORTAL_NAV_ITEMS: PortalNavItem[] = [
     icon: BarChart3,
     key: "other",
     hint: "Quarterly reviews",
-    sample: true,
     section: "programs",
-    rule: { sample: true, featureReady: false },
+    // Owners read published reviews (shared/permissions/lane-c.ts reviews.read).
+    rule: { roles: ["owner" as ClientRole], featureReady: true },
   },
   {
     href: "/portal/learning",
@@ -584,6 +584,16 @@ export const PORTAL_NAV_ITEMS: PortalNavItem[] = [
     section: "admin",
     rule: { deOnly: true, featureReady: true },
     target: { group: "admin", label: "Roadmaps", order: 9 },
+  },
+  {
+    href: "/portal/admin/business-reviews",
+    label: "Business Reviews (DE)",
+    icon: BarChart3,
+    key: "other",
+    hint: "Write client business reviews",
+    section: "admin",
+    rule: { deOnly: true, featureReady: true },
+    target: { group: "admin", label: "Business reviews", order: 10 },
   },
   {
     href: "/portal/admin/data-sources",

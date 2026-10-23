@@ -131,6 +131,7 @@ import { registerAgentReleaseRoutes } from "./agentReleaseRoutes";
 import { envReleaseSource } from "./agentRelease";
 import { registerStatusNoticeRoutes } from "./statusNoticeRoutes";
 import { companyHasRoadmap, registerRoadmapRoutes } from "./roadmapRoutes";
+import { companyHasPublishedReview, registerBusinessReviewRoutes } from "./businessReviewRoutes";
 import { registerLicensingRoutes } from "./licensingRoutes";
 import { registerPortalAgreementRoutes } from "./portalAgreementRoutes";
 import { registerLicenseBoardRoutes } from "./licenseBoardRoutes";
@@ -1164,7 +1165,11 @@ export async function registerRoutes(app: Express) {
       const [entitlements, sharedFiles, itPlan] = await Promise.all([
         getEntitlements(actingCompany),
         hasSharedFiles(actingCompany),
-        actingCompany ? companyHasRoadmap(actingCompany).catch(() => false) : Promise.resolve(false),
+        actingCompany
+          ? Promise.all([companyHasRoadmap(actingCompany), companyHasPublishedReview(actingCompany)])
+              .then(([roadmap, reviews]) => roadmap || reviews)
+              .catch(() => false)
+          : Promise.resolve(false),
       ]);
       res.json({
         success: true,
@@ -1177,7 +1182,7 @@ export async function registerRoutes(app: Express) {
           clientRoles: effectiveClientRoles(req.user),
           navContext: {
             entitlements,
-            // itPlan: the company has roadmap items (Lane C). Business reviews join this when they ship.
+            // itPlan: the company has roadmap items or a published business review (Lane C).
             data: { sharedFiles, itPlan },
           },
         },
@@ -1364,6 +1369,14 @@ export async function registerRoutes(app: Express) {
     adminGuards: [authMiddleware, requirePermission("roadmap.manage", (req) => req.params.companyId || null), validateInput],
     getClient: serviceRequestDeps.getClient,
     findUser: serviceRequestDeps.findUser,
+  });
+  // Business reviews (server/businessReviewRoutes.ts). DE side: reviews.manage on the company in the path.
+  registerBusinessReviewRoutes(app, {
+    guards: [authMiddleware, validateInput],
+    adminGuards: [authMiddleware, requirePermission("reviews.manage", (req) => req.params.companyId || null), validateInput],
+    getClient: serviceRequestDeps.getClient,
+    findUser: serviceRequestDeps.findUser,
+    listCompanyFiles: (clientId) => storage.getTenantFilesByClientId(clientId),
   });
   // Licensing: account types and the company licence policy (server/licensingRoutes.ts).
   registerLicensingRoutes(app, {
