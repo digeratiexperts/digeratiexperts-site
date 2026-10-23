@@ -59,17 +59,17 @@ export const DE_SYNC_EVENT_TYPES = [
 export type DeSyncEventType = (typeof DE_SYNC_EVENT_TYPES)[number];
 
 export const deSyncEnvelopeSchema = z.object({
-  eventId: z.string().uuid(),
+  eventId: z.guid(),
   eventType: z.enum(DE_SYNC_EVENT_TYPES),
   version: z.literal(1),
   source: z.enum(DE_SYNC_SOURCES),
   occurredAt: z.string().datetime({ offset: true }),
-  correlationId: z.string().uuid(),
+  correlationId: z.guid(),
   entityType: z.string().min(1).max(80),
   entityId: z.string().min(1).max(120),
   canonicalAccountId: z.string().max(80).optional().nullable(),
-  originEventId: z.string().uuid().optional().nullable(),
-  payload: z.record(z.unknown()).default({}),
+  originEventId: z.guid().optional().nullable(),
+  payload: z.record(z.string(), z.unknown()).default({}),
 });
 
 export type DeSyncEnvelope = z.infer<typeof deSyncEnvelopeSchema>;

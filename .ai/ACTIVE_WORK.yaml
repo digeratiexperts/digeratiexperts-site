@@ -4486,3 +4486,18 @@ claims:
       fix anything in yellow or red." Search-facing titles and snippets now
       use the Arizona search terms DataForSEO measured. No visible page text
       changes (checked at 390 and 1440: headings unchanged).
+  - id: zod4-security-upgrade
+    owner: claude
+    subsystem: dependencies
+    branch: claude/zod4-security-upgrade
+    base_sha: 8cdb120
+    started: 2026-10-23
+    files:
+      - package.json, package-lock.json (zod ^4.6.7, drizzle-zod ^0.8.3, zod-validation-error ^5.0.0)
+      - shared/serviceRequests.ts (z.enum errorMap -> message)
+      - server/integrations/deSyncContract.ts (z.record key schema; z.guid for DE-Sync ids)
+    status: in-review
+    note: >-
+      GHSA-mrhx-c7xc-m3w5 (zod < 4.6.6, high) turned the CI audit step red on
+      every branch on 2026-10-23. Joe: "own PR for zod, go ahead do the
+      upgrade". No 3.x fix exists; this is the major upgrade.
