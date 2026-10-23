@@ -1,5 +1,5 @@
 import type { PoolItemKind } from "./licenseBoard";
-import { VENDOR_SKU_DEFAULTS } from "./vendorPush";
+import { GOOGLE_SKU, VENDOR_SKU_DEFAULTS } from "./vendorPush";
 import { LICENSE_CATALOG } from "./licensing";
 
 /**
@@ -8,7 +8,8 @@ import { LICENSE_CATALOG } from "./licensing";
  * Hub catalog and the Store).
  *
  * Sources, merged by the server: this starter shelf, the licensing catalog
- * (shared/licensing.ts) and, when the Hub feed is connected, the Hub's SKUs.
+ * (shared/licensing.ts) and, when the Hub feed is connected, the Hub's SKUs
+ * and the Pax8 products the Hub reads (Microsoft, Google).
  * DE can always add its own (a line-of-business app, a vendor SKU not here).
  */
 
@@ -23,7 +24,7 @@ export type ShelfEntry = {
   sku?: string;
   /** Chocolatey package id, for apps JumpCloud Software Management can install on Windows. */
   chocoPackage?: string;
-  source: "starter" | "catalog" | "hub";
+  source: "starter" | "catalog" | "hub" | "pax8";
 };
 
 export const SHELF_CATEGORIES = [
@@ -32,6 +33,7 @@ export const SHELF_CATEGORIES = [
   { key: "Identity & devices", kind: "license", blurb: "Directory, SSO, device management" },
   { key: "Voice", kind: "license", blurb: "Phones and calling" },
   { key: "Hub SKUs", kind: "license", blurb: "From the Intelligence Hub catalog" },
+  { key: "Pax8", kind: "license", blurb: "Vendor products from Pax8, read by the Hub" },
   { key: "Baseline apps", kind: "app", blurb: "What every machine gets" },
   { key: "Agents", kind: "app", blurb: "DE and vendor agents on each machine" },
   { key: "Line-of-business", kind: "app", blurb: "The client's own business software" },
@@ -102,6 +104,34 @@ export function hubShelf(skus: unknown): ShelfEntry[] {
       category: "Hub SKUs",
       sku,
       source: "hub",
+    });
+  }
+  return out;
+}
+
+/**
+ * The Hub's Pax8 products ({ sku, name, vendor, vendorSku, pax8ProductId }) as
+ * shelf entries. Pax8's vendor code becomes the licence SKU only where the
+ * vendor console takes it as is (a Google product/SKU id); Microsoft's NCE ids
+ * are not Graph part numbers, so those are entered in the Microsoft & Google tab.
+ */
+export function pax8Shelf(rows: unknown): ShelfEntry[] {
+  if (!Array.isArray(rows)) return [];
+  const out: ShelfEntry[] = [];
+  for (const row of rows) {
+    const r = row as { name?: unknown; vendor?: unknown; vendorSku?: unknown; pax8ProductId?: unknown };
+    const id = typeof r.pax8ProductId === "string" ? r.pax8ProductId.trim() : "";
+    const name = typeof r.name === "string" ? r.name.trim() : "";
+    if (!id || !name) continue;
+    const vendorSku = typeof r.vendorSku === "string" ? r.vendorSku.trim() : "";
+    out.push({
+      key: `pax8:${id}`,
+      kind: "license",
+      vendor: typeof r.vendor === "string" && r.vendor.trim() ? r.vendor.trim() : "Pax8",
+      product: name,
+      category: "Pax8",
+      sku: GOOGLE_SKU.test(vendorSku) ? vendorSku : undefined,
+      source: "pax8",
     });
   }
   return out;

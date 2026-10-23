@@ -49,7 +49,16 @@ describe("license patch bay routes", () => {
       getClient: (id) => clients.find((c) => c.id === id),
       listClientUsers: (clientId) => people.filter((p) => p.clientId === clientId),
       listDepartments: async (clientId) => (clientId === "c1" ? [{ id: "d1", name: "Sales" }] : []),
-      fetchHubCatalog: async () => ({ status: "CONNECTED", skus: [{ sku: "DE-MIT-PRO", name: "Managed IT Pro", category: "Managed IT" }] }),
+      fetchHubCatalog: async () => ({
+        status: "CONNECTED",
+        skus: [{ sku: "DE-MIT-PRO", name: "Managed IT Pro", category: "Managed IT" }],
+        vendorSkus: [
+          { sku: "MST-BP", name: "Microsoft 365 Business Premium", vendor: "Microsoft", vendorSku: "CFQ7TTC0LCHC:0002", pax8ProductId: "p-ms-bp" },
+          { sku: "GOO-BS", name: "Google Workspace Business Standard", vendor: "Google", vendorSku: "Google-Apps/1010020028", pax8ProductId: "p-g-bs" },
+          { sku: "X", name: "", vendor: "Microsoft", pax8ProductId: "p-blank" },
+        ],
+        vendorSkusStatus: { source: "pax8", status: "CONNECTED", message: "2 Pax8 products for Microsoft, Google." },
+      }),
       jumpcloud: {
         configured: () => jc.configured,
         ensureChocoApp: async (name, pkg, orgId) => {
@@ -184,6 +193,17 @@ describe("license patch bay routes", () => {
     expect(keys).toContain("catalog:ms_m365_bp");
     expect(body.entries.find((e: any) => e.key === "hub:DE-MIT-PRO")).toMatchObject({ sku: "DE-MIT-PRO", category: "Hub SKUs" });
     expect(body.entries.find((e: any) => e.key === "starter:7zip")).toMatchObject({ kind: "app", chocoPackage: "7zip" });
+  });
+
+  it("puts the Hub's Pax8 products on their own shelf, with a vendor SKU only where the console takes it", async () => {
+    const { body } = await call("GET", "/shelf");
+    expect(body.pax8).toEqual({ status: "CONNECTED", message: "2 Pax8 products for Microsoft, Google." });
+    const pax8 = body.entries.filter((e: any) => e.category === "Pax8");
+    expect(pax8.map((e: any) => e.key)).toEqual(["pax8:p-ms-bp", "pax8:p-g-bs"]);
+    expect(pax8[0]).toMatchObject({ vendor: "Microsoft", product: "Microsoft 365 Business Premium", source: "pax8" });
+    expect(pax8[0].sku).toBeUndefined();
+    expect(pax8[1]).toMatchObject({ vendor: "Google", sku: "Google-Apps/1010020028" });
+    expect(body.categories.map((c: any) => c.key)).toContain("Pax8");
   });
 
   it("turns an app on for a company once, then sends it to any number of people and every machine", async () => {
