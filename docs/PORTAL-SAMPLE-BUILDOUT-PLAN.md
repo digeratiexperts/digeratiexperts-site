@@ -297,4 +297,17 @@ Seamless.ai, any VPN or shipping vendor plan, Cytracom Insights if it is an add-
 
 | Date | Slice | PR | State |
 |---|---|---|---|
-| 2026-10-23 | (prep) Inline company picker for DE admins on request pages | digeratiexperts/digeratiexperts-site#703 | in review |
+| 2026-10-23 | (prep) Inline company picker for DE admins on request pages; this plan | digeratiexperts/digeratiexperts-site#703 | live (verified at `7d837f2`) |
+| 2026-10-23 | (deps) zod 4.6.7, for GHSA-mrhx-c7xc-m3w5 | digeratiexperts/digeratiexperts-site#705 | live |
+| 2026-10-23 | A: System Status | digeratiexperts/digeratiexperts-site#706, digeratiexperts/digeratiexperts-site#708 (DE staff, not only break-glass, can post notices) | live |
+| 2026-10-23 | G: Manage Agents and the desktop agent download | digeratiexperts/digeratiexperts-site#707 | live; needs `DE_AGENT_RELEASE_MANIFEST` and `DE_AGENT_RELEASE_KEYS` set on the server before downloads show |
+| 2026-10-23 | B: IT Roadmap | digeratiexperts/digeratiexperts-site#709 | live |
+| 2026-10-23 | (deps) body-parser 1.20.9, for GHSA-27r3-jxmh-p828 | digeratiexperts/digeratiexperts-site#712 (landed with #709) | live |
+| 2026-10-23 | C: Business Reviews | digeratiexperts/digeratiexperts-site#710 | live |
+| 2026-10-23 | D: IT plan hub (`itPlan` = roadmap items or a published review) | digeratiexperts/digeratiexperts-site#709, digeratiexperts/digeratiexperts-site#710 | live |
+| 2026-10-23 | E: DE Questionnaires | digeratiexperts/digeratiexperts-site#711 | live (verified at `65a6bbb`) |
+
+Still open:
+- **E follow-up:** `server/portalSurveyStore.ts` still creates `portal_surveys` and `portal_survey_responses` at runtime. Move them into a migration, as section 3 says.
+- **F:** Joe or a server admin sets `PORTAL_VPN_PROVIDER=manual` and `PORTAL_SHIPPING_PROVIDER=manual` in production. Code work: remove the sample call history from the phone live view.
+- **H:** blocked on D7: either remove the badge and write honest copy, or build the Zoho importer through `server/zoho/oauth`.
