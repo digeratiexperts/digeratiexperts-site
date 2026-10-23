@@ -4550,3 +4550,18 @@ claims:
       guaranteed" line are gone; no device health until an RMM integration
       exists. Hub sync is a follow-up: the Hub has no ingest endpoint for
       status notices yet.
+  - id: portal-status-staff-access
+    owner: claude
+    subsystem: portal
+    branch: claude/portal-status-staff-access
+    base_sha: d798421
+    started: 2026-10-23
+    files:
+      - shared/permissions/lane-d.ts (new), shared/permissions/index.ts (one import + one spread), shared/permissions/permissions.test.ts
+      - server/routes.ts (status notice admin guard only)
+    status: in-review
+    note: >-
+      Follow-up to #706. The Status notices menu item is deOnly (DE staff +
+      break-glass) but its admin API used requireAdmin (break-glass only), so
+      a DE staff account would see the page and get 403 on every action. Adds
+      lane D's `status.manage` permission and guards the routes with it.
