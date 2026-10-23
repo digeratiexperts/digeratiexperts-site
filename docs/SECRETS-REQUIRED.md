@@ -193,6 +193,8 @@ Safe defaults; set only to override.
 | `PUBLIC_SITE_URL` | config | `server/zohoConnectRoutes.ts` | Public origin for the Zoho Connect callback; falls back to `https://$MAIN_DOMAIN`. |
 | `ALLOWED_ORIGINS` | config | `server/production.config.ts` | Extra CORS origins, comma-separated. |
 | `WEBAUTHN_RP_ID` | config | `server/portalPasskeys.ts` | Passkey relying-party id; defaults to the registrable domain. |
+| `PORTAL_BREAK_GLASS_ALERT_EMAIL` | config | `server/portalAccess.ts`, `server/routes.ts` | Where break-glass login and audit-failure alerts go. **No default**: unset logs a warning and sends nothing (lane-a-update-3.md §2). Waiting on Joe for the real inbox. |
+| `PORTAL_BREAK_GLASS_REQUIRE_STRONG_MFA` | config | `server/routes.ts` | Default off. `1` = the break-glass account (`role=admin`) may only sign in with an enrolled passkey / hardware key. Waiting on Joe (docs/lanes/lane-a-roles-nav.md). |
 | `JWT_EXPIRY` | config | `server/production.config.ts` | Default `24h`. |
 | `BCRYPT_ROUNDS` | config | `server/production.config.ts` | Default 12. |
 | `RATE_LIMIT_WINDOW` | config | `server/production.config.ts` | Default 15 minutes. |

@@ -168,10 +168,11 @@ describe("sample and unfinished features", () => {
     expect(ruleAllows({ sample: true, featureReady: false }, { principal: itContact })).toBe(false);
   });
 
-  it("DE staff keep sample items; break-glass is unchanged", () => {
-    expect(ruleAllows({ sample: true }, { principal: deStaff })).toBe(true);
+  it("DE staff hide samples too; only the break-glass account still sees them (update 3 §3)", () => {
+    expect(ruleAllows({ sample: true }, { principal: deStaff })).toBe(false);
+    expect(ruleAllows({ featureReady: false }, { principal: deStaff })).toBe(false);
     expect(ruleAllows({ sample: true }, { principal: superAdmin })).toBe(true);
-    expect(ruleAllows({ featureReady: false }, { principal: deStaff })).toBe(true);
+    expect(ruleAllows({ featureReady: false }, { principal: superAdmin })).toBe(true);
   });
 });
 

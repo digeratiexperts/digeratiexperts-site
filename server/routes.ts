@@ -206,7 +206,7 @@ import { registerRetiredLegacyAuthRoutes } from "./legacyAuthRetired";
 import { registerAddressLookupRoutes } from "./addressLookup";
 import { registerRetiredLegacyGenericRoutes } from "./legacyGenericRetired";
 import { loginRateLimiter, loginKnockRateLimiter, formSubmissionRateLimiter, apiGeneralRateLimiter, paymentRateLimiter } from "./middleware/rateLimiter";
-import { actingCompanyId, auditMutation, requirePermission } from "./portalAccess";
+import { actingCompanyId, auditMutation, requirePermission, sendBreakGlassAlert } from "./portalAccess";
 import { registerPortalAccessRoutes } from "./portalAccessRoutes";
 import {
   accountClassOf,
@@ -2574,33 +2574,20 @@ export async function registerRoutes(app: Express) {
   // Portal Login Endpoint
   // Helper: complete login and return token + session
   //
-  // Break-glass login alert (lane A, additive — lane-a-update-2.md §1): every
-  // successful login by the break-glass account emails Joe. It is an alert, never
-  // a second factor. Recipient: PORTAL_BREAK_GLASS_ALERT_EMAIL (default below).
-  const breakGlassAlertEsc = (value: unknown): string =>
-    String(value ?? "").replace(/[&<>"']/g, (ch) =>
-      (({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }) as Record<string, string>)[ch]!,
-    );
+  // Break-glass login alert (lane A, additive — lane-a-update-2.md §1, corrected
+  // by lane-a-update-3.md §2): every successful login by the break-glass account
+  // alerts PORTAL_BREAK_GLASS_ALERT_EMAIL. When that is unset nothing is sent and
+  // a warning is logged — there is no invented default address. It is an alert,
+  // never a second factor.
   function alertBreakGlassLogin(user: any, req: AuthenticatedRequest): void {
     if (user?.role !== "admin") return;
-    const to = (process.env.PORTAL_BREAK_GLASS_ALERT_EMAIL || "admin@digeratiexperts.com").trim();
-    const at = new Date().toISOString();
-    const ip = clientIpFromReq(req) || "unknown";
-    const ua = typeof req.headers?.["user-agent"] === "string" ? req.headers["user-agent"] : "unknown";
-    const lines = [
+    sendBreakGlassAlert("Break-glass portal login", [
       `Account: ${user.email}`,
-      `When: ${at}`,
-      `IP: ${ip}`,
-      `Agent: ${ua}`,
-    ];
-    void sendEmail({
-      to,
-      subject: "Break-glass portal login",
-      htmlBody: `<p>A break-glass portal login just completed.</p><ul>${lines
-        .map((line) => `<li>${breakGlassAlertEsc(line)}</li>`)
-        .join("")}</ul><p>If this was not you, sign out everywhere and rotate the account.</p>`,
-      textBody: `A break-glass portal login just completed.\n${lines.join("\n")}\nIf this was not you, sign out everywhere and rotate the account.`,
-    }).catch((err: unknown) => logger.warn("Break-glass login alert failed", { error: String(err) }));
+      `When: ${new Date().toISOString()}`,
+      `IP: ${clientIpFromReq(req) || "unknown"}`,
+      `Agent: ${typeof req.headers?.["user-agent"] === "string" ? req.headers["user-agent"] : "unknown"}`,
+      "If this was not you, sign out everywhere and rotate the account.",
+    ]);
   }
 
   function completeLogin(user: any, req: AuthenticatedRequest, res: Response) {

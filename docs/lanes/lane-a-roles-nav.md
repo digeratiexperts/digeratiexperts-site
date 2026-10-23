@@ -39,15 +39,17 @@ plus one import line in `index.ts` — see `docs/lanes/registry.md`.
 - **de_staff** and **client** render the plan's target client menu (Phase 2): hub items
   (Home, Get help, People and devices, Billing and contracts, Order equipment, IT plan and
   reviews) with their merged routes as hub children, renamed labels, role/entitlement rules.
-  de_staff additionally sees the DE-only items (Infrastructure Issues, Structure & IDs,
-  Ship Center, System Status) and the DE Admin items they may use.
+  de_staff additionally sees the finished DE-only items (Infrastructure Issues,
+  Structure & IDs) and the DE Admin items they may use. Sample items are hidden from
+  them too (update 3 §3).
 - Every legacy route keeps working: nothing is unmounted or deleted. Hub children cover every
   old menu href (asserted by a test).
 
-### D4 — Sample rule (update 1 §2)
-`sample: true` items are dropped for client roles entirely; DE staff and super_admin keep them
-with the badge. `featureReady: false` (every Wave 1 sample feature) behaves the same for
-clients. `/portal/admin/import` and `/portal/admin/agents` stay super-admin-only, untouched
+### D4 — Sample rule (update 1 §2, corrected by update 3 §3)
+`sample: true` and `featureReady: false` items are dropped for **client roles and DE staff**
+alike (update 3 §3: "there are no samples in the product"). Only the break-glass account
+still sees them — with today's badges — because its access must not be reduced.
+`/portal/admin/import` and `/portal/admin/agents` stay super-admin-only, untouched
 (update 1 §6).
 
 ### D5 — Entitlements (update 2 §3)
@@ -55,17 +57,20 @@ New additive table `portal_client_entitlements` (keys `cloud_edge`, `voice`,
 `security_awareness`), **default OFF** = menu item hidden. DE staff / super admin set them
 (`entitlements.manage`). No Zoho or Hub source is wired; that needs Joe's approval first.
 
-### D6 — Break-glass (update 2 §1)
+### D6 — Break-glass (update 2 §1, corrected by update 3 §1-2)
 Built now (additive):
-- **Login alert email** to Joe on every successful `role=admin` login
-  (`PORTAL_BREAK_GLASS_ALERT_EMAIL`, default `admin@digeratiexperts.com`).
+- **Login alert** on every successful `role=admin` login, sent to
+  `PORTAL_BREAK_GLASS_ALERT_EMAIL` **only**. Unset = log a warning and send nothing;
+  there is no invented default address (update 3 §2).
 - **Audit flag** on admin actions: new additive `portal_audit_log` table; every mutating
   `/api/portal/*` request by a `super_admin`/`de_staff` actor writes a row with
-  `break_glass = (role === 'admin')`, before the action runs (no audit row ⇒ no action for
-  break-glass; the row is the flag the plan asks for).
+  `break_glass = (role === 'admin')` before the action runs. If that write fails the
+  failure is logged loudly and alerted, and **the action still runs** — the emergency
+  account is never blocked by its own audit log (update 3 §1).
 Built behind a flag, **default OFF**:
-- `PORTAL_BREAK_GLASS_REQUIRE_STRONG_MFA` — when set, `role=admin` may only complete login
-  with an enrolled passkey / hardware key (WebAuthn). No email or code fallback is written.
+- `PORTAL_BREAK_GLASS_REQUIRE_STRONG_MFA` — when set, `role=admin` may only complete
+  login with an enrolled passkey / hardware key (WebAuthn). No email or code fallback is
+  written.
 **Waiting on Joe** — see "Waiting on Joe" below.
 
 ### D7 — DE as a tenant (lane file Step 2)
@@ -89,6 +94,13 @@ of it and hold client-manager rights across all companies.
    3. Restart; password login for `role=admin` without an enrolled passkey is then refused with
       a message pointing at enrollment. No other account type is affected.
    4. Joe decides the separate break-glass login path (plan Phase 1) as a later change.
+2. **Break-glass alert address** (update 3 §2). `PORTAL_BREAK_GLASS_ALERT_EMAIL` is read
+   from the environment only. Joe supplies the real inbox; until it is set, break-glass
+   logins and audit failures log a warning and send nothing. Listed in
+   `docs/SECRETS-REQUIRED.md`.
+3. **Fail-closed audit** (update 3 §1). Today a failed audit write is logged and alerted and
+   the action proceeds. Whether break-glass actions should ever be blocked when their audit
+   row cannot be written is Joe's decision.
 
 ## Notes for other lanes
 

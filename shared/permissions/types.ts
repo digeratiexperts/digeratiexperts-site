@@ -123,7 +123,12 @@ export function ruleAllows(rule: AccessRule | undefined, ctx: AccessContext): bo
   if (cls === "super_admin") return true; // today's Administrator access, unchanged
   if (!rule) return false; // unknown permission: fail closed
   if (rule.superAdminOnly) return false;
-  if (cls === "de_staff") return tenantOk(rule, ctx, cls);
+  if (cls === "de_staff") {
+    // DE staff are client managers, but there are no samples in the product
+    // (lane-a-update-3.md §3): only the break-glass account still sees them.
+    if (rule.sample || rule.featureReady === false) return false;
+    return tenantOk(rule, ctx, cls);
+  }
   if (rule.deOnly || rule.sample || rule.featureReady === false) return false;
   if (rule.requiresData && !ctx.data?.[rule.requiresData]) return false;
   if (rule.entitlement && !(ctx.entitlements ?? []).includes(rule.entitlement)) return false;

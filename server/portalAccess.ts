@@ -7,14 +7,52 @@ import {
   type PermissionKey,
 } from "@shared/permissions";
 import { writeAudit } from "./portalAccessStore";
+import { sendEmail } from "./services/notificationService";
+import { logger } from "./logger";
 
 /**
  * Lane A (Wave 1): route guards on top of the one permission helper
  * (`shared/permissions` → can()) and the break-glass audit flag
- * (lane-a-update-2.md §1: "the audit flag on admin actions").
+ * (lane-a-update-2.md §1, corrected by lane-a-update-3.md §1-2).
  */
 
 export type AuthedRequest = Request & { user?: any; userId?: string };
+
+/**
+ * Break-glass alerts go ONLY to the configured address (lane-a-update-3.md §2).
+ * Nothing is sent when it is unset — there is no invented default.
+ */
+export function breakGlassAlertRecipient(): string | null {
+  const to = (process.env.PORTAL_BREAK_GLASS_ALERT_EMAIL || "").trim();
+  return to ? to : null;
+}
+
+const escapeAlert = (value: unknown): string =>
+  String(value ?? "").replace(/[&<>"']/g, (ch) =>
+    (({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }) as Record<string, string>)[ch]!,
+  );
+
+/** Fire-and-forget alert about a break-glass event. Warns loudly when unsent. */
+export function sendBreakGlassAlert(subject: string, lines: string[]): void {
+  const to = breakGlassAlertRecipient();
+  if (!to) {
+    logger.warn(`Break-glass alert NOT sent (PORTAL_BREAK_GLASS_ALERT_EMAIL unset): ${subject}`, {
+      lines,
+    });
+    return;
+  }
+  const body = lines.join("\n");
+  void sendEmail({
+    to,
+    subject,
+    htmlBody: `<p>${escapeAlert(subject)}</p><ul>${lines
+      .map((line) => `<li>${escapeAlert(line)}</li>`)
+      .join("")}</ul>`,
+    textBody: `${subject}\n${body}`,
+  }).catch((err: unknown) =>
+    logger.warn("Break-glass alert send failed", { error: String(err), subject }),
+  );
+}
 
 /**
  * The company an action targets: the company a DE actor is switched into,
@@ -63,11 +101,15 @@ function auditedAction(req: AuthedRequest): string | null {
 
 /**
  * Break-glass / DE staff action audit. Runs from authMiddleware, after the live
- * record is attached and before the handler, so "no audit row, no action" holds
- * for the break-glass account. Every audited row carries
+ * record is attached and before the handler, so the row describes the action
+ * that is about to run. Every audited row carries
  * `breakGlass = (actor is the break-glass account)`.
+ *
+ * lane-a-update-3.md §1: a failed audit write NEVER blocks the break-glass
+ * account — it is logged loudly, alerted, and the action proceeds. A fail-closed
+ * rule is Joe's to make (see "Waiting on Joe").
  */
-export async function auditMutation(req: AuthedRequest, res: Response): Promise<boolean> {
+export async function auditMutation(req: AuthedRequest, _res: Response): Promise<boolean> {
   const user = req.user;
   if (!user || !isDeStaff(user)) return true; // client actions are not in this audit
   const action = auditedAction(req);
@@ -89,15 +131,18 @@ export async function auditMutation(req: AuthedRequest, res: Response): Promise<
     });
     return true;
   } catch (err: any) {
-    console.warn("[portalAudit] write failed:", err?.message);
+    // Loud, then keep going: the emergency account must never be locked out by
+    // its own audit log (lane-a-update-3.md §1).
+    const message = String(err?.message || err);
+    console.error(`[portalAudit] AUDIT WRITE FAILED (${action}) — action still allowed:`, message);
+    logger.error("Break-glass / DE staff audit write failed", { action, actor: user.email, error: message });
     if (isSuperAdmin(user)) {
-      // Fail closed: a break-glass action that cannot be recorded does not run.
-      res.status(503).json({
-        code: "AUDIT_UNAVAILABLE",
-        error: "The audit log is unavailable, so this action was not recorded. Try again shortly.",
-      });
-      return false;
+      sendBreakGlassAlert("Break-glass audit write failed", [
+        `Account: ${user.email}`,
+        `Action: ${action}`,
+        "The audit row could not be written. The action was still allowed, so this entry is missing from the audit log.",
+      ]);
     }
-    return true; // DE staff actions degrade to console logging
+    return true;
   }
 }

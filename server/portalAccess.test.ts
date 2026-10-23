@@ -11,6 +11,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vites
 vi.mock("./db", () => ({ db: null, dbReady: false, initPromise: Promise.resolve() }));
 
 const writeAudit = vi.hoisted(() => vi.fn(async (_entry: unknown) => undefined));
+const sendEmail = vi.hoisted(() => vi.fn(async () => true));
 vi.mock("./portalAccessStore", () => ({
   writeAudit,
   getEntitlements: vi.fn(async () => []),
@@ -19,6 +20,11 @@ vi.mock("./portalAccessStore", () => ({
   hasSharedFiles: vi.fn(async () => false),
   recentAudit: vi.fn(async () => []),
   _resetPortalAccessMemory: vi.fn(),
+}));
+vi.mock("./services/notificationService", () => ({
+  sendEmail,
+  notificationService: {},
+  baseEmailTemplate: (inner: string) => inner,
 }));
 
 import { actingCompanyId, auditMutation, requirePermission } from "./portalAccess";
@@ -116,6 +122,8 @@ describe("requirePermission (server route guard)", () => {
 describe("break-glass audit flag", () => {
   beforeEach(() => {
     writeAudit.mockClear();
+    sendEmail.mockClear();
+    delete process.env.PORTAL_BREAK_GLASS_ALERT_EMAIL;
   });
 
   it("flags every break-glass mutation and writes it before the action runs", async () => {
@@ -148,13 +156,28 @@ describe("break-glass audit flag", () => {
     expect(writeAudit).not.toHaveBeenCalled();
   });
 
-  it("fails closed for the break-glass account when the audit row cannot be written", async () => {
+  it("never blocks break-glass when the audit write fails: it alerts and the action runs (update 3 §1)", async () => {
+    process.env.PORTAL_BREAK_GLASS_ALERT_EMAIL = "alerts@de.test";
     writeAudit.mockRejectedValueOnce(new Error("audit table down"));
     const res = fakeRes();
     const ok = await auditMutation(fakeReq({ user: BREAK_GLASS }), res);
-    expect(ok).toBe(false);
-    expect(res.statusCode).toBe(503);
-    expect(res.body.code).toBe("AUDIT_UNAVAILABLE");
+    expect(ok).toBe(true); // the action is allowed
+    expect(res.body).toBeNull(); // and no error is returned
+    expect(sendEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: "alerts@de.test",
+        subject: "Break-glass audit write failed",
+      }),
+    );
+    delete process.env.PORTAL_BREAK_GLASS_ALERT_EMAIL;
+  });
+
+  it("sends nothing when the alert address is not configured (update 3 §2)", async () => {
+    delete process.env.PORTAL_BREAK_GLASS_ALERT_EMAIL;
+    writeAudit.mockRejectedValueOnce(new Error("audit table down"));
+    const ok = await auditMutation(fakeReq({ user: BREAK_GLASS }), fakeRes());
+    expect(ok).toBe(true);
+    expect(sendEmail).not.toHaveBeenCalled();
   });
 
   it("degrades to console logging for DE staff when the write fails", async () => {

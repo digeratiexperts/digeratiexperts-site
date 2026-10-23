@@ -67,10 +67,11 @@ describe("update-2 acceptance: a client user can never see a sample item", () =>
     }
   });
 
-  it("keeps sample items with the badge for DE staff", () => {
+  it("hides sample items from DE staff too — only break-glass keeps them (update 3 §3)", () => {
     const shown = items(deStaff);
-    expect(shown.map((i) => i.href)).toContain("/portal/status");
-    expect(shown.find((i) => i.href === "/portal/status")?.sample).toBe(true);
+    expect(shown.filter((i) => i.sample)).toEqual([]);
+    expect(shown.filter((i) => i.rule?.featureReady === false)).toEqual([]);
+    expect(shown.map((i) => i.href)).not.toContain("/portal/status");
   });
 });
 
@@ -140,7 +141,12 @@ describe("target client menu", () => {
 
   it("gives DE staff the client menu plus DE-only items and their DE Admin subset", () => {
     const shown = labels(deStaff);
-    expect(shown).toEqual(expect.arrayContaining(["Home", "Get help", "Infrastructure Issues", "Ship Center", "Companies"]));
+    expect(shown).toEqual(expect.arrayContaining(["Home", "Get help", "Infrastructure Issues", "Structure & IDs", "Companies"]));
+    // Samples stay out of the daily DE staff menu (update 3 §3): Ship Center is
+    // still in sample mode here, and System Status / DE Questionnaires never left it.
+    expect(shown).not.toContain("Ship Center");
+    expect(shown).not.toContain("System Status");
+    expect(shown).not.toContain("DE Questionnaires");
     // Break-glass-only surfaces stay out of the daily DE staff menu.
     expect(shown).not.toContain("Login Alerts");
     expect(shown).not.toContain("Data Sources");
@@ -187,10 +193,13 @@ describe("route guard (hidden route → Home with a note)", () => {
     const ctx = { integrations: SAMPLE_INT, navContext: NO_DATA, view: "target" as const };
     const roadmapOwner = findNavItem("/portal/roadmap", "target")!.item;
     expect(isNavAllowed(roadmapOwner, { ...ctx, user: standardUser })).toBe(false);
-    expect(isNavAllowed(roadmapOwner, { ...ctx, user: deStaff })).toBe(true);
+    // Update 3 §3: unfinished features are hidden from DE staff too — only the
+    // break-glass account still reaches them.
+    expect(isNavAllowed(roadmapOwner, { ...ctx, user: deStaff })).toBe(false);
 
     const infraOwner = findNavItem("/portal/infrastructure", "target")!.item;
     expect(isNavAllowed(infraOwner, { ...ctx, user: clientItContact })).toBe(false);
+    expect(isNavAllowed(infraOwner, { ...ctx, user: deStaff })).toBe(true);
 
     const homeOwner = findNavItem("/portal/dashboard", "target")!.item;
     expect(isNavAllowed(homeOwner, { ...ctx, user: standardUser })).toBe(true);
