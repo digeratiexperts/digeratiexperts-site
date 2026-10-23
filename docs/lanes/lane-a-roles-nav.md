@@ -127,10 +127,11 @@ of it and hold client-manager rights across all companies.
 
 ## Notes added during verification
 
-- The dashboard's "Do something" quick actions still link to routes that are now DE-only
-  (e.g. Report an outage → Infrastructure Issues). Clients who click one get the guard's
-  redirect + note; the dashboard's own action list is content for whoever owns it next
-  (logged here rather than changed in this lane).
+- The dashboard's "Do something" quick actions and the "All services" header link now use the
+  same `isNavAllowed` rule as the menu, so an account is never offered a route it cannot open
+  (e.g. clients no longer see "Report an outage" → the now-DE-only Infrastructure Issues page;
+  reporting an issue stays available through Get help / New ticket). Asserted in
+  `scripts/qa/lane-a-roles-nav.mjs`.
 - `navContext.data.sharedFiles` counts live `portal_tenant_files` rows for the acting company.
   When Lane B adds per-user sharing, narrow it to the signed-in user.
 

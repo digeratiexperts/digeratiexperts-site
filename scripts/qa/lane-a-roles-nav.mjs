@@ -183,6 +183,13 @@ try {
           }
           if (role === 'standard') {
             assert.deepEqual(items, ['Home', 'Get help', 'My requests', 'How-to guides', 'Desktop agent', 'My profile'], 'standard user sees the plan’s items');
+            // Quick actions never offer a route this account cannot open.
+            assert.equal(await page.getByText('Report an outage', { exact: true }).count(), 0, 'no quick action to the DE-only outage page');
+            assert.equal(await page.getByText('View or pay an invoice', { exact: true }).count(), 0, 'no quick action to invoices without the billing hat');
+          }
+          if (role === 'break-glass') {
+            assert.equal(await page.getByText('Report an outage', { exact: true }).count(), 1, 'break-glass keeps every quick action');
+            assert.equal(await page.getByText('View or pay an invoice', { exact: true }).count(), 1, 'break-glass keeps every quick action');
           }
           if (role === 'standard-files') {
             assert(items.includes('Files'), 'Files appears when a file is shared');
@@ -198,6 +205,8 @@ try {
             for (const hidden of ['Infrastructure Issues', 'Structure & IDs', 'DE Questionnaires']) {
               assert(!items.includes(hidden), `client roles never see ${hidden}`);
             }
+            assert.equal(await page.getByText('View or pay an invoice', { exact: true }).count(), 1, 'billing hat sees the invoice quick action');
+            assert.equal(await page.getByText('Report an outage', { exact: true }).count(), 0, 'client roles get no DE-only quick action');
           }
           assert.deepEqual(errors, [], 'no page errors');
         }
