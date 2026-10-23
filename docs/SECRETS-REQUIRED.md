@@ -135,6 +135,8 @@ Optional; each portal page shows "not connected" without its provider.
 | `PORTAL_CARRIER_USPS_CLIENT_ID` | config | `server/portalDataSources.ts`, `server/integrations/shipping/carriers/usps.ts` | USPS OAuth client. |
 | `PORTAL_CARRIER_USPS_CLIENT_SECRET` | secret | `server/portalDataSources.ts`, `server/integrations/shipping/carriers/usps.ts` | Secret for the above. |
 | `PORTAL_CARRIER_USPS_ENV` | config | `server/integrations/shipping/carriers/usps.ts` | USPS sandbox/production. |
+| `DE_AGENT_RELEASE_MANIFEST` | config | `server/agentRelease.ts` | Path to the signed release envelope from the Hub's `de-release manifest` (the same file the Hub reads from `ENDPOINT_AGENT_RELEASE_MANIFEST`). Without it the Desktop agent page says no release is published. |
+| `DE_AGENT_RELEASE_KEYS` | config | `server/agentRelease.ts` | Release public key(s), `kid=base64url` as printed by `de-release keygen`. Public half only; a release that doesn't verify against one is never offered. |
 | `VAULT_ENCRYPTION_KEY` | secret | `server/portalClientVault.ts`, `client/src/pages/portal/AdminClientWorkspace.tsx` | Client file vault encryption (32+ characters). Vault stores nothing without it. |
 | `VAULT_STORAGE_DIR` | config | `server/portalClientVault.ts` | Vault storage path. |
 | `PORTAL_DESK_TICKET_SYNC_MS` | config | `server/routes.ts` | Desk ticket sync interval. |

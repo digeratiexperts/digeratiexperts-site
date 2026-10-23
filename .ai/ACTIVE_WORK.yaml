@@ -4501,3 +4501,25 @@ claims:
       GHSA-mrhx-c7xc-m3w5 (zod < 4.6.6, high) turned the CI audit step red on
       every branch on 2026-10-23. Joe: "own PR for zod, go ahead do the
       upgrade". No 3.x fix exists; this is the major upgrade.
+  - id: portal-agent-release
+    owner: claude
+    subsystem: portal
+    branch: claude/portal-agent-release
+    base_sha: 27e36a0
+    started: 2026-10-23
+    files:
+      - server/agentRelease.ts, server/agentReleaseRoutes.ts, server/agentReleaseRoutes.test.ts (new)
+      - server/routes.ts (one registration block)
+      - client/src/pages/portal/PortalAgent.tsx, client/src/pages/portal/AdminAgents.tsx (rewritten on real data)
+      - client/src/components/portal/shell/portalNav.ts (Manage Agents loses its sample flags)
+      - docs/SECRETS-REQUIRED.md (DE_AGENT_RELEASE_MANIFEST, DE_AGENT_RELEASE_KEYS)
+    status: in-review
+    note: >-
+      Slice G of docs/PORTAL-SAMPLE-BUILDOUT-PLAN.md. Joe, 2026-10-23: "yes to
+      all, do it". The Desktop agent page advertised a v1.0.0 installer that
+      does not exist (its button only showed an alert), three made-up extra
+      agents and security claims; Manage Agents was an in-memory list with a
+      fake download URL. Both now read the Intelligence Hub's signed
+      de-release envelope (the same file the Hub relays to devices) and only
+      offer a release whose ed25519 signature verifies against a pinned key.
+      Verified against a real `de-release keygen` + `manifest` run.

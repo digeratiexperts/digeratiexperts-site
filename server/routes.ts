@@ -127,6 +127,8 @@ import { registerHubServiceRequestStatusRoute, registerServiceRequestRoutes, sta
 import { registerRepresentationRoutes } from "./representationRoutes";
 import { requireDeSyncAuth } from "./integrations/deSyncAuth";
 import { registerPortalAssistRoutes } from "./portalAssistRoutes";
+import { registerAgentReleaseRoutes } from "./agentReleaseRoutes";
+import { envReleaseSource } from "./agentRelease";
 import { registerLicensingRoutes } from "./licensingRoutes";
 import { registerPortalAgreementRoutes } from "./portalAgreementRoutes";
 import { registerLicenseBoardRoutes } from "./licenseBoardRoutes";
@@ -1339,6 +1341,12 @@ export async function registerRoutes(app: Express) {
     },
     fetchProjection: (hubAccountId, portalClientId) => fetchHubRepresentation(hubAccountId, portalClientId),
     createDeskTicket: serviceRequestDeps.createDeskTicket,
+  });
+  // DE endpoint agent release: verified de-release envelope (server/agentReleaseRoutes.ts).
+  registerAgentReleaseRoutes(app, {
+    guards: [authMiddleware, validateInput],
+    adminGuards: [authMiddleware, requireAdmin, validateInput],
+    source: envReleaseSource(),
   });
   // Licensing: account types and the company licence policy (server/licensingRoutes.ts).
   registerLicensingRoutes(app, {

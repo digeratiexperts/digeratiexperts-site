@@ -586,10 +586,9 @@ export const PORTAL_NAV_ITEMS: PortalNavItem[] = [
     label: "Manage Agents",
     icon: Download,
     key: "other",
-    hint: "Desktop agents",
-    sample: true,
+    hint: "Endpoint agent release",
     section: "admin",
-    rule: { superAdminOnly: true, sample: true, featureReady: false },
+    rule: { superAdminOnly: true, featureReady: true },
   },
   {
     href: "/portal/admin/openai",
