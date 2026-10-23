@@ -338,21 +338,22 @@ export default function BackupDisasterRecovery() {
         ]}
       />
 
-      <Chapter tone="well" seam={false}>
+      {/* Section fields follow the Homepage v2 role pattern (signal = how it works, ink = proof/decision). */}
+      <Chapter tone="signal" seam={false}>
         <Container>
-          <ChapterHeader tone="well" eyebrow="Plain English" title="BCDR in 30 Seconds" />
+          <ChapterHeader tone="paper" eyebrow="Plain English" title="BCDR in 30 Seconds" />
           <FeatureGrid
-            tone="well"
+            tone="paper"
             items={[
               { icon: HardDrive, title: "Backup", text: "Copies of your data, stored securely, with immutable protection against ransomware" },
               { icon: Timer, title: "Recovery Targets", text: "Agreed RPO (data loss limit) and RTO (downtime limit) documented in your agreement" },
               { icon: ClipboardCheck, title: "Tested Recovery", text: "Regular restore tests with documented procedures—proven, not assumed" },
             ]}
           />
-          <ul className="mt-12 flex flex-wrap gap-x-10 gap-y-5 border-t border-[var(--de-hairline)] pt-8" aria-label="What we protect">
+          <ul className="mt-12 flex flex-wrap gap-x-10 gap-y-5 border-t border-[var(--de-paper-hairline)] pt-8" aria-label="What we protect">
             {bcdrData.protectedSystems.map((system) => (
-              <li key={system.name} className="flex items-center gap-3 text-white/80">
-                <IconWell icon={system.icon} surface="dark" size="sm" />
+              <li key={system.name} className="flex items-center gap-3 text-[#3A3448]">
+                <IconWell icon={system.icon} surface="light" size="sm" />
                 <span className="font-medium">{system.name}</span>
               </li>
             ))}
@@ -429,7 +430,7 @@ export default function BackupDisasterRecovery() {
         </Container>
       </Chapter>
 
-      <Chapter plate="backup" tone="well">
+      <Chapter plate="backup" tone="ink">
         <Container>
           <ChapterHeader
             tone="well"
@@ -467,7 +468,7 @@ export default function BackupDisasterRecovery() {
         </Container>
       </Chapter>
 
-      <Chapter tone="surface" id="packages" className="scroll-mt-32" data-testid="section-packages">
+      <Chapter tone="ink" id="packages" className="scroll-mt-32" data-testid="section-packages">
         <Container>
           <ChapterHeader
             tone="surface"
@@ -518,21 +519,21 @@ export default function BackupDisasterRecovery() {
         </Container>
       </Chapter>
 
-      <Chapter tone="well">
+      <Chapter tone="signal">
         <Container>
           <ChapterHeader
-            tone="well"
+            tone="paper"
             eyebrow="Testing"
             title="How Testing Works"
             lede="Restore testing is how we prove your backups actually work"
           />
-          <StepRail tone="well" steps={testingSteps.map((st) => ({ title: st.title, text: st.description }))} />
+          <StepRail tone="paper" steps={testingSteps.map((st) => ({ title: st.title, text: st.description }))} />
         </Container>
       </Chapter>
 
       <FaqChapter faqs={faqs} title="Frequently Asked Questions" lede="Common questions about BCDR" />
 
-      <Chapter tone="well">
+      <Chapter tone="ink">
         <Container>
           <ChapterHeader tone="well" eyebrow="After you book" title="What Happens After You Book?" />
           <StepRail

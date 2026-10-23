@@ -129,7 +129,8 @@ export default function LawFirms() {
         <FactStrip facts={riskFactors} label="Security risk assessment" />
       </div>
 
-      <Chapter tone="well" seam={false} data-testid="section-compliance-risks">
+      {/* Section fields follow the Homepage v2 role pattern (ink = risk/proof, signal = how it works). */}
+      <Chapter tone="ink" seam={false} data-testid="section-compliance-risks">
         <Container>
           <ChapterHeader
             tone="well"
@@ -173,15 +174,15 @@ export default function LawFirms() {
         </Container>
       </Chapter>
 
-      <Chapter tone="surface" data-testid="section-engagement">
+      <Chapter tone="signal" data-testid="section-engagement">
         <Container>
           <ChapterHeader
-            tone="surface"
+            tone="paper"
             eyebrow="Arizona law firms"
             title="How engagement works"
             lede="Privilege, client files, and wire instructions are the attack surface. We work with East Valley and Greater Phoenix firms that need security without slowing partners who live in email and document review."
           />
-          <StepRail tone="surface" steps={steps} />
+          <StepRail tone="paper" steps={steps} />
         </Container>
       </Chapter>
 

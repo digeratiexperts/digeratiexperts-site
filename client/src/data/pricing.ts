@@ -75,7 +75,7 @@ const tiers = {
       "Managed network & connectivity",
       "Stronger MFA / SSO / password hygiene",
       "Advanced email anti-phishing",
-      "DE Security Foundation with 24/7 managed detection and response",
+      "DE Security Foundation with managed endpoint detection (EDR)",
       "Security awareness and phishing resilience",
       "Endpoint backup",
       "Annual technology + cyber review",
@@ -191,7 +191,7 @@ export const getShortPricingText = (): string =>
   `IT ${formatPrice(pricing.it.monthlyMin)}/mo · Office ${formatPrice(pricing.office.monthlyMin)}/mo · Business ${formatPrice(pricing.business.monthlyMin)}/mo · Enterprise ${formatPrice(pricing.enterprise.monthlyMin)}/mo`;
 
 export const PRICING_SCOPE_NOTE =
-  "Final pricing depends on users, endpoints, locations, infrastructure, backup requirements, and security/compliance scope. Estimates are not quotes — your Cyber Risk Assessment confirms final scope.";
+  "Final pricing depends on users, endpoints, locations, infrastructure, backup requirements, and security/compliance scope. Estimates are not quotes — fully managed and co-managed plans start with a required Cyber Risk Assessment, which confirms final scope.";
 
 export const NO_BLACK_BOX_TAGLINE =
   "No Black-Box IT. You know what you're buying, what you're paying, what's included, and who owns it.";

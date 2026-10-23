@@ -8,15 +8,15 @@ const config: TierPageConfig = {
   canonicalPath: "/solutions/proactive-office-ecosystem",
   seoTitle: "ProActive Office Ecosystem | Digerati Experts",
   seoDescription:
-    `Small office operating package from Digerati Experts. Starts at ${formatUserPrice("office")} with a ${formatPrice(pricing.office.monthlyMin)}/mo minimum. Includes the DE Security Foundation with 24/7 managed detection and response, managed network & connectivity, endpoint backup, and an annual combined technology + cyber review.`,
+    `Small office operating package from Digerati Experts. Starts at ${formatUserPrice("office")} with a ${formatPrice(pricing.office.monthlyMin)}/mo minimum. Includes the DE Security Foundation with managed endpoint detection (EDR), managed network & connectivity, endpoint backup, and an annual combined technology + cyber review.`,
   heroBadge: "Small office operating package",
-  tagline: "Managed IT, network, backup, and 24/7 managed threat response under one accountable partner.",
+  tagline: "Managed IT, network, backup, and managed endpoint security under one accountable partner.",
   positioning:
-    "ProActive Office Ecosystem takes the DE Security Foundation from the IT tier and adds 24/7 managed detection and response, managed network & connectivity, a limited Managed Workplace layer, endpoint backup, and an annual combined technology + cyber review. Business still adds deeper security operations, BCDR, compliance/risk reporting, and a more frequent review cadence, but Office is already a managed-security plan rather than an IT plan waiting for security later.",
+    "ProActive Office Ecosystem takes the DE Security Foundation from the IT tier and adds managed endpoint detection (EDR), managed network & connectivity, a limited Managed Workplace layer, endpoint backup, and an annual combined technology + cyber review. Business still adds deeper security operations, BCDR, compliance/risk reporting, and a more frequent review cadence, but Office is already a managed-security plan rather than an IT plan waiting for security later.",
   whoFor: [
     "Small offices (typically 5–30 users) that need dependable IT plus a professionally managed network",
     "Teams that want endpoint backup included rather than bolted on later",
-    "Organizations that want 24/7 managed threat response without the deeper BCDR, compliance, and governance scope of Business",
+    "Organizations that want managed endpoint security, network and backup without the 24/7 MDR, deeper BCDR, compliance, and governance scope of Business",
     "Buyers who want transparent per-user pricing with a predictable monthly minimum",
   ],
   outcomes: [
@@ -33,7 +33,7 @@ const config: TierPageConfig = {
     "Stronger identity protection (MFA / SSO / Password Manager)",
     "Advanced email anti-phishing protection",
     "Security Awareness Training & phishing simulation",
-    "24/7 Managed Detection & Response (MDR)",
+    "Managed endpoint detection (EDR) with alerting",
     "Annual combined technology + cyber review",
   ],
   notIncluded: [

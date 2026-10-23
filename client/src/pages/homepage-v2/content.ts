@@ -5,8 +5,10 @@ import { PRIMARY_PHONE } from "@shared/companyContact";
  * source of truth for copy; values that more than one section uses live here.
  */
 
-/** Final name for the under-30-user lane (Joe, 2026-10-22). Keep every mention on this constant. */
-export const THIRD_LANE_NAME = "Ready-to-Work IT";
+import { THIRD_LANE_NAME } from "@/data/offering";
+
+/** Final name for the under-30-user lane lives in data/offering (shared with the other pages). */
+export { THIRD_LANE_NAME };
 
 /** The phone number comes from the canonical company contact module, never a literal here. */
 export const PHONE_DISPLAY = PRIMARY_PHONE.display;

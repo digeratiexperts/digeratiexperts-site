@@ -250,7 +250,7 @@ export default function ManagedWorkplace() {
         </Container>
       </Chapter>
 
-      <Chapter tone="paper">
+      <Chapter tone="signal">
         <Container>
           <ChapterHeader
             tone="paper"
@@ -262,7 +262,7 @@ export default function ManagedWorkplace() {
         </Container>
       </Chapter>
 
-      <Chapter tone="surface" id="packages" className="scroll-mt-32">
+      <Chapter tone="ink" id="packages" className="scroll-mt-32">
         <Container>
           <ChapterHeader
             tone="surface"
@@ -417,7 +417,7 @@ export default function ManagedWorkplace() {
         lede="Common questions about Managed Workplace"
       />
 
-      <Chapter tone="well">
+      <Chapter tone="ink">
         <Container>
           <ChapterHeader tone="well" eyebrow="After you book" title="What Happens After You Book?" />
           <StepRail

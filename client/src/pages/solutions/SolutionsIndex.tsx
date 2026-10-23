@@ -18,6 +18,7 @@ import {
   BarChart3, Clock, Phone, Award, MapPin
 } from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
+import { THIRD_LANE_NAME } from "@/data/offering";
 import { pricingTiers, getPricingFooterText } from "@/data/pricing";
 import { CTA } from "@/lib/ctaCopy";
 import { IncidentFlow } from "@/components/evidence/IncidentFlow";
@@ -25,7 +26,7 @@ import { IncidentFlow } from "@/components/evidence/IncidentFlow";
 const SolutionsIndex = () => {
   useSEO({
     title: 'Managed IT & Security Solutions',
-    description: 'Comprehensive managed IT and cybersecurity solutions. Network security, endpoint protection, cloud security, compliance support, and 24/7 monitoring for Arizona businesses.',
+    description: 'Comprehensive managed IT and cybersecurity solutions. Network security, endpoint protection, cloud security, compliance support, and 24/7 managed detection on Business and Enterprise for Arizona businesses.',
     canonical: '/solutions',
   });
 
@@ -127,7 +128,7 @@ const SolutionsIndex = () => {
   ];
 
   const trustFacts = [
-    { icon: Lock, title: "24/7 Human-Led SOC", text: "Real analysts watching the environment" },
+    { icon: Lock, title: "24/7 Human-Led SOC", text: "Real analysts, on Business and Enterprise" },
     { icon: MapPin, title: "Arizona local engineering team", text: "Chandler / East Valley operator" },
     { icon: Shield, title: "8 blocks", text: "Assessed & protected" },
     { icon: Activity, title: "RTO / RPO defined", text: "SLA commitments set in your agreement" },
@@ -164,14 +165,14 @@ const SolutionsIndex = () => {
             <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-de-accent-ink">Door 1</p>
             <h2 className="mt-2 font-heading text-xl font-semibold text-white">Handle Our IT</h2>
             <p className="mt-2 text-sm leading-relaxed text-white/70">
-              ProActive operating models. Assessment first — not a catalog checkout.
+              Fully managed or co-managed. Starts with a required Cyber Risk Assessment.
             </p>
           </a>
           <a href="/store" className={doorLink}>
             <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-de-accent-ink">Door 2</p>
             <h2 className="mt-2 font-heading text-xl font-semibold text-white">Solve a Business Need</h2>
             <p className="mt-2 text-sm leading-relaxed text-white/70">
-              Thirteen solution families. Request a scoped recommendation — not a catalog checkout.
+              Thirteen solution families, plus {THIRD_LANE_NAME} devices and licenses for teams under 30 users.
             </p>
           </a>
         </div>
@@ -179,7 +180,8 @@ const SolutionsIndex = () => {
     >
       <FactStrip facts={trustFacts} label="Why businesses choose the ProActive Ecosystem" />
 
-      <Chapter tone="well" seam={false} data-testid="solutions-pricing">
+      {/* Section fields follow the Homepage v2 role pattern (ink = decision, signal = how it works). */}
+      <Chapter tone="ink" seam={false} data-testid="solutions-pricing">
         <Container>
           <ChapterHeader
             tone="well"
@@ -228,21 +230,21 @@ const SolutionsIndex = () => {
         </Container>
       </Chapter>
 
-      <Chapter tone="surface" data-testid="solutions-foundation">
+      <Chapter tone="signal" data-testid="solutions-foundation">
         <Container>
           <ChapterHeader
-            tone="surface"
+            tone="paper"
             eyebrow="Baseline vs depth"
             title="What every model starts from"
             lede="Service desk, endpoint foundation, identity guidance, and a documented environment are the baseline. Managed network and endpoint backup typically arrive at Office. Security operations, awareness training, and BCDR posture typically arrive at Business. Unified posture reporting and deeper governance typically arrive at Enterprise."
           />
           <FeatureGrid
-            tone="surface"
+            tone="paper"
             items={foundationServices.map((s) => ({ icon: s.icon, title: s.title, text: s.description }))}
           />
-          <p className="mt-8 max-w-3xl text-base text-white/70">
+          <p className="mt-8 max-w-3xl text-base text-[#3A3448]">
             Weighing an AI budget against these basics?{" "}
-            <a href="/solutions/efficiency-before-ai" className={textLinkClass("surface")} data-testid="link-efficiency-before-ai">
+            <a href="/solutions/efficiency-before-ai" className={textLinkClass("paper")} data-testid="link-efficiency-before-ai">
               Why your team’s efficiency comes before AI readiness
               <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" aria-hidden="true" />
             </a>
@@ -285,11 +287,11 @@ const SolutionsIndex = () => {
         </Container>
       </Chapter>
 
-      <Chapter tone="surface" data-testid="solutions-why">
+      <Chapter tone="signal" data-testid="solutions-why">
         <Container>
-          <ChapterHeader tone="surface" eyebrow="Why DE" title="Why Arizona Businesses Choose Us" layout="stack" />
+          <ChapterHeader tone="paper" eyebrow="Why DE" title="Why Arizona Businesses Choose Us" layout="stack" />
           <IndexedList
-            tone="surface"
+            tone="paper"
             columns={2}
             items={whyFacts.map((f) => ({ title: f.value, text: `${f.label}. ${f.description}` }))}
           />

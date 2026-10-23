@@ -61,7 +61,7 @@ export default function ProActiveEcosystemPage() {
       name: "Office",
       text: (
         <>
-          Adds 24/7 managed detection and response, managed network, stronger identity/email protection, endpoint backup, and an annual technology + cyber review. Starts at {formatUserPrice("office")} ({formatPrice(pricing.office.monthlyMin)}/mo minimum).
+          Adds managed endpoint detection (EDR), managed network, stronger identity/email protection, endpoint backup, and an annual technology + cyber review. Starts at {formatUserPrice("office")} ({formatPrice(pricing.office.monthlyMin)}/mo minimum).
         </>
       ),
     },
@@ -133,8 +133,9 @@ export default function ProActiveEcosystemPage() {
           ]}
         />
 
+        {/* Section fields follow the Homepage v2 role pattern (signal = how it works, ink = decision). */}
         <Chapter
-          tone="well"
+          tone="signal"
           seam={false}
           id="ch-model"
           data-de-chapter="0"
@@ -144,12 +145,12 @@ export default function ProActiveEcosystemPage() {
         >
           <Container>
             <ChapterHeader
-              tone="well"
+              tone="paper"
               eyebrow="The model"
               title="Cybersecurity-first IT, one accountable relationship"
             />
             <FeatureGrid
-              tone="well"
+              tone="paper"
               items={[
                 { icon: Shield, title: "Cybersecurity-first IT", text: "Every ProActive tier includes the DE Security Foundation across identity, endpoint, email, awareness, and managed security monitoring. Higher tiers add deeper response, recovery, compliance, and governance." },
                 { icon: Layers, title: "One accountable model", text: "Support, workplace, security operations, and strategy sit in one operating relationship instead of a pile of vendors." },
@@ -184,7 +185,7 @@ export default function ProActiveEcosystemPage() {
           </Container>
         </Chapter>
 
-        <Chapter tone="well" id="ch-progression" data-de-chapter="2" data-sc-act="flow">
+        <Chapter tone="ink" id="ch-progression" data-de-chapter="2" data-sc-act="flow">
           <Container>
             <ChapterHeader
               tone="well"
@@ -225,12 +226,12 @@ export default function ProActiveEcosystemPage() {
           </Container>
         </Chapter>
 
-        <Chapter tone="surface" id="ch-fit" data-de-chapter="5" data-sc-act="flow">
+        <Chapter tone="signal" id="ch-fit" data-de-chapter="5" data-sc-act="flow">
           <Container>
-            <ChapterHeader tone="surface" eyebrow="Fit" title="Standalone and co-managed" layout="stack" />
+            <ChapterHeader tone="paper" eyebrow="Fit" title="Standalone and co-managed" layout="stack" />
             <div data-sc-reveal="up" data-sc-reveal-at="0.05 0.42">
               <FeatureGrid
-                tone="surface"
+                tone="paper"
                 columns={2}
                 items={[
                   {

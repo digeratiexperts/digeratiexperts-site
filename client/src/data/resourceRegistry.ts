@@ -193,19 +193,19 @@ export const resourceLandingMeta: Record<string, ResourceLandingMeta> = {
   },
   "proactive-office-ecosystem-datasheet": {
     tagline:
-      "The small-office operating package — managed IT, 24/7 managed detection and response, stronger identity, endpoint backup, and a real annual review.",
+      "The small-office operating package — managed IT, managed endpoint detection (EDR), stronger identity, endpoint backup, and a real annual review.",
     forWho:
       "Growing offices that need their network, devices, identity, and backup managed as one package.",
     inside: [
       "Everything in ProActive IT, plus full Managed Workplace",
       "Stronger endpoint security, email protection, and identity controls",
-      "Security awareness training, phishing simulation, and 24/7 managed detection and response",
+      "Security awareness training, phishing simulation, and managed endpoint detection (EDR)",
       "Managed network and connectivity",
       "Endpoint backup included; BCDR available as add-on",
       "1× combined technology + cybersecurity review per year",
     ],
     positioning:
-      "The right starting point for offices that need 24/7 managed threat response but not yet the deeper BCDR, compliance, and governance scope of ProActive Business.",
+      "The right starting point for offices that need managed endpoint security but not yet the 24/7 MDR, deeper BCDR, compliance, and governance scope of ProActive Business.",
   },
   "proactive-business-ecosystem-datasheet": {
     tagline:

@@ -16,7 +16,8 @@ import {
   HeroActions,
   IndexedList,
   StepRail,
-  cardDark,
+  bodyClass,
+  cardPaper,
   inkClass,
 } from "@/components/site/chapters";
 import { Shield, Clock, Award, Users } from "lucide-react";
@@ -93,7 +94,7 @@ const eyebrowFromCanonical = (canonical?: string) =>
 
 /** Facts the site already states elsewhere (SOC, local team, managed protection, SLA). */
 const serviceFacts = [
-  { icon: Shield, title: "24/7 human-led SOC", text: "Monitoring behind the managed stack" },
+  { icon: Shield, title: "24/7 human-led SOC", text: "On ProActive Business and Enterprise" },
   { icon: Users, title: "Arizona engineering team", text: "Chandler / East Valley operator" },
   { icon: Award, title: "8 blocks of managed protection", text: "One program, not point tools" },
   { icon: Clock, title: "Defined response times", text: "SLA-backed support" },
@@ -148,7 +149,9 @@ export default function GenericServicePage({
     >
       <FactStrip facts={serviceFacts} label="Why Arizona businesses choose Digerati Experts" />
 
-      <Chapter tone="well" seam={false}>
+      {/* Section fields follow the Homepage v2 role pattern: ink = proof/decision, paper = reading,
+          signal = how it works. Child primitives keep paper (light) or well (dark) recipes. */}
+      <Chapter tone="ink" seam={false}>
         <Container>
           <div className={stat ? "grid items-start gap-10 lg:grid-cols-12 lg:gap-14" : undefined}>
             <div className={stat ? "lg:col-span-7" : "max-w-3xl"}>
@@ -162,7 +165,7 @@ export default function GenericServicePage({
             </div>
             {stat && (
               <div className="lg:col-span-5" data-testid="service-stat-callout">
-                <div className={`${cardDark} p-6 md:p-8`}>
+                <div className="rounded-xl border border-de-hairline bg-de-raised p-6 md:p-8">
                   <p className="font-heading text-4xl font-semibold tracking-[-0.02em] text-de-accent-ink md:text-5xl">
                     {stat.value}
                   </p>
@@ -176,21 +179,21 @@ export default function GenericServicePage({
       </Chapter>
 
       {painPoints.length > 0 && (
-        <Chapter tone="surface" data-testid="section-pain-points">
+        <Chapter tone="paper" data-testid="section-pain-points">
           <Container>
             <ChapterHeader
-              tone="surface"
+              tone="paper"
               eyebrow="Is this you"
               title="Does any of this sound familiar?"
               lede="If two or more feel familiar, this page is for your office."
             />
-            <IndexedList tone="surface" columns={2} items={painPoints.map((p) => ({ title: p }))} />
+            <IndexedList tone="paper" columns={2} items={painPoints.map((p) => ({ title: p }))} />
           </Container>
         </Chapter>
       )}
 
       {(features.length > 0 || benefits.length > 0) && (
-        <Chapter tone="paper" id="included" className="scroll-mt-28">
+        <Chapter tone="signal" id="included" className="scroll-mt-28">
           <Container>
             {features.length > 0 && (
               <>
@@ -220,7 +223,7 @@ export default function GenericServicePage({
       )}
 
       {process.length > 0 && (
-        <Chapter plate={plateForServiceKey(serviceKey)} tone="well" data-testid="section-process">
+        <Chapter plate={plateForServiceKey(serviceKey)} tone="ink" data-testid="section-process">
           <Container>
             <ChapterHeader
               tone="well"
@@ -234,24 +237,24 @@ export default function GenericServicePage({
       )}
 
       {(narrative?.arizonaNote || proof) && (
-        <Chapter tone="surface" data-testid="section-local-proof">
+        <Chapter tone="paper" data-testid="section-local-proof">
           <Container>
             <div className="grid gap-5 md:grid-cols-2">
               {narrative?.arizonaNote && (
-                <div className={`${cardDark} p-7 md:p-8`}>
-                  <p className="mb-3 font-mono text-xs font-semibold uppercase tracking-[0.16em] text-de-magenta-ink">
+                <div className={`${cardPaper} p-7 md:p-8`}>
+                  <p className="mb-3 font-mono text-xs font-semibold uppercase tracking-[0.16em] text-de-magenta-paper-ink">
                     Arizona operator
                   </p>
-                  <p className="text-lg leading-relaxed text-white/85">{narrative.arizonaNote}</p>
+                  <p className={`text-lg leading-relaxed ${bodyClass("paper")}`}>{narrative.arizonaNote}</p>
                 </div>
               )}
               {proof && (
-                <div className={`${cardDark} border-[#D3126A]/35 p-7 md:p-8`}>
-                  <p className="mb-3 font-mono text-xs font-semibold uppercase tracking-[0.16em] text-de-magenta-ink">
+                <div className={`${cardPaper} border-[#D3126A]/35 p-7 md:p-8`}>
+                  <p className="mb-3 font-mono text-xs font-semibold uppercase tracking-[0.16em] text-de-magenta-paper-ink">
                     {proofIsSourced ? "Industry context" : "Typical outcome (illustrative, not a named client)"}
                   </p>
-                  <p className="text-lg leading-relaxed text-white">“{proof.quote}”</p>
-                  <p className="mt-3 text-sm text-white/60">{proof.attribution}</p>
+                  <p className={`text-lg leading-relaxed ${inkClass("paper")}`}>“{proof.quote}”</p>
+                  <p className="mt-3 text-sm text-black/60">{proof.attribution}</p>
                 </div>
               )}
             </div>

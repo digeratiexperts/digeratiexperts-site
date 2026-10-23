@@ -25,7 +25,8 @@ describe("Homepage v2 content rules", () => {
     const literal = sectionSources.filter((s) => s.text.includes("Ready-to-Work IT") && s.file !== "ContactSection.tsx");
     // Copy that is a plain sentence may repeat the name; the heading must come from the constant.
     expect(literal.every((s) => !/<h3>Ready-to-Work IT<\/h3>/.test(s.text))).toBe(true);
-    expect(readFileSync(path.join(here, "content.ts"), "utf8")).toContain('THIRD_LANE_NAME = "Ready-to-Work IT"');
+    expect(readFileSync(path.join(here, "../../data/offering.ts"), "utf8")).toContain('THIRD_LANE_NAME = "Ready-to-Work IT"');
+    expect(readFileSync(path.join(here, "content.ts"), "utf8")).toContain('from "@/data/offering"');
   });
 
   it("does not hotlink the reference's digeratiexperts.com assets", () => {

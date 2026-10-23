@@ -23,25 +23,26 @@ export default function CampaignIndex() {
       layout="chapters"
       actions={<HeroActions primary={{ label: CTA.primary, href: "/book" }} />}
     >
-      <Chapter tone="well" seam={false}>
+      {/* Light field: the hero and the closing band are dark, so the list reads as paper (Homepage v2 rhythm). */}
+      <Chapter tone="paper" seam={false}>
         <Container>
-          <ol className="border-t border-[var(--de-hairline)]">
+          <ol className="border-t border-[var(--de-paper-hairline)]">
             {CAMPAIGNS.map((campaign, index) => (
-              <li key={campaign.slug} className="border-b border-[var(--de-hairline)]">
+              <li key={campaign.slug} className="border-b border-[var(--de-paper-hairline)]">
                 <Link
                   href={`/go/${campaign.slug}`}
                   className="de-interactive-card group grid gap-3 py-7 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#ec4899] md:grid-cols-[4rem_1fr_auto] md:items-center md:gap-8"
                   data-testid={`campaign-index-${campaign.slug}`}
                 >
-                  <span className="font-mono text-sm font-semibold text-de-magenta-ink">0{index + 1}</span>
+                  <span className="font-mono text-sm font-semibold text-de-magenta-paper-ink">0{index + 1}</span>
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/60">{campaign.eyebrow}</p>
-                    <h2 className="mt-2 font-heading text-2xl font-semibold text-white group-hover:text-de-magenta-ink">
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-black/60">{campaign.eyebrow}</p>
+                    <h2 className="mt-2 font-heading text-2xl font-semibold text-[#1A1228] group-hover:text-de-magenta-paper-ink">
                       {campaign.offerName}
                     </h2>
-                    <p className="mt-2 max-w-2xl text-base leading-relaxed text-white/70">{campaign.lede}</p>
+                    <p className="mt-2 max-w-2xl text-base leading-relaxed text-[#3A3448]">{campaign.lede}</p>
                   </div>
-                  <span className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-de-magenta-ink">
+                  <span className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-de-magenta-paper-ink">
                     Explore this service
                     <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
                   </span>
