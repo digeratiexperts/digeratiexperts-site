@@ -56,6 +56,10 @@ claims:
       extend with their own files, route guards redirecting hidden routes to
       Home, "Digerati Experts" company record, report-only sample-data CI
       guardrail. Specialist agent: opens a PR only, never merges.
+      Continuity (Joe, 2026-10-23): opencode lane sessions own this work
+      operationally and any session may continue it from the lane files and
+      this claim if Joe's account cannot work; account access, secrets and
+      legal rights are not transferred by this note and stay Joe's to grant.
   - id: dex-presence
     owner: claude
     subsystem: mascots-concept

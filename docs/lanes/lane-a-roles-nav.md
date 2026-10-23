@@ -135,6 +135,22 @@ of it and hold client-manager rights across all companies.
 - `navContext.data.sharedFiles` counts live `portal_tenant_files` rows for the acting company.
   When Lane B adds per-user sharing, narrow it to the signed-in user.
 
+## Ownership and continuity (Joe's instruction, 2026-10-23)
+
+Joe asked that the tasks he assigned to the opencode lanes keep moving if his own account stops
+being able to work. Recorded here so any session can pick them up:
+
+- **Operational ownership** of the opencode lane work (Lane A roles/nav, PR #700; and the other
+  `docs/plans/opencode/` lanes as they start) sits with the **opencode lane sessions**, coordinated
+  by the lead integrator per `docs/AI-ENGINEERING-GOVERNANCE.md`. Any agent session may continue
+  a lane from its lane file, this log, and the open PR/issue — no chat history needed.
+- The open work is claimed on GitHub (issue #697, PR #700) and mirrored in `.ai/ACTIVE_WORK.yaml`;
+  those records are the handover.
+- **What this note is not:** it does not transfer legal rights, account access, secrets, or
+  repository/admin permissions. Those remain Joe's (or an org admin's) to grant, and merging and
+  production deploys stay with the governance process (Joe approves; the lead integrator merges
+  within given approvals).
+
 ## Notes for other lanes
 
 - **Lane B (file delivery):** `files.share` (de_staff + super_admin) and `files.read` exist in
