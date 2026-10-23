@@ -4494,6 +4494,8 @@ claims:
     started: 2026-10-23
     files:
       - client/src/pages/homepage-v2/sections/HeroSection.tsx (speakName only)
+      - client/src/pages/homepage-v2/sections/WhySection.tsx (define card copy only)
+      - client/src/pages/homepage-v2/homepage-v2.css (.define .w removed)
     status: in-review
     note: >-
       Joe, 2026-10-23: the hero "Hear it" "doesn't even sound good or sound
@@ -4502,3 +4504,6 @@ claims:
       device) and never used client/public/audio/digerati-pronunciation.wav.
       Now it plays that file, with synthesis only as the fallback. The file
       itself is still synthetic; a human recording is pending Joe.
+      Joe picked option A for the word appearing twice: the Why card drops
+      its big "dig·er·a·ti" headword and keeps the meaning, so the word is
+      shown large only once (the hero).
