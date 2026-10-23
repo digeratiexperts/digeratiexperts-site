@@ -32,6 +32,7 @@ version: 2
 claims:
   - id: lane-a-roles-nav
     issue: 697
+    pr: 700
     owner: opencode
     subsystem: portal-roles-nav
     branch: opencode/lane-a-roles-nav-20261022
