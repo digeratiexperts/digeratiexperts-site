@@ -36,6 +36,7 @@ claims:
     subsystem: homepage
     branch: opencode/lane-h-homepage-20261022
     base_sha: 398f4d6f
+    pr: 698
     files:
       - client/src/pages/versions/v8/** (homepage V8 only: one CTA system, canonical names, visitor copy, section consolidation)
       - docs/lanes/lane-h-homepage.md, docs/lanes/lane-h-phase0.md (log and Phase 0 report)
