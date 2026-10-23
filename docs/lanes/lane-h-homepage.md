@@ -122,3 +122,39 @@
 - 2026-10-22: PR [#698](https://github.com/digeratiexperts/digeratiexperts-site/pull/698) opened with the section map, moved-content list, CTA replacement list, before/after evidence and the concurrency report; issue [#696](https://github.com/digeratiexperts/digeratiexperts-site/issues/696) updated to match. Lane H is complete on the opencode side.
 - 2026-10-22: **Joe told Claude (Code, lead integrator) about this lane / PR #698**, so the review-and-merge step is Claude's to take under `docs/AI-ENGINEERING-GOVERNANCE.md` (exact wording not captured here). Merge and deploy remain separate states: Joe deploys, then this lane's claim flips to `verified-live` in `.ai/ACTIVE_WORK.yaml` and issue #696 closes.
 
+## Follow-up slice (2026-10-22, plan §6 + §5)
+
+- **§6 Connected journey — wired where the existing scope model already supports it.** The booking
+  context model is `openBooking(source)` (`client/src/contexts/BookingContext.tsx`, which also sends
+  `analytics.bookingOpened(source)`). Four homepage assessment CTAs navigated to `/book` bare; they now
+  carry their section like the other five already did: `tackle_section` (04), `trust_section` (08),
+  `industries_section` (10, both CTAs), `contact_section` (16). `href="/book"` stays as the no-JS and
+  modified-click fallback (middle-click still opens the page). Verified in-browser: each opens the
+  booking modal with the Zoho booking frame.
+  - **Store context:** the Store sits in the main nav, which the plan's DO-NOT-CHANGE list fixes
+    ("Solutions, Industries, Pricing, Resources, About, Store, Assessment") — nothing to carry.
+  - **Ask DE context:** the existing scope model deliberately seeds nothing from `/`
+    (`client/src/lib/deskOpenSeed.test.ts` asserts `deskOpenSeed({ context: "home" }, "/")` is
+    `undefined`). Carrying homepage context there would need a new seed decision — out of scope
+    ("no new systems").
+  - **Assessment form:** `POST /api/assessment` already posts `source: "lead_form"`; forms and APIs are
+    DO-NOT-CHANGE.
+- **§5 Visual consistency — assessed, no further churn:** section rhythm is already one system
+  (`.v8-section` 64px, `--tight` 48px on the credibility strip); the light/dark sequence after the
+  reorder is deliberate (dark hero → paper credibility → paper problems → dark engage/packages →
+  light protect → dark updates/industries/proof → paper trust island → light FAQ → light close + dark
+  contact bookend); the remaining gradients are the cyan/purple/magenta lighting language the plan
+  tells us to keep. Card-count reductions would mean moving content the plan forbids deleting.
+- Gates re-run after this slice: `npm run check` clean · `npm run smoke:public` OK · `npm run smoke:a11y`
+  axe 0 violation groups · v8 + `useDockAutohide` + `deskOpenSeed` suites green.
+
+## Ownership and continuity (Joe, 2026-10-22)
+
+Joe asked that opencode keep exclusive ownership of the rights and tasks assigned to it if his own
+account access lapses, with someone taking the work over. **What is recorded here:** Lane H's slice
+(PR #698, issue #696, `docs/lanes/lane-h-homepage.md`) is opencode-owned work product and the next
+session may pick it up from this log + the handoff block without re-asking. **What an agent cannot
+do:** grant account access, transfer workspace/org ownership, or change roles — those are admin
+actions only Joe (or the account owner) can perform; they are listed on his DE To-Do. Nothing has
+been granted or transferred at the account level by this session.
+

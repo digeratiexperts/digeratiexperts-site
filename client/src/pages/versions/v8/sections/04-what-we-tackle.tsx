@@ -1,7 +1,9 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { Link } from "wouter";
+import type { MouseEvent } from "react";
 import { revealInitial, revealInView, revealTransition, revealViewport } from "@/lib/animations";
+import { useBooking } from "@/contexts/BookingContext";
 import { HOME_CTA } from "../cta";
 import "./04-what-we-tackle.css";
 import { ChapterPattern } from "@/components/site/Atmosphere";
@@ -58,6 +60,15 @@ const CHALLENGES = [
 
 export function V8WhatWeTackle(): JSX.Element {
   const prefersReducedMotion = useReducedMotion();
+  const { openBooking } = useBooking();
+  // Same context model the hero, proof, team and monitoring CTAs use: the booking
+  // source names the homepage section the visitor came from (Lane H §6, existing
+  // scope model only). Modified clicks keep the /book href.
+  const openFromSection = (source: string) => (e: MouseEvent<HTMLAnchorElement>) => {
+    if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    e.preventDefault();
+    openBooking(source);
+  };
   const reveal = {
     initial: prefersReducedMotion ? false : revealInitial,
     whileInView: revealInView,
@@ -108,7 +119,12 @@ export function V8WhatWeTackle(): JSX.Element {
           <p className="v8-lede">
             Don&apos;t see your specific challenge? We handle custom threat profiles across Arizona.
           </p>
-          <a className="v8-btn v8-btn--primary" href="/book" data-testid="tackle-cta">
+          <a
+            className="v8-btn v8-btn--primary"
+            href="/book"
+            onClick={openFromSection("tackle_section")}
+            data-testid="tackle-cta"
+          >
             {HOME_CTA.primary} <ArrowRight size={18} strokeWidth={1.8} aria-hidden="true" />
           </a>
         </div>

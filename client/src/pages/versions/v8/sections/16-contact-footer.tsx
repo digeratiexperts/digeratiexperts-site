@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { revealInitial, revealInView, revealTransition, revealViewport } from "@/lib/animations";
 import { useToast } from "@/hooks/use-toast";
 import { analytics } from "@/lib/analytics";
+import { useBooking } from "@/contexts/BookingContext";
 import { HOME_CTA } from "../cta";
 import { DE_LOGO_REVERSE } from "@/lib/brandAssets";
 import { COMPANY, COMPANY_SOCIAL, PRIMARY_PHONE, formatAddressOneLine } from "@/data/companyContact";
@@ -435,6 +436,7 @@ function FooterNewsletter(): JSX.Element {
 
 export function V8ContactFooter(): JSX.Element {
   const reduceMotion = useReducedMotion();
+  const { openBooking } = useBooking();
   const reveal = (delay = 0) =>
     reduceMotion
       ? {}
@@ -475,7 +477,18 @@ export function V8ContactFooter(): JSX.Element {
               help or want to explore our services, we&apos;re here for you.
             </p>
             <div className="contact__actions">
-              <a className="v8-btn v8-btn--primary" href="/book" data-testid="contact-cta-assessment">
+              <a
+                className="v8-btn v8-btn--primary"
+                href="/book"
+                onClick={(e) => {
+                  // Booking source names the section (existing context model, Lane H §6);
+                  // modified clicks keep the /book href.
+                  if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+                  e.preventDefault();
+                  openBooking("contact_section");
+                }}
+                data-testid="contact-cta-assessment"
+              >
                 {HOME_CTA.primary}{" "}
                 <svg {...svgProps}>
                   <path d="M5 12h14" />
