@@ -384,6 +384,27 @@ export const portalRoadmapItems = pgTable("portal_roadmap_items", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
+/** Business reviews (migrations/0023_portal_business_reviews.sql; shared/businessReviews.ts). */
+export const portalBusinessReviews = pgTable("portal_business_reviews", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  clientId: varchar("client_id")
+    .notNull()
+    .references(() => portalClients.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  period: text("period"),
+  meetingOn: date("meeting_on", { mode: "string" }).notNull(),
+  status: text("status").notNull().default("draft"),
+  summary: text("summary").notNull().default(""),
+  decisions: jsonb("decisions").notNull().default([]),
+  roadmapItemIds: jsonb("roadmap_item_ids").notNull().default([]),
+  fileId: varchar("file_id"),
+  createdBy: varchar("created_by"),
+  createdByName: text("created_by_name").notNull().default(""),
+  publishedAt: timestamp("published_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
 /**
  * Group-level requests filed by a Hub-defined representative on behalf of the
  * group they represent (migrations/0019_portal_group_requests.sql;
