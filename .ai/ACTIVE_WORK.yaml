@@ -30,6 +30,29 @@
 
 version: 2
 claims:
+  - id: license-kit-vault-docs
+    owner: claude
+    subsystem: licensing
+    branch: claude/exciting-cannon-ttx8m8
+    base_sha: 398f4d6f
+    files:
+      - migrations/0020_company_kits_and_vault_requirements.sql (new)
+      - shared/starterKits.ts, shared/clientVault.ts, shared/jumpcloudPlan.test.ts
+      - server/licenseBoardStore.ts, server/licenseBoardRoutes.ts, server/licenseBoardRoutes.test.ts
+      - server/portalClientVault.ts, server/portalClientVault.test.ts (list response gains requirements)
+      - server/routes.ts (licence board vaultTitles dep, vault requirements dep)
+      - client/src/pages/portal/AdminLicenseBoard.tsx, client/src/components/portal/licensing/CompanyTools.tsx, client/src/lib/licenseBoardApi.ts
+      - client/src/pages/portal/AdminClientWorkspace.tsx (needed-documents checklist)
+    status: active
+    started: 2026-10-23
+    note: >-
+      Joe, 2026-10-23 ("I want all these"): slice A of four. The License
+      Patch Bay records which starter kit each company has (header chip,
+      company list) and applying a kit adds its document checklist to the
+      client vault (Regulated: BAA or engagement terms, WISP, incident
+      response plan; GCC High: CUI handling agreement, SSP reference, tool
+      review record). Next slices: Microsoft 365 / Google licence push, Hub
+      SKU feed.
   - id: dex-presence
     owner: claude
     subsystem: mascots-concept

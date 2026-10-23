@@ -15,6 +15,7 @@ import { SHELF_CATEGORIES, catalogShelf, hubShelf, starterShelf } from "@shared/
 import * as store from "./licenseBoardStore";
 import { JC_ID, planJumpCloudInstalls } from "@shared/jumpcloudPlan";
 import { STARTER_KITS, shelfEntry, starterKit } from "@shared/starterKits";
+import { requirementStatus } from "@shared/clientVault";
 
 /**
  * License patch bay (DE admin only).
@@ -29,6 +30,9 @@ import { STARTER_KITS, shelfEntry, starterKit } from "@shared/starterKits";
  *   GET    /api/portal/admin/license-board/clients/:clientId    the company's free pool, departments, people, devices
  *   POST   /api/portal/admin/license-board/clients/:clientId/assign
  *   DELETE /api/portal/admin/license-board/clients/:clientId/assignments/:id
+ *
+ *   GET    /api/portal/admin/license-board/kits                  the starter kits
+ *   POST   /api/portal/admin/license-board/clients/:clientId/kit records the kit, its apps and its vault checklist
  *
  * These are DE's records of where seats are meant to go. Nothing here
  * provisions a licence in Microsoft, Google or any vendor console.
@@ -49,6 +53,8 @@ export type LicenseBoardRouteDeps = {
   fetchHubCatalog?: () => Promise<Record<string, unknown> | null>;
   /** JumpCloud Software Management (server/integrations/jumpcloud.ts); tests pass a fake. */
   jumpcloud: JumpCloudClient;
+  /** Kinds and titles of the client's vault items, to tick off kit documents. Absent or null: on-file status unknown. */
+  vaultTitles?: (clientId: string) => Promise<Array<{ kind: string; title: string }> | null>;
 };
 
 export type JumpCloudClient = {
@@ -83,14 +89,21 @@ export function registerLicenseBoardRoutes(app: Express, deps: LicenseBoardRoute
 
   app.get(BASE, ...guard, async (_req: AdminRequest, res: Response) => {
     try {
-      const [items, allocations, assignments] = await Promise.all([
+      const [items, allocations, assignments, kits] = await Promise.all([
         store.listPoolItems(),
         store.listAllocations(),
         store.listAssignments(),
+        store.listCompanyKits(),
       ]);
+      const kitOf = new Map(kits.map((k) => [k.clientId, starterKit(k.kitKey)?.name ?? null]));
       const clients = deps
         .listClients()
-        .map((c) => ({ id: c.id, name: c.companyName, seats: summarizeCompany(c.id, allocations, assignments, appIdsOf(items)) }))
+        .map((c) => ({
+          id: c.id,
+          name: c.companyName,
+          kit: kitOf.get(c.id) ?? null,
+          seats: summarizeCompany(c.id, allocations, assignments, appIdsOf(items)),
+        }))
         .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" }));
       res.json({ success: true, items: summarizePool(items, allocations), clients, catalog: LICENSE_CATALOG });
     } catch (error) {
@@ -238,12 +251,17 @@ export function registerLicenseBoardRoutes(app: Express, deps: LicenseBoardRoute
 
   /** One company's free pool, departments, people and devices (the page's level 2). */
   const companyView = async (client: Client) => {
-    const [items, allocations, assignments, departments] = await Promise.all([
+    const [items, allocations, assignments, departments, kitRow, requirements, vaultItems] = await Promise.all([
       store.listPoolItems(),
       store.listAllocations(client.id),
       store.listAssignments(client.id),
       deps.listDepartments(client.id).catch(() => []),
+      store.getCompanyKit(client.id),
+      store.listVaultRequirements(client.id),
+      deps.vaultTitles ? deps.vaultTitles(client.id).catch(() => null) : Promise.resolve(null),
     ]);
+    const kit = kitRow ? starterKit(kitRow.kitKey) : undefined;
+    const vaultStatus = vaultItems ? requirementStatus(requirements, vaultItems as any) : null;
     const seats = summarizeCompany(client.id, allocations, assignments, appIdsOf(items));
     const byId = new Map(items.map((i) => [i.id, i]));
     const people = deps
@@ -259,6 +277,12 @@ export function registerLicenseBoardRoutes(app: Express, deps: LicenseBoardRoute
     for (const a of assignments) if (a.targetType === "device") devices.set(a.targetId, a.targetLabel);
     return {
       company: { id: client.id, name: client.companyName },
+      kit: kit && kitRow ? { key: kit.key, name: kit.name, appliedAt: kitRow.appliedAt } : null,
+      vaultDocs: {
+        needed: requirements.length,
+        /** null when the vault could not be read (not configured or down). */
+        onFile: vaultStatus ? vaultStatus.filter((r) => r.onFile).length : null,
+      },
       pool: seats
         .filter((s) => byId.has(s.itemId))
         .map((s) => {
@@ -553,7 +577,24 @@ export function registerLicenseBoardRoutes(app: Express, deps: LicenseBoardRoute
         if (added) addedToPool++;
         recommended.push({ itemId: item.id, product: item.product });
       }
-      res.json({ success: true, kit: kit.name, addedToPool, appsOn, onEveryMachine, recommended, note: kit.note ?? null });
+      await store.setCompanyKit(client.id, kit.key, by);
+      const vaultDocsAdded = await store.addVaultRequirements(
+        client.id,
+        kit.vaultDocs.map((d) => ({ kind: d.kind, title: d.title, hint: d.hint })),
+        `kit:${kit.key}`,
+        by,
+      );
+      res.json({
+        success: true,
+        kit: kit.name,
+        kitKey: kit.key,
+        addedToPool,
+        appsOn,
+        onEveryMachine,
+        recommended,
+        vaultDocsAdded,
+        note: kit.note ?? null,
+      });
     } catch (error) {
       fail(res, error, "apply the starter kit");
     }

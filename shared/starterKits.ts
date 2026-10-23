@@ -1,4 +1,5 @@
 import { starterShelf, catalogShelf, type ShelfEntry } from "./licenseShelf";
+import type { ClientVaultKind } from "./clientVault";
 
 /**
  * Starter kits by business type. Applying a kit to a company in the License
@@ -20,8 +21,13 @@ export type StarterKit = {
   /** Shelf keys (shared/licenseShelf.ts). */
   apps: string[];
   licenses: string[];
+  /** Documents the client's vault should hold for this business type (a checklist; nothing is uploaded for you). */
+  vaultDocs: Array<{ kind: ClientVaultKind; title: string; hint: string }>;
   note?: string;
 };
+
+const MSA = { kind: "contract" as const, title: "Signed managed services agreement", hint: "The countersigned MSA and current SOW." };
+const INSURANCE = { kind: "contract" as const, title: "Cyber insurance policy", hint: "Current-year declarations page and security requirements." };
 
 export const STARTER_KITS: StarterKit[] = [
   {
@@ -38,6 +44,7 @@ export const STARTER_KITS: StarterKit[] = [
       "starter:agent-coro",
     ],
     licenses: ["catalog:ms_m365_bp", "starter:coro", "starter:jumpcloud-platform"],
+    vaultDocs: [MSA, INSURANCE],
   },
   {
     key: "regulated",
@@ -62,6 +69,13 @@ export const STARTER_KITS: StarterKit[] = [
       "starter:coro",
       "starter:jumpcloud-platform",
     ],
+    vaultDocs: [
+      MSA,
+      INSURANCE,
+      { kind: "contract", title: "Business associate agreement or engagement terms", hint: "BAA for HIPAA clients; engagement or confidentiality terms for legal and finance." },
+      { kind: "contract", title: "Written information security program", hint: "The client's WISP or security policy set." },
+      { kind: "contract", title: "Incident response plan", hint: "Who to call, in what order, and the notification duties." },
+    ],
     note: "Record the client's BAA or engagement terms in the vault before go-live.",
   },
   {
@@ -70,6 +84,12 @@ export const STARTER_KITS: StarterKit[] = [
     blurb: "GCC High licences and a minimal, reviewed app set. Data stays in the client's GCC High tenant.",
     apps: ["starter:adobereader", "starter:7zip", "starter:agent-de"],
     licenses: ["catalog:gcch_m365_g3", "catalog:gcch_m365_g5"],
+    vaultDocs: [
+      MSA,
+      { kind: "contract", title: "CUI handling agreement", hint: "Scope and handling terms. The CUI itself never goes in DE's vault." },
+      { kind: "contract", title: "System security plan reference", hint: "Where the SSP lives in the client's GCC High tenant, not the SSP itself." },
+      { kind: "contract", title: "Tool review record (FedRAMP / CMMC)", hint: "One line per tool on these machines: authorization status and who reviewed it." },
+    ],
     note: "Do not store CUI in DE's own vault. Every tool on these machines needs a FedRAMP / CMMC review first.",
   },
 ];

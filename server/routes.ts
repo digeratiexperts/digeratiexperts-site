@@ -1330,6 +1330,11 @@ export async function registerRoutes(app: Express) {
       associate: (appId, target, orgId) => jumpcloudAssociateSoftware(appId, target, orgId),
       findSystem: (name, orgId) => jumpcloudFindSystem(name, orgId),
     },
+    vaultTitles: async (clientId) => {
+      const meta = await createDbVaultMetaStore();
+      if (!meta.ready()) return null;
+      return (await meta.list(clientId)).map((i) => ({ kind: i.kind, title: i.title }));
+    },
   });
 
   // Company structure (site / department leaders) and the people directory (server/orgDirectoryRoutes.ts).
@@ -4756,6 +4761,7 @@ export async function registerRoutes(app: Express) {
     meta: createDbVaultMetaStore,
     blobs: createConfiguredVaultBlobStore,
     logSecurityEvent,
+    requirements: async (clientId) => (await import("./licenseBoardStore")).listVaultRequirements(clientId),
   });
 
   // Get company metrics/stats (admin only)

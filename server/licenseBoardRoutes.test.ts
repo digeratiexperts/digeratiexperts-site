@@ -26,6 +26,8 @@ const people = [
   { id: "u3", clientId: "c2", fullName: "Sam Ortiz", email: "sam@bluebird.test", departmentId: null },
 ];
 
+const vaultOnFile: Array<{ kind: string; title: string }> = [];
+
 describe("license patch bay routes", () => {
   let server: Server;
   let base = "";
@@ -59,6 +61,7 @@ describe("license patch bay routes", () => {
         },
         findSystem: async (name) => (name === "FRONT-01" ? { ok: true, id: "sys-front" } : { ok: false, error: `No JumpCloud machine named ${name}` }),
       },
+      vaultTitles: async (clientId) => (clientId === "c1" ? vaultOnFile : []),
     });
     server = createServer(app);
     await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
@@ -75,6 +78,7 @@ describe("license patch bay routes", () => {
     (await import("./licenseBoardStore"))._resetLicenseBoardMemory();
     jc.configured = true;
     jc.calls.length = 0;
+    vaultOnFile.length = 0;
   });
 
   const call = async (method: string, path: string, body?: object, user: object | null = ADMIN) => {
@@ -237,5 +241,24 @@ describe("license patch bay routes", () => {
     expect(bp).toMatchObject({ quantity: 0, allocated: 0 });
     expect(board.clients.find((c: any) => c.id === "c1").seats.some((s: any) => s.itemId === bp.id)).toBe(false);
     expect((await call("POST", "/clients/c1/kit", { kit: "nope" })).status).toBe(400);
+  });
+
+  it("records the company's kit and adds its vault checklist once, ticking documents already on file", async () => {
+    expect((await call("GET", "/clients/c1")).body).toMatchObject({ kit: null, vaultDocs: { needed: 0, onFile: 0 } });
+
+    vaultOnFile.push({ kind: "contract", title: "  signed MANAGED services   agreement " });
+    const first = (await call("POST", "/clients/c1/kit", { kit: "regulated" })).body;
+    expect(first).toMatchObject({ kitKey: "regulated", vaultDocsAdded: 5 });
+    expect((await call("POST", "/clients/c1/kit", { kit: "regulated" })).body.vaultDocsAdded).toBe(0);
+
+    const view = (await call("GET", "/clients/c1")).body;
+    expect(view.kit).toMatchObject({ key: "regulated", name: "Regulated (HIPAA, legal, finance)" });
+    expect(view.vaultDocs).toEqual({ needed: 5, onFile: 1 });
+
+    // Switching to the regular kit keeps the documents already asked for (MSA and insurance are shared).
+    expect((await call("POST", "/clients/c1/kit", { kit: "regular" })).body.vaultDocsAdded).toBe(0);
+    const board = (await call("GET", "")).body;
+    expect(board.clients.find((c: any) => c.id === "c1").kit).toBe("Regular business");
+    expect(board.clients.find((c: any) => c.id === "c2")?.kit ?? null).toBeNull();
   });
 });
