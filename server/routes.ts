@@ -127,6 +127,7 @@ import { registerHubServiceRequestStatusRoute, registerServiceRequestRoutes, sta
 import { registerRepresentationRoutes } from "./representationRoutes";
 import { requireDeSyncAuth } from "./integrations/deSyncAuth";
 import { registerPortalAssistRoutes } from "./portalAssistRoutes";
+import { registerStatusNoticeRoutes } from "./statusNoticeRoutes";
 import { registerLicensingRoutes } from "./licensingRoutes";
 import { registerPortalAgreementRoutes } from "./portalAgreementRoutes";
 import { registerLicenseBoardRoutes } from "./licenseBoardRoutes";
@@ -1339,6 +1340,13 @@ export async function registerRoutes(app: Express) {
     },
     fetchProjection: (hubAccountId, portalClientId) => fetchHubRepresentation(hubAccountId, portalClientId),
     createDeskTicket: serviceRequestDeps.createDeskTicket,
+  });
+  // System Status notices (server/statusNoticeRoutes.ts).
+  registerStatusNoticeRoutes(app, {
+    guards: [authMiddleware, validateInput],
+    adminGuards: [authMiddleware, requireAdmin, validateInput],
+    getClient: serviceRequestDeps.getClient,
+    findUser: serviceRequestDeps.findUser,
   });
   // Licensing: account types and the company licence policy (server/licensingRoutes.ts).
   registerLicensingRoutes(app, {
