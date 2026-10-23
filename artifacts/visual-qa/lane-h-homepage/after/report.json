@@ -1,0 +1,440 @@
+{
+  "base": "http://127.0.0.1:8080",
+  "when": "2026-10-23T02:46:10.078Z",
+  "widths": {
+    "390": {
+      "overflow": {
+        "scrollWidth": 390,
+        "innerWidth": 390,
+        "over": false,
+        "offenders": []
+      },
+      "fold": {
+        "viewportH": 844,
+        "card": {
+          "top": 1115,
+          "bottom": 1975
+        },
+        "cta": {
+          "top": 415,
+          "bottom": 463
+        },
+        "checks": null
+      },
+      "collisions": [
+        "cookieBanner overlaps pronunciation"
+      ],
+      "layers": {
+        "cookieBanner": {
+          "x": 0,
+          "y": 749,
+          "width": 390,
+          "height": 95
+        },
+        "askDe": {
+          "x": 323,
+          "y": 682,
+          "width": 40,
+          "height": 40
+        },
+        "bottomBar": {
+          "x": 20,
+          "y": 675,
+          "width": 350,
+          "height": 54
+        },
+        "stickyCta": null,
+        "heroSchedule": {
+          "x": 16,
+          "y": 415,
+          "width": 358,
+          "height": 48
+        },
+        "heroPricing": {
+          "x": 16,
+          "y": 475,
+          "width": 358,
+          "height": 48
+        },
+        "assessmentCard": {
+          "x": 16,
+          "y": 1115,
+          "width": 358,
+          "height": 861
+        },
+        "pronunciation": {
+          "x": 16,
+          "y": 739,
+          "width": 358,
+          "height": 328
+        }
+      },
+      "sectionShots": [
+        "hero",
+        "stats",
+        "challenges",
+        "services",
+        "pricing",
+        "protection",
+        "insights",
+        "industries",
+        "testimonials",
+        "faq",
+        "cta"
+      ],
+      "pageErrors": []
+    },
+    "768": {
+      "overflow": {
+        "scrollWidth": 768,
+        "innerWidth": 768,
+        "over": false,
+        "offenders": []
+      },
+      "fold": {
+        "viewportH": 844,
+        "card": {
+          "top": 682,
+          "bottom": 1267
+        },
+        "cta": {
+          "top": 420,
+          "bottom": 468
+        },
+        "checks": {
+          "top": 478,
+          "bottom": 522
+        }
+      },
+      "collisions": [
+        "cookieBanner overlaps assessmentCard",
+        "askDe overlaps assessmentCard",
+        "bottomBar overlaps assessmentCard"
+      ],
+      "layers": {
+        "cookieBanner": {
+          "x": 0,
+          "y": 749,
+          "width": 768,
+          "height": 95
+        },
+        "askDe": {
+          "x": 556,
+          "y": 690,
+          "width": 193,
+          "height": 40
+        },
+        "bottomBar": {
+          "x": 12,
+          "y": 683,
+          "width": 744,
+          "height": 54
+        },
+        "stickyCta": null,
+        "heroSchedule": {
+          "x": 24,
+          "y": 420,
+          "width": 383,
+          "height": 48
+        },
+        "heroPricing": {
+          "x": 419,
+          "y": 420,
+          "width": 207,
+          "height": 48
+        },
+        "assessmentCard": {
+          "x": 24,
+          "y": 682,
+          "width": 680,
+          "height": 584
+        },
+        "pronunciation": {
+          "x": 24,
+          "y": 590,
+          "width": 600,
+          "height": 44
+        }
+      },
+      "sectionShots": [
+        "hero",
+        "stats",
+        "challenges",
+        "services",
+        "pricing",
+        "protection",
+        "insights",
+        "industries",
+        "testimonials",
+        "faq",
+        "cta"
+      ],
+      "pageErrors": []
+    },
+    "1024": {
+      "overflow": {
+        "scrollWidth": 1024,
+        "innerWidth": 1024,
+        "over": false,
+        "offenders": []
+      },
+      "fold": {
+        "viewportH": 800,
+        "card": {
+          "top": 860,
+          "bottom": 1444
+        },
+        "cta": {
+          "top": 598,
+          "bottom": 646
+        },
+        "checks": {
+          "top": 656,
+          "bottom": 700
+        }
+      },
+      "collisions": [
+        "cookieBanner overlaps pronunciation"
+      ],
+      "layers": {
+        "cookieBanner": {
+          "x": 0,
+          "y": 723,
+          "width": 1024,
+          "height": 77
+        },
+        "askDe": {
+          "x": 812,
+          "y": 664,
+          "width": 193,
+          "height": 40
+        },
+        "bottomBar": {
+          "x": 12,
+          "y": 657,
+          "width": 1000,
+          "height": 54
+        },
+        "stickyCta": null,
+        "heroSchedule": {
+          "x": 24,
+          "y": 598,
+          "width": 383,
+          "height": 48
+        },
+        "heroPricing": {
+          "x": 419,
+          "y": 598,
+          "width": 207,
+          "height": 48
+        },
+        "assessmentCard": {
+          "x": 24,
+          "y": 860,
+          "width": 680,
+          "height": 584
+        },
+        "pronunciation": {
+          "x": 24,
+          "y": 768,
+          "width": 600,
+          "height": 44
+        }
+      },
+      "sectionShots": [
+        "hero",
+        "stats",
+        "challenges",
+        "services",
+        "pricing",
+        "protection",
+        "insights",
+        "industries",
+        "testimonials",
+        "faq",
+        "cta"
+      ],
+      "pageErrors": []
+    },
+    "1280": {
+      "overflow": {
+        "scrollWidth": 1280,
+        "innerWidth": 1280,
+        "over": false,
+        "offenders": []
+      },
+      "fold": {
+        "viewportH": 900,
+        "card": {
+          "top": 244,
+          "bottom": 884
+        },
+        "cta": {
+          "top": 622,
+          "bottom": 670
+        },
+        "checks": {
+          "top": 680,
+          "bottom": 724
+        }
+      },
+      "collisions": [
+        "cookieBanner overlaps assessmentCard",
+        "cookieBanner overlaps pronunciation",
+        "askDe overlaps assessmentCard",
+        "bottomBar overlaps heroSchedule",
+        "bottomBar overlaps heroPricing",
+        "bottomBar overlaps assessmentCard"
+      ],
+      "layers": {
+        "cookieBanner": {
+          "x": 0,
+          "y": 685,
+          "width": 1280,
+          "height": 215
+        },
+        "askDe": {
+          "x": 1068,
+          "y": 626,
+          "width": 193,
+          "height": 40
+        },
+        "bottomBar": {
+          "x": 12,
+          "y": 619,
+          "width": 1256,
+          "height": 54
+        },
+        "stickyCta": null,
+        "heroSchedule": {
+          "x": 24,
+          "y": 622,
+          "width": 383,
+          "height": 48
+        },
+        "heroPricing": {
+          "x": 419,
+          "y": 622,
+          "width": 207,
+          "height": 48
+        },
+        "assessmentCard": {
+          "x": 676,
+          "y": 244,
+          "width": 580,
+          "height": 640
+        },
+        "pronunciation": {
+          "x": 24,
+          "y": 792,
+          "width": 600,
+          "height": 44
+        }
+      },
+      "sectionShots": [
+        "hero",
+        "stats",
+        "challenges",
+        "services",
+        "pricing",
+        "protection",
+        "insights",
+        "industries",
+        "testimonials",
+        "faq",
+        "cta"
+      ],
+      "pageErrors": []
+    },
+    "1440": {
+      "overflow": {
+        "scrollWidth": 1440,
+        "innerWidth": 1440,
+        "over": false,
+        "offenders": []
+      },
+      "fold": {
+        "viewportH": 900,
+        "card": {
+          "top": 244,
+          "bottom": 860
+        },
+        "cta": {
+          "top": 621,
+          "bottom": 669
+        },
+        "checks": {
+          "top": 679,
+          "bottom": 723
+        }
+      },
+      "collisions": [
+        "cookieBanner overlaps assessmentCard",
+        "cookieBanner overlaps pronunciation",
+        "askDe overlaps assessmentCard",
+        "bottomBar overlaps heroSchedule",
+        "bottomBar overlaps heroPricing",
+        "bottomBar overlaps assessmentCard"
+      ],
+      "layers": {
+        "cookieBanner": {
+          "x": 0,
+          "y": 711,
+          "width": 1440,
+          "height": 189
+        },
+        "askDe": {
+          "x": 1228,
+          "y": 652,
+          "width": 193,
+          "height": 40
+        },
+        "bottomBar": {
+          "x": 12,
+          "y": 645,
+          "width": 1416,
+          "height": 54
+        },
+        "stickyCta": null,
+        "heroSchedule": {
+          "x": 44,
+          "y": 621,
+          "width": 383,
+          "height": 48
+        },
+        "heroPricing": {
+          "x": 439,
+          "y": 621,
+          "width": 207,
+          "height": 48
+        },
+        "assessmentCard": {
+          "x": 757,
+          "y": 244,
+          "width": 639,
+          "height": 616
+        },
+        "pronunciation": {
+          "x": 44,
+          "y": 791,
+          "width": 600,
+          "height": 44
+        }
+      },
+      "sectionShots": [
+        "hero",
+        "stats",
+        "challenges",
+        "services",
+        "pricing",
+        "protection",
+        "insights",
+        "industries",
+        "testimonials",
+        "faq",
+        "cta"
+      ],
+      "pageErrors": []
+    }
+  }
+}
