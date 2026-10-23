@@ -9,6 +9,8 @@ import type {
   AssignmentTarget,
 } from "@shared/licenseBoard";
 import type { JumpCloudLink } from "@shared/jumpcloudPlan";
+import type { ClientVaultKind, ClientVaultRequirement } from "@shared/clientVault";
+import type { PushVendor, VendorLink } from "@shared/vendorPush";
 
 export type JumpCloudPush = {
   id: string;
@@ -36,7 +38,26 @@ const mem = {
   assignments: new Map<string, LicenseAssignment>(),
   links: new Map<string, JumpCloudLink>(),
   pushes: [] as JumpCloudPush[],
+  kits: new Map<string, CompanyKit>(),
+  vaultReqs: [] as ClientVaultRequirement[],
+  vendorLinks: new Map<string, VendorLink>(),
+  vendorPushes: [] as VendorPush[],
 };
+
+export type VendorPush = {
+  id: string;
+  clientId: string;
+  vendor: PushVendor;
+  itemId: string;
+  product: string;
+  sku: string;
+  userEmail: string;
+  ok: boolean;
+  detail: string | null;
+  createdAt: string;
+};
+
+export type CompanyKit = { clientId: string; kitKey: string; appliedAt: string };
 
 export function _resetLicenseBoardMemory() {
   mem.items.clear();
@@ -44,6 +65,10 @@ export function _resetLicenseBoardMemory() {
   mem.assignments.clear();
   mem.links.clear();
   mem.pushes.length = 0;
+  mem.kits.clear();
+  mem.vaultReqs.length = 0;
+  mem.vendorLinks.clear();
+  mem.vendorPushes.length = 0;
 }
 
 let verified = false;
@@ -127,14 +152,17 @@ export async function createPoolItem(input: Omit<LicensePoolItem, "id" | "create
   return item;
 }
 
-export async function updatePoolItem(id: string, patch: Partial<Pick<LicensePoolItem, "vendor" | "product" | "quantity" | "chocoPackage">>): Promise<LicensePoolItem | null> {
+export async function updatePoolItem(
+  id: string,
+  patch: Partial<Pick<LicensePoolItem, "vendor" | "product" | "quantity" | "chocoPackage" | "sku">>,
+): Promise<LicensePoolItem | null> {
   const current = await getPoolItem(id);
   if (!current) return null;
   const next = { ...current, ...patch };
   if (await ensureSchema()) {
     await db.execute(sql`
       UPDATE license_pool_items SET vendor = ${next.vendor}, product = ${next.product}, quantity = ${next.quantity},
-        choco_package = ${next.chocoPackage}
+        choco_package = ${next.chocoPackage}, sku = ${next.sku}
       WHERE id = ${id}
     `);
   } else {
@@ -309,3 +337,202 @@ export async function listJumpCloudPushes(clientId: string, limit = 20): Promise
   return mem.pushes.filter((p) => p.clientId === clientId).slice(0, limit);
 }
 
+
+/* Company starter kits and vault requirements (migrations/0021_company_kits_and_vault_requirements.sql). */
+
+let kitsVerified = false;
+async function kitsTablesReady(): Promise<boolean> {
+  if (!(await ensureSchema())) return false;
+  if (kitsVerified) return true;
+  try {
+    const [row] = rows(await db.execute(sql`SELECT to_regclass('public.license_company_kits') AS present`));
+    if (row && !row.present) {
+      console.error("[license-board] table license_company_kits is missing; run `npm run db:migrate` (migrations/0021).");
+      return false;
+    }
+    kitsVerified = true;
+    return true;
+  } catch (error: any) {
+    console.warn("[license-board] could not verify kit tables:", error?.message || error);
+    return false;
+  }
+}
+
+export async function getCompanyKit(clientId: string): Promise<CompanyKit | null> {
+  if (await kitsTablesReady()) {
+    const [r] = rows(await db.execute(sql`SELECT * FROM license_company_kits WHERE client_id = ${clientId} LIMIT 1`));
+    return r ? { clientId: String(r.client_id), kitKey: String(r.kit_key), appliedAt: new Date(r.applied_at).toISOString() } : null;
+  }
+  return mem.kits.get(clientId) ?? null;
+}
+
+export async function listCompanyKits(): Promise<CompanyKit[]> {
+  if (await kitsTablesReady()) {
+    return rows(await db.execute(sql`SELECT * FROM license_company_kits`)).map((r: any) => ({
+      clientId: String(r.client_id),
+      kitKey: String(r.kit_key),
+      appliedAt: new Date(r.applied_at).toISOString(),
+    }));
+  }
+  return Array.from(mem.kits.values());
+}
+
+export async function setCompanyKit(clientId: string, kitKey: string, appliedBy: string | null): Promise<CompanyKit> {
+  const kit: CompanyKit = { clientId, kitKey, appliedAt: new Date().toISOString() };
+  if (await kitsTablesReady()) {
+    await db.execute(sql`
+      INSERT INTO license_company_kits (client_id, kit_key, applied_by, applied_at)
+      VALUES (${clientId}, ${kitKey}, ${appliedBy}, now())
+      ON CONFLICT (client_id) DO UPDATE SET kit_key = EXCLUDED.kit_key, applied_by = EXCLUDED.applied_by, applied_at = now()
+    `);
+  } else {
+    mem.kits.set(clientId, kit);
+  }
+  return kit;
+}
+
+const sameTitle = (a: string, b: string) => a.trim().toLowerCase().replace(/\s+/g, " ") === b.trim().toLowerCase().replace(/\s+/g, " ");
+
+export async function listVaultRequirements(clientId: string): Promise<ClientVaultRequirement[]> {
+  if (await kitsTablesReady()) {
+    return rows(
+      await db.execute(sql`SELECT * FROM client_vault_requirements WHERE client_id = ${clientId} ORDER BY created_at, title`),
+    ).map((r: any) => ({
+      id: String(r.id),
+      clientId: String(r.client_id),
+      kind: String(r.kind) as ClientVaultKind,
+      title: String(r.title),
+      hint: r.hint ? String(r.hint) : null,
+      source: String(r.source),
+      createdAt: new Date(r.created_at).toISOString(),
+    }));
+  }
+  return mem.vaultReqs.filter((r) => r.clientId === clientId);
+}
+
+/** Adds the requirements the client does not already have (same kind and title). Returns how many were added. */
+export async function addVaultRequirements(
+  clientId: string,
+  docs: Array<{ kind: ClientVaultKind; title: string; hint: string | null }>,
+  source: string,
+  createdBy: string | null,
+): Promise<number> {
+  const existing = await listVaultRequirements(clientId);
+  let added = 0;
+  for (const d of docs) {
+    if (existing.some((e) => e.kind === d.kind && sameTitle(e.title, d.title))) continue;
+    const req: ClientVaultRequirement = {
+      id: randomUUID(),
+      clientId,
+      kind: d.kind,
+      title: d.title,
+      hint: d.hint,
+      source,
+      createdAt: new Date().toISOString(),
+    };
+    if (await kitsTablesReady()) {
+      await db.execute(sql`
+        INSERT INTO client_vault_requirements (id, client_id, kind, title, hint, source, created_by, created_at)
+        VALUES (${req.id}, ${clientId}, ${req.kind}, ${req.title}, ${req.hint}, ${source}, ${createdBy}, now())
+        ON CONFLICT DO NOTHING
+      `);
+    } else {
+      mem.vaultReqs.push(req);
+    }
+    existing.push(req);
+    added++;
+  }
+  return added;
+}
+
+/* Microsoft 365 / Google Workspace links and the push log (migrations/0022_license_vendor_push.sql). */
+
+let vendorVerified = false;
+async function vendorTablesReady(): Promise<boolean> {
+  if (!(await ensureSchema())) return false;
+  if (vendorVerified) return true;
+  try {
+    const [row] = rows(await db.execute(sql`SELECT to_regclass('public.license_vendor_links') AS present`));
+    if (row && !row.present) {
+      console.error("[license-board] table license_vendor_links is missing; run `npm run db:migrate` (migrations/0022).");
+      return false;
+    }
+    vendorVerified = true;
+    return true;
+  } catch (error: any) {
+    console.warn("[license-board] could not verify vendor tables:", error?.message || error);
+    return false;
+  }
+}
+
+const linkKey = (clientId: string, vendor: PushVendor) => `${clientId}|${vendor}`;
+
+export async function getVendorLink(clientId: string, vendor: PushVendor): Promise<VendorLink | null> {
+  if (await vendorTablesReady()) {
+    const [r] = rows(
+      await db.execute(sql`SELECT * FROM license_vendor_links WHERE client_id = ${clientId} AND vendor = ${vendor} LIMIT 1`),
+    );
+    if (!r) return null;
+    return vendor === "microsoft"
+      ? r.tenant
+        ? { vendor, tenant: String(r.tenant), cloud: (r.cloud || "commercial") as any }
+        : null
+      : r.admin_email
+        ? { vendor, adminEmail: String(r.admin_email) }
+        : null;
+  }
+  return mem.vendorLinks.get(linkKey(clientId, vendor)) ?? null;
+}
+
+export async function setVendorLink(clientId: string, link: VendorLink, updatedBy: string | null): Promise<void> {
+  if (await vendorTablesReady()) {
+    const tenant = link.vendor === "microsoft" ? link.tenant : null;
+    const cloud = link.vendor === "microsoft" ? link.cloud : null;
+    const adminEmail = link.vendor === "google" ? link.adminEmail : null;
+    await db.execute(sql`
+      INSERT INTO license_vendor_links (client_id, vendor, tenant, cloud, admin_email, updated_by, updated_at)
+      VALUES (${clientId}, ${link.vendor}, ${tenant}, ${cloud}, ${adminEmail}, ${updatedBy}, now())
+      ON CONFLICT (client_id, vendor) DO UPDATE SET tenant = EXCLUDED.tenant, cloud = EXCLUDED.cloud,
+        admin_email = EXCLUDED.admin_email, updated_by = EXCLUDED.updated_by, updated_at = now()
+    `);
+    return;
+  }
+  mem.vendorLinks.set(linkKey(clientId, link.vendor), link);
+}
+
+export async function recordVendorPush(p: Omit<VendorPush, "id" | "createdAt">, createdBy: string | null): Promise<VendorPush> {
+  const push: VendorPush = { ...p, id: randomUUID(), createdAt: new Date().toISOString() };
+  if (await vendorTablesReady()) {
+    await db.execute(sql`
+      INSERT INTO license_vendor_pushes (id, client_id, vendor, item_id, product, sku, user_email, ok, detail, created_by, created_at)
+      VALUES (${push.id}, ${push.clientId}, ${push.vendor}, ${push.itemId}, ${push.product}, ${push.sku}, ${push.userEmail},
+              ${push.ok}, ${push.detail}, ${createdBy}, ${new Date(push.createdAt)})
+    `);
+  } else {
+    mem.vendorPushes.unshift(push);
+  }
+  return push;
+}
+
+export async function listVendorPushes(clientId: string, vendor: PushVendor, limit = 30): Promise<VendorPush[]> {
+  if (await vendorTablesReady()) {
+    return rows(
+      await db.execute(sql`
+        SELECT * FROM license_vendor_pushes WHERE client_id = ${clientId} AND vendor = ${vendor}
+        ORDER BY created_at DESC LIMIT ${limit}
+      `),
+    ).map((r: any) => ({
+      id: String(r.id),
+      clientId: String(r.client_id),
+      vendor: String(r.vendor) as PushVendor,
+      itemId: String(r.item_id),
+      product: String(r.product),
+      sku: String(r.sku),
+      userEmail: String(r.user_email),
+      ok: Boolean(r.ok),
+      detail: r.detail ? String(r.detail) : null,
+      createdAt: new Date(r.created_at).toISOString(),
+    }));
+  }
+  return mem.vendorPushes.filter((p) => p.clientId === clientId && p.vendor === vendor).slice(0, limit);
+}

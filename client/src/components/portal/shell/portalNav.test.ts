@@ -86,7 +86,7 @@ describe("update-2 acceptance: the break-glass account reaches everything today"
 
   it("keeps sample badges and is never gated by role, entitlement or data", () => {
     const shown = items(breakGlass, SAMPLE_INT, NO_DATA);
-    expect(shown.find((i) => i.href === "/portal/questionnaires")?.sample).toBe(true);
+    expect(shown.find((i) => i.href === "/portal/admin/import")?.sample).toBe(true);
     for (const item of PORTAL_NAV_ITEMS.filter((i) => i.section)) {
       expect(isNavAllowed(item, { user: breakGlass, integrations: SAMPLE_INT, navContext: NO_DATA, view: "legacy" }), item.href).toBe(true);
     }
@@ -147,7 +147,8 @@ describe("target client menu", () => {
     // is real now but lives in the Get help hub, not as its own menu entry.
     expect(shown).not.toContain("Ship Center");
     expect(shown).not.toContain("System Status");
-    expect(shown).not.toContain("DE Questionnaires");
+    // DE Questionnaires is real now (lane C) and belongs in the DE staff menu.
+    expect(shown).toContain("DE Questionnaires");
     // Break-glass-only surfaces stay out of the daily DE staff menu.
     expect(shown).not.toContain("Login Alerts");
     expect(shown).not.toContain("Data Sources");
@@ -198,8 +199,8 @@ describe("route guard (hidden route → Home with a note)", () => {
     expect(isNavAllowed(roadmapOwner, { ...ctx, user: deStaff })).toBe(true);
     // Update 3 §3: unfinished features are hidden from DE staff too — only the
     // break-glass account still reaches them.
-    const questionnaires = findNavItem("/portal/questionnaires", "legacy")!.item;
-    expect(isNavAllowed(questionnaires, { ...ctx, user: deStaff })).toBe(false);
+    const shipCenter = findNavItem("/portal/ship-center", "legacy")!.item;
+    expect(isNavAllowed(shipCenter, { ...ctx, user: deStaff })).toBe(false);
 
     const infraOwner = findNavItem("/portal/infrastructure", "target")!.item;
     expect(isNavAllowed(infraOwner, { ...ctx, user: clientItContact })).toBe(false);
@@ -261,5 +262,17 @@ describe("IT Roadmap (real, owners, in the IT plan hub)", () => {
       expect(isNavAllowed(admin, { ...ctx, user: deStaff }), href).toBe(true);
       for (const user of [standardUser, clientItContact, owner]) expect(isNavAllowed(admin, { ...ctx, user }), href).toBe(false);
     }
+  });
+});
+
+describe("DE Questionnaires (real, lane C)", () => {
+  it("gives every client role My questionnaires inside Home, and the assign page to DE staff only", () => {
+    const ctx = { integrations: SAMPLE_INT, navContext: NO_DATA, view: "target" as const };
+    const mine = findNavItem("/portal/my-questionnaires", "legacy")!.item;
+    const de = findNavItem("/portal/questionnaires", "legacy")!.item;
+    for (const user of [standardUser, clientItContact, clientViewer, deStaff]) expect(isNavAllowed(mine, { ...ctx, user }), user.id ?? "").toBe(true);
+    expect(findNavItem("/portal/my-questionnaires", "target")?.item.href).toBe("/portal/dashboard");
+    expect(isNavAllowed(de, { ...ctx, user: deStaff })).toBe(true);
+    for (const user of [standardUser, clientItContact, clientViewer]) expect(isNavAllowed(de, { ...ctx, user }), user.id ?? "").toBe(false);
   });
 });

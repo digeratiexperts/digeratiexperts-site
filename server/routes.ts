@@ -101,6 +101,7 @@ import {
   initPortalSurveyStore,
   listSurveysForUser,
   getSurveyById,
+  validateAnswers,
   getUserResponseForSurvey,
   submitSurveyResponse,
   getSurveyStoreStatus,
@@ -132,9 +133,12 @@ import { envReleaseSource } from "./agentRelease";
 import { registerStatusNoticeRoutes } from "./statusNoticeRoutes";
 import { companyHasRoadmap, registerRoadmapRoutes } from "./roadmapRoutes";
 import { companyHasPublishedReview, registerBusinessReviewRoutes } from "./businessReviewRoutes";
+import { registerQuestionnaireRoutes } from "./questionnaireRoutes";
 import { registerLicensingRoutes } from "./licensingRoutes";
 import { registerPortalAgreementRoutes } from "./portalAgreementRoutes";
 import { registerLicenseBoardRoutes } from "./licenseBoardRoutes";
+import { msAssignLicense, msGraphConfigured, msSubscribedSkus } from "./integrations/msGraph";
+import { googleAssignLicense, googleLicensingConfigured } from "./integrations/googleLicensing";
 import {
   jumpcloudAssociateSoftware,
   jumpcloudConfigured,
@@ -1379,6 +1383,20 @@ export async function registerRoutes(app: Express) {
     findUser: serviceRequestDeps.findUser,
     listCompanyFiles: (clientId) => storage.getTenantFilesByClientId(clientId),
   });
+  // DE Questionnaires on the Surveys engine (server/questionnaireRoutes.ts).
+  registerQuestionnaireRoutes(app, {
+    guards: [authMiddleware, validateInput],
+    adminGuards: [authMiddleware, requirePermission("questionnaires.manage"), validateInput],
+    getClient: serviceRequestDeps.getClient,
+    findUser: (id) => {
+      const u: any = findUserById(id);
+      return u ? { id: u.id, clientId: u.clientId ?? null, fullName: u.fullName, email: u.email, isActive: u.isActive } : undefined;
+    },
+    listClientUsers: serviceRequestDeps.listClientUsers,
+    getSurvey: (id) => getSurveyById(id),
+    listSurveys: () => listSurveysForUser(""),
+    validateAnswers: (survey, answers) => validateAnswers(survey as any, answers),
+  });
   // Licensing: account types and the company licence policy (server/licensingRoutes.ts).
   registerLicensingRoutes(app, {
     guards: [authMiddleware, validateInput],
@@ -1410,6 +1428,22 @@ export async function registerRoutes(app: Express) {
       ensureChocoApp: (name, pkg, orgId) => jumpcloudEnsureChocoApp(name, pkg, orgId),
       associate: (appId, target, orgId) => jumpcloudAssociateSoftware(appId, target, orgId),
       findSystem: (name, orgId) => jumpcloudFindSystem(name, orgId),
+    },
+    vendors: {
+      microsoft: {
+        configured: (cloud) => msGraphConfigured(cloud),
+        subscribedSkus: (tenant, cloud) => msSubscribedSkus(tenant, cloud),
+        assign: (tenant, cloud, upn, skuId) => msAssignLicense(tenant, cloud, upn, skuId),
+      },
+      google: {
+        configured: () => googleLicensingConfigured(),
+        assign: (adminEmail, productId, skuId, userEmail) => googleAssignLicense(adminEmail, productId, skuId, userEmail),
+      },
+    },
+    vaultTitles: async (clientId) => {
+      const meta = await createDbVaultMetaStore();
+      if (!meta.ready()) return null;
+      return (await meta.list(clientId)).map((i) => ({ kind: i.kind, title: i.title }));
     },
   });
 
@@ -1694,15 +1728,6 @@ export async function registerRoutes(app: Express) {
     } catch (error: any) {
       const status = /Forbidden|not the current/i.test(error.message) ? 403 : 400;
       res.status(status).json({ error: error.message });
-    }
-  });
-
-  app.get("/api/portal/questionnaires/events", [authMiddleware], async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      res.json({ success: true, configured: false, events: [] });
-      logSecurityEvent("QUESTIONNAIRES_FETCHED", req, {});
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
     }
   });
 
@@ -4886,6 +4911,7 @@ export async function registerRoutes(app: Express) {
     meta: createDbVaultMetaStore,
     blobs: createConfiguredVaultBlobStore,
     logSecurityEvent,
+    requirements: async (clientId) => (await import("./licenseBoardStore")).listVaultRequirements(clientId),
   });
 
   // Get company metrics/stats (admin only)

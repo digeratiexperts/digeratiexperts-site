@@ -41,6 +41,34 @@ claims:
       - client/src/data/pricing.ts, offering.ts (new), campaigns.ts, resourceRegistry.ts, client/src/lib/quoteMatch.ts, shared/routeMeta.json (offering wording)
     status: active
     started: 2026-10-23
+  - id: license-kit-vault-docs
+    owner: claude
+    subsystem: licensing
+    branch: claude/exciting-cannon-ttx8m8
+    base_sha: 398f4d6f
+    files:
+      - migrations/0021_company_kits_and_vault_requirements.sql (new)
+      - shared/starterKits.ts, shared/clientVault.ts, shared/jumpcloudPlan.test.ts
+      - server/licenseBoardStore.ts, server/licenseBoardRoutes.ts, server/licenseBoardRoutes.test.ts
+      - server/portalClientVault.ts, server/portalClientVault.test.ts (list response gains requirements)
+      - server/routes.ts (licence board vaultTitles dep, vault requirements dep)
+      - client/src/pages/portal/AdminLicenseBoard.tsx, client/src/components/portal/licensing/CompanyTools.tsx, client/src/lib/licenseBoardApi.ts
+      - client/src/pages/portal/AdminClientWorkspace.tsx (needed-documents checklist)
+      - migrations/0022_license_vendor_push.sql (new), shared/vendorPush.ts (+ test), shared/licenseShelf.ts (default SKUs)
+      - server/integrations/msGraph.ts, server/integrations/googleLicensing.ts (new, + vendorLicensing.test.ts)
+      - client/src/components/portal/licensing/VendorTools.tsx (new), .env.example, docs/SECRETS-REQUIRED.md
+    status: active
+    started: 2026-10-23
+    note: >-
+      Joe, 2026-10-23 ("I want all these"): slice A of four. The License
+      Patch Bay records which starter kit each company has (header chip,
+      company list) and applying a kit adds its document checklist to the
+      client vault (Regulated: BAA or engagement terms, WISP, incident
+      response plan; GCC High: CUI handling agreement, SSP reference, tool
+      review record). Slice B in the same PR: a Microsoft & Google tab that
+      assigns person-held licences in the client's Microsoft 365 tenant
+      (Graph) or Google Workspace (Licensing API) on Send, with per-client
+      links, default SKU codes and a send log. Next: Hub Pax8 vendor SKUs.
   - id: lane-a-roles-nav
     issue: 697
     pr: 700
@@ -4668,6 +4696,32 @@ claims:
       a review per client meeting (date, summary, decisions, linked roadmap
       items, report file); owners see published ones. The invented QBR
       reports, recommendations and "88" security score are gone.
+  - id: portal-questionnaires
+    owner: claude
+    subsystem: portal
+    branch: claude/portal-questionnaires
+    base_sha: f0ccfac
+    started: 2026-10-23
+    files:
+      - migrations/0024_portal_questionnaire_assignments.sql (new)
+      - shared/schema.ts (portalQuestionnaireAssignments only), shared/questionnaires.ts (new)
+      - shared/permissions/lane-c.ts (questionnaires.manage)
+      - server/questionnaireStore.ts, server/questionnaireRoutes.ts, server/questionnaireRoutes.test.ts (new)
+      - server/routes.ts (one registration block; stub /api/portal/questionnaires/events removed; validateAnswers import)
+      - client/src/lib/questionnairesApi.ts, client/src/components/portal/QuestionnaireTasks.tsx, client/src/pages/portal/PortalMyQuestionnaires.tsx (new)
+      - client/src/pages/portal/PortalQuestionnaireCalendar.tsx (rewritten on real data)
+      - client/src/pages/portal/PortalDashboard.tsx (Home task card only)
+      - client/src/components/portal/shell/portalNav.ts, portalNav.test.ts (DE Questionnaires real; My questionnaires in the Home hub)
+      - client/src/App.tsx (one route)
+    status: in-review
+    note: >-
+      Slice E of docs/PORTAL-SAMPLE-BUILDOUT-PLAN.md, stacked on
+      portal-business-reviews (#710). Joe, 2026-10-23: "yes to all, do it".
+      DE assigns a portal survey to a person at a client company with a due
+      date; that person sees it on Home and in My questionnaires, saves a
+      draft and submits (validated by the survey's own rules); DE reviews or
+      sends it back. The mock calendar events are gone. Answers live on the
+      assignment so the same questionnaire can be assigned again.
   - id: portal-status-staff-access
     owner: claude
     subsystem: portal
