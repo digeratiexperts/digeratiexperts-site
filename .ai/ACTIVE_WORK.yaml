@@ -59,6 +59,21 @@ claims:
       geometry, a plain-SVG renderer and a JSON kit. No production wiring into
       chat, DE Desk, the Client Portal or the Intelligence Hub; each needs its
       own go-ahead from Joe. Merge needs Joe's "merge".
+  - id: home-classic-preserve
+    owner: claude
+    subsystem: homepage-concept
+    branch: claude/homepage-v2-20261022
+    base_sha: 398f4d6f
+    started: 2026-10-23
+    files:
+      - client/src/pages/concepts/HomeClassic.tsx (new; renders HomepageV8 unchanged at /concepts/home-classic, noindex)
+      - client/src/App.tsx (lazy import, route, bottom-bar list)
+      - client/src/lib/stickyCtaVisibility.test.ts (one expectation)
+      - server/spaKnownPaths.ts (one path)
+    status: active
+    notes: |
+      Step 1 of Homepage v2 swap (Joe, 2026-10-23). Current / unchanged. Step 2
+      (new / from homepage-v2-reference.html) is not started; waits for the reference file.
   - id: home-mesh-concept
     owner: claude
     subsystem: homepage-concept
