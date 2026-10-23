@@ -52,7 +52,7 @@ try {
       assert(!/\b(?:free|complimentary)\s+(?:(?:it\s+)?(?:cybersecurity|cyber\s+risk|security|risk)\s+)?assessment\b/i.test(await page.locator('body').innerText()), `${route}: unsupported free assessment offer`);
       const leadForm = page.locator('#assessment-form');
       if (await leadForm.count()) {
-        await leadForm.getByRole('heading', { name: 'Request a Cyber Risk Assessment', exact: true }).waitFor();
+        await leadForm.getByRole('heading', { name: 'Request your assessment here', exact: true }).waitFor();
         assert(await leadForm.getByText('Scope and fees confirmed before work begins', { exact: true }).count(), `${route}: assessment terms missing`);
       }
       const announcement = page.getByTestId('announce-start-assessment');
