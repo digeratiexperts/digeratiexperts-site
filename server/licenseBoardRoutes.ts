@@ -11,7 +11,7 @@ import {
   type AssignmentTarget,
 } from "@shared/licenseBoard";
 import { LICENSE_CATALOG, catalogLicense } from "@shared/licensing";
-import { SHELF_CATEGORIES, catalogShelf, hubShelf, starterShelf } from "@shared/licenseShelf";
+import { SHELF_CATEGORIES, catalogShelf, hubShelf, pax8Shelf, starterShelf } from "@shared/licenseShelf";
 import * as store from "./licenseBoardStore";
 import { JC_ID, planJumpCloudInstalls } from "@shared/jumpcloudPlan";
 import { STARTER_KITS, shelfEntry, starterKit } from "@shared/starterKits";
@@ -104,6 +104,13 @@ const whole = (v: unknown) => {
   return Number.isInteger(n) && n >= 0 && n <= MAX_SEATS ? n : null;
 };
 
+/** The Hub's word on its Pax8 read ({ status, message }), or null when the Hub is unreachable. */
+function pax8Feed(hub: unknown): { status: string; message: string } | null {
+  const s = (hub as { vendorSkusStatus?: { status?: unknown; message?: unknown } } | null)?.vendorSkusStatus;
+  if (!s || typeof s.status !== "string") return null;
+  return { status: s.status, message: typeof s.message === "string" ? s.message : "" };
+}
+
 function catalogVendor(platform: string): string {
   if (platform.startsWith("microsoft")) return "Microsoft";
   if (platform.startsWith("google")) return "Google";
@@ -146,7 +153,13 @@ export function registerLicenseBoardRoutes(app: Express, deps: LicenseBoardRoute
         success: true,
         categories: SHELF_CATEGORIES,
         hubConnected: Boolean(hub && Array.isArray((hub as { skus?: unknown }).skus)),
-        entries: [...starterShelf(), ...catalogShelf(), ...hubShelf((hub as { skus?: unknown } | null)?.skus)],
+        pax8: pax8Feed(hub),
+        entries: [
+          ...starterShelf(),
+          ...catalogShelf(),
+          ...hubShelf((hub as { skus?: unknown } | null)?.skus),
+          ...pax8Shelf((hub as { vendorSkus?: unknown } | null)?.vendorSkus),
+        ],
       });
     } catch (error) {
       fail(res, error, "load the parts bin");

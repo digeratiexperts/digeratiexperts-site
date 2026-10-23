@@ -26,6 +26,8 @@ export type HeldLicense = { assignmentId: string; itemId: string; viaDepartmentI
 export type Shelf = {
   categories: Array<(typeof SHELF_CATEGORIES)[number]>;
   hubConnected: boolean;
+  /** The Hub's Pax8 read: CONNECTED, AUTH_REQUIRED, FAILED, STALE…; null when the Hub is unreachable. */
+  pax8?: { status: string; message: string } | null;
   entries: ShelfEntry[];
 };
 
