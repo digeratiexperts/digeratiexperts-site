@@ -129,6 +129,7 @@ import { requireDeSyncAuth } from "./integrations/deSyncAuth";
 import { registerPortalAssistRoutes } from "./portalAssistRoutes";
 import { registerAgentReleaseRoutes } from "./agentReleaseRoutes";
 import { envReleaseSource } from "./agentRelease";
+import { registerStatusNoticeRoutes } from "./statusNoticeRoutes";
 import { registerLicensingRoutes } from "./licensingRoutes";
 import { registerPortalAgreementRoutes } from "./portalAgreementRoutes";
 import { registerLicenseBoardRoutes } from "./licenseBoardRoutes";
@@ -1347,6 +1348,13 @@ export async function registerRoutes(app: Express) {
     guards: [authMiddleware, validateInput],
     adminGuards: [authMiddleware, requireAdmin, validateInput],
     source: envReleaseSource(),
+  });
+  // System Status notices (server/statusNoticeRoutes.ts).
+  registerStatusNoticeRoutes(app, {
+    guards: [authMiddleware, validateInput],
+    adminGuards: [authMiddleware, requireAdmin, validateInput],
+    getClient: serviceRequestDeps.getClient,
+    findUser: serviceRequestDeps.findUser,
   });
   // Licensing: account types and the company licence policy (server/licensingRoutes.ts).
   registerLicensingRoutes(app, {

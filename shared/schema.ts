@@ -340,6 +340,25 @@ export const portalManualRecords = pgTable("portal_manual_records", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+/** System Status notices (migrations/0021_portal_status_notices.sql; shared/statusNotices.ts). client_id null = every client. */
+export const portalStatusNotices = pgTable("portal_status_notices", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  clientId: varchar("client_id").references(() => portalClients.id, { onDelete: "cascade" }),
+  kind: text("kind").notNull(),
+  severity: text("severity").notNull(),
+  title: text("title").notNull(),
+  body: text("body").notNull().default(""),
+  affectedServices: jsonb("affected_services").notNull().default([]),
+  startsAt: timestamp("starts_at", { withTimezone: true }).notNull(),
+  endsAt: timestamp("ends_at", { withTimezone: true }),
+  resolvedAt: timestamp("resolved_at", { withTimezone: true }),
+  updates: jsonb("updates").notNull().default([]),
+  createdBy: varchar("created_by"),
+  createdByName: text("created_by_name").notNull().default(""),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
 /**
  * Group-level requests filed by a Hub-defined representative on behalf of the
  * group they represent (migrations/0019_portal_group_requests.sql;

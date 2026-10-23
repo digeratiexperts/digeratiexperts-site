@@ -368,11 +368,13 @@ export const PORTAL_NAV_ITEMS: PortalNavItem[] = [
     label: "System Status",
     icon: Activity,
     key: "other",
-    hint: "Uptime and incidents",
-    sample: true,
+    hint: "Incidents and maintenance",
     section: "programs",
-    rule: { deOnly: true, sample: true, featureReady: false },
-    target: { group: "de", label: "System Status", order: 4 },
+    // Every signed-in user may open it: from the status line on Home and from
+    // the Get help hub, not as its own menu entry (lane-d-status-shipping.md).
+    // DE staff post notices from DE Admin → Status notices.
+    rule: { featureReady: true },
+    target: { group: "portal", label: "Service status", order: 2, hub: "/portal/help" },
   },
 
   // ── Tools ──
@@ -460,7 +462,7 @@ export const PORTAL_NAV_ITEMS: PortalNavItem[] = [
     hint: "Tickets, DE Desk chat and request forms",
     rule: { featureReady: true },
     target: { group: "portal", label: "Get help", order: 2 },
-    children: ["/portal/tickets", "/portal/chat", "/portal/forms"],
+    children: ["/portal/tickets", "/portal/chat", "/portal/forms", "/portal/status"],
   },
   {
     href: "/portal/people-devices",
@@ -561,6 +563,16 @@ export const PORTAL_NAV_ITEMS: PortalNavItem[] = [
     section: "admin",
     rule: { deOnly: true, featureReady: true },
     target: { group: "admin", label: "Contracts", order: 4 },
+  },
+  {
+    href: "/portal/admin/status",
+    label: "Status Notices",
+    icon: Activity,
+    key: "other",
+    hint: "Post incidents and maintenance",
+    section: "admin",
+    rule: { deOnly: true, featureReady: true },
+    target: { group: "admin", label: "Status notices", order: 8 },
   },
   {
     href: "/portal/admin/data-sources",
