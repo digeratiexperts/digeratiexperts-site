@@ -4,7 +4,7 @@ import { Link } from "wouter";
 import { ArrowRight, ArrowUpRight, Scale, ShieldCheck, type LucideIcon } from "lucide-react";
 import { revealInitial, revealInView, revealTransition, revealViewport } from "@/lib/animations";
 import { useBooking } from "@/contexts/BookingContext";
-import { CTA } from "@/lib/ctaCopy";
+import { HOME_CTA } from "../cta";
 import { PRIMARY_PHONE } from "@/data/companyContact";
 import { ReviewsCarousel, ReviewSourceChips } from "@/components/ReviewsCarousel";
 import {
@@ -323,7 +323,9 @@ export function V8ClientProof(): JSX.Element {
               Case studies
             </h3>
             {/* One line. No client story is approved yet (publishedCaseStudies is empty) and the page lists
-                industry frameworks, so the line claims "real engagements" only once one is (Joe, 2026-10-14). */}
+                industry frameworks, so the line claims "real engagements" only once one is (Joe, 2026-10-14).
+                TODO (Joe, Lane H 2026-10-22): the client testimonial slot here stays unpublished — add a real,
+                approved testimonial (verbatim, with attribution) or leave it out. Never invent one. */}
             <p className="v8-body">
               {publishedCaseStudies.length
                 ? "See how we approach real Arizona engagements — challenge, approach, and outcome."
@@ -346,7 +348,7 @@ export function V8ClientProof(): JSX.Element {
                 }}
                 data-testid="button-proof-assessment"
               >
-                {CTA.primary} <ArrowRight {...icon} />
+                {HOME_CTA.primary} <ArrowRight {...icon} />
               </a>
             </div>
           </article>
@@ -399,8 +401,8 @@ export function V8ClientProof(): JSX.Element {
           {/* (4) One quiet serving line */}
           <div className="proof-foot">
             <p className="v8-small">
-              Serving professional services, healthcare, construction, nonprofit, and regulated organizations across
-              Greater Phoenix<span className="proof-foot__sep"> · </span>
+              Serving healthcare, accounting and finance, law firms, real estate, nonprofits, and animal hospitals
+              across Greater Phoenix<span className="proof-foot__sep"> · </span>
               <span className="proof-foot__phonewrap">
                 <a className="proof-foot__phone" href={PRIMARY_PHONE.telHref}>
                   {PRIMARY_PHONE.display}

@@ -12,6 +12,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { revealInitial, revealInView, revealTransition, revealViewport } from "@/lib/animations";
+import { HOME_CTA } from "../cta";
 import lawScalesImg from "@assets/Rectangle-152058-1_1767027918697.webp";
 import healthcareImg from "@assets/Rectangle-152058-2_1767027918698.webp";
 import realEstateImg from "@assets/Rectangle-152058-3_1767027918698.webp";
@@ -139,7 +140,7 @@ export function V8Industries(): JSX.Element {
             <p className="v8-lede">Specialized cybersecurity solutions for Arizona's essential sectors</p>
           </div>
           <a className="v8-btn v8-btn--primary" href="/book" data-testid="button-industries-cta">
-            Get Industry-Specific Protection <ArrowRight size={18} {...icon} />
+            {HOME_CTA.primary} <ArrowRight size={18} {...icon} />
           </a>
         </motion.div>
 
@@ -202,7 +203,7 @@ export function V8Industries(): JSX.Element {
         </motion.div>
 
         <a className="v8-btn v8-btn--primary ind-ask" href="/book">
-          Get Industry-Specific Protection <ArrowRight size={18} {...icon} />
+          {HOME_CTA.primary} <ArrowRight size={18} {...icon} />
         </a>
       </div>
     </section>

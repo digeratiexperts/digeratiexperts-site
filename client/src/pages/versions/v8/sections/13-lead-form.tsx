@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { revealInitial, revealInView, revealTransition, revealViewport } from "@/lib/animations";
 import { useToast } from "@/hooks/use-toast";
-import { CTA } from "@/lib/ctaCopy";
+import { HOME_CTA } from "../cta";
 import { PRIMARY_PHONE } from "@/data/companyContact";
 import { FieldOk, SubmitFace, submitPhase, useSentFlash } from "./SubmitFace";
 import "./13-lead-form.css";
@@ -115,7 +115,7 @@ export function V8LeadForm(): JSX.Element {
         <motion.div className="lead__statement" {...reveal()}>
           <p className="v8-eyebrow">Cyber Risk Assessment</p>
           <h2 className="v8-h2" id="assessment-form-title">
-            Request a Cyber Risk Assessment
+            Request your assessment here
           </h2>
           <p className="v8-lede">
             Discover vulnerabilities before attackers do. Our experts will analyze your security posture and provide
@@ -213,7 +213,7 @@ export function V8LeadForm(): JSX.Element {
               data-testid="button-lead-submit"
             >
               <SubmitFace phase={phase} sendingLabel="Submitting your request" sentLabel="Request sent">
-                {CTA.primary}{" "}
+                {HOME_CTA.formSubmit}{" "}
                 <svg {...svgProps}>
                   <path d="M5 12h14" />
                   <path d="m12 5 7 7-7 7" />

@@ -27,6 +27,10 @@ const faqs: FAQ[] = [
     question: "How do I choose the right plan for my business?",
     answer: "User count is a signal, never the sole criterion. We start with a Cyber Risk Assessment of your environment, then match IT, Office, Business, or Enterprise. We do not start with a package and pile on add-ons."
   },
+  // TODO (Joe, Lane H 2026-10-22): the assessment-price question ("What does the Cyber Risk
+  // Assessment cost?") stays unpublished until Joe sets the wording. Per the Lane H decision the
+  // homepage never states that the assessment is free or paid — do not add either word. When the
+  // wording lands, add the question here and its row in docs/CLAIMS-REGISTER.md.
   {
     question: "Can I customize the solutions?",
     answer: "Yes! We understand every business is unique. Our packages can be customized with additional services, and we offer both co-managed and fully managed options to fit your existing IT structure."

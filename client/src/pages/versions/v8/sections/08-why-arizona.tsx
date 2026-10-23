@@ -2,7 +2,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, MapPin, Scale, UserCheck } from "lucide-react";
 import { revealInitial, revealInView, revealTransition, revealViewport } from "@/lib/animations";
 import { DE_LOGO_PRIMARY } from "@/lib/brandAssets";
-import { CTA } from "@/lib/ctaCopy";
+import { HOME_CTA } from "../cta";
 import { TipTag } from "./TipTag";
 import "./08-why-arizona.css";
 import { ChapterPattern } from "@/components/site/Atmosphere";
@@ -88,7 +88,7 @@ export function V8WhyArizona(): JSX.Element {
 
           <div className="why__cta-row">
             <a className="v8-btn v8-btn--primary why__cta" href="/book" data-testid="link-trust-cta">
-              {CTA.primary} <ArrowRight {...icon} />
+              {HOME_CTA.primary} <ArrowRight {...icon} />
             </a>
           </div>
         </motion.div>
