@@ -10,7 +10,22 @@ export const memberRoleEnum = pgEnum("member_role", ["owner", "admin", "member",
 export const viewTypeEnum = pgEnum("view_type", ["board", "list", "calendar", "timeline", "table"]);
 
 // Portal enums
-export const portalUserRoleEnum = pgEnum("portal_user_role", ["admin", "user", "viewer"]);
+/** DE portal role. `admin` is the break-glass class (unchanged); `staff` is the daily DE
+ *  staff / client-manager class (lane A, additive — existing values are never renamed). */
+export const portalUserRoleEnum = pgEnum("portal_user_role", ["admin", "user", "viewer", "staff"]);
+
+/** Client hats (lane A). A user may hold several; stored on portal_users.client_roles. */
+export const portalClientRoleEnum = pgEnum("portal_client_role", [
+  "standard",
+  "approver",
+  "client_admin",
+  "billing",
+  "purchaser",
+  "owner",
+]);
+
+/** Purchased-service entitlements (lane A). Default: none — menu items stay hidden. */
+export const entitlementKeyEnum = pgEnum("entitlement_key", ["cloud_edge", "voice", "security_awareness"]);
 
 /** Client-org hierarchy (separate from DE portal role + store commerce role) */
 export const portalOrgRoleEnum = pgEnum("portal_org_role", [
@@ -499,6 +514,8 @@ export const portalUsers = pgTable("portal_users", {
   departmentId: varchar("department_id").references(() => portalDepartments.id, { onDelete: "set null" }),
   managerUserId: varchar("manager_user_id"),
   isCompanyItContact: boolean("is_company_it_contact").default(false),
+  /** Client hats (portal_client_role values). Empty = legacy org-role derivation only. */
+  clientRoles: jsonb("client_roles").$type<string[]>().default([]),
   emailVerified: boolean("email_verified").default(false),
   isActive: boolean("is_active").default(true),
   mfaEnabled: boolean("mfa_enabled").default(false),
@@ -520,6 +537,39 @@ export const portalRevokedSessions = pgTable("portal_revoked_sessions", {
   userId: varchar("user_id"),
   revokedAt: timestamp("revoked_at").defaultNow().notNull(),
   expiresAt: timestamp("expires_at").notNull(),
+});
+
+/** Purchased-service entitlements per company (lane A). Absent row = entitlement off. */
+export const portalClientEntitlements = pgTable("portal_client_entitlements", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  clientId: varchar("client_id")
+    .notNull()
+    .references(() => portalClients.id, { onDelete: "cascade" }),
+  entitlement: entitlementKeyEnum("entitlement").notNull(),
+  /** active | ended — an ended row is as good as none (never deleted, auditable). */
+  status: text("status").notNull().default("active"),
+  /** de_manual until an approved automated source exists (lane A D5). */
+  source: text("source").notNull().default("de_manual"),
+  grantedBy: varchar("granted_by"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+/** Break-glass / DE staff action audit (lane A). break_glass = actor is the break-glass account. */
+export const portalAuditLog = pgTable("portal_audit_log", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  at: timestamp("at").defaultNow().notNull(),
+  actorUserId: varchar("actor_user_id"),
+  actorEmail: text("actor_email"),
+  accountClass: text("account_class"),
+  breakGlass: boolean("break_glass").notNull().default(false),
+  action: text("action").notNull(),
+  targetType: text("target_type"),
+  targetId: text("target_id"),
+  clientId: varchar("client_id"),
+  ip: text("ip"),
+  userAgent: text("user_agent"),
+  meta: jsonb("meta").$type<Record<string, unknown>>(),
 });
 
 export const portalApprovalRequests = pgTable("portal_approval_requests", {
