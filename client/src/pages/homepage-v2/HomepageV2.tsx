@@ -31,35 +31,40 @@ import { SiteFooter } from "./sections/SiteFooter";
 export default function HomepageV2(): JSX.Element {
   useSEO({
     title: "Managed IT Services & Cybersecurity in Arizona",
-    description: "Arizona MSP/MSSP. Cybersecurity-first managed IT, 24/7 emergency incident response, and a Cyber Risk Assessment that matches the operating model to your environment.",
+    description:
+      "Arizona MSP/MSSP. Cybersecurity-first managed IT, 24/7 emergency incident response, and a Cyber Risk Assessment that matches the operating model to your environment.",
     canonical: "/",
   });
+  // The global chrome renders outside `.hv2`: the page's scoped reset must not reach the
+  // shared MegaMenu or the Ask DE launcher.
   return (
-    <div className="hv2">
+    <>
       <OrganizationJsonLd />
       <WebSiteJsonLd />
       <MegaMenu />
       <SiteBottomBar autohide />
-      <main id="home-main">
-        <HeroSection />
-        <PillarsStrip />
-        <WhySection />
-        <ThreatStatsSection />
-        <ChallengesSection />
-        <ServicesSection />
-        <ProtectionSection />
-        <HowProtectionSection />
-        <ProofSection />
-        <FitSection />
-        <TeamSection />
-        <IndustriesSection />
-        <PricingSection />
-        <DetectSection />
-        <InsightsSection />
-        <FaqSection />
-        <ContactSection />
-      </main>
-      <SiteFooter />
-    </div>
+      <div className="hv2">
+        <main id="home-main">
+          <HeroSection />
+          <PillarsStrip />
+          <WhySection />
+          <ThreatStatsSection />
+          <ChallengesSection />
+          <ServicesSection />
+          <ProtectionSection />
+          <HowProtectionSection />
+          <ProofSection />
+          <FitSection />
+          <TeamSection />
+          <IndustriesSection />
+          <PricingSection />
+          <DetectSection />
+          <InsightsSection />
+          <FaqSection />
+          <ContactSection />
+        </main>
+        <SiteFooter />
+      </div>
+    </>
   );
 }
