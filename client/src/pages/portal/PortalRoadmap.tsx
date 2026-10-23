@@ -80,7 +80,7 @@ export default function PortalRoadmap() {
     }
     return groups;
   }, [shown]);
-  const c = data?.summary.committed;
+  const c = data?.summary?.committed;
 
   return (
     <PortalLayout
@@ -104,7 +104,7 @@ export default function PortalRoadmap() {
           </Callout>
         ) : q.isPending ? (
           <Skeleton className="h-40 rounded-xl" />
-        ) : data && data.items.length === 0 ? (
+        ) : !data?.items?.length ? (
           <Panel id="roadmap-items">
             <EmptyState icon={Map} title="No roadmap items yet" description="Your DE team adds these after your business review." />
           </Panel>
