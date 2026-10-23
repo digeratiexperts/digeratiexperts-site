@@ -4530,3 +4530,18 @@ claims:
       Verified locally in Chromium with the dev bootstrap admin: requests
       page and licence form both show the picker, picking stays on the page,
       and the error is gone.
+  - id: portal-sample-buildout-plan
+    owner: claude
+    subsystem: portal
+    branch: claude/sleepy-johnson-bkojbp
+    base_sha: 8cdb120
+    started: 2026-10-23
+    files:
+      - docs/PORTAL-SAMPLE-BUILDOUT-PLAN.md (new)
+    status: in-review
+    note: >-
+      Joe, 2026-10-23: "nothing should be a mere sample … plan it all out fully
+      and document how its built from a high level technically so others can
+      continue your work and jump in." Plan only, no feature code: inventory
+      of the 10 SAMPLE nav items, the build pattern, per-feature slices,
+      order of work and the decisions Joe needs to make.
