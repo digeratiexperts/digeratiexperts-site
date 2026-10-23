@@ -4501,3 +4501,30 @@ claims:
       GHSA-mrhx-c7xc-m3w5 (zod < 4.6.6, high) turned the CI audit step red on
       every branch on 2026-10-23. Joe: "own PR for zod, go ahead do the
       upgrade". No 3.x fix exists; this is the major upgrade.
+  - id: portal-system-status
+    owner: claude
+    subsystem: portal
+    branch: claude/portal-system-status
+    base_sha: 27e36a0
+    started: 2026-10-23
+    files:
+      - migrations/0021_portal_status_notices.sql (new)
+      - shared/schema.ts (portalStatusNotices table only)
+      - shared/statusNotices.ts (new)
+      - server/statusNoticeStore.ts, server/statusNoticeRoutes.ts, server/statusNoticeRoutes.test.ts (new)
+      - server/routes.ts (one registration block)
+      - client/src/lib/statusApi.ts, client/src/components/portal/StatusLine.tsx, client/src/pages/portal/AdminStatusNotices.tsx (new)
+      - client/src/pages/portal/PortalStatus.tsx (rewritten on real data)
+      - client/src/pages/portal/PortalDashboard.tsx (status line only)
+      - client/src/App.tsx (one route)
+      - client/src/components/portal/shell/portalNav.ts, portalNav.test.ts (System Status + Status Notices items)
+    status: in-review
+    note: >-
+      Slice A of docs/PORTAL-SAMPLE-BUILDOUT-PLAN.md. Joe, 2026-10-23: "yes to
+      all, do it" (D1 portal owns the data; D2 clients see System Status).
+      DE posts incidents, maintenance and notices for one company or all;
+      clients see /portal/status (in the Get help hub) and a status line on
+      Home. The invented uptime figures, incidents and the "99.95% uptime
+      guaranteed" line are gone; no device health until an RMM integration
+      exists. Hub sync is a follow-up: the Hub has no ingest endpoint for
+      status notices yet.

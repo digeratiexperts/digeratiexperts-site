@@ -86,7 +86,7 @@ describe("update-2 acceptance: the break-glass account reaches everything today"
 
   it("keeps sample badges and is never gated by role, entitlement or data", () => {
     const shown = items(breakGlass, SAMPLE_INT, NO_DATA);
-    expect(shown.find((i) => i.href === "/portal/status")?.sample).toBe(true);
+    expect(shown.find((i) => i.href === "/portal/roadmap")?.sample).toBe(true);
     for (const item of PORTAL_NAV_ITEMS.filter((i) => i.section)) {
       expect(isNavAllowed(item, { user: breakGlass, integrations: SAMPLE_INT, navContext: NO_DATA, view: "legacy" }), item.href).toBe(true);
     }
@@ -143,7 +143,8 @@ describe("target client menu", () => {
     const shown = labels(deStaff);
     expect(shown).toEqual(expect.arrayContaining(["Home", "Get help", "Infrastructure Issues", "Structure & IDs", "Companies"]));
     // Samples stay out of the daily DE staff menu (update 3 §3): Ship Center is
-    // still in sample mode here, and System Status / DE Questionnaires never left it.
+    // still in sample mode here, and DE Questionnaires never left it. System Status
+    // is real now but lives in the Get help hub, not as its own menu entry.
     expect(shown).not.toContain("Ship Center");
     expect(shown).not.toContain("System Status");
     expect(shown).not.toContain("DE Questionnaires");
@@ -205,5 +206,27 @@ describe("route guard (hidden route → Home with a note)", () => {
     expect(isNavAllowed(homeOwner, { ...ctx, user: standardUser })).toBe(true);
     // The break-glass account is never redirected away.
     expect(isNavAllowed(roadmapOwner, { ...ctx, user: breakGlass, view: "legacy" })).toBe(true);
+  });
+});
+
+describe("System Status (real, in the Get help hub)", () => {
+  const ctx = { integrations: SAMPLE_INT, navContext: NO_DATA, view: "target" as const };
+
+  it("lets every client role open the status page, which folds into Get help", () => {
+    const status = findNavItem("/portal/status", "legacy")!.item;
+    expect(status.sample).toBeFalsy();
+    for (const user of [standardUser, clientItContact, clientViewer, deStaff]) {
+      expect(isNavAllowed(status, { ...ctx, user }), user.id ?? "").toBe(true);
+    }
+    expect(findNavItem("/portal/status", "target")?.item.href).toBe("/portal/help");
+    expect(PORTAL_NAV_HUBS["/portal/help"]).toContain("/portal/status");
+  });
+
+  it("gives Status notices to DE staff only", () => {
+    const admin = findNavItem("/portal/admin/status", "legacy")!.item;
+    expect(isNavAllowed(admin, { ...ctx, user: deStaff })).toBe(true);
+    for (const user of [standardUser, clientItContact, clientViewer]) {
+      expect(isNavAllowed(admin, { ...ctx, user }), user.id ?? "").toBe(false);
+    }
   });
 });

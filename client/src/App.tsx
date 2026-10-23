@@ -114,6 +114,7 @@ const PortalInvoices = lazy(() => import("@/pages/portal/PortalInvoices"));
 const PortalPayment = lazy(() => import("@/pages/portal/PortalPayment"));
 const PortalKB = lazy(() => import("@/pages/portal/PortalKB"));
 const PortalStatus = lazy(() => import("@/pages/portal/PortalStatus"));
+const AdminStatusNotices = lazy(() => import("@/pages/portal/AdminStatusNotices"));
 const PortalLearning = lazy(() => import("@/pages/portal/PortalLearning"));
 const PortalChat = lazy(() => import("@/pages/portal/PortalChat"));
 const PortalAgent = lazy(() => import("@/pages/portal/PortalAgent"));
@@ -979,6 +980,11 @@ function Router() {
       <Route path="/portal/questionnaires" component={() => (
         <Suspense fallback={<PageLoadingSkeleton />}>
           <PortalQuestionnaireCalendar />
+        </Suspense>
+      )} />
+      <Route path="/portal/admin/status" component={() => (
+        <Suspense fallback={<PageLoadingSkeleton />}>
+          <AdminStatusNotices />
         </Suspense>
       )} />
       <Route path="/portal/admin/import" component={() => (
