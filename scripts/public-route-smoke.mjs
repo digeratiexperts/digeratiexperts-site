@@ -128,7 +128,8 @@ for (const path of routes) {
         const h1 = page.locator("h1").first();
         await h1.waitFor({ state: "visible", timeout: 10_000 });
         const headline = ((await h1.textContent()) || "").replace(/\s+/g, " ").trim();
-        if (!headline.includes("Cybersecurity-First IT That Powers") || !headline.includes("Your Business")) {
+        // Homepage v2 headline (approved 2026-10-22, design/reference/homepage-v2).
+        if (!headline.includes("Cybersecurity-first IT that powers your business")) {
           fails.push(`homepage ${width}px → unexpected H1: ${headline}`);
         }
 
