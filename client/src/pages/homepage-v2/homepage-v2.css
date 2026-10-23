@@ -1754,4 +1754,10 @@
 
 .hv2 .hero{padding-top:clamp(150px,15vw,190px)}
 .hv2 section[id]{scroll-margin-top:120px}
+/* Accent text on light sections: the hover tone keeps small labels at WCAG AA contrast. */
+.hv2 .sec:not(.band) :is(.mark,.link,.chip):not(.deep *){color:var(--accent-hover)}
+/* Findings list sits on white in a sonoran section: the approved ink-2 keeps AA contrast. */
+.hv2 .findings li span:last-child,.hv2 .sec:not(.band) .note{color:var(--ink-2)}
+/* Selected protection tab: solid white caption on the pink tab. */
+.hv2 .tab[aria-selected="true"] small{color:#fff}
 @media (max-width:680px){.hv2 .hero{padding-top:88px}}
