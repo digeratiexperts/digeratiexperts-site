@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { MouseEvent } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import {
   ArrowRight,
@@ -12,6 +13,8 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { revealInitial, revealInView, revealTransition, revealViewport } from "@/lib/animations";
+import { useBooking } from "@/contexts/BookingContext";
+import { HOME_CTA } from "../cta";
 import lawScalesImg from "@assets/Rectangle-152058-1_1767027918697.webp";
 import healthcareImg from "@assets/Rectangle-152058-2_1767027918698.webp";
 import realEstateImg from "@assets/Rectangle-152058-3_1767027918698.webp";
@@ -87,6 +90,13 @@ const icon = { strokeWidth: 1.8, "aria-hidden": true } as const;
 
 export function V8Industries(): JSX.Element {
   const prefersReducedMotion = useReducedMotion();
+  const { openBooking } = useBooking();
+  // Booking source names the section (existing context model, Lane H §6); modified clicks keep /book.
+  const openFromSection = (source: string) => (e: MouseEvent<HTMLAnchorElement>) => {
+    if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    e.preventDefault();
+    openBooking(source);
+  };
   const reveal = {
     initial: prefersReducedMotion ? false : revealInitial,
     whileInView: revealInView,
@@ -138,8 +148,13 @@ export function V8Industries(): JSX.Element {
             </h2>
             <p className="v8-lede">Specialized cybersecurity solutions for Arizona's essential sectors</p>
           </div>
-          <a className="v8-btn v8-btn--primary" href="/book" data-testid="button-industries-cta">
-            Get Industry-Specific Protection <ArrowRight size={18} {...icon} />
+          <a
+            className="v8-btn v8-btn--primary"
+            href="/book"
+            onClick={openFromSection("industries_section")}
+            data-testid="button-industries-cta"
+          >
+            {HOME_CTA.primary} <ArrowRight size={18} {...icon} />
           </a>
         </motion.div>
 
@@ -201,8 +216,12 @@ export function V8Industries(): JSX.Element {
           </ul>
         </motion.div>
 
-        <a className="v8-btn v8-btn--primary ind-ask" href="/book">
-          Get Industry-Specific Protection <ArrowRight size={18} {...icon} />
+        <a
+          className="v8-btn v8-btn--primary ind-ask"
+          href="/book"
+          onClick={openFromSection("industries_section")}
+        >
+          {HOME_CTA.primary} <ArrowRight size={18} {...icon} />
         </a>
       </div>
     </section>

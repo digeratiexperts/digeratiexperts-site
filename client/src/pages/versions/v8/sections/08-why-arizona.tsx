@@ -1,8 +1,10 @@
 import { motion, useReducedMotion } from "framer-motion";
+import type { MouseEvent } from "react";
 import { ArrowRight, MapPin, Scale, UserCheck } from "lucide-react";
 import { revealInitial, revealInView, revealTransition, revealViewport } from "@/lib/animations";
 import { DE_LOGO_PRIMARY } from "@/lib/brandAssets";
-import { CTA } from "@/lib/ctaCopy";
+import { useBooking } from "@/contexts/BookingContext";
+import { HOME_CTA } from "../cta";
 import { TipTag } from "./TipTag";
 import "./08-why-arizona.css";
 import { ChapterPattern } from "@/components/site/Atmosphere";
@@ -48,6 +50,13 @@ const icon = { size: 20, strokeWidth: 1.8, "aria-hidden": true } as const;
 
 export function V8WhyArizona(): JSX.Element {
   const prefersReducedMotion = useReducedMotion();
+  const { openBooking } = useBooking();
+  // Booking source names the section (existing context model, Lane H §6); modified clicks keep /book.
+  const openFromSection = (source: string) => (e: MouseEvent<HTMLAnchorElement>) => {
+    if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    e.preventDefault();
+    openBooking(source);
+  };
   const reveal = {
     initial: prefersReducedMotion ? false : revealInitial,
     whileInView: revealInView,
@@ -87,8 +96,13 @@ export function V8WhyArizona(): JSX.Element {
           </ul>
 
           <div className="why__cta-row">
-            <a className="v8-btn v8-btn--primary why__cta" href="/book" data-testid="link-trust-cta">
-              {CTA.primary} <ArrowRight {...icon} />
+            <a
+              className="v8-btn v8-btn--primary why__cta"
+              href="/book"
+              onClick={openFromSection("trust_section")}
+              data-testid="link-trust-cta"
+            >
+              {HOME_CTA.primary} <ArrowRight {...icon} />
             </a>
           </div>
         </motion.div>

@@ -12,6 +12,8 @@ import { ChapterPattern } from "@/components/site/Atmosphere";
  * artifacts/design-concepts/homepage-sections-2026-10/sections/03-threats-are-real.html.
  * Facts read from getHomepageCyberFacts(); icons and test ids as
  * client/src/pages/sections/DigeratiStatsSection.tsx.
+ * Lane H: half of the thin credibility strip (the defensible proof), so it renders tight.
+ * The section id lives on the chapter wrapper in HomepageV8.tsx (it used to collide).
  */
 
 const ICON = { size: 20, strokeWidth: 1.8, "aria-hidden": true } as const;
@@ -55,7 +57,7 @@ export function V8ThreatsAreReal(): JSX.Element {
   const facts = getHomepageCyberFacts();
 
   return (
-    <section className="f-well v8-section" id="stats" aria-labelledby="stats-heading">
+    <section className="f-well v8-section v8-section--tight" aria-labelledby="stats-heading">
       <ChapterPattern variant="lattice" />
       <div className="v8-canvas">
         <div className="v8-box stats-box">

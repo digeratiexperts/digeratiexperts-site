@@ -3,13 +3,16 @@ import { Link } from "wouter";
 import { ArrowRight, MapPin } from "lucide-react";
 import { revealInitial, revealInView, revealTransition, revealViewport } from "@/lib/animations";
 import { useBooking } from "@/contexts/BookingContext";
+import { PRIMARY_PHONE } from "@/data/companyContact";
+import { HOME_CTA } from "../cta";
 import "./09-team.css";
 import { ChapterPattern } from "@/components/site/Atmosphere";
 
 /**
  * 09 · The people behind your technology (mock: sections/09-team.html).
  * Founder portrait is the real, approved studio photo (webp with jpg fallback).
- * "Talk to an Expert" opens the booking modal in place, as live (meet_experts).
+ * "Talk to an Expert" opens the booking modal in place, as live (meet_experts);
+ * it is the CTA system's secondary action and is paired with the phone number.
  */
 
 const ops = [
@@ -94,7 +97,7 @@ export function V8Team(): JSX.Element {
 
             <p className="lead__cta">
               <a
-                className="v8-btn v8-btn--primary"
+                className="v8-btn v8-btn--outline"
                 href="/book"
                 onClick={(e) => {
                   e.preventDefault();
@@ -102,7 +105,10 @@ export function V8Team(): JSX.Element {
                 }}
                 data-testid="button-talk-to-expert"
               >
-                Talk to an Expert <ArrowRight {...icon} />
+                {HOME_CTA.secondary} <ArrowRight {...icon} />
+              </a>
+              <a className="v8-link--quiet lead__phone" href={PRIMARY_PHONE.telHref} data-testid="link-team-phone">
+                or call {PRIMARY_PHONE.display}
               </a>
             </p>
           </div>

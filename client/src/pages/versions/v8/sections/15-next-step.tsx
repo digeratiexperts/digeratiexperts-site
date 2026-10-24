@@ -1,7 +1,7 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { revealInitial, revealInView, revealTransition, revealViewport } from "@/lib/animations";
 import { useBooking } from "@/contexts/BookingContext";
-import { CTA } from "@/lib/ctaCopy";
+import { HOME_CTA } from "../cta";
 import { PRIMARY_PHONE } from "@/data/companyContact";
 import "./15-next-step.css";
 import { ChapterPattern } from "@/components/site/Atmosphere";
@@ -10,6 +10,8 @@ import { ChapterPattern } from "@/components/site/Atmosphere";
  * Section 15 (mock: artifacts/design-concepts/homepage-sections-2026-10/sections/15-next-step.html).
  * Joe, round 2: one assessment form on the page (13). The live email field here never submitted;
  * it only opened the booking modal, so it is now the button it really was: openBooking("homepage-cta").
+ * Lane H: the closing CTA carries the CTA system's primary and secondary —
+ * "Schedule Your Cyber Risk Assessment" and "Talk to an Expert" with the phone number.
  */
 
 const operatingPoints: { key: string; label: JSX.Element }[] = [
@@ -31,9 +33,9 @@ export function V8NextStep(): JSX.Element {
       <ChapterPattern variant="dots" />
       <div className="v8-canvas">
         <motion.div className="next" {...reveal}>
-          <p className="v8-eyebrow">Cyber Risk Assessment</p>
+          <p className="v8-eyebrow">Next step</p>
           <h2 className="v8-h2" id="cta-title">
-            Start with a Cyber Risk Assessment
+            Schedule Your Cyber Risk Assessment
           </h2>
           <p className="v8-lede">
             Discover identity, endpoint, email, backup, and operating gaps before you buy a package.
@@ -58,7 +60,7 @@ export function V8NextStep(): JSX.Element {
               onClick={() => openBooking("homepage-cta")}
               data-testid="button-cta-assessment"
             >
-              {CTA.primary}{" "}
+              {HOME_CTA.primary}{" "}
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="20"
@@ -74,6 +76,14 @@ export function V8NextStep(): JSX.Element {
                 <path d="M5 12h14" />
                 <path d="m12 5 7 7-7 7" />
               </svg>
+            </button>
+            <button
+              className="v8-btn v8-btn--outline-paper"
+              type="button"
+              onClick={() => openBooking("meet_experts")}
+              data-testid="button-cta-talk"
+            >
+              {HOME_CTA.secondary}
             </button>
           </div>
 

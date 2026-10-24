@@ -1,8 +1,7 @@
 import type { ReactNode } from "react";
 import { motion, useReducedMotion } from "framer-motion";
-import { ArrowRight, ChevronRight, Phone } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { Link } from "wouter";
-import { PRIMARY_PHONE } from "@/data/companyContact";
 import { revealInitial, revealInView, revealTransition, revealViewport } from "@/lib/animations";
 import "./02-why-we-exist.css";
 import { ChapterPattern } from "@/components/site/Atmosphere";
@@ -11,6 +10,9 @@ import { ChapterPattern } from "@/components/site/Atmosphere";
  * 02 · Why we exist, ported from
  * artifacts/design-concepts/homepage-sections-2026-10/sections/02-why-we-exist.html.
  * Copy, destinations and test ids from client/src/pages/sections/DigeratiAlertBanner.tsx.
+ * Lane H: this is now the thin credibility strip under the hero. Its "Ready to Secure
+ * Your Business?" CTA band moved to the closing block (CTA system: primary assessment +
+ * secondary "Talk to an Expert" with the phone), so the strip carries the narrative only.
  */
 
 const ICON = { size: 20, strokeWidth: 1.8, "aria-hidden": true } as const;
@@ -56,7 +58,7 @@ export function V8WhyWeExist(): JSX.Element {
   } as const;
 
   return (
-    <section className="f-paper v8-section" id="why-we-exist" aria-labelledby="why-we-exist-title">
+    <section className="f-paper v8-section v8-section--tight" id="why-we-exist" aria-labelledby="why-we-exist-title">
       <ChapterPattern variant="dots" />
       <div className="v8-canvas why">
         <motion.div className="why__statement" {...reveal}>
@@ -84,25 +86,6 @@ export function V8WhyWeExist(): JSX.Element {
             </li>
           ))}
         </motion.ul>
-
-        <motion.div className="why__ask" {...reveal}>
-          <h3 className="v8-h3">Ready to Secure Your Business?</h3>
-          <p className="v8-body">
-            Get enterprise-grade protection tailored for Arizona businesses. Let&apos;s discuss your security needs.
-          </p>
-          <div className="ask__actions">
-            <a className="v8-btn v8-btn--primary" href="/book" data-testid="button-schedule-consultation-banner">
-              Schedule Consultation <ArrowRight {...ICON} />
-            </a>
-            <a
-              className="v8-btn v8-btn--outline-paper"
-              href={PRIMARY_PHONE.telHref}
-              data-testid="button-call-banner"
-            >
-              <Phone {...ICON} /> Call {PRIMARY_PHONE.display}
-            </a>
-          </div>
-        </motion.div>
       </div>
     </section>
   );

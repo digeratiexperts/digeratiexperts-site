@@ -6,7 +6,8 @@ import { useForm } from "react-hook-form";
 import { revealInitial, revealInView, revealTransition, revealViewport } from "@/lib/animations";
 import { useToast } from "@/hooks/use-toast";
 import { analytics } from "@/lib/analytics";
-import { CTA } from "@/lib/ctaCopy";
+import { useBooking } from "@/contexts/BookingContext";
+import { HOME_CTA } from "../cta";
 import { DE_LOGO_REVERSE } from "@/lib/brandAssets";
 import { COMPANY, COMPANY_SOCIAL, PRIMARY_PHONE, formatAddressOneLine } from "@/data/companyContact";
 // Closing bookend (Joe 2026-08-31): the hero's Phoenix city-lights plate returns behind the contact chapter.
@@ -59,7 +60,7 @@ const serviceLinks = [
   { name: "Managed IT", href: "/solutions/managed-it-support" },
   { name: "Cybersecurity", href: "/solutions/security-operations" },
   { name: "Compliance & Risk", href: "/solutions/compliance-reports" },
-  { name: "Backup & DR", href: "/solutions/backup-disaster-recovery" },
+  { name: "Backup & Disaster Recovery", href: "/solutions/backup-disaster-recovery" },
 ];
 
 const resourceLinks = [
@@ -329,7 +330,7 @@ function ContactForm(): JSX.Element {
         </div>
       </div>
       <button
-        className="v8-btn v8-btn--dark contact__submit v8-submit"
+        className="v8-btn v8-btn--primary contact__submit v8-submit"
         type="submit"
         disabled={isSubmitting}
         data-state={phase}
@@ -435,6 +436,7 @@ function FooterNewsletter(): JSX.Element {
 
 export function V8ContactFooter(): JSX.Element {
   const reduceMotion = useReducedMotion();
+  const { openBooking } = useBooking();
   const reveal = (delay = 0) =>
     reduceMotion
       ? {}
@@ -475,15 +477,26 @@ export function V8ContactFooter(): JSX.Element {
               help or want to explore our services, we&apos;re here for you.
             </p>
             <div className="contact__actions">
-              <a className="v8-link" href="/book" data-testid="contact-cta-assessment">
-                {CTA.primary}{" "}
+              <a
+                className="v8-btn v8-btn--primary"
+                href="/book"
+                onClick={(e) => {
+                  // Booking source names the section (existing context model, Lane H §6);
+                  // modified clicks keep the /book href.
+                  if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+                  e.preventDefault();
+                  openBooking("contact_section");
+                }}
+                data-testid="contact-cta-assessment"
+              >
+                {HOME_CTA.primary}{" "}
                 <svg {...svgProps}>
                   <path d="M5 12h14" />
                   <path d="m12 5 7 7-7 7" />
                 </svg>
               </a>
               <a className="v8-btn v8-btn--outline" href={PRIMARY_PHONE.telHref} data-testid="contact-cta-call">
-                Call {PRIMARY_PHONE.display}
+                {HOME_CTA.secondary} · {PRIMARY_PHONE.display}
               </a>
             </div>
 
