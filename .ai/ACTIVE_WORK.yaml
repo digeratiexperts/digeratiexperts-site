@@ -4889,3 +4889,27 @@ claims:
       "1-lessac-female.mp3 failover", "merge both when green". Free local
       neural TTS (Piper), fed the IPA, not the spelling. Replaces the Windows
       SAPI file. A human recording can still replace the main file.
+  - id: cookie-banner-askde-overlap
+    owner: claude
+    subsystem: site-chrome
+    branch: claude/cookie-banner-askde-overlap
+    base_sha: c0fa29c9
+    files:
+      - client/src/components/CookieConsentBanner.tsx (one short consent line at every width)
+      - client/src/components/CookieConsentBanner.copy.test.ts (new)
+      - client/src/components/SiteBottomBar.tsx (Ask DE label reveals on hover/focus; 40px circle at rest)
+      - client/src/components/SiteBottomBar.launcher.test.ts
+      - client/src/lib/storeLightChrome.test.ts (assertion for the removed long paragraph)
+      - artifacts/visual-qa/cookie-banner-askde-2026-10-24/**
+    status: implemented
+    started: 2026-10-24
+    note: >-
+      Joe, 2026-10-24: "fix the cookie banner and Ask DE overlap" (from the live
+      site check of 2026-10-20). The full-length consent paragraph covered ~21%
+      of a 1440x900 screen and sat on the homepage hero buttons; it is now one
+      line (81px, 9%), same layout on the dark site and the light Store. The
+      labelled Ask DE pill (~205px) covered the right end of trust strips; it
+      now rests as the 40px gold-ring badge with the "Ask DE / We're here to
+      help." label sliding out on hover or keyboard focus. This changes the
+      2026-10-03 launcher decision (label always beside the badge from sm), so
+      Joe confirms the screenshots before merge.

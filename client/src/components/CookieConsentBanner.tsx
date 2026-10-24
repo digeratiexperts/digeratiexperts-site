@@ -283,46 +283,32 @@ export function CookieConsentBanner() {
               )}
 
               <div className="relative z-10 mx-auto flex max-w-screen-2xl flex-col items-stretch gap-2 px-4 py-2.5 lg:flex-row lg:items-center lg:gap-8 lg:px-8 lg:py-4">
+                {/* One short line at every width, on the dark site and the light Store
+                    alike. The full disclosure paragraph covered about a fifth of a
+                    1440x900 screen and sat on the hero buttons; its substance (what the
+                    cookies are for, what Accept All means, where the policy is) fits in
+                    one sentence, and the preferences panel holds the detail. */}
                 <p
                   className={cn(
-                    "min-w-0 flex-1 text-base leading-relaxed",
-                    // Full disclosure from 1280px. Between 1024 and 1279 it shared the row
-                    // with the buttons, wrapped to eleven lines and covered 311px of a
-                    // 768px-tall screen; those widths get the short line tablets use.
-                    light ? "hidden" : "hidden xl:block",
-                    light ? "text-slate-700" : "text-gray-200",
+                    "min-w-0 flex-1 text-sm font-medium leading-snug md:text-base",
+                    light ? "text-slate-800" : "text-gray-200",
                   )}
+                  data-testid="cookie-consent-text"
                 >
-                  Digerati Experts uses cookies and similar tracking technologies to collect information you provide and to capture your interaction with our site. We use this information to enhance site navigation, personalize content, analyze your use of our website, and assist in our marketing efforts and customer service. To deliver the best experience, analytics and hosting service providers may have access to this information. By clicking "Accept All," you consent to our collection, use, and disclosure of such information. For more information about our data processing practices, please see our{" "}
+                  <span className="hidden md:inline">
+                    We use cookies to run the site, measure visits and support our marketing. Accept All allows all of them.{" "}
+                  </span>
+                  <span className="md:hidden">We use cookies. </span>
                   <Link
                     href="/legal/privacy-policy"
                     className={cn(
-                      "font-medium underline underline-offset-2 transition-colors",
+                      "whitespace-nowrap font-semibold underline underline-offset-2 transition-colors",
                       light ? "text-[#D3126A] hover:text-slate-900" : "text-[#D3126A] hover:text-white",
                     )}
                     data-testid="link-privacy-policy-cookie"
                   >
-                    Privacy Policy
-                  </Link>
-                  .
-                </p>
-                <p
-                  className={cn(
-                    "min-w-0 flex-1 text-sm font-medium leading-snug",
-                    light ? "" : "xl:hidden",
-                    light ? "text-slate-800" : "text-gray-200",
-                  )}
-                >
-                  We use cookies.{" "}
-                  <Link
-                    href="/legal/privacy-policy"
-                    className={cn(
-                      "font-semibold underline underline-offset-2 transition-colors",
-                      light ? "text-[#D3126A] hover:text-slate-900" : "text-[#D3126A] hover:text-white",
-                    )}
-                    data-testid="link-privacy-policy-cookie-mobile"
-                  >
-                    Privacy
+                    <span className="hidden md:inline">Privacy Policy</span>
+                    <span className="md:hidden">Privacy</span>
                   </Link>
                   {/* From md the full "Manage Cookie Preferences" button shows, so this one would double it. */}
                   <span className="md:hidden">{" · "}</span>
