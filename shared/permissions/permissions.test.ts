@@ -195,3 +195,31 @@ describe("lane D: status.manage", () => {
     }
   });
 });
+
+describe("DE staff tools (lane-staff.ts)", () => {
+  const STAFF_TOOL_PERMS = [
+    "licenses.manage",
+    "kb.manage",
+    "orders.manage",
+    "manualRecords.manage",
+    "warehouse.access",
+  ] as const;
+
+  it("lets DE staff and the break-glass account use every DE Admin tool, never a client", () => {
+    for (const perm of STAFF_TOOL_PERMS) {
+      expect(can(superAdmin, perm), perm).toBe(true);
+      expect(can(deStaff, perm), perm).toBe(true);
+      expect(can(deStaff, perm, "c-a"), perm).toBe(true);
+      for (const client of [plainUser, manager, itContact]) {
+        expect(can(client, perm), `${perm} ${client.orgRole}`).toBe(false);
+        expect(can(client, perm, client.clientId), `${perm} ${client.orgRole}`).toBe(false);
+      }
+    }
+  });
+
+  it("does not widen the break-glass-only actions (company delete, billing config, the old requireAdmin)", () => {
+    for (const perm of ["portal.admin", "company.delete", "admin.billingConfig"] as const) {
+      expect(can(deStaff, perm), perm).toBe(false);
+    }
+  });
+});

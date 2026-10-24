@@ -8,6 +8,7 @@
 import { laneAPermissions } from "./lane-a";
 import { laneCPermissions } from "./lane-c";
 import { laneDPermissions } from "./lane-d";
+import { laneStaffPermissions } from "./lane-staff";
 import { ruleAllows, type AccessContext, type AccessPrincipal, type AccessRule } from "./types";
 
 export * from "./types";
@@ -16,12 +17,14 @@ export const PERMISSIONS: Record<string, AccessRule> = {
   ...laneAPermissions,
   ...laneCPermissions,
   ...laneDPermissions,
+  ...laneStaffPermissions,
 };
 
 export type PermissionKey =
   | keyof typeof laneAPermissions
   | keyof typeof laneCPermissions
   | keyof typeof laneDPermissions
+  | keyof typeof laneStaffPermissions
   | (string & {});
 
 /**

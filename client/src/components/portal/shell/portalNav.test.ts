@@ -9,6 +9,7 @@ import {
 } from "./portalNav";
 import type { IntegrationMap } from "@/lib/portalIntegrations";
 import type { PortalUserSession } from "@/lib/portalRoles";
+import { PERMISSIONS, can } from "@shared/permissions";
 
 const integration = (mode: "sample" | "hidden" | "live") =>
   ({ mode, provider: null }) as const;
@@ -275,5 +276,51 @@ describe("DE Questionnaires (real, lane C)", () => {
     expect(findNavItem("/portal/my-questionnaires", "target")?.item.href).toBe("/portal/dashboard");
     expect(isNavAllowed(de, { ...ctx, user: deStaff })).toBe(true);
     for (const user of [standardUser, clientItContact, clientViewer]) expect(isNavAllowed(de, { ...ctx, user }), user.id ?? "").toBe(false);
+  });
+});
+
+describe("every DE-only menu item's APIs accept DE staff", () => {
+  // The permission(s) guarding the APIs each deOnly page calls (server/routes.ts
+  // and the register*Routes it wires). `[]` = the page's APIs only need a sign-in.
+  // A new deOnly item must be added here with its guards, or this test fails.
+  const DE_ONLY_PAGE_GUARDS: Record<string, string[]> = {
+    "/portal/infrastructure": [],
+    "/portal/organization": [],
+    "/portal/questionnaires": ["questionnaires.manage", "company.switch"],
+    "/portal/ship-center": ["manualRecords.manage"],
+    "/internal/warehouse": ["warehouse.access"],
+    "/portal/admin/companies": ["company.manage", "company.switch", "entitlements.manage", "clientRoles.manage", "files.share"],
+    "/portal/admin/license-board": ["licenses.manage"],
+    "/portal/admin/status": ["status.manage", "company.switch"],
+    "/portal/admin/roadmap": ["roadmap.manage", "company.switch"],
+    "/portal/admin/business-reviews": ["reviews.manage", "company.manage", "files.share", "company.switch"],
+    "/portal/admin/kb": ["kb.manage", "company.manage"],
+    "/portal/admin/order-requests": ["orders.manage"],
+    "/portal/sales-process": [],
+  };
+  const staffPrincipal = { role: "staff", clientId: "msp-digerati" };
+  const clientPrincipal = { role: "user", clientId: "c-a", orgRole: "company_it_contact", isCompanyItContact: true };
+
+  it("lists exactly the deOnly menu items", () => {
+    const deOnly = PORTAL_NAV_ITEMS.filter((i) => i.rule?.deOnly).map((i) => i.href).sort();
+    expect(deOnly).toEqual(Object.keys(DE_ONLY_PAGE_GUARDS).sort());
+  });
+
+  it("grants DE staff every permission those pages' APIs check, and no client", () => {
+    for (const [href, perms] of Object.entries(DE_ONLY_PAGE_GUARDS)) {
+      for (const perm of perms) {
+        expect(PERMISSIONS[perm], `${href} ${perm} is registered`).toBeDefined();
+        expect(can(staffPrincipal, perm, "c-a"), `${href} ${perm}`).toBe(true);
+        expect(can(clientPrincipal, perm, "c-a"), `${href} ${perm}`).toBe(false);
+      }
+    }
+  });
+
+  it("keeps Admin Contracts (no backend yet) break-glass only", () => {
+    const ctx = { integrations: SAMPLE_INT, navContext: NO_DATA, view: "legacy" as const };
+    const contracts = findNavItem("/portal/admin/contracts", "legacy")!.item;
+    expect(contracts.rule?.superAdminOnly).toBe(true);
+    expect(isNavAllowed(contracts, { ...ctx, user: deStaff })).toBe(false);
+    expect(isNavAllowed(contracts, { ...ctx, user: breakGlass })).toBe(true);
   });
 });
