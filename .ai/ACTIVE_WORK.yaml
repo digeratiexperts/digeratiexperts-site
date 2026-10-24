@@ -4868,3 +4868,18 @@ claims:
       Zoho and JumpCloud syncs on request, Seamless.ai is not connected (paid),
       and links the CSV imports that exist (VPN devices, shipments). The
       Zoho/JumpCloud importer itself stays a separate slice.
+  - id: pronunciation-voice-piper
+    owner: claude
+    subsystem: homepage
+    branch: claude/sleepy-johnson-bkojbp
+    base_sha: abe95fe
+    started: 2026-10-24
+    files:
+      - client/public/audio/digerati-pronunciation.wav (replaced with Piper ryan-high), digerati-pronunciation-backup.mp3 (new, Piper lessac-high), README.md
+      - client/src/pages/homepage-v2/sections/HeroSection.tsx, client/src/components/PronunciationCard.tsx (main, then backup, then synthesis)
+    status: in-review
+    note: >-
+      Joe, 2026-10-24, after hearing the samples: "2-ryan-male.mp3 main",
+      "1-lessac-female.mp3 failover", "merge both when green". Free local
+      neural TTS (Piper), fed the IPA, not the spelling. Replaces the Windows
+      SAPI file. A human recording can still replace the main file.
