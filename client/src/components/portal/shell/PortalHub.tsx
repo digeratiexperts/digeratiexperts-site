@@ -4,8 +4,12 @@ import { PortalLayout } from "@/pages/portal/PortalLayout";
 import {
   PORTAL_NAV_HUBS,
   PORTAL_NAV_ITEMS,
+  isNavAllowed,
+  navViewFor,
   type PortalNavItem,
 } from "@/components/portal/shell/portalNav";
+import { usePortalSession } from "@/components/portal/shell/portalSession";
+import { usePortalIntegrations } from "@/lib/portalIntegrations";
 import { cn } from "@/lib/utils";
 
 /**
@@ -23,12 +27,21 @@ function membersOf(hubHref: string): PortalNavItem[] {
     .filter((item): item is PortalNavItem => Boolean(item));
 }
 
+/** Members this user may open: a card must never lead to a page that bounces them to Home. */
+function useAllowedMembers(hubHref: string): PortalNavItem[] {
+  const { user } = usePortalSession();
+  const integrations = usePortalIntegrations();
+  return membersOf(hubHref).filter((item) =>
+    isNavAllowed(item, { user, integrations, navContext: user?.navContext, view: navViewFor(user) }),
+  );
+}
+
 const tabClass =
   "rounded-[3px] border border-border bg-card px-3 py-1.5 text-sm text-foreground transition-colors hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
 export function PortalHubPage({ hubHref }: { hubHref: string }) {
   const hub = PORTAL_NAV_ITEMS.find((item) => item.href === hubHref);
-  const members = membersOf(hubHref);
+  const members = useAllowedMembers(hubHref);
   if (!hub) return null;
   return (
     <PortalLayout title={hub.target?.label ?? hub.label} description={hub.hint} width="wide">
@@ -79,7 +92,7 @@ export function PortalHubPanel({
   title?: string;
   className?: string;
 }) {
-  const members = membersOf(hubHref);
+  const members = useAllowedMembers(hubHref);
   if (members.length === 0) return null;
   return (
     <section className={cn("rounded-xl border border-border bg-card", className)} aria-label={title ?? "More in this section"}>

@@ -31,7 +31,17 @@ const td = "px-3 py-2.5 align-top text-sm text-white/85";
 const fieldLabel = "mb-1 block text-xs font-semibold text-white/70";
 const input = "h-10 w-full rounded-md border border-white/15 bg-black/30 px-3 font-mono text-sm text-white placeholder:text-white/35";
 
-export function StarterKitTab({ clientId, companyName, onApplied }: { clientId: string; companyName: string; onApplied: () => void }) {
+export function StarterKitTab({
+  clientId,
+  companyName,
+  currentKit,
+  onApplied,
+}: {
+  clientId: string;
+  companyName: string;
+  currentKit?: string | null;
+  onApplied: () => void;
+}) {
   const { toast } = useToast();
   const q = useQuery({ queryKey: ["/api/portal/admin/license-board/kits"], queryFn: licenseBoardApi.kits, staleTime: Infinity });
   const [busy, setBusy] = useState<string | null>(null);
@@ -56,8 +66,9 @@ export function StarterKitTab({ clientId, companyName, onApplied }: { clientId: 
   return (
     <div className="space-y-3">
       <p className="text-sm text-white/60">
-        Pick the business type. The kit turns its apps on for Every machine and lists the licences {companyName} should get. Seat
-        counts stay your call: nothing is allocated, and applying a kit again changes nothing.
+        Pick the business type. The kit turns its apps on for Every machine, lists the licences {companyName} should get and adds
+        the documents its vault should hold. Seat counts stay your call: nothing is allocated, and applying a kit again changes
+        nothing.
       </p>
       {result ? (
         <div className="flex gap-2 rounded-md border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm text-white/85">
@@ -75,10 +86,16 @@ export function StarterKitTab({ clientId, companyName, onApplied }: { clientId: 
         {(q.data?.kits ?? []).map((kit) => (
           <li key={kit.key} className="flex flex-col gap-3 p-4 sm:flex-row sm:items-start">
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-white">{kit.name}</p>
+              <p className="flex flex-wrap items-center gap-2 text-sm font-semibold text-white">
+                {kit.name}
+                {currentKit === kit.key ? (
+                  <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-xs font-normal text-emerald-300">Current</span>
+                ) : null}
+              </p>
               <p className="mt-0.5 text-sm text-white/60">{kit.blurb}</p>
               <p className="mt-1 text-xs text-white/45">
                 {kit.apps.length} apps · {kit.licenses.length} licences
+                {kit.vaultDocs?.length ? ` · ${kit.vaultDocs.length} vault documents` : ""}
               </p>
               {kit.note ? (
                 <p className="mt-2 flex gap-1.5 text-xs text-amber-300">
@@ -108,7 +125,7 @@ export function StarterKitTab({ clientId, companyName, onApplied }: { clientId: 
                   onClick={() => setConfirm(kit.key)}
                   className="min-h-9 rounded-md border border-white/15 px-3 text-sm font-semibold text-white hover:bg-white/10"
                 >
-                  Apply
+                  {currentKit === kit.key ? "Re-apply" : "Apply"}
                 </button>
               )}
             </div>

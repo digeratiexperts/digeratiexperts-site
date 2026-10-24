@@ -57,13 +57,13 @@ const BUSINESS_CONNECTIVITY_REASONS = [
 
 const OFFICE_DEVICES_REASONS = [
   "Email + Calendar + Team Chat with MFA + SSO",
-  "Endpoint Security + Email Protection + 24/7 MDR",
+  "Endpoint Security (EDR) + Email Protection",
   "Managed Network + Service Desk + Endpoint Backup",
 ];
 
 const OFFICE_BASE_REASONS = [
   "Security-first IT with MFA, SSO, and Password Manager",
-  "Endpoint Security + Email Protection + 24/7 MDR",
+  "Endpoint Security (EDR) + Email Protection",
   "Service Desk + Managed Network + Endpoint Backup",
 ];
 

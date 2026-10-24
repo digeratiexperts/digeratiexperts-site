@@ -340,6 +340,92 @@ export const portalManualRecords = pgTable("portal_manual_records", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+/** System Status notices (migrations/0021_portal_status_notices.sql; shared/statusNotices.ts). client_id null = every client. */
+export const portalStatusNotices = pgTable("portal_status_notices", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  clientId: varchar("client_id").references(() => portalClients.id, { onDelete: "cascade" }),
+  kind: text("kind").notNull(),
+  severity: text("severity").notNull(),
+  title: text("title").notNull(),
+  body: text("body").notNull().default(""),
+  affectedServices: jsonb("affected_services").notNull().default([]),
+  startsAt: timestamp("starts_at", { withTimezone: true }).notNull(),
+  endsAt: timestamp("ends_at", { withTimezone: true }),
+  resolvedAt: timestamp("resolved_at", { withTimezone: true }),
+  updates: jsonb("updates").notNull().default([]),
+  createdBy: varchar("created_by"),
+  createdByName: text("created_by_name").notNull().default(""),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+/** IT Roadmap items (migrations/0022_portal_roadmap_items.sql; shared/roadmap.ts). */
+export const portalRoadmapItems = pgTable("portal_roadmap_items", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  clientId: varchar("client_id")
+    .notNull()
+    .references(() => portalClients.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  rationale: text("rationale").notNull().default(""),
+  category: text("category").notNull(),
+  priority: text("priority").notNull(),
+  targetQuarter: text("target_quarter").notNull(),
+  estimateLow: integer("estimate_low"),
+  estimateHigh: integer("estimate_high"),
+  costBasis: text("cost_basis").notNull().default("one_time"),
+  status: text("status").notNull().default("proposed"),
+  decisionNote: text("decision_note").notNull().default(""),
+  decidedByName: text("decided_by_name"),
+  decidedAt: timestamp("decided_at", { withTimezone: true }),
+  comments: jsonb("comments").notNull().default([]),
+  createdBy: varchar("created_by"),
+  createdByName: text("created_by_name").notNull().default(""),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+/** Business reviews (migrations/0023_portal_business_reviews.sql; shared/businessReviews.ts). */
+export const portalBusinessReviews = pgTable("portal_business_reviews", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  clientId: varchar("client_id")
+    .notNull()
+    .references(() => portalClients.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  period: text("period"),
+  meetingOn: date("meeting_on", { mode: "string" }).notNull(),
+  status: text("status").notNull().default("draft"),
+  summary: text("summary").notNull().default(""),
+  decisions: jsonb("decisions").notNull().default([]),
+  roadmapItemIds: jsonb("roadmap_item_ids").notNull().default([]),
+  fileId: varchar("file_id"),
+  createdBy: varchar("created_by"),
+  createdByName: text("created_by_name").notNull().default(""),
+  publishedAt: timestamp("published_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+/** DE Questionnaires (migrations/0024_portal_questionnaire_assignments.sql; shared/questionnaires.ts). */
+export const portalQuestionnaireAssignments = pgTable("portal_questionnaire_assignments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  clientId: varchar("client_id")
+    .notNull()
+    .references(() => portalClients.id, { onDelete: "cascade" }),
+  surveyId: varchar("survey_id").notNull(),
+  assignedToUserId: varchar("assigned_to_user_id").notNull(),
+  dueOn: date("due_on", { mode: "string" }).notNull(),
+  status: text("status").notNull().default("assigned"),
+  note: text("note").notNull().default(""),
+  answers: jsonb("answers").notNull().default({}),
+  assignedBy: varchar("assigned_by"),
+  assignedByName: text("assigned_by_name").notNull().default(""),
+  submittedAt: timestamp("submitted_at", { withTimezone: true }),
+  reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+  reviewedByName: text("reviewed_by_name"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
 /**
  * Group-level requests filed by a Hub-defined representative on behalf of the
  * group they represent (migrations/0019_portal_group_requests.sql;

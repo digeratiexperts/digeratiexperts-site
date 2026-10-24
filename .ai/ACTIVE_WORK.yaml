@@ -53,6 +53,49 @@ claims:
       its compact labels are a cross-lane follow-up. Assessment price (FAQ) and a
       client testimonial stay unpublished with TODO (Joe) comments. No deploy;
       production lags main until Joe deploys.
+  - id: menu-pages-upgrade
+    owner: claude
+    subsystem: marketing-menu-pages
+    branch: claude/menu-pages-upgrade-20261023
+    base_sha: 8cdb1202
+    files:
+      - client/src/components/home/HomeChapter.tsx (FieldTone signal + ink fields), chapters.tsx, Atmosphere.tsx, client/src/index.css
+      - client/src/pages/GenericServicePage.tsx and menu-linked solution, industry, resource, about, /go and contact pages (section fields)
+      - client/src/data/pricing.ts, offering.ts (new), campaigns.ts, resourceRegistry.ts, client/src/lib/quoteMatch.ts, shared/routeMeta.json (offering wording)
+    status: active
+    started: 2026-10-23
+  - id: license-kit-vault-docs
+    owner: claude
+    subsystem: licensing
+    branch: claude/exciting-cannon-ttx8m8
+    base_sha: 398f4d6f
+    files:
+      - migrations/0021_company_kits_and_vault_requirements.sql (new)
+      - shared/starterKits.ts, shared/clientVault.ts, shared/jumpcloudPlan.test.ts
+      - server/licenseBoardStore.ts, server/licenseBoardRoutes.ts, server/licenseBoardRoutes.test.ts
+      - server/portalClientVault.ts, server/portalClientVault.test.ts (list response gains requirements)
+      - server/routes.ts (licence board vaultTitles dep, vault requirements dep)
+      - client/src/pages/portal/AdminLicenseBoard.tsx, client/src/components/portal/licensing/CompanyTools.tsx, client/src/lib/licenseBoardApi.ts
+      - client/src/pages/portal/AdminClientWorkspace.tsx (needed-documents checklist)
+      - migrations/0022_license_vendor_push.sql (new), shared/vendorPush.ts (+ test), shared/licenseShelf.ts (default SKUs)
+      - server/integrations/msGraph.ts, server/integrations/googleLicensing.ts (new, + vendorLicensing.test.ts)
+      - client/src/components/portal/licensing/VendorTools.tsx (new), .env.example, docs/SECRETS-REQUIRED.md
+      - slice C: shared/licenseShelf.ts (Pax8 shelf), server/licenseBoardRoutes.ts (shelf pax8), client/src/components/portal/licensing/PartsBin.tsx, client/src/lib/licenseBoardApi.ts
+    status: active
+    pr: 701 (slices A and B, merged 65a6bbb3)
+    started: 2026-10-23
+    note: >-
+      Joe, 2026-10-23 ("I want all these"): slice A of four. The License
+      Patch Bay records which starter kit each company has (header chip,
+      company list) and applying a kit adds its document checklist to the
+      client vault (Regulated: BAA or engagement terms, WISP, incident
+      response plan; GCC High: CUI handling agreement, SSP reference, tool
+      review record). Slice B in the same PR: a Microsoft & Google tab that
+      assigns person-held licences in the client's Microsoft 365 tenant
+      (Graph) or Google Workspace (Licensing API) on Send, with per-client
+      links, default SKU codes and a send log. Slice C: a Pax8 shelf in the
+      parts bin from the Hub staff catalog's vendorSkus (Hub PR
+      digeratiexperts/Intelligence-Hub#551).
   - id: lane-a-roles-nav
     issue: 697
     pr: 700
@@ -112,6 +155,25 @@ claims:
       geometry, a plain-SVG renderer and a JSON kit. No production wiring into
       chat, DE Desk, the Client Portal or the Intelligence Hub; each needs its
       own go-ahead from Joe. Merge needs Joe's "merge".
+  - id: home-classic-preserve
+    owner: claude
+    subsystem: homepage-concept
+    branch: claude/homepage-v2-20261022
+    base_sha: 398f4d6f
+    started: 2026-10-23
+    files:
+      - client/src/pages/concepts/HomeClassic.tsx (new; renders HomepageV8 unchanged at /concepts/home-classic, noindex)
+      - client/src/App.tsx (lazy import, route, bottom-bar list)
+      - client/src/lib/stickyCtaVisibility.test.ts (one expectation)
+      - server/spaKnownPaths.ts (one path)
+      - client/src/pages/homepage-v2/ (new; Step 2 build at /, from design/reference/homepage-v2)
+      - design/reference/homepage-v2/ (approved reference copied in, sha256 7d9bbfe4e81d)
+      - design/DESIGN-AUTHORITY.md (gold exception inside t-ink sections, Joe 2026-10-22)
+    status: verified-live
+    notes: |
+      Homepage v2 swap (Joe, 2026-10-22). Step 1: current / kept at /concepts/home-classic.
+      Step 2: v2 at / built as components; PR stays a draft; Joe merges and deploys.
+      PR #698 (Lane H) stays on hold; its cta.ts labels and threat-feed change are borrowed here.
   - id: home-mesh-concept
     owner: claude
     subsystem: homepage-concept
@@ -4490,3 +4552,263 @@ claims:
       fix anything in yellow or red." Search-facing titles and snippets now
       use the Arizona search terms DataForSEO measured. No visible page text
       changes (checked at 390 and 1440: headings unchanged).
+  - id: hero-pronunciation-audio
+    owner: claude
+    subsystem: homepage
+    branch: claude/sleepy-johnson-bkojbp
+    base_sha: 8cdb120
+    started: 2026-10-23
+    files:
+      - client/src/pages/homepage-v2/sections/HeroSection.tsx (speakName only)
+      - client/src/pages/homepage-v2/sections/WhySection.tsx (define card copy only)
+      - client/src/pages/homepage-v2/homepage-v2.css (.define .w removed)
+    status: verified-live
+    released: 2026-10-23
+    pr: "703"
+    note: >-
+      Joe, 2026-10-23: the hero "Hear it" "doesn't even sound good or sound
+      like the word Digerati". The v2 hero spoke "dij uh RAH tee" through
+      browser speech synthesis (four separate syllables, voice varies by
+      device) and never used client/public/audio/digerati-pronunciation.wav.
+      Now it plays that file, with synthesis only as the fallback. The file
+      itself is still synthetic; a human recording is pending Joe.
+      Joe picked option A for the word appearing twice: the Why card drops
+      its big "dig·er·a·ti" headword and keeps the meaning, so the word is
+      shown large only once (the hero).
+  - id: portal-admin-company-picker
+    owner: claude
+    subsystem: portal
+    branch: claude/sleepy-johnson-bkojbp
+    base_sha: 8cdb120
+    started: 2026-10-23
+    files:
+      - client/src/components/portal/CompanyReadiness.tsx (inline company picker for DE admins)
+      - client/src/components/portal/AdminModeSwitch.tsx (View as stays on the current client page)
+      - client/src/components/portal/viewAsDestination.test.ts (new)
+      - client/src/pages/portal/requests/PortalServiceRequests.tsx (My Requests shows the picker, not an error)
+    status: verified-live
+    released: 2026-10-23
+    pr: "703"
+    note: >-
+      Joe, 2026-10-23: Service Requests showed "Your requests couldn't be
+      loaded. Open a company (impersonate) before filing a request for it",
+      and the licence form only showed options after Manage Companies -> View
+      Portal -> back button. A DE admin with no company open now gets a
+      company picker on the page itself; picking opens that company and
+      reloads the same page. "View as" from the admin bar also stays on the
+      client page you were on instead of jumping to the dashboard.
+      Verified locally in Chromium with the dev bootstrap admin: requests
+      page and licence form both show the picker, picking stays on the page,
+      and the error is gone.
+  - id: portal-sample-buildout-plan
+    owner: claude
+    subsystem: portal
+    branch: claude/sleepy-johnson-bkojbp
+    base_sha: 8cdb120
+    started: 2026-10-23
+    files:
+      - docs/PORTAL-SAMPLE-BUILDOUT-PLAN.md (new)
+    status: verified-live
+    released: 2026-10-23
+    pr: "703"
+    note: >-
+      Joe, 2026-10-23: "nothing should be a mere sample … plan it all out fully
+      and document how its built from a high level technically so others can
+      continue your work and jump in." Plan only, no feature code: inventory
+      of the 10 SAMPLE nav items, the build pattern, per-feature slices,
+      order of work and the decisions Joe needs to make.
+  - id: zod4-security-upgrade
+    owner: claude
+    subsystem: dependencies
+    branch: claude/zod4-security-upgrade
+    base_sha: 8cdb120
+    started: 2026-10-23
+    files:
+      - package.json, package-lock.json (zod ^4.6.7, drizzle-zod ^0.8.3, zod-validation-error ^5.0.0)
+      - shared/serviceRequests.ts (z.enum errorMap -> message)
+      - server/integrations/deSyncContract.ts (z.record key schema; z.guid for DE-Sync ids)
+    status: verified-live
+    released: 2026-10-23
+    pr: "705"
+    note: >-
+      GHSA-mrhx-c7xc-m3w5 (zod < 4.6.6, high) turned the CI audit step red on
+      every branch on 2026-10-23. Joe: "own PR for zod, go ahead do the
+      upgrade". No 3.x fix exists; this is the major upgrade.
+  - id: portal-agent-release
+    owner: claude
+    subsystem: portal
+    branch: claude/portal-agent-release
+    base_sha: 27e36a0
+    started: 2026-10-23
+    files:
+      - server/agentRelease.ts, server/agentReleaseRoutes.ts, server/agentReleaseRoutes.test.ts (new)
+      - server/routes.ts (one registration block)
+      - client/src/pages/portal/PortalAgent.tsx, client/src/pages/portal/AdminAgents.tsx (rewritten on real data)
+      - client/src/components/portal/shell/portalNav.ts (Manage Agents loses its sample flags)
+      - docs/SECRETS-REQUIRED.md (DE_AGENT_RELEASE_MANIFEST, DE_AGENT_RELEASE_KEYS)
+    status: verified-live
+    released: 2026-10-23
+    pr: "707"
+    note: >-
+      Slice G of docs/PORTAL-SAMPLE-BUILDOUT-PLAN.md. Joe, 2026-10-23: "yes to
+      all, do it". The Desktop agent page advertised a v1.0.0 installer that
+      does not exist (its button only showed an alert), three made-up extra
+      agents and security claims; Manage Agents was an in-memory list with a
+      fake download URL. Both now read the Intelligence Hub's signed
+      de-release envelope (the same file the Hub relays to devices) and only
+      offer a release whose ed25519 signature verifies against a pinned key.
+      Verified against a real `de-release keygen` + `manifest` run.
+  - id: portal-system-status
+    owner: claude
+    subsystem: portal
+    branch: claude/portal-system-status
+    base_sha: 27e36a0
+    started: 2026-10-23
+    files:
+      - migrations/0021_portal_status_notices.sql (new)
+      - shared/schema.ts (portalStatusNotices table only)
+      - shared/statusNotices.ts (new)
+      - server/statusNoticeStore.ts, server/statusNoticeRoutes.ts, server/statusNoticeRoutes.test.ts (new)
+      - server/routes.ts (one registration block)
+      - client/src/lib/statusApi.ts, client/src/components/portal/StatusLine.tsx, client/src/pages/portal/AdminStatusNotices.tsx (new)
+      - client/src/pages/portal/PortalStatus.tsx (rewritten on real data)
+      - client/src/pages/portal/PortalDashboard.tsx (status line only)
+      - client/src/App.tsx (one route)
+      - client/src/components/portal/shell/portalNav.ts, portalNav.test.ts (System Status + Status Notices items)
+    status: verified-live
+    released: 2026-10-23
+    pr: "706"
+    note: >-
+      Slice A of docs/PORTAL-SAMPLE-BUILDOUT-PLAN.md. Joe, 2026-10-23: "yes to
+      all, do it" (D1 portal owns the data; D2 clients see System Status).
+      DE posts incidents, maintenance and notices for one company or all;
+      clients see /portal/status (in the Get help hub) and a status line on
+      Home. The invented uptime figures, incidents and the "99.95% uptime
+      guaranteed" line are gone; no device health until an RMM integration
+      exists. Hub sync is a follow-up: the Hub has no ingest endpoint for
+      status notices yet.
+  - id: portal-it-roadmap
+    owner: claude
+    subsystem: portal
+    branch: claude/portal-it-roadmap
+    base_sha: d798421
+    started: 2026-10-23
+    files:
+      - migrations/0022_portal_roadmap_items.sql (new)
+      - shared/schema.ts (portalRoadmapItems only), shared/roadmap.ts (new)
+      - shared/permissions/lane-c.ts (new), shared/permissions/index.ts (one import + one spread)
+      - server/roadmapStore.ts, server/roadmapRoutes.ts, server/roadmapRoutes.test.ts (new)
+      - server/routes.ts (one registration block; /api/portal/me itPlan)
+      - client/src/lib/roadmapApi.ts, client/src/components/portal/roadmap/RoadmapItemCard.tsx, client/src/pages/portal/AdminRoadmap.tsx (new)
+      - client/src/pages/portal/PortalRoadmap.tsx (rewritten on real data)
+      - client/src/components/portal/shell/PortalHub.tsx (hub cards filtered by access)
+      - client/src/components/portal/shell/portalNav.ts, portalNav.test.ts (IT Roadmap, IT plan hub, Roadmaps admin)
+      - client/src/App.tsx (one route)
+    status: verified-live
+    released: 2026-10-23
+    pr: "709"
+    note: >-
+      Slice B (with the itPlan part of D) of docs/PORTAL-SAMPLE-BUILDOUT-PLAN.md.
+      Joe, 2026-10-23: "yes to all, do it". DE writes each company's roadmap
+      (title, why it matters, priority, target quarter, estimate, status);
+      the company's owners see it, comment, and approve or decline proposals.
+      The sample items, "Reduces breach risk by 85%"-style claims and invented
+      budget are gone; figures are summed from the rows.
+  - id: portal-business-reviews
+    owner: claude
+    subsystem: portal
+    branch: claude/portal-business-reviews
+    base_sha: 81c9463
+    started: 2026-10-23
+    files:
+      - migrations/0023_portal_business_reviews.sql (new)
+      - shared/schema.ts (portalBusinessReviews only), shared/businessReviews.ts (new)
+      - shared/permissions/lane-c.ts (reviews.manage, reviews.read)
+      - server/businessReviewStore.ts, server/businessReviewRoutes.ts, server/businessReviewRoutes.test.ts (new)
+      - server/routes.ts (one registration block; itPlan counts published reviews)
+      - client/src/lib/reviewsApi.ts, client/src/pages/portal/AdminBusinessReviews.tsx (new)
+      - client/src/pages/portal/PortalQBR.tsx (rewritten on real data)
+      - client/src/components/portal/shell/portalNav.ts, portalNav.test.ts (Business Reviews + admin item)
+      - client/src/App.tsx (one route)
+    status: verified-live
+    released: 2026-10-23
+    pr: "710"
+    note: >-
+      Slice C of docs/PORTAL-SAMPLE-BUILDOUT-PLAN.md, stacked on
+      portal-it-roadmap (#709). Joe, 2026-10-23: "yes to all, do it". DE writes
+      a review per client meeting (date, summary, decisions, linked roadmap
+      items, report file); owners see published ones. The invented QBR
+      reports, recommendations and "88" security score are gone.
+  - id: portal-questionnaires
+    owner: claude
+    subsystem: portal
+    branch: claude/portal-questionnaires
+    base_sha: f0ccfac
+    started: 2026-10-23
+    files:
+      - migrations/0024_portal_questionnaire_assignments.sql (new)
+      - shared/schema.ts (portalQuestionnaireAssignments only), shared/questionnaires.ts (new)
+      - shared/permissions/lane-c.ts (questionnaires.manage)
+      - server/questionnaireStore.ts, server/questionnaireRoutes.ts, server/questionnaireRoutes.test.ts (new)
+      - server/routes.ts (one registration block; stub /api/portal/questionnaires/events removed; validateAnswers import)
+      - client/src/lib/questionnairesApi.ts, client/src/components/portal/QuestionnaireTasks.tsx, client/src/pages/portal/PortalMyQuestionnaires.tsx (new)
+      - client/src/pages/portal/PortalQuestionnaireCalendar.tsx (rewritten on real data)
+      - client/src/pages/portal/PortalDashboard.tsx (Home task card only)
+      - client/src/components/portal/shell/portalNav.ts, portalNav.test.ts (DE Questionnaires real; My questionnaires in the Home hub)
+      - client/src/App.tsx (one route)
+    status: verified-live
+    released: 2026-10-23
+    pr: "711"
+    note: >-
+      Slice E of docs/PORTAL-SAMPLE-BUILDOUT-PLAN.md, stacked on
+      portal-business-reviews (#710). Joe, 2026-10-23: "yes to all, do it".
+      DE assigns a portal survey to a person at a client company with a due
+      date; that person sees it on Home and in My questionnaires, saves a
+      draft and submits (validated by the survey's own rules); DE reviews or
+      sends it back. The mock calendar events are gone. Answers live on the
+      assignment so the same questionnaire can be assigned again.
+  - id: portal-status-staff-access
+    owner: claude
+    subsystem: portal
+    branch: claude/portal-status-staff-access
+    base_sha: d798421
+    started: 2026-10-23
+    files:
+      - shared/permissions/lane-d.ts (new), shared/permissions/index.ts (one import + one spread), shared/permissions/permissions.test.ts
+      - server/routes.ts (status notice admin guard only)
+    status: verified-live
+    released: 2026-10-23
+    pr: "708"
+    note: >-
+      Follow-up to #706. The Status notices menu item is deOnly (DE staff +
+      break-glass) but its admin API used requireAdmin (break-glass only), so
+      a DE staff account would see the page and get 403 on every action. Adds
+      lane D's `status.manage` permission and guards the routes with it.
+  - id: body-parser-security-patch
+    owner: claude
+    subsystem: dependencies
+    branch: claude/deps-body-parser
+    base_sha: dc665cd
+    started: 2026-10-23
+    files:
+      - package-lock.json (body-parser 1.20.8 -> 1.20.9, ip-address 10.7.3 -> 10.7.4; npm audit fix)
+    status: verified-live
+    released: 2026-10-23
+    pr: "712"
+    note: >-
+      GHSA-27r3-jxmh-p828 (body-parser < 1.20.9, high) turned the CI audit
+      step red on 2026-10-23. Lockfile-only patch bumps; express 4.22.3 already
+      allows 1.20.9. Same pattern as zod4-security-upgrade.
+  - id: portal-buildout-progress-log
+    owner: claude
+    subsystem: docs
+    branch: claude/sleepy-johnson-bkojbp
+    base_sha: cbac30f
+    started: 2026-10-23
+    files:
+      - docs/PORTAL-SAMPLE-BUILDOUT-PLAN.md (section 7 progress log and open items)
+      - .ai/ACTIVE_WORK.yaml (retire the merged slices as verified-live)
+    status: in-review
+    note: >-
+      Docs-only follow-up after slices A, B, C, D, E and G merged and were
+      checked in production on 2026-10-23. Joe: "Approved".

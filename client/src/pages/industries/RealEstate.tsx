@@ -120,7 +120,8 @@ export default function RealEstate() {
         <FactStrip facts={focusAreas} label="Where we focus for brokerages" />
       </div>
 
-      <Chapter tone="well" seam={false} data-testid="section-wire-fraud">
+      {/* Section fields follow the Homepage v2 role pattern (ink = risk/proof, signal = how it works). */}
+      <Chapter tone="ink" seam={false} data-testid="section-wire-fraud">
         <Container>
           <ChapterHeader
             tone="well"
@@ -164,7 +165,7 @@ export default function RealEstate() {
         </Container>
       </Chapter>
 
-      <Chapter plate="realestate" tone="well" data-testid="section-promises">
+      <Chapter plate="realestate" tone="ink" data-testid="section-promises">
         <Container>
           <ChapterHeader tone="well" eyebrow="What to expect" title="Practical, not promised" lede="Three commitments, stated without guarantees we cannot back." />
           <IndexedList tone="well" items={promises} />

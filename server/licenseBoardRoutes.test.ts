@@ -19,12 +19,15 @@ const clients = [
   { id: "c2", companyName: "Bluebird Dental" },
 ];
 const jc = { configured: true, calls: [] as string[] };
+const vend = { ms: true, google: true, calls: [] as string[], tenantSkus: [{ skuId: "sku-bp", skuPartNumber: "SPB", enabled: 10, consumed: 2 }] };
 
 const people = [
   { id: "u1", clientId: "c1", fullName: "Dana Ruiz", email: "dana@acme.test", departmentId: "d1" },
   { id: "u2", clientId: "c1", fullName: "Lee Park", email: "lee@acme.test", departmentId: null },
   { id: "u3", clientId: "c2", fullName: "Sam Ortiz", email: "sam@bluebird.test", departmentId: null },
 ];
+
+const vaultOnFile: Array<{ kind: string; title: string }> = [];
 
 describe("license patch bay routes", () => {
   let server: Server;
@@ -46,7 +49,16 @@ describe("license patch bay routes", () => {
       getClient: (id) => clients.find((c) => c.id === id),
       listClientUsers: (clientId) => people.filter((p) => p.clientId === clientId),
       listDepartments: async (clientId) => (clientId === "c1" ? [{ id: "d1", name: "Sales" }] : []),
-      fetchHubCatalog: async () => ({ status: "CONNECTED", skus: [{ sku: "DE-MIT-PRO", name: "Managed IT Pro", category: "Managed IT" }] }),
+      fetchHubCatalog: async () => ({
+        status: "CONNECTED",
+        skus: [{ sku: "DE-MIT-PRO", name: "Managed IT Pro", category: "Managed IT" }],
+        vendorSkus: [
+          { sku: "MST-BP", name: "Microsoft 365 Business Premium", vendor: "Microsoft", vendorSku: "CFQ7TTC0LCHC:0002", pax8ProductId: "p-ms-bp" },
+          { sku: "GOO-BS", name: "Google Workspace Business Standard", vendor: "Google", vendorSku: "Google-Apps/1010020028", pax8ProductId: "p-g-bs" },
+          { sku: "X", name: "", vendor: "Microsoft", pax8ProductId: "p-blank" },
+        ],
+        vendorSkusStatus: { source: "pax8", status: "CONNECTED", message: "2 Pax8 products for Microsoft, Google." },
+      }),
       jumpcloud: {
         configured: () => jc.configured,
         ensureChocoApp: async (name, pkg, orgId) => {
@@ -58,6 +70,27 @@ describe("license patch bay routes", () => {
           return { ok: true };
         },
         findSystem: async (name) => (name === "FRONT-01" ? { ok: true, id: "sys-front" } : { ok: false, error: `No JumpCloud machine named ${name}` }),
+      },
+      vaultTitles: async (clientId) => (clientId === "c1" ? vaultOnFile : []),
+      vendors: {
+        microsoft: {
+          configured: () => vend.ms,
+          subscribedSkus: async (tenant, cloud) => {
+            vend.calls.push(`skus:${tenant}:${cloud}`);
+            return { ok: true, skus: vend.tenantSkus };
+          },
+          assign: async (tenant, cloud, upn, skuId) => {
+            vend.calls.push(`ms:${tenant}:${cloud}:${upn}:${skuId}`);
+            return upn === "lee@acme.test" ? { ok: false, error: "No user lee@acme.test in this tenant" } : { ok: true };
+          },
+        },
+        google: {
+          configured: () => vend.google,
+          assign: async (admin, productId, skuId, user) => {
+            vend.calls.push(`g:${admin}:${productId}:${skuId}:${user}`);
+            return { ok: true };
+          },
+        },
       },
     });
     server = createServer(app);
@@ -75,6 +108,10 @@ describe("license patch bay routes", () => {
     (await import("./licenseBoardStore"))._resetLicenseBoardMemory();
     jc.configured = true;
     jc.calls.length = 0;
+    vaultOnFile.length = 0;
+    vend.ms = true;
+    vend.google = true;
+    vend.calls.length = 0;
   });
 
   const call = async (method: string, path: string, body?: object, user: object | null = ADMIN) => {
@@ -158,6 +195,17 @@ describe("license patch bay routes", () => {
     expect(body.entries.find((e: any) => e.key === "starter:7zip")).toMatchObject({ kind: "app", chocoPackage: "7zip" });
   });
 
+  it("puts the Hub's Pax8 products on their own shelf, with a vendor SKU only where the console takes it", async () => {
+    const { body } = await call("GET", "/shelf");
+    expect(body.pax8).toEqual({ status: "CONNECTED", message: "2 Pax8 products for Microsoft, Google." });
+    const pax8 = body.entries.filter((e: any) => e.category === "Pax8");
+    expect(pax8.map((e: any) => e.key)).toEqual(["pax8:p-ms-bp", "pax8:p-g-bs"]);
+    expect(pax8[0]).toMatchObject({ vendor: "Microsoft", product: "Microsoft 365 Business Premium", source: "pax8" });
+    expect(pax8[0].sku).toBeUndefined();
+    expect(pax8[1]).toMatchObject({ vendor: "Google", sku: "Google-Apps/1010020028" });
+    expect(body.categories.map((c: any) => c.key)).toContain("Pax8");
+  });
+
   it("turns an app on for a company once, then sends it to any number of people and every machine", async () => {
     const add = await call("POST", "/items", { kind: "app", vendor: "Igor Pavlov", product: "7-Zip", category: "Baseline apps", chocoPackage: "7zip" });
     expect(add.body.item).toMatchObject({ kind: "app", quantity: 0, chocoPackage: "7zip" });
@@ -237,5 +285,89 @@ describe("license patch bay routes", () => {
     expect(bp).toMatchObject({ quantity: 0, allocated: 0 });
     expect(board.clients.find((c: any) => c.id === "c1").seats.some((s: any) => s.itemId === bp.id)).toBe(false);
     expect((await call("POST", "/clients/c1/kit", { kit: "nope" })).status).toBe(400);
+  });
+
+  it("records the company's kit and adds its vault checklist once, ticking documents already on file", async () => {
+    expect((await call("GET", "/clients/c1")).body).toMatchObject({ kit: null, vaultDocs: { needed: 0, onFile: 0 } });
+
+    vaultOnFile.push({ kind: "contract", title: "  signed MANAGED services   agreement " });
+    const first = (await call("POST", "/clients/c1/kit", { kit: "regulated" })).body;
+    expect(first).toMatchObject({ kitKey: "regulated", vaultDocsAdded: 5 });
+    expect((await call("POST", "/clients/c1/kit", { kit: "regulated" })).body.vaultDocsAdded).toBe(0);
+
+    const view = (await call("GET", "/clients/c1")).body;
+    expect(view.kit).toMatchObject({ key: "regulated", name: "Regulated (HIPAA, legal, finance)" });
+    expect(view.vaultDocs).toEqual({ needed: 5, onFile: 1 });
+
+    // Switching to the regular kit keeps the documents already asked for (MSA and insurance are shared).
+    expect((await call("POST", "/clients/c1/kit", { kit: "regular" })).body.vaultDocsAdded).toBe(0);
+    const board = (await call("GET", "")).body;
+    expect(board.clients.find((c: any) => c.id === "c1").kit).toBe("Regular business");
+    expect(board.clients.find((c: any) => c.id === "c2")?.kit ?? null).toBeNull();
+  });
+
+  it("assigns person-held Microsoft and Google licences in the client's consoles, only on Send, and logs each answer", async () => {
+    const bp = (await call("POST", "/items", { catalogKey: "ms_m365_bp", quantity: 5 })).body.item.id;
+    const gws = (await call("POST", "/items", { catalogKey: "gws_business_starter", quantity: 5 })).body.item.id;
+    const e3 = (await call("POST", "/items", { catalogKey: "ms_m365_e3", quantity: 5 })).body.item.id;
+    for (const itemId of [bp, gws, e3]) await call("POST", "/allocate", { itemId, clientId: "c1", quantity: 2 });
+    await call("POST", "/clients/c1/assign", { itemId: bp, targetType: "user", targetId: "u1" });
+    await call("POST", "/clients/c1/assign", { itemId: bp, targetType: "user", targetId: "u2" });
+    await call("POST", "/clients/c1/assign", { itemId: e3, targetType: "user", targetId: "u1" });
+    await call("POST", "/clients/c1/assign", { itemId: gws, targetType: "user", targetId: "u2" });
+    await call("POST", "/clients/c1/assign", { itemId: gws, targetType: "department", targetId: "d1" });
+
+    // Before linking: everything waits on the link, and nothing is sent.
+    let view = (await call("GET", "/clients/c1/vendors")).body;
+    expect(view.microsoft.steps).toHaveLength(3);
+    expect(view.microsoft.steps.every((s: any) => /Link the company's Microsoft tenant/.test(s.reason))).toBe(true);
+    expect(view.google.parkedInDepartments).toBe(1);
+    expect((await call("POST", "/clients/c1/vendors/microsoft/push")).status).toBe(409);
+
+    expect((await call("PUT", "/clients/c1/vendors/microsoft", { tenant: "not a tenant", cloud: "commercial" })).status).toBe(400);
+    expect((await call("PUT", "/clients/c1/vendors/microsoft", { tenant: "acme.onmicrosoft.com", cloud: "moon" })).status).toBe(400);
+    expect((await call("PUT", "/clients/c1/vendors/microsoft", { tenant: "acme.onmicrosoft.com", cloud: "commercial" })).status).toBe(200);
+    expect((await call("PUT", "/clients/c1/vendors/google", { adminEmail: "nope" })).status).toBe(400);
+    expect((await call("PUT", "/clients/c1/vendors/google", { adminEmail: "admin@acme.test" })).status).toBe(200);
+    expect(vend.calls).toEqual([]);
+
+    view = (await call("GET", "/clients/c1/vendors")).body;
+    expect(view.microsoft.steps.map((s: any) => `${s.product}:${s.sku}:${s.email}:${s.status}`)).toEqual([
+      "Microsoft 365 Business Premium:SPB:dana@acme.test:ready",
+      "Microsoft 365 E3:SPE_E3:dana@acme.test:ready",
+      "Microsoft 365 Business Premium:SPB:lee@acme.test:ready",
+    ]);
+
+    // Microsoft: the part number resolves through the tenant's subscriptions; a missing subscription or user is logged, not thrown.
+    const ms = (await call("POST", "/clients/c1/vendors/microsoft/push")).body;
+    expect(ms).toMatchObject({ sent: 1, failed: 2 });
+    expect(vend.calls).toEqual([
+      "skus:acme.onmicrosoft.com:commercial",
+      "ms:acme.onmicrosoft.com:commercial:dana@acme.test:sku-bp",
+      "ms:acme.onmicrosoft.com:commercial:lee@acme.test:sku-bp",
+    ]);
+    const log = (await call("GET", "/clients/c1/vendors")).body.microsoft.pushes.map((p: any) => `${p.userEmail}:${p.ok}:${p.detail}`);
+    expect(log).toContain("dana@acme.test:false:The tenant has no SPE_E3 subscription");
+    expect(log).toContain("lee@acme.test:false:No user lee@acme.test in this tenant");
+
+    // Google: product/sku from DE's defaults, acting as the client's admin.
+    vend.calls.length = 0;
+    expect((await call("POST", "/clients/c1/vendors/google/push")).body).toMatchObject({ sent: 1, failed: 0 });
+    expect(vend.calls).toEqual(["g:admin@acme.test:Google-Apps:1010020027:lee@acme.test"]);
+
+    // A licence with no known SKU waits until one is set, then goes.
+    const visioGcc = (await call("POST", "/items", { catalogKey: "gcc_visio_p2", quantity: 1 })).body.item.id;
+    await call("POST", "/allocate", { itemId: visioGcc, clientId: "c1", quantity: 1 });
+    await call("POST", "/clients/c1/assign", { itemId: visioGcc, targetType: "user", targetId: "u1" });
+    let step = (await call("GET", "/clients/c1/vendors")).body.microsoft.steps.find((s: any) => s.itemId === visioGcc);
+    expect(step).toMatchObject({ status: "skip", reason: "No Microsoft SKU part number on this licence" });
+    expect((await call("PUT", `/items/${visioGcc}`, { sku: "VISIOCLIENT_GOV" })).status).toBe(200);
+    step = (await call("GET", "/clients/c1/vendors")).body.microsoft.steps.find((s: any) => s.itemId === visioGcc);
+    expect(step).toMatchObject({ status: "ready", sku: "VISIOCLIENT_GOV" });
+
+    // Without the server credentials Send is refused, and non-admins never reach it.
+    vend.ms = false;
+    expect((await call("POST", "/clients/c1/vendors/microsoft/push")).status).toBe(409);
+    expect((await call("GET", "/clients/c1/vendors", undefined, CLIENT_ADMIN)).status).toBe(403);
   });
 });

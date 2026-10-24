@@ -6,15 +6,23 @@
  * import/merge line below — see docs/lanes/registry.md. Never edit another lane's file.
  */
 import { laneAPermissions } from "./lane-a";
+import { laneCPermissions } from "./lane-c";
+import { laneDPermissions } from "./lane-d";
 import { ruleAllows, type AccessContext, type AccessPrincipal, type AccessRule } from "./types";
 
 export * from "./types";
 
 export const PERMISSIONS: Record<string, AccessRule> = {
   ...laneAPermissions,
+  ...laneCPermissions,
+  ...laneDPermissions,
 };
 
-export type PermissionKey = keyof typeof laneAPermissions | (string & {});
+export type PermissionKey =
+  | keyof typeof laneAPermissions
+  | keyof typeof laneCPermissions
+  | keyof typeof laneDPermissions
+  | (string & {});
 
 /**
  * The single permission helper. Denies unknown permissions (except for the

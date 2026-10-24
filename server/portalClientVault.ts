@@ -5,8 +5,10 @@ import { clientVaultAudit, clientVaultItems } from "@shared/schema";
 import {
   CLIENT_VAULT_KINDS,
   CLIENT_VAULT_MAX_BYTES,
+  requirementStatus,
   type ClientVaultItem,
   type ClientVaultKind,
+  type ClientVaultRequirement,
 } from "@shared/clientVault";
 
 /**
@@ -392,6 +394,8 @@ export type ClientVaultRouteDeps = {
   logSecurityEvent?: (event: string, req: any, data: Record<string, unknown>) => void;
   rateLimit?: { windowMs: number; max: number };
   now?: () => number;
+  /** Documents the client's starter kit says should be on file (server/licenseBoardStore.ts). */
+  requirements?: (clientId: string) => Promise<ClientVaultRequirement[]>;
 };
 
 const SAFE_NAME = /[^A-Za-z0-9._ -]+/g;
@@ -506,7 +510,8 @@ export function registerClientVaultRoutes(app: Express, deps: ClientVaultRouteDe
       const items = await meta.list(clientId);
       await meta.audit({ clientId, action: "list", outcome: "ok", ...actor(req) });
       const audit = await meta.recentAudit(clientId, 25);
-      res.json({ items: items.map(publicItem), audit });
+      const reqs = deps.requirements ? await deps.requirements(clientId).catch(() => []) : [];
+      res.json({ items: items.map(publicItem), audit, requirements: requirementStatus(reqs, items) });
     } catch {
       res.status(500).json({ error: "Could not load the client vault." });
     }

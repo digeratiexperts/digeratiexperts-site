@@ -124,7 +124,8 @@ export default function Nonprofits() {
         <FactStrip facts={focusAreas} label="Where we focus for nonprofits" />
       </div>
 
-      <Chapter tone="well" seam={false} data-testid="section-challenges">
+      {/* Section fields follow the Homepage v2 role pattern (ink = risk/proof, signal = how it works). */}
+      <Chapter tone="ink" seam={false} data-testid="section-challenges">
         <Container>
           <ChapterHeader
             tone="well"
@@ -168,7 +169,7 @@ export default function Nonprofits() {
         </Container>
       </Chapter>
 
-      <Chapter plate="nonprofits" tone="well" data-testid="section-promises">
+      <Chapter plate="nonprofits" tone="ink" data-testid="section-promises">
         <Container>
           <ChapterHeader tone="well" eyebrow="What to expect" title="Practical, not promised" lede="Three commitments, stated without guarantees we cannot back." />
           <IndexedList tone="well" items={promises} />

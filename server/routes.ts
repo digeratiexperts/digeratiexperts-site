@@ -101,6 +101,7 @@ import {
   initPortalSurveyStore,
   listSurveysForUser,
   getSurveyById,
+  validateAnswers,
   getUserResponseForSurvey,
   submitSurveyResponse,
   getSurveyStoreStatus,
@@ -127,9 +128,17 @@ import { registerHubServiceRequestStatusRoute, registerServiceRequestRoutes, sta
 import { registerRepresentationRoutes } from "./representationRoutes";
 import { requireDeSyncAuth } from "./integrations/deSyncAuth";
 import { registerPortalAssistRoutes } from "./portalAssistRoutes";
+import { registerAgentReleaseRoutes } from "./agentReleaseRoutes";
+import { envReleaseSource } from "./agentRelease";
+import { registerStatusNoticeRoutes } from "./statusNoticeRoutes";
+import { companyHasRoadmap, registerRoadmapRoutes } from "./roadmapRoutes";
+import { companyHasPublishedReview, registerBusinessReviewRoutes } from "./businessReviewRoutes";
+import { registerQuestionnaireRoutes } from "./questionnaireRoutes";
 import { registerLicensingRoutes } from "./licensingRoutes";
 import { registerPortalAgreementRoutes } from "./portalAgreementRoutes";
 import { registerLicenseBoardRoutes } from "./licenseBoardRoutes";
+import { msAssignLicense, msGraphConfigured, msSubscribedSkus } from "./integrations/msGraph";
+import { googleAssignLicense, googleLicensingConfigured } from "./integrations/googleLicensing";
 import {
   jumpcloudAssociateSoftware,
   jumpcloudConfigured,
@@ -1157,9 +1166,14 @@ export async function registerRoutes(app: Express) {
       // Lane A: account class, effective client hats, and the nav context the
       // target menu is built from (entitlements + honest data gates).
       const actingCompany = (req.user as any)?.impersonatingCompanyId || live.clientId || null;
-      const [entitlements, sharedFiles] = await Promise.all([
+      const [entitlements, sharedFiles, itPlan] = await Promise.all([
         getEntitlements(actingCompany),
         hasSharedFiles(actingCompany),
+        actingCompany
+          ? Promise.all([companyHasRoadmap(actingCompany), companyHasPublishedReview(actingCompany)])
+              .then(([roadmap, reviews]) => roadmap || reviews)
+              .catch(() => false)
+          : Promise.resolve(false),
       ]);
       res.json({
         success: true,
@@ -1172,8 +1186,8 @@ export async function registerRoutes(app: Express) {
           clientRoles: effectiveClientRoles(req.user),
           navContext: {
             entitlements,
-            // itPlan stays false until a real roadmap/review source exists (Lane C).
-            data: { sharedFiles, itPlan: false },
+            // itPlan: the company has roadmap items or a published business review (Lane C).
+            data: { sharedFiles, itPlan },
           },
         },
         accountTeam: accountTeamForClient(live.clientId),
@@ -1340,6 +1354,49 @@ export async function registerRoutes(app: Express) {
     fetchProjection: (hubAccountId, portalClientId) => fetchHubRepresentation(hubAccountId, portalClientId),
     createDeskTicket: serviceRequestDeps.createDeskTicket,
   });
+  // DE endpoint agent release: verified de-release envelope (server/agentReleaseRoutes.ts).
+  registerAgentReleaseRoutes(app, {
+    guards: [authMiddleware, validateInput],
+    adminGuards: [authMiddleware, requireAdmin, validateInput],
+    source: envReleaseSource(),
+  });
+  // System Status notices (server/statusNoticeRoutes.ts).
+  registerStatusNoticeRoutes(app, {
+    guards: [authMiddleware, validateInput],
+    // DE staff manage notices too, matching the Status notices menu item (deOnly).
+    adminGuards: [authMiddleware, requirePermission("status.manage"), validateInput],
+    getClient: serviceRequestDeps.getClient,
+    findUser: serviceRequestDeps.findUser,
+  });
+  // IT Roadmap (server/roadmapRoutes.ts). DE side: roadmap.manage on the company in the path.
+  registerRoadmapRoutes(app, {
+    guards: [authMiddleware, validateInput],
+    adminGuards: [authMiddleware, requirePermission("roadmap.manage", (req) => req.params.companyId || null), validateInput],
+    getClient: serviceRequestDeps.getClient,
+    findUser: serviceRequestDeps.findUser,
+  });
+  // Business reviews (server/businessReviewRoutes.ts). DE side: reviews.manage on the company in the path.
+  registerBusinessReviewRoutes(app, {
+    guards: [authMiddleware, validateInput],
+    adminGuards: [authMiddleware, requirePermission("reviews.manage", (req) => req.params.companyId || null), validateInput],
+    getClient: serviceRequestDeps.getClient,
+    findUser: serviceRequestDeps.findUser,
+    listCompanyFiles: (clientId) => storage.getTenantFilesByClientId(clientId),
+  });
+  // DE Questionnaires on the Surveys engine (server/questionnaireRoutes.ts).
+  registerQuestionnaireRoutes(app, {
+    guards: [authMiddleware, validateInput],
+    adminGuards: [authMiddleware, requirePermission("questionnaires.manage"), validateInput],
+    getClient: serviceRequestDeps.getClient,
+    findUser: (id) => {
+      const u: any = findUserById(id);
+      return u ? { id: u.id, clientId: u.clientId ?? null, fullName: u.fullName, email: u.email, isActive: u.isActive } : undefined;
+    },
+    listClientUsers: serviceRequestDeps.listClientUsers,
+    getSurvey: (id) => getSurveyById(id),
+    listSurveys: () => listSurveysForUser(""),
+    validateAnswers: (survey, answers) => validateAnswers(survey as any, answers),
+  });
   // Licensing: account types and the company licence policy (server/licensingRoutes.ts).
   registerLicensingRoutes(app, {
     guards: [authMiddleware, validateInput],
@@ -1371,6 +1428,22 @@ export async function registerRoutes(app: Express) {
       ensureChocoApp: (name, pkg, orgId) => jumpcloudEnsureChocoApp(name, pkg, orgId),
       associate: (appId, target, orgId) => jumpcloudAssociateSoftware(appId, target, orgId),
       findSystem: (name, orgId) => jumpcloudFindSystem(name, orgId),
+    },
+    vendors: {
+      microsoft: {
+        configured: (cloud) => msGraphConfigured(cloud),
+        subscribedSkus: (tenant, cloud) => msSubscribedSkus(tenant, cloud),
+        assign: (tenant, cloud, upn, skuId) => msAssignLicense(tenant, cloud, upn, skuId),
+      },
+      google: {
+        configured: () => googleLicensingConfigured(),
+        assign: (adminEmail, productId, skuId, userEmail) => googleAssignLicense(adminEmail, productId, skuId, userEmail),
+      },
+    },
+    vaultTitles: async (clientId) => {
+      const meta = await createDbVaultMetaStore();
+      if (!meta.ready()) return null;
+      return (await meta.list(clientId)).map((i) => ({ kind: i.kind, title: i.title }));
     },
   });
 
@@ -1655,15 +1728,6 @@ export async function registerRoutes(app: Express) {
     } catch (error: any) {
       const status = /Forbidden|not the current/i.test(error.message) ? 403 : 400;
       res.status(status).json({ error: error.message });
-    }
-  });
-
-  app.get("/api/portal/questionnaires/events", [authMiddleware], async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      res.json({ success: true, configured: false, events: [] });
-      logSecurityEvent("QUESTIONNAIRES_FETCHED", req, {});
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
     }
   });
 
@@ -4847,6 +4911,7 @@ export async function registerRoutes(app: Express) {
     meta: createDbVaultMetaStore,
     blobs: createConfiguredVaultBlobStore,
     logSecurityEvent,
+    requirements: async (clientId) => (await import("./licenseBoardStore")).listVaultRequirements(clientId),
   });
 
   // Get company metrics/stats (admin only)
@@ -5273,12 +5338,21 @@ export async function registerRoutes(app: Express) {
         return res.status(400).json({ error: "Invalid request" });
       }
 
+      // Optional homepage v2 fields; capped so a long paste can't bloat the lead record.
+      const interest = typeof req.body?.interest === "string" ? req.body.interest.trim().slice(0, 120) : "";
+      const visitorMessage = typeof req.body?.message === "string" ? req.body.message.trim().slice(0, 2000) : "";
+      const visitorDetails = [
+        interest ? `Interested in: ${interest}` : "",
+        visitorMessage ? `Message: ${visitorMessage}` : "",
+      ].filter(Boolean).join("\n");
+      const withVisitorDetails = (base: string) => (visitorDetails ? `${base}\n${visitorDetails}` : base);
+
       const leadId = randomId();
       logger.info("[ASSESSMENT] Form submitted", { fullName, email, company, source, timestamp: new Date().toISOString() });
       logSecurityEvent("ASSESSMENT_SUBMITTED", req, { email, source: source || "hero_form" });
 
       const assessmentNote = appendSituationToDescription(
-        `Assessment request from ${source || "hero_form"}`,
+        withVisitorDetails(`Assessment request from ${source || "hero_form"}`),
         situation,
       );
 
@@ -5307,7 +5381,7 @@ export async function registerRoutes(app: Express) {
           Lead_Source: taxonomy.leadSource,
           Lead_Status: taxonomy.leadStatus,
           Description: appendSituationToDescription(
-            `Free assessment request submitted from ${source || "homepage hero"}`,
+            withVisitorDetails(`Free assessment request submitted from ${source || "homepage hero"}`),
             situation,
           ),
         });

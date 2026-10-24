@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { Link, useRoute } from "wouter";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Download, Eye, FileLock2, Lock, Trash2, Upload, Users } from "lucide-react";
+import { CheckCircle2, Circle, ClipboardList, Download, Eye, FileLock2, Lock, Trash2, Upload, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -55,6 +55,8 @@ export function AdminClientWorkspace() {
   const clientId = params?.id ? decodeURIComponent(params.id) : "";
   const { toast } = useToast();
   const [viewing, setViewing] = useState(false);
+  const vault = useVault(clientId);
+  const missing = (k: ClientVaultKind) => (vault.data?.requirements || []).filter((r) => r.kind === k && !r.onFile).length;
 
   const company = useQuery<CompanyDetail>({
     queryKey: ["/api/portal/admin/companies", clientId],
@@ -99,6 +101,7 @@ export function AdminClientWorkspace() {
             {CLIENT_VAULT_KINDS.map((k) => (
               <TabsTrigger key={k} value={k} data-testid={`tab-vault-${k}`}>
                 {CLIENT_VAULT_KIND_LABELS[k].label}
+                {missing(k) ? <span className="ml-1.5 rounded-full bg-amber-500/15 px-1.5 text-xs text-amber-700 dark:text-amber-300">{missing(k)} needed</span> : null}
               </TabsTrigger>
             ))}
             <TabsTrigger value="users">Users</TabsTrigger>
@@ -178,6 +181,7 @@ function VaultSection({ clientId, kind }: { clientId: string; kind: ClientVaultK
 
   if (vault.error) return <VaultBlocked error={vault.error} />;
   const items = (vault.data?.items || []).filter((i) => i.kind === kind);
+  const needed = (vault.data?.requirements || []).filter((r) => r.kind === kind);
 
   const upload = async () => {
     const file = fileRef.current?.files?.[0];
@@ -244,6 +248,44 @@ function VaultSection({ clientId, kind }: { clientId: string; kind: ClientVaultK
 
   return (
     <div className="space-y-4">
+      {needed.length ? (
+        <Panel
+          title="Needed for this client's business type"
+          description="From the starter kit applied in the License Patch Bay. A document counts once one here has the same title."
+          icon={ClipboardList}
+          flush
+        >
+          <ul className="divide-y divide-border">
+            {needed.map((r) => (
+              <li key={r.id} className="flex flex-wrap items-center gap-3 px-4 py-3 text-sm" data-testid={`vault-requirement-${r.id}`}>
+                {r.onFile ? (
+                  <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
+                ) : (
+                  <Circle className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                )}
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium">{r.title}</p>
+                  {r.hint ? <p className="text-xs text-muted-foreground">{r.hint}</p> : null}
+                </div>
+                {r.onFile ? (
+                  <Token label="On file" tone="ok" />
+                ) : (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setTitle(r.title);
+                      fileRef.current?.click();
+                    }}
+                  >
+                    <Upload className="mr-2 h-4 w-4" aria-hidden="true" /> Upload
+                  </Button>
+                )}
+              </li>
+            ))}
+          </ul>
+        </Panel>
+      ) : null}
       <Panel title={`Add to ${meta.label.toLowerCase()}`} description={meta.hint} icon={Lock}>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <Input

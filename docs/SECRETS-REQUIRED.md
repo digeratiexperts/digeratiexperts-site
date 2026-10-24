@@ -99,6 +99,9 @@ Optional; each portal page shows "not connected" without its provider.
 | Name | Kind | Where used | Notes |
 |---|---|---|---|
 | `JUMPCLOUD_API_KEY` | secret | `server/lifecycleOrchestrator.ts`, `server/integrations/jumpcloud.ts` | Identity lifecycle (`/portal/admin/lifecycle`). |
+| `MS_GRAPH_CLIENT_ID` / `MS_GRAPH_CLIENT_SECRET` | secret | `server/integrations/msGraph.ts` | License Patch Bay → Microsoft 365 licence push (Commercial and GCC). Multi-tenant app consented in each client tenant. |
+| `MS_GRAPH_GOV_CLIENT_ID` / `MS_GRAPH_GOV_CLIENT_SECRET` | secret | `server/integrations/msGraph.ts` | Same, for GCC High tenants (app in Azure Government). |
+| `GOOGLE_LICENSING_SERVICE_ACCOUNT` | secret | `server/integrations/googleLicensing.ts` | License Patch Bay → Google Workspace licence push. Service account JSON with domain-wide delegation per client. |
 | `JUMPCLOUD_ORG_ID` | config | `server/integrations/jumpcloud.ts`, `client/src/pages/portal/AdminLifecycle.tsx` | JumpCloud organization. |
 | `JUMPCLOUD_API_BASE` | config | `server/integrations/jumpcloud.ts` | API base override. |
 | `BLACKPOINT_API_KEY` | secret | `server/lifecycleOrchestrator.ts`, `server/integrations/blackpoint.ts` | Blackpoint (also accepts `BLACKPOINT_API_TOKEN`). |
@@ -135,6 +138,8 @@ Optional; each portal page shows "not connected" without its provider.
 | `PORTAL_CARRIER_USPS_CLIENT_ID` | config | `server/portalDataSources.ts`, `server/integrations/shipping/carriers/usps.ts` | USPS OAuth client. |
 | `PORTAL_CARRIER_USPS_CLIENT_SECRET` | secret | `server/portalDataSources.ts`, `server/integrations/shipping/carriers/usps.ts` | Secret for the above. |
 | `PORTAL_CARRIER_USPS_ENV` | config | `server/integrations/shipping/carriers/usps.ts` | USPS sandbox/production. |
+| `DE_AGENT_RELEASE_MANIFEST` | config | `server/agentRelease.ts` | Path to the signed release envelope from the Hub's `de-release manifest` (the same file the Hub reads from `ENDPOINT_AGENT_RELEASE_MANIFEST`). Without it the Desktop agent page says no release is published. |
+| `DE_AGENT_RELEASE_KEYS` | config | `server/agentRelease.ts` | Release public key(s), `kid=base64url` as printed by `de-release keygen`. Public half only; a release that doesn't verify against one is never offered. |
 | `VAULT_ENCRYPTION_KEY` | secret | `server/portalClientVault.ts`, `client/src/pages/portal/AdminClientWorkspace.tsx` | Client file vault encryption (32+ characters). Vault stores nothing without it. |
 | `VAULT_STORAGE_DIR` | config | `server/portalClientVault.ts` | Vault storage path. |
 | `PORTAL_DESK_TICKET_SYNC_MS` | config | `server/routes.ts` | Desk ticket sync interval. |

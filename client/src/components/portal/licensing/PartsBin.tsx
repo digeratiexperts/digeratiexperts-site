@@ -13,7 +13,13 @@ import type { ShelfEntry } from "@shared/licenseShelf";
  * goes in through the form at the bottom.
  */
 
-const sameProduct = (a: { vendor: string; product: string }, b: { vendor: string; product: string }) =>
+const PAX8_NOTE: Record<string, string> = {
+  AUTH_REQUIRED: "not connected (Pax8 credentials not set on the Hub)",
+  FAILED: "the last read failed",
+  STALE: "showing an older read",
+};
+
+const sameProduct =(a: { vendor: string; product: string }, b: { vendor: string; product: string }) =>
   a.vendor.toLowerCase() === b.vendor.toLowerCase() && a.product.toLowerCase() === b.product.toLowerCase();
 
 function PartRow({ entry, inPool, onAdd }: { entry: ShelfEntry; inPool: boolean; onAdd: (seats: number) => Promise<void> }) {
@@ -203,6 +209,7 @@ export function PartsBin({ board, onAdded }: { board: Board; onAdded: () => void
     <section aria-label="Catalog" className="space-y-3">
       <p className="text-xs text-white/50">
         {q.data ? (q.data.hubConnected ? "Hub SKUs connected." : "Hub SKUs not connected yet: showing the starter shelf and the catalog.") : ""}
+        {q.data?.pax8 && q.data.pax8.status !== "CONNECTED" ? ` Pax8: ${PAX8_NOTE[q.data.pax8.status] ?? q.data.pax8.status}.` : ""}
       </p>
       <label className="relative block">
         <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/35" aria-hidden />
@@ -241,7 +248,14 @@ export function PartsBin({ board, onAdded }: { board: Board; onAdded: () => void
         </p>
       ) : entries.length === 0 ? (
         <p className="py-4 text-sm text-white/55">
-          {needle ? "Nothing matches." : shelf === "Hub SKUs" ? "No Hub SKUs yet: the Hub feed is not connected." : "This shelf is empty."} Add your own
+          {needle
+            ? "Nothing matches."
+            : shelf === "Hub SKUs"
+              ? "No Hub SKUs yet: the Hub feed is not connected."
+              : shelf === "Pax8"
+                ? `No Pax8 products yet: ${q.data?.pax8?.message || "the Hub feed is not connected."}`
+                : "This shelf is empty."}{" "}
+          Add your own
           below.
         </p>
       ) : (
@@ -269,7 +283,7 @@ export function PartsBin({ board, onAdded }: { board: Board; onAdded: () => void
       )}
 
       {making ? (
-        <MakePartForm categories={(q.data?.categories ?? []).filter((c) => c.key !== "Hub SKUs").map((c) => c.key)} onAdd={add} onClose={() => setMaking(false)} />
+        <MakePartForm categories={(q.data?.categories ?? []).filter((c) => c.key !== "Hub SKUs" && c.key !== "Pax8").map((c) => c.key)} onAdd={add} onClose={() => setMaking(false)} />
       ) : (
         <button
           type="button"

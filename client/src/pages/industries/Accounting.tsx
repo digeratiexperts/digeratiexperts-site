@@ -109,7 +109,8 @@ export default function Accounting() {
         <FactStrip facts={capabilities} label="What we own for accounting firms" />
       </div>
 
-      <Chapter tone="well" seam={false} data-testid="section-risk-profile">
+      {/* Section fields follow the Homepage v2 role pattern (ink = risk/proof, signal = how it works). */}
+      <Chapter tone="ink" seam={false} data-testid="section-risk-profile">
         <Container>
           <ChapterHeader
             tone="well"
@@ -145,7 +146,7 @@ export default function Accounting() {
         </Container>
       </Chapter>
 
-      <Chapter plate="accounting" tone="well" data-testid="section-expectations">
+      <Chapter plate="accounting" tone="ink" data-testid="section-expectations">
         <Container>
           <ChapterHeader
             tone="well"

@@ -34,7 +34,7 @@ const values = [
     icon: Target,
     title: "Proactive Approach",
     description:
-      "We prevent problems before they happen. Our proactive monitoring and maintenance keep your systems running smoothly 24/7.",
+      "We prevent problems before they happen. Our proactive monitoring and maintenance keep your systems running smoothly.",
   },
   {
     icon: Heart,
@@ -149,11 +149,12 @@ export default function MissionValues() {
         </Container>
       </Chapter>
 
-      <Chapter tone="surface">
+      {/* Signal field (Homepage v2 role pattern) so this section does not merge into the closing band. */}
+      <Chapter tone="signal">
         <Container>
-          <ChapterHeader tone="surface" eyebrow="Difference" title="What Sets Us Apart" />
+          <ChapterHeader tone="paper" eyebrow="Difference" title="What Sets Us Apart" />
           <FeatureGrid
-            tone="surface"
+            tone="paper"
             columns={2}
             items={differentiators.map((d) => ({ icon: d.icon, title: d.title, text: d.desc }))}
           />

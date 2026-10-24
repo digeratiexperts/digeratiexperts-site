@@ -11,10 +11,22 @@ import {
   type AssignmentTarget,
 } from "@shared/licenseBoard";
 import { LICENSE_CATALOG, catalogLicense } from "@shared/licensing";
-import { SHELF_CATEGORIES, catalogShelf, hubShelf, starterShelf } from "@shared/licenseShelf";
+import { SHELF_CATEGORIES, catalogShelf, hubShelf, pax8Shelf, starterShelf } from "@shared/licenseShelf";
 import * as store from "./licenseBoardStore";
 import { JC_ID, planJumpCloudInstalls } from "@shared/jumpcloudPlan";
 import { STARTER_KITS, shelfEntry, starterKit } from "@shared/starterKits";
+import { requirementStatus } from "@shared/clientVault";
+import {
+  EMAIL,
+  MICROSOFT_CLOUDS,
+  MS_TENANT,
+  VENDOR_SKU_DEFAULTS,
+  planVendorPush,
+  splitGoogleSku,
+  type MicrosoftCloud,
+  type PushVendor,
+  type VendorLink,
+} from "@shared/vendorPush";
 
 /**
  * License patch bay (DE admin only).
@@ -30,8 +42,14 @@ import { STARTER_KITS, shelfEntry, starterKit } from "@shared/starterKits";
  *   POST   /api/portal/admin/license-board/clients/:clientId/assign
  *   DELETE /api/portal/admin/license-board/clients/:clientId/assignments/:id
  *
- * These are DE's records of where seats are meant to go. Nothing here
- * provisions a licence in Microsoft, Google or any vendor console.
+ *   GET    /api/portal/admin/license-board/clients/:clientId/vendors              Microsoft / Google links, plans, logs
+ *   PUT    /api/portal/admin/license-board/clients/:clientId/vendors/:vendor      link the tenant / Google admin
+ *   POST   /api/portal/admin/license-board/clients/:clientId/vendors/:vendor/push assign the ready licences (on request)
+ *   GET    /api/portal/admin/license-board/kits                  the starter kits
+ *   POST   /api/portal/admin/license-board/clients/:clientId/kit records the kit, its apps and its vault checklist
+ *
+ * These are DE's records of where seats are meant to go. Licences reach a
+ * vendor console only through the vendors push, when an admin presses Send.
  */
 
 type AdminRequest = Request & { user?: { id?: string | null; role?: string | null } };
@@ -49,6 +67,10 @@ export type LicenseBoardRouteDeps = {
   fetchHubCatalog?: () => Promise<Record<string, unknown> | null>;
   /** JumpCloud Software Management (server/integrations/jumpcloud.ts); tests pass a fake. */
   jumpcloud: JumpCloudClient;
+  /** Microsoft Graph and Google licensing (server/integrations/msGraph.ts, googleLicensing.ts); tests pass fakes. */
+  vendors?: VendorClients;
+  /** Kinds and titles of the client's vault items, to tick off kit documents. Absent or null: on-file status unknown. */
+  vaultTitles?: (clientId: string) => Promise<Array<{ kind: string; title: string }> | null>;
 };
 
 export type JumpCloudClient = {
@@ -56,6 +78,18 @@ export type JumpCloudClient = {
   ensureChocoApp: (displayName: string, packageId: string, orgId: string | null) => Promise<{ ok: boolean; id?: string; error?: string }>;
   associate: (appId: string, target: { type: "system_group" | "system"; id: string }, orgId: string | null) => Promise<{ ok: boolean; error?: string }>;
   findSystem: (name: string, orgId: string | null) => Promise<{ ok: boolean; id?: string; error?: string }>;
+};
+
+export type VendorClients = {
+  microsoft: {
+    configured: (cloud: MicrosoftCloud) => boolean;
+    subscribedSkus: (tenant: string, cloud: MicrosoftCloud) => Promise<{ ok: boolean; skus?: Array<{ skuId: string; skuPartNumber: string; enabled: number; consumed: number }>; error?: string }>;
+    assign: (tenant: string, cloud: MicrosoftCloud, upn: string, skuId: string) => Promise<{ ok: boolean; error?: string }>;
+  };
+  google: {
+    configured: () => boolean;
+    assign: (adminEmail: string, productId: string, skuId: string, userEmail: string) => Promise<{ ok: boolean; error?: string }>;
+  };
 };
 
 const SHELF_CATEGORY_KEYS = new Set<string>(SHELF_CATEGORIES.map((c) => c.key));
@@ -70,6 +104,13 @@ const whole = (v: unknown) => {
   return Number.isInteger(n) && n >= 0 && n <= MAX_SEATS ? n : null;
 };
 
+/** The Hub's word on its Pax8 read ({ status, message }), or null when the Hub is unreachable. */
+function pax8Feed(hub: unknown): { status: string; message: string } | null {
+  const s = (hub as { vendorSkusStatus?: { status?: unknown; message?: unknown } } | null)?.vendorSkusStatus;
+  if (!s || typeof s.status !== "string") return null;
+  return { status: s.status, message: typeof s.message === "string" ? s.message : "" };
+}
+
 function catalogVendor(platform: string): string {
   if (platform.startsWith("microsoft")) return "Microsoft";
   if (platform.startsWith("google")) return "Google";
@@ -83,14 +124,21 @@ export function registerLicenseBoardRoutes(app: Express, deps: LicenseBoardRoute
 
   app.get(BASE, ...guard, async (_req: AdminRequest, res: Response) => {
     try {
-      const [items, allocations, assignments] = await Promise.all([
+      const [items, allocations, assignments, kits] = await Promise.all([
         store.listPoolItems(),
         store.listAllocations(),
         store.listAssignments(),
+        store.listCompanyKits(),
       ]);
+      const kitOf = new Map(kits.map((k) => [k.clientId, starterKit(k.kitKey)?.name ?? null]));
       const clients = deps
         .listClients()
-        .map((c) => ({ id: c.id, name: c.companyName, seats: summarizeCompany(c.id, allocations, assignments, appIdsOf(items)) }))
+        .map((c) => ({
+          id: c.id,
+          name: c.companyName,
+          kit: kitOf.get(c.id) ?? null,
+          seats: summarizeCompany(c.id, allocations, assignments, appIdsOf(items)),
+        }))
         .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" }));
       res.json({ success: true, items: summarizePool(items, allocations), clients, catalog: LICENSE_CATALOG });
     } catch (error) {
@@ -105,7 +153,13 @@ export function registerLicenseBoardRoutes(app: Express, deps: LicenseBoardRoute
         success: true,
         categories: SHELF_CATEGORIES,
         hubConnected: Boolean(hub && Array.isArray((hub as { skus?: unknown }).skus)),
-        entries: [...starterShelf(), ...catalogShelf(), ...hubShelf((hub as { skus?: unknown } | null)?.skus)],
+        pax8: pax8Feed(hub),
+        entries: [
+          ...starterShelf(),
+          ...catalogShelf(),
+          ...hubShelf((hub as { skus?: unknown } | null)?.skus),
+          ...pax8Shelf((hub as { vendorSkus?: unknown } | null)?.vendorSkus),
+        ],
       });
     } catch (error) {
       fail(res, error, "load the parts bin");
@@ -143,7 +197,8 @@ export function registerLicenseBoardRoutes(app: Express, deps: LicenseBoardRoute
     try {
       const item = await store.getPoolItem(req.params.id);
       if (!item) return res.status(404).json({ error: "Licence not found" });
-      const patch: { vendor?: string; product?: string; quantity?: number; chocoPackage?: string | null } = {};
+      const patch: { vendor?: string; product?: string; quantity?: number; chocoPackage?: string | null; sku?: string | null } = {};
+      if (req.body?.sku !== undefined) patch.sku = text(req.body.sku, 80) || null;
       if (req.body?.vendor !== undefined) patch.vendor = text(req.body.vendor) || item.vendor;
       if (req.body?.product !== undefined) patch.product = text(req.body.product) || item.product;
       if (req.body?.chocoPackage !== undefined && item.kind === "app") {
@@ -238,12 +293,17 @@ export function registerLicenseBoardRoutes(app: Express, deps: LicenseBoardRoute
 
   /** One company's free pool, departments, people and devices (the page's level 2). */
   const companyView = async (client: Client) => {
-    const [items, allocations, assignments, departments] = await Promise.all([
+    const [items, allocations, assignments, departments, kitRow, requirements, vaultItems] = await Promise.all([
       store.listPoolItems(),
       store.listAllocations(client.id),
       store.listAssignments(client.id),
       deps.listDepartments(client.id).catch(() => []),
+      store.getCompanyKit(client.id),
+      store.listVaultRequirements(client.id),
+      deps.vaultTitles ? deps.vaultTitles(client.id).catch(() => null) : Promise.resolve(null),
     ]);
+    const kit = kitRow ? starterKit(kitRow.kitKey) : undefined;
+    const vaultStatus = vaultItems ? requirementStatus(requirements, vaultItems as any) : null;
     const seats = summarizeCompany(client.id, allocations, assignments, appIdsOf(items));
     const byId = new Map(items.map((i) => [i.id, i]));
     const people = deps
@@ -259,6 +319,12 @@ export function registerLicenseBoardRoutes(app: Express, deps: LicenseBoardRoute
     for (const a of assignments) if (a.targetType === "device") devices.set(a.targetId, a.targetLabel);
     return {
       company: { id: client.id, name: client.companyName },
+      kit: kit && kitRow ? { key: kit.key, name: kit.name, appliedAt: kitRow.appliedAt } : null,
+      vaultDocs: {
+        needed: requirements.length,
+        /** null when the vault could not be read (not configured or down). */
+        onFile: vaultStatus ? vaultStatus.filter((r) => r.onFile).length : null,
+      },
       pool: seats
         .filter((s) => byId.has(s.itemId))
         .map((s) => {
@@ -383,6 +449,137 @@ export function registerLicenseBoardRoutes(app: Express, deps: LicenseBoardRoute
       res.json({ success: true, returnedTo: assignment.viaDepartmentId ? "department" : "company" });
     } catch (error) {
       fail(res, error, "unassign the seat");
+    }
+  });
+
+  /* ------------------------------------------- Microsoft 365 / Google */
+
+  const PUSH_VENDORS: PushVendor[] = ["microsoft", "google"];
+  const vendorParam = (v: unknown): PushVendor | null => (PUSH_VENDORS.includes(v as PushVendor) ? (v as PushVendor) : null);
+  const vendorConfigured = (vendor: PushVendor, link: VendorLink | null) =>
+    !deps.vendors
+      ? false
+      : vendor === "microsoft"
+        ? deps.vendors.microsoft.configured(link?.vendor === "microsoft" ? link.cloud : "commercial")
+        : deps.vendors.google.configured();
+
+  /** The push plan for one vendor: person-held licences, with each one's SKU (its own, else DE's default). */
+  const vendorPlan = async (client: Client, vendor: PushVendor, link: VendorLink | null) => {
+    const view = await companyView(client);
+    const items = await store.listPoolItems();
+    const byId = new Map(items.map((i) => [i.id, i]));
+    const pool = view.pool
+      .filter((p) => byId.has(p.itemId))
+      .map((p) => {
+        const i = byId.get(p.itemId)!;
+        return {
+          itemId: p.itemId,
+          kind: i.kind,
+          vendor: i.vendor,
+          product: i.product,
+          catalogKey: i.catalogKey,
+          sku: i.sku || (i.catalogKey ? VENDOR_SKU_DEFAULTS[`catalog:${i.catalogKey}`] ?? null : null),
+        };
+      });
+    return planVendorPush({ pool, people: view.people, departments: view.departments }, vendor, Boolean(link));
+  };
+
+  app.get(`${BASE}/clients/:clientId/vendors`, ...guard, async (req: AdminRequest, res: Response) => {
+    try {
+      const client = deps.getClient(req.params.clientId);
+      if (!client) return res.status(404).json({ error: "Company not found" });
+      const out: Record<string, unknown> = {};
+      for (const vendor of PUSH_VENDORS) {
+        const link = await store.getVendorLink(client.id, vendor);
+        out[vendor] = {
+          configured: vendorConfigured(vendor, link),
+          link,
+          ...(await vendorPlan(client, vendor, link)),
+          pushes: await store.listVendorPushes(client.id, vendor),
+        };
+      }
+      res.json({ success: true, ...out });
+    } catch (error) {
+      fail(res, error, "load the vendor consoles");
+    }
+  });
+
+  app.put(`${BASE}/clients/:clientId/vendors/:vendor`, ...guard, async (req: AdminRequest, res: Response) => {
+    try {
+      const client = deps.getClient(req.params.clientId);
+      if (!client) return res.status(404).json({ error: "Company not found" });
+      const vendor = vendorParam(req.params.vendor);
+      if (!vendor) return res.status(404).json({ error: "Unknown vendor" });
+      let link: VendorLink;
+      if (vendor === "microsoft") {
+        const tenant = text(req.body?.tenant, 120);
+        const cloud = text(req.body?.cloud, 20) as MicrosoftCloud;
+        if (!MS_TENANT.test(tenant)) return res.status(400).json({ error: "Enter the tenant ID (a GUID) or its domain, e.g. contoso.onmicrosoft.com" });
+        if (!MICROSOFT_CLOUDS.some((c) => c.key === cloud)) return res.status(400).json({ error: "Pick Commercial, GCC or GCC High" });
+        link = { vendor, tenant, cloud };
+      } else {
+        const adminEmail = text(req.body?.adminEmail, 160);
+        if (!EMAIL.test(adminEmail)) return res.status(400).json({ error: "Enter the client's Google super admin email" });
+        link = { vendor, adminEmail };
+      }
+      await store.setVendorLink(client.id, link, req.user?.id ?? null);
+      res.json({ success: true, link });
+    } catch (error) {
+      fail(res, error, "save the link");
+    }
+  });
+
+  /** Sends every ready step for one vendor. Only on an admin's press; each result is logged. */
+  app.post(`${BASE}/clients/:clientId/vendors/:vendor/push`, ...guard, async (req: AdminRequest, res: Response) => {
+    try {
+      const client = deps.getClient(req.params.clientId);
+      if (!client) return res.status(404).json({ error: "Company not found" });
+      const vendor = vendorParam(req.params.vendor);
+      if (!vendor || !deps.vendors) return res.status(404).json({ error: "Unknown vendor" });
+      const link = await store.getVendorLink(client.id, vendor);
+      if (!link) return res.status(409).json({ error: "Link the company first" });
+      if (!vendorConfigured(vendor, link)) {
+        return res.status(409).json({
+          error:
+            vendor === "microsoft"
+              ? "Microsoft Graph is not connected on this server (MS_GRAPH_CLIENT_ID / MS_GRAPH_CLIENT_SECRET, or the _GOV_ pair for GCC High)"
+              : "Google licensing is not connected on this server (GOOGLE_LICENSING_SERVICE_ACCOUNT)",
+        });
+      }
+      const ready = (await vendorPlan(client, vendor, link)).steps.filter((s) => s.status === "ready");
+      if (!ready.length) return res.status(409).json({ error: "Nothing is ready to send" });
+      const by = req.user?.id ?? null;
+      let sent = 0;
+      let failed = 0;
+      const log = async (step: (typeof ready)[number], ok: boolean, detail: string | null) => {
+        ok ? sent++ : failed++;
+        await store.recordVendorPush(
+          { clientId: client.id, vendor, itemId: step.itemId, product: step.product, sku: step.sku!, userEmail: step.email, ok, detail },
+          by,
+        );
+      };
+      if (link.vendor === "microsoft") {
+        const subs = await deps.vendors.microsoft.subscribedSkus(link.tenant, link.cloud);
+        if (!subs.ok) return res.status(502).json({ error: `Microsoft: ${subs.error}` });
+        for (const step of ready) {
+          const sub = subs.skus!.find((s) => s.skuPartNumber.toLowerCase() === step.sku!.toLowerCase());
+          if (!sub) {
+            await log(step, false, `The tenant has no ${step.sku} subscription`);
+            continue;
+          }
+          const r = await deps.vendors.microsoft.assign(link.tenant, link.cloud, step.email, sub.skuId);
+          await log(step, r.ok, r.ok ? "Assigned" : r.error || "Failed");
+        }
+      } else if (link.vendor === "google") {
+        for (const step of ready) {
+          const ids = splitGoogleSku(step.sku!)!;
+          const r = await deps.vendors.google.assign(link.adminEmail, ids.productId, ids.skuId, step.email);
+          await log(step, r.ok, r.ok ? "Assigned" : r.error || "Failed");
+        }
+      }
+      res.json({ success: true, sent, failed });
+    } catch (error) {
+      fail(res, error, "send to the vendor console");
     }
   });
 
@@ -553,7 +750,24 @@ export function registerLicenseBoardRoutes(app: Express, deps: LicenseBoardRoute
         if (added) addedToPool++;
         recommended.push({ itemId: item.id, product: item.product });
       }
-      res.json({ success: true, kit: kit.name, addedToPool, appsOn, onEveryMachine, recommended, note: kit.note ?? null });
+      await store.setCompanyKit(client.id, kit.key, by);
+      const vaultDocsAdded = await store.addVaultRequirements(
+        client.id,
+        kit.vaultDocs.map((d) => ({ kind: d.kind, title: d.title, hint: d.hint })),
+        `kit:${kit.key}`,
+        by,
+      );
+      res.json({
+        success: true,
+        kit: kit.name,
+        kitKey: kit.key,
+        addedToPool,
+        appsOn,
+        onEveryMachine,
+        recommended,
+        vaultDocsAdded,
+        note: kit.note ?? null,
+      });
     } catch (error) {
       fail(res, error, "apply the starter kit");
     }
