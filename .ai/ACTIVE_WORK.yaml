@@ -4812,3 +4812,19 @@ claims:
     note: >-
       Docs-only follow-up after slices A, B, C, D, E and G merged and were
       checked in production on 2026-10-23. Joe: "Approved".
+  - id: homepage-v2-copy-port
+    owner: claude
+    subsystem: homepage
+    branch: claude/sleepy-johnson-bkojbp
+    base_sha: 6bf3208
+    started: 2026-10-24
+    files:
+      - client/src/pages/homepage-v2/sections/{Hero,Detect,Fit,Challenges,Services,Contact,Team}Section.tsx, SiteFooter.tsx (CTA labels and names only)
+      - client/src/pages/homepage-v2/cta.ts (header comment), homepage-v2.css (.nowrap, .team-cta)
+    status: in-review
+    note: >-
+      Joe, 2026-10-24: "yes port them to homepage v2". Ports #698's copy and
+      CTA fixes from V8 to homepage v2 at /: one primary label from HOME_CTA,
+      the form submit "Request Assessment", "Talk to an Expert" as the
+      secondary style with the phone, canonical service names, and the
+      "signals surface immediately" speed claim softened. Layout unchanged.

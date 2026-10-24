@@ -1,4 +1,5 @@
 import { objectIcon } from "../content";
+import { HOME_CTA } from "../cta";
 
 const CHALLENGES = [
   { icon: "lock", title: "Ransomware & malware", text: "Threat detection and rapid response to stop attacks before damage occurs." },
@@ -36,7 +37,7 @@ export function ChallengesSection(): JSX.Element {
         </div>
         <div className="card strip">
           <p><b>Don't see your challenge?</b> <span className="muted">We handle custom threat profiles across Arizona.</span></p>
-          <a href="#contact" className="btn btn-cta">Discuss your security needs</a>
+          <a href="#contact" className="btn btn-cta">{HOME_CTA.primary}</a>
         </div>
       </div>
     </section>

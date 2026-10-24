@@ -1,5 +1,5 @@
 /**
- * Homepage (V8) CTA system — one label per role, one primary and one secondary
+ * Homepage CTA system (V8 and homepage v2 at /) — one label per role, one primary and one secondary
  * button style, from docs/plans/opencode/lane-h-homepage.md and
  * docs/plans/opencode/DE-homepage-refinement-prompt.md §2.
  *
