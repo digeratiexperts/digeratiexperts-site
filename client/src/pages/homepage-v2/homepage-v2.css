@@ -1768,3 +1768,9 @@
   .hv2 .news input{min-width:0;width:100%}
   .hv2 .news button{height:48px;width:100%}
 }
+
+/* Footer social links, matching the V8 footer. */
+.hv2 footer .fbase{align-items:center}
+.hv2 footer .social{display:flex;gap:10px}
+.hv2 footer .social a{display:grid;place-items:center;width:36px;height:36px;border:1px solid rgba(255,255,255,.14);border-radius:50%;color:#fff}
+.hv2 footer .social a:hover{border-color:#fff}
