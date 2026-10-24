@@ -1276,11 +1276,11 @@ export async function registerRoutes(app: Express) {
   registerPortalVpnRoutes(app, { guards: [authMiddleware] });
   registerPortalPhoneRoutes(app, { guards: [authMiddleware] });
   registerPortalShippingRoutes(app, { guards: [authMiddleware] });
-  registerManualRecordAdminRoutes(app, { guards: [authMiddleware, requireAdmin, validateInput] });
+  registerManualRecordAdminRoutes(app, { guards: [authMiddleware, requirePermission("manualRecords.manage"), validateInput] });
 
   // Manage Companies "Add user": the person sets their own password from an emailed link.
   registerPortalUserInviteRoute(app, {
-    guards: [authMiddleware, requireAdmin, validateInput],
+    guards: [authMiddleware, requirePermission("company.manage", (req) => req.params.id || null), validateInput],
     deps: { logEvent: (event, req, data) => logSecurityEvent(event, req as AuthenticatedRequest, data) },
   });
 
@@ -1417,7 +1417,7 @@ export async function registerRoutes(app: Express) {
 
   // License patch bay: DE's vendor licence pool, company seats, assignments (server/licenseBoardRoutes.ts).
   registerLicenseBoardRoutes(app, {
-    adminGuards: [authMiddleware, requireAdmin, validateInput],
+    adminGuards: [authMiddleware, requirePermission("licenses.manage"), validateInput],
     listClients: () => portalClients.values().map((c: any) => ({ id: c.id, companyName: c.companyName })),
     getClient: serviceRequestDeps.getClient,
     listClientUsers: serviceRequestDeps.listClientUsers,
@@ -1461,7 +1461,7 @@ export async function registerRoutes(app: Express) {
   // Store orders: cancel (now if unpaid, else a request to DE), amend requests, holds (server/storeOrderControls.ts).
   registerStoreOrderControlRoutes(app, {
     guards: [authMiddleware, validateInput],
-    adminGuards: [authMiddleware, requireAdmin, validateInput],
+    adminGuards: [authMiddleware, requirePermission("orders.manage"), validateInput],
     getClient: serviceRequestDeps.getClient,
     findUser: serviceRequestDeps.findUser,
     listClientUsers: serviceRequestDeps.listClientUsers,
@@ -1495,7 +1495,7 @@ export async function registerRoutes(app: Express) {
   // Knowledge base (server/kbRoutes.ts): articles, views, ratings, subscriptions, DE authoring.
   registerKbRoutes(app, {
     guards: [authMiddleware],
-    adminGuards: [authMiddleware, requireAdmin],
+    adminGuards: [authMiddleware, requirePermission("kb.manage")],
     findUser: serviceRequestDeps.findUser,
     getClient: serviceRequestDeps.getClient,
     notifySubscriber: (input) => notificationService.sendKbArticleUpdate(input),
@@ -4664,9 +4664,12 @@ export async function registerRoutes(app: Express) {
   });
 
   // ===== ADMIN TENANT MANAGEMENT =====
-  
-  // List all companies (admin only)
-  app.get("/api/portal/admin/companies", [authMiddleware, requireAdmin], async (req: AuthenticatedRequest, res: Response) => {
+  // Companies page (deOnly menu item): DE staff + break-glass via lane A
+  // company.manage. Deleting a company stays break-glass only (company.delete).
+  const companyParam = (req: { params: { id?: string } }) => req.params.id || null;
+
+  // List all companies (DE staff + break-glass)
+  app.get("/api/portal/admin/companies", [authMiddleware, requirePermission("company.manage")], async (req: AuthenticatedRequest, res: Response) => {
     try {
       const companies = Array.from(portalClients.values()).map(client => ({
         id: client.id,
@@ -4720,8 +4723,8 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  // Get company details with users (admin only)
-  app.get("/api/portal/admin/companies/:id", [authMiddleware, requireAdmin], async (req: AuthenticatedRequest, res: Response) => {
+  // Get company details with users (DE staff + break-glass)
+  app.get("/api/portal/admin/companies/:id", [authMiddleware, requirePermission("company.manage", companyParam)], async (req: AuthenticatedRequest, res: Response) => {
     try {
       const company = portalClients.get(req.params.id);
       if (!company) {
@@ -4744,8 +4747,8 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  // Create new company (admin only)
-  app.post("/api/portal/admin/companies", [authMiddleware, requireAdmin, validateInput], async (req: AuthenticatedRequest, res: Response) => {
+  // Create new company (DE staff + break-glass)
+  app.post("/api/portal/admin/companies", [authMiddleware, requirePermission("company.manage"), validateInput], async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { companyName, contactEmail, contactPhone, industry, primaryContact, accountManager } = req.body;
       
@@ -4779,8 +4782,8 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  // Update company (admin only)
-  app.put("/api/portal/admin/companies/:id", [authMiddleware, requireAdmin, validateInput], async (req: AuthenticatedRequest, res: Response) => {
+  // Update company (DE staff + break-glass)
+  app.put("/api/portal/admin/companies/:id", [authMiddleware, requirePermission("company.manage", companyParam), validateInput], async (req: AuthenticatedRequest, res: Response) => {
     try {
       const company = portalClients.get(req.params.id);
       if (!company) {
@@ -4882,7 +4885,7 @@ export async function registerRoutes(app: Express) {
   // Tenant file list/upload/delete + my-files (server/portalTenantFileRoutes.ts, #259).
   registerPortalTenantFileRoutes(app, {
     auth: authMiddleware as any,
-    admin: requireAdmin as any,
+    admin: requirePermission("files.share", (req) => req.params.id || req.params.companyId || null) as any,
     validateInput: validateInput as any,
     storage,
     getCompany: (id) => portalClients.get(id),
@@ -4914,8 +4917,8 @@ export async function registerRoutes(app: Express) {
     requirements: async (clientId) => (await import("./licenseBoardStore")).listVaultRequirements(clientId),
   });
 
-  // Get company metrics/stats (admin only)
-  app.get("/api/portal/admin/companies/:id/metrics", [authMiddleware, requireAdmin], async (req: AuthenticatedRequest, res: Response) => {
+  // Get company metrics/stats (DE staff + break-glass)
+  app.get("/api/portal/admin/companies/:id/metrics", [authMiddleware, requirePermission("company.manage", companyParam)], async (req: AuthenticatedRequest, res: Response) => {
     try {
       const companyId = req.params.id;
       const company = portalClients.get(companyId);
