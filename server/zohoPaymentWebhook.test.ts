@@ -1,5 +1,11 @@
+import { PgDialect } from "drizzle-orm/pg-core";
 import { describe, expect, it } from "vitest";
-import { evaluatePaymentSucceeded, type StoredOrderForPayment } from "./zohoPaymentWebhook";
+import {
+  evaluatePaymentSucceeded,
+  PAID_OR_LATER_STATUSES,
+  type StoredOrderForPayment,
+  unpaidOrderCondition,
+} from "./zohoPaymentWebhook";
 
 const order = (overrides: Partial<StoredOrderForPayment> = {}): StoredOrderForPayment => ({
   id: "order-1",
@@ -61,5 +67,23 @@ describe("evaluatePaymentSucceeded", () => {
         evaluatePaymentSucceeded(order({ status }), { amount: "9999.99", currency: "USD" }),
       ).toEqual({ action: "already_paid" });
     }
+  });
+});
+
+describe("unpaidOrderCondition", () => {
+  // Render the predicate to SQL without a database connection.
+  const render = (orderId: string) => new PgDialect().sqlToQuery(unpaidOrderCondition(orderId));
+
+  it("matches only the requested order", () => {
+    const { sql, params } = render("order-1");
+    expect(sql).toMatch(/"id" = \$1/);
+    expect(params[0]).toBe("order-1");
+  });
+
+  it("excludes every paid-or-later status and admits a null status", () => {
+    const { sql, params } = render("order-1");
+    expect(sql).toMatch(/is null/i);
+    expect(sql).toMatch(/not in/i);
+    expect(params.slice(1)).toEqual([...PAID_OR_LATER_STATUSES]);
   });
 });
