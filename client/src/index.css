@@ -661,6 +661,19 @@ html[data-dock-hidden="true"] .de-bottom-bar {
   );
 }
 
+/* Homepage v2 role fields (Joe 2026-10-22). Signal: "how it works" sections.
+   Ink: proof and decision sections; dark primitives re-point to navy inside it. */
+.de-signal-chapter {
+  background-color: #f1f5fc;
+  background-image: radial-gradient(rgba(29, 111, 242, 0.16) 1px, transparent 1.3px);
+  background-size: 22px 22px;
+}
+.de-ink-chapter {
+  background-color: #0e1526;
+  --de-raised: #172138;
+  --de-hairline: rgba(255, 255, 255, 0.09);
+}
+
 /* Paper chapter — one warm recipe. Raised cards must actually lift. */
 .de-paper-chapter {
   background-color: var(--de-paper);

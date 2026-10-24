@@ -160,7 +160,8 @@ export default function Healthcare() {
         <FactStrip facts={trustStrip} label="Why practices choose Digerati Experts" />
       </div>
 
-      <Chapter tone="well" seam={false} data-testid="section-pain">
+      {/* Section fields follow the Homepage v2 role pattern (ink = risk/proof, signal = how it works). */}
+      <Chapter tone="ink" seam={false} data-testid="section-pain">
         <Container>
           <ChapterHeader
             tone="well"
@@ -202,28 +203,28 @@ export default function Healthcare() {
         </Container>
       </Chapter>
 
-      <Chapter tone="surface" data-testid="section-how-we-solve">
+      <Chapter tone="signal" data-testid="section-how-we-solve">
         <Container>
           <ChapterHeader
-            tone="surface"
+            tone="paper"
             eyebrow="How we solve it"
             title="How Digerati Experts solves them"
             lede="IT, cybersecurity, and compliance as one operating program — so security is not bolted onto break/fix support after the fact."
           />
-          <FeatureGrid tone="surface" items={howWeSolve} />
+          <FeatureGrid tone="paper" items={howWeSolve} />
 
-          <div className="mt-14 grid gap-8 border-t border-[var(--de-hairline)] pt-10 lg:grid-cols-12 lg:gap-14" data-testid="section-differentiation">
-            <h2 className="font-heading text-2xl font-semibold leading-tight text-white md:text-3xl lg:col-span-4">
+          <div className="mt-14 grid gap-8 border-t border-[var(--de-paper-hairline)] pt-10 lg:grid-cols-12 lg:gap-14" data-testid="section-differentiation">
+            <h2 className="font-heading text-2xl font-semibold leading-tight text-[#1A1228] md:text-3xl lg:col-span-4">
               Why Digerati Experts instead of ordinary IT support
             </h2>
             <div className="lg:col-span-8">
-              <CheckList tone="surface" items={differentiation} columns={1} />
+              <CheckList tone="paper" items={differentiation} columns={1} />
             </div>
           </div>
         </Container>
       </Chapter>
 
-      <Chapter plate="healthcare" tone="well" data-testid="section-security-stack">
+      <Chapter plate="healthcare" tone="ink" data-testid="section-security-stack">
         <Container>
           <div className="grid gap-10 lg:grid-cols-12 lg:gap-14">
             <div className="lg:col-span-4">

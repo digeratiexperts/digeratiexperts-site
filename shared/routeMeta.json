@@ -498,7 +498,7 @@
   },
   "/resources/datasheets/proactive-office-ecosystem-datasheet": {
     "title": "ProActive Office Ecosystem Datasheet | Digerati Experts",
-    "description": "The small-office operating package — managed IT, 24/7 managed detection and response, stronger identity, endpoint backup, and a real annual review.",
+    "description": "The small-office operating package — managed IT, managed endpoint detection (EDR), stronger identity, endpoint backup, and a real annual review.",
     "canonical": "/resources/datasheets/proactive-office-ecosystem-datasheet",
     "robots": "index, follow",
     "ogImage": "https://digeratiexperts.com/og-image.png"
@@ -575,7 +575,7 @@
   },
   "/solutions": {
     "title": "Managed IT & Security Solutions | Digerati Experts",
-    "description": "Comprehensive managed IT and cybersecurity solutions. Network security, endpoint protection, cloud security, compliance support, and 24/7 monitoring for Arizona businesses.",
+    "description": "Comprehensive managed IT and cybersecurity solutions. Network security, endpoint protection, cloud security, compliance support, and 24/7 managed detection on Business and Enterprise for Arizona businesses.",
     "canonical": "/solutions",
     "robots": "index, follow",
     "ogImage": "https://digeratiexperts.com/og-image.png"
@@ -666,7 +666,7 @@
   },
   "/solutions/proactive-office-ecosystem": {
     "title": "ProActive Office Ecosystem | Digerati Experts",
-    "description": "Small office operating package from Digerati Experts. Starts at $165/user/mo with a $2,400/mo minimum. Includes the DE Security Foundation with 24/7 managed detection and response, managed network & connectivity, endpoint backup, and an annual combined technology + cyber review.",
+    "description": "Small office operating package from Digerati Experts. Starts at $165/user/mo with a $2,400/mo minimum. Includes the DE Security Foundation with managed endpoint detection (EDR), managed network & connectivity, endpoint backup, and an annual combined technology + cyber review.",
     "canonical": "/solutions/proactive-office-ecosystem",
     "robots": "index, follow",
     "ogImage": "https://digeratiexperts.com/og-image.png"

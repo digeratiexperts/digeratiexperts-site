@@ -24,16 +24,38 @@ import { PlateBand, type PlateName } from "@/components/site/PlateBand";
 
 export type ChapterTone = "well" | "surface" | "paper";
 
-const toneField: Record<ChapterTone, string> = {
+/**
+ * Section field tones. The three ChapterTones plus two fields from the approved
+ * Homepage v2 role system (design/reference/homepage-v2, Joe 2026-10-22):
+ *   - signal: pale blue + fine dot grid for "how it works" sections (a light field;
+ *     children use tone="paper").
+ *   - ink: deep navy for proof and decision sections (a dark field; children use
+ *     tone="well"). Raised cards and hairlines re-point to navy inside it.
+ * Only the field changes; every child primitive keeps its paper/dark recipe.
+ */
+export type FieldTone = ChapterTone | "signal" | "ink";
+
+/** The child-primitive tone that matches a field: light fields → "paper", dark → "well". */
+export function contentTone(field: FieldTone): ChapterTone {
+  if (field === "signal") return "paper";
+  if (field === "ink") return "well";
+  return field;
+}
+
+const toneField: Record<FieldTone, string> = {
   well: "de-dark-well text-white",
   surface: "de-dark-chapter text-white",
   paper: "de-paper-chapter text-[#1A1228]",
+  signal: "de-signal-chapter text-[#1A1228]",
+  ink: "de-ink-chapter text-white",
 };
 
-const toneSeam: Record<ChapterTone, string> = {
+const toneSeam: Record<FieldTone, string> = {
   well: "border-t border-[var(--de-hairline)]",
   surface: "border-t border-[var(--de-hairline)]",
   paper: "border-t border-[var(--de-paper-hairline)]",
+  signal: "border-t border-[var(--de-paper-hairline)]",
+  ink: "border-t border-[var(--de-hairline)]",
 };
 
 /** Section padding — one rhythm for the whole page. */
@@ -45,7 +67,7 @@ export const containerClass =
 
 type HomeChapterProps<T extends ElementType> = {
   as?: T;
-  tone: ChapterTone;
+  tone: FieldTone;
   /** Hairline seam on the top edge. Off when the chapter follows a hero or a strip that already draws it. */
   seam?: boolean;
   /** Tighter padding for strips and closing bands. */

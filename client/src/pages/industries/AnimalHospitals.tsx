@@ -54,7 +54,7 @@ export default function AnimalHospitals() {
     "Practice Management System Security",
     "Encrypted Client Communications",
     "Secure Payment Processing",
-    "24/7 Network Monitoring",
+    "Network Monitoring & Alerting",
     "Backup & Disaster Recovery",
     "Email Protection & Anti-Phishing",
     "Endpoint Security (EDR)",
@@ -94,7 +94,8 @@ export default function AnimalHospitals() {
         <FactStrip facts={focusAreas} label="What we protect in a veterinary practice" />
       </div>
 
-      <Chapter tone="well" seam={false} data-testid="section-targets">
+      {/* Section fields follow the Homepage v2 role pattern (ink = risk/proof, signal = how it works). */}
+      <Chapter tone="ink" seam={false} data-testid="section-targets">
         <Container>
           <div className="grid gap-8 lg:grid-cols-12 lg:gap-14">
             <div className="lg:col-span-5">
@@ -134,12 +135,12 @@ export default function AnimalHospitals() {
         </Container>
       </Chapter>
 
-      <Chapter tone="surface" data-testid="section-security">
+      <Chapter tone="ink" data-testid="section-security">
         <Container>
           <div className="grid gap-10 lg:grid-cols-12 lg:gap-14">
             <div className="lg:col-span-4">
               <ChapterHeader
-                tone="surface"
+                tone="well"
                 layout="stack"
                 eyebrow="Controls"
                 title="Complete Security for Your Practice"
@@ -148,7 +149,7 @@ export default function AnimalHospitals() {
               />
             </div>
             <div className={`${cardDark} p-6 md:p-8 lg:col-span-8 lg:self-start`}>
-              <CheckList tone="surface" items={securityFeatures} />
+              <CheckList tone="well" items={securityFeatures} />
             </div>
           </div>
         </Container>

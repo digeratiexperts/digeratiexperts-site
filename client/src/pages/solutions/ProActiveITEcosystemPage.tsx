@@ -58,7 +58,7 @@ const config: TierPageConfig = {
     },
     {
       label: "Step up to ProActive Office or Business",
-      desc: "Office adds 24/7 managed detection and response plus managed network and endpoint backup; Business adds deeper security operations, BCDR, compliance/risk reporting, and semi-annual reviews.",
+      desc: "Office adds managed endpoint detection (EDR) plus managed network and endpoint backup; Business adds 24/7 managed detection and response, deeper security operations, BCDR, compliance/risk reporting, and semi-annual reviews.",
     },
   ],
   reviewCadence:

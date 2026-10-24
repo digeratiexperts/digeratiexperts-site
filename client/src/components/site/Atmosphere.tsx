@@ -276,8 +276,10 @@ export function ChapterPattern({ variant, className }: { variant: PatternVariant
 }
 
 /** The default pattern per chapter tone: lattice on the well, contours on the surface, dots on paper. */
-export function patternForTone(tone: "well" | "surface" | "paper"): PatternVariant {
+export function patternForTone(tone: "well" | "surface" | "paper" | "signal" | "ink"): PatternVariant | "none" {
   if (tone === "surface") return "contour";
   if (tone === "paper") return "dots";
+  // signal draws its own fine dot grid in CSS; ink stays a quiet, unpatterned field.
+  if (tone === "signal" || tone === "ink") return "none";
   return "lattice";
 }

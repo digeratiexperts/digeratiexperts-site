@@ -147,7 +147,8 @@ export default function ResourcesIndex() {
       layout="chapters"
       actions={<HeroActions primary={{ label: CTA.primary, href: "/book" }} />}
     >
-      <Chapter tone="well" seam={false}>
+      {/* Ink field (Homepage v2 role pattern) so the library and the flipbook band read as two sections. */}
+      <Chapter tone="ink" seam={false}>
         <Container>
           <ChapterHeader
             tone="well"

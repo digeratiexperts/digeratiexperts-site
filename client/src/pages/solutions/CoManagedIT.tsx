@@ -13,6 +13,7 @@ import {
 } from "@/components/site/chapters";
 import { SolutionsRelationshipTable } from "@/components/site/SolutionsRelationshipTable";
 import { useSEO } from "@/hooks/useSEO";
+import { CTA } from "@/lib/ctaCopy";
 
 const principles = [
   {
@@ -38,6 +39,7 @@ const principles = [
 ];
 
 const responsibilityExamples = [
+  ["Cyber Risk Assessment", "DE", "Required first step: DE reviews identity, endpoints, email, backups and security posture before the responsibility map is agreed."],
   ["Business approvals", "Client", "DE supports the process; your business retains approval authority."],
   ["Package design", "DE", "DE defines the approved solution package and documented boundaries."],
   ["Implementation", "Shared", "The selected install mode and responsibility map determine who executes each step."],
@@ -65,14 +67,14 @@ export default function CoManagedIT() {
       layout="chapters"
       eyebrow="Co-Managed Solutions"
       title="Keep your IT team. Add DE where it helps."
-      subtitle="Co-Managed is a shared operating relationship for selected solutions. Your team stays in the picture; DE adds package design, implementation capacity, specialist support, monitoring, or escalation where the agreed responsibility model calls for it."
+      subtitle="Co-Managed is a shared operating relationship for selected solutions. Your team stays in the picture; DE adds package design, implementation capacity, specialist support, monitoring, or escalation where the agreed responsibility model calls for it. It starts with a required Cyber Risk Assessment."
       breadcrumbs={[{ label: "Solutions", href: "/solutions" }, { label: "Co-Managed IT" }]}
       actions={
         <div>
           <div className="flex flex-col gap-3 sm:flex-row">
             <HeroActions
-              primary={{ label: "Build a co-managed solution", href: "/store" }}
-              secondary={{ label: "Compare Standalone", href: "/solutions/standalone-services" }}
+              primary={{ label: CTA.primary, href: "/book" }}
+              secondary={{ label: "Build a co-managed solution", href: "/store" }}
             />
           </div>
           <p className="mt-5 max-w-xl text-sm leading-relaxed text-white/60">

@@ -95,8 +95,8 @@ const matrixCategories: MatrixCategory[] = [
     services: [
       { name: "DE Security Foundation", tooltip: "Managed security is included in every ProActive tier. Higher tiers add deeper monitoring, response, recovery, compliance, and governance.", it: "Included", office: "Included", business: "Included", enterprise: "Included" },
       { name: "Security Awareness Training", it: "Included", office: "Included + phishing simulation", business: "Enhanced", enterprise: "Role-based / advanced" },
-      { name: "Threat Detection & Response", tooltip: "Monitoring, detection, triage, containment, and guided recovery signals from endpoint, identity, email, cloud, or other detection systems.", it: "Managed platform baseline", office: "24/7 MDR", business: "24/7 MDR + deeper response", enterprise: "Advanced / custom" },
-      { name: "Security Operations / SOC-as-a-Service", tooltip: "Security monitoring, alert triage, tuning, escalation, reporting, and response coordination.", it: "Platform monitoring", office: "24/7 MDR", business: "24/7 security operations", enterprise: "Advanced / custom" },
+      { name: "Threat Detection & Response", tooltip: "Monitoring, detection, triage, containment, and guided recovery signals from endpoint, identity, email, cloud, or other detection systems.", it: "Managed platform baseline", office: "Managed EDR + alerting", business: "24/7 MDR + deeper response", enterprise: "Advanced / custom" },
+      { name: "Security Operations / SOC-as-a-Service", tooltip: "Security monitoring, alert triage, tuning, escalation, reporting, and response coordination.", it: "Platform monitoring", office: "Platform monitoring + alerting", business: "24/7 security operations", enterprise: "Advanced / custom" },
     ],
   },
   {
@@ -187,7 +187,7 @@ const plans: PlanCard[] = [
       "Endpoint Backup",
       "Annual combined technology + cyber review",
       "Security Awareness Training + phishing simulation",
-      "24/7 Managed Detection & Response",
+      "Managed endpoint detection (EDR)",
       "BCDR, cloud backup, compliance reports (add-ons)",
     ],
     learnMoreUrl: pricing.office.learnMoreUrl,
@@ -340,7 +340,8 @@ export default function ProActiveEcosystemPricing() {
         </Container>
       </Chapter>
 
-      <Chapter tone="surface" aria-labelledby="estimator-heading">
+      {/* Estimator is a decision section: ink field (Homepage v2 role pattern). */}
+      <Chapter tone="ink" aria-labelledby="estimator-heading">
         <Container>
           <ChapterHeader
             tone="surface"

@@ -276,7 +276,7 @@ export const CAMPAIGNS: CampaignPage[] = [
     eyebrow: "Internal IT kept",
     headline: "Keep your team. Extend helpdesk, security, and coverage.",
     lede:
-      "Co-Managed IT is a separate path — not a ProActive tier. Digerati Experts works beside internal IT: shared ownership, named responsibilities, no silent takeover of your stack.",
+      "Co-Managed IT is a separate path — not a ProActive tier. Digerati Experts works beside internal IT: shared ownership, named responsibilities, no silent takeover of your stack. It starts with a required Cyber Risk Assessment.",
     seoTitle: "Co-Managed IT for Teams That Already Have IT Staff",
     seoDescription:
       "Co-Managed IT from Digerati Experts extends internal teams with helpdesk, security, and kits — without replacing the staff you already have.",

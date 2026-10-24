@@ -256,14 +256,15 @@ export default function UCaaS() {
         </Container>
       </Chapter>
 
-      <Chapter tone="surface">
+      {/* Section fields follow the Homepage v2 role pattern (signal = how it works, ink = decision). */}
+      <Chapter tone="signal">
         <Container>
-          <ChapterHeader tone="surface" eyebrow="The work" title="What we actually do" />
-          <IconCards tone="surface" columns={3} testPrefix="card-service" items={serviceCards} />
+          <ChapterHeader tone="paper" eyebrow="The work" title="What we actually do" />
+          <IconCards tone="paper" columns={3} testPrefix="card-service" items={serviceCards} />
         </Container>
       </Chapter>
 
-      <Chapter tone="well" id="pricing" className="scroll-mt-28">
+      <Chapter tone="ink" id="pricing" className="scroll-mt-28">
         <Container>
           <ChapterHeader
             tone="well"

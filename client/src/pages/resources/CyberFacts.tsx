@@ -331,18 +331,19 @@ const CyberFacts = () => {
           </Container>
         </Chapter>
 
-        <Chapter tone="surface">
+        {/* Signal field (Homepage v2 role pattern) breaks the dark run between the hero stats and the closing band. */}
+        <Chapter tone="signal">
           <Container>
             <ChapterHeader
-              tone="surface"
+              tone="paper"
               eyebrow="Two to remember"
               title="Prevention and Recovery"
               layout="stack"
               lede="One fact about stopping an attack, one about what recovery costs."
             />
             <div className="grid gap-6 md:grid-cols-2">
-              <FactCard fact={allFacts.find(f => f.id === "microsoft-mfa-blocks-2025")!} onCopy={handleCopy} copiedId={copiedId} />
-              <FactCard fact={allFacts.find(f => f.id === "ransomware-recovery")!} onCopy={handleCopy} copiedId={copiedId} />
+              <FactCard fact={allFacts.find(f => f.id === "microsoft-mfa-blocks-2025")!} tone="paper" onCopy={handleCopy} copiedId={copiedId} />
+              <FactCard fact={allFacts.find(f => f.id === "ransomware-recovery")!} tone="paper" onCopy={handleCopy} copiedId={copiedId} />
             </div>
           </Container>
         </Chapter>

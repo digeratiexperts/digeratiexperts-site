@@ -19,7 +19,9 @@ import {
   ledeClass,
   titleClass,
   textLinkClass,
+  contentTone,
   type ChapterTone,
+  type FieldTone,
 } from "@/components/home/HomeChapter";
 
 /**
@@ -50,8 +52,9 @@ export {
   ledeClass,
   titleClass,
   textLinkClass,
+  contentTone,
 };
-export type { ChapterTone };
+export type { ChapterTone, FieldTone };
 
 /** Heading ink per tone. */
 export function inkClass(tone: ChapterTone) {

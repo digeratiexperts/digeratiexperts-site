@@ -30,6 +30,17 @@
 
 version: 2
 claims:
+  - id: menu-pages-upgrade
+    owner: claude
+    subsystem: marketing-menu-pages
+    branch: claude/menu-pages-upgrade-20261023
+    base_sha: 8cdb1202
+    files:
+      - client/src/components/home/HomeChapter.tsx (FieldTone signal + ink fields), chapters.tsx, Atmosphere.tsx, client/src/index.css
+      - client/src/pages/GenericServicePage.tsx and menu-linked solution, industry, resource, about, /go and contact pages (section fields)
+      - client/src/data/pricing.ts, offering.ts (new), campaigns.ts, resourceRegistry.ts, client/src/lib/quoteMatch.ts, shared/routeMeta.json (offering wording)
+    status: active
+    started: 2026-10-23
   - id: license-kit-vault-docs
     owner: claude
     subsystem: licensing
@@ -135,7 +146,7 @@ claims:
       - client/src/pages/homepage-v2/ (new; Step 2 build at /, from design/reference/homepage-v2)
       - design/reference/homepage-v2/ (approved reference copied in, sha256 7d9bbfe4e81d)
       - design/DESIGN-AUTHORITY.md (gold exception inside t-ink sections, Joe 2026-10-22)
-    status: active
+    status: verified-live
     notes: |
       Homepage v2 swap (Joe, 2026-10-22). Step 1: current / kept at /concepts/home-classic.
       Step 2: v2 at / built as components; PR stays a draft; Joe merges and deploys.

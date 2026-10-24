@@ -16,7 +16,7 @@ export const servicePageData = {
     benefits: [
       "Predictable monthly costs with no surprises",
       "Zero internal IT staff required",
-      "24/7 security baseline built into every plan",
+      "Security baseline built into every plan; 24/7 MDR on Business and Enterprise",
       "Vendor coordination handled—no more vendor juggling",
       "Compliance optional: add modules only when needed",
       "Monthly service summaries and quarterly business reviews available"
@@ -145,7 +145,7 @@ export const servicePageData = {
   },
   'threat-detection': {
     title: "Threat Detection & Response",
-    subtitle: "24/7 security monitoring and real incident response",
+    subtitle: "24/7 security monitoring and real incident response on ProActive Business and Enterprise",
     description: "Threat Detection & Response is detection + triage + containment + guided recovery. We monitor endpoints, cloud apps, email, and network events 24/7 for threats. When we see something, we investigate, contain (isolate endpoints, reset credentials), and walk you through recovery. Not just alerts—real response.",
     features: [
       { title: "24/7 Telemetry Monitoring", description: "Real-time monitoring of endpoints, cloud apps, email, and gateway security events" },

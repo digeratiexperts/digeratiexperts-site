@@ -1,4 +1,4 @@
-import { CheckCircle2, PackageCheck, ShieldCheck, SlidersHorizontal, Wrench } from "lucide-react";
+import { CheckCircle2, KeyRound, Laptop, PackageCheck, ShieldCheck, SlidersHorizontal, Truck, Wrench } from "lucide-react";
 import { PageTemplate } from "@/components/PageTemplate";
 import {
   Chapter,
@@ -11,6 +11,7 @@ import {
 } from "@/components/site/chapters";
 import { SolutionsRelationshipTable } from "@/components/site/SolutionsRelationshipTable";
 import { useSEO } from "@/hooks/useSEO";
+import { THIRD_LANE_NAME } from "@/data/offering";
 
 const standalonePrinciples = [
   {
@@ -33,6 +34,14 @@ const standalonePrinciples = [
     title: "No managed-IT enrollment",
     body: "Your business or existing IT provider owns ongoing operation unless you separately select DE support or move into a Co-Managed or ProActive relationship.",
   },
+];
+
+/** The under-30-user lane (Joe, 2026-10-22). No assessment required; distributors never named. */
+const readyToWork = [
+  { icon: Laptop, title: "We buy the devices", body: "Laptops, desktops and peripherals sourced for your team." },
+  { icon: Wrench, title: "We set them up and test them", body: "Configured, secured and tested before they leave us." },
+  { icon: Truck, title: "We ship them ready to use", body: "Delivered to your office or your people, ready on day one." },
+  { icon: KeyRound, title: "Per-user licenses through DE", body: "Microsoft 365 and other per-user licenses, managed with the devices." },
 ];
 
 const flow = [
@@ -127,16 +136,33 @@ export default function StandaloneServices() {
         </Container>
       </Chapter>
 
-      <Chapter tone="surface" aria-labelledby="relationship-compare">
+      <Chapter tone="ink" aria-labelledby="ready-to-work">
         <Container>
           <ChapterHeader
-            tone="surface"
+            tone="well"
+            eyebrow="Under 30 users"
+            title={`${THIRD_LANE_NAME}: devices and licenses, set up before they reach you`}
+            titleId="ready-to-work"
+            lede="For business owners and IT departments, in Arizona and beyond. No assessment needed."
+          />
+          <FeatureGrid
+            tone="well"
+            columns={4}
+            items={readyToWork.map((p) => ({ icon: p.icon, title: p.title, text: p.body }))}
+          />
+        </Container>
+      </Chapter>
+
+      <Chapter tone="signal" aria-labelledby="relationship-compare">
+        <Container>
+          <ChapterHeader
+            tone="paper"
             eyebrow="Compare"
             title="Choose the relationship, not a duplicate catalog"
             titleId="relationship-compare"
             layout="stack"
           />
-          <SolutionsRelationshipTable tone="surface" rows={comparisons} label="Standalone services table" />
+          <SolutionsRelationshipTable tone="paper" rows={comparisons} label="Standalone services table" />
         </Container>
       </Chapter>
 

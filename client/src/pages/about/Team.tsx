@@ -131,7 +131,7 @@ export default function Team() {
           {
             icon: Activity,
             title: "24/7 monitoring",
-            text: "Security operations coverage as documented in our SLA.",
+            text: "On ProActive Business and Enterprise, as documented in our SLA.",
           },
           {
             icon: Clock,
