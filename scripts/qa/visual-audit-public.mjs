@@ -52,7 +52,10 @@ try {
       assert(!/\b(?:free|complimentary)\s+(?:(?:it\s+)?(?:cybersecurity|cyber\s+risk|security|risk)\s+)?assessment\b/i.test(await page.locator('body').innerText()), `${route}: unsupported free assessment offer`);
       const leadForm = page.locator('#assessment-form');
       if (await leadForm.count()) {
-        await leadForm.getByRole('heading', { name: 'Request a Cyber Risk Assessment', exact: true }).waitFor();
+        // The live homepage (Lane H) reads "Request your assessment here"; the frozen
+        // version archives keep their archived heading and must not change.
+        const leadHeading = route === '/' ? 'Request your assessment here' : 'Request a Cyber Risk Assessment';
+        await leadForm.getByRole('heading', { name: leadHeading, exact: true }).waitFor();
         assert(await leadForm.getByText('Scope and fees confirmed before work begins', { exact: true }).count(), `${route}: assessment terms missing`);
       }
       const announcement = page.getByTestId('announce-start-assessment');

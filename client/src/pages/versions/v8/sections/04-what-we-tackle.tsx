@@ -1,7 +1,10 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { Link } from "wouter";
+import type { MouseEvent } from "react";
 import { revealInitial, revealInView, revealTransition, revealViewport } from "@/lib/animations";
+import { useBooking } from "@/contexts/BookingContext";
+import { HOME_CTA } from "../cta";
 import "./04-what-we-tackle.css";
 import { ChapterPattern } from "@/components/site/Atmosphere";
 
@@ -10,8 +13,10 @@ import { ChapterPattern } from "@/components/site/Atmosphere";
  * artifacts/design-concepts/homepage-sections-2026-10/sections/04-what-we-tackle.html.
  * Copy, destinations and test ids from
  * client/src/pages/sections/DigeratiWhatWeTackleSection.tsx. Reading order is
- * row-major as the mock (live is column-first); "Discuss Your Security Needs"
- * opens /book in the same tab (live's target=_blank is a recorded defect, T-06).
+ * row-major as the mock (live is column-first); the challenge CTA opens /book in
+ * the same tab (live's target=_blank is a recorded defect, T-06).
+ * Lane H: the section id lives on the chapter wrapper in HomepageV8.tsx (it used
+ * to collide with the chapter's), and the CTA is the CTA system's primary label.
  */
 
 const CHALLENGES = [
@@ -55,6 +60,15 @@ const CHALLENGES = [
 
 export function V8WhatWeTackle(): JSX.Element {
   const prefersReducedMotion = useReducedMotion();
+  const { openBooking } = useBooking();
+  // Same context model the hero, proof, team and monitoring CTAs use: the booking
+  // source names the homepage section the visitor came from (Lane H §6, existing
+  // scope model only). Modified clicks keep the /book href.
+  const openFromSection = (source: string) => (e: MouseEvent<HTMLAnchorElement>) => {
+    if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    e.preventDefault();
+    openBooking(source);
+  };
   const reveal = {
     initial: prefersReducedMotion ? false : revealInitial,
     whileInView: revealInView,
@@ -63,7 +77,7 @@ export function V8WhatWeTackle(): JSX.Element {
   } as const;
 
   return (
-    <section className="f-paper v8-section" id="challenges" aria-labelledby="what-we-tackle-title">
+    <section className="f-paper v8-section" aria-labelledby="what-we-tackle-title">
       <ChapterPattern variant="dots" />
       <div className="v8-canvas">
         <motion.div className="tackle__head" {...reveal}>
@@ -105,8 +119,13 @@ export function V8WhatWeTackle(): JSX.Element {
           <p className="v8-lede">
             Don&apos;t see your specific challenge? We handle custom threat profiles across Arizona.
           </p>
-          <a className="v8-btn v8-btn--primary" href="/book" data-testid="tackle-cta">
-            Discuss Your Security Needs <ArrowRight size={18} strokeWidth={1.8} aria-hidden="true" />
+          <a
+            className="v8-btn v8-btn--primary"
+            href="/book"
+            onClick={openFromSection("tackle_section")}
+            data-testid="tackle-cta"
+          >
+            {HOME_CTA.primary} <ArrowRight size={18} strokeWidth={1.8} aria-hidden="true" />
           </a>
         </div>
       </div>

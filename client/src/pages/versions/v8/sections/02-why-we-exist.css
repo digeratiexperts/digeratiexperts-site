@@ -1,5 +1,7 @@
 .v8 #why-we-exist { border-top: 1px solid var(--v8-paper-hairline); }
-.v8 .v8s-02 .why { display: grid; grid-template-columns: minmax(0, 640px) minmax(0, 600px); grid-template-areas: "statement claims" "ask claims"; justify-content: space-between; column-gap: clamp(48px, 6vw, 96px); align-items: start; }
+/* Lane H: the credibility strip is thin — statement and claims side by side, no CTA band
+   (its primary/secondary pair now lives in the closing block). */
+.v8 .v8s-02 .why { display: grid; grid-template-columns: minmax(0, 640px) minmax(0, 600px); grid-template-areas: "statement claims"; justify-content: space-between; column-gap: clamp(48px, 6vw, 96px); align-items: start; }
 .v8 .v8s-02 .why__statement { grid-area: statement; max-width: 640px; }
 .v8 .v8s-02 .why .v8-eyebrow { line-height: 20px; }
 .v8 .v8s-02 .why__claims { grid-area: claims; margin-top: 42px; }
@@ -11,7 +13,7 @@
 .v8 .v8s-02 .claims { grid-template-columns: minmax(0, 1fr); }
 .v8 .v8s-02 .claims > * { padding: 0; border-left: 0; border-top: 1px solid var(--v8-paper-hairline); }
 .v8 .v8s-02 .claims > *:first-child { border-top: 0; }
-.v8 .v8s-02 .claim { position: relative; display: grid; grid-template-columns: 12px minmax(0, 1fr) 20px; column-gap: 16px; padding: 24px 24px 24px 28px; }
+.v8 .v8s-02 .claim { position: relative; display: grid; grid-template-columns: 12px minmax(0, 1fr) 20px; column-gap: 16px; padding: 18px 20px 18px 24px; }
 .v8 .v8s-02 .claim .v8-dash { grid-column: 1; grid-row: 1; align-self: start; width: 12px; height: 2px; margin: 10px 0 0; background: var(--v8-magenta); vertical-align: top; }
 .v8 .v8s-02 .claim__title { grid-column: 2; grid-row: 1; line-height: 22px; }
 .v8 .v8s-02 .claim__title a { color: var(--v8-ink); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; text-decoration-color: rgba(26, 18, 16, 0.28); transition: color 200ms ease-out, text-decoration-color 200ms ease-out; }
@@ -24,9 +26,8 @@
 .v8 .v8s-02 .claim__title a:focus-visible { outline: none; }
 .v8 .v8s-02 .claim__title a:focus-visible::after { outline: 2px solid #ec4899; outline-offset: -2px; }
 @media (max-width: 1023px) {
-  .v8 .v8s-02 .why { grid-template-columns: minmax(0, 1fr); grid-template-areas: "statement" "claims" "ask"; row-gap: 32px; }
+  .v8 .v8s-02 .why { grid-template-columns: minmax(0, 1fr); grid-template-areas: "statement" "claims"; row-gap: 32px; }
   .v8 .v8s-02 .why__claims { margin-top: 0; }
-  .v8 .v8s-02 .why__ask { margin-top: 0; border-top: 0; padding-top: 0; }
 }
 @media (max-width: 639px) {
   .v8 .v8s-02 .claim { padding: 20px 16px 20px 20px; column-gap: 12px; }

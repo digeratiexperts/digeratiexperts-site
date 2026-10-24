@@ -24,7 +24,7 @@ import type { LucideIcon } from "lucide-react";
 import { Link } from "wouter";
 import { useBooking } from "@/contexts/BookingContext";
 import { analytics } from "@/lib/analytics";
-import { CTA } from "@/lib/ctaCopy";
+import { HOME_CTA } from "../cta";
 import { PRIMARY_PHONE } from "@/data/companyContact";
 import { PronunciationCard } from "@/components/PronunciationCard";
 import { TipTag } from "./TipTag";
@@ -481,15 +481,15 @@ export function V8Hero({ aside }: { aside?: ReactNode } = {}): JSX.Element {
 
             <div className="hero__actions">
               <a
-                className="v8-btn v8-btn--hero"
+                className="v8-btn v8-btn--primary"
                 href="/book"
                 onClick={openAssessment}
                 data-testid="button-hero-schedule"
               >
-                {CTA.heroPrimary} <ArrowRight {...ICON} />
+                {HOME_CTA.primary} <ArrowRight {...ICON} />
               </a>
-              <Link className="v8-btn v8-btn--outline" href={CTA.secondaryHref} data-testid="button-hero-pricing">
-                {CTA.secondary}
+              <Link className="v8-btn v8-btn--outline" href="/proactive-ecosystem-pricing" data-testid="button-hero-pricing">
+                See Plans &amp; Pricing
               </Link>
             </div>
 
@@ -538,10 +538,12 @@ export function V8Hero({ aside }: { aside?: ReactNode } = {}): JSX.Element {
 
       {/* Joe, 2026-10-03: the live homepage's trust strip reads better than V7's
           heading-over-cells, so V8 uses its layout (ruled label, four items with
-          dividers, white icon tiles) on the white band instead of the cream. */}
-      <section className="f-paper tstrip" aria-labelledby="trust-title">
+          dividers, white icon tiles) on the white band instead of the cream.
+          id is "tstrip-title", not "trust-title": the proof-and-trust chapter
+          owns "trust-title" (they used to collide). */}
+      <section className="f-paper tstrip" aria-labelledby="tstrip-title">
         <div className="v8-canvas tstrip__row">
-          <h2 id="trust-title" className="tstrip__label">
+          <h2 id="tstrip-title" className="tstrip__label">
             Trusted IT partner
             <span>for Arizona businesses</span>
           </h2>

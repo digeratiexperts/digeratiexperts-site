@@ -30,6 +30,29 @@
 
 version: 2
 claims:
+  - id: lane-h-homepage-refinement
+    issue: 696
+    owner: opencode
+    subsystem: homepage
+    branch: opencode/lane-h-homepage-20261022
+    base_sha: 398f4d6f
+    pr: 698
+    files:
+      - client/src/pages/versions/v8/** (homepage V8 only: one CTA system, canonical names, visitor copy, section consolidation)
+      - docs/lanes/lane-h-homepage.md, docs/lanes/lane-h-phase0.md (log and Phase 0 report)
+    status: active
+    started: 2026-10-22
+    note: >-
+      Lane H, Wave 1 (docs/plans/opencode/lane-h-homepage.md + lane-h-update-1.md).
+      V8 at / refined in place: nothing ported from /version-3, V8 hero kept, threat
+      feed moved off the homepage to a Security Updates link (route and component
+      kept), 02 folded into a thin credibility strip, 07+08+09 merged into
+      proof-and-trust, 15+16 merged into one closing block, story-spine order, every
+      section id kept working with aliases. Homepage-scoped CTA labels live in
+      versions/v8/cta.ts; shared chrome (MegaMenu, StickyCTABar) is NOT edited and
+      its compact labels are a cross-lane follow-up. Assessment price (FAQ) and a
+      client testimonial stay unpublished with TODO (Joe) comments. No deploy;
+      production lags main until Joe deploys.
   - id: menu-pages-upgrade
     owner: claude
     subsystem: marketing-menu-pages
@@ -90,7 +113,7 @@ claims:
       - server/ (route guards / permission enforcement)
       - migrations/ (additive only: DE company record, role model)
       - scripts/sampleDataGuard.mjs + .github/workflows (report-only guardrail)
-    status: active
+    status: merged
     started: 2026-10-22
     note: >-
       Lane A of the approved portal/homepage build (docs/plans/opencode/).
@@ -4809,3 +4832,19 @@ claims:
       Contracts goes break-glass only because its /api/admin/contracts calls
       have no server routes. Overlaps the license-kit-vault-docs claim only in
       server/routes.ts (one guard line); server/licenseBoardRoutes.ts untouched.
+  - id: homepage-v2-copy-port
+    owner: claude
+    subsystem: homepage
+    branch: claude/sleepy-johnson-bkojbp
+    base_sha: 6bf3208
+    started: 2026-10-24
+    files:
+      - client/src/pages/homepage-v2/sections/{Hero,Detect,Fit,Challenges,Services,Contact,Team}Section.tsx, SiteFooter.tsx (CTA labels and names only)
+      - client/src/pages/homepage-v2/cta.ts (header comment), homepage-v2.css (.nowrap, .team-cta)
+    status: in-review
+    note: >-
+      Joe, 2026-10-24: "yes port them to homepage v2". Ports #698's copy and
+      CTA fixes from V8 to homepage v2 at /: one primary label from HOME_CTA,
+      the form submit "Request Assessment", "Talk to an Expert" as the
+      secondary style with the phone, canonical service names, and the
+      "signals surface immediately" speed claim softened. Layout unchanged.

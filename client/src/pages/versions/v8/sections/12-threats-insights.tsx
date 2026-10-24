@@ -1,10 +1,8 @@
 import { Link } from "wouter";
 import { motion, useReducedMotion } from "framer-motion";
 import { revealInitial, revealInView, revealTransition, revealViewport } from "@/lib/animations";
-import { useThreatFeed } from "@/hooks/useThreatFeed";
 import { useBooking } from "@/contexts/BookingContext";
-import { CTA } from "@/lib/ctaCopy";
-import { formatThreatDate, THREAT_ATTRIBUTION, type ThreatItem } from "@shared/threatFeed";
+import { HOME_CTA } from "../cta";
 import { TipTag } from "./TipTag";
 import "./12-threats-insights.css";
 import { ChapterPattern } from "@/components/site/Atmosphere";
@@ -13,7 +11,9 @@ import officeEveningImg from "@assets/de-arizona-office-evening-960.webp";
 
 /**
  * Section 12 (mock: artifacts/design-concepts/homepage-sections-2026-10/sections/12-threats-insights.html).
- * Block 1: the live threat feed (useThreatFeed("homepage"), API order, live loading/empty shells).
+ * Block 1: a small link to Security Updates (Lane H, 2026-10-22: the threat feed moved off the
+ * homepage — it was often empty at the homepage threshold and duplicated threat messaging. The
+ * full stream stays at /resources/security-updates with its own route and component).
  * Block 2: "Monitoring that ends with a person who owns the outcome" (live DigeratiAIAssistanceSection copy,
  * booking source "ai_assistance_section").
  */
@@ -37,13 +37,6 @@ const ArrowIcon = () => (
     <path d="m12 5 7 7-7 7" />
   </svg>
 );
-const ExternalIcon = () => (
-  <svg {...svgProps}>
-    <path d="M15 3h6v6" />
-    <path d="M10 14 21 3" />
-    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-  </svg>
-);
 const CheckIcon = () => (
   <svg {...svgProps}>
     <path d="M20 6 9 17l-5-5" />
@@ -61,16 +54,6 @@ const LayersIcon = () => (
     <path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65" />
   </svg>
 );
-
-function sourceLine(item: ThreatItem): string {
-  return `${item.sourceName}${item.vendor ? ` · ${item.vendor}` : ""}${item.cve ? ` · ${item.cve}` : ""}`;
-}
-
-function capturedDate(iso: string | null): string | null {
-  if (!iso) return null;
-  const ms = Date.parse(iso);
-  return Number.isNaN(ms) ? null : new Date(ms).toISOString().slice(0, 10);
-}
 
 const monitorChecks = [
   "Partner-backed detection and alerting across endpoints and identity",
@@ -91,92 +74,40 @@ export function V8ThreatsInsights(): JSX.Element {
           transition: { ...revealTransition, delay },
         };
   const { openBooking } = useBooking();
-  const { payload, loading } = useThreatFeed("homepage");
-  const items = payload.items;
-  const captured = capturedDate(payload.generatedAt);
 
   return (
     <>
-      {/* Nothing to show once loaded: drop the whole chapter rather than a "no items" box; Security Updates keeps the full stream. */}
-      {loading || items.length > 0 ? (
-        <section className="f-well v8-section feed" aria-labelledby="insights-heading" data-testid="v8-insights">
-          <ChapterPattern variant="lattice" />
-          <div className="v8-canvas">
-            <motion.div className="feed-head" {...reveal()}>
-              <div className="v8-head">
-                <p className="v8-eyebrow">Security Updates</p>
-                <h2 className="v8-h2" id="insights-heading">
-                  Recent Threats &amp; Insights<span className="v8-colon" aria-hidden="true">:</span>
-                </h2>
-                <p className="v8-lede">
-                  Current items prioritized by active exploitation, exploit probability, and SMB relevance. Full stream,
-                  dates, and sources live on{" "}
-                  <Link className="v8-link--quiet" href="/resources/security-updates">
-                    Security Updates
-                  </Link>
-                  .
-                </p>
-              </div>
-              <div className="feed-actions">
-                <Link className="v8-btn v8-btn--outline" href="/resources/security-updates" data-testid="view-all-updates">
-                  View All Security Updates <ArrowIcon />
+      {/* Small link to Security Updates (Lane H): the feed itself moved off the homepage —
+          it was often empty at the homepage threshold and duplicated threat messaging. */}
+      <section className="f-well v8-section feed feed--link" aria-labelledby="insights-heading" data-testid="v8-insights">
+        <ChapterPattern variant="lattice" />
+        <div className="v8-canvas">
+          <motion.div className="feed-head feed-head--link" {...reveal()}>
+            <div className="v8-head">
+              <p className="v8-eyebrow">Security Updates</p>
+              <h2 className="v8-h2--sub" id="insights-heading">
+                Current threats &amp; insights<span className="v8-colon" aria-hidden="true">:</span>
+              </h2>
+              <p className="v8-lede">
+                Prioritized by active exploitation, exploit probability, and business relevance. Full stream, dates,
+                and sources live on{" "}
+                <Link className="v8-link--quiet" href="/resources/security-updates">
+                  Security Updates
                 </Link>
-                <Link className="v8-link" href="/resources/blog" data-testid="view-digerati-journal">
-                  Read the Digerati Journal <ArrowIcon />
-                </Link>
-              </div>
-            </motion.div>
-
-            {loading ? (
-              <div className="v8-card feed-state" data-testid="insights-loading" role="status">
-                <p className="v8-h4">Loading current threats…</p>
-                <p className="v8-body">Checking CISA, FIRST, NVD, and Microsoft MSRC. Nothing is invented while this loads.</p>
-              </div>
-            ) : (
-              <>
-                <p className="feed-caption" id="feed-caption">
-                  <span className="v8-tag v8-tag--live">
-                    {captured ? `Live feed · Captured ${captured}` : "Live feed"}
-                  </span>
-                </p>
-                <ul className="v8-grid v8-grid--2 feed-grid" aria-describedby="feed-caption">
-                  {items.map((item, index) => (
-                    <motion.li key={item.id} {...reveal(index * 0.04)}>
-                      <article className="v8-card--paper feed-card" data-testid={`insight-card-${index}`}>
-                        <div className="feed-card__row">
-                          <span
-                            className={`v8-tag v8-tag--paper${item.severity === "critical" ? " feed-tag--critical" : ""}`}
-                          >
-                            {item.kicker}
-                          </span>
-                          <time className="feed-date" dateTime={item.publishedAt.slice(0, 10)}>
-                            {formatThreatDate(item.publishedAt)}
-                          </time>
-                        </div>
-                        <h3 className="v8-h3">{item.title}</h3>
-                        <p className="feed-card__excerpt">{item.excerpt}</p>
-                        <div className="feed-card__foot">
-                          <span className="feed-card__src">{sourceLine(item)}</span>
-                          <a className="v8-link" href={item.sourceUrl} target="_blank" rel="noopener noreferrer">
-                            Read source
-                            <span className="sr-only">
-                              {" "}
-                              for {item.cve ?? item.title} on {item.sourceName} (opens in new tab)
-                            </span>{" "}
-                            <ExternalIcon />
-                          </a>
-                        </div>
-                      </article>
-                    </motion.li>
-                  ))}
-                </ul>
-              </>
-            )}
-
-            <p className="v8-small feed-sources">{payload.attribution || THREAT_ATTRIBUTION}</p>
-          </div>
-        </section>
-      ) : null}
+                .
+              </p>
+            </div>
+            <div className="feed-actions">
+              <Link className="v8-btn v8-btn--outline" href="/resources/security-updates" data-testid="view-all-updates">
+                View Security Updates <ArrowIcon />
+              </Link>
+              <Link className="v8-link" href="/resources/blog" data-testid="view-digerati-journal">
+                Read the Digerati Journal <ArrowIcon />
+              </Link>
+            </div>
+          </motion.div>
+        </div>
+      </section>
 
       <section className="f-well v8-section monitor" aria-labelledby="monitor-heading">
         <ChapterPattern variant="lattice" />
@@ -187,8 +118,8 @@ export function V8ThreatsInsights(): JSX.Element {
               Monitoring that ends with a person who owns the outcome
             </h2>
             <p className="v8-lede">
-              We leverage modern threat detection tooling so signals surface immediately — then our team investigates,
-              prioritizes, and acts. Technology scales coverage; accountability remains human.
+              Modern threat detection tooling surfaces the signals — then our team investigates, prioritizes, and acts.
+              Technology scales coverage; accountability remains human.
             </p>
 
             <ul className="monitor-checks">
@@ -233,7 +164,7 @@ export function V8ThreatsInsights(): JSX.Element {
                 }}
                 data-testid="button-ai-section-assessment"
               >
-                {CTA.primary} <ArrowIcon />
+                {HOME_CTA.primary} <ArrowIcon />
               </a>
             </p>
           </motion.div>
@@ -258,7 +189,7 @@ export function V8ThreatsInsights(): JSX.Element {
                 <span className="v8-seq">01</span>
                 <div>
                   <span className="dg-label">Signal</span>
-                  <p className="v8-small">Signals surface immediately</p>
+                  <p className="v8-small">Detection tooling surfaces the signals</p>
                 </div>
               </li>
               <li className="dg-step dg-step--hot">

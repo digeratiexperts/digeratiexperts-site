@@ -1,5 +1,6 @@
 import { CheckIcon } from "../icons";
 import { objectIcon, THIRD_LANE_NAME } from "../content";
+import { HOME_CTA } from "../cta";
 
 /** Managed IT always starts with the assessment; the third lane skips it (approved content rule). */
 export function ServicesSection(): JSX.Element {
@@ -25,7 +26,7 @@ export function ServicesSection(): JSX.Element {
                 <b>Cyber Risk Assessment</b>
                 <p>We review identity, endpoints, email, backups, and security posture. Then you choose fully managed or co-managed.</p>
               </div>
-              <a href="#contact" className="btn btn-cta">Get my assessment</a>
+              <a href="#contact" className="btn btn-cta">{HOME_CTA.primary}</a>
             </div>
             <div className="then">Then choose how much we own</div>
             <div className="grid g2">
@@ -67,11 +68,11 @@ export function ServicesSection(): JSX.Element {
             <a className="link" href="/solutions/proactive-ecosystem">How the ecosystem works</a>
           </div>
           <div className="eco-grid">
-            <a href="/solutions/proactive-business-ecosystem"><img src={objectIcon("eye")} alt="" /><div><h4>SOC / MDR monitoring</h4><p>24/7 detection and response on Business and Enterprise.</p></div></a>
-            <a href="/solutions/endpoint-management"><img src={objectIcon("laptop")} alt="" /><div><h4>Endpoint security (EDR)</h4><p>Protect devices across the environment.</p></div></a>
-            <a href="/solutions/identity-management"><img src={objectIcon("people")} alt="" /><div><h4>SMART Identity (MFA + SSO)</h4><p>Stronger access without user chaos.</p></div></a>
+            <a href="/solutions/proactive-business-ecosystem"><img src={objectIcon("eye")} alt="" /><div><h4>Detection &amp; Response <span className="nowrap">(SOC / MDR)</span></h4><p>24/7 detection and response on Business and Enterprise.</p></div></a>
+            <a href="/solutions/endpoint-management"><img src={objectIcon("laptop")} alt="" /><div><h4>Endpoint Security / EDR-MDR</h4><p>Protect devices across the environment.</p></div></a>
+            <a href="/solutions/identity-management"><img src={objectIcon("people")} alt="" /><div><h4>Identity &amp; Access Management</h4><p>Stronger access without user chaos.</p></div></a>
             <a href="/solutions/identity-management"><img src={objectIcon("lock")} alt="" /><div><h4>Privileged access controls</h4><p>Admin controls and audit visibility.</p></div></a>
-            <a href="/solutions/backup-disaster-recovery"><img src={objectIcon("backup")} alt="" /><div><h4>Backup &amp; disaster recovery</h4><p>Recovery planning and restore discipline.</p></div></a>
+            <a href="/solutions/backup-disaster-recovery"><img src={objectIcon("backup")} alt="" /><div><h4>Backup &amp; Disaster Recovery</h4><p>Recovery planning and restore discipline.</p></div></a>
             <a href="/solutions/email-security"><img src={objectIcon("email")} alt="" /><div><h4>Email protection</h4><p>Anti-phishing and mailbox defenses.</p></div></a>
           </div>
         </div>

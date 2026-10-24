@@ -13,7 +13,7 @@ import {
   Users,
   type LucideIcon,
 } from "lucide-react";
-import { CTA } from "@/lib/ctaCopy";
+import { HOME_CTA } from "../cta";
 import { revealInitial, revealInView, revealTransition, revealViewport } from "@/lib/animations";
 // v8.css first so this section's rules follow the base system in the cascade,
 // as the section stylesheet follows tokens.css in the mock.
@@ -62,15 +62,15 @@ const paths: {
     description:
       "Start with a practical review of identity, endpoints, email, backups, and security posture — then choose what to own together.",
     link: "/book",
-    cta: CTA.primary,
+    cta: HOME_CTA.primary,
     testId: "engage-assessment",
   },
 ];
 
 const capabilityPreview: { icon: LucideIcon; title: string; link: string; desc: string }[] = [
-  { icon: Eye, title: "SOC / MDR Monitoring", link: "/solutions/security-operations", desc: "24/7 detection and response." },
-  { icon: ShieldCheck, title: "Endpoint Security (EDR)", link: "/solutions/threat-detection", desc: "Protect devices across the environment." },
-  { icon: UserCheck, title: "SMART Identity (MFA + SSO)", link: "/solutions/unified-security", desc: "Stronger access without user chaos." },
+  { icon: Eye, title: "Detection & Response (SOC / MDR)", link: "/solutions/security-operations", desc: "24/7 detection and response." },
+  { icon: ShieldCheck, title: "Endpoint Security / EDR-MDR", link: "/solutions/threat-detection", desc: "Protect devices across the environment." },
+  { icon: UserCheck, title: "Identity & Access Management", link: "/solutions/unified-security", desc: "Stronger access without user chaos." },
   { icon: KeyRound, title: "Privileged Access Controls", link: "/solutions/unified-security", desc: "Admin controls and audit visibility." },
   { icon: Cloud, title: "Backup & Disaster Recovery", link: "/solutions/backup-disaster-recovery", desc: "Recovery planning and restore discipline." },
   { icon: MailCheck, title: "Email Protection", link: "/solutions/security-operations", desc: "Anti-phishing and mailbox defenses." },
@@ -99,7 +99,8 @@ export function V8Services(): JSX.Element {
               Cybersecurity-First <span className="v8-accent">Managed IT</span>
             </h2>
             <p className="v8-lede">
-              Three clear paths. Capability depth stays available here and under Protect — nothing removed.
+              Three clear paths: fully managed, co-managed, or start with an assessment. Everything we operate is
+              explained under Protect.
             </p>
           </div>
           <p className="svc-aside">
@@ -151,7 +152,7 @@ export function V8Services(): JSX.Element {
                 </span>
               </h3>
               <p className="v8-body svc-stack__lede">
-                Preview of the stack we manage — also detailed under{" "}
+                One stack, managed end to end — see how each block is operated under{" "}
                 <Link className="v8-link--quiet" href="/#protection" data-testid="link-see-security-stack">
                   Protect
                 </Link>

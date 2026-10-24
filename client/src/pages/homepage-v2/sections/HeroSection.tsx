@@ -3,6 +3,7 @@ import heroImage from "@assets/de-hero-arizona-dusk-1600.webp";
 import { DexMark } from "@/components/mascots/Mascots";
 import { CheckIcon, PhoneIcon, SoundIcon } from "../icons";
 import { PHONE_DISPLAY, PHONE_HREF, objectIcon } from "../content";
+import { HOME_CTA } from "../cta";
 
 /** See client/public/audio/README.md for how the file was made and how to replace it. */
 const PRONUNCIATION_AUDIO = "/audio/digerati-pronunciation.wav";
@@ -56,7 +57,7 @@ export function HeroSection(): JSX.Element {
           <h1>Cybersecurity-first IT that powers your business.</h1>
           <p className="lede">Managed IT, security, and compliance — built for Arizona businesses that can't afford downtime.</p>
           <div className="row">
-            <a href="#contact" className="btn btn-cta" data-testid="button-hero-schedule">Get My Cyber Risk Assessment</a>
+            <a href="#contact" className="btn btn-cta" data-testid="button-hero-schedule">{HOME_CTA.primary}</a>
             <a href="/pricing" className="btn btn-line" data-testid="button-hero-pricing">See Plans &amp; Pricing</a>
           </div>
           <div className="facts">

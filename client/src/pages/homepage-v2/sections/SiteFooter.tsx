@@ -4,7 +4,7 @@ import { EMAIL_ADDRESS, PHONE_DISPLAY, PHONE_HREF } from "../content";
 
 const COLUMNS = [
   { title: "Client", links: [["Client Portal", "/portal/login"], ["Submit Ticket", "/support/submit-ticket"], ["Remote Support", "/support/remote-support"], ["Pay Invoice", "/support/pay-invoice"]] },
-  { title: "Services", links: [["Managed IT", "/solutions/managed-it-support"], ["Cybersecurity", "/solutions"], ["Compliance & Risk", "/about/compliance"], ["Backup & DR", "/solutions/backup-disaster-recovery"]] },
+  { title: "Services", links: [["Managed IT", "/solutions/managed-it-support"], ["Cybersecurity", "/solutions"], ["Compliance & Risk", "/about/compliance"], ["Backup & Disaster Recovery", "/solutions/backup-disaster-recovery"]] },
   { title: "Resources", links: [["Digerati Journal", "/resources/blog"], ["Cyber Facts", "/resources/cyber-facts"], ["Knowledge Base", "/support/knowledge-base"], ["Contact", "#contact"]] },
 ];
 
