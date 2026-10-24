@@ -30,6 +30,17 @@
 
 version: 2
 claims:
+  - id: design-basics-type-titles-labels
+    owner: claude
+    subsystem: marketing-typography
+    branch: claude/design-basics-20261024
+    base_sha: a30a1ae4
+    files:
+      - tailwind.config.ts, client/index.html, client/src/index.css (one family)
+      - client/src/components/PageTemplate.tsx (no statement colon)
+      - client/src/components/home/HomeChapter.tsx, client/src/components/site/chapters.tsx, client/src/components/site/SolutionsRelationshipTable.tsx (sentence-case labels)
+    status: active
+    started: 2026-10-24
   - id: lane-h-homepage-refinement
     issue: 696
     owner: opencode
@@ -62,7 +73,7 @@ claims:
       - client/src/components/home/HomeChapter.tsx (FieldTone signal + ink fields), chapters.tsx, Atmosphere.tsx, client/src/index.css
       - client/src/pages/GenericServicePage.tsx and menu-linked solution, industry, resource, about, /go and contact pages (section fields)
       - client/src/data/pricing.ts, offering.ts (new), campaigns.ts, resourceRegistry.ts, client/src/lib/quoteMatch.ts, shared/routeMeta.json (offering wording)
-    status: active
+    status: verified-live
     started: 2026-10-23
   - id: license-kit-vault-docs
     owner: claude

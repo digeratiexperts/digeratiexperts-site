@@ -237,7 +237,7 @@ export function HeroFacts({
   return (
     <div className={cn(cardDark, "p-6 md:p-7")}>
       {title && (
-        <p className="mb-4 font-mono text-xs font-semibold uppercase tracking-[0.18em] text-white/55">{title}</p>
+        <p className="mb-4 text-sm font-semibold text-white/60">{title}</p>
       )}
       <dl className="divide-y divide-[var(--de-hairline)]">
         {rows.map((r) => (
@@ -370,7 +370,7 @@ export function FeatureGrid({
               {f.tag && (
                 <span
                   className={cn(
-                    "ml-2 align-middle font-mono text-xs font-semibold uppercase tracking-[0.12em]",
+                    "ml-2 align-middle text-[13px] font-semibold",
                     tone === "paper" ? "text-de-magenta-paper-ink" : "text-de-magenta-ink",
                   )}
                 >
@@ -459,7 +459,7 @@ export function StepRail({ steps, tone }: { steps: Step[]; tone: ChapterTone }) 
             {String(i + 1).padStart(2, "0")}
           </span>
           {s.meta && (
-            <p className={cn("mt-5 font-mono text-xs font-semibold uppercase tracking-[0.16em]", tone === "paper" ? "text-black/55" : "text-white/50")}>
+            <p className={cn("mt-5 text-sm font-semibold", tone === "paper" ? "text-black/60" : "text-white/55")}>
               {s.meta}
             </p>
           )}

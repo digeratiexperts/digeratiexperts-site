@@ -8,11 +8,13 @@ module.exports = {
     extend: {
       fontFamily: {
         "paragraph-2": "var(--paragraph-2-font-family)",
-        // Primary font system - Space Grotesk for headings, Inter for body
+        // One family sitewide (Joe 2026-10-24, matches the approved Homepage v2 and the Store):
+        // Space Grotesk for headings, body and data labels. `mono` keeps a real monospace
+        // fallback only for code; figures use tabular-nums where they line up.
         heading: ['"Space Grotesk"', 'system-ui', 'sans-serif'],
-        sans: ['"Inter"', 'system-ui', 'sans-serif'],
-        body: ['"Inter"', 'system-ui', 'sans-serif'],
-        mono: ['"Oxanium"', '"JetBrains Mono"', 'monospace'],
+        sans: ['"Space Grotesk"', 'system-ui', 'sans-serif'],
+        body: ['"Space Grotesk"', 'system-ui', 'sans-serif'],
+        mono: ['"Space Grotesk"', 'ui-monospace', 'SFMono-Regular', 'monospace'],
       },
       colors: {
         border: "hsl(var(--border))",
