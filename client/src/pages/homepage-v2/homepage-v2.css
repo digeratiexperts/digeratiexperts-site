@@ -1761,3 +1761,10 @@
    link strip with no feed on the homepage. Carry this into the generator if it is added. */
 .hv2 #insights.sec{padding:64px 0}
 .hv2 #insights .head{margin-bottom:0}
+
+/* Footer newsletter on phones: stack the field above the button so the field keeps its width. */
+@media (max-width:680px){
+  .hv2 .news{flex-direction:column;max-width:none}
+  .hv2 .news input{min-width:0;width:100%}
+  .hv2 .news button{height:48px;width:100%}
+}
