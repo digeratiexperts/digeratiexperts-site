@@ -1,0 +1,43 @@
+{
+  "task": "ool_index_hero_abstract_object_study",
+  "output": {
+    "type": "single_image",
+    "layout": "1x1",
+    "aspect_ratio": "16:9",
+    "resolution": "1K",
+    "camera_style": "professional_studio_macro"
+  },
+  "image_quality_simulation": {
+    "sharpness": "clean_and_crisp",
+    "noise": "clean_digital",
+    "compression_artifacts": false,
+    "dynamic_range": "hdr_capable",
+    "white_balance": "neutral",
+    "lens_imperfections": []
+  },
+  "subject": {
+    "type": "object_still_life",
+    "object_or_nature_details": {
+      "material_or_texture": "a single matte charcoal form with a soft satin finish, plus one small glossy magenta accent element",
+      "wear_and_tear": "none, pristine",
+      "typography": "none, no text or logos anywhere in the image"
+    }
+  },
+  "composition": {
+    "framing": "single object placed off-centre on a warm off-white surface, large negative space on the right third",
+    "lighting": "soft diffused key light from upper left, gentle contact shadow beneath the object",
+    "palette": "warm off-white ground, charcoal object, one magenta accent (#D3126A) and no other saturated colour"
+  },
+  "negative_constraints": [
+    "no people, no hands, no faces",
+    "no screens, no readable text, no logos",
+    "no hooded or hacker imagery",
+    "no clutter, no props beyond the single object"
+  ],
+  "api_parameters": {
+    "aspect_ratio": "16:9",
+    "resolution": "1K",
+    "output_format": "jpg",
+    "google_search": false
+  }
+}

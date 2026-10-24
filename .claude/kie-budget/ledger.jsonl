@@ -110,3 +110,6 @@
 {"at":"2026-10-21T23:15:11.860Z","type":"spend","job":"mascot-round3-2026-10-21","model":"nano-banana-2","credits":12,"usd":0.06,"task":"d3825b983c5639e7cbda49c54cbb821e","file":"artifacts/kie-ai/nano-banana/images/mascots/2026-10-21-r3-final-2-three-quarter.png"}
 {"at":"2026-10-21T23:15:13.750Z","type":"spend","job":"mascot-round3-2026-10-21","model":"nano-banana-2","credits":12,"usd":0.06,"task":"6821920556a5c07bcce183b6b70e318a","file":"artifacts/kie-ai/nano-banana/images/mascots/2026-10-21-r3-final-4-moods.png"}
 {"at":"2026-10-21T23:16:01.781Z","type":"close","job":"mascot-round3-2026-10-21","spentUsd":0.6000000000000001}
+{"at":"2026-10-24T05:01:26.153Z","type":"open","job":"ool-hero-direction-a","model":"nano-banana-2","count":1,"resolution":"1K","projectedCredits":8,"projectedUsd":0.04,"briefOk":"User, 2026-10-24: approved one low-res sample of direction A","note":"One Less Opportunity index hero, direction A, one low-res sample"}
+{"at":"2026-10-24T05:01:45.225Z","type":"spend","job":"ool-hero-direction-a","model":"nano-banana-2","credits":8,"usd":0.04,"task":"00b4c89bb8c9cdf1b3f985b2319ccd3c","file":"artifacts/kie-ai/nano-banana/images/client-education/2026-10-24-ool-hero-direction-a.jpg"}
+{"at":"2026-10-24T05:01:45.302Z","type":"close","job":"ool-hero-direction-a","spentUsd":0.04}
