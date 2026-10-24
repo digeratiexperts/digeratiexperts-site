@@ -1119,6 +1119,16 @@
   color:var(--ink-2);
   font-size:15px;
 }
+.hv2 .nowrap {
+  white-space:nowrap;
+  font-weight:inherit;
+}
+.hv2 .team-cta {
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:12px 18px;
+}
 .hv2 .ind {
   display:grid;
   grid-template-columns:repeat(5,1fr);

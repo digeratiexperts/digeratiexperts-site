@@ -1,4 +1,5 @@
 import deskImage from "@assets/de-trust-assessment-desk-960.webp";
+import { HOME_CTA } from "../cta";
 
 const FIT_POINTS = [
   { title: "Arizona-based", text: "Local principal support — a real person, not a ticket queue." },
@@ -22,7 +23,7 @@ export function FitSection(): JSX.Element {
               </div>
             ))}
           </div>
-          <a href="#contact" className="btn btn-cta">Get My Cyber Risk Assessment</a>
+          <a href="#contact" className="btn btn-cta">{HOME_CTA.primary}</a>
         </div>
         <div className="photo">
           <img src={deskImage} alt="Principal-led cyber risk assessment work for an Arizona business" />
