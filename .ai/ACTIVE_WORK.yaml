@@ -4847,10 +4847,45 @@ claims:
     files:
       - client/src/pages/homepage-v2/sections/{Hero,Detect,Fit,Challenges,Services,Contact,Team}Section.tsx, SiteFooter.tsx (CTA labels and names only)
       - client/src/pages/homepage-v2/cta.ts (header comment), homepage-v2.css (.nowrap, .team-cta)
-    status: in-review
+    status: verified-live
+    released: 2026-10-24
+    pr: "716"
     note: >-
       Joe, 2026-10-24: "yes port them to homepage v2". Ports #698's copy and
       CTA fixes from V8 to homepage v2 at /: one primary label from HOME_CTA,
       the form submit "Request Assessment", "Talk to an Expert" as the
       secondary style with the phone, canonical service names, and the
       "signals surface immediately" speed claim softened. Layout unchanged.
+  - id: portal-data-import-honest
+    owner: claude
+    subsystem: portal
+    branch: claude/sleepy-johnson-bkojbp
+    base_sha: a30a1ae
+    started: 2026-10-24
+    files:
+      - client/src/pages/portal/AdminImport.tsx (rewritten: no dead buttons or dev notes)
+      - client/src/components/portal/shell/portalNav.ts (Data Import loses its sample flags)
+      - client/src/components/portal/shell/portalNav.test.ts (sample example is now VPN Access)
+      - docs/PORTAL-SAMPLE-BUILDOUT-PLAN.md (progress log)
+    status: in-review
+    note: >-
+      Slice H, D7 default ("not now; drop the badge with honest copy"). Joe,
+      2026-10-24: "Data Import ... fix it please". The page says DE ops runs
+      Zoho and JumpCloud syncs on request, Seamless.ai is not connected (paid),
+      and links the CSV imports that exist (VPN devices, shipments). The
+      Zoho/JumpCloud importer itself stays a separate slice.
+  - id: pronunciation-voice-piper
+    owner: claude
+    subsystem: homepage
+    branch: claude/sleepy-johnson-bkojbp
+    base_sha: abe95fe
+    started: 2026-10-24
+    files:
+      - client/public/audio/digerati-pronunciation.wav (replaced with Piper ryan-high), digerati-pronunciation-backup.mp3 (new, Piper lessac-high), README.md
+      - client/src/pages/homepage-v2/sections/HeroSection.tsx, client/src/components/PronunciationCard.tsx (main, then backup, then synthesis)
+    status: in-review
+    note: >-
+      Joe, 2026-10-24, after hearing the samples: "2-ryan-male.mp3 main",
+      "1-lessac-female.mp3 failover", "merge both when green". Free local
+      neural TTS (Piper), fed the IPA, not the spelling. Replaces the Windows
+      SAPI file. A human recording can still replace the main file.

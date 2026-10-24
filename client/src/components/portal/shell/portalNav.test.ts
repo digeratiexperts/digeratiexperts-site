@@ -87,7 +87,8 @@ describe("update-2 acceptance: the break-glass account reaches everything today"
 
   it("keeps sample badges and is never gated by role, entitlement or data", () => {
     const shown = items(breakGlass, SAMPLE_INT, NO_DATA);
-    expect(shown.find((i) => i.href === "/portal/admin/import")?.sample).toBe(true);
+    expect(shown.find((i) => i.href === "/portal/vpn")?.sample).toBe(true);
+    expect(shown.find((i) => i.href === "/portal/admin/import")?.sample).toBeFalsy();
     for (const item of PORTAL_NAV_ITEMS.filter((i) => i.section)) {
       expect(isNavAllowed(item, { user: breakGlass, integrations: SAMPLE_INT, navContext: NO_DATA, view: "legacy" }), item.href).toBe(true);
     }

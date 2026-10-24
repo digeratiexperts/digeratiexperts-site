@@ -17,6 +17,8 @@ import { Play } from "lucide-react";
  * page accent token, which is magenta on the homepage.
  */
 const AUDIO_SRC = "/audio/digerati-pronunciation.wav";
+/** Second voice, tried when AUDIO_SRC cannot play, before synthesis. */
+const BACKUP_AUDIO_SRC = "/audio/digerati-pronunciation-backup.mp3";
 const SPOKEN_PRONUNCIATION = "dij-uh-RAH-tee";
 const SPEECH_RATE = 0.78;
 
@@ -186,10 +188,23 @@ export function PronunciationCard({
       setSpeaking(false);
       setStatus("Pronunciation finished.");
     };
-    // A missing or blocked recording falls back to synthesis rather than going silent.
-    const fallback = () => {
+    // A missing or blocked recording tries the backup voice, then synthesis,
+    // rather than going silent.
+    let fellBack = false;
+    const synth = () => {
+      if (fellBack) return;
+      fellBack = true;
       setSpeaking(false);
       speak(SPOKEN_PRONUNCIATION, `pronunciation: ${SPOKEN_PRONUNCIATION}`);
+    };
+    let triedBackup = false;
+    const fallback = () => {
+      if (triedBackup) return;
+      triedBackup = true;
+      const second = new Audio(BACKUP_AUDIO_SRC);
+      second.onended = el.onended;
+      second.onerror = synth;
+      void second.play().catch(synth);
     };
     el.onerror = fallback;
     setSpeaking(true);
