@@ -4812,6 +4812,26 @@ claims:
     note: >-
       Docs-only follow-up after slices A, B, C, D, E and G merged and were
       checked in production on 2026-10-23. Joe: "Approved".
+  - id: portal-deonly-staff-guards
+    owner: claude
+    subsystem: portal
+    branch: claude/jolly-edison-app0dk
+    base_sha: e458451
+    started: 2026-10-24
+    files:
+      - shared/permissions/lane-staff.ts (new), shared/permissions/index.ts (one import + one spread), shared/permissions/permissions.test.ts
+      - server/routes.ts (guards only: companies, company user invite, tenant files, manual records, licence board, order requests, KB authoring)
+      - server/warehouseAccess.ts (+ test): warehouse gate checks warehouse.access
+      - client/src/components/portal/shell/portalNav.ts (Admin Contracts item rule only), portalNav.test.ts
+    status: in-review
+    note: >-
+      Follow-up to #708. Every deOnly menu item's APIs now accept DE staff, or
+      the item is break-glass only. Joe 2026-10-24: widen Companies (lane A
+      company.manage / files.share), License Patch Bay, Knowledge Authoring,
+      Order Change Requests, manual records and the Digital Warehouse; Admin
+      Contracts goes break-glass only because its /api/admin/contracts calls
+      have no server routes. Overlaps the license-kit-vault-docs claim only in
+      server/routes.ts (one guard line); server/licenseBoardRoutes.ts untouched.
   - id: homepage-v2-copy-port
     owner: claude
     subsystem: homepage

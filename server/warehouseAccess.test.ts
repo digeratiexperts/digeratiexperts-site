@@ -25,7 +25,7 @@ describe("warehouse staff resolution", () => {
     (findUserById as ReturnType<typeof vi.fn>).mockReset();
   });
 
-  it("denies missing tokens and non-admin live records", async () => {
+  it("denies missing tokens and client live records", async () => {
     const { resolveWarehouseStaff } = await import("./warehouseAccess");
     const { getUser } = await import("./portalAuthStore");
     expect(resolveWarehouseStaff({ headers: {}, cookies: {} } as any)).toBeNull();
@@ -43,7 +43,39 @@ describe("warehouse staff resolution", () => {
     expect(resolveWarehouseStaff(req)).toBeNull();
   });
 
-  it("allows only a live admin record", async () => {
+  it("allows a live DE staff record (warehouse.access is deOnly)", async () => {
+    const { resolveWarehouseStaff } = await import("./warehouseAccess");
+    const { getUser } = await import("./portalAuthStore");
+    (getUser as ReturnType<typeof vi.fn>).mockReturnValue({
+      id: "s1",
+      email: "staff@digeratiexperts.com",
+      role: "staff",
+      isActive: true,
+    });
+    const req = {
+      headers: { authorization: `Bearer ${sign({ userId: "s1", email: "staff@digeratiexperts.com", role: "staff" })}` },
+      cookies: {},
+    } as any;
+    expect(resolveWarehouseStaff(req)).toEqual({ id: "s1", email: "staff@digeratiexperts.com" });
+  });
+
+  it("denies a disabled DE staff record", async () => {
+    const { resolveWarehouseStaff } = await import("./warehouseAccess");
+    const { getUser } = await import("./portalAuthStore");
+    (getUser as ReturnType<typeof vi.fn>).mockReturnValue({
+      id: "s2",
+      email: "gone@digeratiexperts.com",
+      role: "staff",
+      isActive: false,
+    });
+    const req = {
+      headers: { authorization: `Bearer ${sign({ userId: "s2", email: "gone@digeratiexperts.com", role: "staff" })}` },
+      cookies: {},
+    } as any;
+    expect(resolveWarehouseStaff(req)).toBeNull();
+  });
+
+  it("allows a live admin record", async () => {
     const { resolveWarehouseStaff } = await import("./warehouseAccess");
     const { getUser } = await import("./portalAuthStore");
     (getUser as ReturnType<typeof vi.fn>).mockReturnValue({

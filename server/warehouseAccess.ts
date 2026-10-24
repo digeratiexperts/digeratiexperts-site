@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import { findUserById } from "./portalOrg";
 import { getUser as portalAuthGetUser } from "./portalAuthStore";
 import { getJwtSecretOrNull } from "./config/authSecrets";
+import { can } from "@shared/permissions";
 
 export const PORTAL_AUTH_COOKIE = "portalAuth";
 export const GENERIC_NOT_FOUND_JSON = { error: "Not found" } as const;
@@ -72,7 +73,8 @@ export function resolveWarehouseStaff(req: Request): { id: string; email: string
           ? findUserById(decoded.userId)
           : null;
     if (!live || isDisabled(live)) return null;
-    if ((live.role || "user") !== "admin") return null;
+    // DE staff + break-glass (warehouse.access, shared/permissions/lane-staff.ts).
+    if (!can({ role: live.role }, "warehouse.access")) return null;
     return { id: live.id, email: live.email };
   } catch {
     return null;
