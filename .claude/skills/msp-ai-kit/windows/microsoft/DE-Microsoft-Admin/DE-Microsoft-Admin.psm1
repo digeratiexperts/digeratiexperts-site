@@ -133,7 +133,7 @@ function Invoke-DEGraphRequest {
                 $code = $null; try { $code = [int]$_.Exception.Response.StatusCode } catch { $code = $null }
                 if (-not $code -and $msg -match '\b(429|502|503|504)\b') { $code = [int]$Matches[1] }
                 if ($attempt -gt $MaxRetries -or $code -notin @(429, 502, 503, 504)) { throw }
-                $wait = [Math]::Min(60, [Math]::Pow(2, $attempt)); try { $ra = $_.Exception.Response.Headers.RetryAfter.Delta; if ($ra) { $wait = [Math]::Ceiling($ra.TotalSeconds) } } catch { }
+                $wait = [Math]::Min(60, [Math]::Pow(2, $attempt)); try { $ra = $_.Exception.Response.Headers.RetryAfter.Delta; if ($ra) { $wait = [Math]::Ceiling($ra.TotalSeconds) } } catch { }   # no Retry-After header: the exponential $wait above already applies, so this stays quiet on purpose
                 Start-Sleep -Seconds $wait
             }
         }
