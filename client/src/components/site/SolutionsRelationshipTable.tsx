@@ -31,7 +31,7 @@ export function SolutionsRelationshipTable({
       <table className={cn("w-full min-w-[760px] border-collapse border-t text-left text-sm", seam)}>
         <thead>
           <tr className={cn("border-b", seam)}>
-            <th scope="col" className={cn("px-4 py-4 font-mono text-xs font-semibold uppercase tracking-[0.14em]", paper ? "text-black/60" : "text-white/60")}>
+            <th scope="col" className={cn("px-4 py-4 text-sm font-semibold", paper ? "text-black/60" : "text-white/60")}>
               Dimension
             </th>
             {["Standalone", "Co-Managed", "ProActive Managed IT"].map((h) => (

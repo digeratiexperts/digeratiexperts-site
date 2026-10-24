@@ -1,6 +1,5 @@
 import { MegaMenu } from "@/components/MegaMenu";
 import { DigeratiEnhancedFooterSection } from "@/pages/sections/DigeratiEnhancedFooterSection";
-import { shouldAppendStatementColon } from "@/components/visual/StatementHeading";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageHero, Breadcrumbs, Container } from "@/components/site/chapters";
@@ -39,17 +38,13 @@ interface PageTemplateProps {
   readable?: boolean;
 }
 
+/**
+ * Page titles render as written. The magenta "statement colon" that used to be appended
+ * was retired (Joe 2026-10-24): 45 of 60 page titles ended in a colon and read as labels,
+ * not headlines. Homepage v2 headlines are the model.
+ */
 function StatementTitle({ text }: { text: string }) {
-  return (
-    <>
-      {text}
-      {shouldAppendStatementColon(text) ? (
-        <span className="text-de-accent-ink" aria-hidden="true">
-          :
-        </span>
-      ) : null}
-    </>
-  );
+  return <>{text}</>;
 }
 
 export const PageTemplate = ({

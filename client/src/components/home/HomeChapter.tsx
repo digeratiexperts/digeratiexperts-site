@@ -159,12 +159,13 @@ export function Eyebrow({
   return (
     <p
       className={cn(
-        "flex items-center gap-3 text-sm font-semibold uppercase tracking-[0.18em]",
+        // Sentence-case label, no tracked-out caps and no leading dash (Joe 2026-10-24,
+        // matching Homepage v2 section labels).
+        "flex items-center gap-3 text-[15px] font-semibold",
         tone === "paper" ? "text-de-magenta-paper-ink" : "text-de-magenta-ink",
         className,
       )}
     >
-      <span className="h-px w-6 shrink-0 bg-current" aria-hidden="true" />
       <span>{children}</span>
     </p>
   );
