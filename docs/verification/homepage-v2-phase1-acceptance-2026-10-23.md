@@ -103,7 +103,7 @@ Removed label proliferations ("Start Cyber Risk Assessment", "Start My Assessmen
 1. **Gate 3/4 visual not run (blocker for full sign-off):** render + screenshots at 390 / 768 / 1440 (light + dark) and before/after were **not** produced in this environment. To complete: run `npm run dev` (or build + preview) and capture `/` vs `/concepts/home-classic` at the three widths in both themes, per `.cursor/skills/visual-audit`. Recommended in CI or a render pass. Nothing here fabricates screenshots.
 2. **Shared-chrome CTA labels not reconciled (out of Lane H scope):** `homepage-v2/cta.ts` notes the compact nav / floating-bar labels still use site-wide `lib/ctaCopy.ts` ("Get My Cyber Risk Assessment" / "Risk Assessment"). Aligning MegaMenu / StickyCTABar to `HOME_CTA.compact` is owned by the **shared-chrome lane**, flagged in code. Touching `ctaCopy.ts` here would be parallel-lane interference.
 3. **Verify two cited threat figures** (§2) against Verizon DBIR 2026 / Microsoft MDDR 2025 before publish.
-4. **`check:route-meta`** did not complete within the 120s window on this box (still running a longer retry); it is CI-guarded and unrelated to homepage content.
+4. **`check:route-meta` not runnable here:** it is a Playwright pass that navigates `http://127.0.0.1:3300/...` routes and needs a running server; it failed with `ERR_CONNECTION_REFUSED` in this environment (no server booted), which is environmental, not a code issue. Same Playwright infra can produce the Gate 3 screenshots once a server is up (CI is the right place).
 
 ## 5. Full test-suite failures (out of homepage scope)
 
