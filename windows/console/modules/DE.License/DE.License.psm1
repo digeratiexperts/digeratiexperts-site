@@ -236,13 +236,13 @@ function Test-DELicenseFor {
     elseif ($Client -and @($s.clients) -notcontains $Client -and @($s.clients) -notcontains '*') { $why = "the licence for $($s.technician) does not include client '$Client'" }
     if (-not $why) { return [pscustomobject]@{ ok = $true; licensed = $true; reason = $s.reason } }
     if ($s.enforce -eq 'required') { return [pscustomobject]@{ ok = $false; licensed = $false; reason = "UNLICENSED: $why. Activate this device in DE Tech Tool (Settings > Licence) with your DE account." } }
-    if (-not $script:Warned.ContainsKey($Feature)) { $script:Warned[$Feature] = $true; try { Add-DEEvidence -Step "license.$Feature" -Module 'license' -Before 'unlicensed' -ActionTaken "allowed under policy 'warn': $why" -Result 'WARN' -Remediation 'Activate a DE licence on this device.' | Out-Null } catch { } }
+    if (-not $script:Warned.ContainsKey($Feature)) { $script:Warned[$Feature] = $true; try { Add-DEEvidence -Step "license.$Feature" -Module 'license' -Before 'unlicensed' -ActionTaken "allowed under policy 'warn': $why" -Result 'WARN' -Remediation 'Activate a DE licence on this device.' | Out-Null } catch { Write-DELog -Level WARN -Message "licence policy 'warn' for '$Feature': the evidence record could not be written ($($_.Exception.Message)); this unlicensed use is not recorded" } }
     return [pscustomobject]@{ ok = $true; licensed = $false; reason = "UNLICENSED (policy warn): $why" }
 }
 function Get-DEBuildInfo {
     <# The build watermark written by New-DEReleasePackage.ps1: build ID, when, and who the copy was issued to. #>
     $f = Join-Path (Get-DEConsole).Root 'BUILD.json'
-    if (Test-Path -LiteralPath $f) { try { $b = Get-Content -LiteralPath $f -Raw -Encoding UTF8 | ConvertFrom-Json; return [pscustomobject]@{ buildId = "$($b.buildId)"; builtAt = "$($b.builtAt)"; issuedTo = "$($b.issuedTo)"; channel = "$($b.channel)" } } catch { } }
+    if (Test-Path -LiteralPath $f) { try { $b = Get-Content -LiteralPath $f -Raw -Encoding UTF8 | ConvertFrom-Json; return [pscustomobject]@{ buildId = "$($b.buildId)"; builtAt = "$($b.builtAt)"; issuedTo = "$($b.issuedTo)"; channel = "$($b.channel)" } } catch { Write-DELog -Level WARN -Message "the build watermark BUILD.json could not be read ($($_.Exception.Message)); this copy is reported as build 'dev', which a build-bound licence will refuse" } }
     return [pscustomobject]@{ buildId = 'dev'; builtAt = $null; issuedTo = 'development checkout'; channel = 'dev' }
 }
 

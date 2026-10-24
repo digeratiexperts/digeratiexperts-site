@@ -46,7 +46,7 @@ function Get-DESanitizedInstallerDiagnostics {
     $scrub = { param($l) $t = Protect-DEText $l; $t = [regex]::Replace($t, "Its value is '[^']*'", "Its value is '[REDACTED]'"); [regex]::Replace($t, '(?i)\b([A-Z0-9_]*(TOKEN|KEY|PASSWORD|PASSPHRASE|SECRET)[A-Z0-9_]*)\s*=\s*("[^"]*"|\S+)', '$1=[REDACTED]') }
     $files = @("$env:ProgramData\Sentinel\Logs\*.log", "$env:ProgramFiles\Guardz\*.log", "$env:ProgramData\Guardz\*.log", "$env:TEMP\*Sentinel*.log", "$env:TEMP\*guardz*.log", "$env:TEMP\MSI*.LOG")
     $out = @()
-    foreach ($g in $files) { foreach ($f in @(Get-ChildItem -Path $g -File -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 2)) { try { $tail = @(Get-Content -LiteralPath $f.FullName -Tail 40 -ErrorAction Stop) | ForEach-Object { & $scrub $_ }; $out += @{ file = $f.FullName; modified = $f.LastWriteTime.ToString('o'); tail = $tail } } catch { } } }
+    foreach ($g in $files) { foreach ($f in @(Get-ChildItem -Path $g -File -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 2)) { try { $tail = @(Get-Content -LiteralPath $f.FullName -Tail 40 -ErrorAction Stop) | ForEach-Object { & $scrub $_ }; $out += @{ file = $f.FullName; modified = $f.LastWriteTime.ToString('o'); tail = $tail } } catch { Write-DELog -Level WARN -Message "installer diagnostics: '$([IO.Path]::GetFileName($f.FullName))' could not be read ($($_.Exception.Message)); it is missing from the diagnostic bundle" } } }
     return $out
 }
 

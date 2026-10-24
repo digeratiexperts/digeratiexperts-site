@@ -299,7 +299,7 @@ $null = Initialize-DEConsole -Root $ConsoleRoot -Mode Audit -DataDir $DataDir
 $settingsPath = Join-Path (Get-DEConsole).Dirs.State 'gui-settings.json'
 $Settings = @{ technician = "$Technician"; client = ''; mode = 'audit'; lastPage = $Page; hubEndpoint = ''; dryRun = $true }
 if (Test-Path -LiteralPath $settingsPath) { try { $loaded = ConvertTo-DEHashtable (Get-Content -LiteralPath $settingsPath -Raw -Encoding UTF8 | ConvertFrom-Json); foreach ($k in $loaded.Keys) { $Settings[$k] = $loaded[$k] } } catch { } }
-function Save-GuiSettings { try { $Settings | ConvertTo-Json | Set-Content -LiteralPath $settingsPath -Encoding UTF8 } catch { } }
+function Save-GuiSettings { try { $Settings | ConvertTo-Json | Set-Content -LiteralPath $settingsPath -Encoding UTF8 } catch { Write-DELog -Level WARN -Message "the technician's GUI settings could not be saved ($($_.Exception.Message)); this session's choices are not remembered" } }
 if ($Technician) { $Settings.technician = $Technician }
 if (-not $Settings.technician) { $Settings.technician = "$(Get-DEState -Path 'settings.technician')" }
 if ($Settings.hubEndpoint) { Set-DEStateValue -Path 'settings.hub.endpoint' -Value $Settings.hubEndpoint }
@@ -599,7 +599,7 @@ function Update-DEJob {
             }
         }
         if ($S.LogBox) { foreach ($l in @($new -split "`r?`n" | Where-Object { $_ })) { $S.LogBox.AppendText((Protect-DEText $l) + "`r`n") }; $S.LogBox.ScrollToEnd() }
-    } catch { }
+    } catch { if (-not $script:JobLogWarned) { $script:JobLogWarned = $true; Write-DELog -Level WARN -Message "the run log could not be read for the progress pane ($($_.Exception.Message)); progress stops updating" } }
     $elapsed = [math]::Max(1, [int]((Get-Date) - $S.Job.started).TotalSeconds)
     $UI.TxtProgress.Text = $(if ($S.Job.total) { "$($S.Job.progress) / $($S.Job.total) steps  ·  ${elapsed}s" } else { "Running  ·  ${elapsed}s" })
     $UI.TxtEta.Text = if ($S.Job.progress -gt 0 -and $S.Job.total -gt $S.Job.progress) {
@@ -1903,7 +1903,7 @@ $Win.Add_ContentRendered({
         $Settings.technician = $(if ("$t".Trim()) { "$t".Trim() } else { 'jrpetro' }); Save-GuiSettings; Set-DEStateValue -Path 'settings.technician' -Value $Settings.technician
     }
     if (-not $Settings.technician) { $Settings.technician = 'jrpetro' }
-    if ($Settings.client) { try { $S.Profile = New-DEComposedProfile -ClientProfile (Get-DEClientProfile -Id $Settings.client) -Bundle "$(Get-DEHashPath -Object $Settings -Path 'planBundle')" -Solution @(Get-DEHashPath -Object $Settings -Path 'planSolutions' | Where-Object { $_ }) } catch { } }
+    if ($Settings.client) { try { $S.Profile = New-DEComposedProfile -ClientProfile (Get-DEClientProfile -Id $Settings.client) -Bundle "$(Get-DEHashPath -Object $Settings -Path 'planBundle')" -Solution @(Get-DEHashPath -Object $Settings -Path 'planSolutions' | Where-Object { $_ }) } catch { Write-DELog -Level WARN -Message "the client profile for '$($Settings.client)' could not be composed ($($_.Exception.Message)); this run has no plan and must not apply anything" } }
     if ($Resume) { $r = Resume-DEWorkflow; Set-Status "Resumed after restart. Next: $(Get-DEHashPath -Object $r -Path 'nextAction')"; $S.CurrentPage = 'Scan' }
     Show-Page $S.CurrentPage
     if ($Integrity.status -eq 'tampered') { Set-Status ('WARNING: console files changed after packaging; do not run changes from this copy. ' + (@($Integrity.problems | Select-Object -First 3) -join '; ')) }

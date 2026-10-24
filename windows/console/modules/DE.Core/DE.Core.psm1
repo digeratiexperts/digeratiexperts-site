@@ -310,7 +310,7 @@ function Clear-DEEvidence { $script:DE.Evidence.Clear(); $script:DE.ExitCode = 0
 
 # ------------------------------------------------------------------ exceptions
 function Get-DEExceptionsPath { return (Join-Path $script:DE.Dirs.State 'exceptions.json') }
-function Import-DEExceptions { $p = Get-DEExceptionsPath; $script:DE.Exceptions = @{}; if (Test-Path -LiteralPath $p) { try { $list = Get-Content -LiteralPath $p -Raw -Encoding UTF8 | ConvertFrom-Json; foreach ($e in @($list | Where-Object { $null -ne $_ })) { $script:DE.Exceptions[$e.target] = $e } } catch { } }; return $script:DE.Exceptions }
+function Import-DEExceptions { $p = Get-DEExceptionsPath; $script:DE.Exceptions = @{}; if (Test-Path -LiteralPath $p) { try { $list = Get-Content -LiteralPath $p -Raw -Encoding UTF8 | ConvertFrom-Json; foreach ($e in @($list | Where-Object { $null -ne $_ })) { $script:DE.Exceptions[$e.target] = $e } } catch { Write-DELog -Level WARN -Message "the approved-exceptions file could not be read ($($_.Exception.Message)); no exceptions apply and every gate fails closed" } }; return $script:DE.Exceptions }
 function Save-DEExceptions { @($script:DE.Exceptions.Values) | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Get-DEExceptionsPath) -Encoding UTF8 -WhatIf:$false }
 function Add-DEException {
     <# Records an approved exception for a gate or action. The item never reads PASS; it reads EXCEPTION until the expiry. #>

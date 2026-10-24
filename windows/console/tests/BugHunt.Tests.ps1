@@ -52,7 +52,7 @@ Describe 'Fail closed: engine, integrity, per-user controls' {
     It 'JumpCloud lists are unrolled even when Invoke-RestMethod hands back the array as one object (5.1)' {
         Mock -ModuleName DE.JumpCloud Test-DESecret { $true }
         Mock -ModuleName DE.JumpCloud Get-DESecretPlain { 'k' }
-        Mock -ModuleName DE.JumpCloud Invoke-RestMethod { Write-Output -NoEnumerate @([pscustomobject]@{ to = [pscustomobject]@{ id = 'G1' } }, [pscustomobject]@{ to = [pscustomobject]@{ id = 'G2' } }) }
+        Mock -ModuleName DE.JumpCloud Invoke-RestMethod { Write-Output -InputObject @([pscustomobject]@{ to = [pscustomobject]@{ id = 'G1' } }, [pscustomobject]@{ to = [pscustomobject]@{ id = 'G2' } }) -NoEnumerate }
         $l = @(Get-DEJumpCloudList -Path '/users/U1/memberof')
         $l.Count | Should -Be 2; $l[1].to.id | Should -Be 'G2'
     }

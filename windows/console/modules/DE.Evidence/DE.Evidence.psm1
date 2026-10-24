@@ -286,6 +286,8 @@ function Convert-DEHtmlToPdf {
             Start-Sleep -Seconds 1
         }
     } catch {
+        # the report step is best effort, but a missing client PDF must never vanish without a trace
+        Write-DELog -Level WARN -Message "the client report PDF could not be built from '$([IO.Path]::GetFileName($HtmlPath))' ($($_.Exception.Message)); the run continues without a PDF"
     } finally {
         Remove-Item -LiteralPath $tmpPdf -Force -ErrorAction SilentlyContinue -WhatIf:$false
         Remove-Item -LiteralPath $profileDir -Recurse -Force -ErrorAction SilentlyContinue -WhatIf:$false
