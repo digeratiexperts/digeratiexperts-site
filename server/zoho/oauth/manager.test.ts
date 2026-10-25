@@ -4,7 +4,8 @@
  * Adapted to the website's sources: legacy env tokens with their own client
  * (instead of the Hub's per-product DB rows), and the ZOHO_CONNECT_ENABLED flag.
  */
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { DeadlineError } from "../../deadline";
 import { isZohoAccountsServer, zohoDcFromUrl, zohoDefaultDc } from "./dc";
 import {
   REFRESH_BUDGET,
@@ -537,5 +538,101 @@ describe("Zoho Connect", () => {
     expect(store.rows.has(UNIFIED_PROVIDER)).toBe(false);
     expect(http.calls[0].url).toBe("https://accounts.zoho.com/oauth/v2/token/revoke");
     expect(http.calls[0].params?.get("token")).toBe("rt-x");
+  });
+});
+
+describe("database source availability (#668)", () => {
+  it.each(["revoked", "missing client", "rejected refresh"] as const)("prefers an unreadable Connect grant over a %s fallback failure, then retries the recovered grant", async (failure) => {
+    const t = setup([{ status: 400, body: { error: "invalid_code" } }], { connectEnabled: true });
+    if (failure === "missing client") legacy = [{ ...legacyCrm(), client: null }];
+    if (failure === "revoked") await t.store.writeState(fingerprint("rt-legacy"), {
+      authStatus: "revoked", nextAttemptAt: new Date(t.now() + 3_600_000), lastError: "fixture revoked",
+    });
+    const originalRead = t.store.read.bind(t.store);
+    let unavailable = true;
+    const read = vi.spyOn(t.store, "read").mockImplementation(async (provider, onUnavailable?: () => void) => {
+      if (unavailable) { onUnavailable?.(); return null; }
+      return originalRead(provider);
+    });
+    expect(await t.auth.status()).toMatchObject({ state: "degraded" });
+    await expect(t.auth.getAccess()).rejects.toBeInstanceOf(ZohoAuthUnavailableError);
+    await expect(t.auth.getAccess()).rejects.toThrow(/database unavailable/i);
+    expect(read).toHaveBeenCalledTimes(3);
+    expect(t.http.calls).toHaveLength(failure === "rejected refresh" ? 1 : 0);
+
+    await t.store.saveGrant({
+      provider: UNIFIED_PROVIDER, refreshToken: "rt-recovered-connect", clientId: "crm-client",
+      scope: ZOHO_PRODUCT_SCOPES.crm.join(" "), accessToken: "recovered-access",
+      accessExpiresAt: new Date(t.now() + 3_600_000),
+    });
+    unavailable = false;
+    expect(await t.auth.getAccess()).toMatchObject({ source: "unified", token: "recovered-access" });
+    expect(await t.auth.status()).toMatchObject({ state: "connected", source: "unified" });
+    expect(read).toHaveBeenCalledTimes(4);
+    expect(t.http.calls).toHaveLength(failure === "rejected refresh" ? 1 : 0);
+  });
+
+  it.each(["revoked", "missing client", "rejected refresh"] as const)("keeps a %s fallback failure a reconnect error when Connect was read successfully", async (failure) => {
+    const t = setup([{ status: 400, body: { error: "invalid_code" } }], { connectEnabled: true });
+    if (failure === "missing client") legacy = [{ ...legacyCrm(), client: null }];
+    if (failure === "revoked") await t.store.writeState(fingerprint("rt-legacy"), {
+      authStatus: "revoked", nextAttemptAt: new Date(t.now() + 3_600_000), lastError: "fixture revoked",
+    });
+    await expect(t.auth.getAccess()).rejects.toMatchObject({ problem: failure === "missing client" ? "client" : "revoked" });
+    expect(await t.auth.status()).toMatchObject({ state: "needs_reconnect" });
+    expect(t.http.calls).toHaveLength(failure === "rejected refresh" ? 1 : 0);
+  });
+
+  it("keeps a genuinely revoked readable Connect grant a reconnect error", async () => {
+    legacy = [];
+    const t = setup([{ status: 400, body: { error: "invalid_code" } }], { connectEnabled: true });
+    await t.store.saveGrant({ provider: UNIFIED_PROVIDER, refreshToken: "rt-readable-revoked", clientId: "crm-client", scope: ZOHO_PRODUCT_SCOPES.crm.join(" ") });
+    await expect(t.auth.getAccess()).rejects.toMatchObject({ problem: "revoked" });
+    expect(await t.auth.status()).toMatchObject({ state: "needs_reconnect", source: "unified" });
+    expect(t.http.calls).toHaveLength(1);
+  });
+
+  it("reports a failed grant read as degraded and retries immediately until recovery", async () => {
+    legacy = [];
+    const { auth, store, http } = setup([], { connectEnabled: true });
+    const read = vi.spyOn(store, "read")
+      .mockRejectedValueOnce(new DeadlineError("token store", 30))
+      .mockRejectedValueOnce(new Error("Connection terminated unexpectedly"));
+    const probe = vi.fn();
+    expect(await auth.status()).toMatchObject({ state: "degraded", reason: expect.stringMatching(/database unavailable/i) });
+    expect(await auth.check(probe)).toMatchObject({ state: "degraded" });
+    expect(await auth.status()).toMatchObject({ state: "not_configured" });
+    expect(read).toHaveBeenCalledTimes(3);
+    expect(probe).not.toHaveBeenCalled();
+    expect(http.calls).toHaveLength(0);
+  });
+
+  it("does not turn a failed grant read into a reconnect error on access", async () => {
+    legacy = [];
+    const { auth, store, http } = setup([], { connectEnabled: true });
+    vi.spyOn(store, "read").mockRejectedValue(new DeadlineError("token store", 30));
+    await expect(auth.hasCredentials()).rejects.toBeInstanceOf(ZohoAuthUnavailableError);
+    await expect(auth.getAccess()).rejects.toBeInstanceOf(ZohoAuthUnavailableError);
+    expect(http.calls).toHaveLength(0);
+  });
+
+  it("does not cache a failed legacy state read or probe during the outage", async () => {
+    const { auth, store, http } = setup([]);
+    const readState = vi.spyOn(store, "readState").mockRejectedValueOnce(new DeadlineError("token state", 30));
+    const probe = vi.fn();
+    expect(await auth.check(probe)).toMatchObject({ state: "degraded", source: "env" });
+    expect(await auth.status()).toMatchObject({ state: "unknown", source: "env" });
+    expect(readState).toHaveBeenCalledTimes(2);
+    expect(probe).not.toHaveBeenCalled();
+    expect(http.calls).toHaveLength(0);
+  });
+
+  it("keeps a successful missing grant not_configured and cacheable", async () => {
+    legacy = [];
+    const { auth, store } = setup([], { connectEnabled: true });
+    const read = vi.spyOn(store, "read");
+    expect(await auth.status()).toMatchObject({ state: "not_configured" });
+    expect(await auth.status()).toMatchObject({ state: "not_configured" });
+    expect(read).toHaveBeenCalledTimes(1);
   });
 });

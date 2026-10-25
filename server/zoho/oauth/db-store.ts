@@ -326,9 +326,11 @@ export class ResilientZohoTokenStore implements ZohoTokenStore {
   readonly memory = new MemoryZohoTokenStore();
   private readonly database = new DbZohoTokenStore();
   private tableChecked: boolean | null = null;
+  private databaseSeen = false;
 
   private async useDb(): Promise<boolean> {
     if (!dbReady || !db) return false;
+    this.databaseSeen = true;
     if (this.tableChecked !== null) return this.tableChecked;
     const generation = dbGeneration;
     try {
@@ -354,8 +356,14 @@ export class ResilientZohoTokenStore implements ZohoTokenStore {
    * (deadline, dropped connection) mark the database down and answer from
    * memory. Any other database error is the caller's to see, as before.
    */
-  private async viaDatabase<T>(label: string, operation: (store: ZohoTokenStore) => Promise<T>): Promise<T> {
-    if (!(await this.useDb())) return operation(this.memory);
+  private async viaDatabase<T>(label: string, operation: (store: ZohoTokenStore) => Promise<T>, onUnavailable?: () => void): Promise<T> {
+    if (!(await this.useDb())) {
+      // No configured database is intentional memory-only operation. A
+      // configured or previously used database falling away is an outage,
+      // including a cold process whose first connection never succeeded.
+      if (this.databaseSeen || Boolean(process.env.DATABASE_URL)) onUnavailable?.();
+      return operation(this.memory);
+    }
     // Which pool this statement runs on; a failure that lands after the pool
     // was replaced must not take the replacement down (db.ts).
     const generation = dbGeneration;
@@ -363,6 +371,7 @@ export class ResilientZohoTokenStore implements ZohoTokenStore {
       return await withDeadline(operation(this.database), dbStoreTimeoutMs, `zoho token store ${label}`);
     } catch (error: any) {
       if (!looksLikeDatabaseOutage(error)) throw error;
+      onUnavailable?.();
       const message = describeDatabaseError(error);
       console.warn(`[zoho-oauth] ${label} did not reach the database (${message}); answering from memory until it reconnects`);
       markDatabaseDown(`zoho token store ${label}: ${message}`, generation);
@@ -370,8 +379,8 @@ export class ResilientZohoTokenStore implements ZohoTokenStore {
     }
   }
 
-  async read(provider: string) {
-    return this.viaDatabase("read", (store) => store.read(provider));
+  async read(provider: string, onUnavailable?: () => void) {
+    return this.viaDatabase("read", (store) => store.read(provider), onUnavailable);
   }
   async saveGrant(input: ZohoGrantInput) {
     return this.viaDatabase("saveGrant", (store) => store.saveGrant(input));
@@ -382,8 +391,8 @@ export class ResilientZohoTokenStore implements ZohoTokenStore {
   async remove(provider: string) {
     return this.viaDatabase("remove", (store) => store.remove(provider));
   }
-  async readState(fp: string) {
-    return this.viaDatabase("readState", (store) => store.readState(fp));
+  async readState(fp: string, onUnavailable?: () => void) {
+    return this.viaDatabase("readState", (store) => store.readState(fp), onUnavailable);
   }
   async writeState(fp: string, patch: ZohoStatePatch) {
     return this.viaDatabase("writeState", (store) => store.writeState(fp, patch));

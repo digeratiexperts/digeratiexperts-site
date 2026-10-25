@@ -65,7 +65,8 @@ export interface ZohoStatePatch {
 }
 
 export interface ZohoTokenStore {
-  read(provider: string): Promise<StoredZohoCredential | null>;
+  /** Report unavailable persistent storage even if memory supplies a value, scoped to this read. */
+  read(provider: string, onUnavailable?: () => void): Promise<StoredZohoCredential | null>;
   /** Insert/replace a grant. Resets all cached access + health state. */
   saveGrant(input: ZohoGrantInput): Promise<void>;
   /**
@@ -76,7 +77,7 @@ export interface ZohoTokenStore {
   patch(provider: string, refreshToken: string, patch: ZohoStatePatch): Promise<void>;
   remove(provider: string): Promise<void>;
   /** State for an env refresh token, by fingerprint (see fingerprint() in manager.ts). */
-  readState(fingerprint: string): Promise<ZohoTokenState | null>;
+  readState(fingerprint: string, onUnavailable?: () => void): Promise<ZohoTokenState | null>;
   /** Upsert state for an env refresh token. */
   writeState(fingerprint: string, patch: ZohoStatePatch): Promise<void>;
 }
