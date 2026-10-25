@@ -561,12 +561,12 @@ describe("database source availability (#668)", () => {
     expect(t.http.calls).toHaveLength(failure === "rejected refresh" ? 1 : 0);
 
     await t.store.saveGrant({
-      provider: UNIFIED_PROVIDER, refreshToken: "rt-recovered-connect", clientId: "crm-client",
-      scope: ZOHO_PRODUCT_SCOPES.crm.join(" "), accessToken: "recovered-access",
+      provider: UNIFIED_PROVIDER, refreshToken: "fixture-oauth-recovery-refresh", clientId: "crm-client",
+      scope: ZOHO_PRODUCT_SCOPES.crm.join(" "), accessToken: "fixture-oauth-recovery-access",
       accessExpiresAt: new Date(t.now() + 3_600_000),
     });
     unavailable = false;
-    expect(await t.auth.getAccess()).toMatchObject({ source: "unified", token: "recovered-access" });
+    expect(await t.auth.getAccess()).toMatchObject({ source: "unified", token: "fixture-oauth-recovery-access" });
     expect(await t.auth.status()).toMatchObject({ state: "connected", source: "unified" });
     expect(read).toHaveBeenCalledTimes(4);
     expect(t.http.calls).toHaveLength(failure === "rejected refresh" ? 1 : 0);
@@ -586,7 +586,7 @@ describe("database source availability (#668)", () => {
   it("keeps a genuinely revoked readable Connect grant a reconnect error", async () => {
     legacy = [];
     const t = setup([{ status: 400, body: { error: "invalid_code" } }], { connectEnabled: true });
-    await t.store.saveGrant({ provider: UNIFIED_PROVIDER, refreshToken: "rt-readable-revoked", clientId: "crm-client", scope: ZOHO_PRODUCT_SCOPES.crm.join(" ") });
+    await t.store.saveGrant({ provider: UNIFIED_PROVIDER, refreshToken: "fixture-oauth-revoked-refresh", clientId: "crm-client", scope: ZOHO_PRODUCT_SCOPES.crm.join(" ") });
     await expect(t.auth.getAccess()).rejects.toMatchObject({ problem: "revoked" });
     expect(await t.auth.status()).toMatchObject({ state: "needs_reconnect", source: "unified" });
     expect(t.http.calls).toHaveLength(1);
