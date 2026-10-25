@@ -388,8 +388,11 @@ function AskDELauncherButton({ compact = false }: { compact?: boolean }) {
         }}
         // One white focus ring that keeps the round shape. focus-visible:rounded-full
         // pins the radius so no global focus rule can square it off again.
-        // Without a label the button is a 40px circle (no extra right padding).
-        className={`group flex h-10 shrink-0 items-center gap-2 rounded-full px-1${compact ? "" : " sm:pr-1.5"} text-white transition-colors duration-200 hover:bg-white/[0.06] focus-visible:rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#f5f5f4] focus-visible:ring-offset-2 focus-visible:ring-offset-black`}
+        // At rest the button is a 40px circle. From sm the label slides out on
+        // hover or keyboard focus, so the resting launcher no longer covers the
+        // right edge of page content (the labelled pill sat over trust-strip
+        // text at 1440). The extra right padding only appears with the label.
+        className={`group flex h-10 shrink-0 items-center rounded-full px-1${compact ? "" : " sm:hover:pr-1.5 sm:focus-visible:pr-1.5"} text-white transition-[background-color,padding] duration-200 motion-reduce:transition-none hover:bg-white/[0.06] focus-visible:rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#f5f5f4] focus-visible:ring-offset-2 focus-visible:ring-offset-black`}
         data-testid="button-open-asap-widget"
         aria-label={compact ? "Open Ask DE support options" : "Open Ask DE"}
         aria-expanded={showMenu}
@@ -402,7 +405,10 @@ function AskDELauncherButton({ compact = false }: { compact?: boolean }) {
           <AskDeGlyph className="h-[26px] w-[26px]" />
         </span>
         {!compact && (
-          <span className="hidden text-left sm:block">
+          <span
+            className="hidden max-w-0 overflow-hidden whitespace-nowrap text-left opacity-0 transition-[max-width,opacity,margin] duration-200 ease-out motion-reduce:transition-none sm:block group-hover:ml-2 group-hover:max-w-[12rem] group-hover:opacity-100 group-focus-visible:ml-2 group-focus-visible:max-w-[12rem] group-focus-visible:opacity-100"
+            data-testid="ask-de-launcher-label"
+          >
             <span className="block text-base font-semibold leading-4 tracking-tight">Ask DE</span>
             <span className="block text-base leading-4 text-white/70">We&apos;re here to help.</span>
           </span>
