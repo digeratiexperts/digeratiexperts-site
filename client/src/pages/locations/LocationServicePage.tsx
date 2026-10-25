@@ -72,6 +72,8 @@ interface LocationPageProps {
   heroImage: string;
   keywordPhrase: string;
   whyChooseUs: string[];
+  /** One city-specific paragraph (Joe 2026-10-24): what being in this city means for service. Facts only. */
+  localNote?: string;
   localProof: {
     officeLocation: string;
     yearsServing: string;
@@ -215,12 +217,13 @@ export function LocationServicePage(props: LocationPageProps) {
   const stats = [
     { icon: Shield, value: "Security-first", label: "Operating model" },
     { icon: Zap, value: "15 min", label: "Critical response (SLA)" },
-    { icon: Clock, value: "24/7", label: "Monitoring" },
+    // 24/7 MDR is ProActive Business and Enterprise only; the SLA line applies to every client.
+    { icon: Clock, value: "24/7/365", label: "Emergency incident response (SLA)" },
   ];
 
   const features = [
     { icon: FileCheck, text: "Insurance & Compliance-Ready" },
-    { icon: Shield, text: "24/7 Human-Led Monitoring" },
+    { icon: Shield, text: "24/7/365 Emergency Incident Response" },
     { icon: Building, text: `Built for ${props.city} Businesses` },
     { icon: CheckCircle, text: "Easy-to-Read Risk Reports" },
   ];
@@ -452,8 +455,13 @@ export function LocationServicePage(props: LocationPageProps) {
                   layout="stack"
                   eyebrow="Why Digerati Experts"
                   title={`Why ${props.city} Chooses Digerati Experts`}
-                  className="mb-8"
+                  className={props.localNote ? "mb-5" : "mb-8"}
                 />
+                {props.localNote && (
+                  <p className="mb-8 max-w-xl text-base leading-relaxed text-[#3A3448] md:text-lg" data-testid="location-local-note">
+                    {props.localNote}
+                  </p>
+                )}
                 <dl className="divide-y divide-[var(--de-paper-hairline)] border-y border-[var(--de-paper-hairline)]">
                   {stats.map((stat) => (
                     <div key={stat.label} className="flex items-center gap-4 py-4">
@@ -473,7 +481,8 @@ export function LocationServicePage(props: LocationPageProps) {
           </Container>
         </Chapter>
 
-        <Chapter plate="locations" tone="surface" aria-label="Arizona cybersecurity context" data-testid="section-location-context">
+        {/* Section fields follow the Homepage v2 role pattern (ink = proof, signal = reach). */}
+        <Chapter plate="locations" tone="ink" aria-label="Arizona cybersecurity context" data-testid="section-location-context">
           <Container>
             <div className="grid gap-8 lg:grid-cols-12 lg:items-start lg:gap-14">
               <div className="lg:col-span-4">
@@ -503,30 +512,30 @@ export function LocationServicePage(props: LocationPageProps) {
           </Container>
         </Chapter>
 
-        <Chapter tone="well" data-testid="section-location-reach">
+        <Chapter tone="signal" data-testid="section-location-reach">
           <Container>
             <div className="grid gap-12 lg:grid-cols-2 lg:gap-14">
               <div>
                 <ChapterHeader
-                  tone="well"
+                  tone="paper"
                   layout="stack"
                   eyebrow="Industries"
                   title={`Industries We Serve in ${props.city}`}
                   as="h2"
                   className="mb-6"
                 />
-                <IndexedList tone="well" columns={2} items={props.localProof.industries.map((t) => ({ title: t }))} />
+                <IndexedList tone="paper" columns={2} items={props.localProof.industries.map((t) => ({ title: t }))} />
               </div>
               <div>
                 <ChapterHeader
-                  tone="well"
+                  tone="paper"
                   layout="stack"
                   eyebrow="Coverage"
                   title="Neighborhoods We Serve"
                   lede={props.serviceRadius}
                   className="mb-6"
                 />
-                <IndexedList tone="well" columns={2} items={props.neighborhoods.map((t) => ({ title: t }))} />
+                <IndexedList tone="paper" columns={2} items={props.neighborhoods.map((t) => ({ title: t }))} />
               </div>
             </div>
           </Container>

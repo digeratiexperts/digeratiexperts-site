@@ -30,6 +30,16 @@
 
 version: 2
 claims:
+  - id: city-pages-truth-rhythm
+    owner: claude
+    subsystem: marketing-locations
+    branch: claude/city-pages-20261024
+    base_sha: a30a1ae4
+    files:
+      - client/src/pages/locations/LocationServicePage.tsx (24/7 wording, localNote, section fields)
+      - client/src/pages/routes/locationPages.tsx (localNote per city)
+    status: active
+    started: 2026-10-24
   - id: lane-h-homepage-refinement
     issue: 696
     owner: opencode

@@ -11,6 +11,7 @@ export const locationPageData = {
     description: "Digerati Experts provides comprehensive managed IT services and cybersecurity solutions to businesses throughout Chandler, Arizona. Based in Chandler, we bring local expertise to healthcare, law firms, accounting firms, and growing businesses, backed by a published SLA with a 15-minute response for critical incidents.",
     heroImage: "🏢",
     keywordPhrase: "Managed IT Chandler",
+    localNote: "Chandler is home base. The team that scopes your environment works from here, so on-site visits are local when your plan includes them, and the person accountable for your IT is nearby.",
     whyChooseUs: [
       "A Chandler-based team: the office you call is down the road",
       "15-minute response for critical incidents, per our published SLA",
@@ -46,6 +47,7 @@ export const locationPageData = {
     description: "Digerati Experts serves Phoenix organizations from our office in Chandler, in the Southeast Valley. Downtown, North, East or West Phoenix, you get the same published SLA, emergency incident response 24/7/365, and compliance support built for Arizona businesses.",
     heroImage: "🌆",
     keywordPhrase: "IT Support Phoenix",
+    localNote: "Phoenix is the largest city we serve. Offices spread across the metro get one operating model and one published SLA, whether a site is Downtown, in North Phoenix or on the West side.",
     whyChooseUs: [
       "One published SLA across the Valley: 15-minute response for critical incidents",
       "Emergency incident response 24/7/365",
@@ -81,6 +83,7 @@ export const locationPageData = {
     description: "Digerati Experts is your trusted local IT partner in Mesa, Arizona. We provide comprehensive managed IT services, cybersecurity solutions, and compliance support to small and mid-sized businesses throughout the East Valley region including Mesa, Apache Junction, and Gold Canyon.",
     heroImage: "🏭",
     keywordPhrase: "Managed IT Mesa",
+    localNote: "Mesa sits next to Chandler in the East Valley, so on-site work is a short drive from our office when your plan includes it.",
     whyChooseUs: [
       "Onsite visits from our Chandler office, next door in the East Valley, as your plan sets",
       "15-minute response for critical incidents, per our published SLA",
@@ -116,6 +119,7 @@ export const locationPageData = {
     description: "Digerati Experts serves fast-growing businesses in Gilbert, Arizona. We provide managed IT services, security solutions, and growth-focused technology planning to help Gilbert companies scale safely and securely with enterprise-grade infrastructure.",
     heroImage: "📈",
     keywordPhrase: "IT Services Gilbert",
+    localNote: "Gilbert borders Chandler, which keeps on-site work a short trip from our office when your plan includes it, as your team and locations grow.",
     whyChooseUs: [
       "Local support for Gilbert's fastest-growing businesses",
       "Scalable IT solutions as your company grows",
@@ -151,6 +155,7 @@ export const locationPageData = {
     description: "Digerati Experts provides managed IT services and cybersecurity to Tempe-based organizations. With deep understanding of Tempe's tech-forward culture and proximity to ASU, we deliver modern IT solutions, security expertise, and innovation-focused technology planning.",
     heroImage: "🚀",
     keywordPhrase: "IT Tempe Arizona",
+    localNote: "Tempe is a short drive from our Chandler office, close enough for on-site work when your plan includes it.",
     whyChooseUs: [
       "Tech-savvy team aligned with Tempe's innovation culture",
       "Understanding of startup and scale-up environments",
@@ -186,6 +191,7 @@ export const locationPageData = {
     description: "Digerati Experts delivers premium managed IT services and cybersecurity solutions to distinguished Scottsdale organizations. We provide white-glove service, executive-level technology strategy, and enterprise-grade security tailored to Scottsdale's sophisticated business community.",
     heroImage: "💎",
     keywordPhrase: "IT Services Scottsdale",
+    localNote: "Scottsdale offices get the same published SLA as the rest of the Valley, with on-site visits scheduled from our Chandler office when your plan includes them.",
     whyChooseUs: [
       "Executive-level IT partnership and strategy",
       "Premium service delivery and responsiveness",
