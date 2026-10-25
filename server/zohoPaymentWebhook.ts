@@ -1,3 +1,5 @@
+import { and, eq, isNull, notInArray, or } from "drizzle-orm";
+import { storeOrders } from "@shared/schema";
 import type { ZohoPaymentWebhookEvent } from "./zohoPayments";
 
 /**
@@ -22,7 +24,8 @@ export type PaymentWebhookDecision =
   | { action: "already_paid" }
   | { action: "reject"; reason: string };
 
-const PAID_OR_LATER = new Set(["paid", "processing", "provisioning", "completed"]);
+export const PAID_OR_LATER_STATUSES = ["paid", "processing", "provisioning", "completed"] as const;
+const PAID_OR_LATER: ReadonlySet<string> = new Set(PAID_OR_LATER_STATUSES);
 const EXPECTED_CURRENCY = "USD";
 
 export function evaluatePaymentSucceeded(
@@ -57,4 +60,16 @@ export function evaluatePaymentSucceeded(
   }
 
   return { action: "mark_paid" };
+}
+
+/**
+ * The condition on the write that marks an order paid. It matches only an
+ * order that is still unpaid, so a second delivery of the same event updates
+ * nothing and the caller skips fulfilment. A null status counts as unpaid.
+ */
+export function unpaidOrderCondition(orderId: string) {
+  return and(
+    eq(storeOrders.id, orderId),
+    or(isNull(storeOrders.status), notInArray(storeOrders.status, [...PAID_OR_LATER_STATUSES])),
+  );
 }
