@@ -1,4 +1,5 @@
 import { cyberAwarenessFacts } from "@/data/cyberAwarenessFacts";
+import { HomeScene } from "../scene/HomeScene";
 
 const MFA_SOURCE_URL =
   cyberAwarenessFacts.find((fact) => fact.id === "microsoft-mfa-blocks-2025")?.sourceUrl ?? null;
@@ -13,6 +14,7 @@ const STATS = [
 export function ThreatStatsSection(): JSX.Element {
   return (
     <section className="sec band t-ink" id="stats">
+      <HomeScene frame="exposure" />
       <div className="wrap">
         <div className="head">
           <div>

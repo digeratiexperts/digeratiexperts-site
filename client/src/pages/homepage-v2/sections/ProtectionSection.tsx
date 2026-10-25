@@ -1,5 +1,6 @@
 import { useState, type KeyboardEvent } from "react";
 import { CheckIcon } from "../icons";
+import { HomeScene } from "../scene/HomeScene";
 
 const BLOCKS = [
   {
@@ -71,6 +72,7 @@ export function ProtectionSection(): JSX.Element {
 
   return (
     <section className="sec t-ink" id="protection">
+      <HomeScene frame="protected" />
       <div className="wrap">
         <div className="head">
           <div>
