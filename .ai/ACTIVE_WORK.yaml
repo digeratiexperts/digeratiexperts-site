@@ -39,7 +39,8 @@ claims:
       - client/src/pages/homepage-v2/scene/** (new; HomeScene component and its own stylesheet)
       - client/src/pages/homepage-v2/sections/{ThreatStats,Challenges,Protection,Contact}Section.tsx (one import and one first-child line each)
       - artifacts/visual-qa/home-v2-scene-story/**
-    status: in-review
+      - design/approved/homepage-scene-story-2026-10.md (scope extended to /)
+    status: approved
     started: 2026-10-25
     note: >-
       Joe, 2026-10-25: "make version 10 the live homepage", then, after the

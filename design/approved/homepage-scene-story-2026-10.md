@@ -1,6 +1,8 @@
 # Homepage scene story and Signal Thread plates — Oct 2026
 
-**Scope of this approval: the noindex preview pages `/version-9` and `/version-10` only.** Not approved for the live homepage `/` or any other public page; that needs its own decision from Joe.
+**Scope of this approval:** the noindex preview pages `/version-9` and `/version-10` (2026-10-14), and four scene-story frames on the live homepage `/` (Homepage v2, 2026-10-25). Not approved for any other public page; that needs its own decision from Joe.
+
+**Homepage v2 extension (2026-10-25):** Joe reviewed the before/after screenshots of PR #837 (`artifacts/visual-qa/home-v2-scene-story/compare-*.jpg`) and said "Merge". Approved on `/`: `2-exposure` behind #stats, `3-gaps` (light edition, inverted) behind #challenges, `4-protected` behind #protection, `5-close` behind #contact. `1-network` is not used on `/`.
 
 Approved by Joe 2026-10-14 in the build session ("approve the images"), after review of the frames and the fixes below. PR #565, branch `claude/loving-edison-epagrb`.
 
