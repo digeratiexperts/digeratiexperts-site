@@ -26,6 +26,7 @@ export function registerPortalPhoneRoutes(
   },
 ) {
   app.get(PHONE_PATH, ...opts.guards, async (req: Request, res: Response) => {
+    res.setHeader("Cache-Control", "private, no-store");
     const env = opts.env ?? process.env;
     const status = readIntegrationStatus("phone", env);
     if (status.mode !== "live" || !status.provider) return res.json({ success: true, status });

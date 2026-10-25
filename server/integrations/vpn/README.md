@@ -153,7 +153,14 @@ pages; recheck before building.
   https://kb.timusnetworks.com/knowledge-base/dashboards/partner-portal ,
   https://timusnetworks.com/partners/msp-partner-solutions
 
-**Not found:** a public API reference, base URL, endpoint list, OpenAPI/Swagger file,
+**Rechecked 2026-10-25:** the API Access article is public and now documents a
+`Custom` application with client credentials and Bearer-token authentication.
+Its linked [Quick Start](https://support.timusnetworks.com/hc/en-us/articles/31494426988179-Quick-Start)
+redirects to Timus sign-in. A signed-in export of that reference, including the
+device endpoint, tenant scope and response examples, is still required. The
+adapter continues to fail closed; no endpoint or credential format was guessed.
+
+**Not found publicly:** a complete API reference, base URL, endpoint list, OpenAPI/Swagger file,
 Postman collection, official SDK, Terraform provider, SCIM endpoint or webhooks. Timus's
 npm scope `@timus-networks/*` holds Vue/Nuxt UI components only. Whether the API Access
 credentials can read devices, users or connection state per customer is undocumented.

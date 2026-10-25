@@ -201,7 +201,7 @@ export const PROVIDER_REQUIREMENTS: Record<IntegrationArea, Record<string, Provi
           ],
         },
       ],
-      note: "Not built: Timus publishes no API reference yet, so the page says data isn't available. See server/integrations/vpn/timus.ts.",
+      note: "Not built: Timus's linked Quick Start requires vendor sign-in. Authentication and device endpoint documentation are still needed. See server/integrations/vpn/timus.ts.",
     },
   },
   phone: {
@@ -213,10 +213,9 @@ export const PROVIDER_REQUIREMENTS: Record<IntegrationArea, Record<string, Provi
       groups: [
         {
           id: "call-history",
-          label: "Call history (reserved; not built, nothing reads it yet)",
+          label: "Personal call history (optional; verify Insights access first)",
           rule: "optional",
-          reserved: true,
-          options: [[{ name: "PORTAL_PHONE_CALL_HISTORY", purpose: "Switch for call history once it is built" }]],
+          options: [[{ name: "PORTAL_PHONE_CALL_HISTORY", purpose: "Set on for masked seven-day history of the signed-in user's assigned extension" }]],
         },
       ],
       perCompanyEnv: {

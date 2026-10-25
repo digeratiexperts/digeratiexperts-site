@@ -20,12 +20,9 @@ import type { PhoneData, PhoneExtension } from "./types";
  * - GET /data/users lists extensions with their users: name, extension_number,
  *   email (null when no user is assigned). `limit` default 100, max 1000.
  *
- * Not used (see README.md, "Call history (Insights)" and "Voicemail and
- * devices"): Insights (call detail records) is documented but the
- * /insights/search response envelope could not be read first-hand, so call
- * history is not connected and PORTAL_PHONE_CALL_HISTORY is reserved, not read;
- * the docs describe no endpoint for phone registration status or voicemail
- * message counts.
+ * Optional Insights call history is loaded separately by history.ts when
+ * PORTAL_PHONE_CALL_HISTORY=on. This module remains the extension directory.
+ * The docs describe no endpoint for phone registration status or voicemail counts.
  */
 
 export const CYTRACOM_BASE_URL = "https://api.cytracom.net/v1.0";

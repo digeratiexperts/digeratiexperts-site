@@ -18,6 +18,23 @@ export type PhoneExtension = {
  */
 export type PhoneGap = "phoneStatus" | "recentCalls" | "voicemail";
 
+export type PhoneCall = {
+  id: string;
+  startedAt: string;
+  direction: "inbound" | "outbound" | "internal";
+  durationSeconds: number;
+  answered: boolean;
+  number: string | null;
+};
+
+export type PhoneHistory = {
+  status: "ok" | "not_assigned" | "unavailable";
+  since: string;
+  until: string;
+  calls: PhoneCall[];
+  truncated: boolean;
+};
+
 export type PhoneData = {
   provider: "cytracom";
   /** The company's extensions, sorted by extension number. */
@@ -25,6 +42,7 @@ export type PhoneData = {
   /** The signed-in user's extension, matched by email; null when none matches. */
   myExtension: PhoneExtension | null;
   unavailable: PhoneGap[];
+  callHistory?: PhoneHistory;
   /** ISO time the vendor was read. */
   fetchedAt: string;
 };
