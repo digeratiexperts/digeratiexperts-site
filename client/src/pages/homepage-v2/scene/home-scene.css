@@ -1,0 +1,74 @@
+/* Scene story on Homepage v2: see HomeScene.tsx. Scoped to .hv2; homepage-v2.css is untouched. */
+
+/* The section paints its own field; the scene sits on it and every other child sits above. */
+.hv2 .sec:has(> .hscene) { position: relative; isolation: isolate; }
+.hv2 .sec:has(> .hscene) > :not(.hscene) { position: relative; z-index: 1; }
+
+.hv2 .hscene {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.hv2 .hscene__img {
+  position: absolute;
+  display: block;
+  max-width: none;
+  height: auto;
+  aspect-ratio: 1600 / 893;
+  /* The frames are lit objects on black. On the dark sections black drops out and only
+     the light adds to the field, so the frame takes the section's own navy. */
+  mix-blend-mode: screen;
+  -webkit-mask-image: radial-gradient(ellipse 46% 56% at 64% 46%, #000 35%, transparent 80%);
+  mask-image: radial-gradient(ellipse 46% 56% at 64% 46%, #000 35%, transparent 80%);
+}
+
+/* Light section (#challenges): the same frame as a light edition, inverted and blended into
+   the paper, so the story carries through without changing the section's approved field. */
+.hv2 .hscene--gaps .hscene__img {
+  filter: invert(1) hue-rotate(180deg) saturate(0.8);
+  mix-blend-mode: multiply;
+}
+
+/* Wide layout (heading and side note side by side, above 1080px): the building sits in the
+   open gap between them, measured from the 1200px content column (`--hcol` is its left edge). */
+.hv2 .hscene { --hcol: max(24px, calc((100% - 1200px) / 2 + 24px)); }
+.hv2 .hscene--exposure .hscene__img { left: calc(var(--hcol) + 140px); top: 10px; width: 620px; opacity: 0.85; }
+.hv2 .hscene--protected .hscene__img { left: calc(var(--hcol) + 150px); top: 40px; width: 600px; opacity: 0.9; }
+.hv2 .hscene--gaps .hscene__img { left: calc(var(--hcol) + 120px); top: -40px; width: 600px; opacity: 0.45; }
+.hv2 .hscene--close .hscene__img { left: calc(var(--hcol) - 40px); bottom: -170px; width: 760px; opacity: 0.55; }
+
+/* Stacked heads (681-1080px): the frame moves to the top right, above the side note. */
+@media (max-width: 1080px) {
+  .hv2 .hscene--exposure .hscene__img,
+  .hv2 .hscene--protected .hscene__img,
+  .hv2 .hscene--gaps .hscene__img { left: auto; right: -6%; top: -50px; width: min(64%, 600px); }
+  .hv2 .hscene--close .hscene__img { left: -8%; bottom: -150px; width: min(80%, 680px); }
+}
+/* Phones: the copy runs full width, so the frame steps back to a quiet corner. */
+@media (max-width: 680px) {
+  .hv2 .hscene--exposure .hscene__img,
+  .hv2 .hscene--protected .hscene__img,
+  .hv2 .hscene--gaps .hscene__img { right: -34%; top: -40px; width: 120%; opacity: 0.45; }
+  .hv2 .hscene--gaps .hscene__img { opacity: 0.3; }
+  .hv2 .hscene--close .hscene__img { left: -20%; bottom: -90px; width: 140%; opacity: 0.45; }
+}
+
+/* The frame settles in as its section arrives. Decorative: progressive enhancement only. */
+@media (prefers-reduced-motion: no-preference) {
+  @supports ((animation-timeline: view()) and (animation-range: entry)) {
+    @keyframes hscene-settle { from { scale: 1.06; } }
+    .hv2 .hscene { view-timeline: --hscene block; }
+    .hv2 .hscene__img {
+      transform-origin: 70% 40%;
+      animation: hscene-settle linear both;
+      animation-timeline: --hscene;
+      animation-range: entry 0% cover 40%;
+    }
+  }
+}
+
+/* High-contrast and print: no decoration. */
+@media (forced-colors: active) { .hv2 .hscene { display: none; } }
+@media print { .hv2 .hscene { display: none; } }

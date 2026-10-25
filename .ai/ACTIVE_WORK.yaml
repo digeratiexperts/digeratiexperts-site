@@ -30,6 +30,31 @@
 
 version: 2
 claims:
+  - id: home-v2-scene-story
+    owner: claude
+    subsystem: homepage
+    branch: claude/loving-edison-epagrb
+    base_sha: c0fa29c9
+    files:
+      - client/src/pages/homepage-v2/scene/** (new; HomeScene component and its own stylesheet)
+      - client/src/pages/homepage-v2/sections/{ThreatStats,Challenges,Protection,Contact}Section.tsx (one import and one first-child line each)
+      - artifacts/visual-qa/home-v2-scene-story/**
+    status: in-review
+    started: 2026-10-25
+    note: >-
+      Joe, 2026-10-25: "make version 10 the live homepage", then, after the
+      conflict was put to him: add Version 10's scene backgrounds to Homepage v2
+      at / as a visual enhancement, keep its approved layout, content, type,
+      SEO and CTAs, leave /concepts/home-classic (Version 8) and
+      /concepts/home-chapters untouched, no merge or deploy before he reviews
+      the screenshots. Four of the five approved scene-story frames are placed
+      (exposure on #stats, gaps as a light edition on #challenges, protected on
+      #protection, close on #contact); network is left out because #why has no
+      open space beside its cards. homepage-v2.css, the hero (claimed by
+      pronunciation-voice-piper) and the footer (open PR 717) are not edited.
+      Overlap check 2026-10-25: open PRs 717 (homepage-v2.css tail, SiteFooter),
+      827 (global font) and 832 (cookie banner, Ask DE launcher) touch none of
+      these files; lane-h-homepage-refinement's branch has nothing unmerged.
   - id: lane-h-homepage-refinement
     issue: 696
     owner: opencode
