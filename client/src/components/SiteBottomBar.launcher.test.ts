@@ -58,8 +58,20 @@ describe("Ask DE launcher button", () => {
     expect(launcherButton).not.toContain("ring-de-magenta-ink");
   });
 
-  it("is a circle when there is no label (extra right padding only beside the label)", () => {
-    expect(launcherButton).toMatch(/px-1\$\{compact \? "" : " sm:pr-1\.5"\}/);
+  it("is a circle at rest; extra right padding only while the label shows", () => {
+    expect(launcherButton).toMatch(/px-1\$\{compact \? "" : " sm:hover:pr-1\.5 sm:focus-visible:pr-1\.5"\}/);
+    expect(launcherButton).not.toMatch(/"\s*sm:pr-1\.5"/);
+  });
+
+  it("keeps the label off page content at rest and slides it out on hover or keyboard focus", () => {
+    const label = src.slice(src.indexOf('data-testid="ask-de-launcher-label"') - 600, src.indexOf('data-testid="ask-de-launcher-label"'));
+    expect(label).toContain("max-w-0");
+    expect(label).toContain("opacity-0");
+    expect(label).toContain("group-hover:max-w-[12rem]");
+    expect(label).toContain("group-focus-visible:max-w-[12rem]");
+    expect(label).toContain("motion-reduce:transition-none");
+    // The button still names itself when the label is collapsed.
+    expect(src).toContain('aria-label={compact ? "Open Ask DE support options" : "Open Ask DE"}');
   });
 });
 
