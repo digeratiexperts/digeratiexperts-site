@@ -1,4 +1,4 @@
-// Card objects (Exploration, 2026-10-19): one monochrome 3D object per card, in document order,
+// Card objects (Exploration, 2026-10-21): one monochrome 3D object per card, in document order,
 // placed by section without editing the live section components. Objects are ILLUSTRATIVE kie.ai renders
 // (abstract, no faces, no text). Decorative: aria-hidden, empty alt.
 import { useEffect, type RefObject } from "react";
@@ -16,6 +16,10 @@ export const objectPlan: Record<string, Placement[]> = {
   testimonials: [{ selector: ".proof-cells > li", objects: ["network", "eye", "headset"], size: 120 }],
   trust: [{ selector: ".why__pillars > li", objects: ["building", "people", "chart", "document"], size: 110 }],
   pricing: [{ selector: ".pricing-grid .pricing-card", objects: ["laptop", "network", "shield", "building"], size: 120 }],
+  industries: [{ selector: ".ind-rail .ind-card", objects: ["building", "factory", "hospital", "bank", "school", "warehouse", "office", "truck"], size: 96 }],
+  insights: [{ selector: ".feed-card", objects: ["newspaper", "shield", "chart", "alert", "doc", "lock", "server"], size: 96 }],
+  faq: [{ selector: ".faq-item", objects: ["question", "shield", "lock", "clipboard", "server", "network", "people"], size: 80 }],
+  team: [{ selector: ".ops > li", objects: ["people", "people", "people", "people"], size: 100 }],
 };
 
 export function useCardObjects(rootRef: RefObject<HTMLElement>): void {

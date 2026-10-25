@@ -214,7 +214,7 @@ export function HomeChapters(): JSX.Element {
       <WebSiteJsonLd />
       <MegaMenu />
       <SiteBottomBar autohide />
-      <main id="home-main" className="contents">
+      <main id="home-main" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--section-gap)' }}>
         <nav className={`hc-nav${closing ? " is-closing" : ""}`} aria-label="Sections">
           <ul aria-hidden={closing || undefined}>
             {navItems.map((id) => {
@@ -244,9 +244,9 @@ export function HomeChapters(): JSX.Element {
           <div className="hc-poster__dark" aria-hidden="true" />
           <div className="hc-wrap hc-poster__grid">
             <div className="hc-poster__copy">
-              <p className="hc-poster__eyebrow">Arizona MSP. Cybersecurity &amp; Managed IT.</p>
+              <p className="hc-poster__eyebrow">Arizona MSP · Cybersecurity & Managed IT</p>
               <h1 id="hc-poster-title" className="hc-poster__title">
-                Cybersecurity-first IT<br />that powers<br />your business.
+                Cybersecurity-first IT<br />that powers<br />your <span className="accent-word">business.</span>
               </h1>
               <p className="hc-poster__sub">Managed IT, security and compliance for Arizona businesses that can&rsquo;t afford downtime.</p>
               <div className="hc-poster__actions">
@@ -255,13 +255,52 @@ export function HomeChapters(): JSX.Element {
               </div>
             </div>
             <figure className="hc-poster__figure">
-              <img src="/images/founder/joe-petro-studio-blazer-white.jpg" alt="Joseph Petro, Founder of Digerati Experts" width={900} height={1100} {...({ fetchpriority: "high" } as Record<string, string>)} />
-              <figcaption><span>Joseph Petro</span><span>Founder &amp; Chief Technology Strategist</span></figcaption>
+              <picture>
+                <source srcSet="/images/founder/joe-petro-studio-blazer-white.webp" type="image/webp" />
+                <img src="/images/founder/joe-petro-studio-blazer-white.jpg" alt="Joseph Petro, Founder of Digerati Experts" width={900} height={1100} {...({ fetchpriority: "high" } as Record<string, string>)} />
+              </picture>
+              <figcaption><span>Joseph Petro</span><span>Founder & Chief Technology Strategist</span></figcaption>
             </figure>
+            {/* Assessment preview card — laid over portrait's lower corner (mesh style) */}
+            <div className="hc-poster__preview" aria-hidden="true">
+              <div className="win">
+                <div className="win__bar">
+                  <div className="win__head">
+                    <span className="win__title">Cyber Risk Assessment</span>
+                    <span className="v8-meta">Preview</span>
+                  </div>
+                </div>
+                <div className="win__body">
+                  <div className="bar" role="progressbar" aria-valuenow={68} aria-valuemin={0} aria-valuemax={100}>
+                    <span style={{ width: '68%' }}></span>
+                  </div>
+                  <div className="tstrip">
+                    <ul className="tstrip__items">
+                      <li className="tstrip__item">
+                        <span className="tstrip__icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
+                        <span>Attack Surface</span>
+                      </li>
+                      <li className="tstrip__item">
+                        <span className="tstrip__icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></span>
+                        <span>Identity Risk</span>
+                      </li>
+                      <li className="tstrip__item">
+                        <span className="tstrip__icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12V7H5"/><path d="M16 7v5a2 2 0 0 1-2 2h-4"/></svg></span>
+                        <span>Data Exposure</span>
+                      </li>
+                      <li className="tstrip__item">
+                        <span className="tstrip__icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></span>
+                        <span>Compliance Gaps</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
-        {chapters.map((c) => (
-          <section key={c.id} id={c.id} ref={sectionRefs.current[c.id]} className={`hc-section${plates[c.id] ? " hc-section--plate" : ""}`} aria-label={c.label}>
+        {chapters.map((c, idx) => (
+          <section key={c.id} id={c.id} ref={sectionRefs.current[c.id]} className={`hc-section${plates[c.id] ? " hc-section--plate" : ""}`} aria-label={c.label} style={{ paddingTop: idx === 0 ? 0 : 'var(--section-gap)' }}>
             {plates[c.id] && (
               <img className="hc-plate" src={plates[c.id]} alt="" aria-hidden="true" width={1600} height={900} loading={c.id === "hero" ? "eager" : "lazy"} data-depth="0.18" />
             )}

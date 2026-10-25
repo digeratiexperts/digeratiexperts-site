@@ -1,4 +1,4 @@
-/* Concept v7 (Exploration, 2026-10-19): DARK-FIRST premium pass for /concepts/home-chapters.
+/* Concept v8 (Exploration, 2026-10-21): DARK-FIRST premium pass for /concepts/home-chapters.
    Default = ChatGPT/Grok/x.ai-grade dark: charcoal #0a0a0a ground, white cards #1a1a1c,
    magenta accent. Light mode (Apple-style) flips via [data-theme="light"] on the root,
    persisted + system-preference aware (see ThemeToggle). All 14 live sections reused;
@@ -7,7 +7,7 @@
 .hc {
   --ink: #f5f5f5;
   --ink-2: #a1a1a6;
-  --ink-3: #6e6e73;
+  --ink-3: #8a8a90;
   --base: #0a0a0a;
   --card: #ffffff;
   --card-2: #f1f1f2;
@@ -25,12 +25,16 @@
   --dark-line: rgba(255, 255, 255, 0.08);
   --r: 24px;
   --r-sm: 16px;
+  --r-lg: 28px;
   --gutter: clamp(20px, 4vw, 48px);
-  --section: clamp(96px, 12vw, 160px);
+  --section-gap: clamp(48px, 6vw, 96px);
+  --section-pad-x: clamp(20px, 4vw, 48px);
   --t-fast: 150ms;
   --t-mid: 320ms;
   --t-slow: 900ms;
   --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   background: var(--base);
   color: var(--ink);
   color-scheme: dark;
@@ -68,10 +72,10 @@
   --v8-fg: #f5f5f5;
   --v8-ink: #f5f5f5;
   --v8-ink-body: #a1a1a6;
-  --v8-ink-muted: #6e6e73;
+  --v8-ink-muted: #8a8a90;
   --v8-muted: #a1a1a6;
   --v8-muted-soft: #8a8a90;
-  --v8-muted-quiet: #6e6e73;
+  --v8-muted-quiet: #8a8a90;
   --v8-hairline: rgba(255,255,255,0.08);
   --v8-hairline-strong: rgba(255,255,255,0.14);
   --v8-paper-hairline: rgba(255,255,255,0.08);
@@ -136,10 +140,10 @@
   --v8-magenta-ink: #ff4d8d;
 }
 
-/* ---------- Strip dark-field grammar ---------- */
+/* Strip dark-field grammar */
 .hc .v8-section, .hc .f-well, .hc .f-surface, .hc .f-paper {
   background: transparent !important; background-image: none !important;
-  border: 0 !important; padding-block: var(--section) !important;
+  border: 0 !important; padding-block: 0 !important;
 }
 .hc [class*="ChapterPattern"], .hc [class*="pattern"], .hc .hero__field,
 .hc .v8-section::before, .hc .v8-section::after, .hc .v8-box::after,
@@ -147,15 +151,30 @@
 .hc .v8-dash:not(#protection .v8-dash), .hc .v8-eyebrow .sep { display: none !important; }
 .hc .v8-box, .hc .v8-grid { background: transparent !important; background-image: none !important; border: 0 !important; box-shadow: none !important; padding: 0 !important; }
 
+/* Section rhythm: vertical gaps between sections */
+.hc-section:not(.hc-poster) {
+  padding-top: var(--section-gap) !important;
+}
+.hc-section:first-of-type {
+  padding-top: 0 !important;
+}
+
 /* ---------- Type ---------- */
 .hc .v8-h1, .hc .v8-h2, .hc .v8-h2--sub, .hc .v8-h3, .hc .v8-h4,
 .hc .v8-h2 span, .hc .v8-h1 span {
   color: var(--ink) !important; -webkit-text-fill-color: var(--ink) !important;
   background: none !important; font-weight: 600; letter-spacing: -0.035em;
 }
-.hc .v8-h2 { font-size: clamp(2.4rem, 5vw, 4.2rem) !important; line-height: 1 !important; max-width: 18ch; text-wrap: balance; border-bottom: 0 !important; }
-.hc .v8-h3 { font-size: 1.375rem !important; letter-spacing: -0.02em !important; }
-.hc .v8-h4 { font-size: 1.125rem !important; }
+.hc .v8-h2 { 
+  font-size: clamp(2.4rem, 5vw, 4.2rem) !important; 
+  line-height: 1 !important; 
+  max-width: 18ch; 
+  text-wrap: balance; 
+  border-bottom: 0 !important; 
+  margin-bottom: clamp(32px, 4vw, 56px) !important;
+}
+.hc .v8-h3 { font-size: 1.375rem !important; letter-spacing: -0.02em !important; line-height: 1.25 !important; }
+.hc .v8-h4 { font-size: 1.125rem !important; line-height: 1.3 !important; }
 .hc .v8-accent { background: none !important; -webkit-text-fill-color: inherit !important; color: inherit !important; }
 .hc .v8-eyebrow, .hc .v8-meta, .hc .v8-small, .hc .proof-sources, .hc .tstrip__label,
 .hc .v8-seq, .hc .svc-path__kicker {
@@ -164,14 +183,16 @@
   font-weight: 500 !important; color: var(--ink-3) !important;
 }
 .hc .v8-eyebrow { margin-bottom: 16px !important; }
-.hc .v8-head { margin-bottom: clamp(32px, 4vw, 56px) !important; border-bottom: 0 !important; }
 .hc.v8 .v8-lede { font-size: clamp(1.0625rem, 1.4vw, 1.25rem) !important; line-height: 1.55 !important; color: var(--ink-2) !important; max-width: 52ch; }
-.hc.v8 main .v8-body, .hc.v8 main .v8-section p, .hc.v8 main .hero__sub { color: var(--ink-2) !important; font-size: 1rem; line-height: 1.55; }
+.hc.v8 main .v8-body, .hc.v8 main .v8-section p, .hc.v8 main .hero__sub { color: var(--ink-2) !important; font-size: 1rem; line-height: 1.6; }
 .hc .v8-num, .hc .v8-stat, .hc .pricing-amount { font-family: "Space Grotesk", Inter, sans-serif !important; font-weight: 600 !important; letter-spacing: -0.03em !important; color: var(--ink) !important; }
-.hc .stats-cell .v8-stat { font-size: 3rem !important; line-height: 1 !important; }
+.hc .stats-cell .v8-stat { font-size: clamp(2.5rem, 4vw, 3.5rem) !important; line-height: 1 !important; }
+
+/* Section head: consistent spacing */
+.hc .v8-head { margin-bottom: clamp(32px, 4vw, 56px) !important; border-bottom: 0 !important; }
 
 /* ---------- Controls ---------- */
-.hc .v8-btn { border-radius: 999px !important; box-shadow: none !important; background-image: none !important; min-height: 48px !important; padding: 0 24px !important; font-size: 1rem !important; font-weight: 600 !important; transition: background-color var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease), transform var(--t-fast) var(--ease) !important; }
+.hc .v8-btn { border-radius: 999px !important; box-shadow: none !important; background-image: none !important; min-height: 56px !important; padding: 0 28px !important; font-size: 1rem !important; font-weight: 600 !important; transition: background-color var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease), transform var(--t-fast) var(--ease) !important; }
 .hc .v8-btn:active { transform: scale(0.98); }
 .hc .v8-btn--primary, .hc .v8-btn--hero { background: var(--accent) !important; color: #fff !important; border: 0 !important; }
 .hc .v8-btn--primary:hover, .hc .v8-btn--hero:hover { background: var(--accent-ink) !important; }
@@ -183,7 +204,7 @@
 .hc .v8-iconwell, .hc .tstrip__icon { background: var(--card-2) !important; border: 0 !important; color: var(--card-ink) !important; border-radius: 12px !important; box-shadow: none !important; }
 .hc .v8-tag { background: var(--card) !important; border: 1px solid var(--card-line) !important; color: var(--card-ink-2) !important; border-radius: 999px !important; text-transform: none !important; letter-spacing: 0 !important; font-family: Inter, system-ui, sans-serif !important; }
 
-/* ---------- Cards ---------- */
+/* ---------- Cards: white surfaces, elevation, hover ---------- */
 .hc.v8 .v8-card, .hc.v8 .v8-box .v8-card, .hc.v8 .stats-cell, .hc.v8 .problem,
 .hc.v8 .svc-path, .hc.v8 .proof-cells > li, .hc.v8 .proof-rail > li, .hc.v8 .proof-panel,
 .hc.v8 .pricing-card, .hc.v8 .step, .hc.v8 .feed-card, .hc.v8 .claim, .hc.v8 .claims > *,
@@ -191,18 +212,18 @@
 .hc.v8 .tstrip__items > li, .hc.v8 .next__standards > li {
   position: relative; background: var(--card) !important; background-image: none !important;
   border: 1px solid var(--line) !important; border-radius: var(--r) !important;
-  box-shadow: 0 1px 1px rgba(0,0,0,0.2), 0 24px 60px -40px rgba(0,0,0,0.6) !important;
-  padding: 28px !important; color: var(--card-ink);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.08), 0 8px 24px -8px rgba(0,0,0,0.12) !important;
+  padding: clamp(24px, 3vw, 32px) !important; color: var(--card-ink);
   transition: border-color var(--t-mid) var(--ease), box-shadow var(--t-mid) var(--ease), transform var(--t-mid) var(--ease) !important;
 }
 .hc.v8 :is(.v8-card, .problem, .pricing-card, .svc-path, .step):is(:hover, :focus-within) {
   border-color: var(--line-2) !important;
-  box-shadow: 0 1px 1px rgba(0,0,0,0.2), 0 32px 80px -40px rgba(0,0,0,0.75) !important;
-  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1), 0 20px 40px -12px rgba(0,0,0,0.18) !important;
+  transform: translateY(-4px);
 }
 .hc.v8 .v8-card .v8-h3, .hc.v8 .v8-card .v8-h4, .hc.v8 .problem__title, .hc.v8 .claim__title { color: var(--card-ink) !important; }
 .hc.v8 .v8-card .v8-body, .hc.v8 .v8-card p, .hc.v8 .problem__body { color: var(--card-ink-2) !important; }
-.hc.v8 .pricing-card--flagship { border: 1px solid var(--accent) !important; box-shadow: 0 0 0 1px var(--accent), 0 24px 60px -40px rgba(0,0,0,0.6) !important; }
+.hc.v8 .pricing-card--flagship { border: 1px solid var(--accent) !important; box-shadow: 0 0 0 1px var(--accent), 0 8px 24px -8px rgba(0,0,0,0.12) !important; }
 .hc.v8 .v8-seq { background: none !important; border: 0 !important; padding: 0 !important; }
 .hc.v8 .problem__link { color: var(--ink) !important; text-decoration: none !important; }
 .hc.v8 .problem__arrow { color: var(--ink-3) !important; background: none !important; border: 0 !important; }
@@ -213,7 +234,7 @@
   max-width: 100%; object-fit: contain; object-position: left center;
   margin: 0 0 20px; pointer-events: none;
   filter: drop-shadow(0 16px 24px rgba(0,0,0,0.18));
-  transition: transform var(--t-slow) var(--ease);
+  transition: transform var(--t-slow) var(--ease-out);
 }
 .hc .hc-has-obj { overflow: hidden; }
 .hc .hc-has-obj::before {
@@ -226,23 +247,31 @@
 .hc[data-theme="light"] .hc-has-obj::before { background: radial-gradient(closest-side, rgba(18,18,18,0.05), transparent 70%); }
 .hc[data-theme="light"] .hc-obj { filter: drop-shadow(0 16px 20px rgba(18,18,18,0.12)); }
 
-/* ---------- Bento ---------- */
+/* ---------- Bento: asymmetrical, importance-weighted grids ---------- */
 .hc .stats-cells, .hc .problems, .hc .svc-paths, .hc .proof-cells, .hc .pricing-grid,
-.hc .steps, .hc .ops, .hc .claims, .hc .why__pillars { display: grid !important; gap: 16px !important; border: 0 !important; }
+.hc .steps, .hc .ops, .hc .claims, .hc .why__pillars { display: grid !important; gap: clamp(16px, 2vw, 24px) !important; border: 0 !important; }
 .hc .stats-cells > li, .hc .problems > *, .hc .svc-paths > li, .hc .proof-cells > li,
 .hc .pricing-grid > li, .hc .steps > li, .hc .ops > li { border-left: 0 !important; border-top: 0 !important; padding: 0 !important; }
+
+/* Stats: 4-col at desktop, hero stat spans 2 */
 @media (min-width: 640px) {
-  .hc .stats-cells, .hc .pricing-grid, .hc .steps, .hc .why__pillars { grid-template-columns: repeat(2, minmax(0,1fr)) !important; }
+  .hc .stats-cells { grid-template-columns: repeat(2, minmax(0,1fr)) !important; }
+  .hc .pricing-grid { grid-template-columns: repeat(2, minmax(0,1fr)) !important; }
+  .hc .steps { grid-template-columns: repeat(2, minmax(0,1fr)) !important; }
+  .hc .why__pillars { grid-template-columns: repeat(2, minmax(0,1fr)) !important; }
 }
 @media (min-width: 900px) {
-  .hc .problems:not(.hc-rail) { grid-template-columns: repeat(4, minmax(0,1fr)) !important; grid-auto-rows: minmax(220px, auto); }
+  .hc .stats-cells { grid-template-columns: repeat(4, minmax(0,1fr)) !important; }
+  .hc .stats-cells > li:first-child { grid-column: span 2; }
+  .hc .stats-cells > li:first-child .v8-stat { font-size: clamp(3.5rem, 5vw, 5rem) !important; }
+  .hc .problems:not(.hc-rail) { grid-template-columns: repeat(4, minmax(0,1fr)) !important; grid-auto-rows: minmax(260px, auto); }
   .hc .problems:not(.hc-rail) > :first-child { grid-column: span 2; grid-row: span 2; }
-  .hc .problems:not(.hc-rail) > :first-child .hc-obj { height: clamp(180px, 18vw, 260px); margin: 0 0 24px auto; object-position: right center; }
-  .hc .problems:not(.hc-rail) > :first-child .problem__title { font-size: 1.875rem !important; }
+  .hc .problems:not(.hc-rail) > :first-child .hc-obj { height: clamp(180px, 18vw, 280px); margin: 0 0 24px auto; object-position: right center; }
+  .hc .problems:not(.hc-rail) > :first-child .problem__title { font-size: clamp(1.75rem, 2.2vw, 2.25rem) !important; line-height: 1.15 !important; }
   .hc .svc-paths { grid-template-columns: repeat(4, minmax(0,1fr)) !important; }
   .hc .svc-paths > li:has(.svc-path--featured) { grid-column: span 2; }
-  .hc .stats-cells { grid-template-columns: repeat(4, minmax(0,1fr)) !important; }
   .hc .pricing-grid:not(.hc-rail) { grid-template-columns: repeat(4, minmax(0,1fr)) !important; }
+  .hc .pricing-grid > li:last-child { grid-column: span 2; }
   .hc .steps { grid-template-columns: repeat(4, minmax(0,1fr)) !important; }
   .hc .proof-cells:not(.hc-rail) { grid-template-columns: repeat(3, minmax(0,1fr)) !important; }
   .hc .why__pillars { grid-template-columns: repeat(4, minmax(0,1fr)) !important; }
@@ -255,64 +284,140 @@
   -webkit-backdrop-filter: saturate(180%) blur(14px); border-bottom: 1px solid var(--line);
 }
 .hc[data-theme="light"] .hc-nav { background: rgba(250,250,250,0.72); }
-.hc-nav ul { display: flex; gap: 2px; justify-content: center; list-style: none; padding: 6px var(--gutter); overflow-x: auto; scrollbar-width: none; }
-.hc-nav { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-inline: var(--gutter); }
-.hc-nav ul { flex: 1; }
+.hc-nav { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px var(--section-pad-x); }
+.hc-nav ul { display: flex; gap: 4px; justify-content: center; list-style: none; padding: 0; overflow-x: auto; scrollbar-width: none; flex: 1; }
 .hc-nav__toggle { flex-shrink: 0; }
-.hc-nav__link { display: inline-flex; align-items: center; min-height: 44px; padding: 0 14px; border-radius: 999px; color: var(--ink-2); font-size: 14px; font-weight: 500; white-space: nowrap; text-decoration: none; transition: color var(--t-fast) var(--ease), background-color var(--t-fast) var(--ease); }
+.hc-nav__link { display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; border-radius: 999px; color: var(--ink-2); font-size: 14px; font-weight: 500; white-space: nowrap; text-decoration: none; transition: color var(--t-fast) var(--ease), background-color var(--t-fast) var(--ease); }
 .hc-nav__link:hover { color: var(--ink); }
-.hc-nav__link.is-active { color: var(--ink); background: var(--card); box-shadow: 0 1px 2px rgba(0,0,0,0.3); }
+.hc-nav__link.is-active { color: var(--card-ink); background: var(--card); box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
 .hc-nav__link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.hc-section { scroll-margin-top: 56px; position: relative; }
-.hc-theme-toggle { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line-2); background: var(--card); color: var(--ink); font-size: 14px; font-weight: 500; cursor: pointer; transition: border-color var(--t-fast) var(--ease), background-color var(--t-fast) var(--ease); }
+.hc-theme-toggle { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line-2); background: var(--card); color: var(--card-ink); font-size: 14px; font-weight: 500; cursor: pointer; transition: border-color var(--t-fast) var(--ease), background-color var(--t-fast) var(--ease); }
 .hc-theme-toggle:hover { border-color: var(--ink); }
 .hc-theme-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .hc-theme-toggle svg { width: 16px; height: 16px; }
 
-/* ---------- Movie-poster hero ---------- */
-.hc-poster { position: relative; isolation: isolate; overflow: hidden; padding-top: clamp(72px, 9vw, 120px); background: var(--base); }
-.hc-poster__dark { position: absolute; inset: 0 0 20% 0; background: var(--dark-2); z-index: 0; }
-.hc-wrap { width: min(1240px, calc(100% - var(--gutter) * 2)); margin-inline: auto; }
-.hc-poster__grid { position: relative; z-index: 1; display: grid; gap: 32px; align-items: end; }
-@media (min-width: 1000px) { .hc-poster__grid { grid-template-columns: 1.1fr 0.9fr; gap: 56px; } }
-.hc-poster__copy { padding-bottom: clamp(100px, 14vw, 200px); color: var(--ink); }
-.hc-poster__eyebrow { font-size: 15px; font-weight: 500; color: var(--ink-3); margin-bottom: 24px; }
-.hc-poster__title { font-family: "Space Grotesk", Inter, sans-serif; font-weight: 600; font-size: clamp(3rem, 7vw, 6.5rem); line-height: 0.96; letter-spacing: -0.045em; color: var(--ink); }
-.hc-poster__sub { margin-top: 28px; font-size: clamp(1.125rem, 1.5vw, 1.375rem); line-height: 1.5; color: var(--ink-2); max-width: 40ch; }
-.hc-poster__actions { margin-top: 36px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px 28px; }
-.hc-poster__btn { display: inline-flex; align-items: center; gap: 10px; min-height: 56px; padding: 0 28px; border-radius: 999px; background: var(--accent); color: #fff; font-weight: 600; font-size: 1.0625rem; transition: background-color var(--t-fast) var(--ease), transform var(--t-fast) var(--ease); }
-.hc-poster__btn:hover { background: var(--accent-ink); }
-.hc-poster__btn:active { transform: scale(0.98); }
-.hc-poster__call { color: var(--ink); font-weight: 600; min-height: 44px; display: inline-flex; align-items: center; text-decoration: underline; text-decoration-color: var(--ink-3); text-underline-offset: 5px; }
-.hc-poster__figure { position: relative; margin: 0; border-radius: var(--r) var(--r) 0 0; overflow: hidden; box-shadow: 0 48px 120px -48px rgba(0,0,0,0.6); animation: hc-rise var(--t-slow) var(--ease) both; }
-.hc-poster__figure img { display: block; width: 100%; height: auto; aspect-ratio: 3/4; object-fit: cover; object-position: 50% 0%; }
-.hc-poster__figure figcaption { position: absolute; left: 20px; bottom: 20px; display: grid; gap: 2px; padding: 12px 16px; border-radius: 14px; background: rgba(10,10,10,0.72); backdrop-filter: blur(10px); color: #f5f5f5; }
-.hc-poster__figure figcaption span:first-child { font-weight: 600; }
-.hc-poster__figure figcaption span:last-child { font-size: 14px; color: rgba(245,245,245,0.7); }
+/* ---------- Hero: split-field poster with artifact crossing the seam ---------- */
+.hc-poster { 
+  position: relative; isolation: isolate; overflow: hidden; 
+  padding-top: clamp(64px, 8vw, 100px); 
+  padding-bottom: clamp(80px, 10vw, 140px);
+  background: var(--dark); 
+}
+.hc-poster__dark { 
+  position: absolute; inset: 0 0 45% 0; 
+  background: linear-gradient(180deg, var(--dark-2) 0%, rgba(18,18,18,0) 100%); 
+  z-index: 0; 
+}
+.hc-wrap { width: min(1280px, calc(100% - var(--section-pad-x) * 2)); margin-inline: auto; }
+.hc-poster__grid { position: relative; z-index: 1; display: grid; gap: clamp(32px, 5vw, 72px); align-items: start; }
+@media (min-width: 1000px) { 
+  .hc-poster__grid { grid-template-columns: 1.15fr 0.85fr; gap: clamp(48px, 6vw, 96px); } 
+}
+@media (min-width: 1400px) { .hc-wrap { width: min(1360px, calc(100% - var(--section-pad-x) * 2)); } }
 
-/* Poster copy always sits on the dark band, so it stays light in both modes */
+/* Copy column */
+.hc-poster__copy { color: #f5f5f5; }
+.hc-poster__eyebrow { font-size: 14px; font-weight: 500; color: var(--accent-ink); margin-bottom: 20px; text-transform: uppercase; letter-spacing: 0.08em; }
+.hc-poster__title { font-family: "Space Grotesk", Inter, sans-serif; font-weight: 600; font-size: clamp(3rem, 7vw, 7rem); line-height: 0.94; letter-spacing: -0.045em; color: #fff; }
+.hc-poster__title .accent-word { color: var(--accent-ink); }
+.hc-poster__sub { margin-top: 28px; font-size: clamp(1.125rem, 1.4vw, 1.375rem); line-height: 1.6; color: rgba(245,245,245,0.75); max-width: 42ch; }
+.hc-poster__actions { margin-top: 40px; display: flex; flex-wrap: wrap; align-items: center; gap: 16px 32px; }
+.hc-poster__btn { display: inline-flex; align-items: center; gap: 12px; min-height: 60px; padding: 0 32px; border-radius: 999px; background: var(--accent); color: #fff; font-weight: 600; font-size: 1.0625rem; transition: background-color var(--t-fast) var(--ease), transform var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease); box-shadow: 0 4px 16px -4px rgba(211,18,106,0.4); }
+.hc-poster__btn:hover { background: var(--accent-ink); box-shadow: 0 8px 24px -6px rgba(211,18,106,0.5); }
+.hc-poster__btn:active { transform: scale(0.97); }
+.hc-poster__call { color: rgba(245,245,245,0.85); font-weight: 500; min-height: 44px; display: inline-flex; align-items: center; text-decoration: underline; text-decoration-color: var(--ink-3); text-underline-offset: 5px; transition: color var(--t-fast) var(--ease); }
+.hc-poster__call:hover { color: #fff; }
+
+/* Figure column — artifact crossing the seam */
+.hc-poster__figure { 
+  position: relative; margin: 0; 
+  border-radius: var(--r-lg) var(--r-lg) 0 0; 
+  overflow: hidden; 
+  box-shadow: 
+    0 0 0 1px rgba(255,255,255,0.04),
+    0 32px 80px -24px rgba(0,0,0,0.5),
+    0 0 0 24px rgba(10,10,10,0.4) inset;
+  animation: hc-rise var(--t-slow) var(--ease-out) both;
+  transform-origin: bottom center;
+}
+.hc-poster__figure img { 
+  display: block; width: 100%; height: auto; 
+  aspect-ratio: 3/4; 
+  object-fit: cover; 
+  object-position: 50% 15%;
+}
+.hc-poster__figure figcaption { 
+  position: absolute; left: 20px; bottom: 20px; 
+  display: grid; gap: 2px; padding: 14px 18px; 
+  border-radius: 14px; 
+  background: rgba(10,10,10,0.8); 
+  backdrop-filter: blur(12px); 
+  border: 1px solid rgba(255,255,255,0.06);
+  color: #f5f5f5; 
+}
+.hc-poster__figure figcaption span:first-child { font-weight: 600; font-size: 15px; }
+.hc-poster__figure figcaption span:last-child { font-size: 13px; color: rgba(245,245,245,0.6); }
+
+/* Artifact crossing the seam - a real UI shot that bridges dark/light */
+.hc-poster__artifact {
+  position: absolute;
+  bottom: -20%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 85%;
+  max-width: 520px;
+  aspect-ratio: 4/3;
+  border-radius: var(--r);
+  overflow: hidden;
+  box-shadow: 
+    0 0 0 1px rgba(255,255,255,0.08),
+    0 48px 120px -32px rgba(0,0,0,0.6);
+  background: var(--card);
+  z-index: 10;
+  animation: hc-artifact-rise var(--t-slow) var(--ease-spring) both 200ms;
+}
+.hc-poster__artifact img {
+  width: 100%; height: 100%; object-fit: cover;
+}
+@keyframes hc-artifact-rise { 
+  from { opacity: 0; transform: translateX(-50%) translateY(40px) scale(0.95); } 
+  to { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); } 
+}
+@keyframes hc-rise { from { opacity: 0; transform: translateY(24px) scale(0.98); } to { opacity: 1; transform: none; } }
+
+/* Light mode: hero stays dark stage (Apple-style), artifact still crosses */
+.hc[data-theme="light"] .hc-poster { background: #0a0a0a; }
+.hc[data-theme="light"] .hc-poster__dark { background: linear-gradient(180deg, #121212 0%, rgba(18,18,18,0) 100%); }
+.hc[data-theme="light"] .hc-poster__figure {
+  box-shadow: 
+    0 0 0 1px rgba(18,18,18,0.08),
+    0 32px 80px -24px rgba(0,0,0,0.3),
+    0 0 0 24px rgba(10,10,10,0.3) inset;
+}
+.hc[data-theme="light"] .hc-poster__artifact {
+  box-shadow: 
+    0 0 0 1px rgba(18,18,18,0.12),
+    0 48px 120px -32px rgba(0,0,0,0.4);
+}
+
+/* The poster copy always sits on the dark band */
 .hc .hc-poster__copy,
 .hc .hc-poster__title,
 .hc .hc-poster__eyebrow,
 .hc .hc-poster__sub,
 .hc .hc-poster__call { color: #f5f5f5 !important; }
 
-/* The poster stays a dark stage in light mode too (Apple-style dark hero),
-   so its light type keeps the contrast it was designed for. */
-.hc[data-theme="light"] .hc-poster { background: #0a0a0a; }
-.hc[data-theme="light"] .hc-poster__dark { background: #121212; }
-@keyframes hc-rise { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
 .hc .v8s-01 .hero__copy, .hc .v8s-01 .hero__city, .hc .v8s-01 .hero__field { display: none !important; }
-.hc .v8s-01 .hero { background: transparent !important; padding-top: var(--section) !important; padding-bottom: 0 !important; }
+.hc .v8s-01 .hero { background: transparent !important; padding-top: 0 !important; padding-bottom: 0 !important; }
 .hc .v8s-01 .hero__body { display: grid !important; grid-template-columns: 1fr !important; justify-items: center; }
-.hc .v8s-01 .win { width: min(100%, 880px); margin: 0 auto !important; background: var(--card) !important; border: 1px solid var(--line) !important; border-radius: var(--r) !important; box-shadow: 0 1px 1px rgba(0,0,0,0.2), 0 48px 120px -48px rgba(0,0,0,0.6) !important; color: var(--ink) !important; }
+.hc .v8s-01 .win { width: min(100%, 880px); margin: 0 auto !important; background: var(--card) !important; border: 1px solid var(--line) !important; border-radius: var(--r) !important; box-shadow: 0 1px 2px rgba(0,0,0,0.08), 0 24px 48px -16px rgba(0,0,0,0.15) !important; color: var(--card-ink) !important; }
 .hc .v8s-01 .win, .hc .v8s-01 .win * { color: var(--card-ink) !important; }
 .hc .v8s-01 .win__bar, .hc .v8s-01 .win__head { background: var(--card) !important; border-bottom: 1px solid var(--line) !important; }
 .hc .v8s-01 .win .v8-meta, .hc .v8s-01 .win .win__title { color: var(--card-ink-3) !important; }
 .hc .v8s-01 .win .bar { background: var(--card-2) !important; }
 .hc .v8s-01 .win .bar > span, .hc .v8s-01 .win .bar::after { background: var(--ink) !important; background-image: none !important; }
-.hc .v8s-01 .tstrip { background: transparent !important; padding-top: 48px !important; }
-.hc .v8s-01 .tstrip__items { display: grid; gap: 16px; }
+.hc .v8s-01 .tstrip { background: transparent !important; padding-top: 40px !important; }
+.hc .v8s-01 .tstrip__items { display: grid; gap: clamp(16px, 2vw, 24px); }
 @media (min-width: 900px) { .hc .v8s-01 .tstrip__items { grid-template-columns: repeat(4, 1fr); } }
 
 /* ---------- Plates: only the Protect stage and the close ---------- */
@@ -322,6 +427,27 @@
 #hero > .hc-plate, #stats > .hc-plate { display: none; }
 #protection .hc-plate { opacity: 0.7; object-position: 50% 60%; }
 #contact .hc-plate { opacity: 0.85; object-position: 50% 30%; }
+
+/* Plate images: graceful fallback when kie.ai assets not yet generated */
+.hc-plate { background: linear-gradient(135deg, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0) 100%); }
+
+/* ---------- Assessment preview card (hero) ---------- */
+.hc-poster__preview {
+  background: var(--card) !important; border: 1px solid var(--line) !important; 
+  border-radius: var(--r) !important; 
+  box-shadow: 0 1px 2px rgba(0,0,0,0.08), 0 24px 48px -16px rgba(0,0,0,0.15) !important;
+  color: var(--card-ink) !important; padding: 24px;
+}
+.hc-poster__preview .win__bar, .hc-poster__preview .win__head { background: var(--card) !important; border-bottom: 1px solid var(--line) !important; }
+.hc-poster__preview .v8-meta, .hc-poster__preview .win__title { color: var(--card-ink-3) !important; }
+.hc-poster__preview .bar { background: var(--card-2) !important; }
+.hc-poster__preview .bar > span, .hc-poster__preview .bar::after { background: var(--ink) !important; background-image: none !important; }
+.hc-poster__preview .tstrip { background: transparent !important; padding-top: 24px !important; }
+.hc-poster__preview .tstrip__items { display: grid; gap: 16px; }
+@media (min-width: 900px) { .hc-poster__preview .tstrip__items { grid-template-columns: repeat(4, 1fr); } }
+
+/* ---------- Object images: graceful fallback when kie.ai assets not yet generated ---------- */
+.hc-obj { background: linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0) 100%); border-radius: 12px; }
 
 /* ---------- Protect: the dark stage (always dark) ---------- */
 #protection { background: var(--dark); color: #f5f5f5; }
@@ -588,7 +714,7 @@
    page link colour (--ink, near white in dark mode) was winning over the
    heading colour, so card titles vanished on white. Links inside cards now
    inherit the card ink; accent links (.v8-link) and buttons keep their own. */
-.hc.v8 :is(.v8s-02 .claims > *, .v8s-04 .problem, .v8s-05 .v8-card, .v8s-08 .why__pillars li, .v8s-11 .v8-card, .v8s-12 .feed-card, .v8s-14 .faq-item, .v8s-15 .next__standards li, .v8-card, .pricing-card, .step, .svc-path, .proof-cells > li, .faq-item)
+.hc.v8 :is(.v8s-02 .claims > *, .v8s-04 .problem, .v8s-05 .v8-card, .v8s-08 .why__pillars li, .v8s-11 .v8-card, .v8s-12 .feed-card, .v8s-14 .faq-item, .v8s-15 .next__standards li, .v8-card, .pricing-card, .step, .svc-path, .proof-cells > li, .faq-item, .ind-rail .ind-card, .ops > li)
   a:not(.v8-link):not(.v8-btn):not([class*="btn"]) { color: var(--card-ink) !important; }
 .hc.v8 .problem__link { color: var(--card-ink) !important; }
 .hc.v8 .problem__arrow, .hc.v8 .v8s-02 .claim__chev { color: var(--card-ink-2) !important; }
@@ -615,7 +741,8 @@
 .hc.v8 :is(.v8-card, .v8-card--paper, .stats-cell, .stats-cells > li, .problem, .svc-path,
   .proof-cells > li, .proof-rail > li, .proof-panel, .pricing-card, .feed-card,
   .claim, .claims > *, .why__pillars > li, .lead__form, .tackle__ask, .faq-item,
-  .tstrip__items > li, .next__standards > li, .doc, .portrait figcaption, .contact__card) {
+  .tstrip__items > li, .next__standards > li, .doc, .portrait figcaption, .contact__card,
+  .ind-rail .ind-card, .ops > li) {
   --ink: var(--card-ink);
   --ink-2: var(--card-ink-2);
   --ink-3: var(--card-ink-3);
@@ -631,11 +758,11 @@
   --v8-magenta-paper-ink: #b50f5a;
   color: var(--card-ink);
 }
-.hc.v8 :is(.v8-card, .v8-card--paper, .stats-cell, .stats-cells > li, .proof-cells > li, .proof-panel, .pricing-card, .tstrip__items > li, .doc, .portrait figcaption, .contact__card, .lead__form, .tackle__ask)
-  :is(h2, h3, h4, .v8-h2, .v8-h3, .v8-h4, .v8-num, .v8-stat, .stats-cell__statement, .doc__name, .portrait__name) { color: var(--card-ink) !important; }
-.hc.v8 :is(.v8-card, .v8-card--paper, .stats-cell, .stats-cells > li, .proof-cells > li, .proof-panel, .pricing-card, .tstrip__items > li, .doc, .portrait figcaption, .contact__card, .lead__form, .tackle__ask)
-  :is(p, li, .v8-body, .v8-small, .v8-lede, .v8-meta, .stats-source__text, .stats-source__pdf, .doc__label, .portrait__role, .portrait__loc, .lead__call, label) { color: var(--card-ink-2) !important; }
-.hc.v8 :is(.v8-card, .v8-card--paper, .stats-cell, .proof-panel, .pricing-card, .doc, .contact__card, .lead__form, .tackle__ask) .v8-link { color: #b50f5a !important; }
+.hc.v8 :is(.v8-card, .v8-card--paper, .stats-cell, .stats-cells > li, .proof-cells > li, .proof-panel, .pricing-card, .tstrip__items > li, .doc, .portrait figcaption, .contact__card, .lead__form, .tackle__ask, .ind-rail .ind-card, .ops > li, .feed-card, .faq-item)
+  :is(h2, h3, h4, .v8-h2, .v8-h3, .v8-h4, .v8-num, .v8-stat, .stats-cell__statement, .doc__name, .portrait__name, .ind-card__name, .feed-card__title) { color: var(--card-ink) !important; }
+.hc.v8 :is(.v8-card, .v8-card--paper, .stats-cell, .stats-cells > li, .proof-cells > li, .proof-panel, .pricing-card, .tstrip__items > li, .doc, .portrait figcaption, .contact__card, .lead__form, .tackle__ask, .ind-rail .ind-card, .ops > li, .feed-card, .faq-item)
+  :is(p, li, .v8-body, .v8-small, .v8-lede, .v8-meta, .stats-source__text, .stats-source__pdf, .doc__label, .portrait__role, .portrait__loc, .lead__call, label, .ind-card__desc, .feed-card__excerpt, .faq-a) { color: var(--card-ink-2) !important; }
+.hc.v8 :is(.v8-card, .v8-card--paper, .stats-cell, .proof-panel, .pricing-card, .doc, .contact__card, .lead__form, .tackle__ask, .ind-rail .ind-card, .ops > li, .feed-card, .faq-item) .v8-link { color: #b50f5a !important; }
 /* Outline buttons sit on white in this concept, so they take card ink. */
 .hc .v8-btn--outline, .hc .v8-btn--outline-paper, .hc .v8-btn--ghost { color: var(--card-ink) !important; border-color: var(--card-line) !important; background: var(--card) !important; }
 .hc .v8-btn--outline:hover, .hc .v8-btn--outline-paper:hover { border-color: var(--card-ink) !important; }
@@ -656,6 +783,37 @@
 .hc-theme-toggle { color: var(--card-ink); }
 /* Figures are paragraphs too; keep them at full card ink after the body rule above. */
 .hc.v8 :is(.stats-cell, .stats-cells > li, .pricing-card) :is(.v8-stat, .v8-num) { color: var(--card-ink) !important; }
+
+/* ---------- New object-bearing grids (industries, insights, faq, team) ---------- */
+/* Industries rail cards: white cards with objects */
+.hc .ind-rail .ind-card { background: var(--card) !important; border: 1px solid var(--line) !important; border-radius: var(--r) !important; box-shadow: 0 1px 2px rgba(0,0,0,0.08), 0 8px 24px -8px rgba(0,0,0,0.12) !important; padding: clamp(20px, 2.5vw, 28px) !important; }
+.hc .ind-rail .ind-card .hc-obj { height: clamp(72px, 6vw, 96px); margin: 0 0 16px; }
+.hc .ind-rail .ind-card__name { color: var(--card-ink) !important; font-size: 1.125rem !important; font-weight: 600 !important; }
+.hc .ind-rail .ind-card__desc { color: var(--card-ink-2) !important; font-size: 0.9375rem !important; line-height: 1.5 !important; }
+.hc .ind-rail .ind-card__link { color: var(--accent-ink) !important; font-weight: 500 !important; }
+
+/* Insights feed cards: white cards with objects */
+.hc .feed-card { background: var(--card) !important; border: 1px solid var(--line) !important; border-radius: var(--r) !important; box-shadow: 0 1px 2px rgba(0,0,0,0.08), 0 8px 24px -8px rgba(0,0,0,0.12) !important; padding: clamp(20px, 2.5vw, 28px) !important; }
+.hc .feed-card .hc-obj { height: clamp(72px, 6vw, 96px); margin: 0 0 16px; }
+.hc .feed-card__title { color: var(--card-ink) !important; }
+.hc .feed-card__excerpt { color: var(--card-ink-2) !important; }
+.hc .feed-card__src, .hc .feed-date { color: var(--card-ink-3) !important; }
+
+/* FAQ items: white cards with objects */
+.hc.v8 .v8s-14 .faq-item { background: var(--card) !important; border: 1px solid var(--line) !important; border-radius: var(--r-sm) !important; box-shadow: 0 1px 2px rgba(0,0,0,0.08), 0 8px 24px -8px rgba(0,0,0,0.12) !important; padding: 0 !important; margin-top: clamp(12px, 1.5vw, 16px) !important; }
+.hc.v8 .v8s-14 .faq-item[open] { border-color: var(--accent) !important; }
+.hc.v8 .v8s-14 .faq-item summary { padding: clamp(16px, 2vw, 20px) clamp(20px, 2.5vw, 24px) !important; color: var(--card-ink) !important; }
+.hc.v8 .v8s-14 .faq-answer { padding: 0 clamp(20px, 2.5vw, 24px) clamp(20px, 2.5vw, 24px) !important; color: var(--card-ink-2) !important; }
+.hc.v8 .v8s-14 .faq-item .hc-obj { height: clamp(64px, 5vw, 80px); margin: clamp(16px, 2vw, 20px) clamp(20px, 2.5vw, 24px) 0 !important; }
+.hc.v8 .v8s-14 .v8-chip { color: var(--card-ink) !important; background: var(--card) !important; border: 1px solid var(--card-line) !important; }
+.hc.v8 .v8s-14 .city-list .v8-chip.is-home { color: var(--accent-ink) !important; background: var(--accent-soft) !important; border-color: var(--accent) !important; box-shadow: none !important; }
+
+/* Team cards: white cards with objects */
+.hc .ops > li { background: var(--card) !important; border: 1px solid var(--line) !important; border-radius: var(--r) !important; box-shadow: 0 1px 2px rgba(0,0,0,0.08), 0 8px 24px -8px rgba(0,0,0,0.12) !important; padding: clamp(20px, 2.5vw, 28px) !important; }
+.hc .ops > li .hc-obj { height: clamp(80px, 7vw, 100px); margin: 0 0 16px; }
+.hc .ops > li .portrait__name { color: var(--card-ink) !important; }
+.hc .ops > li .portrait__role, .hc .ops > li .portrait__loc { color: var(--card-ink-2) !important; }
+.hc .ops > li .v8-seq { color: var(--card-ink-3) !important; }
 
 /* ---------- Scrollcraft layer (scrollcraft/builds/home-mesh/BRIEF.md) ---------- */
 /* Signature: the pill becomes the principal. The chapter links close in toward the
