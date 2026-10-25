@@ -41,6 +41,32 @@ claims:
       - client/src/components/home/HomeChapter.tsx, client/src/components/site/chapters.tsx, client/src/components/site/SolutionsRelationshipTable.tsx (sentence-case labels)
     status: active
     started: 2026-10-24
+  - id: home-v2-scene-story
+    owner: claude
+    subsystem: homepage
+    branch: claude/loving-edison-epagrb
+    base_sha: c0fa29c9
+    files:
+      - client/src/pages/homepage-v2/scene/** (new; HomeScene component and its own stylesheet)
+      - client/src/pages/homepage-v2/sections/{ThreatStats,Challenges,Protection,Contact}Section.tsx (one import and one first-child line each)
+      - artifacts/visual-qa/home-v2-scene-story/**
+      - design/approved/homepage-scene-story-2026-10.md (scope extended to /)
+    status: approved
+    started: 2026-10-25
+    note: >-
+      Joe, 2026-10-25: "make version 10 the live homepage", then, after the
+      conflict was put to him: add Version 10's scene backgrounds to Homepage v2
+      at / as a visual enhancement, keep its approved layout, content, type,
+      SEO and CTAs, leave /concepts/home-classic (Version 8) and
+      /concepts/home-chapters untouched, no merge or deploy before he reviews
+      the screenshots. Four of the five approved scene-story frames are placed
+      (exposure on #stats, gaps as a light edition on #challenges, protected on
+      #protection, close on #contact); network is left out because #why has no
+      open space beside its cards. homepage-v2.css, the hero (claimed by
+      pronunciation-voice-piper) and the footer (open PR 717) are not edited.
+      Overlap check 2026-10-25: open PRs 717 (homepage-v2.css tail, SiteFooter),
+      827 (global font) and 832 (cookie banner, Ask DE launcher) touch none of
+      these files; lane-h-homepage-refinement's branch has nothing unmerged.
   - id: city-pages-truth-rhythm
     owner: claude
     subsystem: marketing-locations
@@ -49,7 +75,8 @@ claims:
     files:
       - client/src/pages/locations/LocationServicePage.tsx (24/7 wording, localNote, section fields)
       - client/src/pages/routes/locationPages.tsx (localNote per city)
-    status: active
+    status: verified-live
+    pr: 828 (merged 80f0e8c3); live in release 9c55956f, checked 2026-10-25 on /locations/chandler-az and /locations/scottsdale-az
     started: 2026-10-24
   - id: lane-h-homepage-refinement
     issue: 696
@@ -102,8 +129,8 @@ claims:
       - server/integrations/msGraph.ts, server/integrations/googleLicensing.ts (new, + vendorLicensing.test.ts)
       - client/src/components/portal/licensing/VendorTools.tsx (new), .env.example, docs/SECRETS-REQUIRED.md
       - slice C: shared/licenseShelf.ts (Pax8 shelf), server/licenseBoardRoutes.ts (shelf pax8), client/src/components/portal/licensing/PartsBin.tsx, client/src/lib/licenseBoardApi.ts
-    status: active
-    pr: 701 (slices A and B, merged 65a6bbb3)
+    status: verified-live
+    pr: 701 (slices A and B, merged 65a6bbb3) and 714 (slice C, merged 39dee2d6); both in live release fb7418ff (2026-10-24)
     started: 2026-10-23
     note: >-
       Joe, 2026-10-23 ("I want all these"): slice A of four. The License

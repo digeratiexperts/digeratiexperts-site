@@ -1,0 +1,476 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Protect the account behind the password · One Less Opportunity</title>
+<meta name="description" content="Use unique passwords and respond safely to unexpected login prompts.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ground: #fafafa; --card: #ffffff; --ink: #111113; --body: #4a4a4f; --muted: #6f6f76;
+    --rule: rgba(17,17,19,.09); --well: #f2f2f4;
+    --accent: #D3126A; --accent-hover: #b80f5b; --accent-soft: rgba(211,18,106,.08);
+    --ease: cubic-bezier(.2,.7,.2,1); color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:#0a0a0a; --card:#1a1a1c; --ink:#f5f5f4; --body:#c2c2c7; --muted:#8c8c93;
+      --rule:rgba(255,255,255,.08); --well:#121214; --accent-soft:rgba(211,18,106,.14); color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground:#0a0a0a; --card:#1a1a1c; --ink:#f5f5f4; --body:#c2c2c7; --muted:#8c8c93;
+    --rule:rgba(255,255,255,.08); --well:#121214; --accent-soft:rgba(211,18,106,.14); color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 88px; }
+  html, body { margin: 0; }
+  body { background: var(--ground); color: var(--ink); font: 400 17px/1.6 Inter, system-ui, sans-serif; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+  a { color: inherit; }
+  button { font: inherit; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 8px; }
+  h1, h2, h3, .brand, .route strong, .pager strong, .numeral, .idx-title { font-family: "Space Grotesk", Inter, sans-serif; }
+
+  .bar { position: sticky; top: 0; z-index: 20; background: color-mix(in srgb, var(--ground) 72%, transparent); backdrop-filter: saturate(180%) blur(14px); -webkit-backdrop-filter: saturate(180%) blur(14px); border-bottom: 1px solid var(--rule); }
+  .bar-inner { display: flex; align-items: center; gap: 12px; height: 64px; padding: 0 clamp(16px,4vw,48px); }
+  .brand { font-weight: 600; font-size: 15px; letter-spacing: -0.01em; text-decoration: none; white-space: nowrap; }
+  .bar-spacer { flex: 1; }
+  .bar-link { font: 500 14px Inter, sans-serif; color: var(--body); text-decoration: none; padding: 10px 12px; border-radius: 999px; transition: color 150ms var(--ease); }
+  .bar-link:hover { color: var(--ink); }
+  .pill { white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; min-height: 56px; padding: 0 28px; border-radius: 999px; border: 0; background: var(--accent); color: #fff; font: 500 16px Inter, sans-serif; text-decoration: none; cursor: pointer; transition: background-color 150ms var(--ease); }
+  .pill:hover { background: var(--accent-hover); }
+  .pill.sm { min-height: 44px; padding: 0 20px; font-size: 15px; }
+  .pill .short { display: none; }
+  .pill.ghost { background: transparent; color: var(--ink); border: 1px solid var(--rule); }
+  .pill.ghost:hover { border-color: var(--muted); background: transparent; }
+  .icon-btn { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border-radius: 999px; border: 1px solid var(--rule); background: transparent; color: var(--ink); cursor: pointer; transition: border-color 150ms var(--ease); flex: none; }
+  .icon-btn:hover { border-color: var(--muted); }
+  .icon-btn svg { width: 18px; height: 18px; }
+  .icon-btn .moon { display: none; }
+  :root:not([data-theme="light"]) .icon-btn .sun { display: none; }
+  :root:not([data-theme="light"]) .icon-btn .moon { display: block; }
+  :root[data-theme="dark"] .icon-btn .sun { display: none; }
+  :root[data-theme="dark"] .icon-btn .moon { display: block; }
+  :root[data-theme="light"] .icon-btn .moon { display: none; }
+  :root[data-theme="light"] .icon-btn .sun { display: block; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .icon-btn .sun { display: none; } :root:not([data-theme="light"]) .icon-btn .moon { display: block; } }
+  .bar-progress { height: 2px; position: relative; overflow: hidden; }
+  .bar-progress span { position: absolute; inset: 0; background: var(--accent); transform-origin: left; transform: scaleX(var(--p, 0)); }
+
+  .shell { max-width: 1180px; margin: 0 auto; padding: 0 clamp(16px,4vw,48px); display: grid; grid-template-columns: 200px minmax(0,1fr); gap: 56px; }
+  .rail { position: sticky; top: 96px; align-self: start; padding-top: 56px; }
+  .rail p { margin: 0 0 12px; font: 500 14px Inter, sans-serif; color: var(--muted); }
+  .rail ol { list-style: none; margin: 0; padding: 0; border-left: 1px solid var(--rule); }
+  .rail a { display: block; padding: 8px 0 8px 16px; margin-left: -1px; font: 500 14px Inter, sans-serif; color: var(--muted); text-decoration: none; border-left: 2px solid transparent; transition: color 150ms var(--ease), border-color 150ms var(--ease); }
+  .rail a:hover { color: var(--ink); }
+  .rail a.on { color: var(--ink); border-left-color: var(--accent); }
+  main { min-width: 0; padding-bottom: 96px; }
+
+  .progress-meta { padding-top: 40px; }
+  .progress-track { display: grid; grid-template-columns: repeat(8,1fr); gap: 6px; max-width: 360px; }
+  .progress-track span { height: 4px; border-radius: 999px; background: var(--rule); }
+  .progress-track span.done { background: var(--ink); }
+  .progress-track span.now { background: var(--accent); }
+  .progress-label { margin: 12px 0 0; font: 500 14px Inter, sans-serif; color: var(--muted); }
+
+  .hero { position: relative; padding: clamp(36px,6vw,72px) 0 40px; }
+  .numeral { font-weight: 600; font-size: clamp(72px,12vw,140px); line-height: .85; letter-spacing: -0.05em; color: var(--accent); margin: 0 0 20px; }
+  .hero h1 { font-weight: 600; font-size: clamp(2.6rem,6.6vw,5rem); line-height: .96; letter-spacing: -0.045em; margin: 0 0 24px; max-width: 14ch; }
+  .lede { font-size: clamp(18px,2vw,22px); line-height: 1.5; color: var(--body); margin: 0; max-width: 34em; }
+  .takeaways { list-style: none; margin: 36px 0 0; padding: 0; display: grid; gap: 12px; grid-template-columns: repeat(3,minmax(0,1fr)); }
+  .takeaways li { display: grid; gap: 10px; padding: 18px 20px; border-radius: 20px; background: var(--card); border: 1px solid var(--rule); color: var(--ink); font-size: 15px; line-height: 1.45; }
+
+  .recap { margin-top: 40px; display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: center; justify-content: space-between; padding: 20px 24px; border-radius: 20px; background: var(--card); border: 1px solid var(--rule); }
+  .recap p { margin: 0; color: var(--body); font-size: 15px; }
+  .recap strong { color: var(--ink); font-weight: 500; }
+  .recap-answer { flex-basis: 100%; margin: 0; color: var(--body); font-size: 15px; display: none; }
+  .recap-answer.show { display: block; }
+  .ghost { min-height: 44px; padding: 0 16px; border-radius: 999px; border: 1px solid var(--rule); background: transparent; color: var(--ink); cursor: pointer; font: 500 14px Inter, sans-serif; transition: border-color 150ms var(--ease); }
+  .ghost:hover { border-color: var(--muted); }
+
+  section.block { padding: 56px 0 0; scroll-margin-top: 88px; }
+  .eyebrow { font: 500 14px Inter, sans-serif; color: var(--accent); margin: 0 0 12px; }
+  h2 { font-weight: 600; font-size: clamp(24px,3vw,32px); line-height: 1.2; letter-spacing: -0.02em; margin: 0 0 16px; }
+  p { margin: 0 0 16px; color: var(--body); }
+  p strong { color: var(--ink); font-weight: 600; }
+  .pull { margin: 36px 0; padding: 4px 0 4px 24px; border-left: 2px solid var(--accent); font-family: "Space Grotesk", Inter, sans-serif; font-weight: 600; font-size: clamp(20px,2.4vw,26px); line-height: 1.35; letter-spacing: -0.01em; color: var(--ink); }
+  .card { background: var(--card); border: 1px solid var(--rule); border-radius: 28px; padding: clamp(24px,3.2vw,36px); }
+  section.block.card { margin-top: 56px; }
+
+  .routes { display: grid; gap: 12px; margin-top: 24px; }
+  .route { display: grid; grid-template-columns: 44px 1fr; gap: 16px; align-items: center; padding: 18px; border-radius: 20px; background: var(--well); }
+  .route.good { background: var(--ground); border: 1px solid var(--rule); }
+  .route-icon { width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); }
+  .route.good .route-icon { background: var(--ink); color: var(--ground); }
+  .route-icon svg { width: 22px; height: 22px; }
+  .route strong { display: block; font: 600 16px "Space Grotesk", Inter, sans-serif; }
+  .route small { display: block; color: var(--muted); font-size: 14px; margin-top: 2px; line-height: 1.45; }
+
+  .mock { margin-top: 24px; border-radius: 24px; border: 1px solid var(--rule); background: var(--ground); overflow: hidden; }
+  .mock-head { display: flex; align-items: center; gap: 12px; padding: 16px 20px; border-bottom: 1px solid var(--rule); }
+  .avatar { width: 36px; height: 36px; border-radius: 999px; background: var(--well); display: grid; place-items: center; font: 600 13px "Space Grotesk", Inter, sans-serif; color: var(--ink); flex: none; }
+  .mock-from { font-size: 14px; line-height: 1.35; color: var(--muted); }
+  .mock-from strong { display: block; color: var(--ink); font-weight: 500; font-size: 15px; }
+  .mock-body { padding: 20px; font-size: 16px; line-height: 1.7; color: var(--ink); }
+  .mock-body p { color: var(--ink); margin: 0 0 14px; }
+  .mock-body p:last-child { margin-bottom: 0; }
+  .flag { display: inline; padding: 2px 8px; margin: 0 1px; border-radius: 8px; cursor: pointer; border: 1px dashed var(--accent); background: var(--accent-soft); color: var(--ink); font: inherit; transition: background-color 150ms var(--ease); }
+  .flag:hover { background: rgba(211,18,106,.16); }
+  .flag[aria-pressed="true"] { background: var(--accent); color: #fff; border-style: solid; }
+  .legend { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--rule); display: grid; grid-template-columns: repeat(auto-fit, minmax(160px,1fr)); }
+  .legend li { padding: 16px 20px; border-right: 1px solid var(--rule); color: var(--muted); font-size: 14px; line-height: 1.45; }
+  .legend li:last-child { border-right: 0; }
+  .legend li.hit { color: var(--ink); font-weight: 500; }
+  .legend li.hit::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 999px; background: var(--accent); margin-right: 8px; vertical-align: 1px; }
+  .scenario-hint { font-size: 14px; color: var(--muted); margin: 12px 0 0; min-height: 1.6em; }
+
+  .reach { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); gap: 12px; margin-top: 24px; }
+  .reach div { padding: 22px; border-radius: 20px; background: var(--well); font: 600 17px "Space Grotesk", Inter, sans-serif; color: var(--ink); letter-spacing: -0.01em; }
+  .reach div span { display: block; font: 500 13px Inter, sans-serif; color: var(--muted); margin-bottom: 14px; }
+
+  .steps { list-style: none; margin: 24px 0 0; padding: 0; display: grid; gap: 10px; counter-reset: s; }
+  .steps li { display: grid; grid-template-columns: 32px 1fr; gap: 14px; align-items: center; padding: 14px 18px; border-radius: 18px; background: var(--well); color: var(--ink); font-size: 16px; }
+  .steps li::before { counter-increment: s; content: counter(s); display: grid; place-items: center; width: 32px; height: 32px; border-radius: 999px; background: var(--ground); font: 600 13px "Space Grotesk", Inter, sans-serif; }
+
+  .quiz h3 { font-weight: 600; font-size: 20px; line-height: 1.3; letter-spacing: -0.01em; margin: 0 0 16px; color: var(--ink); }
+  .options { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+  .option { width: 100%; min-height: 56px; padding: 14px 20px; border-radius: 20px; border: 1px solid var(--rule); background: var(--well); color: var(--ink); text-align: left; cursor: pointer; font: 500 16px/1.4 Inter, sans-serif; transition: border-color 150ms var(--ease), background-color 150ms var(--ease); }
+  .option:hover { border-color: var(--muted); }
+  .option[aria-pressed="true"] { border-color: var(--ink); background: var(--card); }
+  .option.correct[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+  .feedback { margin: 16px 0 0; padding: 16px 18px; border-radius: 16px; background: var(--well); color: var(--body); display: none; font-size: 15px; }
+  .feedback.show { display: block; }
+  .feedback strong { color: var(--ink); font-weight: 600; }
+
+  .checks { list-style: none; margin: 20px 0 0; padding: 0; display: grid; gap: 10px; }
+  .checks label { display: grid; grid-template-columns: 24px 1fr; gap: 14px; align-items: start; padding: 16px 18px; border-radius: 18px; background: var(--well); cursor: pointer; color: var(--body); }
+  .checks input { appearance: none; -webkit-appearance: none; width: 24px; height: 24px; margin: 0; border-radius: 8px; border: 1.5px solid var(--muted); display: grid; place-items: center; cursor: pointer; background: var(--ground); transition: background-color 150ms var(--ease), border-color 150ms var(--ease); }
+  .checks input::after { content: ""; width: 10px; height: 6px; border-left: 2px solid #fff; border-bottom: 2px solid #fff; transform: rotate(-45deg) translate(1px,-1px) scale(0); transition: transform 150ms var(--ease); }
+  .checks input:checked { background: var(--ink); border-color: var(--ink); }
+  .checks input:checked::after { transform: rotate(-45deg) translate(1px,-1px) scale(1); }
+  :root:not([data-theme="light"]) .checks input:checked::after { border-color: var(--ground); }
+  :root[data-theme="dark"] .checks input:checked::after { border-color: var(--ground); }
+  .checks input:checked + span { color: var(--muted); text-decoration: line-through; }
+
+  section.report-card { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 24px; }
+  .report-card h2 { margin: 0 0 6px; }
+  .report-card p { margin: 0; }
+  .complete { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; margin-top: 40px; padding-top: 32px; border-top: 1px solid var(--rule); }
+  .complete p { margin: 0; color: var(--muted); font-size: 15px; }
+  .complete-btn { min-width: 220px; }
+  .complete-btn[aria-pressed="true"] { background: var(--ink); color: var(--ground); }
+  .complete-btn[aria-pressed="true"]:hover { background: var(--body); }
+  .finish { margin-top: 24px; font-size: 15px; color: var(--body); }
+
+  .pager { display: flex; gap: 16px; margin-top: 40px; }
+  .pager a { display: grid; gap: 4px; padding: 20px 24px; border-radius: 24px; border: 1px solid var(--rule); text-decoration: none; min-width: 0; flex: 1; background: var(--card); transition: border-color 150ms var(--ease); }
+  .pager a:hover { border-color: var(--muted); }
+  .pager a.next { text-align: right; }
+  .pager small { color: var(--muted); font-size: 14px; }
+  .pager strong { font-weight: 600; font-size: 18px; letter-spacing: -0.01em; }
+
+  .next-bar { display: none; }
+  .hero-top { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; }
+  .hero-top .numeral { margin-bottom: 0; }
+  .hero-art { width: 104px; height: 104px; border-radius: 32px; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; flex: none; }
+  .hero-art svg { width: 50px; height: 50px; }
+  .tagline { font-family: "Space Grotesk", Inter, sans-serif; font-weight: 600; font-size: clamp(19px,2.2vw,24px); letter-spacing: -0.015em; color: var(--ink); margin: 0 0 22px; }
+  .found { margin: 12px 0 0; font: 500 14px Inter, sans-serif; color: var(--accent); min-height: 1.4em; }
+  .idx-top { display: flex; justify-content: space-between; align-items: center; }
+  .idx-ico { width: 44px; height: 44px; border-radius: 14px; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; }
+  .idx-ico svg { width: 22px; height: 22px; }
+  .idx-tag { margin: 0; font: 500 15px/1.4 Inter, sans-serif; color: var(--ink); }
+  .bento a.feature .idx-tag { color: var(--ground); }
+  .signoff { font-family: "Space Grotesk", Inter, sans-serif; font-weight: 600; font-size: clamp(22px,3vw,32px); letter-spacing: -0.02em; line-height: 1.25; color: var(--ink); text-align: center; margin: 72px auto 0; max-width: 20em; }
+  @media (max-width: 560px) { .hero-art { width: 80px; height: 80px; border-radius: 24px; } .hero-art svg { width: 40px; height: 40px; } }
+
+  /* index */
+  .idx-hero { padding: clamp(40px,7vw,96px) 0 40px; }
+  .idx-hero-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); gap: 48px; align-items: center; }
+  .idx-art { margin: 0; }
+  .idx-art img { width: 100%; height: auto; border-radius: 28px; border: 1px solid var(--rule); background: var(--card); }
+  .idx-art figcaption { margin-top: 10px; font: 500 13px Inter, sans-serif; color: var(--muted); }
+  .idx-hero h1 { font-weight: 600; font-size: clamp(3rem,8vw,6.5rem); line-height: .94; letter-spacing: -0.05em; margin: 0 0 24px; max-width: 11ch; }
+  .idx-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 36px; }
+  .idx-stats { margin-top: 28px; font-size: 15px; color: var(--muted); }
+  .bento { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 16px; margin-top: 16px; }
+  .bento a { position: relative; display: flex; flex-direction: column; gap: 10px; padding: 28px; border-radius: 28px; background: var(--card); border: 1px solid var(--rule); text-decoration: none; min-height: 210px; transition: border-color 150ms var(--ease); }
+  .bento a:hover { border-color: var(--muted); }
+  .bento a.feature { grid-column: span 2; background: var(--ink); color: var(--ground); border-color: var(--ink); }
+  .bento a.feature .idx-num { color: var(--accent); }
+  .bento a.feature .idx-desc { color: color-mix(in srgb, var(--ground) 72%, transparent); }
+  .idx-num { font: 600 15px "Space Grotesk", Inter, sans-serif; color: var(--accent); }
+  .idx-title { font-weight: 600; font-size: 22px; line-height: 1.2; letter-spacing: -0.02em; margin: 0; color: inherit; }
+  .idx-desc { margin: 0; color: var(--body); font-size: 15px; line-height: 1.5; }
+  .idx-state { margin-top: auto; font-size: 13px; color: var(--muted); }
+  .bento a.done .idx-state { color: var(--accent); }
+  .help { margin-top: 56px; }
+  .help-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 24px; }
+  .help h2 { margin: 0 0 6px; }
+  .help p { margin: 0; }
+  .report-note { margin-top: 10px !important; font-size: 14px; color: var(--muted); }
+  .pill:disabled { opacity: .45; cursor: not-allowed; }
+  .pill:disabled:hover { background: var(--accent); }
+
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *, *::before, *::after { transition: none !important; } }
+  @media (max-width: 960px) {
+    .shell { grid-template-columns: 1fr; gap: 0; }
+    .rail { display: none; }
+    .bento { grid-template-columns: repeat(2,minmax(0,1fr)); }
+    .takeaways { grid-template-columns: 1fr; }
+    .idx-hero-grid { grid-template-columns: 1fr; gap: 32px; }
+  }
+  @media (max-width: 560px) {
+    body { font-size: 16px; }
+    .bar-link { display: none; }
+    .pill.sm { padding: 0 16px; }
+    .pill .long { display: none; }
+    .pill .short { display: inline; }
+    .card, .report-card { border-radius: 24px; }
+    .pager { flex-direction: column; }
+    .pager a.next { text-align: left; }
+    .pager a { width: 100%; }
+    .complete-btn { width: 100%; }
+    .report-card .pill { width: 100%; }
+    .bento { grid-template-columns: 1fr; }
+    .bento a.feature { grid-column: auto; }
+    .idx-actions .pill { width: 100%; }
+    .help-row .pill { width: 100%; }
+    .next-bar { display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); background: color-mix(in srgb, var(--ground) 80%, transparent); backdrop-filter: saturate(180%) blur(14px); -webkit-backdrop-filter: saturate(180%) blur(14px); border-top: 1px solid var(--rule); }
+    .next-bar a { flex: 1; }
+    main { padding-bottom: 120px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="bar-inner">
+    <a class="brand" href="index.html">One Less Opportunity</a>
+    <div class="bar-spacer"></div>
+    <a class="bar-link" href="index.html">All lessons</a>
+    <button class="pill sm" type="button" disabled aria-disabled="true" title="Reporting opens once it is verified"><span class="long">Report a concern</span><span class="short">Report</span></button>
+    <button class="icon-btn" id="theme" type="button" aria-label="Switch between light and dark mode"><svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg><svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+  </div>
+  <div class="bar-progress" aria-hidden="true"><span id="reading"></span></div>
+</header>
+<div class="shell">
+  <nav class="rail" aria-label="Lesson sections"><p>On this page</p><ol>
+      <li><a href="#pattern" data-sec="pattern">The pattern</a></li>
+      <li><a href="#scenario" data-sec="scenario">Tap the signals in this prompt.</a></li>
+      <li><a href="#check" data-sec="check">Knowledge check</a></li>
+      <li><a href="#try" data-sec="try">Try this today</a></li>
+      <li><a href="#report" data-sec="report">Report</a></li>
+    </ol></nav>
+  <main>
+    <div class="progress-meta">
+      <div class="progress-track" aria-hidden="true"><span class="done"></span><span class="done"></span><span class="now"></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span></div>
+      <p class="progress-label">Lesson 3 of 8 · about three minutes</p>
+    </div>
+    
+    <section class="hero">
+      <div class="hero-top"><div class="numeral" aria-hidden="true">03</div><div class="hero-art"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M17 6l3 3M14 9l2 2"/></svg></div></div>
+      <p class="tagline">One password, one door.</p>
+      <h1>Protect the account behind the password.</h1>
+      <p class="lede">One reused password connects your work account to every other site where you used it.</p>
+      <ul class="takeaways" aria-label="You will leave with"><li>Unique passwords stop one breach becoming many</li><li>Deny prompts you did not start</li><li>Never share codes with someone who contacts you</li></ul>
+    </section>
+    <div class="recap">
+      <p><strong>From lesson 2:</strong> what is the first thing to do with an unexpected sign-in link?</p>
+      <button class="ghost" id="recap-btn" type="button" aria-expanded="false" aria-controls="recap-answer">Show answer</button>
+      <p class="recap-answer" id="recap-answer">Do not follow it. Open the service through your usual bookmark or approved app.</p>
+    </div>
+    
+    <section class="block" id="pattern" aria-labelledby="pattern-title">
+      <p class="eyebrow">The pattern</p>
+      <h2 id="pattern-title">One password, many doors.</h2>
+      <p><strong>Reusing a password</strong> connects your work account to every other site where you used it. If one site is breached, attackers may try the same credentials elsewhere.</p>
+      <p><strong>Use a unique password for every account,</strong> and your organization's approved password manager. Turn on multifactor authentication where available.</p>
+      <p><strong>Passkeys or security keys:</strong> if your organization offers them, follow IT's guidance for setting them up.</p>
+      <p><strong>Never approve a login prompt you did not start.</strong> Never share verification codes with someone who contacts you, even if they claim to be support.</p>
+      <blockquote class="pull">A login prompt you did not start is a warning, not a request.</blockquote>
+    </section>
+    
+    <section class="block" id="scenario" aria-labelledby="scenario-title">
+      <p class="eyebrow">Scenario</p>
+      <h2 id="scenario-title">Tap the signals in this prompt.</h2>
+      <p>A sign-in request is waiting for your approval. Tap what stands out.</p>
+      <div class="mock" role="group" aria-label="Work account sign-in">
+        <div class="mock-head">
+          <div class="avatar" aria-hidden="true">WA</div>
+          <div class="mock-from"><strong>Work account sign-in</strong>Approval requested · Just now</div>
+        </div>
+        <div class="mock-body"><p>A sign-in attempt is waiting for your approval.</p><p>Device: unrecognized · Location: unknown</p><p><button class="flag" type="button" data-flag="start" aria-pressed="false">You did not start this sign-in</button> · <button class="flag" type="button" data-flag="repeat" aria-pressed="false">Third prompt this morning</button></p></div>
+        <ul class="legend" aria-label="Flags"><li data-legend="start">Not started by you</li><li data-legend="repeat">Repeated prompts</li></ul>
+      </div>
+      <p class="scenario-hint" id="scenario-hint" role="status" aria-live="polite">Tap a highlighted phrase to begin.</p>
+      <p class="found" id="found" aria-live="polite">0 of 2 flags found</p>
+    </section>
+    
+    
+    <section class="block quiz" id="check" aria-labelledby="check-title">
+      <p class="eyebrow">Knowledge check</p>
+      <h2 id="check-title">Check your understanding.</h2>
+      <h3>You receive several approval prompts while you are not signing in. What should you do?</h3>
+      <ul class="options" role="list">
+        <li><button class="option" type="button" data-ok="false" data-why="Approving gives access. Do not approve prompts you did not start." aria-pressed="false">Approve one to see what happens</button></li>
+        <li><button class="option" type="button" data-ok="true" data-why="Repeated unexpected prompts can mean someone is trying to get in." aria-pressed="false">Deny them and report the activity</button></li>
+        <li><button class="option" type="button" data-ok="false" data-why="Ignoring them does not alert your security team. Report the activity." aria-pressed="false">Ignore them and wait</button></li>
+      </ul>
+      <p class="feedback" id="feedback" role="status" aria-live="polite"></p>
+    </section>
+    
+    <section class="block" id="try" aria-labelledby="try-title">
+      <p class="eyebrow">Try this today</p>
+      <h2 id="try-title">One small action.</h2>
+      <p>Tick each step as you go.</p>
+      <ul class="checks" role="list">
+        <li><label><input type="checkbox"><span>Check that your work account uses your organization's required sign-in protections.</span></label></li>
+        <li><label><input type="checkbox"><span>If you are unsure, ask IT for help.</span></label></li>
+      </ul>
+    </section>
+    
+    <section class="block card report-card" id="report" aria-labelledby="report-title">
+      <div>
+        <h2 id="report-title">Think something happened?</h2>
+        <p>Report it now through your established IT or security channel. You do not need to be certain first.</p>
+      </div>
+      <button class="pill" type="button" disabled aria-disabled="true" title="Reporting opens once it is verified">Report a concern</button>
+    </section>
+    
+    <div class="complete">
+      <p>Finished? Mark this lesson complete to track your progress.</p>
+      <button class="pill complete-btn" id="complete" type="button" aria-pressed="false">Mark lesson complete</button>
+    </div>
+    
+    
+    <nav class="pager" aria-label="Lesson navigation">
+      <a href="lesson-2.html"><small>Previous</small><strong>2. Pause before you click</strong></a>
+      <a class="next" href="lesson-4.html"><small>Next</small><strong>4. Verify before money moves</strong></a>
+    </nav>
+  </main>
+</div>
+<div class="next-bar"><a class="pill" href="#scenario" id="next-section">Next section</a></div>
+<script>
+  (function () {
+    
+    var root = document.documentElement;
+    var KEY = 'ool-theme';
+    function storeGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+    function storeSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+    function isDark() {
+      var t = root.getAttribute('data-theme');
+      return t ? t === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
+    var saved = storeGet(KEY);
+    if (saved === 'light' || saved === 'dark') root.setAttribute('data-theme', saved);
+    document.getElementById('theme').addEventListener('click', function () {
+      var next = isDark() ? 'light' : 'dark';
+      root.setAttribute('data-theme', next);
+      storeSet(KEY, next);
+    });
+
+    var DONE_KEY = 'ool-lesson-3-complete';
+    var reading = document.getElementById('reading');
+    function onScroll() {
+      var max = document.documentElement.scrollHeight - window.innerHeight;
+      reading.style.setProperty('--p', max > 0 ? Math.min(1, window.scrollY / max).toFixed(3) : 0);
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+
+    var links = document.querySelectorAll('.rail a[data-sec]');
+    if ('IntersectionObserver' in window) {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          if (!e.isIntersecting) return;
+          links.forEach(function (a) { a.classList.toggle('on', a.dataset.sec === e.target.id); });
+        });
+      }, { rootMargin: '-40% 0px -55% 0px' });
+      document.querySelectorAll('section.block').forEach(function (s) { io.observe(s); });
+    }
+
+    var ORDER = ["scenario","check","try","report"];
+    var TITLES = {"pattern":"The pattern","scenario":"Tap the signals in this prompt.","check":"Knowledge check","try":"Try this today","report":"Report"};
+    var nextBtn = document.getElementById('next-section');
+    function updateNext() {
+      if (!nextBtn) return;
+      var y = window.scrollY + 120;
+      var target = ORDER[ORDER.length - 1];
+      for (var i = 0; i < ORDER.length; i++) {
+        var el = document.getElementById(ORDER[i]);
+        if (el && el.getBoundingClientRect().top + window.scrollY > y) { target = ORDER[i]; break; }
+      }
+      nextBtn.setAttribute('href', '#' + target);
+      nextBtn.textContent = 'Next: ' + TITLES[target];
+    }
+    window.addEventListener('scroll', updateNext, { passive: true });
+    updateNext();
+
+    var recapBtn = document.getElementById('recap-btn');
+    if (recapBtn) {
+      var recapAns = document.getElementById('recap-answer');
+      recapBtn.addEventListener('click', function () {
+        var open = recapAns.classList.toggle('show');
+        recapBtn.setAttribute('aria-expanded', String(open));
+        recapBtn.textContent = open ? 'Hide answer' : 'Show answer';
+      });
+    }
+
+    var HINTS = {"start":"If you did not start the sign-in, deny it. Approving it gives someone access.","repeat":"Repeated unexpected prompts can mean someone is trying to access your account. Report them."};
+    var flags = document.querySelectorAll('.flag');
+    var legend = document.querySelector('.legend');
+    var hint = document.getElementById('scenario-hint');
+    var seen = {};
+    flags.forEach(function (f) {
+      f.addEventListener('click', function () {
+        var key = f.dataset.flag;
+        flags.forEach(function (o) { o.setAttribute('aria-pressed', String(o === f)); });
+        seen[key] = true;
+        var found = Object.keys(seen).length;
+        var total = Object.keys(HINTS).length;
+        var fe = document.getElementById('found');
+        if (fe) fe.textContent = found === total ? 'You found them all. Nice eye.' : found + ' of ' + total + ' flags found';
+        if (legend) legend.querySelectorAll('li').forEach(function (li) { li.classList.toggle('hit', !!seen[li.dataset.legend]); });
+        if (hint) hint.textContent = HINTS[key] || '';
+      });
+    });
+
+    var feedback = document.getElementById('feedback');
+    var opts = document.querySelectorAll('.option');
+    opts.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var ok = btn.dataset.ok === 'true';
+        opts.forEach(function (b) {
+          b.setAttribute('aria-pressed', String(b === btn));
+          b.classList.toggle('correct', b.dataset.ok === 'true');
+        });
+        feedback.textContent = '';
+        var lead = document.createElement('strong');
+        lead.textContent = ok ? 'Nice catch. ' : 'Close. Here is the catch: ';
+        feedback.appendChild(lead);
+        feedback.appendChild(document.createTextNode(btn.dataset.why));
+        feedback.classList.add('show');
+      });
+    });
+
+    var completeBtn = document.getElementById('complete');
+    function paint(on) {
+      completeBtn.setAttribute('aria-pressed', String(on));
+      completeBtn.textContent = on ? 'Completed' : 'Mark lesson complete';
+    }
+    var stored = null;
+    try { stored = localStorage.getItem(DONE_KEY); } catch (e) {}
+    paint(stored === 'yes');
+    completeBtn.addEventListener('click', function () {
+      var on = completeBtn.getAttribute('aria-pressed') !== 'true';
+      paint(on);
+      try { localStorage.setItem(DONE_KEY, on ? 'yes' : 'no'); } catch (e) {}
+    });
+  })();
+</script>
+</body>
+</html>
