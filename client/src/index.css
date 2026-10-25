@@ -27,7 +27,7 @@ html {
 body {
   background-color: var(--de-bg, #050312);
   color: var(--de-fg, #ffffff);
-  font-family: "Inter", system-ui, sans-serif;
+  font-family: "Space Grotesk", system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -836,7 +836,7 @@ html[data-dock-hidden="true"] .de-bottom-bar {
   border-radius: 9999px;
   background: rgba(211, 18, 106, 0.1);
   border: 1px solid rgba(211, 18, 106, 0.3);
-  font-family: var(--font-mono, "Oxanium", monospace);
+  font-family: var(--font-mono, "Space Grotesk", ui-monospace, monospace);
   font-size: 0.75rem;
   color: var(--de-magenta-ink);
   letter-spacing: 0.08em;
@@ -1596,7 +1596,7 @@ html {
 }
 
 :root {
-  --paragraph-2-font-family: "Inter", Helvetica;
+  --paragraph-2-font-family: "Space Grotesk", Helvetica;
   --paragraph-2-font-size: 1rem;
   --paragraph-2-font-style: normal;
   --paragraph-2-font-weight: 400;
@@ -1798,17 +1798,16 @@ html {
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    font-feature-settings: 'cv11', 'ss01';
+    font-family: 'Space Grotesk', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     font-weight: 400;
     line-height: 1.6;
   }
 
-  /* Typography system — intentional three-role stack (Talos “one display font”
-   * guidance does not override DE brand): Space Grotesk headings, Inter body,
-   * Oxanium/JetBrains Mono for stats/telemetry only. */
+  /* Typography system — one family (Joe 2026-10-24, matching the approved Homepage v2
+   * and the Store): Space Grotesk for headings, body and stats. Was Space Grotesk /
+   * Inter / Oxanium; the Inter and Oxanium files stay self-hosted for the PDF renderer. */
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Space Grotesk', system-ui, sans-serif;
     font-weight: 700;
@@ -1826,11 +1825,10 @@ html {
     letter-spacing: -0.01em;
   }
 
-  /* Stats and numbers use Oxanium for tech feel. Tabular figures keep
-   * digit width fixed so counters/percentages don't jitter horizontally
-   * during a count-up animation or when a sibling value changes. */
+  /* Stats and numbers: same family, tabular figures keep digit width fixed so
+   * counters/percentages don't jitter during a count-up or when a sibling changes. */
   .font-mono, [data-stat], .stat-value {
-    font-family: 'Oxanium', 'JetBrains Mono', monospace;
+    font-family: 'Space Grotesk', ui-monospace, monospace;
     font-variant-numeric: tabular-nums;
   }
 
