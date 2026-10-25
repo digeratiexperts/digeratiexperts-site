@@ -39,7 +39,7 @@ import { zohoPayments } from "./zohoPayments";
 import { zohoClient } from "./zoho/zohoClient";
 import { zohoHealthStates } from "./zoho/zohoHealth";
 import { withDeadline } from "./deadline";
-import { evaluatePaymentSucceeded } from "./zohoPaymentWebhook";
+import { evaluatePaymentSucceeded, unpaidOrderCondition } from "./zohoPaymentWebhook";
 import { setupCrossServiceHandlers } from "./crossServiceHandler";
 import { eventBus, EventTypes } from "./eventBus";
 import { revocationLoadState } from "./portalSessionRevocation";
@@ -320,14 +320,24 @@ app.post(
           }
 
           if (decision.action === "mark_paid") {
-            await db.update(storeOrders)
+            // Conditional on the order still being unpaid. A duplicate delivery
+            // that lost the race updates nothing, so fulfilment runs once.
+            const [paidRow] = await db.update(storeOrders)
               .set({
                 status: "paid",
                 zohoPaymentId: parsed.paymentId || existingOrder.zohoPaymentId || null,
                 paidAt: new Date(),
                 updatedAt: new Date(),
               })
-              .where(eq(storeOrders.id, existingOrder.id));
+              .where(unpaidOrderCondition(existingOrder.id))
+              .returning({ id: storeOrders.id });
+            if (!paidRow) {
+              console.info("[ZOHO PAYMENTS WEBHOOK] Order already paid by an earlier delivery", {
+                orderId: existingOrder.id,
+                paymentId: parsed.paymentId,
+              });
+              return res.json({ received: true });
+            }
 
             const paidLines = Array.isArray(existingOrder.lineItems) ? existingOrder.lineItems : [];
             void import("./integrations/enqueueStoreOrder")

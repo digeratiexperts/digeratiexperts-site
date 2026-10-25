@@ -1,46 +1,37 @@
 # Digerati pronunciation audio
 
-`digerati-pronunciation.wav` is the file the homepage pronunciation card plays
-for **dij-uh-RAH-tee** (`/ˌdɪdʒəˈrɑːti/`). The card points at it through
-`AUDIO_SRC` in `client/src/components/PronunciationCard.tsx` and falls back to
-browser speech synthesis if the file ever fails to load. The per-syllable chips
-always use synthesis — there are no per-syllable recordings.
+Two files say **dij-uh-RAH-tee** (`/ˌdɪdʒəˈrɑːti/`). Joe picked both on 2026-10-24:
 
-## What the committed file is, precisely
+| File | Voice | Role |
+|---|---|---|
+| `digerati-pronunciation.wav` | Piper `en_US-ryan-high` (male) | main |
+| `digerati-pronunciation-backup.mp3` | Piper `en_US-lessac-high` (female) | failover |
 
-It is **not a human recording.** It is Windows SAPI speech synthesis
-(Microsoft Zira, rate −3), driven by SSML with an explicit IPA phoneme string
-rather than the spelling, so the synthesiser pronounces the word instead of
-guessing at it:
+Who plays them:
 
-```xml
-<phoneme alphabet="ipa" ph="ˌdɪdʒəˈrɑːti">Digerati</phoneme>
-```
+- The live homepage "Hear it" button: `client/src/pages/homepage-v2/sections/HeroSection.tsx`.
+- The shared card: `client/src/components/PronunciationCard.tsx`.
 
-The phoneme tag was verified as honoured, not silently ignored, by synthesising
-the same word with a deliberately wrong phoneme (`kæt`) and confirming the
-output changed length accordingly.
+Both try the main file first. If it cannot play, they try the backup, and if that also fails they use the browser's speech synthesis. The archived homepage versions (`client/src/pages/versions/v7`–`v10`) play the main file only, through their own `AUDIO_SRC`, which is unchanged.
 
-Post-processing: leading/trailing silence trimmed with 40 ms of padding, peak
-normalised to −1.5 dBFS. Result is 16-bit PCM mono, 22.05 kHz, 0.85 s, 37 KB.
+## How they were made
 
-WAV rather than MP3 because no MP3 encoder was available on the build machine
-(the only ffmpeg present is Playwright's video-only stripped build). WAV is
-universally supported and 37 KB is acceptable for media that loads on click.
-Re-encoding to MP3 or Opus would cut it to roughly 10 KB if someone with an
-encoder wants to.
+Neither file is a human recording. Both come from [Piper](https://github.com/rhasspy/piper), an open-source neural text-to-speech engine that runs locally. There was no paid service and no API call.
 
-## Replacing it with a real voice
+- **Voice models:** `rhasspy/piper-voices` v1.0.0 on Hugging Face.
+- **Input:** the sounds themselves, `[[ dˌɪdʒəɹˈɑːti ]]`, not the spelling. Fed the plain word "Digerati", Piper says "DYE-jrah-tee".
+- **Command:** `echo "[[ dˌɪdʒəɹˈɑːti ]]" | piper -m en_US-ryan-high.onnx --length-scale 1.15 -f raw.wav`
+- **Post-processing (ffmpeg):** trim leading and trailing silence, pad 150 ms, loudness-normalise to −16 LUFS (true peak −1.5 dB), 22.05 kHz mono. The main file is 16-bit WAV (1.06 s, 46 KB); the backup is MP3 (0.89 s, 6 KB).
+- **Check:** Whisper `small.en` transcribed every sample as "Digerati" when prompted with the company name, and as "Dijerati" without the prompt, which is the right soft "g".
 
-A recorded human voice is still the better asset — it carries the brand and it
-is the actual answer to "how do *they* say it". To swap:
+The file these replace was Windows SAPI (Microsoft Zira) and sounded robotic.
 
-1. Record the spoken phrase only: "dij-uh-RAH-tee". Neutral, confident
-   delivery, no music, reverb, or background bed.
-2. Trim the silence, normalise conservatively, avoid clipping.
-3. Save it here, keeping the file small — this is homepage media.
-4. Point `AUDIO_SRC` in `PronunciationCard.tsx` at the new filename. If the
-   extension changes, that constant is the only line that needs editing.
+## Replacing them with a human recording
 
-No other code changes are required, and the synthesis fallback stays in place
-either way.
+A real voice is still the better asset. To swap:
+
+1. Record the word once: "dij-uh-RAH-tee". Neutral delivery, no music or reverb.
+2. Trim the silence and normalise without clipping.
+3. Save it over `digerati-pronunciation.wav` (or change the constants in the two files above if the name or format changes).
+
+The backup and the synthesis fallback stay in place either way.

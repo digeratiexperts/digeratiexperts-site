@@ -4,6 +4,8 @@
 
 Compatibility names such as DE Technician Console, TechConsole and MSP AI Kit may remain in file paths or launch aliases where changing them would break installed automation.
 
+**Execution checklist:** the sequenced 104-move plan for the work below is tracked in [DE-TECH-TOOL-TRACKER.md](DE-TECH-TOOL-TRACKER.md) — one GitHub issue per move, in plan order. This document stays the live done/open board for the roadmap; the tracker is the checklist underneath it. When a move lands, tick its row there and fold anything roadmap-shaped back into this document.
+
 ## Product rule: three components, one contract
 
 DE Tech Tool has three parts. Each one works on its own, and all three were designed to work together.

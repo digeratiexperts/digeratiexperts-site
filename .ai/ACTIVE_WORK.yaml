@@ -41,6 +41,16 @@ claims:
       - client/src/components/home/HomeChapter.tsx, client/src/components/site/chapters.tsx, client/src/components/site/SolutionsRelationshipTable.tsx (sentence-case labels)
     status: active
     started: 2026-10-24
+  - id: city-pages-truth-rhythm
+    owner: claude
+    subsystem: marketing-locations
+    branch: claude/city-pages-20261024
+    base_sha: a30a1ae4
+    files:
+      - client/src/pages/locations/LocationServicePage.tsx (24/7 wording, localNote, section fields)
+      - client/src/pages/routes/locationPages.tsx (localNote per city)
+    status: active
+    started: 2026-10-24
   - id: lane-h-homepage-refinement
     issue: 696
     owner: opencode
@@ -4823,6 +4833,32 @@ claims:
     note: >-
       Docs-only follow-up after slices A, B, C, D, E and G merged and were
       checked in production on 2026-10-23. Joe: "Approved".
+  - id: portal-deonly-staff-guards
+    owner: claude
+    subsystem: portal
+    branch: claude/jolly-edison-app0dk
+    base_sha: e458451
+    started: 2026-10-24
+    files:
+      - shared/permissions/lane-staff.ts (new), shared/permissions/index.ts (one import + one spread), shared/permissions/permissions.test.ts
+      - server/routes.ts (guards only: companies, company user invite, tenant files, manual records, licence board, order requests, KB authoring)
+      - server/warehouseAccess.ts (+ test): warehouse gate checks warehouse.access
+      - client/src/components/portal/shell/portalNav.ts (Admin Contracts item rule only), portalNav.test.ts
+    status: verified-live
+    released: 2026-10-24
+    pr: "825"
+    note: >-
+      Follow-up to #708. Every deOnly menu item's APIs now accept DE staff, or
+      the item is break-glass only. Joe 2026-10-24: widen Companies (lane A
+      company.manage / files.share), License Patch Bay, Knowledge Authoring,
+      Order Change Requests, manual records and the Digital Warehouse; Admin
+      Contracts goes break-glass only because its /api/admin/contracts calls
+      have no server routes. Overlaps the license-kit-vault-docs claim only in
+      server/routes.ts (one guard line); server/licenseBoardRoutes.ts untouched.
+      Merged as abe95fe (Joe, "You have my permission"); production served
+      abe95fe at 11:27Z and the deploy job's runtime verification passed.
+      Smoke: every widened admin API returns 401 to anonymous callers and the
+      warehouse session returns its generic 404.
   - id: homepage-v2-copy-port
     owner: claude
     subsystem: homepage
@@ -4832,10 +4868,69 @@ claims:
     files:
       - client/src/pages/homepage-v2/sections/{Hero,Detect,Fit,Challenges,Services,Contact,Team}Section.tsx, SiteFooter.tsx (CTA labels and names only)
       - client/src/pages/homepage-v2/cta.ts (header comment), homepage-v2.css (.nowrap, .team-cta)
-    status: in-review
+    status: verified-live
+    released: 2026-10-24
+    pr: "716"
     note: >-
       Joe, 2026-10-24: "yes port them to homepage v2". Ports #698's copy and
       CTA fixes from V8 to homepage v2 at /: one primary label from HOME_CTA,
       the form submit "Request Assessment", "Talk to an Expert" as the
       secondary style with the phone, canonical service names, and the
       "signals surface immediately" speed claim softened. Layout unchanged.
+  - id: portal-data-import-honest
+    owner: claude
+    subsystem: portal
+    branch: claude/sleepy-johnson-bkojbp
+    base_sha: a30a1ae
+    started: 2026-10-24
+    files:
+      - client/src/pages/portal/AdminImport.tsx (rewritten: no dead buttons or dev notes)
+      - client/src/components/portal/shell/portalNav.ts (Data Import loses its sample flags)
+      - client/src/components/portal/shell/portalNav.test.ts (sample example is now VPN Access)
+      - docs/PORTAL-SAMPLE-BUILDOUT-PLAN.md (progress log)
+    status: in-review
+    note: >-
+      Slice H, D7 default ("not now; drop the badge with honest copy"). Joe,
+      2026-10-24: "Data Import ... fix it please". The page says DE ops runs
+      Zoho and JumpCloud syncs on request, Seamless.ai is not connected (paid),
+      and links the CSV imports that exist (VPN devices, shipments). The
+      Zoho/JumpCloud importer itself stays a separate slice.
+  - id: pronunciation-voice-piper
+    owner: claude
+    subsystem: homepage
+    branch: claude/sleepy-johnson-bkojbp
+    base_sha: abe95fe
+    started: 2026-10-24
+    files:
+      - client/public/audio/digerati-pronunciation.wav (replaced with Piper ryan-high), digerati-pronunciation-backup.mp3 (new, Piper lessac-high), README.md
+      - client/src/pages/homepage-v2/sections/HeroSection.tsx, client/src/components/PronunciationCard.tsx (main, then backup, then synthesis)
+    status: in-review
+    note: >-
+      Joe, 2026-10-24, after hearing the samples: "2-ryan-male.mp3 main",
+      "1-lessac-female.mp3 failover", "merge both when green". Free local
+      neural TTS (Piper), fed the IPA, not the spelling. Replaces the Windows
+      SAPI file. A human recording can still replace the main file.
+  - id: cookie-banner-askde-overlap
+    owner: claude
+    subsystem: site-chrome
+    branch: claude/cookie-banner-askde-overlap
+    base_sha: c0fa29c9
+    files:
+      - client/src/components/CookieConsentBanner.tsx (one short consent line at every width)
+      - client/src/components/CookieConsentBanner.copy.test.ts (new)
+      - client/src/components/SiteBottomBar.tsx (Ask DE label reveals on hover/focus; 40px circle at rest)
+      - client/src/components/SiteBottomBar.launcher.test.ts
+      - client/src/lib/storeLightChrome.test.ts (assertion for the removed long paragraph)
+      - artifacts/visual-qa/cookie-banner-askde-2026-10-24/**
+    status: implemented
+    started: 2026-10-24
+    note: >-
+      Joe, 2026-10-24: "fix the cookie banner and Ask DE overlap" (from the live
+      site check of 2026-10-20). The full-length consent paragraph covered ~21%
+      of a 1440x900 screen and sat on the homepage hero buttons; it is now one
+      line (81px, 9%), same layout on the dark site and the light Store. The
+      labelled Ask DE pill (~205px) covered the right end of trust strips; it
+      now rests as the 40px gold-ring badge with the "Ask DE / We're here to
+      help." label sliding out on hover or keyboard focus. This changes the
+      2026-10-03 launcher decision (label always beside the badge from sm), so
+      Joe confirms the screenshots before merge.

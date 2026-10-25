@@ -7,6 +7,8 @@ import { HOME_CTA } from "../cta";
 
 /** See client/public/audio/README.md for how the file was made and how to replace it. */
 const PRONUNCIATION_AUDIO = "/audio/digerati-pronunciation.wav";
+/** Second voice, tried when the main file cannot play (client/public/audio/README.md). */
+const PRONUNCIATION_BACKUP = "/audio/digerati-pronunciation-backup.mp3";
 
 const READINESS_BARS = [
   { label: "Identity", value: 68 },
@@ -26,7 +28,8 @@ const ASSESSED_AREAS = [
 /** Dex sits on the assessment card only; the hero carries no founder photo. */
 export function HeroSection(): JSX.Element {
   // Plays the fixed pronunciation asset so the name sounds the same on every
-  // device; browser synthesis is only the fallback if the file cannot play.
+  // device; the backup voice is tried next, and browser synthesis only if
+  // neither file can play.
   const speakName = () => {
     let fellBack = false;
     const synth = () => {
@@ -41,9 +44,17 @@ export function HeroSection(): JSX.Element {
         // Speech synthesis is optional; the phonetic spelling is printed beside the button.
       }
     };
+    let triedBackup = false;
+    const backup = () => {
+      if (triedBackup) return;
+      triedBackup = true;
+      const second = new Audio(PRONUNCIATION_BACKUP);
+      second.onerror = synth;
+      void second.play().catch(synth);
+    };
     const audio = new Audio(PRONUNCIATION_AUDIO);
-    audio.onerror = synth;
-    void audio.play().catch(synth);
+    audio.onerror = backup;
+    void audio.play().catch(backup);
   };
 
   return (

@@ -572,8 +572,9 @@ export const PORTAL_NAV_ITEMS: PortalNavItem[] = [
     key: "other",
     hint: "Send and countersign",
     section: "admin",
-    rule: { deOnly: true, featureReady: true },
-    target: { group: "admin", label: "Contracts", order: 4 },
+    // Break-glass only until the page has a backend: its /api/admin/contracts
+    // calls are not served by the server (Joe 2026-10-24).
+    rule: { superAdminOnly: true, featureReady: true },
   },
   {
     href: "/portal/admin/status",
@@ -620,9 +621,8 @@ export const PORTAL_NAV_ITEMS: PortalNavItem[] = [
     icon: Upload,
     key: "other",
     hint: "External systems",
-    sample: true,
     section: "admin",
-    rule: { superAdminOnly: true, sample: true, featureReady: false },
+    rule: { superAdminOnly: true, featureReady: true },
   },
   {
     href: "/portal/admin/agents",

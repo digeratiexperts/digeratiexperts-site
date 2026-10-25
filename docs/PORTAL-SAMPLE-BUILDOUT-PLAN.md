@@ -306,8 +306,9 @@ Seamless.ai, any VPN or shipping vendor plan, Cytracom Insights if it is an add-
 | 2026-10-23 | C: Business Reviews | digeratiexperts/digeratiexperts-site#710 | live |
 | 2026-10-23 | D: IT plan hub (`itPlan` = roadmap items or a published review) | digeratiexperts/digeratiexperts-site#709, digeratiexperts/digeratiexperts-site#710 | live |
 | 2026-10-23 | E: DE Questionnaires | digeratiexperts/digeratiexperts-site#711 | live (verified at `65a6bbb`) |
+| 2026-10-24 | H: Data Import, D7 default (badge dropped, honest copy, links to the CSV imports that exist) | this PR | in review |
 
 Still open:
 - **E follow-up:** `server/portalSurveyStore.ts` still creates `portal_surveys` and `portal_survey_responses` at runtime. Move them into a migration, as section 3 says.
 - **F:** Joe or a server admin sets `PORTAL_VPN_PROVIDER=manual` and `PORTAL_SHIPPING_PROVIDER=manual` in production. Code work: remove the sample call history from the phone live view.
-- **H:** blocked on D7: either remove the badge and write honest copy, or build the Zoho importer through `server/zoho/oauth`.
+- **H follow-up:** the Zoho/JumpCloud importer itself (dry-run preview, field mapping, run log), through `server/zoho/oauth` only. Not started.

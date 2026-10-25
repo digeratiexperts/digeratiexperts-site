@@ -1,112 +1,85 @@
-import { useState } from "react";
+import { Link } from "wouter";
+import { Database, Mail, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Database, Mail } from "lucide-react";
 import { PortalLayout } from "./PortalLayout";
-import { Callout, Panel, Token } from "@/components/portal/ui";
+import { Panel, Token } from "@/components/portal/ui";
 
-interface ImportJob {
-  id: string;
-  system: string;
-  status: "unavailable";
-  description: string;
-}
+/**
+ * Data Import (DE admin). Syncs from outside systems are run by DE ops on
+ * request; there is no self-serve importer yet (docs/PORTAL-SAMPLE-BUILDOUT-PLAN.md,
+ * slice H, decision D7). The bulk imports that do exist in the portal are linked
+ * below. No buttons here pretend to start a sync.
+ */
 
-const importSystems: ImportJob[] = [
-  {
-    id: "1",
-    system: "Zoho CRM (Companies)",
-    status: "unavailable",
-    description: "Company sync is handled by DE ops — not self-serve from this page.",
-  },
-  {
-    id: "2",
-    system: "Zoho Desk (Contacts)",
-    status: "unavailable",
-    description: "Contact sync is handled by DE ops — not self-serve from this page.",
-  },
-  {
-    id: "3",
-    system: "JumpCloud (Users)",
-    status: "unavailable",
-    description: "User directory imports require ops configuration.",
-  },
-  {
-    id: "4",
-    system: "Seamless.ai (Companies)",
-    status: "unavailable",
-    description: "Prospect imports require ops configuration.",
-  },
+const SOURCES = [
+  { system: "Zoho CRM", objects: "Companies", how: "DE ops runs the sync on request." },
+  { system: "Zoho Desk", objects: "Contacts", how: "DE ops runs the sync on request." },
+  { system: "JumpCloud", objects: "Users", how: "DE ops runs the import on request." },
+  { system: "Seamless.ai", objects: "Prospect companies", how: "Not connected. A paid plan is needed first." },
 ];
 
+const IN_PORTAL = [
+  { label: "VPN devices", href: "/portal/vpn", text: "CSV import on the VPN Access page, while viewing as the company." },
+  { label: "Shipments", href: "/portal/ship-center", text: "CSV import on the Ship Center page, while viewing as the company." },
+];
+
+const REQUEST_MAIL =
+  "mailto:admin@digeratiexperts.com?subject=Data%20import%20request&body=Source%20system%3A%0AObject%20type%3A%0ACompany%20or%20record%20range%3A%0AOne-time%20or%20recurring%3A%0A";
+
 export function AdminImport() {
-  const [showContactNote, setShowContactNote] = useState(false);
-
   return (
-    <PortalLayout title="Data Import" description="External system imports are not available as a self-serve action in this admin UI.">
+    <PortalLayout title="Data Import" description="Bring companies, contacts and users in from outside systems.">
       <div className="space-y-4">
-        <Callout tone="warn" title="No simulated imports">
-          This page previously simulated successful syncs. Live import jobs are not wired here. Contact DE ops to run or
-          schedule a sync from Zoho, JumpCloud, or Seamless.ai.
-        </Callout>
-
-        <Panel id="import-systems" title="Import sources" description="Each source is run by DE ops on request." flush>
+        <Panel id="import-sources" title="Outside systems" description="DE ops runs these syncs. Ask with the button below." flush>
           <ul className="divide-y divide-border">
-            {importSystems.map((job) => (
-              <li key={job.id} className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between md:px-5" data-testid={`import-card-${job.id}`}>
-                <div className="flex min-w-0 items-start gap-3">
-                  <Database className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="text-sm font-semibold">{job.system}</h3>
-                      <Token label="Contact ops" tone="neutral" />
-                    </div>
-                    <p className="mt-0.5 text-xs text-muted-foreground">{job.description}</p>
+            {SOURCES.map((s) => (
+              <li key={s.system} className="flex items-start gap-3 px-4 py-4 md:px-5" data-testid={`import-source-${s.system.toLowerCase().replace(/[^a-z]+/g, "-")}`}>
+                <Database className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="text-sm font-semibold">{s.system}</h3>
+                    <Token label={s.objects} tone="neutral" />
                   </div>
+                  <p className="mt-0.5 text-xs text-muted-foreground">{s.how}</p>
                 </div>
-                <Button disabled variant="outline" className="shrink-0 border-border bg-card" data-testid={`button-import-${job.id}`}>
-                  Run Import (unavailable)
-                </Button>
+              </li>
+            ))}
+          </ul>
+        </Panel>
+
+        <Panel id="import-in-portal" title="Bulk imports you can run now" flush>
+          <ul className="divide-y divide-border">
+            {IN_PORTAL.map((i) => (
+              <li key={i.href} className="flex items-start gap-3 px-4 py-4 md:px-5">
+                <Upload className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                <div className="min-w-0">
+                  <Link href={i.href} className="text-sm font-semibold underline">
+                    {i.label}
+                  </Link>
+                  <p className="mt-0.5 text-xs text-muted-foreground">{i.text}</p>
+                </div>
               </li>
             ))}
           </ul>
         </Panel>
 
         <Panel
-          id="contact-ops"
+          id="request-import"
           title={
             <span className="inline-flex items-center gap-2">
               <Mail className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-              Contact DE ops
+              Ask DE ops for a sync
             </span>
           }
         >
-          <div className="space-y-4">
+          <div className="space-y-3">
             <p className="text-sm text-muted-foreground">
-              To request a data import or sync, email ops with the system name, environment (prod/preview), and any filters
-              or record ranges needed. Do not paste API keys into this UI.
+              Say which system, which records (companies, contacts or users), which company or range, and whether it is one-time
+              or recurring. Never send API keys by email.
             </p>
-            <div className="flex flex-wrap gap-2">
-              <Button asChild variant="brand" data-testid="button-contact-ops">
-                <a href="mailto:admin@digeratiexperts.com?subject=Admin%20data%20import%20request">Email DE ops</a>
-              </Button>
-              <Button
-                variant="outline"
-                className="border-border bg-card hover:bg-accent"
-                onClick={() => setShowContactNote((v) => !v)}
-                aria-expanded={showContactNote}
-                data-testid="button-ops-details"
-              >
-                {showContactNote ? "Hide details" : "What to include"}
-              </Button>
-            </div>
-            {showContactNote && (
-              <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
-                <li>Source system (Zoho CRM, Zoho Desk, JumpCloud, Seamless.ai)</li>
-                <li>Object type (companies, contacts, users)</li>
-                <li>Target environment and urgency</li>
-                <li>Whether this is a one-time import or recurring sync</li>
-              </ul>
-            )}
+            <Button asChild variant="brand" data-testid="button-request-import">
+              <a href={REQUEST_MAIL}>Email DE ops</a>
+            </Button>
           </div>
         </Panel>
       </div>

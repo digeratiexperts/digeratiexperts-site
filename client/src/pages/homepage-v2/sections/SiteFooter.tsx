@@ -1,6 +1,25 @@
 import { useState, type FormEvent } from "react";
 import { DE_LOGO_REVERSE } from "@/lib/brandAssets";
+import { PUBLIC_SOCIAL_LINKS } from "@shared/companyContact";
 import { EMAIL_ADDRESS, PHONE_DISPLAY, PHONE_HREF } from "../content";
+
+/** Same icons as the V8 footer, so the social row looks the same on both. */
+const SOCIAL_ICONS: Record<string, JSX.Element> = {
+  linkedin: (
+    <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M16 8a6 6 0 0 1 6 6v8h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v8h-4v-7a6 6 0 0 1 6-6z" />
+      <rect width="4" height="12" x="2" y="9" />
+      <circle cx="4" cy="4" r="2" />
+    </svg>
+  ),
+  instagram: (
+    <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+      <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+    </svg>
+  ),
+};
 
 const COLUMNS = [
   { title: "Client", links: [["Client Portal", "/portal/login"], ["Submit Ticket", "/support/submit-ticket"], ["Remote Support", "/support/remote-support"], ["Pay Invoice", "/support/pay-invoice"]] },
@@ -63,6 +82,8 @@ export function SiteFooter(): JSX.Element {
             <a href="/" className="logo"><img src={DE_LOGO_REVERSE} alt="Digerati Experts" /></a>
             <p style={{ marginTop: 18 }}>Cybersecurity and managed IT<br />Chandler, Arizona</p>
             <p style={{ marginTop: 12 }}><a href={PHONE_HREF}>{PHONE_DISPLAY}</a><br /><a href={`mailto:${EMAIL_ADDRESS}`}>{EMAIL_ADDRESS}</a></p>
+            <h4 style={{ marginTop: 28 }}>Stay updated</h4>
+            <p className="small" style={{ marginTop: 6 }}>Get the latest cybersecurity insights and IT tips delivered to your inbox.</p>
             <NewsletterForm />
           </div>
           {COLUMNS.map((column) => (
@@ -87,6 +108,13 @@ export function SiteFooter(): JSX.Element {
         <div className="fbase">
           <span>© {new Date().getFullYear()} Digerati Experts, Chandler, Arizona</span>
           <span><a href="/trust/accessibility">Accessibility</a> &nbsp; <a href="/trust">Security</a></span>
+          <div className="social">
+            {PUBLIC_SOCIAL_LINKS.map((social) => (
+              <a key={social.key} href={social.href} aria-label={social.name} target="_blank" rel="noopener noreferrer">
+                {SOCIAL_ICONS[social.key]}
+              </a>
+            ))}
+          </div>
         </div>
       </div>
     </footer>
