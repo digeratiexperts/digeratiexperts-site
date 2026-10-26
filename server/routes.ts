@@ -164,8 +164,10 @@ import {
   mapDeskPriority,
   mapDeskStatus,
   mergePortalAndDeskTickets,
+  normalizeLocalTicketStatus,
   parseDeskPortalTicketId,
   startDeskTicketSyncWorker,
+  summarizeTicketStatuses,
   ticketInScope,
 } from "./portalDeskTickets";
 import { RESEND_COOLDOWN_MS } from "./portalVerificationThrottle";
@@ -3680,7 +3682,9 @@ export async function registerRoutes(app: Express) {
       
       let openTickets = 0;
       let resolvedTickets = 0;
-      let pendingInvoices = 0;
+      let waitingOnClient = 0;
+      // null = billing could not be read; never report an unknown as zero.
+      let pendingInvoices: number | null = null;
       let recentTickets: any[] = [];
       let zohoDataFetched = false;
       
@@ -3696,17 +3700,13 @@ export async function registerRoutes(app: Express) {
             // Get tickets for this specific contact
             const contactTickets = await zohoDeskService.getTicketsByContact(contact.id);
             
-            openTickets = contactTickets.filter(t => 
-              t.status?.toLowerCase() === "open" || t.status?.toLowerCase() === "in progress"
-            ).length;
-            resolvedTickets = contactTickets.filter(t => 
-              t.status?.toLowerCase() === "closed" || t.status?.toLowerCase() === "resolved"
-            ).length;
-            recentTickets = contactTickets.slice(0, 5).map(t => ({
+            const mapped = contactTickets.map(t => mapDeskStatus(t.status, t.statusType));
+            ({ openTickets, waitingOnClient, resolvedTickets } = summarizeTicketStatuses(mapped));
+            recentTickets = contactTickets.slice(0, 5).map((t, i) => ({
               id: t.id,
               ticketNumber: t.ticketNumber,
               subject: t.subject,
-              status: t.status?.toLowerCase() || "open",
+              status: mapped[i],
               priority: t.priority,
               createdAt: t.createdTime,
             }));
@@ -3733,13 +3733,13 @@ export async function registerRoutes(app: Express) {
       // Fallback to local tickets if Zoho didn't return data
       if (!zohoDataFetched) {
         const tickets = await storage.getPortalTickets(req.userId || "");
-        openTickets = tickets.filter(t => t.status === "open" || (t.status as string) === "in-progress" || (t.status as string) === "in_progress").length;
-        resolvedTickets = tickets.filter(t => t.status === "resolved" || t.status === "closed").length;
-        recentTickets = tickets.slice(0, 5).map(t => ({
+        const mapped = tickets.map(t => normalizeLocalTicketStatus(t.status as string));
+        ({ openTickets, waitingOnClient, resolvedTickets } = summarizeTicketStatuses(mapped));
+        recentTickets = tickets.slice(0, 5).map((t, i) => ({
           id: t.id,
           ticketNumber: t.ticketNumber || `#TK${String(t.id).padStart(3, '0')}`,
           subject: t.subject,
-          status: t.status,
+          status: mapped[i],
           priority: t.priority,
           createdAt: t.createdAt,
         }));
@@ -3775,7 +3775,9 @@ export async function registerRoutes(app: Express) {
       const dashboardStats = {
         openTickets,
         resolvedTickets,
-        activeServices: services.length,
+        waitingOnClient,
+        // null when subscriptions could not be read (not linked or Zoho down).
+        activeServices: zohoBillingFetched ? services.length : null,
         pendingInvoices,
         recentTickets,
         services,

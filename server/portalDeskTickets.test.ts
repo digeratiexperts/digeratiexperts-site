@@ -314,3 +314,20 @@ describe("access and rendering helpers", () => {
     expect(admin[1].isInternal).toBe(true);
   });
 });
+
+describe("summarizeTicketStatuses / normalizeLocalTicketStatus (W1 dashboard truth)", () => {
+  it("counts only explicit pending_client as waiting on the client", async () => {
+    const { summarizeTicketStatuses, mapDeskStatus } = await import("./portalDeskTickets");
+    const mapped = ["Open", "On Hold", "Pending vendor", "Waiting on customer", "Closed", "Resolved"].map((s) =>
+      mapDeskStatus(s, s === "On Hold" ? "On Hold" : s === "Closed" ? "Closed" : "Open"),
+    );
+    expect(summarizeTicketStatuses(mapped)).toEqual({ openTickets: 3, waitingOnClient: 1, resolvedTickets: 2 });
+  });
+
+  it("normalizes legacy local statuses", async () => {
+    const { normalizeLocalTicketStatus } = await import("./portalDeskTickets");
+    expect(normalizeLocalTicketStatus("in-progress")).toBe("in_progress");
+    expect(normalizeLocalTicketStatus("pending_client")).toBe("pending_client");
+    expect(normalizeLocalTicketStatus(undefined)).toBe("open");
+  });
+});
