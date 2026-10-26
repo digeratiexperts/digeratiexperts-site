@@ -52,7 +52,7 @@ These are the dependencies worth knowing before picking anything up:
 | Section | Moves | Done | Open | Needs Joe |
 |---|---|---|---|---|
 | Start here (highest leverage) | 10 | 5 | 5 | 5 |
-| A. Quality and trust (11-24) | 14 | 1 | 13 | 0 |
+| A. Quality and trust (11-24) | 14 | 3 | 11 | 0 |
 | B. Real-device validation (25-38) | 14 | 0 | 14 | 1 |
 | C. Installer integrity (39-48) | 10 | 0 | 10 | 1 |
 | D. Signing and release (49-58) | 10 | 0 | 10 | 0 |
@@ -61,7 +61,7 @@ These are the dependencies worth knowing before picking anything up:
 | G. Client and dropship workflows (83-90) | 8 | 0 | 8 | 0 |
 | H. Sensitive data (91-96) | 6 | 0 | 6 | 0 |
 | I. Supportability and docs (97-104) | 8 | 0 | 8 | 1 |
-| **Total** | **104** | **6** | **98** | **8** |
+| **Total** | **104** | **8** | **96** | **8** |
 
 ## The moves
 
@@ -87,8 +87,8 @@ These are the dependencies worth knowing before picking anything up:
 ### A. Quality and trust (11-24)
 
 - [x] **11** Test that a failed control can never appear as PASS in any report. `agent` - [#729](https://github.com/digeratiexperts/digeratiexperts-site/issues/729)
-- [ ] **12** Golden-file tests for client-facing reports: no costs, margins, keys or vendor sourcing. `agent` - [#730](https://github.com/digeratiexperts/digeratiexperts-site/issues/730)
-- [ ] **13** Automated check that client output contains none of the restricted fields. `agent` - [#731](https://github.com/digeratiexperts/digeratiexperts-site/issues/731)
+- [x] **12** Golden-file tests for client-facing reports: no costs, margins, keys or vendor sourcing. `agent` - [#730](https://github.com/digeratiexperts/digeratiexperts-site/issues/730)
+- [x] **13** Automated check that client output contains none of the restricted fields. `agent` - [#731](https://github.com/digeratiexperts/digeratiexperts-site/issues/731)
 - [ ] **14** Redaction tests: BitLocker recovery passwords never reach logs, state or receipts. `agent` - [#732](https://github.com/digeratiexperts/digeratiexperts-site/issues/732)
 - [ ] **15** Test that Guardz keys and SentinelOne tokens are never persisted. `agent` - [#733](https://github.com/digeratiexperts/digeratiexperts-site/issues/733)
 - [ ] **16** Mutation-test the licence and fail-closed paths. `agent` - [#734](https://github.com/digeratiexperts/digeratiexperts-site/issues/734)
