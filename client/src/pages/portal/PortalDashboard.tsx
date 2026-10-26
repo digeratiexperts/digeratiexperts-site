@@ -82,6 +82,11 @@ export function renderableRows<T extends { id: string }>(rows: unknown): T[] {
   return rows.filter((r): r is T => typeof r === "object" && r !== null && typeof (r as { id?: unknown }).id === "string");
 }
 
+/** Render provider text only when it is a non-empty string; anything else gets the fallback. */
+export function text(value: unknown, fallback: string): string {
+  return typeof value === "string" && value.trim() ? value : fallback;
+}
+
 const known = (n: number | null | undefined): n is number => typeof n === "number" && Number.isFinite(n);
 
 function billingNote(stats: DashboardStats): string {
@@ -299,15 +304,15 @@ export default function PortalDashboard() {
                   <li key={ticket.id} data-testid={`ticket-${ticket.id}`}>
                     <Link href={`/portal/tickets/${ticket.id}`} className="flex items-center justify-between gap-3 px-4 py-3 transition-colors hover:bg-accent/60 focus-visible:bg-accent/60 focus-visible:outline-none md:px-5">
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-medium">{ticket.subject}</p>
+                        <p className="truncate text-sm font-medium">{text(ticket.subject, "(no subject)")}</p>
                         <p className="mt-0.5 text-xs text-muted-foreground">
                           {ticket.ticketNumber}
                           {ticket.updatedAt || ticket.createdAt ? ` · ${formatDeskTimestamp(ticket.updatedAt || ticket.createdAt || "")}` : ""}
                         </p>
                       </div>
                       <div className="flex shrink-0 items-center gap-2">
-                        {ticket.priority && <Priority priority={ticket.priority} className="hidden sm:inline-flex" />}
-                        <TicketStatus status={ticket.status} />
+                        {typeof ticket.priority === "string" && ticket.priority && <Priority priority={ticket.priority} className="hidden sm:inline-flex" />}
+                        <TicketStatus status={text(ticket.status, "unknown")} />
                       </div>
                     </Link>
                   </li>
@@ -362,13 +367,13 @@ export default function PortalDashboard() {
                   {services.map((service) => (
                     <li key={service.id} className="flex items-center justify-between gap-3 px-4 py-3 md:px-5" data-testid={`service-${service.id}`}>
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-medium">{service.serviceName}</p>
-                        {service.amount && <p className="pt-num text-xs text-muted-foreground">${service.amount}/mo</p>}
+                        <p className="truncate text-sm font-medium">{text(service.serviceName, "Subscription")}</p>
+                        {typeof service.amount === "number" && service.amount > 0 && <p className="pt-num text-xs text-muted-foreground">${service.amount}/mo</p>}
                       </div>
                       <div className="flex shrink-0 items-center gap-2">
-                        <GenericStatus status={service.status || "active"} />
-                        {service.zohoLink && (
-                          <a href={service.zohoLink} target="_blank" rel="noopener noreferrer" className="rounded p-1 text-muted-foreground hover:text-foreground" title="View in Zoho" aria-label={`View ${service.serviceName} in Zoho`} data-testid={`link-zoho-${service.id}`}>
+                        <GenericStatus status={text(service.status, "active")} />
+                        {typeof service.zohoLink === "string" && service.zohoLink.startsWith("https://billing.zoho.com/") && (
+                          <a href={service.zohoLink} target="_blank" rel="noopener noreferrer" className="rounded p-1 text-muted-foreground hover:text-foreground" title="View in Zoho" aria-label={`View ${text(service.serviceName, "subscription")} in Zoho`} data-testid={`link-zoho-${service.id}`}>
                             <ExternalLink className="h-4 w-4" aria-hidden="true" />
                           </a>
                         )}

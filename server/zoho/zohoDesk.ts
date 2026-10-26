@@ -314,15 +314,18 @@ export class ZohoDeskService {
   /**
    * Strict contact lookup: `{ ok: true, value: null }` is a validated
    * no-match; any failure or malformed envelope is `{ ok: false }`.
-   * Zoho Desk answers a search with no match as 204 / empty body.
+   * Zoho Desk answers a search with no match as HTTP 204; a 200 must carry `data`.
    */
   async findContactByEmailStrict(email: string): Promise<StrictDeskRead<{ id: string } | null>> {
     try {
       const client = await this.source.getDeskClient();
       const orgId = await this.getOrgId();
       const response = await client.get('/contacts/search', { headers: { orgId }, params: { email } });
+      // Only a verified 204 No Content is a no-match; an HTTP 200 with a
+      // null, missing or empty body is malformed, not proof of absence.
+      if (response?.status === 204) return { ok: true, value: null };
       const data = response?.data;
-      if (data === undefined || data === null || data === "") return { ok: true, value: null };
+      if (response?.status !== 200) return { ok: false };
       if (!isDeskRow(data) || !Array.isArray(data.data)) return { ok: false };
       const first = data.data[0];
       if (first === undefined) return { ok: true, value: null };
@@ -348,9 +351,11 @@ export class ZohoDeskService {
         headers: { orgId },
         params: { limit: STRICT_DESK_TICKET_LIMIT },
       });
+      // Only a verified 204 No Content means the contact has no tickets; an
+      // HTTP 200 with a null, missing or empty body stays unavailable.
+      if (response?.status === 204) return { ok: true, value: { tickets: [], complete: true } };
       const data = response?.data;
-      // 204 / empty body: the contact has no tickets.
-      if (data === undefined || data === null || data === "") return { ok: true, value: { tickets: [], complete: true } };
+      if (response?.status !== 200) return { ok: false };
       if (!isDeskRow(data) || !Array.isArray(data.data)) return { ok: false };
       const rows = data.data;
       if (!rows.every((r) => isDeskRow(r) && typeof r.id === "string" && typeof r.status === "string")) return { ok: false };

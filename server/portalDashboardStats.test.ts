@@ -12,7 +12,7 @@ import { registerPortalDashboardRoute, type DashboardDeps } from "./portalDashbo
  * client; the real route runs behind a stand-in for authMiddleware.
  */
 
-type Reply = { data?: unknown } | Error;
+type Reply = { data?: unknown; status?: number } | Error;
 type Handler = (url: string, config: { params?: Record<string, unknown> }) => Reply;
 
 function fakeProvider(handlers: Record<string, Handler>) {
@@ -24,7 +24,7 @@ function fakeProvider(handlers: Record<string, Handler>) {
       if (!key) throw new Error(`unexpected ${url}`);
       const reply = handlers[key](url, config);
       if (reply instanceof Error) throw reply;
-      return reply;
+      return { status: 200, ...reply };
     },
   };
   return { client, calls };
@@ -43,7 +43,7 @@ const SUBS: Handler = () => page("subscriptions", [
   { subscription_id: "s1", status: "live", plan: { name: "Managed Security" }, amount: 99 },
   { subscription_id: "s2", status: "cancelled" },
 ]);
-const CONTACT_A: Handler = (_u, c) => (c.params?.email === "a@acme.test" ? { data: { data: [{ id: "contact-a" }] } } : { data: "" });
+const CONTACT_A: Handler = (_u, c) => (c.params?.email === "a@acme.test" ? { data: { data: [{ id: "contact-a" }] } } : { status: 204, data: "" });
 const TICKETS: Handler = () => ({ data: { data: [
   { id: "t1", status: "Open", subject: "Printer" },
   { id: "t2", status: "Waiting on customer", subject: "Laptop" },
@@ -212,6 +212,22 @@ describe("dashboard billing: strict provider → adapter → route", () => {
     await b.service.findCustomerByEmailStrict("a@acme.test");
     for (const call of warn.mock.calls) expect(JSON.stringify(call)).not.toMatch(/a@acme\.test|boom/);
   });
+
+  it("object-valued or empty subscription names become a plain-text label", async () => {
+    const b = billingWith({ "/billing/v1/subscriptions": () => page("subscriptions", [
+      { subscription_id: "s1", status: "live", plan: { name: { en: "Managed" } }, name: { x: 1 }, amount: { v: 1 }, next_billing_at: { d: 1 } },
+      { subscription_id: "s2", status: "live", plan: null, name: "  Backup  " },
+      { subscription_id: "s3", status: "live", plan: { name: "" }, name: "" },
+    ]) });
+    const { status, body } = await get(await serve(deps(b.service, deskWith().service), A));
+    expect(status).toBe(200);
+    expect(body.services.map((s: { serviceName: unknown }) => s.serviceName)).toEqual(["Subscription", "Backup", "Subscription"]);
+    for (const s of body.services) {
+      expect(typeof s.serviceName).toBe("string");
+      expect(s.amount === undefined || typeof s.amount === "number").toBe(true);
+      expect(s.nextBilling === undefined || typeof s.nextBilling === "string").toBe(true);
+    }
+  });
 });
 
 describe("dashboard tickets: no sample stands in for a total", () => {
@@ -254,10 +270,39 @@ describe("dashboard tickets: no sample stands in for a total", () => {
     expect(body.recentTickets[1].subject).toBe("(no subject)");
   });
 
-  it("Desk 204 (empty body) for a contact with no tickets is a complete zero", async () => {
-    const d = deskWith({ "/contacts/contact-a/tickets": () => ({ data: "" }) });
+  it("a verified Desk 204 for a contact with no tickets is a complete zero", async () => {
+    const d = deskWith({ "/contacts/contact-a/tickets": () => ({ status: 204, data: "" }) });
     const { body } = await get(await serve(deps(billingWith().service, d.service), A));
     expect(body).toMatchObject({ openTickets: 0, waitingOnClient: 0, resolvedTickets: 0, ticketSource: "desk" });
+  });
+
+  it.each([
+    ["null body", { data: null }],
+    ["missing body", {}],
+    ["empty-string body", { data: "" }],
+  ] as Array<[string, { data?: unknown }]>)("HTTP 200 with a %s on the ticket list is unavailable, never an all-clear", async (_n, reply) => {
+    const d = deskWith({ "/contacts/contact-a/tickets": () => reply });
+    const { body } = await get(await serve(deps(billingWith().service, d.service), A));
+    expect(body).toMatchObject({ openTickets: null, waitingOnClient: null, resolvedTickets: null, ticketSource: "unavailable" });
+  });
+
+  it.each([
+    ["null body", { data: null }],
+    ["missing body", {}],
+    ["empty-string body", { data: "" }],
+  ] as Array<[string, { data?: unknown }]>)("HTTP 200 with a %s on the contact lookup is unavailable, not a no-match", async (_n, reply) => {
+    const local = vi.fn(async () => []);
+    const d = deskWith({ "/contacts/search": () => reply });
+    const { body } = await get(await serve(deps(billingWith().service, d.service, local), A));
+    expect(body).toMatchObject({ openTickets: null, waitingOnClient: null, ticketSource: "unavailable" });
+    expect(local).not.toHaveBeenCalled();
+    expect(d.calls.some((c) => c.url.includes("/tickets"))).toBe(false);
+  });
+
+  it("an unexpected non-200/204 success status is unavailable", async () => {
+    const d = deskWith({ "/contacts/contact-a/tickets": () => ({ status: 206, data: { data: [] } }) });
+    const { body } = await get(await serve(deps(billingWith().service, d.service), A));
+    expect(body.ticketSource).toBe("unavailable");
   });
 
   it("an unexpected server error answers 500 without provider detail", async () => {

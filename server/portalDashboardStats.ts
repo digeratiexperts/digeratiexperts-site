@@ -43,6 +43,15 @@ export interface DashboardDeps {
 }
 
 const UNPAID = new Set(["unpaid", "overdue"]);
+
+/** A plain-text label only: provider data with object or empty names never reaches the page. */
+export function serviceLabel(sub: { plan?: unknown; name?: unknown }): string {
+  const plan = sub.plan;
+  const planName = typeof plan === "object" && plan !== null ? (plan as { name?: unknown }).name : undefined;
+  if (typeof planName === "string" && planName.trim()) return planName.trim();
+  if (typeof sub.name === "string" && sub.name.trim()) return sub.name.trim();
+  return "Subscription";
+}
 const LIVE = new Set(["live", "active"]);
 
 function recentFrom(rows: Array<{ id: unknown; ticketNumber?: unknown; subject?: unknown; priority?: unknown; createdAt?: unknown }>, statuses: PortalTicketStatus[]) {
@@ -111,10 +120,10 @@ async function loadBilling(deps: DashboardDeps, email: string | undefined) {
   const live = subscriptions.ok ? subscriptions.value.filter((s: ZohoSubscription) => LIVE.has(s.status.toLowerCase())) : null;
   const services: DashboardStats["services"] = (live ?? []).map((sub) => ({
     id: sub.subscription_id,
-    serviceName: sub.plan?.name || sub.name || "Subscription",
+    serviceName: serviceLabel(sub),
     status: sub.status,
-    amount: typeof sub.amount === "number" ? sub.amount : undefined,
-    nextBilling: sub.next_billing_at,
+    amount: typeof sub.amount === "number" && Number.isFinite(sub.amount) ? sub.amount : undefined,
+    nextBilling: typeof sub.next_billing_at === "string" ? sub.next_billing_at : undefined,
     zohoLink: `https://billing.zoho.com/app#/subscriptions/${encodeURIComponent(sub.subscription_id)}`,
   }));
   return {

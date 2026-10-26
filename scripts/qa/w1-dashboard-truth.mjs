@@ -64,7 +64,7 @@ const STATES = {
   'waiting-on-client': { status: 200, body: { openTickets: 1, resolvedTickets: 4, waitingOnClient: 2, activeServices: 2, pendingInvoices: 1, recentTickets: [T('2', 'EXAMPLE confirm new hire laptop', 'pending_client'), T('3', 'EXAMPLE VPN access', 'in_progress')], services: [{ id: 's1', serviceName: 'EXAMPLE Managed Security', status: 'live' }, { id: 's2', serviceName: 'EXAMPLE Backup', status: 'live' }], zohoConnected: true } },
   'load-failed': { status: 500, body: { message: 'Failed to load dashboard' } },
   'tickets-unknown': { status: 200, body: { openTickets: null, resolvedTickets: null, waitingOnClient: null, ticketSource: 'unavailable', activeServices: null, pendingInvoices: null, billingStatus: 'not_linked', recentTickets: [], services: [], zohoConnected: false } },
-  'null-rows': { status: 200, body: { openTickets: 1, resolvedTickets: 0, waitingOnClient: 0, ticketSource: 'local', activeServices: 0, pendingInvoices: 0, billingStatus: 'ok', recentTickets: [null, { id: 9 }, T('4', 'EXAMPLE kept row', 'open'), 'x'], services: [null, { serviceName: 'no id' }], zohoConnected: true } },
+  'null-rows': { status: 200, body: { openTickets: 1, resolvedTickets: 0, waitingOnClient: 0, ticketSource: 'local', activeServices: 0, pendingInvoices: 0, billingStatus: 'ok', recentTickets: [null, { id: 9 }, T('4', 'EXAMPLE kept row', 'open'), 'x', { id: '5', subject: { en: 'obj' }, status: { s: 1 }, priority: { p: 1 } }], services: [null, { serviceName: 'no id' }, { id: 's9', serviceName: { en: 'EXAMPLE object name' }, status: { a: 1 }, amount: '99', zohoLink: { href: 'x' } }], zohoConnected: true } },
 };
 let browser;
 const observations = [];
@@ -124,7 +124,11 @@ try {
           assert.equal(await page.getByText('billing not linked', { exact: true }).count(), 2, `${name}@${width}: not-linked hint on both billing tiles`);
           assert.equal(await page.getByText('No tickets yet').count(), 0, `${name}@${width}: claims no tickets`);
         }
-        if (name === 'null-rows') assert.equal(await page.getByText('EXAMPLE kept row').count(), 1, `${name}@${width}: valid row lost`);
+        if (name === 'null-rows') {
+          assert.equal(await page.getByText('EXAMPLE kept row').count(), 1, `${name}@${width}: valid row lost`);
+          assert.equal(await page.getByText('(no subject)').count(), 1, `${name}@${width}: object subject not replaced`);
+          assert.equal(await page.getByTestId('service-s9').getByText('Subscription', { exact: true }).count(), 1, `${name}@${width}: object service name not replaced`);
+        }
         assert.equal(errors.length, 0, `${name}@${width}: page errors ${errors.join(' | ')}`);
       }
       await context.close();

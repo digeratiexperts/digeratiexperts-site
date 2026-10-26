@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 // The page module pulls in UI and hooks; the verdict logic under test is pure.
 vi.mock("./PortalLayout", () => ({ PortalLayout: () => null, portalFirstName: () => "" }));
 
-import { buildVerdict, figure, renderableRows, type DashboardStats } from "./PortalDashboard";
+import { buildVerdict, figure, renderableRows, text, type DashboardStats } from "./PortalDashboard";
 
 function stats(over: Partial<DashboardStats> = {}): DashboardStats {
   return {
@@ -96,6 +96,16 @@ describe("renderableRows: null or malformed rows never crash the page", () => {
   it("treats a non-array as empty", () => {
     expect(renderableRows(null)).toEqual([]);
     expect(renderableRows({ id: "x" })).toEqual([]);
+  });
+});
+
+describe("text: only plain strings reach React", () => {
+  it("falls back for objects, numbers, null and blank strings", () => {
+    expect(text({ en: "Managed" }, "Subscription")).toBe("Subscription");
+    expect(text(5, "x")).toBe("x");
+    expect(text(null, "x")).toBe("x");
+    expect(text("  ", "x")).toBe("x");
+    expect(text("Backup", "x")).toBe("Backup");
   });
 });
 
