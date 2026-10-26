@@ -118,7 +118,10 @@ describe("saving a store quote request outside the database (#240)", () => {
     const [entry] = listSpoolEntries<SpooledQuote>(dir);
     expect(entry.record.quote.quoteNumber).toBe(quote.quoteNumber);
     expect(entry.record.quote.requestedItems).toEqual(quote.requestedItems);
-    expect((fs.statSync(path.join(dir, `${quote.id}.json`)).mode & 0o777).toString(8)).toBe("600");
+    // POSIX permissions remain checked on the production platform (Linux).
+    if (process.platform !== "win32") {
+      expect((fs.statSync(path.join(dir, `${quote.id}.json`)).mode & 0o777).toString(8)).toBe("600");
+    }
   });
 });
 

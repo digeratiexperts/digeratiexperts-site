@@ -87,7 +87,8 @@ for (const viewport of VIEWPORTS) {
     check(w, `no sideways overflow on ${name}`, !overflow);
   };
 
-  await page.goto(`${BASE}/quote-wizard`, { waitUntil: "networkidle" });
+  await page.goto(`${BASE}/quote-wizard`, { waitUntil: "domcontentloaded", timeout: 120_000 });
+  await page.getByTestId('quiz-step-seats').waitFor({ state: 'visible', timeout: 120_000 });
   await settle();
 
   // Chrome: the room's own, nothing competing.
@@ -179,6 +180,7 @@ for (const viewport of VIEWPORTS) {
   await page.getByTestId("quiz-submit").click();
   await settle();
   check(w, "empty submit does not post", posted === null);
+  check(w, "empty submit explains required fields", (await page.getByText('First name must be at least 2 characters', { exact: true }).count()) === 1);
   check(w, "no site scroll-progress bar after scrolling", (await page.locator(".scroll-progress").count()) === 0);
   await shot("8-contact-errors");
 
@@ -215,7 +217,14 @@ for (const viewport of VIEWPORTS) {
     JSON.stringify(posted?.context),
   );
   await settle();
-  await page.screenshot({ path: path.join(OUT, `9-confirmation-${w}.png`), fullPage: true });
+  const confirmationGeometry = await page.evaluate(() => {
+    const title = document.querySelector('main h1')?.getBoundingClientRect();
+    const header = document.querySelector('.mega-menu-container')?.getBoundingClientRect();
+    return { scrollY: window.scrollY, titleTop: title?.top, headerBottom: header?.bottom };
+  });
+  check(w, "confirmation starts at the top", confirmationGeometry.scrollY === 0, JSON.stringify(confirmationGeometry));
+  check(w, "confirmation title clears the header", typeof confirmationGeometry.titleTop === 'number' && typeof confirmationGeometry.headerBottom === 'number' && confirmationGeometry.titleTop >= confirmationGeometry.headerBottom, JSON.stringify(confirmationGeometry));
+  await shot("9-confirmation");
   check(w, "confirmation names the plan", (await page.locator("main").textContent())?.includes("Business") ?? false);
 
   check(w, "no runtime errors", pageErrors.length === 0, pageErrors.join(" | "));

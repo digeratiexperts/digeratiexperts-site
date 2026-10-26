@@ -23,7 +23,7 @@ describe("session marketing kits", () => {
   it("committed outputs are fresh (run: npx tsx scripts/de-marketing/build.ts)", () => {
     const stale = [...renderAll(kits)].filter(([rel, content]) => {
       const abs = resolve(ROOT, rel);
-      return !existsSync(abs) || readFileSync(abs, "utf8") !== content;
+      return !existsSync(abs) || readFileSync(abs, "utf8").replace(/\r\n/g, "\n") !== content.replace(/\r\n/g, "\n");
     });
     expect(stale.map(([rel]) => rel)).toEqual([]);
   });

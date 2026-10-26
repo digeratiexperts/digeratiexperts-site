@@ -27,6 +27,23 @@ describe("admin company metrics tell the truth (#234)", () => {
     expect(m.activity.ticketsThisMonth).toBe(3);
   });
 
+  it("uses UTC month boundaries for persisted activity timestamps", () => {
+    const m = buildCompanyMetrics({
+      company,
+      tickets: [
+        { createdAt: "2026-09-30T18:00:00-07:00" }, // October in UTC
+        { createdAt: "2026-11-01T01:00:00+02:00" }, // October in UTC
+        { createdAt: "2026-10-31T23:30:00-07:00" }, // November in UTC
+        { createdAt: "invalid" },
+      ],
+      users: [],
+      files: [{ createdAt: "2026-09-30T18:00:00-07:00" }],
+      now: new Date("2026-10-15T00:00:00Z"),
+    });
+    expect(m.activity.ticketsThisMonth).toBe(2);
+    expect(m.activity.filesUploadedThisMonth).toBe(1);
+  });
+
   it("last login is the most recent real login among the company's users", () => {
     const m = buildCompanyMetrics({
       company,
