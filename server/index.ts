@@ -415,6 +415,12 @@ app.post(
 // Staff CSV import of manual portal records (server/portalManualRecords.ts):
 // up to 500 rows in one request, above the default 100kb body limit.
 app.use("/api/portal/admin/manual-records/import", express.json({ limit: "1mb" }));
+// Portal API responses are per-user. Default them to private, no-store so a
+// shared cache never keeps one; a route that must cache sets its own header.
+app.use("/api/portal", (_req, res, next) => {
+  res.setHeader("Cache-Control", "private, no-store");
+  next();
+});
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());

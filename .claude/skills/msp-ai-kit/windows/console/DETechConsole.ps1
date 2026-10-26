@@ -801,6 +801,8 @@ function New-ModeSwitch {
     if (-not $live) { $b.BorderBrush = Get-Brush 'Lavender'; $b.BorderThickness = 2 }
     $b.Add_Click({ Invoke-GuiSafely -Label 'mode switch' -Action {
                 $isLive = -not (Get-DEConsole).DryRun
+                # Same rule as headless -Apply: a copy whose files changed after packaging never goes live.
+                if (-not $isLive -and $Integrity.status -eq 'tampered') { Set-Status ('REFUSED: console files changed after packaging; this copy cannot go live. Re-download the signed package. ' + (@($Integrity.problems | Select-Object -First 3) -join '; ')); return }
                 if (-not $isLive -and -not (Confirm-Gui 'Go live?' 'Fix selected will now change this device. Destructive steps still ask first. Continue?')) { return }
                 $Settings.dryRun = $isLive; Save-GuiSettings; Set-DEMode -Mode $(if ($isLive) { 'Audit' } else { 'Apply' }) -DryRun:$isLive
                 Show-Page 'Scan'; Set-Status $(if ($isLive) { 'Plan only: nothing will change.' } else { 'LIVE: Fix selected changes this device.' })
@@ -1881,7 +1883,9 @@ if ($SmokeTest) {
 }
 
 # ============================================================== start
-if ($Settings.dryRun) { Set-DEMode -Mode Audit -DryRun } else { Set-DEMode -Mode Apply }
+# A copy whose files changed after packaging starts in plan-only whatever the saved setting says; the mode switch refuses to go live on it too.
+if ($Integrity.status -eq 'tampered') { $Settings.dryRun = $true; Set-DEMode -Mode Audit -DryRun }
+elseif ($Settings.dryRun) { Set-DEMode -Mode Audit -DryRun } else { Set-DEMode -Mode Apply }
 $Win.Add_Closing({ param($closing, $e)
     if ($S.Job -and $S.Job.noCancel -and -not $S.Job.handle.IsCompleted) {
         $e.Cancel = $true; Set-Status 'Windows servicing is running. Wait for its result before closing DE Tech Tool.'
