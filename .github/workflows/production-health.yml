@@ -186,7 +186,7 @@ jobs:
           echo "database=$DB status=$STATUS uptime=$UPTIME truncated=$TRUNCATED desk=$DESK reason=$DESK_REASON state=$DESK_STATE error=$DESK_ERROR timed_out=$DESK_TIMED_OUT healthz=$HEALTHZ"
 
       - name: File or clear the health issue
-        uses: actions/github-script@v7
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
         env:
           DB: ${{ steps.probe.outputs.database }}
           STATUS: ${{ steps.probe.outputs.status }}
