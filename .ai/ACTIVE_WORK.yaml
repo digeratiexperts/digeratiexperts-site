@@ -49,9 +49,9 @@ claims:
     files:
       - client/src/pages/homepage-v2/scene/** (new; HomeScene component and its own stylesheet)
       - client/src/pages/homepage-v2/sections/{ThreatStats,Challenges,Protection,Contact}Section.tsx (one import and one first-child line each)
-      - artifacts/visual-qa/home-v2-scene-story/**
+      - artifacts/visual-qa/home-v2-scene-story/** (live/ added with the release record)
       - design/approved/homepage-scene-story-2026-10.md (scope extended to /)
-    status: approved
+    status: verified-live
     started: 2026-10-25
     note: >-
       Joe, 2026-10-25: "make version 10 the live homepage", then, after the
@@ -67,6 +67,17 @@ claims:
       Overlap check 2026-10-25: open PRs 717 (homepage-v2.css tail, SiteFooter),
       827 (global font) and 832 (cookie banner, Ask DE launcher) touch none of
       these files; lane-h-homepage-refinement's branch has nothing unmerged.
+      RELEASED 2026-10-25: Joe reviewed the before/after screenshots and
+      said "Merge", then "Approved". Merged as 9c55956f (PR 837) after CI
+      passed on 7273aa1e; CI run 40218976659 deployed 9c55956f to the
+      production VPS (deploy and runtime verification succeeded 18:13Z,
+      Cloudflare cache purged). Checked on digeratiexperts.com 2026-10-26 at
+      390, 768 and 1440: all four scene sections (#stats exposure, #challenges
+      gaps, #protection protected, #contact close) render with their frames
+      loaded, no horizontal overflow, no page errors
+      (artifacts/visual-qa/home-v2-scene-story/live/). The network frame
+      stays unused on /. VERIFIED LIVE. Files released.
+
   - id: city-pages-truth-rhythm
     owner: claude
     subsystem: marketing-locations
