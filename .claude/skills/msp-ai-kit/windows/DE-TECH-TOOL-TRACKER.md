@@ -23,6 +23,15 @@ Status board for the sequenced 104-move plan for **DE Tech Tool** (the `windows/
 | `agent + Joe` | Agent writes it, Joe runs it |
 | *note* | Blocking or overlap detail captured when the plan was written |
 
+## Plan documents
+
+Written while working through the plan. Each gates a section of it:
+
+| Document | Move | What it governs |
+|---|---|---|
+| [AUDIT-MODE-CHECKLIST.md](AUDIT-MODE-CHECKLIST.md) | 5 | Validating on a real DE Windows laptop in audit mode (roadmap step 3). Feeds move 25. |
+| [INSTALLER-TRUST-POLICY.md](INSTALLER-TRUST-POLICY.md) | 6 | Trust rules for every installer the tool downloads or runs. Gates all of section C. |
+
 ## Blocked and gated moves
 
 These are the dependencies worth knowing before picking anything up:
@@ -42,7 +51,7 @@ These are the dependencies worth knowing before picking anything up:
 
 | Section | Moves | Done | Open | Needs Joe |
 |---|---|---|---|---|
-| Start here (highest leverage) | 10 | 4 | 6 | 5 |
+| Start here (highest leverage) | 10 | 5 | 5 | 5 |
 | A. Quality and trust (11-24) | 14 | 0 | 14 | 0 |
 | B. Real-device validation (25-38) | 14 | 0 | 14 | 1 |
 | C. Installer integrity (39-48) | 10 | 0 | 10 | 1 |
@@ -52,7 +61,7 @@ These are the dependencies worth knowing before picking anything up:
 | G. Client and dropship workflows (83-90) | 8 | 0 | 8 | 0 |
 | H. Sensitive data (91-96) | 6 | 0 | 6 | 0 |
 | I. Supportability and docs (97-104) | 8 | 0 | 8 | 1 |
-| **Total** | **104** | **4** | **100** | **8** |
+| **Total** | **104** | **5** | **99** | **8** |
 
 ## The moves
 
@@ -62,7 +71,7 @@ These are the dependencies worth knowing before picking anything up:
 - [x] **2** Make control-path catches (licence, evidence, verification) log a WARN, never swallow silently. `agent` - [#720](https://github.com/digeratiexperts/digeratiexperts-site/issues/720)
 - [x] **3** Fix the 3 remaining non-catch analyzer warnings, so the warnings are all empty catches. `agent` - [#721](https://github.com/digeratiexperts/digeratiexperts-site/issues/721)
 - [x] **4** Add a local pre-push script that runs the same analyzer and Pester checks as CI. `agent` - [#722](https://github.com/digeratiexperts/digeratiexperts-site/issues/722)
-- [ ] **5** Write the real-laptop audit-mode checklist (roadmap step 3). **agent + Joe** - [#723](https://github.com/digeratiexperts/digeratiexperts-site/issues/723)
+- [x] **5** Write the real-laptop audit-mode checklist (roadmap step 3). **agent + Joe** - [#723](https://github.com/digeratiexperts/digeratiexperts-site/issues/723)
   - *Joe runs the hardware side; the checklist itself is written by an agent.*
 - [ ] **6** Confirm the installer-trust policy in writing before any hash work starts. `agent` - [#724](https://github.com/digeratiexperts/digeratiexperts-site/issues/724)
   - *Gates every item in section C. Needs DE sign-off on the wording once drafted.*
