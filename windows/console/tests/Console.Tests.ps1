@@ -386,7 +386,13 @@ Describe 'Secret vault, device trust and PDF helpers' {
             (Join-Path $env:ProgramFiles 'Google\Chrome\Application\chrome.exe'), (Join-Path ${env:ProgramFiles(x86)} 'Google\Chrome\Application\chrome.exe')
         ) | Where-Object { $_ -and (Test-Path -LiteralPath $_) } | Select-Object -First 1
         $made = $null
-        { $made = Convert-DEHtmlToPdf -HtmlPath $h -PdfPath $pdf -TimeoutSeconds 30 } | Should -Not -Throw
+        # the call is NOT wrapped in { } | Should -Not -Throw: that runs the scriptblock in its own
+        # scope, so the assignment never escapes and $made is always $null - the contract check below
+        # could not see the result and failed on every machine that has a browser. try/catch keeps
+        # both properties: the call is observed, and a throw is still a failure.
+        $threw = $null
+        try { $made = Convert-DEHtmlToPdf -HtmlPath $h -PdfPath $pdf -TimeoutSeconds 30 } catch { $threw = "$_" }
+        $threw | Should -BeNullOrEmpty -Because 'the contract is that Convert-DEHtmlToPdf never throws'
         if ($browser) {
             # the contract is "returns the PDF path, or $null when no browser is available". A browser is present,
             # so a $null here means the print silently failed - which is how client PDFs went missing unnoticed.
