@@ -376,9 +376,28 @@ Describe 'Secret vault, device trust and PDF helpers' {
         $t = Get-DEDeviceTrustState
         if ($env:OS -ne 'Windows_NT') { $t.certificatePresent | Should -Be $false }
     }
-    It 'PDF conversion degrades to nothing instead of failing' {
+    It 'PDF conversion builds a real PDF when a browser is available, and never throws' {
         $h = Join-Path ([IO.Path]::GetTempPath()) 'de-pdf-test.html'; Set-Content -LiteralPath $h -Value '<p>x</p>'
-        { Convert-DEHtmlToPdf -HtmlPath $h -PdfPath ($h + '.pdf') -TimeoutSeconds 20 } | Should -Not -Throw
+        $pdf = $h + '.pdf'
+        if (Test-Path -LiteralPath $pdf) { Remove-Item -LiteralPath $pdf -Force }
+        # the same browser hunt Convert-DEHtmlToPdf does, so the assertion matches what it can actually see
+        $browser = @(
+            (Join-Path ${env:ProgramFiles(x86)} 'Microsoft\Edge\Application\msedge.exe'), (Join-Path $env:ProgramFiles 'Microsoft\Edge\Application\msedge.exe'),
+            (Join-Path $env:ProgramFiles 'Google\Chrome\Application\chrome.exe'), (Join-Path ${env:ProgramFiles(x86)} 'Google\Chrome\Application\chrome.exe')
+        ) | Where-Object { $_ -and (Test-Path -LiteralPath $_) } | Select-Object -First 1
+        $made = $null
+        { $made = Convert-DEHtmlToPdf -HtmlPath $h -PdfPath $pdf -TimeoutSeconds 30 } | Should -Not -Throw
+        if ($browser) {
+            # the contract is "returns the PDF path, or $null when no browser is available". A browser is present,
+            # so a $null here means the print silently failed - which is how client PDFs went missing unnoticed.
+            $made | Should -Be $pdf -Because 'a browser was found, so the PDF must be produced'
+            Test-Path -LiteralPath $pdf | Should -Be $true
+            (Get-Item -LiteralPath $pdf).Length | Should -BeGreaterThan 0
+        } else {
+            $made | Should -BeNullOrEmpty -Because 'with no browser the contract is to degrade to nothing'
+        }
+        Remove-Item -LiteralPath $h -Force -ErrorAction SilentlyContinue
+        Remove-Item -LiteralPath $pdf -Force -ErrorAction SilentlyContinue
     }
 }
 
