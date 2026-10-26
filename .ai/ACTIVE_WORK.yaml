@@ -4102,8 +4102,10 @@ claims:
       PR 587, merged as 7d7b1af (2026-10-14, Joe "merge or push this"). VERIFIED LIVE: CI run
       38636911735 deploy job logged DE_DEPLOYED_RELEASE 7d7b1af at 21:11Z, replacing 4505f0c0.
       Not verified: /llms.txt (Cloudflare purge covers client/public only; check the live file).
-      Contract templates (document_templates/*.docx) re-keyed to 325-480-9870 in a follow-up;
-      PDFs and the admin@ email still open for DE.
+      Contract templates (document_templates/*.docx) re-keyed to 325-480-9870 in PR 841 (merged
+      ce66d8f6); the eight affected PDFs re-exported from those docx with LibreOffice in a follow-up PR
+      (order form, network, UCaaS and vCIO SOWs gained a short last page from the Arimo body
+      font; DE to tighten the docx if wanted). admin@digerati-experts.com kept (Joe, 2026-10-26).
       Closeout checkpoint 2026-10-18: PR #587 merged 7d7b1af56ee7cb958e707dbd21f092d8d00ee9c0 on 2026-10-14 and is included in released 9283da04. This retires a stale in-review claim without asserting every live device/content check. The separate unsupported free-assessment announcement discovered in live verification is repaired in the current closeout branch.
 
   - id: zoho-oauth-manager
