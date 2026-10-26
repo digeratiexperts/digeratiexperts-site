@@ -78,3 +78,15 @@ function ConvertTo-DENormalizedReport {
     $t = [regex]::Replace($t, '\s+', ' ')
     return $t.Trim()
 }
+
+# ---------------------------------------------------------------- move 14 recovery-password redaction
+# A BitLocker recovery password is 48 digits in 8 groups of 6 (dashes, spaces or none). Matching the
+# bare 48 digits after stripping separators catches every form it can persist in, so the surface
+# tests assert an empty result - and can report what survived when one is not. Digit runs shorter
+# than 48, and anything with a letter or punctuation in between, are left alone.
+function Find-DERecoveryPasswordIn {
+    param([Parameter(Mandatory = $true)][AllowEmptyString()][string]$Text)
+    if (-not $Text) { return @() }
+    $flat = $Text -replace '[-\s]', ''
+    return @([regex]::Matches($flat, '(?<!\d)\d{48}(?!\d)') | ForEach-Object { $_.Value })
+}
