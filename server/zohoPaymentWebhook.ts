@@ -32,6 +32,9 @@ export function evaluatePaymentSucceeded(
   order: StoredOrderForPayment,
   event: Pick<ZohoPaymentWebhookEvent, "amount" | "currency">,
 ): PaymentWebhookDecision {
+  if (order.status === "cancelled" || order.status === "refunded") {
+    return { action: "reject", reason: "order_closed" };
+  }
   if (PAID_OR_LATER.has(order.status || "")) {
     return { action: "already_paid" };
   }

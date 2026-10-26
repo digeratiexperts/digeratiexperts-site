@@ -53,7 +53,18 @@ export async function processDeSyncOutbox(
 
   for (const record of claimed) {
     try {
-      const result = await deliverEnvelopeToHub(recordToEnvelope(record), record.destination);
+      let envelope = recordToEnvelope(record);
+      if (record.eventType === "store.order_created" && (record.payload.commercial as Record<string, unknown> | undefined)?.status === "paid") {
+        const { db } = await import("../db");
+        if (!db) throw new Error("Store paid handoff requires durable order storage");
+        const { prepareStorePaidHandoff } = await import("./storePaidHandoff");
+        envelope = await prepareStorePaidHandoff(db, envelope);
+        // Verification proof is local outbox metadata. Preserve the existing
+        // Hub payload contract and sign only the prepared client-safe command.
+        const { paidOrderSnapshot: _proof, ...payload } = envelope.payload;
+        envelope = { ...envelope, payload };
+      }
+      const result = await deliverEnvelopeToHub(envelope, record.destination);
       const portalClientId =
         typeof record.payload.portalClientId === "string" ? record.payload.portalClientId.trim() : "";
       if (result.canonicalAccountId && portalClientId) {

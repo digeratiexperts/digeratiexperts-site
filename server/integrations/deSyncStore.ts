@@ -4,6 +4,7 @@ import { syncConflicts, syncFailures, syncInbox, syncOutbox, publicCatalogSnapsh
 import { and, asc, eq, lt, sql } from "drizzle-orm";
 import type { DeSyncEnvelope, DeSyncEventType, DeSyncSource } from "./deSyncContract";
 import { createDeSyncEnvelope, type DeSyncPayload } from "./deSyncContract";
+import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 
 const RETRY_DELAYS_MS = [30_000, 120_000, 300_000, 900_000, 3_600_000, 14_400_000];
 
@@ -119,7 +120,7 @@ export async function enqueueOutbox(input: {
   canonicalAccountId?: string | null;
   correlationId?: string;
   payload: DeSyncPayload;
-}): Promise<DeSyncEnvelope> {
+}, writer?: Pick<NodePgDatabase, "insert">): Promise<DeSyncEnvelope> {
   const envelope = createDeSyncEnvelope({
     eventType: input.eventType,
     source: input.source,
@@ -152,12 +153,14 @@ export async function enqueueOutbox(input: {
     deliveredAt: null,
   };
 
-  if (useMemory()) {
+  // A supplied transaction must always persist through that transaction;
+  // never acknowledge its event through the development memory fallback.
+  if (!writer && useMemory()) {
     memoryOutbox.set(record.eventId, record);
     return envelope;
   }
 
-  await db.insert(syncOutbox).values({
+  await (writer ?? db).insert(syncOutbox).values({
     eventId: record.eventId,
     eventType: record.eventType,
     version: record.version,

@@ -13,7 +13,7 @@ const mocks = vi.hoisted(() => ({
   recordPaidOrderInBooks: vi.fn(),
 }));
 
-vi.mock("../db", () => ({ db: mocks.db }));
+vi.mock("../db", () => ({ db: mocks.db, dbReady: false }));
 vi.mock("./notificationService", () => ({
   notificationService: {
     sendOrderConfirmation: mocks.sendOrderConfirmation,

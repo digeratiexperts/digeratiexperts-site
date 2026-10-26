@@ -39,7 +39,7 @@ import { zohoPayments } from "./zohoPayments";
 import { zohoClient } from "./zoho/zohoClient";
 import { zohoHealthStates } from "./zoho/zohoHealth";
 import { withDeadline } from "./deadline";
-import { evaluatePaymentSucceeded, unpaidOrderCondition } from "./zohoPaymentWebhook";
+import { recordPaidStoreHandoff } from "./integrations/storePaidHandoff";
 import { setupCrossServiceHandlers } from "./crossServiceHandler";
 import { eventBus, EventTypes } from "./eventBus";
 import { revocationLoadState } from "./portalSessionRevocation";
@@ -301,8 +301,9 @@ app.post(
         }
 
         if (existingOrder) {
-          const oldStatus = existingOrder.status || "unknown";
-          const decision = evaluatePaymentSucceeded(existingOrder, parsed);
+          const decision = await recordPaidStoreHandoff(db, existingOrder.id, parsed);
+          if (decision.action === "missing") return res.json({ received: true });
+          existingOrder = decision.order;
 
           if (decision.action === "reject") {
             console.error("[SECURITY] PAYMENT_VERIFICATION_FAILED", {
@@ -320,54 +321,13 @@ app.post(
           }
 
           if (decision.action === "mark_paid") {
-            // Conditional on the order still being unpaid. A duplicate delivery
-            // that lost the race updates nothing, so fulfilment runs once.
-            const [paidRow] = await db.update(storeOrders)
-              .set({
-                status: "paid",
-                zohoPaymentId: parsed.paymentId || existingOrder.zohoPaymentId || null,
-                paidAt: new Date(),
-                updatedAt: new Date(),
-              })
-              .where(unpaidOrderCondition(existingOrder.id))
-              .returning({ id: storeOrders.id });
-            if (!paidRow) {
-              console.info("[ZOHO PAYMENTS WEBHOOK] Order already paid by an earlier delivery", {
-                orderId: existingOrder.id,
-                paymentId: parsed.paymentId,
-              });
-              return res.json({ received: true });
-            }
-
-            const paidLines = Array.isArray(existingOrder.lineItems) ? existingOrder.lineItems : [];
-            void import("./integrations/enqueueStoreOrder")
-              .then(({ enqueueStoreOrderCreated }) => enqueueStoreOrderCreated({
-                id: existingOrder.id,
-                orderNumber: existingOrder.orderNumber,
-                status: "paid",
-                clientId: existingOrder.clientId,
-                billingEmail: existingOrder.billingEmail,
-                billingName: existingOrder.billingName,
-                billingCompany: existingOrder.billingCompany,
-                lineItems: paidLines,
-              }))
-              .catch((error) => console.warn("[store-order] Hub enqueue skipped:", error?.message || error));
-
             console.log("[SECURITY] ORDER_STATUS_CHANGED", {
               orderId: existingOrder.id,
               orderNumber: existingOrder.orderNumber,
-              oldStatus,
+              oldStatus: decision.oldStatus || "unknown",
               newStatus: "paid",
               triggeredBy: "zoho_payments_webhook",
             });
-          } else if (!existingOrder.zohoPaymentId && parsed.paymentId) {
-            await db.update(storeOrders)
-              .set({
-                zohoPaymentId: parsed.paymentId,
-                paidAt: existingOrder.paidAt || new Date(),
-                updatedAt: new Date(),
-              })
-              .where(eq(storeOrders.id, existingOrder.id));
           }
 
           console.log("[SECURITY] CHECKOUT_COMPLETED", {

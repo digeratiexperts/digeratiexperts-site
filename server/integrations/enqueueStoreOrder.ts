@@ -1,5 +1,6 @@
 import { buildCommercialSnapshot } from "./commercialSnapshot";
 import { enqueueWebsiteCommand } from "./enqueueWebsiteCommand";
+import type { WebsiteLeadLike } from "./enqueueWebsiteCommand";
 
 type StoreOrderLine = {
   productId: string;
@@ -11,7 +12,7 @@ type StoreOrderLine = {
   total: number;
 };
 
-export async function enqueueStoreOrderCreated(order: {
+export type StoreOrderCommand = {
   id: string;
   orderNumber: string;
   status: string;
@@ -20,8 +21,34 @@ export async function enqueueStoreOrderCreated(order: {
   billingName?: string | null;
   billingCompany?: string | null;
   lineItems: StoreOrderLine[];
-}): Promise<void> {
-  if (!order.orderNumber || !Array.isArray(order.lineItems) || order.lineItems.length === 0) return;
+};
+
+/** The existing client-safe order body, shared with the paid transaction. */
+export function buildStoreOrderCreatedPayload(order: StoreOrderCommand): WebsiteLeadLike | null {
+  if (!order.orderNumber || !Array.isArray(order.lineItems) || order.lineItems.length === 0) return null;
+  return {
+    id: order.id,
+    name: order.billingName || "",
+    email: order.billingEmail || "",
+    company: order.billingCompany || "",
+    phone: "",
+    message: "",
+    source: "store_order",
+    ...(order.clientId ? { portalClientId: order.clientId } : {}),
+    commercial: buildCommercialSnapshot({
+      reference: order.orderNumber,
+      status: order.status,
+      portalClientId: order.clientId || null,
+      company: order.billingCompany,
+      email: order.billingEmail,
+      lineItems: order.lineItems,
+    }),
+  };
+}
+
+export async function enqueueStoreOrderCreated(order: StoreOrderCommand): Promise<void> {
+  const payload = buildStoreOrderCreatedPayload(order);
+  if (!payload) return;
   let hubAccountId: string | null = null;
   if (order.clientId) {
     const { getClient } = await import("../portalAuthStore");
@@ -29,21 +56,8 @@ export async function enqueueStoreOrderCreated(order: {
   }
   await enqueueWebsiteCommand(
     {
-      id: order.id,
-      name: order.billingName || "",
-      email: order.billingEmail || "",
-      company: order.billingCompany || "",
-      source: "store_order",
+      ...payload,
       canonicalAccountId: hubAccountId,
-      portalClientId: order.clientId || null,
-      commercial: buildCommercialSnapshot({
-        reference: order.orderNumber,
-        status: order.status,
-        portalClientId: order.clientId || null,
-        company: order.billingCompany,
-        email: order.billingEmail,
-        lineItems: order.lineItems,
-      }),
     },
     "store.order_created",
   );

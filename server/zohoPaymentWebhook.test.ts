@@ -17,6 +17,10 @@ const order = (overrides: Partial<StoredOrderForPayment> = {}): StoredOrderForPa
 });
 
 describe("evaluatePaymentSucceeded", () => {
+  it.each(["cancelled", "refunded"])("never revives a %s order on a late successful payment", (status) => {
+    expect(evaluatePaymentSucceeded(order({ status }), { amount: "1250.00", currency: "USD" }))
+      .toEqual({ action: "reject", reason: "order_closed" });
+  });
   it("marks paid only when the event amount matches the stored total exactly", () => {
     expect(evaluatePaymentSucceeded(order(), { amount: "1250.00", currency: "USD" })).toEqual({
       action: "mark_paid",

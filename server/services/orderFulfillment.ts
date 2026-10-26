@@ -236,10 +236,11 @@ export async function fulfillPaidOrder(orderId: string | number): Promise<boolea
   let claimed = false;
 
   try {
-    // A client or DE hold pauses fulfilment until its end date; reconciliation picks the order up afterwards.
-    const { isStoreOrderHeld } = await import("../storeOrderControls");
-    if (await isStoreOrderHeld(id)) {
-      logSecurity("ORDER_FULFILLMENT_SKIPPED", { orderId: id, reason: "on_hold" });
+    // Holds pause until their end date. A completed cancel/amend request still
+    // needs purchase reconciliation; its administrative status cannot resume it.
+    const { isStoreOrderProvisioningBlocked } = await import("../storeOrderControls");
+    if (await isStoreOrderProvisioningBlocked(id)) {
+      logSecurity("ORDER_FULFILLMENT_SKIPPED", { orderId: id, reason: "hold_or_change_request" });
       return false;
     }
     const order = await claimPaidOrder(id);

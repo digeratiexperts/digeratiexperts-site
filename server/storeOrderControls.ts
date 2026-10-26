@@ -77,6 +77,22 @@ export async function isStoreOrderHeld(orderId: string, now = new Date()): Promi
   }
 }
 
+/** Closing the request is administrative; it does not reconcile the purchase. */
+export function blocksOriginalStorePurchase(request: { kind: string; status: string }): boolean {
+  return (request.kind === "cancel" || request.kind === "amend") && request.status !== "declined";
+}
+
+export async function isStoreOrderProvisioningBlocked(orderId: string, now = new Date()): Promise<boolean> {
+  try {
+    if (process.env.DATABASE_URL && !useDb()) return true;
+    return isHoldActive(await getOrderHold(orderId), todayIso(now)) ||
+      (await listChangeRequests({ orderId })).some(blocksOriginalStorePurchase);
+  } catch (error: any) {
+    console.warn("[store-order-controls] provisioning check failed:", error?.message || error);
+    return true;
+  }
+}
+
 async function setOrderHold(hold: StoreOrderHold, clientId: string | null): Promise<void> {
   if (useDb()) {
     const values = {

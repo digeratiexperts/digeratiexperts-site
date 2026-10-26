@@ -91,6 +91,25 @@ const call = (method: string, path: string, user: object | null, body?: unknown)
   });
 
 describe("cancel", () => {
+  it.each(["cancel", "amend"])("marking a %s request done does not reconcile or unblock the original purchase", async (kind) => {
+    const { isStoreOrderProvisioningBlocked } = await import("./storeOrderControls");
+    const endpoint = kind === "cancel" ? "cancel" : "change-request";
+    const body = kind === "cancel" ? { reason: "Do not provision this purchase" } : { details: "Replace the purchased scope" };
+    const response = await (await call("POST", `/api/portal/orders/o-paid/${endpoint}`, ANN, body)).json();
+    expect(await isStoreOrderProvisioningBlocked("o-paid", NOW)).toBe(true);
+    const done = await call("POST", `/api/portal/admin/order-requests/${response.request.id}`, DE_ADMIN, { decision: "done", note: "Details reconciled" });
+    expect(done.status).toBe(200);
+    expect(orders.get("o-paid")!.status).toBe("paid");
+    expect(await isStoreOrderProvisioningBlocked("o-paid", NOW)).toBe(true);
+  });
+
+  it("a declined request permits the unchanged purchase to continue", async () => {
+    const { isStoreOrderProvisioningBlocked } = await import("./storeOrderControls");
+    const response = await (await call("POST", "/api/portal/orders/o-paid/cancel", ANN, { reason: "Check cancellation" })).json();
+    await call("POST", `/api/portal/admin/order-requests/${response.request.id}`, DE_ADMIN, { decision: "declined", note: "Original purchase remains approved" });
+    expect(await isStoreOrderProvisioningBlocked("o-paid", NOW)).toBe(false);
+  });
+
   it("cancels an unpaid order at once", async () => {
     const res = await (await call("POST", "/api/portal/orders/o-unpaid/cancel", ANN, { reason: "Ordered twice" })).json();
     expect(res.cancelled).toBe(true);
