@@ -30,6 +30,23 @@
 
 version: 2
 claims:
+  - id: w1-dashboard-truth
+    owner: claude
+    subsystem: portal-home
+    branch: claude/w1-dashboard-truth-20261026
+    base_sha: 6fea7ffa
+    files:
+      - client/src/pages/portal/PortalDashboard.tsx (+ new PortalDashboard.test.ts)
+      - server/routes.ts (GET /api/portal/dashboard handler only)
+      - server/portalDeskTickets.ts, server/portalDeskTickets.test.ts (summarizeTicketStatuses, normalizeLocalTicketStatus)
+      - scripts/qa/w1-dashboard-truth.mjs, artifacts/visual-qa/w1-dashboard-truth/**
+    status: active
+    started: 2026-10-26
+    note: >-
+      Delivery sizing W1 / journey 10: unknown is not zero, waiting-on-you is only
+      the explicit pending_client state (server count over all tickets), no
+      monitoring claim, honest error states. Overlap check 2026-10-26: no open PR
+      touches these files.
   - id: design-basics-type-titles-labels
     owner: claude
     subsystem: marketing-typography

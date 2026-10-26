@@ -1,0 +1,119 @@
+[
+  {
+    "width": 390,
+    "state": "billing-unreachable",
+    "verdict": "1 open ticket is with DE engineers. Nothing is waiting on you in your tickets. You'll see a reply here and in your inbox as soon as there is one. Billing figures aren't available right now; check Invoices for the latest. Track tickets",
+    "tiles": {
+      "stat-open-tickets": "1",
+      "stat-resolved-tickets": "4",
+      "stat-active-services": "—",
+      "stat-pending-invoices": "—"
+    },
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "width": 390,
+    "state": "waiting-on-client",
+    "verdict": "3 items are waiting on you. 2 tickets waiting for your reply · 1 invoice pending. Reply now",
+    "tiles": {
+      "stat-open-tickets": "1",
+      "stat-resolved-tickets": "4",
+      "stat-active-services": "2",
+      "stat-pending-invoices": "1"
+    },
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "width": 390,
+    "state": "load-failed",
+    "verdict": "We couldn't load your summary. Tickets and invoices may still be reachable from the menu. If this keeps happening, call us and we'll check the link. Open tickets",
+    "tiles": {
+      "stat-open-tickets": "—",
+      "stat-resolved-tickets": "—",
+      "stat-active-services": "—",
+      "stat-pending-invoices": "—"
+    },
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "width": 768,
+    "state": "billing-unreachable",
+    "verdict": "1 open ticket is with DE engineers. Nothing is waiting on you in your tickets. You'll see a reply here and in your inbox as soon as there is one. Billing figures aren't available right now; check Invoices for the latest. Track tickets",
+    "tiles": {
+      "stat-open-tickets": "1",
+      "stat-resolved-tickets": "4",
+      "stat-active-services": "—",
+      "stat-pending-invoices": "—"
+    },
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "width": 768,
+    "state": "waiting-on-client",
+    "verdict": "3 items are waiting on you. 2 tickets waiting for your reply · 1 invoice pending. Reply now",
+    "tiles": {
+      "stat-open-tickets": "1",
+      "stat-resolved-tickets": "4",
+      "stat-active-services": "2",
+      "stat-pending-invoices": "1"
+    },
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "width": 768,
+    "state": "load-failed",
+    "verdict": "We couldn't load your summary. Tickets and invoices may still be reachable from the menu. If this keeps happening, call us and we'll check the link. Open tickets",
+    "tiles": {
+      "stat-open-tickets": "—",
+      "stat-resolved-tickets": "—",
+      "stat-active-services": "—",
+      "stat-pending-invoices": "—"
+    },
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "width": 1440,
+    "state": "billing-unreachable",
+    "verdict": "1 open ticket is with DE engineers. Nothing is waiting on you in your tickets. You'll see a reply here and in your inbox as soon as there is one. Billing figures aren't available right now; check Invoices for the latest. Track tickets",
+    "tiles": {
+      "stat-open-tickets": "1",
+      "stat-resolved-tickets": "4",
+      "stat-active-services": "—",
+      "stat-pending-invoices": "—"
+    },
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "width": 1440,
+    "state": "waiting-on-client",
+    "verdict": "3 items are waiting on you. 2 tickets waiting for your reply · 1 invoice pending. Reply now",
+    "tiles": {
+      "stat-open-tickets": "1",
+      "stat-resolved-tickets": "4",
+      "stat-active-services": "2",
+      "stat-pending-invoices": "1"
+    },
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "width": 1440,
+    "state": "load-failed",
+    "verdict": "We couldn't load your summary. Tickets and invoices may still be reachable from the menu. If this keeps happening, call us and we'll check the link. Open tickets",
+    "tiles": {
+      "stat-open-tickets": "—",
+      "stat-resolved-tickets": "—",
+      "stat-active-services": "—",
+      "stat-pending-invoices": "—"
+    },
+    "overflow": false,
+    "errors": []
+  }
+]
