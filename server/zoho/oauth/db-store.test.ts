@@ -32,12 +32,14 @@ const never = () => new Promise<never>(() => {});
 describe("ResilientZohoTokenStore deadlines", () => {
   beforeEach(async () => {
     vi.clearAllMocks();
+    vi.stubEnv("DATABASE_URL", "");
     dbMock.dbReady = true;
     const { setZohoTokenStoreTimeoutForTests } = await import("./db-store");
     setZohoTokenStoreTimeoutForTests(30);
   });
 
   afterEach(async () => {
+    vi.unstubAllEnvs();
     const { setZohoTokenStoreTimeoutForTests } = await import("./db-store");
     setZohoTokenStoreTimeoutForTests();
   });
@@ -182,5 +184,107 @@ describe("ResilientZohoTokenStore deadlines", () => {
     expect(dbMock.markDatabaseDown.mock.calls[0][0]).toBe(
       "zoho token store read: Failed query: select * from zoho_oauth_tokens <- Connection terminated unexpectedly",
     );
+  });
+
+  it("surfaces memory fallback to the manager and recovers without caching missing sources (#668)", async () => {
+    const { ResilientZohoTokenStore } = await import("./db-store");
+    const { ZohoProductAuth } = await import("./manager");
+    const { DeadlineError } = await import("../../deadline");
+    dbMock.execute.mockResolvedValueOnce(tablePresent).mockRejectedValueOnce(new DeadlineError("token read", 30));
+    const store = new ResilientZohoTokenStore();
+    const http = vi.fn();
+    const auth = new ZohoProductAuth({
+      product: "crm", legacySources: () => [], notConfigured: (message) => new Error(message),
+    }, { store, connectEnabled: () => true, fetchImpl: http });
+    expect(await auth.status()).toMatchObject({ state: "degraded", reason: expect.stringMatching(/database unavailable/i) });
+    dbMock.dbReady = false;
+    expect(await auth.status()).toMatchObject({ state: "degraded" });
+    expect(dbMock.execute).toHaveBeenCalledTimes(2);
+    dbMock.dbReady = true;
+    dbMock.execute.mockResolvedValueOnce({ rows: [] });
+    expect(await auth.status()).toMatchObject({ state: "not_configured" });
+    expect(dbMock.execute).toHaveBeenCalledTimes(3);
+    expect(http).not.toHaveBeenCalled();
+  });
+
+  it("keeps an intentionally memory-only missing grant not_configured and cacheable", async () => {
+    const { ResilientZohoTokenStore } = await import("./db-store");
+    const { ZohoProductAuth } = await import("./manager");
+    dbMock.dbReady = false;
+    const store = new ResilientZohoTokenStore();
+    const read = vi.spyOn(store, "read");
+    const auth = new ZohoProductAuth({
+      product: "crm", legacySources: () => [], notConfigured: (message) => new Error(message),
+    }, { store, connectEnabled: () => true });
+    expect(await auth.status()).toMatchObject({ state: "not_configured" });
+    expect(await auth.status()).toMatchObject({ state: "not_configured" });
+    expect(read).toHaveBeenCalledTimes(1);
+    expect(dbMock.execute).not.toHaveBeenCalled();
+  });
+
+  it("reports a configured database unavailable on a cold process and retries before any successful read", async () => {
+    const { ResilientZohoTokenStore } = await import("./db-store");
+    const { ZohoProductAuth } = await import("./manager");
+    vi.stubEnv("DATABASE_URL", "postgresql://fixture.invalid/offline");
+    dbMock.dbReady = false;
+    const store = new ResilientZohoTokenStore();
+    const read = vi.spyOn(store, "read");
+    const auth = new ZohoProductAuth({
+      product: "crm", legacySources: () => [], notConfigured: (message) => new Error(message),
+    }, { store, connectEnabled: () => true });
+    expect(await auth.status()).toMatchObject({ state: "degraded", reason: expect.stringMatching(/database unavailable/i) });
+    expect(await auth.status()).toMatchObject({ state: "degraded" });
+    expect(read).toHaveBeenCalledTimes(2);
+    expect(dbMock.execute).not.toHaveBeenCalled();
+  });
+
+  it.each([false, true])("preserves a cached legacy access token in memory (database configured: %s)", async (configured) => {
+    const { ResilientZohoTokenStore } = await import("./db-store");
+    const { ZohoProductAuth, fingerprint, resetZohoRuntimeForTests } = await import("./manager");
+    resetZohoRuntimeForTests();
+    vi.stubEnv("DATABASE_URL", configured ? "postgresql://fixture.invalid/offline" : "");
+    dbMock.dbReady = false;
+    const store = new ResilientZohoTokenStore();
+    const now = 1_700_000_000_000;
+    await store.memory.writeState(fingerprint("outage-legacy-fixture"), {
+      accessToken: "cached-fixture-access", accessExpiresAt: new Date(now + 3_600_000), authStatus: "ok",
+    });
+    const http = vi.fn();
+    const auth = new ZohoProductAuth({
+      product: "crm",
+      legacySources: () => [{ label: "fixture", refreshToken: "outage-legacy-fixture", client: { id: "fixture", secret: "fixture" } }],
+      notConfigured: (message) => new Error(message),
+    }, { store, connectEnabled: () => false, fetchImpl: http, now: () => now });
+    expect(await auth.status()).toMatchObject({ state: configured ? "degraded" : "connected", source: "env" });
+    expect(await auth.getAccess()).toMatchObject({ token: "cached-fixture-access" });
+    expect(http).not.toHaveBeenCalled();
+    expect(dbMock.execute).not.toHaveBeenCalled();
+  });
+
+  it("does not let a concurrent healthy read erase another manager's outage", async () => {
+    const { ResilientZohoTokenStore } = await import("./db-store");
+    const { ZohoProductAuth } = await import("./manager");
+    const { DeadlineError } = await import("../../deadline");
+    dbMock.execute.mockResolvedValueOnce(tablePresent).mockResolvedValueOnce({ rows: [] });
+    const store = new ResilientZohoTokenStore();
+    await store.read("warm");
+    const createAuth = () => new ZohoProductAuth({
+      product: "crm", legacySources: () => [], notConfigured: (message) => new Error(message),
+    }, { store, connectEnabled: () => true });
+    const failed = createAuth();
+    const healthy = createAuth();
+    let finishHealthy!: (rows: unknown) => void;
+    const healthyRead = new Promise((resolve) => { finishHealthy = resolve; });
+    dbMock.execute.mockRejectedValueOnce(new DeadlineError("old pool read", 30)).mockReturnValueOnce(healthyRead);
+    let healthyStatus: ReturnType<typeof healthy.status> | undefined;
+    vi.spyOn(store.memory, "read").mockImplementationOnce(async () => {
+      // A replacement pool may answer while the old read falls back to memory.
+      healthyStatus = healthy.status();
+      return null;
+    });
+    const failedStatus = await failed.status();
+    finishHealthy({ rows: [] });
+    expect(await healthyStatus).toMatchObject({ state: "not_configured" });
+    expect(failedStatus).toMatchObject({ state: "degraded", reason: expect.stringMatching(/database unavailable/i) });
   });
 });

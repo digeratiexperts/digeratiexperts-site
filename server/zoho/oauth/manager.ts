@@ -53,6 +53,7 @@ const FRESH_TOKEN_MS = 2 * 60_000;
 const PROBE_TTL_MS = 10 * 60_000;
 /** How long resolved credential sources are cached between DB reads. */
 const SOURCES_TTL_MS = 30_000;
+const DATABASE_UNAVAILABLE_MESSAGE = "Zoho token database unavailable; retrying.";
 
 /** The consolidated Zoho Connect grant (one refresh token for every product). */
 export const UNIFIED_PROVIDER = "zoho";
@@ -328,12 +329,21 @@ export class ZohoProductAuth {
     };
   }
 
-  private async resolveSources(force = false): Promise<CredentialSource[]> {
+  private async resolveSources(force = false): Promise<{ sources: CredentialSource[]; unavailable: boolean }> {
     const c = this.sourcesCache;
     if (!force && c && c.gen === sourcesGeneration && this.now() - c.at < SOURCES_TTL_MS) {
-      return c.sources;
+      return { sources: c.sources, unavailable: false };
     }
     const out: CredentialSource[] = [];
+    let unavailable = false;
+    const read = async <T>(operation: (onUnavailable: () => void) => Promise<T>): Promise<T | null> => {
+      try {
+        return await operation(() => { unavailable = true; });
+      } catch {
+        unavailable = true;
+        return null;
+      }
+    };
     const seen = new Set<string>();
     const push = (s: CredentialSource) => {
       if (seen.has(s.refreshToken)) return;
@@ -342,7 +352,7 @@ export class ZohoProductAuth {
     };
 
     if (this.connectEnabled()) {
-      const unified = await this.deps.store.read(UNIFIED_PROVIDER).catch(() => null);
+      const unified = await read((onUnavailable) => this.deps.store.read(UNIFIED_PROVIDER, onUnavailable));
       if (unified && scopesCover(unified.scope, ZOHO_PRODUCT_SCOPES[this.config.product])) {
         push(this.sourceFromGrant(unified));
       }
@@ -350,7 +360,7 @@ export class ZohoProductAuth {
     for (const legacy of this.config.legacySources()) {
       const token = legacy.refreshToken.trim();
       if (!token || seen.has(token)) continue;
-      const row = await this.deps.store.readState(fingerprint(token)).catch(() => null);
+      const row = await read((onUnavailable) => this.deps.store.readState(fingerprint(token), onUnavailable));
       // Every legacy env token lives in the server's configured DC.
       const dc = zohoDefaultDc();
       push({
@@ -376,8 +386,8 @@ export class ZohoProductAuth {
         out.splice(firstNonUnified, 0, s);
       }
     }
-    this.sourcesCache = { at: this.now(), gen: sourcesGeneration, sources: out };
-    return out;
+    if (!unavailable) this.sourcesCache = { at: this.now(), gen: sourcesGeneration, sources: out };
+    return { sources: out, unavailable };
   }
 
   // ---- access tokens ----
@@ -522,7 +532,9 @@ export class ZohoProductAuth {
 
   /** Any credential at all (Connect grant covering this product, or env). */
   async hasCredentials(): Promise<boolean> {
-    return (await this.resolveSources()).length > 0;
+    const { sources, unavailable } = await this.resolveSources();
+    if (!sources.length && unavailable) throw new ZohoAuthUnavailableError(DATABASE_UNAVAILABLE_MESSAGE, null);
+    return sources.length > 0;
   }
 
   /**
@@ -531,8 +543,9 @@ export class ZohoProductAuth {
    * problem that a refresh cannot fix).
    */
   async getAccess(opts: { rejectedToken?: string } = {}): Promise<ZohoAccess> {
-    const sources = await this.resolveSources();
+    const { sources, unavailable } = await this.resolveSources();
     if (!sources.length) {
+      if (unavailable) throw new ZohoAuthUnavailableError(DATABASE_UNAVAILABLE_MESSAGE, null);
       throw this.config.notConfigured(this.notConfiguredMessage(), "not_configured");
     }
     const now = this.now();
@@ -601,6 +614,8 @@ export class ZohoProductAuth {
       }
     }
 
+    // Failed fallbacks cannot establish that an unreadable grant needs reconnecting.
+    if (unavailable) throw new ZohoAuthUnavailableError(DATABASE_UNAVAILABLE_MESSAGE, null);
     if (temporary) {
       const t = temporary as { message: string; retryAt: number };
       throw new ZohoAuthUnavailableError(
@@ -666,14 +681,23 @@ export class ZohoProductAuth {
   /** Health from stored/in-memory state only — never calls Zoho. */
   async status(): Promise<ZohoProductHealth> {
     let sources: CredentialSource[];
+    let unavailable: boolean;
     try {
-      sources = await this.resolveSources();
+      ({ sources, unavailable } = await this.resolveSources());
     } catch (err) {
       return {
         configured: false,
         state: "unknown",
         source: null,
         reason: err instanceof Error ? err.message : String(err),
+      };
+    }
+    if (unavailable) {
+      return {
+        configured: sources.length > 0,
+        state: "degraded",
+        source: sources[0]?.kind ?? null,
+        reason: DATABASE_UNAVAILABLE_MESSAGE,
       };
     }
     if (!sources.length) {
