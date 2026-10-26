@@ -53,16 +53,19 @@ interface DashboardService {
 }
 
 export interface DashboardStats {
-  openTickets: number;
-  resolvedTickets: number;
-  /** Tickets in the explicit pending_client state, counted over all tickets. */
-  waitingOnClient?: number;
+  /** Exact totals from a complete read, or null when they could not be established. */
+  openTickets: number | null;
+  resolvedTickets: number | null;
+  /** Tickets in the explicit pending_client state, counted over all tickets; null = unknown. */
+  waitingOnClient?: number | null;
   /** null = subscriptions could not be read. Never treat as zero. */
   activeServices: number | null;
   /** null = billing could not be read. Never treat as zero. */
   pendingInvoices: number | null;
-  recentTickets: DashboardTicket[];
-  services: DashboardService[];
+  recentTickets: Array<DashboardTicket | null>;
+  services: Array<DashboardService | null>;
+  ticketSource?: "desk" | "local" | "unavailable";
+  billingStatus?: "ok" | "not_linked" | "unavailable";
   zohoConnected?: boolean;
 }
 
@@ -73,53 +76,73 @@ export function figure(value: number | null | undefined, isError: boolean): numb
   return isError || value === null || value === undefined ? "—" : value;
 }
 
-/** Older servers omit waitingOnClient; fall back to the exact status only. */
-function countWaiting(stats: DashboardStats): number {
-  if (typeof stats.waitingOnClient === "number") return stats.waitingOnClient;
-  return stats.recentTickets.filter((t) => t.status === "pending_client").length;
+/** Rows the page can render: objects with a string id. Anything else is dropped, never crashes. */
+export function renderableRows<T extends { id: string }>(rows: unknown): T[] {
+  if (!Array.isArray(rows)) return [];
+  return rows.filter((r): r is T => typeof r === "object" && r !== null && typeof (r as { id?: unknown }).id === "string");
+}
+
+const known = (n: number | null | undefined): n is number => typeof n === "number" && Number.isFinite(n);
+
+function billingNote(stats: DashboardStats): string {
+  if (known(stats.pendingInvoices)) return "";
+  return stats.billingStatus === "not_linked"
+    ? " Billing isn't linked to your portal account yet."
+    : " Billing figures aren't available right now; check Invoices for the latest.";
 }
 
 /**
  * The verdict says only what the data supports. Counts come from
- * /api/portal/dashboard (Zoho Desk and Billing when linked, local tickets
- * otherwise); nothing here is inferred or invented, and DE makes no
- * monitoring claim the dashboard data cannot back.
+ * /api/portal/dashboard as exact totals or null; a sample of recent tickets
+ * never stands in for a total, so an unknown count can't read as all-clear.
+ * DE makes no monitoring claim the dashboard data cannot back.
  */
 export function buildVerdict(stats: DashboardStats | undefined, isError: boolean): Verdict {
   if (isError) {
     return { tone: "warn", title: "We couldn't load your summary.", detail: "Tickets and invoices may still be reachable from the menu. If this keeps happening, call us and we'll check the link.", href: "/portal/tickets", cta: "Open tickets" };
   }
   if (!stats) return { tone: "info", title: "Loading your summary…", detail: "" };
-  const waiting = countWaiting(stats);
-  const invoices = stats.pendingInvoices ?? 0;
-  const billingKnown = stats.pendingInvoices !== null && stats.pendingInvoices !== undefined;
-  if (waiting > 0 || invoices > 0) {
+  const waiting = known(stats.waitingOnClient) ? stats.waitingOnClient : null;
+  const invoices = known(stats.pendingInvoices) ? stats.pendingInvoices : null;
+  const note = billingNote(stats);
+  if ((waiting ?? 0) > 0 || (invoices ?? 0) > 0) {
+    const w = waiting ?? 0;
+    const i = invoices ?? 0;
     const parts: string[] = [];
-    if (waiting > 0) parts.push(`${waiting} ticket${waiting === 1 ? "" : "s"} waiting for your reply`);
-    if (invoices > 0) parts.push(`${invoices} invoice${invoices === 1 ? "" : "s"} pending`);
+    if (w > 0) parts.push(`${w} ticket${w === 1 ? "" : "s"} waiting for your reply`);
+    if (i > 0) parts.push(`${i} invoice${i === 1 ? "" : "s"} pending`);
+    const unknownPart = waiting === null ? " Ticket status couldn't be confirmed." : invoices === null ? note : "";
     return {
       tone: "warn",
-      title: `${waiting + invoices} item${waiting + invoices === 1 ? " is" : "s are"} waiting on you.`,
-      detail: parts.join(" · ") + ".",
-      href: waiting > 0 ? "/portal/tickets?status=pending_client" : "/portal/invoices",
-      cta: waiting > 0 ? "Reply now" : "View invoices",
+      title: `${w + i} item${w + i === 1 ? " is" : "s are"} waiting on you.`,
+      detail: parts.join(" · ") + "." + unknownPart,
+      href: w > 0 ? "/portal/tickets?status=pending_client" : "/portal/invoices",
+      cta: w > 0 ? "Reply now" : "View invoices",
     };
   }
-  const billingNote = billingKnown ? "" : " Billing figures aren't available right now; check Invoices for the latest.";
+  if (waiting === null || !known(stats.openTickets)) {
+    return {
+      tone: "info",
+      title: "We couldn't confirm your ticket status.",
+      detail: `Open Tickets for the full list.${note}`,
+      href: "/portal/tickets",
+      cta: "Open tickets",
+    };
+  }
   if (stats.openTickets > 0) {
     return {
       tone: "info",
       title: `${stats.openTickets} open ticket${stats.openTickets === 1 ? " is" : "s are"} with DE engineers.`,
-      detail: `Nothing is waiting on you in your tickets. You'll see a reply here and in your inbox as soon as there is one.${billingNote}`,
+      detail: `Nothing is waiting on you in your tickets. You'll see a reply here and in your inbox as soon as there is one.${note}`,
       href: "/portal/tickets",
       cta: "Track tickets",
     };
   }
-  if (!billingKnown) {
+  if (invoices === null) {
     return {
       tone: "info",
       title: "No tickets are waiting on you.",
-      detail: `No open tickets.${billingNote}`,
+      detail: `No open tickets.${note}`,
       href: "/portal/invoices",
       cta: "View invoices",
     };
@@ -164,6 +187,8 @@ export default function PortalDashboard() {
 
   const accountTeam = usePortalAccountTeam();
   const verdict = buildVerdict(stats, isError);
+  const recentTickets = renderableRows<DashboardTicket>(stats?.recentTickets);
+  const services = renderableRows<DashboardService>(stats?.services);
   const VerdictIcon = verdict.tone === "ok" ? CheckCircle2 : verdict.tone === "warn" ? AlertTriangle : Info;
 
   return (
@@ -242,10 +267,10 @@ export default function PortalDashboard() {
         )}
 
         <section className="grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="Key figures">
-          <StatTile label="Open tickets" category="tickets" icon={Ticket} value={figure(stats?.openTickets, isError)} hint={isError ? "not available" : stats ? (stats.openTickets > 0 ? "with DE engineers" : "none open") : undefined} tone={stats && stats.openTickets > 0 ? "warn" : "neutral"} href="/portal/tickets" loading={isLoading} testId="stat-open-tickets" />
-          <StatTile label="Resolved tickets" category="tickets" icon={CheckCircle2} value={figure(stats?.resolvedTickets, isError)} hint={isError ? "not available" : "all time"} tone={isError ? "neutral" : "ok"} href="/portal/tickets?status=resolved" loading={isLoading} testId="stat-resolved-tickets" />
-          <StatTile label="Active services" category="services" icon={Package} value={figure(stats?.activeServices, isError)} hint={isError || stats?.activeServices == null ? "not available" : "subscriptions"} tone={stats?.activeServices == null ? "neutral" : "info"} href="/portal/services" loading={isLoading} testId="stat-active-services" />
-          <StatTile label="Pending invoices" category="billing" icon={Receipt} value={figure(stats?.pendingInvoices, isError)} hint={isError || stats?.pendingInvoices == null ? (stats || isError ? "not available" : undefined) : stats.pendingInvoices > 0 ? "payment due" : "nothing due"} tone={stats?.pendingInvoices != null && stats.pendingInvoices > 0 ? "warn" : "neutral"} href="/portal/invoices" loading={isLoading} testId="stat-pending-invoices" />
+          <StatTile label="Open tickets" category="tickets" icon={Ticket} value={figure(stats?.openTickets, isError)} hint={isError || (stats && !known(stats.openTickets)) ? "not available" : stats ? ((stats.openTickets ?? 0) > 0 ? "with DE engineers" : "none open") : undefined} tone={stats && (stats.openTickets ?? 0) > 0 ? "warn" : "neutral"} href="/portal/tickets" loading={isLoading} testId="stat-open-tickets" />
+          <StatTile label="Resolved tickets" category="tickets" icon={CheckCircle2} value={figure(stats?.resolvedTickets, isError)} hint={isError || (stats && !known(stats.resolvedTickets)) ? "not available" : "all time"} tone={isError || (stats && !known(stats.resolvedTickets)) ? "neutral" : "ok"} href="/portal/tickets?status=resolved" loading={isLoading} testId="stat-resolved-tickets" />
+          <StatTile label="Active services" category="services" icon={Package} value={figure(stats?.activeServices, isError)} hint={!isError && stats?.billingStatus === "not_linked" ? "billing not linked" : isError || stats?.activeServices == null ? "not available" : "subscriptions"} tone={stats?.activeServices == null ? "neutral" : "info"} href="/portal/services" loading={isLoading} testId="stat-active-services" />
+          <StatTile label="Pending invoices" category="billing" icon={Receipt} value={figure(stats?.pendingInvoices, isError)} hint={isError || stats?.pendingInvoices == null ? (stats || isError ? (!isError && stats?.billingStatus === "not_linked" ? "billing not linked" : "not available") : undefined) : stats.pendingInvoices > 0 ? "payment due" : "nothing due"} tone={stats?.pendingInvoices != null && stats.pendingInvoices > 0 ? "warn" : "neutral"} href="/portal/invoices" loading={isLoading} testId="stat-pending-invoices" />
         </section>
 
         <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
@@ -268,9 +293,9 @@ export default function PortalDashboard() {
                   <Skeleton key={i} className="h-12" />
                 ))}
               </div>
-            ) : stats?.recentTickets && stats.recentTickets.length > 0 ? (
+            ) : recentTickets.length > 0 ? (
               <ul className="divide-y divide-border">
-                {stats.recentTickets.map((ticket) => (
+                {recentTickets.map((ticket) => (
                   <li key={ticket.id} data-testid={`ticket-${ticket.id}`}>
                     <Link href={`/portal/tickets/${ticket.id}`} className="flex items-center justify-between gap-3 px-4 py-3 transition-colors hover:bg-accent/60 focus-visible:bg-accent/60 focus-visible:outline-none md:px-5">
                       <div className="min-w-0">
@@ -288,7 +313,7 @@ export default function PortalDashboard() {
                   </li>
                 ))}
               </ul>
-            ) : isError ? (
+            ) : isError || stats?.ticketSource === "unavailable" ? (
               <EmptyState
                 compact
                 icon={Ticket}
@@ -332,9 +357,9 @@ export default function PortalDashboard() {
                     <Skeleton key={i} className="h-12" />
                   ))}
                 </div>
-              ) : stats?.services && stats.services.length > 0 ? (
+              ) : services.length > 0 ? (
                 <ul className="divide-y divide-border">
-                  {stats.services.map((service) => (
+                  {services.map((service) => (
                     <li key={service.id} className="flex items-center justify-between gap-3 px-4 py-3 md:px-5" data-testid={`service-${service.id}`}>
                       <div className="min-w-0">
                         <p className="truncate text-sm font-medium">{service.serviceName}</p>

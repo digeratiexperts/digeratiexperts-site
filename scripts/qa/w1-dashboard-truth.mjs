@@ -63,6 +63,8 @@ const STATES = {
   'billing-unreachable': { status: 200, body: { openTickets: 1, resolvedTickets: 4, waitingOnClient: 0, activeServices: null, pendingInvoices: null, recentTickets: [T('1', 'EXAMPLE printer offline', 'in_progress')], services: [], zohoConnected: true } },
   'waiting-on-client': { status: 200, body: { openTickets: 1, resolvedTickets: 4, waitingOnClient: 2, activeServices: 2, pendingInvoices: 1, recentTickets: [T('2', 'EXAMPLE confirm new hire laptop', 'pending_client'), T('3', 'EXAMPLE VPN access', 'in_progress')], services: [{ id: 's1', serviceName: 'EXAMPLE Managed Security', status: 'live' }, { id: 's2', serviceName: 'EXAMPLE Backup', status: 'live' }], zohoConnected: true } },
   'load-failed': { status: 500, body: { message: 'Failed to load dashboard' } },
+  'tickets-unknown': { status: 200, body: { openTickets: null, resolvedTickets: null, waitingOnClient: null, ticketSource: 'unavailable', activeServices: null, pendingInvoices: null, billingStatus: 'not_linked', recentTickets: [], services: [], zohoConnected: false } },
+  'null-rows': { status: 200, body: { openTickets: 1, resolvedTickets: 0, waitingOnClient: 0, ticketSource: 'local', activeServices: 0, pendingInvoices: 0, billingStatus: 'ok', recentTickets: [null, { id: 9 }, T('4', 'EXAMPLE kept row', 'open'), 'x'], services: [null, { serviceName: 'no id' }], zohoConnected: true } },
 };
 let browser;
 const observations = [];
@@ -70,14 +72,15 @@ try {
   await server.listen();
   const origin = `http://127.0.0.1:${server.httpServer.address().port}`;
   browser = await chromium.launch({ headless: true, ...(process.env.QA_CHROMIUM ? { executablePath: process.env.QA_CHROMIUM } : {}) });
+  for (const theme of ['light', 'dark']) {
   for (const width of [390, 768, 1440]) {
     for (const [name, state] of Object.entries(STATES)) {
       const context = await browser.newContext({ viewport: { width, height: 1100 }, reducedMotion: 'reduce' });
-      await context.addInitScript((u) => {
+      await context.addInitScript(([u, t]) => {
         localStorage.setItem('portalUser', JSON.stringify(u));
-        localStorage.setItem('de-portal-theme', 'light');
+        localStorage.setItem('de-portal-theme', t);
         localStorage.setItem('de-portal-tour-done', 'true');
-      }, USER);
+      }, [USER, theme]);
       const page = await context.newPage();
       page.setDefaultTimeout(60000);
       const errors = [];
@@ -108,19 +111,28 @@ try {
         tiles[id] = (await page.getByTestId(id).innerText().catch(() => '')).replace(/\s+/g, ' ').trim();
       }
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
-      await page.screenshot({ path: path.join(output, `${name}-${width}.png`), fullPage: false });
-      observations.push({ width, state: name, verdict, tiles, overflow, errors });
+      await page.screenshot({ path: path.join(output, `${theme}-${name}-${width}.png`), fullPage: false });
+      observations.push({ theme, width, state: name, verdict, tiles, overflow, errors });
       if (!baseline) {
         assert.ok(!/watching/i.test(verdict), `${name}@${width}: monitoring claim`);
         assert.equal(overflow, false, `${name}@${width}: sideways scroll`);
-        if (name !== 'waiting-on-client') assert.match(tiles['stat-pending-invoices'], /—/, `${name}@${width}: unknown invoices shown as a number`);
+        if (name !== 'waiting-on-client' && name !== 'null-rows') assert.match(tiles['stat-pending-invoices'], /—/, `${name}@${width}: unknown invoices shown as a number`);
         if (name === 'waiting-on-client') assert.match(verdict, /3 items are waiting on you/, `${name}@${width}: waiting count`);
+        if (name === 'tickets-unknown') {
+          assert.match(verdict, /couldn't confirm your ticket status/i, `${name}@${width}: unknown tickets read as all-clear`);
+          assert.match(tiles['stat-open-tickets'], /—/, `${name}@${width}: unknown open tickets shown as a number`);
+          assert.equal(await page.getByText('billing not linked', { exact: true }).count(), 2, `${name}@${width}: not-linked hint on both billing tiles`);
+          assert.equal(await page.getByText('No tickets yet').count(), 0, `${name}@${width}: claims no tickets`);
+        }
+        if (name === 'null-rows') assert.equal(await page.getByText('EXAMPLE kept row').count(), 1, `${name}@${width}: valid row lost`);
+        assert.equal(errors.length, 0, `${name}@${width}: page errors ${errors.join(' | ')}`);
       }
       await context.close();
     }
   }
+  }
   await writeFile(path.join(output, 'observations.json'), JSON.stringify(observations, null, 2));
-  console.log(JSON.stringify(observations.map((o) => [o.width, o.state, o.verdict.slice(0, 70), o.tiles['stat-pending-invoices'], o.overflow, o.errors.length]), null, 0));
+  console.log(JSON.stringify(observations.map((o) => [o.theme, o.width, o.state, o.verdict.slice(0, 70), o.tiles['stat-pending-invoices'], o.overflow, o.errors.length]), null, 0));
 } finally {
   await browser?.close();
   await server.close();

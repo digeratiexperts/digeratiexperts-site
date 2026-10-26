@@ -37,7 +37,9 @@ claims:
     base_sha: 6fea7ffa
     files:
       - client/src/pages/portal/PortalDashboard.tsx (+ new PortalDashboard.test.ts)
-      - server/routes.ts (GET /api/portal/dashboard handler only)
+      - server/routes.ts (GET /api/portal/dashboard registration only)
+      - server/portalDashboardStats.ts, server/portalDashboardStats.test.ts (dashboard handler, strict reads)
+      - server/zoho/zohoBilling.ts, server/zoho/zohoDesk.ts (additive strict read methods + injectable client; legacy methods unchanged)
       - server/portalDeskTickets.ts, server/portalDeskTickets.test.ts (summarizeTicketStatuses, normalizeLocalTicketStatus)
       - scripts/qa/w1-dashboard-truth.mjs, artifacts/visual-qa/w1-dashboard-truth/**
     status: active

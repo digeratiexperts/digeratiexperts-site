@@ -1,5 +1,6 @@
 [
   {
+    "theme": "light",
     "width": 390,
     "state": "billing-unreachable",
     "verdict": "1 open ticket is with DE engineers. Nothing is waiting on you in your tickets. You'll see a reply here and in your inbox as soon as there is one. Billing figures aren't available right now; check Invoices for the latest. Track tickets",
@@ -13,6 +14,7 @@
     "errors": []
   },
   {
+    "theme": "light",
     "width": 390,
     "state": "waiting-on-client",
     "verdict": "3 items are waiting on you. 2 tickets waiting for your reply · 1 invoice pending. Reply now",
@@ -26,6 +28,7 @@
     "errors": []
   },
   {
+    "theme": "light",
     "width": 390,
     "state": "load-failed",
     "verdict": "We couldn't load your summary. Tickets and invoices may still be reachable from the menu. If this keeps happening, call us and we'll check the link. Open tickets",
@@ -39,6 +42,35 @@
     "errors": []
   },
   {
+    "theme": "light",
+    "width": 390,
+    "state": "tickets-unknown",
+    "verdict": "We couldn't confirm your ticket status. Open Tickets for the full list. Billing isn't linked to your portal account yet. Open tickets",
+    "tiles": {
+      "stat-open-tickets": "—",
+      "stat-resolved-tickets": "—",
+      "stat-active-services": "—",
+      "stat-pending-invoices": "—"
+    },
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "theme": "light",
+    "width": 390,
+    "state": "null-rows",
+    "verdict": "1 open ticket is with DE engineers. Nothing is waiting on you in your tickets. You'll see a reply here and in your inbox as soon as there is one. Track tickets",
+    "tiles": {
+      "stat-open-tickets": "1",
+      "stat-resolved-tickets": "0",
+      "stat-active-services": "0",
+      "stat-pending-invoices": "0"
+    },
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "theme": "light",
     "width": 768,
     "state": "billing-unreachable",
     "verdict": "1 open ticket is with DE engineers. Nothing is waiting on you in your tickets. You'll see a reply here and in your inbox as soon as there is one. Billing figures aren't available right now; check Invoices for the latest. Track tickets",
@@ -52,6 +84,7 @@
     "errors": []
   },
   {
+    "theme": "light",
     "width": 768,
     "state": "waiting-on-client",
     "verdict": "3 items are waiting on you. 2 tickets waiting for your reply · 1 invoice pending. Reply now",
@@ -65,6 +98,7 @@
     "errors": []
   },
   {
+    "theme": "light",
     "width": 768,
     "state": "load-failed",
     "verdict": "We couldn't load your summary. Tickets and invoices may still be reachable from the menu. If this keeps happening, call us and we'll check the link. Open tickets",
@@ -78,6 +112,35 @@
     "errors": []
   },
   {
+    "theme": "light",
+    "width": 768,
+    "state": "tickets-unknown",
+    "verdict": "We couldn't confirm your ticket status. Open Tickets for the full list. Billing isn't linked to your portal account yet. Open tickets",
+    "tiles": {
+      "stat-open-tickets": "—",
+      "stat-resolved-tickets": "—",
+      "stat-active-services": "—",
+      "stat-pending-invoices": "—"
+    },
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "theme": "light",
+    "width": 768,
+    "state": "null-rows",
+    "verdict": "1 open ticket is with DE engineers. Nothing is waiting on you in your tickets. You'll see a reply here and in your inbox as soon as there is one. Track tickets",
+    "tiles": {
+      "stat-open-tickets": "1",
+      "stat-resolved-tickets": "0",
+      "stat-active-services": "0",
+      "stat-pending-invoices": "0"
+    },
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "theme": "light",
     "width": 1440,
     "state": "billing-unreachable",
     "verdict": "1 open ticket is with DE engineers. Nothing is waiting on you in your tickets. You'll see a reply here and in your inbox as soon as there is one. Billing figures aren't available right now; check Invoices for the latest. Track tickets",
@@ -91,6 +154,7 @@
     "errors": []
   },
   {
+    "theme": "light",
     "width": 1440,
     "state": "waiting-on-client",
     "verdict": "3 items are waiting on you. 2 tickets waiting for your reply · 1 invoice pending. Reply now",
@@ -104,6 +168,7 @@
     "errors": []
   },
   {
+    "theme": "light",
     "width": 1440,
     "state": "load-failed",
     "verdict": "We couldn't load your summary. Tickets and invoices may still be reachable from the menu. If this keeps happening, call us and we'll check the link. Open tickets",
@@ -112,6 +177,244 @@
       "stat-resolved-tickets": "—",
       "stat-active-services": "—",
       "stat-pending-invoices": "—"
+    },
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "theme": "light",
+    "width": 1440,
+    "state": "tickets-unknown",
+    "verdict": "We couldn't confirm your ticket status. Open Tickets for the full list. Billing isn't linked to your portal account yet. Open tickets",
+    "tiles": {
+      "stat-open-tickets": "—",
+      "stat-resolved-tickets": "—",
+      "stat-active-services": "—",
+      "stat-pending-invoices": "—"
+    },
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "theme": "light",
+    "width": 1440,
+    "state": "null-rows",
+    "verdict": "1 open ticket is with DE engineers. Nothing is waiting on you in your tickets. You'll see a reply here and in your inbox as soon as there is one. Track tickets",
+    "tiles": {
+      "stat-open-tickets": "1",
+      "stat-resolved-tickets": "0",
+      "stat-active-services": "0",
+      "stat-pending-invoices": "0"
+    },
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "theme": "dark",
+    "width": 390,
+    "state": "billing-unreachable",
+    "verdict": "1 open ticket is with DE engineers. Nothing is waiting on you in your tickets. You'll see a reply here and in your inbox as soon as there is one. Billing figures aren't available right now; check Invoices for the latest. Track tickets",
+    "tiles": {
+      "stat-open-tickets": "1",
+      "stat-resolved-tickets": "4",
+      "stat-active-services": "—",
+      "stat-pending-invoices": "—"
+    },
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "theme": "dark",
+    "width": 390,
+    "state": "waiting-on-client",
+    "verdict": "3 items are waiting on you. 2 tickets waiting for your reply · 1 invoice pending. Reply now",
+    "tiles": {
+      "stat-open-tickets": "1",
+      "stat-resolved-tickets": "4",
+      "stat-active-services": "2",
+      "stat-pending-invoices": "1"
+    },
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "theme": "dark",
+    "width": 390,
+    "state": "load-failed",
+    "verdict": "We couldn't load your summary. Tickets and invoices may still be reachable from the menu. If this keeps happening, call us and we'll check the link. Open tickets",
+    "tiles": {
+      "stat-open-tickets": "—",
+      "stat-resolved-tickets": "—",
+      "stat-active-services": "—",
+      "stat-pending-invoices": "—"
+    },
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "theme": "dark",
+    "width": 390,
+    "state": "tickets-unknown",
+    "verdict": "We couldn't confirm your ticket status. Open Tickets for the full list. Billing isn't linked to your portal account yet. Open tickets",
+    "tiles": {
+      "stat-open-tickets": "—",
+      "stat-resolved-tickets": "—",
+      "stat-active-services": "—",
+      "stat-pending-invoices": "—"
+    },
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "theme": "dark",
+    "width": 390,
+    "state": "null-rows",
+    "verdict": "1 open ticket is with DE engineers. Nothing is waiting on you in your tickets. You'll see a reply here and in your inbox as soon as there is one. Track tickets",
+    "tiles": {
+      "stat-open-tickets": "1",
+      "stat-resolved-tickets": "0",
+      "stat-active-services": "0",
+      "stat-pending-invoices": "0"
+    },
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "theme": "dark",
+    "width": 768,
+    "state": "billing-unreachable",
+    "verdict": "1 open ticket is with DE engineers. Nothing is waiting on you in your tickets. You'll see a reply here and in your inbox as soon as there is one. Billing figures aren't available right now; check Invoices for the latest. Track tickets",
+    "tiles": {
+      "stat-open-tickets": "1",
+      "stat-resolved-tickets": "4",
+      "stat-active-services": "—",
+      "stat-pending-invoices": "—"
+    },
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "theme": "dark",
+    "width": 768,
+    "state": "waiting-on-client",
+    "verdict": "3 items are waiting on you. 2 tickets waiting for your reply · 1 invoice pending. Reply now",
+    "tiles": {
+      "stat-open-tickets": "1",
+      "stat-resolved-tickets": "4",
+      "stat-active-services": "2",
+      "stat-pending-invoices": "1"
+    },
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "theme": "dark",
+    "width": 768,
+    "state": "load-failed",
+    "verdict": "We couldn't load your summary. Tickets and invoices may still be reachable from the menu. If this keeps happening, call us and we'll check the link. Open tickets",
+    "tiles": {
+      "stat-open-tickets": "—",
+      "stat-resolved-tickets": "—",
+      "stat-active-services": "—",
+      "stat-pending-invoices": "—"
+    },
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "theme": "dark",
+    "width": 768,
+    "state": "tickets-unknown",
+    "verdict": "We couldn't confirm your ticket status. Open Tickets for the full list. Billing isn't linked to your portal account yet. Open tickets",
+    "tiles": {
+      "stat-open-tickets": "—",
+      "stat-resolved-tickets": "—",
+      "stat-active-services": "—",
+      "stat-pending-invoices": "—"
+    },
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "theme": "dark",
+    "width": 768,
+    "state": "null-rows",
+    "verdict": "1 open ticket is with DE engineers. Nothing is waiting on you in your tickets. You'll see a reply here and in your inbox as soon as there is one. Track tickets",
+    "tiles": {
+      "stat-open-tickets": "1",
+      "stat-resolved-tickets": "0",
+      "stat-active-services": "0",
+      "stat-pending-invoices": "0"
+    },
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "theme": "dark",
+    "width": 1440,
+    "state": "billing-unreachable",
+    "verdict": "1 open ticket is with DE engineers. Nothing is waiting on you in your tickets. You'll see a reply here and in your inbox as soon as there is one. Billing figures aren't available right now; check Invoices for the latest. Track tickets",
+    "tiles": {
+      "stat-open-tickets": "1",
+      "stat-resolved-tickets": "4",
+      "stat-active-services": "—",
+      "stat-pending-invoices": "—"
+    },
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "theme": "dark",
+    "width": 1440,
+    "state": "waiting-on-client",
+    "verdict": "3 items are waiting on you. 2 tickets waiting for your reply · 1 invoice pending. Reply now",
+    "tiles": {
+      "stat-open-tickets": "1",
+      "stat-resolved-tickets": "4",
+      "stat-active-services": "2",
+      "stat-pending-invoices": "1"
+    },
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "theme": "dark",
+    "width": 1440,
+    "state": "load-failed",
+    "verdict": "We couldn't load your summary. Tickets and invoices may still be reachable from the menu. If this keeps happening, call us and we'll check the link. Open tickets",
+    "tiles": {
+      "stat-open-tickets": "—",
+      "stat-resolved-tickets": "—",
+      "stat-active-services": "—",
+      "stat-pending-invoices": "—"
+    },
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "theme": "dark",
+    "width": 1440,
+    "state": "tickets-unknown",
+    "verdict": "We couldn't confirm your ticket status. Open Tickets for the full list. Billing isn't linked to your portal account yet. Open tickets",
+    "tiles": {
+      "stat-open-tickets": "—",
+      "stat-resolved-tickets": "—",
+      "stat-active-services": "—",
+      "stat-pending-invoices": "—"
+    },
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "theme": "dark",
+    "width": 1440,
+    "state": "null-rows",
+    "verdict": "1 open ticket is with DE engineers. Nothing is waiting on you in your tickets. You'll see a reply here and in your inbox as soon as there is one. Track tickets",
+    "tiles": {
+      "stat-open-tickets": "1",
+      "stat-resolved-tickets": "0",
+      "stat-active-services": "0",
+      "stat-pending-invoices": "0"
     },
     "overflow": false,
     "errors": []
