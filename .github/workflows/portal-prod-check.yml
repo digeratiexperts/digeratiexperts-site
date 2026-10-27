@@ -142,5 +142,5 @@ jobs:
         with:
           name: portal-prod-check
           path: artifacts/portal-prod-check
-          retention-days: 14
+          retention-days: 7
           if-no-files-found: warn

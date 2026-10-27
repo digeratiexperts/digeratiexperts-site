@@ -191,6 +191,7 @@ jobs:
           name: msp-ai-kit-windows-logs
           path: ci-artifacts
           if-no-files-found: ignore
+          retention-days: 7
 
   standalone-installer:
     name: Standalone setup build and lifecycle (unsigned test)
@@ -266,3 +267,4 @@ jobs:
           name: DE-TechTool-unsigned-test-setup
           path: ${{ runner.temp }}/de-installer-build
           if-no-files-found: error
+          retention-days: 7

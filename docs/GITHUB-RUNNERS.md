@@ -61,6 +61,16 @@ RUNNER_TOKEN='SHORT_LIVED_TOKEN' \
 ./scripts/setup-github-runner.sh
 ```
 
+## CI on a development runner (cost switch)
+
+The `check-test-build` job in `ci.yml` reads its runner from the repository variable `SITE_CI_RUNS_ON`. The production deploy job is unaffected; it keeps its `de-production` / `website-prod` labels.
+
+- **Not set** (default): GitHub-hosted `ubuntu-latest`, as before.
+- **Set** to a JSON label list, for example `["self-hosted","Linux","X64","de-dev"]`: the job runs on a `de-dev` runner registered to this repository (home PC in WSL2 or Linux, or a RackNerd host), and those minutes are free.
+- Set or delete it under Settings → Secrets and variables → Actions → Variables. A self-hosted job never falls back to GitHub; delete the variable when that machine is off.
+
+The why, the costs and the home PC setup are in Intelligence-Hub `docs/CI-RUNNERS-AND-COSTS.md` (2026-10-27). The Hub has the same switch, `HUB_CI_RUNS_ON`.
+
 ## Security rules
 
 1. Production deployment runners are not general-purpose development runners.
