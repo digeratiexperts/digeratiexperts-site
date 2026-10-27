@@ -51,7 +51,12 @@ function Save-DEStorageReceipt {
     $dir = Join-Path $de.Dirs.Base 'storage'
     [void][IO.Directory]::CreateDirectory($dir)
     $path = Join-Path $dir ("{0}-{1}.json" -f $Record.kind, [guid]::NewGuid().ToString('N'))
-    [IO.File]::WriteAllText($path, ($Record | ConvertTo-Json -Depth 14), (New-Object Text.UTF8Encoding $false))
+    # Redact before the record touches disk (move 14): inventories list file names and servicing
+    # output is raw text, so a recovery password saved as a file name or echoed by a tool would
+    # otherwise be persisted verbatim. Logs and state already scrub through the same helpers. The
+    # record handed back to the caller is left exactly as given.
+    $clean = if (Get-Command Remove-DESecretKeys -ErrorAction SilentlyContinue) { Remove-DESecretKeys -Object $Record } else { $Record }
+    [IO.File]::WriteAllText($path, ($clean | ConvertTo-Json -Depth 14), (New-Object Text.UTF8Encoding $false))
     $Record | Add-Member -NotePropertyName receiptPath -NotePropertyValue $path -Force
     return $Record
 }

@@ -278,7 +278,13 @@ function Convert-DEHtmlToPdf {
     try {
         $uri = ([Uri](Resolve-Path -LiteralPath $HtmlPath).Path).AbsoluteUri
         $argList = @('--headless=new', '--disable-gpu', '--no-first-run', "--user-data-dir=`"$profileDir`"", '--no-pdf-header-footer', "--print-to-pdf=`"$tmpPdf`"", $uri)
-        $p = Start-Process -FilePath $browser -ArgumentList $argList -PassThru -WindowStyle Hidden -WhatIf:$false   # a local PDF of the report, part of the run's record
+        # A plan-only (-WhatIf) run still writes the evidence bundle, so the print must happen even then. Force that
+        # with the preference rather than -WhatIf:$false on the cmdlet: Start-Process has no -WhatIf parameter under
+        # Windows PowerShell 5.1 (it does under 7.x), so passing one throws and no PDF is ever produced.
+        $prevWhatIf = $WhatIfPreference
+        $WhatIfPreference = $false
+        try { $p = Start-Process -FilePath $browser -ArgumentList $argList -PassThru -WindowStyle Hidden }
+        finally { $WhatIfPreference = $prevWhatIf }
         if (-not $p.WaitForExit($TimeoutSeconds * 1000)) {
             # a timed-out print is never used: its PDF may be partial. End the whole browser tree, not just the launcher.
             try { $null = & taskkill.exe /PID $p.Id /T /F 2>&1 } catch { }

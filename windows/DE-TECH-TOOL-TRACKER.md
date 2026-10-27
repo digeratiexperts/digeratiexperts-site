@@ -2,12 +2,13 @@
 
 Status board for the sequenced 104-move plan for **DE Tech Tool** (the `windows/` tree in this repo). Every move below is a GitHub issue; this file is the index that keeps them in plan order.
 
-> **[DE-TECH-TOOL-ARCHITECTURE.md](DE-TECH-TOOL-ARCHITECTURE.md) stays the live done/open board for the roadmap** (move 103). This tracker is the execution checklist underneath it: when a move finishes, tick it here, close its issue, and fold anything that changed the roadmap into the architecture doc.
+> **[DE-TECH-TOOL-ARCHITECTURE.md](DE-TECH-TOOL-ARCHITECTURE.md) stays the live done/open board for the roadmap** (move 103). This tracker is the execution checklist underneath it.
 
 ## How to use it
 
 - **Pick work from the top.** Moves 1-10 are ordered by leverage and several gate later sections; the sections after that are not a strict sequence within themselves.
-- **Tick the box here and close the issue.** The issue carries the detail, the PR links and the decisions. Do not add detail to this file.
+- **Closing the issue ticks the box.** This file is generated from GitHub: an open issue renders `- [ ]`, a closed one `- [x]`. Never edit a checkbox by hand - close (or reopen) the issue and re-run the generator.
+- **The issue carries the detail**, the PR links and the decisions. Do not add detail to this file.
 - **Ownership is fixed at capture.** `Joe` marks the moves that need Joe's decision, access or hardware. Everything else an agent can do unaided.
 - **These are backlog items, not work locks.** They carry the `backlog` label and a `[TECHTOOL-nnn]` title prefix. Under `docs/ACTIVE-WORK-COORDINATION.md`, an open issue is a concurrency lock only once someone claims it and prefixes its title `[ACTIVE]`.
 
@@ -16,11 +17,20 @@ Status board for the sequenced 104-move plan for **DE Tech Tool** (the `windows/
 | Marker | Meaning |
 |---|---|
 | `- [ ]` | Open |
-| `- [x]` | Done |
+| `- [x]` | Done (its issue is closed) |
 | `Joe` | Needs Joe: a decision, account access, or physical hardware |
 | `agent` | Any DE AI agent can complete it unaided |
 | `agent + Joe` | Agent writes it, Joe runs it |
 | *note* | Blocking or overlap detail captured when the plan was written |
+
+## Plan documents
+
+Written while working through the plan. Each gates a section of it:
+
+| Document | Move | What it governs |
+|---|---|---|
+| [AUDIT-MODE-CHECKLIST.md](AUDIT-MODE-CHECKLIST.md) | 5 | Validating on a real DE Windows laptop in audit mode (roadmap step 3). Feeds move 25. |
+| [INSTALLER-TRUST-POLICY.md](INSTALLER-TRUST-POLICY.md) | 6 | Trust rules for every installer the tool downloads or runs. Gates all of section C. |
 
 ## Blocked and gated moves
 
@@ -37,35 +47,33 @@ These are the dependencies worth knowing before picking anything up:
 | 59-78 (E. Hub and call-home agent) | **73** | No job type is enabled before the agent threat model exists. |
 | 19 / 104 | each other | Both retire compatibility names/aliases. Keep one canonical issue and cross-link. |
 
-Moves 1-4 (the analyzer triage, the WARN-on-control-path rule, the last three analyzer warnings, and the pre-push script) are decision-free and unblock nothing else - they are the cheapest way to start.
-
 ## Summary
 
-| Section | Moves | Open | Done | Needs Joe |
+| Section | Moves | Done | Open | Needs Joe |
 |---|---|---|---|---|
-| Start here (highest leverage) | 10 | 10 | 0 | 5 |
-| A. Quality and trust (11-24) | 14 | 14 | 0 | 0 |
-| B. Real-device validation (25-38) | 14 | 14 | 0 | 1 |
-| C. Installer integrity (39-48) | 10 | 10 | 0 | 1 |
-| D. Signing and release (49-58) | 10 | 10 | 0 | 0 |
-| E. Hub and call-home agent (59-78) | 20 | 20 | 0 | 0 |
-| F. Remote assist (79-82) | 4 | 4 | 0 | 0 |
-| G. Client and dropship workflows (83-90) | 8 | 8 | 0 | 0 |
-| H. Sensitive data (91-96) | 6 | 6 | 0 | 0 |
-| I. Supportability and docs (97-104) | 8 | 8 | 0 | 1 |
-| **Total** | **104** | **104** | **0** | **8** |
+| Start here (highest leverage) | 10 | 6 | 4 | 5 |
+| A. Quality and trust (11-24) | 14 | 5 | 9 | 0 |
+| B. Real-device validation (25-38) | 14 | 0 | 14 | 1 |
+| C. Installer integrity (39-48) | 10 | 1 | 9 | 1 |
+| D. Signing and release (49-58) | 10 | 0 | 10 | 0 |
+| E. Hub and call-home agent (59-78) | 20 | 0 | 20 | 0 |
+| F. Remote assist (79-82) | 4 | 0 | 4 | 0 |
+| G. Client and dropship workflows (83-90) | 8 | 0 | 8 | 0 |
+| H. Sensitive data (91-96) | 6 | 0 | 6 | 0 |
+| I. Supportability and docs (97-104) | 8 | 0 | 8 | 1 |
+| **Total** | **104** | **12** | **92** | **8** |
 
 ## The moves
 
 ### Start here (highest leverage)
 
-- [ ] **1** Triage the 75 empty catch {} blocks in the analyzer output: cleanup-only versus control path. `agent` - [#719](https://github.com/digeratiexperts/digeratiexperts-site/issues/719)
-- [ ] **2** Make control-path catches (licence, evidence, verification) log a WARN, never swallow silently. `agent` - [#720](https://github.com/digeratiexperts/digeratiexperts-site/issues/720)
-- [ ] **3** Fix the 3 remaining non-catch analyzer warnings, so the warnings are all empty catches. `agent` - [#721](https://github.com/digeratiexperts/digeratiexperts-site/issues/721)
-- [ ] **4** Add a local pre-push script that runs the same analyzer and Pester checks as CI. `agent` - [#722](https://github.com/digeratiexperts/digeratiexperts-site/issues/722)
-- [ ] **5** Write the real-laptop audit-mode checklist (roadmap step 3). **agent + Joe** - [#723](https://github.com/digeratiexperts/digeratiexperts-site/issues/723)
+- [x] **1** Triage the 75 empty catch {} blocks in the analyzer output: cleanup-only versus control path. `agent` - [#719](https://github.com/digeratiexperts/digeratiexperts-site/issues/719)
+- [x] **2** Make control-path catches (licence, evidence, verification) log a WARN, never swallow silently. `agent` - [#720](https://github.com/digeratiexperts/digeratiexperts-site/issues/720)
+- [x] **3** Fix the 3 remaining non-catch analyzer warnings, so the warnings are all empty catches. `agent` - [#721](https://github.com/digeratiexperts/digeratiexperts-site/issues/721)
+- [x] **4** Add a local pre-push script that runs the same analyzer and Pester checks as CI. `agent` - [#722](https://github.com/digeratiexperts/digeratiexperts-site/issues/722)
+- [x] **5** Write the real-laptop audit-mode checklist (roadmap step 3). **agent + Joe** - [#723](https://github.com/digeratiexperts/digeratiexperts-site/issues/723)
   - *Joe runs the hardware side; the checklist itself is written by an agent.*
-- [ ] **6** Confirm the installer-trust policy in writing before any hash work starts. `agent` - [#724](https://github.com/digeratiexperts/digeratiexperts-site/issues/724)
+- [x] **6** Confirm the installer-trust policy in writing before any hash work starts. `agent` - [#724](https://github.com/digeratiexperts/digeratiexperts-site/issues/724)
   - *Gates every item in section C. Needs DE sign-off on the wording once drafted.*
 - [ ] **7** Buy the code-signing certificate. **Joe** - [#725](https://github.com/digeratiexperts/digeratiexperts-site/issues/725)
   - *Longest lead item. Gates all of section D.*
@@ -78,11 +86,11 @@ Moves 1-4 (the analyzer triage, the WARN-on-control-path rule, the last three an
 
 ### A. Quality and trust (11-24)
 
-- [ ] **11** Test that a failed control can never appear as PASS in any report. `agent` - [#729](https://github.com/digeratiexperts/digeratiexperts-site/issues/729)
-- [ ] **12** Golden-file tests for client-facing reports: no costs, margins, keys or vendor sourcing. `agent` - [#730](https://github.com/digeratiexperts/digeratiexperts-site/issues/730)
-- [ ] **13** Automated check that client output contains none of the restricted fields. `agent` - [#731](https://github.com/digeratiexperts/digeratiexperts-site/issues/731)
-- [ ] **14** Redaction tests: BitLocker recovery passwords never reach logs, state or receipts. `agent` - [#732](https://github.com/digeratiexperts/digeratiexperts-site/issues/732)
-- [ ] **15** Test that Guardz keys and SentinelOne tokens are never persisted. `agent` - [#733](https://github.com/digeratiexperts/digeratiexperts-site/issues/733)
+- [x] **11** Test that a failed control can never appear as PASS in any report. `agent` - [#729](https://github.com/digeratiexperts/digeratiexperts-site/issues/729)
+- [x] **12** Golden-file tests for client-facing reports: no costs, margins, keys or vendor sourcing. `agent` - [#730](https://github.com/digeratiexperts/digeratiexperts-site/issues/730)
+- [x] **13** Automated check that client output contains none of the restricted fields. `agent` - [#731](https://github.com/digeratiexperts/digeratiexperts-site/issues/731)
+- [x] **14** Redaction tests: BitLocker recovery passwords never reach logs, state or receipts. `agent` - [#732](https://github.com/digeratiexperts/digeratiexperts-site/issues/732)
+- [x] **15** Test that Guardz keys and SentinelOne tokens are never persisted. `agent` - [#733](https://github.com/digeratiexperts/digeratiexperts-site/issues/733)
 - [ ] **16** Mutation-test the licence and fail-closed paths. `agent` - [#734](https://github.com/digeratiexperts/digeratiexperts-site/issues/734)
 - [ ] **17** Audit every 'policy warn' path for fail-open risk. `agent` - [#735](https://github.com/digeratiexperts/digeratiexperts-site/issues/735)
 - [ ] **18** Drift check: exported module functions against the docs. `agent` - [#736](https://github.com/digeratiexperts/digeratiexperts-site/issues/736)
@@ -125,7 +133,7 @@ Moves 1-4 (the analyzer triage, the WARN-on-control-path rule, the last three an
 - [ ] **46** Write the trust policy as a short document the technicians can read. `agent` - [#764](https://github.com/digeratiexperts/digeratiexperts-site/issues/764)
   - *Pairs with item 6, which is the written DE confirmation of the policy.*
 - [ ] **47** Test the refusal path for each mismatch type. `agent` - [#765](https://github.com/digeratiexperts/digeratiexperts-site/issues/765)
-- [ ] **48** Decide the outcome for installers that publish no hash. **Joe** - [#766](https://github.com/digeratiexperts/digeratiexperts-site/issues/766)
+- [x] **48** Decide the outcome for installers that publish no hash. **Joe** - [#766](https://github.com/digeratiexperts/digeratiexperts-site/issues/766)
   - *Blocks item 41.*
 
 ### D. Signing and release (49-58)
@@ -210,5 +218,5 @@ Moves 1-4 (the analyzer triage, the WARN-on-control-path rule, the last three an
 
 ---
 
-Generated from the `[TECHTOOL-nnn]` issues on https://github.com/digeratiexperts/digeratiexperts-site. If a title and this file disagree, the issue is wrong: fix the issue, then re-run the generator.
+Generated by `scripts/build-techtool-tracker.ps1` from the `[TECHTOOL-nnn]` issues on https://github.com/digeratiexperts/digeratiexperts-site. Close an issue to tick its box, then re-run the generator.
 
