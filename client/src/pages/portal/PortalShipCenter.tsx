@@ -74,7 +74,7 @@ function SampleShipCenter() {
       align: "right",
       className: "w-28",
       cell: (s) => (
-        <Button variant="outline" size="sm" className="border-border bg-card hover:bg-accent" data-testid={`button-track-${s.id}`}>
+        <Button variant="outline" size="sm" disabled className="border-border bg-card hover:bg-accent" data-testid={`button-track-${s.id}`}>
           Track
         </Button>
       ),
@@ -85,7 +85,7 @@ function SampleShipCenter() {
     <PortalLayout title={PAGE_TITLE} description={PAGE_DESCRIPTION}>
       <div className="space-y-4">
         <Callout tone="info" title="Sample data">
-          The shipments and figures shown here are examples. Live shipment tracking appears once your logistics account is linked.
+          The shipments and figures shown here are examples. Tracking and shipment creation are unavailable in this preview.
         </Callout>
 
         <section className="grid grid-cols-2 gap-3" aria-label="Shipment figures">
@@ -113,7 +113,7 @@ function SampleShipCenter() {
         <div className="grid gap-4 md:grid-cols-2">
           <div data-testid="card-create-shipment">
             <Panel id="create-shipment" title="Create new shipment" description="Schedule a new shipment for your business" className="h-full">
-              <Button variant="brand" className="w-full" data-testid="button-create-shipment">
+              <Button variant="brand" disabled className="w-full" data-testid="button-create-shipment">
                 <Package aria-hidden="true" />
                 New Shipment
               </Button>
@@ -121,8 +121,10 @@ function SampleShipCenter() {
           </div>
           <div data-testid="card-contact-logistics">
             <Panel id="logistics-support" title="Logistics support" description="Need help with your shipment?" className="h-full">
-              <Button variant="outline" className="w-full border-border bg-card hover:bg-accent" data-testid="button-contact-logistics">
+              <Button variant="outline" asChild className="w-full border-border bg-card hover:bg-accent" data-testid="button-contact-logistics">
+                <Link href="/portal/tickets">
                 Contact Support
+                </Link>
               </Button>
             </Panel>
           </div>

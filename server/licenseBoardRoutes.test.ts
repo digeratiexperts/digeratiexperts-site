@@ -98,7 +98,8 @@ describe("license patch bay routes", () => {
     const address = server.address();
     if (!address || typeof address === "string") throw new Error("no port");
     base = `http://127.0.0.1:${address.port}/api/portal/admin/license-board`;
-  });
+    // Cold-importing the shared route module can exceed 10s on Windows workers.
+  }, 30_000);
 
   afterAll(async () => {
     await new Promise<void>((resolve) => server.close(() => resolve()));

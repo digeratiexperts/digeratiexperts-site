@@ -1,0 +1,115 @@
+{
+  "390": {
+    "status": 200,
+    "title": "Managed IT Services & Cybersecurity in Arizona | Digerati Experts",
+    "scenes": [
+      {
+        "section": "stats",
+        "frame": "exposure",
+        "shown": true,
+        "loaded": true,
+        "src": "2-exposure-960.webp"
+      },
+      {
+        "section": "challenges",
+        "frame": "gaps",
+        "shown": true,
+        "loaded": true,
+        "src": "3-gaps-960.webp"
+      },
+      {
+        "section": "protection",
+        "frame": "protected",
+        "shown": true,
+        "loaded": true,
+        "src": "4-protected-960.webp"
+      },
+      {
+        "section": "contact",
+        "frame": "close",
+        "shown": true,
+        "loaded": true,
+        "src": "5-close-960.webp"
+      }
+    ],
+    "overflowX": 0,
+    "height": 29522,
+    "errors": []
+  },
+  "768": {
+    "status": 200,
+    "title": "Managed IT Services & Cybersecurity in Arizona | Digerati Experts",
+    "scenes": [
+      {
+        "section": "stats",
+        "frame": "exposure",
+        "shown": true,
+        "loaded": true,
+        "src": "2-exposure-960.webp"
+      },
+      {
+        "section": "challenges",
+        "frame": "gaps",
+        "shown": true,
+        "loaded": true,
+        "src": "3-gaps-960.webp"
+      },
+      {
+        "section": "protection",
+        "frame": "protected",
+        "shown": true,
+        "loaded": true,
+        "src": "4-protected-960.webp"
+      },
+      {
+        "section": "contact",
+        "frame": "close",
+        "shown": true,
+        "loaded": true,
+        "src": "5-close-960.webp"
+      }
+    ],
+    "overflowX": 0,
+    "height": 22519,
+    "errors": []
+  },
+  "1440": {
+    "status": 200,
+    "title": "Managed IT Services & Cybersecurity in Arizona | Digerati Experts",
+    "scenes": [
+      {
+        "section": "stats",
+        "frame": "exposure",
+        "shown": true,
+        "loaded": true,
+        "src": "2-exposure-960.webp"
+      },
+      {
+        "section": "challenges",
+        "frame": "gaps",
+        "shown": true,
+        "loaded": true,
+        "src": "3-gaps-960.webp"
+      },
+      {
+        "section": "protection",
+        "frame": "protected",
+        "shown": true,
+        "loaded": true,
+        "src": "4-protected-960.webp"
+      },
+      {
+        "section": "contact",
+        "frame": "close",
+        "shown": true,
+        "loaded": true,
+        "src": "5-close-960.webp"
+      }
+    ],
+    "overflowX": 0,
+    "height": 15361,
+    "errors": []
+  },
+  "checkedAt": "2026-10-26T19:54:24.476Z",
+  "release": "9c55956 (PR 837), CI run 40218976659, deploy job success 18:13Z 2026-10-25"
+}

@@ -32,8 +32,11 @@ describe("solution request disk spool (#243)", () => {
   it("writes an owner-only file per request and reads it back in spool order", () => {
     expect(writeSpoolEntry(entry("req-bbbbbb", "2026-10-04T00:00:02.000Z"), dir)).toBe(true);
     expect(writeSpoolEntry(entry("req-aaaaaa", "2026-10-04T00:00:01.000Z"), dir)).toBe(true);
-    expect((fs.statSync(dir).mode & 0o777).toString(8)).toBe("700");
-    expect((fs.statSync(path.join(dir, "req-aaaaaa.json")).mode & 0o777).toString(8)).toBe("600");
+    // NTFS does not expose POSIX owner bits through stat; Linux CI retains these checks.
+    if (process.platform !== "win32") {
+      expect((fs.statSync(dir).mode & 0o777).toString(8)).toBe("700");
+      expect((fs.statSync(path.join(dir, "req-aaaaaa.json")).mode & 0o777).toString(8)).toBe("600");
+    }
     expect(listSpoolEntries(dir).map((e) => e.record.id)).toEqual(["req-aaaaaa", "req-bbbbbb"]);
     expect(spoolPendingCount(dir)).toBe(2);
     expect(fs.readdirSync(dir).some((name) => name.endsWith(".tmp"))).toBe(false);
@@ -65,7 +68,7 @@ describe("solution request disk spool (#243)", () => {
     fs.mkdirSync(dir, { recursive: true });
     for (let i = 0; i < SPOOL_MAX_FILES; i += 1) fs.writeFileSync(path.join(dir, `fill-${String(i).padStart(6, "0")}.json`), "{}");
     expect(writeSpoolEntry(entry("req-ffffff"), dir)).toBe(false);
-  });
+  }, 30_000);
 });
 
 describe("production spool location (spool-outside-releases)", () => {
@@ -81,16 +84,14 @@ describe("production spool location (spool-outside-releases)", () => {
 
   it("keeps the spool in <site>/shared, never inside releases/, whichever path the process sees", () => {
     // systemd starts in <site>/current; process.cwd() reports the release it points to.
-    expect(productionSpoolRoot("/home/digeratiexperts.com/releases/20261007115415")).toBe(
-      "/home/digeratiexperts.com/shared/spool",
-    );
-    expect(productionSpoolRoot("/home/digeratiexperts.com/current")).toBe("/home/digeratiexperts.com/shared/spool");
+    expect(productionSpoolRoot(path.join(site, "releases", "20261007115415"))).toBe(path.join(site, "shared", "spool"));
+    expect(productionSpoolRoot(path.join(site, "current"))).toBe(path.join(site, "shared", "spool"));
   });
 
   it("resolves a real symlinked release the way the server does", () => {
     const release = path.join(site, "releases", "r1");
     fs.mkdirSync(release, { recursive: true });
-    fs.symlinkSync(release, path.join(site, "current"));
+    fs.symlinkSync(release, path.join(site, "current"), process.platform === "win32" ? "junction" : "dir");
     const seen = fs.realpathSync(path.join(site, "current"));
     expect(productionSpoolRoot(seen)).toBe(path.join(fs.realpathSync(site), "shared", "spool"));
   });
@@ -108,7 +109,9 @@ describe("production spool location (spool-outside-releases)", () => {
       "DE-W-BBBBBB-222222",
     ]);
     expect(fs.readdirSync(stranded)).toEqual(["DE-W-BBBBBB-222222.json"]);
-    expect((fs.statSync(path.join(target, "desk-tickets", "DE-W-AAAAAA-111111.json")).mode & 0o777).toString(8)).toBe("600");
+    if (process.platform !== "win32") {
+      expect((fs.statSync(path.join(target, "desk-tickets", "DE-W-AAAAAA-111111.json")).mode & 0o777).toString(8)).toBe("600");
+    }
   });
 
   it("does nothing outside a release directory", () => {
@@ -120,7 +123,8 @@ describe("production spool location (spool-outside-releases)", () => {
     const locked = path.join(site, "locked");
     fs.mkdirSync(locked, { mode: 0o500 });
     const runningAsRoot = process.getuid?.() === 0;
-    expect(spoolWritable(path.join(locked, "desk-tickets"))).toBe(runningAsRoot);
+    // mode: 0o500 does not make a Windows directory unwritable.
+    expect(spoolWritable(path.join(locked, "desk-tickets"))).toBe(process.platform === "win32" || runningAsRoot);
   });
 });
 

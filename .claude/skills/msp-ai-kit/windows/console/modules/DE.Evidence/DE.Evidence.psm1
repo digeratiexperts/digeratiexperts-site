@@ -60,7 +60,11 @@ function Get-DEReadiness {
     $inPlan = @($(if ($mode) { Get-DEActions -Mode $mode } else { Get-DEActions }) | ForEach-Object { $_.Id })
     $results = @($inPlan | ForEach-Object { if ($latest.ContainsKey($_)) { $latest[$_].result } else { 'NOT RUN' } })
     $failures = @($latest.Values | Where-Object { $_ -and $_.result -in @('FAIL', 'BLOCKED') } | ForEach-Object { $_.result })
-    $all = @($results) + @($failures)
+    # Every recorded control counts towards the verdict, not only the in-plan ones. A WARN or a PLANNED
+    # recorded against a step the plan does not list, or in a run with no loaded plan at all, must still
+    # stop the run reading READY, and a FAIL is never hidden by a plan that omits its control.
+    $recorded = @($latest.Values | Where-Object { $_ } | ForEach-Object { $_.result })
+    $all = @($results) + $recorded
     $overall = if (-not $inPlan.Count -and -not $latest.Count) { 'NOT RUN' }
     elseif ($inPlan.Count -and -not @($results | Where-Object { $_ -ne 'NOT RUN' }).Count -and -not $failures.Count) { 'NOT RUN' }
     elseif ($all -contains 'FAIL' -or $all -contains 'BLOCKED') { 'NOT READY' }

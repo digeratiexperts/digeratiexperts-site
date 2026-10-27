@@ -43,16 +43,6 @@ const SAMPLE_DESCRIPTION = "Install the client, download your personal configura
 const LIVE_DESCRIPTION = "Install the client and see which of your company's devices are on the DE VPN.";
 
 function SampleVPN() {
-  const [isRegenerating, setIsRegenerating] = useState(false);
-
-  const handleRegenerateConfig = () => {
-    setIsRegenerating(true);
-    setTimeout(() => {
-      setIsRegenerating(false);
-      alert("New VPN configuration generated! Check your email for the updated config file.");
-    }, 2000);
-  };
-
   const connectedCount = connections.filter((c) => c.status === "connected").length;
 
   const columns: DataColumn<VPNConnection>[] = [
@@ -85,7 +75,7 @@ function SampleVPN() {
     <PortalLayout title={PAGE_TITLE} description={SAMPLE_DESCRIPTION}>
       <div className="space-y-4">
         <Callout tone="info" title="Sample data">
-          The status, devices and configuration shown here are examples. Live VPN figures appear once your account is linked.
+          The status, devices and configuration shown here are examples. Downloads and configuration changes are unavailable in this preview.
         </Callout>
 
         <section className="grid grid-cols-2 gap-3 lg:grid-cols-3" aria-label="VPN figures">
@@ -99,7 +89,7 @@ function SampleVPN() {
             {CLIENTS.map((c) => {
               const Icon = c.icon;
               return (
-                <Button key={c.testId} variant="outline" className="h-auto flex-col gap-1.5 border-border bg-card py-4 hover:bg-accent" data-testid={c.testId}>
+                <Button key={c.testId} disabled variant="outline" className="h-auto flex-col gap-1.5 border-border bg-card py-4 hover:bg-accent" data-testid={c.testId}>
                   <Icon className="h-6 w-6 text-muted-foreground" aria-hidden="true" />
                   <span className="text-sm font-medium">{c.label}</span>
                   <span className="text-xs text-muted-foreground">{c.hint}</span>
@@ -114,9 +104,9 @@ function SampleVPN() {
           title="VPN configuration"
           description="Your personal VPN configuration file"
           actions={
-            <Button variant="outline" size="sm" className="border-border bg-card hover:bg-accent" onClick={handleRegenerateConfig} disabled={isRegenerating} data-testid="button-regenerate-config">
-              <RefreshCw className={isRegenerating ? "animate-spin" : ""} aria-hidden="true" />
-              {isRegenerating ? "Regenerating..." : "Regenerate Config"}
+            <Button variant="outline" size="sm" className="border-border bg-card hover:bg-accent" disabled data-testid="button-regenerate-config">
+              <RefreshCw aria-hidden="true" />
+              Regenerate Config
             </Button>
           }
         >
@@ -128,7 +118,7 @@ function SampleVPN() {
                 <p className="pt-num text-xs text-muted-foreground">Generated: Jan 15, 2025</p>
               </div>
             </div>
-            <Button variant="brand" data-testid="button-download-config">
+            <Button variant="brand" disabled data-testid="button-download-config">
               <Download aria-hidden="true" />
               Download
             </Button>

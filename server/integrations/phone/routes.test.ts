@@ -46,7 +46,7 @@ afterEach(() => {
 
 const get = async (who: string) => {
   const res = await fetch(`${base}${PHONE_PATH}`, { headers: { "x-test-user": who } });
-  return { status: res.status, body: (await res.json()) as any };
+  return { status: res.status, cacheControl: res.headers.get("cache-control"), body: (await res.json()) as any };
 };
 
 const live = (extra: Record<string, string> = {}) =>
@@ -82,6 +82,10 @@ describe("GET /api/portal/phone", () => {
     expect(body).toEqual({ success: true, status: { mode: "hidden", provider: null } });
   });
 
+  it("does not allow personal phone responses to be cached", async () => {
+    expect((await get("acme")).cacheControl).toBe("private, no-store");
+  });
+
   it("needsCompany for a DE admin in admin view", async () => {
     live();
     const { body } = await get("admin");
@@ -108,8 +112,8 @@ describe("GET /api/portal/phone", () => {
     expect(tokenUsed(0)).toBe("token:tok-acme");
   });
 
-  it("never calls Insights: call history is not built, with or without PORTAL_PHONE_CALL_HISTORY", async () => {
-    for (const extra of [{}, { PORTAL_PHONE_CALL_HISTORY: "on" }]) {
+  it("does not call Insights unless explicitly enabled", async () => {
+    for (const extra of [{}, { PORTAL_PHONE_CALL_HISTORY: "off" }]) {
       live(extra);
       vendorOk();
       const { body } = await get("acme");
@@ -129,6 +133,36 @@ describe("GET /api/portal/phone", () => {
     await get("adminAsAcme");
     expect(tokenUsed(0)).toBe("token:tok-globex");
     expect(tokenUsed(1)).toBe("token:tok-acme");
+  });
+
+  it("reads only the caller's extension history with the company's own token", async () => {
+    live({ PORTAL_PHONE_CALL_HISTORY: "on" });
+    vendorFetch.mockImplementation(async (url: string) => new Response(JSON.stringify(
+      url.includes("/data/users") ? CYTRACOM_DATA_USERS_EXAMPLE : { code: 200, data: { total: 2, search: { scroll_id: "", records: ["201", "202"].map(extension => ({
+        linked_id: `call-${extension}`, started_on: new Date(Date.now() - 60_000).toISOString(), direction: "outbound", duration: 12, answered: true,
+        dialed_number: "4805551234", legs: [{ caller: { type: "extension", number: extension } }],
+      })) } } }
+    ), { headers: { "content-type": "application/json" } }));
+    const { status, body } = await get("acme");
+    expect(status).toBe(200);
+    expect(body.data.callHistory.calls.map((call: { id: string }) => call.id)).toEqual(["call-201"]);
+    expect(body.data.unavailable).not.toContain("recentCalls");
+    expect(JSON.stringify(body)).not.toContain("4805551234");
+    expect(tokenUsed(0)).toBe("token:tok-acme");
+    expect(tokenUsed(1)).toBe("token:tok-acme");
+  });
+
+  it("keeps extensions available if optional history is denied by the vendor", async () => {
+    live({ PORTAL_PHONE_CALL_HISTORY: "on" });
+    vendorFetch.mockImplementation(async (url: string) => url.includes("/data/users")
+      ? new Response(JSON.stringify(CYTRACOM_DATA_USERS_EXAMPLE))
+      : new Response("sensitive provider denial", { status: 403 }));
+    const { status, body } = await get("acme");
+    expect(status).toBe(200);
+    expect(body.data.extensions).toHaveLength(4);
+    expect(body.data.callHistory.status).toBe("unavailable");
+    expect(body.data.unavailable).toContain("recentCalls");
+    expect(JSON.stringify(body)).not.toContain("sensitive provider denial");
   });
 
   it("502 with a generic message when the vendor fails, detail only in the log", async () => {

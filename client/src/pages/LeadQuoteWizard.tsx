@@ -208,7 +208,7 @@ export default function LeadQuoteWizard() {
   useSEO({
     title: 'Find Your Plan - Managed IT & Cybersecurity',
     description:
-      "Answer a few questions about your team and setup, and we'll match you to the DE plan that fits: IT, Office, Business or Enterprise.",
+      "Answer a few questions about your team and setup for a preliminary ProActive plan suggestion. DE will confirm scope and pricing with you.",
     canonical: '/quote-wizard',
   });
 
@@ -650,13 +650,13 @@ export default function LeadQuoteWizard() {
       body = (
         <>
           <h1 id={headingId} ref={headingRef} tabIndex={-1} className={cn(headlineClass, 'text-[2.75rem] leading-[1.05] md:text-[4rem] md:leading-[1.05]')}>
-            <span className="sr-only">Your match: </span>
+            <span className="sr-only">A plan to discuss: </span>
             <span className="font-bold" data-testid="match-plan">{match.plan}</span>
             <span className="font-bold text-[#D3126A]" aria-hidden="true">.</span>
           </h1>
-          {why(`${describeMatchBasis(answers)} A plan, not a price: we scope that with you.`)}
+          {why(`${describeMatchBasis(answers)} This is a preliminary plan suggestion, not a quote or Cyber Risk Assessment. We'll confirm fit, scope and pricing with you.`)}
           <div className="mt-8 rounded-2xl border border-[var(--de-paper-hairline)] bg-white p-5 md:mt-10 md:p-8">
-            <p className={eyebrowClass}>Why {match.plan} fits</p>
+            <p className={eyebrowClass}>Discuss {match.plan} with DE</p>
             <ul className="mt-4 space-y-3" data-testid="match-reasons">
               {match.reasons.map((reason) => (
                 <li key={reason} className="flex items-start gap-3 text-base leading-relaxed text-[#1A1228]">

@@ -77,13 +77,37 @@ PORTAL_PHONE_CYTRACOM_TOKEN_GLOBEX=<token created by GLOBEX's Cytracom admin>
 |---|---|---|
 | Phone status (Online) | Not shown | Not in the public API: no endpoint for device registration or presence. |
 | Voicemails count | Not shown | Not in the public API: no voicemail message endpoint. |
-| Today's calls / Recent calls | Not built | Insights is documented, but its list response could not be read first-hand; see "Call history (Insights)" below. |
+| Recent calls | Built, opt-in | Masked, personal seven-day history with PORTAL_PHONE_CALL_HISTORY=on; see below. No company-wide totals are claimed. |
 | Phone settings form, quick actions | Sample mode only | They never saved anything; the docs offer no settings-write endpoint. |
 
-The live page says plainly that phone status, call history and voicemail counts are not connected
-yet and points people to the Cytracom app.
+The live page states which capabilities are unavailable and points people to the Cytracom app.
+When enabled, personal history is rendered separately; phone status and voicemail remain unavailable.
 
-### Call history (Insights): NOT BUILT, gap recorded
+### Call history (Insights): built, opt-in
+
+Updated 2026-10-25: the official Insights reference is now accessible. Set
+`PORTAL_PHONE_CALL_HISTORY=on` only after the mapped account's token is approved
+for Insights. The default remains off. The response envelope is
+`data.search.records`, with `data.search.scroll_id` and `data.total`.
+
+`history.ts` reads the previous seven days, at most five pages of 100 records,
+with one 25-second timeout for the whole search. It keeps only calls whose
+leg caller/callee is an `extension` matching the signed-in user's assigned
+extension. No match means no Insights request. The returned list is capped at
+100 and marked incomplete when the search or returned list was truncated.
+Only masked outside numbers (last four digits) leave the server. Names,
+recording URLs, vendor account details and raw records are discarded.
+
+An Insights failure leaves the extension directory available and reports
+history unavailable. Account tokens and mapping continue to use the existing
+per-company configuration. Unit and HTTP tests cover masking, assignment,
+mapping, safe failures, flag defaults and bounded pagination. Live vendor
+acceptance still requires an account token and an authenticated portal user.
+
+The earlier discovery notes below explain why this was blocked before the
+reference became accessible; they are historical, not the current build state.
+
+### Earlier discovery notes (superseded 2026-10-25)
 
 Planned behind a second switch, `PORTAL_PHONE_CALL_HISTORY=on` (default off), because the docs
 do not say whether every token may read Insights. Nothing reads that variable yet, so Insights is
@@ -159,7 +183,7 @@ customer account.
 | `PORTAL_PHONE_PROVIDER` | `cytracom` | Unset = sample page (production default); `hidden` removes the page. |
 | `PORTAL_PHONE_CLIENT_MAP` | JSON object, portal clientId -> token key, e.g. `{"<clientId>":"ACME"}` | Key: letters, digits, `_`, up to 64; upper-cased. Invalid JSON makes the page answer 502. |
 | `PORTAL_PHONE_CYTRACOM_TOKEN_<KEY>` | The token from the steps above | One per mapped company. Secret: never in the repo, never in logs. |
-| `PORTAL_PHONE_CALL_HISTORY` | `on` | Reserved for call history. Not read by any code yet (see the Insights gap). |
+| `PORTAL_PHONE_CALL_HISTORY` | `on` | Enables the signed-in user's masked seven-day call history. Default off; verify Insights access with the company's token first. |
 
 The admin setup page can show each company's state with
 `phoneSetupStatus(env, clientIds)` from `index.ts`: per clientId

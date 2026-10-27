@@ -24,7 +24,8 @@ export function averageResolutionHours(tickets: TicketLike[]): number | null {
 function sameMonth(value: Date | string | null | undefined, now: Date): boolean {
   if (!value) return false;
   const d = new Date(value);
-  return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  // Persisted timestamps are UTC; reporting must not depend on the server's timezone.
+  return d.getUTCMonth() === now.getUTCMonth() && d.getUTCFullYear() === now.getUTCFullYear();
 }
 
 export function buildCompanyMetrics(input: {

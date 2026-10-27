@@ -30,6 +30,25 @@
 
 version: 2
 claims:
+  - id: w1-dashboard-truth
+    owner: claude
+    subsystem: portal-home
+    branch: claude/w1-dashboard-truth-20261026
+    base_sha: 6fea7ffa
+    files:
+      - client/src/pages/portal/PortalDashboard.tsx (+ new PortalDashboard.test.ts)
+      - server/routes.ts (GET /api/portal/dashboard registration only)
+      - server/portalDashboardStats.ts, server/portalDashboardStats.test.ts (dashboard handler, strict reads)
+      - server/zoho/zohoBilling.ts, server/zoho/zohoDesk.ts (additive strict read methods + injectable client; legacy methods unchanged)
+      - server/portalDeskTickets.ts, server/portalDeskTickets.test.ts (summarizeTicketStatuses, normalizeLocalTicketStatus)
+      - scripts/qa/w1-dashboard-truth.mjs, artifacts/visual-qa/w1-dashboard-truth/**
+    status: active
+    started: 2026-10-26
+    note: >-
+      Delivery sizing W1 / journey 10: unknown is not zero, waiting-on-you is only
+      the explicit pending_client state (server count over all tickets), no
+      monitoring claim, honest error states. Overlap check 2026-10-26: no open PR
+      touches these files.
   - id: design-basics-type-titles-labels
     owner: claude
     subsystem: marketing-typography
@@ -49,9 +68,9 @@ claims:
     files:
       - client/src/pages/homepage-v2/scene/** (new; HomeScene component and its own stylesheet)
       - client/src/pages/homepage-v2/sections/{ThreatStats,Challenges,Protection,Contact}Section.tsx (one import and one first-child line each)
-      - artifacts/visual-qa/home-v2-scene-story/**
+      - artifacts/visual-qa/home-v2-scene-story/** (live/ added with the release record)
       - design/approved/homepage-scene-story-2026-10.md (scope extended to /)
-    status: approved
+    status: verified-live
     started: 2026-10-25
     note: >-
       Joe, 2026-10-25: "make version 10 the live homepage", then, after the
@@ -67,6 +86,17 @@ claims:
       Overlap check 2026-10-25: open PRs 717 (homepage-v2.css tail, SiteFooter),
       827 (global font) and 832 (cookie banner, Ask DE launcher) touch none of
       these files; lane-h-homepage-refinement's branch has nothing unmerged.
+      RELEASED 2026-10-25: Joe reviewed the before/after screenshots and
+      said "Merge", then "Approved". Merged as 9c55956f (PR 837) after CI
+      passed on 7273aa1e; CI run 40218976659 deployed 9c55956f to the
+      production VPS (deploy and runtime verification succeeded 18:13Z,
+      Cloudflare cache purged). Checked on digeratiexperts.com 2026-10-26 at
+      390, 768 and 1440: all four scene sections (#stats exposure, #challenges
+      gaps, #protection protected, #contact close) render with their frames
+      loaded, no horizontal overflow, no page errors
+      (artifacts/visual-qa/home-v2-scene-story/live/). The network frame
+      stays unused on /. VERIFIED LIVE. Files released.
+
   - id: city-pages-truth-rhythm
     owner: claude
     subsystem: marketing-locations
@@ -4102,8 +4132,10 @@ claims:
       PR 587, merged as 7d7b1af (2026-10-14, Joe "merge or push this"). VERIFIED LIVE: CI run
       38636911735 deploy job logged DE_DEPLOYED_RELEASE 7d7b1af at 21:11Z, replacing 4505f0c0.
       Not verified: /llms.txt (Cloudflare purge covers client/public only; check the live file).
-      Contract templates (document_templates/*.docx) re-keyed to 325-480-9870 in a follow-up;
-      PDFs and the admin@ email still open for DE.
+      Contract templates (document_templates/*.docx) re-keyed to 325-480-9870 in PR 841 (merged
+      ce66d8f6); the eight affected PDFs re-exported from those docx with LibreOffice in a follow-up PR
+      (order form, network, UCaaS and vCIO SOWs gained a short last page from the Arimo body
+      font; DE to tighten the docx if wanted). admin@digerati-experts.com kept (Joe, 2026-10-26).
       Closeout checkpoint 2026-10-18: PR #587 merged 7d7b1af56ee7cb958e707dbd21f092d8d00ee9c0 on 2026-10-14 and is included in released 9283da04. This retires a stale in-review claim without asserting every live device/content check. The separate unsupported free-assessment announcement discovered in live verification is repaired in the current closeout branch.
 
   - id: zoho-oauth-manager

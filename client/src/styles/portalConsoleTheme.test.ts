@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 // Joe, 2026-10-14: "a dark theme that is like Entra and IT dashboards" for the Client Portal.
 // Opt-in "Admin console" theme: neutral greys, one blue accent, 4px corners, left-bar nav.
 const root = path.resolve(import.meta.dirname, "../../..");
-const css = readFileSync(path.join(root, "client/src/styles/portal.css"), "utf8");
+const css = readFileSync(path.join(root, "client/src/styles/portal.css"), "utf8").replace(/\r\n/g, "\n");
 
 function consoleBlock(): string {
   const start = css.indexOf('html.de-portal-root[data-theme="console"],\n.de-portal[data-theme="console"],\nbody.de-portal-scope[data-portal-theme="console"] {');

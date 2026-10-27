@@ -53,6 +53,34 @@ export function mapDeskStatus(status?: string | null, statusType?: string | null
   return "open";
 }
 
+/**
+ * Dashboard counts from portal statuses. "Open" is work with DE (open or in
+ * progress); "waiting on client" is only the explicit pending_client state,
+ * never any status that merely contains the word "pending".
+ */
+export function summarizeTicketStatuses(statuses: readonly PortalTicketStatus[]): {
+  openTickets: number;
+  waitingOnClient: number;
+  resolvedTickets: number;
+} {
+  let openTickets = 0;
+  let waitingOnClient = 0;
+  let resolvedTickets = 0;
+  for (const s of statuses) {
+    if (s === "open" || s === "in_progress") openTickets++;
+    else if (s === "pending_client") waitingOnClient++;
+    else if (s === "resolved" || s === "closed") resolvedTickets++;
+  }
+  return { openTickets, waitingOnClient, resolvedTickets };
+}
+
+/** Local ticket rows use "in-progress" in older data; normalize to the portal set. */
+export function normalizeLocalTicketStatus(status?: string | null): PortalTicketStatus {
+  const s = (status || "").trim().toLowerCase().replace(/[-\s]+/g, "_");
+  if (s === "in_progress" || s === "pending_client" || s === "resolved" || s === "closed") return s;
+  return "open";
+}
+
 export function mapDeskPriority(priority?: string | null): PortalTicketPriority {
   const p = (priority || "").trim().toLowerCase();
   if (p === "urgent" || p === "critical") return "critical";
