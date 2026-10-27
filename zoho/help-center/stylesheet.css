@@ -1,0 +1,2485 @@
+/* ===== DIGERATI EXPERTS SUPPORT PORTAL - COMPLETE CSS ===== */
+
+/* ===== CSS VARIABLES ===== */
+:root {
+  --navy: #1e293b;
+  --navy-light: #334155;
+  --yellow: #eeff00;
+  --yellow-alt: #fbbf24;
+  --black: #000000;
+  --white: #ffffff;
+  --gray-light: #f8fafc;
+  --gray-med: #94a3b8;
+  --topnav-h: 70px;
+  --statusbar-h: 36px;
+
+  /* Override Zoho blues via CSS vars */
+  --reading-guide-line-bg: var(--yellow) !important;
+  --color-royalBlue1: var(--black) !important;
+  --color-royalBlue2: var(--black) !important;
+  --color-royalBlue4: var(--yellow) !important;
+  --color-blueTint7: var(--yellow) !important;
+  --color-blueTint10: var(--yellow) !important;
+}
+
+/* ===== RESET ===== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* ===== BODY & BACKGROUND ===== */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  background: #000;
+  padding-top: 0 !important;
+  position: relative;
+}
+
+/* Background image layer */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: url("https://digerati-experts.com/wp-content/uploads/2025/02/Zoho_Portal.jpg")
+    no-repeat center center;
+  background-size: cover;
+  opacity: 1;
+  z-index: -2;
+}
+
+/* Kill any overlay Zoho might inject */
+body::after {
+  content: none !important;
+}
+
+/* ===== TRANSPARENCY OVERRIDES ===== */
+html body,
+body.body,
+div.body,
+.body,
+#container,
+#container > .body,
+body > div.body,
+.Layout__oneColumn,
+.Layout__twoColumn,
+.Layout__twoColumn2,
+.Layout__twoColumnReverse,
+[class*="Layout__"],
+#content,
+.zd-main-content,
+.portal-content,
+.main-content,
+.content-wrapper,
+.page-container,
+.zd-container,
+.container-fluid,
+[class*="portal-"] > div,
+main,
+body > div,
+body > main,
+#wrapper,
+#main-wrapper,
+.wrapper {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+/* Push Zoho content down below fixed nav + status bar */
+#container,
+.page-container,
+.portal-content,
+.zd-main-content,
+.main-content,
+#content,
+.Layout__oneColumn,
+.Layout__twoColumn,
+.Layout__twoColumn2 {
+  padding-top: calc(var(--topnav-h) + var(--statusbar-h)) !important;
+  max-width: 100% !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+/* ===== GLOBAL CONTENT CARDS ===== */
+.card,
+.panel,
+.box,
+[class*="card-"],
+[class*="panel-"],
+.article-card,
+.ticket-card,
+.kb-card,
+[class*="Container__"],
+[class*="Article"],
+[class*="Ticket"],
+[class*="List"] {
+  background: #ffffff !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25) !important;
+  border: 2px solid var(--yellow) !important;
+  padding: 1.5rem !important;
+}
+
+/* De-blue body content links */
+.portal-content a,
+.main-content a,
+.zd-main-content a,
+.page-container a,
+.content-wrapper a,
+#content a {
+  color: var(--yellow-alt) !important;
+  text-decoration: none !important;
+  font-weight: 600;
+}
+
+.portal-content a:hover,
+.main-content a:hover,
+.zd-main-content a:hover,
+.page-container a:hover,
+.content-wrapper a:hover,
+#content a:hover {
+  color: var(--yellow) !important;
+  text-decoration: underline !important;
+}
+
+/* ===== TOP NAVIGATION ===== */
+.top-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1101;
+  background: var(--black);
+  border-bottom: 3px solid var(--yellow);
+  height: var(--topnav-h);
+}
+
+.top-nav-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 2rem;
+  height: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 2rem;
+}
+
+.nav-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.logo {
+  height: 42px;
+  width: auto;
+}
+
+.brand-text h1 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--white);
+  letter-spacing: -0.02em;
+}
+
+/* Navigation Menu */
+.nav-menu {
+  display: flex;
+  list-style: none;
+  gap: 0.5rem;
+  flex: 1;
+  justify-content: center;
+}
+
+.nav-menu li a {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.75rem 1.5rem;
+  background: transparent;
+  color: var(--white);
+  text-decoration: none;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  border-radius: 6px;
+  transition: all 0.2s;
+  border: 2px solid transparent;
+}
+
+.nav-menu li a:hover {
+  background: var(--white);
+  color: var(--black);
+  border-color: var(--yellow);
+}
+
+.nav-menu li.active a {
+  background: var(--yellow);
+  color: var(--black);
+  border-color: var(--yellow);
+}
+
+/* Right Side Container */
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* Generic top-right buttons (Sign In, User Menu) */
+.nav-right a,
+.nav-right button,
+.nav-right > div,
+.nav-right [role="button"],
+.user-menu-icon,
+.user-settings-icon,
+[class*="UserMenu"],
+[class*="user-menu"],
+.zd-user-menu,
+.nav-right a[href*="preference"],
+.nav-right > div > a,
+.user-preference-link {
+  background: transparent !important;
+  border: 2px solid var(--yellow) !important;
+  border-radius: 10px !important;
+  padding: 0.65rem 1.5rem !important;
+  color: var(--white) !important;
+  font-size: 0.9375rem !important;
+  font-weight: 600 !important;
+  text-decoration: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.35rem !important;
+  cursor: pointer !important;
+  transition: all 0.18s ease-out !important;
+  box-shadow: none !important;
+}
+
+.nav-right a:hover,
+.nav-right button:hover,
+.user-menu-icon:hover,
+.user-settings-icon:hover,
+[class*="UserMenu"]:hover {
+  background: var(--yellow) !important;
+  color: var(--black) !important;
+}
+
+/* Primary CTA: Add Ticket Button */
+.nav-right .nav-ticket-btn,
+.nav-right > .nav-ticket-btn {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+
+.nav-right > div.nav-ticket-btn,
+.nav-right > div.nav-ticket-btn *:not(a):not(button) {
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+.nav-ticket-btn a,
+.nav-ticket-btn button {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.45rem !important;
+  padding: 0.7rem 1.9rem !important;
+  border-radius: 999px !important;
+  border: 2px solid var(--yellow) !important;
+  background: var(--yellow) !important;
+  color: var(--black) !important;
+  font-size: 0.95rem !important;
+  font-weight: 700 !important;
+  text-decoration: none !important;
+  max-width: none !important;
+  min-width: 170px !important;
+  white-space: nowrap !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  box-shadow: none !important;
+}
+
+.nav-ticket-btn a i,
+.nav-ticket-btn a svg {
+  font-size: 1rem !important;
+  color: inherit !important;
+}
+
+.nav-ticket-btn a:hover,
+.nav-ticket-btn button:hover {
+  background: #fefce8 !important;
+  border-color: var(--yellow) !important;
+  color: var(--black) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(238, 255, 0, 0.35) !important;
+}
+
+/* Accessibility / Customize Button */
+.nav-right .CustomizeContainer__CustomizeOption,
+.nav-right .CustomizeContainer__aPlus,
+.CustomizeContainer__CustomizeOption,
+.CustomizeContainer__aPlus,
+[data-id="customize"],
+[title="Accessibility Settings"] {
+  border: none !important;
+  background: transparent !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.CustomizeContainer__aPlus svg,
+[data-id="customize"] svg,
+[title="Accessibility Settings"] svg {
+  display: inline-block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.CustomizeContainer__aPlus::before,
+[data-id="customize"]::before {
+  content: none !important;
+}
+
+/* Accessibility icon: white by default, yellow on hover */
+.CustomizeContainer__aPlus svg,
+.CustomizeContainer__aPlus svg *,
+[data-id="customize"] svg,
+[data-id="customize"] svg *,
+[title="Accessibility Settings"],
+[title="Accessibility Settings"] * {
+  fill: #ffffff !important;
+  stroke: #ffffff !important;
+  color: #ffffff !important;
+}
+
+.nav-right .CustomizeContainer__aPlus:hover svg,
+.nav-right .CustomizeContainer__aPlus:hover svg *,
+.nav-right [data-id="customize"]:hover svg,
+.nav-right [data-id="customize"]:hover svg *,
+[title="Accessibility Settings"]:hover,
+[title="Accessibility Settings"]:hover * {
+  fill: var(--yellow) !important;
+  stroke: var(--yellow) !important;
+  color: var(--yellow) !important;
+}
+
+/* ===== STATUS BAR ===== */
+.status-bar {
+  position: fixed;
+  top: var(--topnav-h);
+  left: 0;
+  right: 0;
+  z-index: 1100;
+  background: rgba(0, 0, 0, 0.96);
+  border-bottom: 2px solid rgba(238, 255, 0, 0.3);
+  height: var(--statusbar-h);
+}
+
+.status-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 2rem;
+  height: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.875rem;
+}
+
+.status-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--yellow);
+  border-radius: 50%;
+  box-shadow: 0 0 0 0 rgba(238, 255, 0, 0.7);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(238, 255, 0, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(238, 255, 0, 0);
+  }
+}
+
+.status-text {
+  color: var(--white);
+  font-weight: 500;
+}
+
+.status-right {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.status-right strong {
+  color: var(--yellow);
+  font-weight: 700;
+}
+
+/* ===== SUBMIT TICKET FORM - BLACK BACKGROUND, FULL WIDTH ===== */
+
+/* Hide right column completely */
+.TicketFormRightContainer__wrapper,
+.TicketFormRightContainer__widget,
+#scrollStickyContainer,
+.ScrollSticky__type2,
+[class*="TicketFormRightContainer"],
+[class*="scrollSticky"] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+}
+
+/* Hide empty widget containers in the form */
+.TicketFormLeftContainer__widget {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Form wrapper - full width edge-to-edge */
+.TicketFormLeftContainer__wrapper {
+  max-width: 100% !important;
+  width: 100% !important;
+  margin: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+.TicketFormLeftContainer__form {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+/* Main form card - BLACK BACKGROUND, NO BORDER */
+.TicketFormLeftContainer__part {
+  max-width: 100% !important;
+  width: 100% !important;
+  margin: 1.5rem 0 0 0 !important;
+  background: #000000 !important;
+  border-radius: 12px !important;
+  border: none !important;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8) !important;
+  padding: 3rem 4rem !important;
+}
+
+/* Remove global card styling inside the form */
+.TicketFormLeftContainer__part .TicketFormLeftContainer__title,
+.TicketFormLeftContainer__part .TicketFormLeftContainer__w50,
+.TicketFormLeftContainer__part .TicketFormLeftContainer__sectionName,
+.TicketFormLeftContainer__part .Form__input,
+.TicketFormLeftContainer__part .Form__formElement,
+.TicketFormLeftContainer__part [class*="Container__"],
+.TicketFormLeftContainer__part [class*="Ticket"],
+.TicketFormLeftContainer__part [class*="List"] {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+/* Form title "Submit a ticket" */
+.TicketFormLeftContainer__part h2,
+.TicketFormLeftContainer__part .TicketFormLeftContainer__title {
+  color: var(--white) !important;
+  font-size: 2rem !important;
+  font-weight: 700 !important;
+  margin-bottom: 2.5rem !important;
+}
+
+/* Section titles - White text with yellow accent line */
+.TicketFormLeftContainer__sectionName,
+.Ticket_Information {
+  margin-top: 2rem !important;
+  margin-bottom: 1.5rem !important;
+  padding-bottom: 0.75rem !important;
+  border-bottom: 2px solid var(--yellow) !important;
+  font-size: 1.125rem !important;
+  letter-spacing: 0.05em !important;
+  text-transform: uppercase !important;
+  color: var(--white) !important;
+  font-weight: 700 !important;
+}
+
+/* First section - no top margin */
+.TicketFormLeftContainer__sectionName:first-of-type,
+.Ticket_Information:first-of-type {
+  margin-top: 0 !important;
+}
+
+/* Field labels - WHITE TEXT */
+.TicketFormLeftContainer__part label,
+.TicketFormLeftContainer__part .Form__label {
+  color: var(--white) !important;
+  font-weight: 600 !important;
+  font-size: 1rem !important;
+  margin-bottom: 0.625rem !important;
+  display: block !important;
+}
+
+/* Required asterisk - yellow */
+.TicketFormLeftContainer__part .Form__required {
+  color: var(--yellow) !important;
+}
+
+/* Field spacing */
+.Form__input,
+.Form__formElement {
+  margin-bottom: 1.75rem !important;
+}
+
+/* Input fields - Better contrast with lighter background */
+.TicketFormLeftContainer__part .Input__formInput,
+.TicketFormLeftContainer__part input[type="text"],
+.TicketFormLeftContainer__part input[type="email"],
+.TicketFormLeftContainer__part input[type="LookUp"],
+.TicketFormLeftContainer__part textarea,
+.TicketFormLeftContainer__part select,
+.TicketFormLeftContainer__part .Captcha__Wd100 input {
+  width: 100% !important;
+  border-radius: 8px !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  padding: 0.875rem 1.125rem !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  box-shadow: none !important;
+  color: var(--white) !important;
+  font-size: 1rem !important;
+  transition: all 0.2s ease !important;
+}
+
+/* Input focus state - Yellow border with glow */
+.TicketFormLeftContainer__part .Input__formInput:focus,
+.TicketFormLeftContainer__part input[type="text"]:focus,
+.TicketFormLeftContainer__part input[type="email"]:focus,
+.TicketFormLeftContainer__part input[type="LookUp"]:focus,
+.TicketFormLeftContainer__part textarea:focus,
+.TicketFormLeftContainer__part select:focus,
+.TicketFormLeftContainer__part .Captcha__Wd100 input:focus {
+  border-color: var(--yellow) !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 0 0 2px rgba(238, 255, 0, 0.2) !important;
+  outline: none !important;
+}
+
+/* Placeholder text - muted gray */
+.TicketFormLeftContainer__part input::placeholder,
+.TicketFormLeftContainer__part textarea::placeholder {
+  color: rgba(255, 255, 255, 0.45) !important;
+  opacity: 1 !important;
+}
+
+/* Description rich text area */
+.TicketFormLeftContainer__part .TextEditor__editDraft,
+.TicketFormLeftContainer__part #description {
+  min-height: 180px !important;
+  border-radius: 8px !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  padding: 0.875rem 1.125rem !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: var(--white) !important;
+  font-size: 1rem !important;
+}
+
+.TicketFormLeftContainer__part .TextEditor__editDraft:focus,
+.TicketFormLeftContainer__part #description:focus {
+  border-color: var(--yellow) !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 0 0 2px rgba(238, 255, 0, 0.2) !important;
+  outline: none !important;
+}
+
+/* ==== RICH TEXT EDITOR TOOLBAR ==== */
+
+/* Toolbar text and elements - BLACK */
+.TicketFormLeftContainer__part .KB_Editor_common_DropDown,
+.TicketFormLeftContainer__part .KB_Editor_common_DropDown *,
+.TicketFormLeftContainer__part .KB_Editor_menus,
+.TicketFormLeftContainer__part .KB_Editor_menus *,
+.TicketFormLeftContainer__part .KB_Editor_text,
+.TicketFormLeftContainer__part [class*="KB_Editor"],
+.TicketFormLeftContainer__part [class*="KB_Editor"] *,
+.TicketFormLeftContainer__part .TextEditor__toolbar,
+.TicketFormLeftContainer__part .TextEditor__toolbar *,
+.TicketFormLeftContainer__part [class*="TextEditor__toolbar"],
+.TicketFormLeftContainer__part [class*="TextEditor__toolbar"] * {
+  color: #000000 !important;
+  -webkit-text-fill-color: #000000 !important;
+}
+
+/* Toolbar buttons */
+.TicketFormLeftContainer__part .TextEditor__toolbar button,
+.TicketFormLeftContainer__part [class*="toolbar"] button,
+.TicketFormLeftContainer__part .KB_Editor_menus button,
+.TicketFormLeftContainer__part [class*="KB_Editor"] button {
+  color: #000000 !important;
+  background: rgba(255, 255, 255, 0.9) !important;
+  border: 1px solid rgba(0, 0, 0, 0.15) !important;
+}
+
+.TicketFormLeftContainer__part .TextEditor__toolbar button:hover,
+.TicketFormLeftContainer__part [class*="toolbar"] button:hover,
+.TicketFormLeftContainer__part .KB_Editor_menus button:hover {
+  background: rgba(238, 255, 0, 0.2) !important;
+  border-color: var(--yellow) !important;
+  color: #000000 !important;
+}
+
+/* Toolbar icons - YELLOW */
+.TicketFormLeftContainer__part .KB_Editor_menus svg,
+.TicketFormLeftContainer__part .KB_Editor_menus svg *,
+.TicketFormLeftContainer__part .KB_Editor_menus path,
+.TicketFormLeftContainer__part .KB_Editor_common_DropDown svg,
+.TicketFormLeftContainer__part .KB_Editor_common_DropDown svg *,
+.TicketFormLeftContainer__part .KB_Editor_common_DropDown path,
+.TicketFormLeftContainer__part [class*="KB_Editor"] svg,
+.TicketFormLeftContainer__part [class*="KB_Editor"] svg *,
+.TicketFormLeftContainer__part [class*="KB_Editor"] path,
+.TicketFormLeftContainer__part .TextEditor__toolbar svg,
+.TicketFormLeftContainer__part .TextEditor__toolbar svg *,
+.TicketFormLeftContainer__part .TextEditor__toolbar path,
+.TicketFormLeftContainer__part .TextEditor__toolbar button svg,
+.TicketFormLeftContainer__part .TextEditor__toolbar button path,
+.TicketFormLeftContainer__part .TextEditor__toolbar i {
+  fill: var(--yellow) !important;
+  stroke: var(--yellow) !important;
+  color: var(--yellow) !important;
+}
+
+/* Toolbar icons on hover - brighter yellow */
+.TicketFormLeftContainer__part .TextEditor__toolbar button:hover svg,
+.TicketFormLeftContainer__part .TextEditor__toolbar button:hover svg *,
+.TicketFormLeftContainer__part .TextEditor__toolbar button:hover path,
+.TicketFormLeftContainer__part [class*="toolbar"] button:hover svg,
+.TicketFormLeftContainer__part .KB_Editor_menus button:hover svg,
+.TicketFormLeftContainer__part .KB_Editor_menus button:hover path {
+  fill: #fefce8 !important;
+  stroke: #fefce8 !important;
+  color: #fefce8 !important;
+}
+
+/* Keep white backgrounds for editor dropdowns */
+.TicketFormLeftContainer__part .KB_Editor_common_DropDown {
+  background-color: #ffffff !important;
+}
+
+/* ==== RICH TEXT EDITOR DROPDOWN MENU - IMPROVED ==== */
+
+/* Main dropdown container */
+.KB_Editor_common_DropDown {
+  background: #ffffff !important;
+  border: 2px solid var(--yellow) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25) !important;
+  padding: 8px 0 !important;
+  min-width: 200px !important;
+  z-index: 9999 !important;
+}
+
+/* List items */
+.KB_Editor_common_DropDown ul {
+  list-style: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.KB_Editor_common_DropDown li {
+  padding: 12px 20px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 14px !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06) !important;
+}
+
+.KB_Editor_common_DropDown li:last-child {
+  border-bottom: none !important;
+}
+
+.KB_Editor_common_DropDown li:hover {
+  background: rgba(238, 255, 0, 0.15) !important;
+  padding-left: 24px !important;
+}
+
+/* Icon containers - BLACK BACKGROUND */
+.KB_Editor_common_DropDown li span[class*="KBEditortools-"] {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 32px !important;
+  height: 32px !important;
+  flex-shrink: 0 !important;
+  background: #000000 !important;
+  border-radius: 6px !important;
+  border: 1px solid rgba(238, 255, 0, 0.3) !important;
+}
+
+/* SVG icons - YELLOW on black background */
+.KB_Editor_common_DropDown li span[class*="KBEditortools-"] svg,
+.KB_Editor_common_DropDown li span[class*="KBEditortools-"] svg *,
+.KB_Editor_common_DropDown li span[class*="KBEditortools-"] use {
+  width: 18px !important;
+  height: 18px !important;
+  fill: var(--yellow) !important;
+  stroke: var(--yellow) !important;
+}
+
+/* Icon background on hover - yellow */
+.KB_Editor_common_DropDown li:hover span[class*="KBEditortools-"] {
+  background: var(--yellow) !important;
+  border-color: var(--yellow) !important;
+}
+
+/* Icons turn black on hover */
+.KB_Editor_common_DropDown li:hover span[class*="KBEditortools-"] svg,
+.KB_Editor_common_DropDown li:hover span[class*="KBEditortools-"] svg *,
+.KB_Editor_common_DropDown li:hover span[class*="KBEditortools-"] use {
+  fill: #000000 !important;
+  stroke: #000000 !important;
+}
+
+/* Text labels - BLACK */
+.KB_Editor_common_DropDown .KB_Editor_text {
+  color: #000000 !important;
+  -webkit-text-fill-color: #000000 !important;
+  font-size: 15px !important;
+  font-weight: 500 !important;
+  line-height: 1.4 !important;
+  flex: 1 !important;
+}
+
+/* Hover state - bolder text */
+.KB_Editor_common_DropDown li:hover .KB_Editor_text {
+  font-weight: 600 !important;
+  color: #000000 !important;
+}
+
+/* ==== STANDARD FORM DROPDOWNS ==== */
+
+/* Dropdown text (Priority, Product Name, etc.) - BLACK text on WHITE */
+.TicketFormLeftContainer__part .DropDown__main,
+.TicketFormLeftContainer__part .DropDown__input,
+.TicketFormLeftContainer__part .DropDown__hide,
+.TicketFormLeftContainer__part .DropDown__normal,
+.TicketFormLeftContainer__part .DropDown__activeNormal,
+.TicketFormLeftContainer__part .commonStyle__link,
+.TicketFormLeftContainer__part .commonStyle__active,
+.TicketFormLeftContainer__part li[class*="DropDown"]:not(.KB_Editor_common_DropDown li),
+.TicketFormLeftContainer__part li[data-id*="field_"],
+.TicketFormLeftContainer__part li[data-act-clickable="true"],
+.TicketFormLeftContainer__part li[data-act-clickable="true"] span {
+  color: #000000 !important;
+  -webkit-text-fill-color: #000000 !important;
+}
+
+/* Dropdown containers - white background */
+.TicketFormLeftContainer__part .DropDown__main,
+.TicketFormLeftContainer__part .DropDown__input,
+.TicketFormLeftContainer__part ul[class*="DropDown"]:not(.KB_Editor_common_DropDown),
+.TicketFormLeftContainer__part .DropDown__hide:not(.KB_Editor_common_DropDown) {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+}
+
+/* Dropdown arrow - black */
+.TicketFormLeftContainer__part .DropDown__main svg,
+.TicketFormLeftContainer__part .DropDown__main path,
+.TicketFormLeftContainer__part .DropDown__input svg,
+.TicketFormLeftContainer__part .DropDown__input path {
+  fill: #000000 !important;
+  stroke: #000000 !important;
+}
+
+/* ==== FILE UPLOAD AREA ==== */
+
+.TicketFormLeftContainer__part .FileUpload__container,
+.TicketFormLeftContainer__part [class*="FileUpload"],
+.TicketFormLeftContainer__part [class*="Attachment"],
+.TicketFormLeftContainer__part .Form__attachmentContainer {
+  border: 2px dashed rgba(255, 255, 255, 0.35) !important;
+  border-radius: 8px !important;
+  padding: 2.5rem !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+  text-align: center !important;
+  transition: all 0.2s ease !important;
+  min-height: 120px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 1rem !important;
+}
+
+.TicketFormLeftContainer__part .FileUpload__container:hover,
+.TicketFormLeftContainer__part [class*="FileUpload"]:hover {
+  border-color: var(--yellow) !important;
+  background: rgba(238, 255, 0, 0.1) !important;
+}
+
+/* Upload area text - WHITE */
+.TicketFormLeftContainer__part .FileUpload__container *,
+.TicketFormLeftContainer__part [class*="FileUpload"] *,
+.TicketFormLeftContainer__part [class*="Attachment"] *,
+.TicketFormLeftContainer__part .Form__attachmentContainer * {
+  color: var(--white) !important;
+}
+
+/* FIX: Remove grey background from upload icon */
+.TicketFormLeftContainer__part .Upload__type1 .Upload__uploadbg,
+.TicketFormLeftContainer__part .FileUpload__icon,
+.TicketFormLeftContainer__part [class*="Upload__uploadbg"] {
+  background-color: transparent !important;
+  background: transparent !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Upload icon - YELLOW */
+.TicketFormLeftContainer__part .FileUpload__icon,
+.TicketFormLeftContainer__part .FileUpload__icon svg,
+.TicketFormLeftContainer__part [class*="FileUpload"] svg,
+.TicketFormLeftContainer__part [class*="Attachment"] svg,
+.TicketFormLeftContainer__part .Upload__uploadbg svg {
+  fill: var(--yellow) !important;
+  stroke: var(--yellow) !important;
+  width: 48px !important;
+  height: 48px !important;
+}
+
+/* Upload button inside upload area */
+.TicketFormLeftContainer__part .FileUpload__container button,
+.TicketFormLeftContainer__part [class*="FileUpload"] button,
+.TicketFormLeftContainer__part [class*="Attachment"] button {
+  background: var(--yellow) !important;
+  border: 2px solid var(--yellow) !important;
+  color: var(--black) !important;
+  border-radius: 999px !important;
+  padding: 0.75rem 2rem !important;
+  font-size: 0.9375rem !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  margin-top: 0.5rem !important;
+}
+
+.TicketFormLeftContainer__part .FileUpload__container button:hover,
+.TicketFormLeftContainer__part [class*="FileUpload"] button:hover {
+  background: #fefce8 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(238, 255, 0, 0.35) !important;
+}
+
+/* Uploaded file list items */
+.TicketFormLeftContainer__part .FileUpload__fileList,
+.TicketFormLeftContainer__part .FileUpload__file,
+.TicketFormLeftContainer__part [class*="attachedFile"] {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 6px !important;
+  padding: 0.75rem 1rem !important;
+  color: var(--white) !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.75rem !important;
+  margin-top: 0.5rem !important;
+}
+
+/* File delete button */
+.TicketFormLeftContainer__part .FileUpload__delete,
+.TicketFormLeftContainer__part [class*="attachedFile"] button,
+.TicketFormLeftContainer__part [class*="removeAttachment"] {
+  background: rgba(255, 59, 48, 0.15) !important;
+  border: 1px solid rgba(255, 59, 48, 0.3) !important;
+  color: #ff3b30 !important;
+  border-radius: 4px !important;
+  padding: 0.375rem 0.75rem !important;
+  font-size: 0.875rem !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.TicketFormLeftContainer__part .FileUpload__delete:hover,
+.TicketFormLeftContainer__part [class*="attachedFile"] button:hover {
+  background: rgba(255, 59, 48, 0.25) !important;
+  border-color: #ff3b30 !important;
+}
+
+/* ==== PRODUCT LOOKUP ==== */
+
+.TicketFormLeftContainer__part .ProductLookupContainer__positionRel {
+  border-radius: 8px !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  display: flex !important;
+  align-items: stretch !important;
+  overflow: hidden !important;
+}
+
+.TicketFormLeftContainer__part .ProductLookupContainer__positionRel:focus-within {
+  border-color: var(--yellow) !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 0 0 2px rgba(238, 255, 0, 0.2) !important;
+}
+
+.TicketFormLeftContainer__part .ProductLookupContainer__positionRel input {
+  border: none !important;
+  border-radius: 0 !important;
+  padding: 0.875rem 1.125rem !important;
+  background: transparent !important;
+  color: var(--white) !important;
+  flex: 1 !important;
+}
+
+.TicketFormLeftContainer__part .ProductLookupContainer__positionRel input:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.TicketFormLeftContainer__part .ProductLookupContainer__searchIcon {
+  border-left: 1px solid rgba(255, 255, 255, 0.2) !important;
+  padding: 0 1.125rem !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.TicketFormLeftContainer__part .ProductLookupContainer__searchIcon:hover {
+  background: var(--yellow) !important;
+}
+
+.TicketFormLeftContainer__part .ProductLookupContainer__searchIcon:hover svg {
+  fill: var(--black) !important;
+}
+
+.TicketFormLeftContainer__part .ProductLookupContainer__searchIcon svg {
+  fill: var(--white) !important;
+  width: 18px !important;
+  height: 18px !important;
+}
+
+/* ==== PRODUCT LOOKUP POPUP MODAL ==== */
+
+.ProductPopupContainer__searchpanelinner {
+  background: #000000 !important;
+  border: 2px solid var(--yellow) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 20px 60px rgba(238, 255, 0, 0.3) !important;
+  overflow: hidden !important;
+}
+
+.ProductPopupContainer__resultslistsectiontitle,
+.ProductPopupContainer__header {
+  background: rgba(238, 255, 0, 0.1) !important;
+  border-bottom: 2px solid var(--yellow) !important;
+  padding: 1.25rem 1.5rem !important;
+}
+
+.ProductPopupContainer__producttitle {
+  color: var(--white) !important;
+  font-size: 1.25rem !important;
+  font-weight: 700 !important;
+}
+
+.ProductPopupContainer__showpopupsearch,
+.ProductPopupContainer__popupsearch {
+  background: transparent !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.75rem !important;
+}
+
+.ProductPopupContainer__searchbox {
+  flex: 1 !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 8px !important;
+  padding: 0.625rem 1rem !important;
+}
+
+.ProductPopupContainer__searchbox input {
+  background: transparent !important;
+  border: none !important;
+  color: var(--white) !important;
+  font-size: 0.9375rem !important;
+  width: 100% !important;
+  outline: none !important;
+}
+
+.ProductPopupContainer__searchbox input::placeholder {
+  color: rgba(255, 255, 255, 0.45) !important;
+}
+
+.ProductPopupContainer__searchbox:focus-within {
+  border-color: var(--yellow) !important;
+  box-shadow: 0 0 0 2px rgba(238, 255, 0, 0.2) !important;
+}
+
+/* Search icon - YELLOW */
+.ProductPopupContainer__search svg,
+.ProductPopupContainer__search svg *,
+.ProductPopupContainer__search path {
+  fill: var(--yellow) !important;
+  stroke: var(--yellow) !important;
+  color: var(--yellow) !important;
+  width: 20px !important;
+  height: 20px !important;
+}
+
+.ProductPopupContainer__search:hover svg,
+.ProductPopupContainer__search:hover svg * {
+  fill: #fefce8 !important;
+  stroke: #fefce8 !important;
+}
+
+/* Close icon - RED/WHITE */
+.ProductPopupContainer__close svg,
+.ProductPopupContainer__close svg *,
+.ProductPopupContainer__close path {
+  fill: rgba(255, 255, 255, 0.7) !important;
+  stroke: rgba(255, 255, 255, 0.7) !important;
+  width: 20px !important;
+  height: 20px !important;
+}
+
+.ProductPopupContainer__close:hover svg,
+.ProductPopupContainer__close:hover svg * {
+  fill: #ff3b30 !important;
+  stroke: #ff3b30 !important;
+}
+
+.ProductPopupContainer__content {
+  background: #000000 !important;
+  padding: 0 !important;
+  max-height: 400px !important;
+  overflow-y: auto !important;
+}
+
+.ProductPopupContainer__resultslist {
+  list-style: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.ProductPopupContainer__resultslistitem {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  transition: all 0.2s ease !important;
+}
+
+.ProductPopupContainer__resultslistitem:last-child {
+  border-bottom: none !important;
+}
+
+.ProductPopupContainer__resultslistitem:hover {
+  background: rgba(238, 255, 0, 0.1) !important;
+}
+
+.ProductPopupContainer__productName {
+  display: block !important;
+  padding: 1rem 1.5rem !important;
+  color: var(--white) !important;
+  font-size: 1rem !important;
+  font-weight: 500 !important;
+  text-decoration: none !important;
+  transition: all 0.2s ease !important;
+}
+
+.ProductPopupContainer__productName:hover {
+  color: var(--yellow) !important;
+  padding-left: 2rem !important;
+}
+
+.ProductPopupContainer__content::-webkit-scrollbar {
+  width: 8px !important;
+}
+
+.ProductPopupContainer__content::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05) !important;
+}
+
+.ProductPopupContainer__content::-webkit-scrollbar-thumb {
+  background: var(--yellow) !important;
+  border-radius: 4px !important;
+}
+
+.ProductPopupContainer__content::-webkit-scrollbar-thumb:hover {
+  background: #fefce8 !important;
+}
+
+/* ==== CAPTCHA SECTION ==== */
+
+.HCNewCaptcha__captchaBoxHeader,
+.HCNewCaptcha__buttonCon {
+  background: #000000 !important;
+  padding: 16px 20px !important;
+  border-radius: 12px 12px 0 0 !important;
+  border-bottom: 2px solid var(--yellow) !important;
+}
+
+.HCNewCaptcha__buttonCon {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+}
+
+/* CAPTCHA buttons */
+.HCNewCaptcha__captchaButton {
+  padding: 10px 24px !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 2px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 8px !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  font-size: 0.9375rem !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.HCNewCaptcha__captchaButton:hover {
+  background: rgba(255, 255, 255, 0.15) !important;
+  border-color: var(--yellow) !important;
+}
+
+/* Active CAPTCHA button */
+.HCNewCaptcha__captchaButtonActive {
+  background: var(--yellow) !important;
+  border-color: var(--yellow) !important;
+  color: #000000 !important;
+  -webkit-text-fill-color: #000000 !important;
+  box-shadow: 0 4px 12px rgba(238, 255, 0, 0.4) !important;
+}
+
+/* CAPTCHA reload button */
+.HCNewCaptcha__captchaReload {
+  cursor: pointer !important;
+  padding: 10px !important;
+  border-radius: 8px !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 2px solid rgba(255, 255, 255, 0.2) !important;
+  transition: all 0.2s ease !important;
+  margin-left: auto !important;
+}
+
+.HCNewCaptcha__captchaReload:hover {
+  background: var(--yellow) !important;
+  border-color: var(--yellow) !important;
+}
+
+.HCNewCaptcha__captchaReload svg,
+.HCNewCaptcha__captchaReload svg * {
+  fill: #ffffff !important;
+  stroke: #ffffff !important;
+  width: 20px !important;
+  height: 20px !important;
+}
+
+.HCNewCaptcha__captchaReload:hover svg,
+.HCNewCaptcha__captchaReload:hover svg * {
+  fill: #000000 !important;
+  stroke: #000000 !important;
+}
+
+.HCNewCaptcha__captchaBox {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  border-radius: 0 0 12px 12px !important;
+  padding: 20px !important;
+}
+
+.Captcha__Wd100 input {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  color: #ffffff !important;
+}
+
+.Captcha__Wd100 input:focus {
+  border-color: var(--yellow) !important;
+  box-shadow: 0 0 0 2px rgba(238, 255, 0, 0.2) !important;
+}
+
+/* ==== FOOTER BUTTONS ==== */
+
+.TicketFormLeftContainer__formfooter {
+  margin-top: 3rem !important;
+  padding-top: 2rem !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.15) !important;
+  display: flex !important;
+  gap: 1rem !important;
+  justify-content: flex-start !important;
+}
+
+/* Submit button - Yellow pill */
+.TicketFormLeftContainer__formfooter .Button__primary {
+  background: var(--yellow) !important;
+  border: 2px solid var(--yellow) !important;
+  color: var(--black) !important;
+  border-radius: 999px !important;
+  padding: 0.875rem 3rem !important;
+  font-size: 1.0625rem !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+/* Override ALL button hover states */
+.TicketFormLeftContainer__formfooter .Button__primary:hover,
+.TicketFormLeftContainer__formfooter .Button__primary:focus,
+.TicketFormLeftContainer__formfooter .Button__primary:active,
+.TicketFormLeftContainer__formfooter .Button__primary.hover,
+.Button__primary.commonStyle__cursor:hover,
+button.Button__primary:hover,
+span.Button__primary:hover,
+[role="button"].Button__primary:hover,
+[data-id="ticket_submit"]:hover,
+.TicketFormLeftContainer__formfooter button:hover,
+.TicketFormLeftContainer__formfooter span[role="button"]:hover {
+  background: #fefce8 !important;
+  background-color: #fefce8 !important;
+  border-color: var(--yellow) !important;
+  color: var(--black) !important;
+  -webkit-text-fill-color: var(--black) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 20px rgba(238, 255, 0, 0.5) !important;
+}
+
+/* Force black text on submit button */
+.TicketFormLeftContainer__formfooter .Button__primary,
+.TicketFormLeftContainer__formfooter .Button__primary *,
+.TicketFormLeftContainer__formfooter .Button__primary:hover,
+.TicketFormLeftContainer__formfooter .Button__primary:hover *,
+[data-id="ticket_submit"],
+[data-id="ticket_submit"] *,
+[data-id="ticket_submit"]:hover,
+[data-id="ticket_submit"]:hover * {
+  color: var(--black) !important;
+  -webkit-text-fill-color: var(--black) !important;
+}
+
+/* Discard button */
+.TicketFormLeftContainer__formfooter .Button__secondary {
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  background: transparent !important;
+  color: var(--white) !important;
+  border-radius: 999px !important;
+  padding: 0.875rem 3rem !important;
+  font-size: 1.0625rem !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.TicketFormLeftContainer__formfooter .Button__secondary:hover,
+.TicketFormLeftContainer__formfooter .Button__secondary:focus,
+.TicketFormLeftContainer__formfooter .Button__secondary:active {
+  border-color: var(--white) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: var(--white) !important;
+}
+
+/* ==== FORM MESSAGES ==== */
+
+.TicketFormLeftContainer__part .Form__error,
+.TicketFormLeftContainer__part .Error__message {
+  color: #fca5a5 !important;
+  font-size: 0.9375rem !important;
+  margin-top: 0.5rem !important;
+}
+
+.TicketFormLeftContainer__part .Form__help {
+  color: rgba(255, 255, 255, 0.55) !important;
+  font-size: 0.9375rem !important;
+  margin-top: 0.5rem !important;
+}
+
+/* Force white text - EXCLUDE dropdowns and editor */
+.TicketFormLeftContainer__part,
+.TicketFormLeftContainer__part *:not([class*="DropDown"]):not([class*="KB_Editor"]):not(li[data-id*="field_"]):not(li[data-act-clickable]):not(.commonStyle__link):not(.commonStyle__active) {
+  color: var(--white) !important;
+}
+
+.TicketFormLeftContainer__part input:not([class*="DropDown"]),
+.TicketFormLeftContainer__part textarea {
+  color: var(--white) !important;
+}
+
+.TicketFormLeftContainer__part a:not(.commonStyle__link) {
+  color: var(--yellow) !important;
+  text-decoration: underline !important;
+}
+
+.TicketFormLeftContainer__part a:not(.commonStyle__link):hover {
+  color: #fefce8 !important;
+}
+
+/* ===== SCROLL TO TOP BUTTON ===== */
+
+.scroll-top,
+#scrollTop,
+[class*="scroll-top"],
+[class*="back-to-top"],
+.AppContainer__backtop,
+.AppContainer__backToTop,
+[data-id="scroll_top"] {
+  width: 56px !important;
+  height: 56px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: var(--yellow) !important;
+  color: var(--black) !important;
+  border: 2px solid var(--yellow) !important;
+  border-radius: 8px !important;
+  cursor: pointer !important;
+  transition: all 0.2s !important;
+  box-shadow: 0 4px 16px rgba(238, 255, 0, 0.4) !important;
+  position: fixed !important;
+  bottom: 24px !important;
+  left: 24px !important;
+  right: auto !important;
+  z-index: 9999 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.scroll-top:hover,
+#scrollTop:hover,
+.AppContainer__backtop:hover,
+.AppContainer__backToTop:hover,
+[data-id="scroll_top"]:hover {
+  background: var(--white) !important;
+  border-color: var(--yellow) !important;
+  transform: translateY(-3px) !important;
+  box-shadow: 0 6px 20px rgba(238, 255, 0, 0.5) !important;
+}
+
+.scroll-top svg,
+#scrollTop svg,
+.AppContainer__backtopbg,
+.AppContainer__backtopicon,
+.AppContainer__backtop svg,
+.AppContainer__backtop span,
+.AppContainer__backtop use {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
+
+.scroll-top::after,
+#scrollTop::after,
+.AppContainer__backtop::after,
+.AppContainer__backToTop::after,
+[data-id="scroll_top"]::after {
+  content: "↑" !important;
+  font-size: 2rem !important;
+  font-weight: 900 !important;
+  color: var(--black) !important;
+  line-height: 1 !important;
+}
+
+/* ===== CHAT WIDGET ===== */
+
+#zsiq_float,
+.zsiq_floatmain,
+.zsiq_float {
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  z-index: 2147483646 !important;
+}
+
+.zsiq_theme1 .zsiq_flt_rel {
+  width: 64px !important;
+  height: 64px !important;
+  background: var(--black) !important;
+  border: 3px solid var(--yellow) !important;
+  border-radius: 50% !important;
+  box-shadow: 0 4px 20px rgba(238, 255, 0, 0.5) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all 0.2s !important;
+}
+
+.zsiq_theme1 .zsiq_flt_rel:hover {
+  background: var(--yellow) !important;
+  border-color: var(--yellow) !important;
+  transform: scale(1.05) !important;
+  box-shadow: 0 6px 24px rgba(238, 255, 0, 0.6) !important;
+}
+
+.zsiq_theme1 div.zsiq_cnt {
+  background-color: var(--black) !important;
+  color: var(--yellow) !important;
+  border: 2px solid var(--yellow) !important;
+  box-shadow: 0 4px 16px rgba(238, 255, 0, 0.3) !important;
+  border-radius: 8px !important;
+}
+
+#zsiq_maintitle,
+.zsiq_theme1 .zsiq_cnt .zsiq_ellips {
+  color: var(--yellow) !important;
+  font-weight: 600 !important;
+  font-size: 0.875rem !important;
+}
+
+.zsiq_theme1 .zsiq_flt_rel svg,
+.zsiq_theme1 .zsiq_flt_rel path {
+  fill: var(--yellow) !important;
+  color: var(--yellow) !important;
+}
+
+.zsiq_theme1 .zsiq_flt_rel:hover svg,
+.zsiq_theme1 .zsiq_flt_rel:hover path {
+  fill: var(--black) !important;
+  color: var(--black) !important;
+}
+
+.zsiq_theme1 .zsiq_flt_rel::before {
+  content: "💬" !important;
+  font-size: 1.75rem !important;
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  z-index: 1 !important;
+}
+
+/* ===== FOOTER ===== */
+
+.footer,
+.footer * {
+  box-sizing: border-box;
+}
+
+.footer {
+  background: #000 !important;
+  color: #fff !important;
+  border-top: 3px solid var(--yellow) !important;
+  padding: 3rem 0 1.5rem !important;
+  position: relative !important;
+  margin-top: 4rem;
+}
+
+/* Prevent global card rules from touching footer */
+.footer .footer-container,
+.footer .footer-brand,
+.footer .footer-col,
+.footer .footer-bottom,
+.footer .footer-links,
+.footer .contact-item {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.footer .footer-container {
+  max-width: 1400px !important;
+  margin: 0 auto !important;
+  padding: 0 2rem !important;
+  display: grid !important;
+  grid-template-columns: 2fr 1fr 1fr 1fr !important;
+  gap: 3rem !important;
+}
+
+.footer .footer-logo {
+  height: 42px !important;
+  width: auto !important;
+  display: block !important;
+  margin-bottom: 1rem !important;
+}
+
+.footer .footer-brand h4 {
+  font-size: 1.25rem !important;
+  font-weight: 700 !important;
+  margin-bottom: 0.75rem !important;
+  color: #fff !important;
+}
+
+.footer .footer-desc {
+  color: rgba(255,255,255,0.8) !important;
+  font-size: 0.95rem !important;
+  line-height: 1.6 !important;
+  margin-bottom: 1.25rem !important;
+}
+
+.footer .availability {
+  display: flex !important;
+  align-items: center !important;
+  gap: 1rem !important;
+  padding: 1rem !important;
+  background: rgba(238, 255, 0, 0.08) !important;
+  border: 2px solid var(--yellow) !important;
+  border-radius: 10px !important;
+  margin-bottom: 1.25rem !important;
+}
+
+.footer .avail-icon {
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 8px !important;
+  background: var(--yellow) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+}
+
+.footer .avail-icon i {
+  color: #000 !important;
+  font-size: 1.125rem !important;
+}
+
+/* Fallback if Font Awesome not loaded */
+.footer .avail-icon:not(:has(i))::before {
+  content: "⏰" !important;
+  font-size: 1.125rem !important;
+}
+
+.footer .avail-status {
+  color: var(--yellow) !important;
+  font-weight: 700 !important;
+  font-size: 0.95rem !important;
+}
+
+.footer .avail-hours {
+  color: rgba(255,255,255,0.7) !important;
+  font-size: 0.9rem !important;
+}
+
+.footer .footer-col h5 {
+  color: #fff !important;
+  font-size: 1rem !important;
+  font-weight: 700 !important;
+  margin-bottom: 1rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.06em !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+}
+
+.footer .footer-col h5 i {
+  color: var(--yellow) !important;
+  font-size: 1rem !important;
+}
+
+.footer .footer-links {
+  display: grid !important;
+  gap: 0.65rem !important;
+}
+
+.footer .footer-links a {
+  color: rgba(255,255,255,0.85) !important;
+  text-decoration: none !important;
+  font-weight: 600 !important;
+  font-size: 0.95rem !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  transition: all 0.2s ease !important;
+}
+
+.footer .footer-links a i {
+  color: var(--yellow) !important;
+  width: 18px !important;
+  text-align: center !important;
+  font-size: 0.875rem !important;
+}
+
+.footer .footer-links a:hover,
+.footer .legal a:hover {
+  color: var(--yellow) !important;
+  text-decoration: underline !important;
+}
+
+.footer .contact-item {
+  color: rgba(255,255,255,0.85) !important;
+  text-decoration: none !important;
+  font-weight: 600 !important;
+  font-size: 0.95rem !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.75rem !important;
+  padding: 0.5rem 0 !important;
+  transition: all 0.2s ease !important;
+}
+
+.footer .contact-item:hover {
+  color: var(--yellow) !important;
+}
+
+.footer .contact-icon {
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 8px !important;
+  background: var(--yellow) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+}
+
+.footer .contact-icon i {
+  color: #000 !important;
+  font-size: 1rem !important;
+}
+
+/* Fallback if Font Awesome not loaded */
+.footer .contact-item[href^="mailto"] .contact-icon:not(:has(i))::before {
+  content: "✉️" !important;
+  font-size: 1rem !important;
+}
+
+.footer .contact-item[href^="tel"] .contact-icon:not(:has(i))::before {
+  content: "📞" !important;
+  font-size: 1rem !important;
+}
+
+/* ===== SOCIAL ICONS - WORKS WITHOUT FONT AWESOME ===== */
+
+.footer .social {
+  display: flex !important;
+  gap: 0.75rem !important;
+  margin-top: 0.75rem !important;
+}
+
+.footer .social a {
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 10px !important;
+  border: 2px solid var(--yellow) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: rgba(238,255,0,0.06) !important;
+  transition: all 0.2s ease !important;
+  position: relative !important;
+}
+
+.footer .social a:hover {
+  background: var(--yellow) !important;
+  border-color: var(--yellow) !important;
+  transform: translateY(-2px) !important;
+}
+
+/* Hide Font Awesome icons if they exist (since FA not loaded) */
+.footer .social a i {
+  display: none !important;
+}
+
+/* CSS fallback icons (work without Font Awesome) */
+.footer .social a[href*="twitter"]::before,
+.footer .social a[aria-label*="Twitter"]::before {
+  content: "𝕏" !important;
+  position: absolute !important;
+  color: #ffffff !important;
+  font-size: 1.125rem !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+}
+
+.footer .social a[href*="linkedin"]::before,
+.footer .social a[aria-label*="LinkedIn"]::before {
+  content: "in" !important;
+  position: absolute !important;
+  color: #ffffff !important;
+  font-size: 1rem !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+}
+
+.footer .social a[href*="github"]::before,
+.footer .social a[aria-label*="GitHub"]::before {
+  content: "⚙" !important;
+  position: absolute !important;
+  color: #ffffff !important;
+  font-size: 1.125rem !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+}
+
+/* Icons turn black on hover */
+.footer .social a:hover::before {
+  color: #000000 !important;
+}
+
+.footer .footer-bottom {
+  max-width: 1400px !important;
+  margin: 2rem auto 0 !important;
+  padding: 1.25rem 2rem 0 !important;
+  border-top: 1px solid rgba(255,255,255,0.12) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 1rem !important;
+  flex-wrap: wrap !important;
+}
+
+.footer .copyright {
+  color: rgba(255,255,255,0.75) !important;
+  font-size: 0.9rem !important;
+}
+
+.footer .separator {
+  color: rgba(255,255,255,0.3) !important;
+  margin: 0 0.25rem !important;
+}
+
+.footer .tagline {
+  color: var(--yellow) !important;
+  font-weight: 700 !important;
+}
+
+.footer .legal {
+  display: flex !important;
+  align-items: center !important;
+  gap: 1rem !important;
+  font-size: 0.875rem !important;
+}
+
+.footer .legal a {
+  color: rgba(255,255,255,0.75) !important;
+  text-decoration: none !important;
+  transition: all 0.2s ease !important;
+}
+
+.footer .legal span {
+  color: rgba(255,255,255,0.3) !important;
+}
+
+.footer .scroll-top {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 0.25rem !important;
+  background: var(--yellow) !important;
+  border: 2px solid var(--yellow) !important;
+  border-radius: 8px !important;
+  padding: 0.5rem 0.75rem !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.footer .scroll-top:hover {
+  background: var(--white) !important;
+  transform: translateY(-2px) !important;
+}
+
+.footer .scroll-top i {
+  color: var(--black) !important;
+  font-size: 1.125rem !important;
+}
+
+.footer .scroll-top span {
+  font-size: 0.625rem !important;
+  text-transform: uppercase !important;
+  font-weight: 700 !important;
+  color: var(--black) !important;
+  letter-spacing: 0.05em !important;
+}
+
+/* ===== HOME PAGE WIDGET FIX ===== */
+
+.AppContainer__homeWidget {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.WidgetsContainer__widgetCont {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  min-height: 0 !important;
+}
+
+.AppContainer__homeWidget:has(.WidgetsContainer__widgetCont:empty) {
+  display: none !important;
+}
+
+.Layout__layout1[data-id="column1"] .AppContainer__homeWidget,
+.Layout__layout1[data-id="column1"] .AppContainer__homeWidget * {
+  min-height: 0 !important;
+}
+
+/* ===== COMPREHENSIVE RESPONSIVE DESIGN ===== */
+
+/* Large Desktop (1680px and below) */
+@media (max-width: 1680px) {
+  :root {
+    --topnav-h: 65px;
+  }
+
+  #container,
+  .Layout__oneColumn,
+  .Layout__twoColumn,
+  .Layout__twoColumn2 {
+    padding-left: 1.5rem !important;
+    padding-right: 1.5rem !important;
+  }
+
+  .top-nav-container,
+  .status-container,
+  .footer-container,
+  .footer-bottom {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+
+  .TicketFormLeftContainer__part {
+    padding: 2.5rem 3rem !important;
+  }
+}
+
+/* Desktop (1400px and below) */
+@media (max-width: 1400px) {
+  .top-nav-container {
+    max-width: 100%;
+    padding: 0 1.5rem;
+  }
+
+  .nav-menu {
+    gap: 0.25rem;
+  }
+
+  .nav-menu li a {
+    padding: 0.65rem 1.25rem;
+    font-size: 0.875rem;
+  }
+
+  .TicketFormLeftContainer__part {
+    padding: 2rem 2.5rem !important;
+  }
+
+  .footer-container {
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 2rem;
+  }
+}
+
+/* Tablet Landscape (1024px and below) */
+@media (max-width: 1024px) {
+  :root {
+    --topnav-h: 60px;
+    --statusbar-h: 32px;
+  }
+
+  .top-nav-container {
+    padding: 0 1.25rem;
+    gap: 1rem;
+  }
+
+  .brand-text h1 {
+    font-size: 1.125rem;
+  }
+
+  .logo {
+    height: 38px;
+  }
+
+  .nav-menu {
+    gap: 0.25rem;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .nav-menu::-webkit-scrollbar {
+    display: none;
+  }
+
+  .nav-menu li a {
+    padding: 0.6rem 1rem;
+    font-size: 0.8125rem;
+    white-space: nowrap;
+  }
+
+  .nav-ticket-btn a,
+  .nav-ticket-btn button {
+    min-width: 140px !important;
+    padding: 0.65rem 1.5rem !important;
+    font-size: 0.875rem !important;
+  }
+
+  .status-container {
+    padding: 0 1.25rem;
+    font-size: 0.8125rem;
+  }
+
+  .status-dot {
+    width: 6px;
+    height: 6px;
+  }
+
+  .TicketFormLeftContainer__part {
+    padding: 2rem !important;
+    margin: 1rem 0 !important;
+  }
+
+  .TicketFormLeftContainer__part h2,
+  .TicketFormLeftContainer__part .TicketFormLeftContainer__title {
+    font-size: 1.75rem !important;
+    margin-bottom: 2rem !important;
+  }
+
+  .TicketFormLeftContainer__sectionName {
+    font-size: 1rem !important;
+  }
+
+  .footer-container {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 2.5rem;
+  }
+
+  .footer-brand {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Tablet Portrait (768px and below) - MAJOR MOBILE SHIFT */
+@media (max-width: 768px) {
+  :root {
+    --topnav-h: auto;
+    --statusbar-h: auto;
+  }
+
+  .top-nav {
+    height: auto;
+    position: fixed;
+  }
+
+  .top-nav-container {
+    flex-wrap: wrap;
+    padding: 1rem 1.25rem;
+    gap: 1rem;
+  }
+
+  .nav-left {
+    flex: 1;
+  }
+
+  .brand-text h1 {
+    font-size: 1rem;
+  }
+
+  .logo {
+    height: 36px;
+  }
+
+  .nav-menu {
+    width: 100%;
+    order: 3;
+    justify-content: flex-start;
+    overflow-x: auto;
+    padding: 1rem 0 0;
+    margin: 0;
+    border-top: 2px solid rgba(238, 255, 0, 0.3);
+    gap: 0.5rem;
+  }
+
+  .nav-menu li a {
+    padding: 0.6rem 1.25rem;
+    font-size: 0.875rem;
+  }
+
+  .nav-right {
+    flex-shrink: 0;
+    gap: 0.75rem;
+  }
+
+  .nav-right a,
+  .nav-right button {
+    padding: 0.5rem 1rem !important;
+    font-size: 0.875rem !important;
+  }
+
+  .nav-ticket-btn a,
+  .nav-ticket-btn button {
+    min-width: 120px !important;
+    padding: 0.6rem 1.25rem !important;
+    font-size: 0.875rem !important;
+  }
+
+  .status-bar {
+    position: relative;
+    top: 0;
+    height: auto;
+  }
+
+  .status-container {
+    flex-direction: column;
+    padding: 0.75rem 1.25rem;
+    gap: 0.5rem;
+    font-size: 0.8125rem;
+  }
+
+  .status-left {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .status-right {
+    width: 100%;
+    text-align: center;
+  }
+
+  #container,
+  .Layout__oneColumn,
+  .Layout__twoColumn,
+  .Layout__twoColumn2 {
+    padding-top: 0 !important;
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+    margin-top: 1rem !important;
+  }
+
+  .TicketFormLeftContainer__wrapper,
+  .TicketFormLeftContainer__part {
+    max-width: 100% !important;
+    margin: 0.75rem 0 !important;
+  }
+
+  .TicketFormLeftContainer__part {
+    padding: 1.5rem 1.25rem !important;
+    border-radius: 8px !important;
+  }
+
+  .TicketFormLeftContainer__part h2,
+  .TicketFormLeftContainer__part .TicketFormLeftContainer__title {
+    font-size: 1.5rem !important;
+    margin-bottom: 1.5rem !important;
+  }
+
+  .TicketFormLeftContainer__sectionName {
+    font-size: 0.9375rem !important;
+    margin-top: 1.5rem !important;
+    margin-bottom: 1rem !important;
+  }
+
+  .TicketFormLeftContainer__part label,
+  .TicketFormLeftContainer__part .Form__label {
+    font-size: 0.9375rem !important;
+  }
+
+  .TicketFormLeftContainer__part .Input__formInput,
+  .TicketFormLeftContainer__part input[type="text"],
+  .TicketFormLeftContainer__part input[type="email"],
+  .TicketFormLeftContainer__part textarea,
+  .TicketFormLeftContainer__part select {
+    padding: 0.75rem 1rem !important;
+    font-size: 16px !important;
+    min-height: 44px !important;
+  }
+
+  .TicketFormLeftContainer__part .TextEditor__toolbar {
+    flex-wrap: wrap !important;
+    gap: 0.375rem !important;
+  }
+
+  .TicketFormLeftContainer__part .TextEditor__toolbar button {
+    min-width: 40px !important;
+    min-height: 40px !important;
+    padding: 0.5rem !important;
+  }
+
+  .KB_Editor_common_DropDown {
+    max-width: calc(100vw - 2rem) !important;
+  }
+
+  .TicketFormLeftContainer__part .FileUpload__container {
+    padding: 1.5rem 1rem !important;
+    min-height: 100px !important;
+  }
+
+  .TicketFormLeftContainer__formfooter {
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+    margin-top: 2rem !important;
+  }
+
+  .TicketFormLeftContainer__formfooter .Button__primary,
+  .TicketFormLeftContainer__formfooter .Button__secondary {
+    width: 100% !important;
+    padding: 1rem !important;
+    font-size: 1rem !important;
+    min-height: 48px !important;
+  }
+
+  .ProductPopupContainer__searchpanelinner {
+    max-width: calc(100vw - 2rem) !important;
+    margin: 1rem !important;
+  }
+
+  .HCNewCaptcha__buttonCon {
+    gap: 0.5rem !important;
+  }
+
+  .HCNewCaptcha__captchaButton {
+    padding: 0.75rem 1.25rem !important;
+    font-size: 0.875rem !important;
+    min-height: 44px !important;
+  }
+
+  .footer {
+    padding: 2rem 0 1rem !important;
+    margin-top: 3rem;
+  }
+
+  .footer-container {
+    grid-template-columns: 1fr !important;
+    gap: 2rem;
+    padding: 0 1.25rem !important;
+  }
+
+  .footer-brand {
+    padding-right: 0;
+  }
+
+  .footer-bottom {
+    flex-direction: column;
+    text-align: center;
+    padding: 1rem 1.25rem 0 !important;
+    gap: 0.75rem;
+  }
+
+  .footer .legal {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .scroll-top,
+  .AppContainer__backtop {
+    width: 48px !important;
+    height: 48px !important;
+    bottom: 16px !important;
+    left: 16px !important;
+  }
+
+  .scroll-top::after,
+  .AppContainer__backtop::after {
+    font-size: 1.5rem !important;
+  }
+}
+
+/* Large Phone (640px and below) */
+@media (max-width: 640px) {
+  .top-nav-container {
+    padding: 0.875rem 1rem;
+  }
+
+  .logo {
+    height: 32px;
+  }
+
+  .brand-text h1 {
+    font-size: 0.9375rem;
+  }
+
+  .nav-menu li a {
+    padding: 0.5rem 1rem;
+    font-size: 0.8125rem;
+  }
+
+  .nav-ticket-btn a,
+  .nav-ticket-btn button {
+    min-width: 110px !important;
+    padding: 0.5rem 1rem !important;
+    font-size: 0.8125rem !important;
+  }
+
+  .status-container {
+    font-size: 0.75rem;
+  }
+
+  .TicketFormLeftContainer__part {
+    padding: 1.25rem 1rem !important;
+  }
+
+  .TicketFormLeftContainer__part h2 {
+    font-size: 1.375rem !important;
+  }
+
+  .TicketFormLeftContainer__sectionName {
+    font-size: 0.875rem !important;
+  }
+
+  .footer-container {
+    padding: 0 1rem !important;
+    gap: 1.75rem;
+  }
+
+  .footer-logo {
+    height: 36px !important;
+  }
+
+  .footer-brand h4 {
+    font-size: 1.125rem !important;
+  }
+
+  .footer-desc {
+    font-size: 0.875rem !important;
+  }
+
+  .footer-col h5 {
+    font-size: 0.9375rem !important;
+  }
+
+  .footer-links a,
+  .footer .contact-item {
+    font-size: 0.875rem !important;
+  }
+
+  .footer-bottom {
+    padding: 1rem 1rem 0 !important;
+  }
+
+  .footer .copyright,
+  .footer .legal a {
+    font-size: 0.8125rem !important;
+  }
+}
+
+/* Phone Portrait (480px and below) */
+@media (max-width: 480px) {
+  .top-nav-container {
+    padding: 0.75rem 0.875rem;
+    gap: 0.75rem;
+  }
+
+  .logo {
+    height: 28px;
+  }
+
+  .brand-text h1 {
+    font-size: 0.875rem;
+  }
+
+  .nav-menu li a {
+    padding: 0.5rem 0.875rem;
+    font-size: 0.75rem;
+  }
+
+  .CustomizeContainer__aPlus {
+    width: 36px !important;
+    height: 36px !important;
+  }
+
+  .TicketFormLeftContainer__part {
+    padding: 1rem 0.875rem !important;
+    border-radius: 6px !important;
+  }
+
+  .TicketFormLeftContainer__part h2 {
+    font-size: 1.25rem !important;
+    margin-bottom: 1.25rem !important;
+  }
+
+  .TicketFormLeftContainer__sectionName {
+    font-size: 0.8125rem !important;
+    margin-top: 1.25rem !important;
+  }
+
+  .TicketFormLeftContainer__part .Input__formInput,
+  .TicketFormLeftContainer__part input,
+  .TicketFormLeftContainer__part textarea,
+  .TicketFormLeftContainer__part select {
+    padding: 0.625rem 0.875rem !important;
+    font-size: 16px !important;
+  }
+
+  .TicketFormLeftContainer__part .TextEditor__toolbar button {
+    min-width: 36px !important;
+    min-height: 36px !important;
+  }
+
+  .TicketFormLeftContainer__formfooter .Button__primary,
+  .TicketFormLeftContainer__formfooter .Button__secondary {
+    padding: 0.875rem !important;
+    font-size: 0.9375rem !important;
+  }
+
+  .footer {
+    padding: 1.5rem 0 1rem !important;
+  }
+
+  .footer-container {
+    padding: 0 0.875rem !important;
+    gap: 1.5rem;
+  }
+
+  .footer-logo {
+    height: 32px !important;
+  }
+
+  .footer-brand h4 {
+    font-size: 1rem !important;
+  }
+
+  .footer .availability {
+    padding: 0.875rem !important;
+  }
+
+  .footer .avail-icon {
+    width: 32px !important;
+    height: 32px !important;
+  }
+
+  .footer .social a {
+    width: 36px !important;
+    height: 36px !important;
+  }
+
+  .scroll-top,
+  .AppContainer__backtop {
+    width: 44px !important;
+    height: 44px !important;
+    bottom: 12px !important;
+    left: 12px !important;
+  }
+
+  .ProductPopupContainer__searchpanelinner {
+    max-width: calc(100vw - 1rem) !important;
+    margin: 0.5rem !important;
+  }
+
+  .ProductPopupContainer__content {
+    max-height: 60vh !important;
+  }
+}
+
+/* Landscape Orientation */
+@media (max-height: 500px) and (orientation: landscape) {
+  .TicketFormLeftContainer__part {
+    padding: 1rem 1.5rem !important;
+  }
+
+  .TicketFormLeftContainer__part h2 {
+    margin-bottom: 1rem !important;
+  }
+
+  .TicketFormLeftContainer__sectionName {
+    margin-top: 1rem !important;
+    margin-bottom: 0.75rem !important;
+  }
+
+  .TicketFormLeftContainer__formfooter {
+    margin-top: 1.5rem !important;
+  }
+
+  .ProductPopupContainer__content {
+    max-height: 50vh !important;
+  }
+
+  .footer {
+    padding: 1.5rem 0 1rem !important;
+  }
+
+  .footer-container {
+    gap: 1.5rem;
+  }
+}
+
+/* Touch Device Optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .nav-menu li a,
+  .nav-right a,
+  .nav-right button,
+  .nav-ticket-btn a,
+  .nav-ticket-btn button,
+  .CustomizeContainer__aPlus,
+  .TicketFormLeftContainer__part input,
+  .TicketFormLeftContainer__part button,
+  .TicketFormLeftContainer__part select,
+  .TextEditor__toolbar button,
+  .HCNewCaptcha__captchaButton,
+  .footer-links a,
+  .footer .contact-item,
+  .footer .social a {
+    min-height: 44px !important;
+    min-width: 44px !important;
+  }
+
+  .ProductLookupContainer__searchIcon,
+  .ProductPopupContainer__close,
+  .HCNewCaptcha__captchaReload {
+    min-width: 44px !important;
+    min-height: 44px !important;
+  }
+
+  * {
+    -webkit-tap-highlight-color: rgba(238, 255, 0, 0.2) !important;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .top-nav,
+  .status-bar,
+  .nav-ticket-btn,
+  .scroll-top,
+  .AppContainer__backtop,
+  #zsiq_float,
+  .footer {
+    display: none !important;
+  }
+
+  .TicketFormLeftContainer__part {
+    background: white !important;
+    color: black !important;
+    box-shadow: none !important;
+  }
+
+  body::before,
+  .HomeContainer::before,
+  .AppContainer__home::before {
+    display: none !important;
+  }
+}
