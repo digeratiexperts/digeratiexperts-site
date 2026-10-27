@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { type ReactNode } from "react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Headphones, Link2Off, Mic, Phone, PhoneCall, PhoneOff, Volume2 } from "lucide-react";
@@ -10,6 +10,8 @@ import { Callout, DataTable, EmptyState, Field, Panel, StatTile, Token, type Dat
 import { portalGet } from "@/lib/portalApi";
 import { usePortalIntegrations, type IntegrationStatus } from "@/lib/portalIntegrations";
 import { IntegrationHiddenNotice, IntegrationNeedsCompanyNotice } from "@/components/portal/IntegrationNotices";
+import type { PhoneHistory } from "../../../../server/integrations/phone/types";
+import { formatDeskTimestamp } from "@/lib/deskTimestamp";
 
 /**
  * PORTAL_PHONE_PROVIDER (server/portalIntegrations.ts) picks what this page shows:
@@ -28,6 +30,7 @@ type PhoneData = {
   myExtension: PhoneExtension | null;
   unavailable: Array<"phoneStatus" | "recentCalls" | "voicemail">;
   fetchedAt: string;
+  callHistory?: PhoneHistory;
 };
 type PhoneResponse = {
   success: boolean;
@@ -54,10 +57,10 @@ const recentCalls: CallHistory[] = [
 ];
 
 const SOFTPHONES = [
-  { label: "Windows", hint: "Desktop App", icon: Headphones, testId: "button-download-windows" },
-  { label: "macOS", hint: "Desktop App", icon: Headphones, testId: "button-download-mac" },
-  { label: "iOS", hint: "App Store", icon: Phone, testId: "button-download-ios" },
-  { label: "Android", hint: "Play Store", icon: Phone, testId: "button-download-android" },
+  { label: "Windows", hint: "Download options", href: "https://www.cytracom.com/downloads", icon: Headphones, testId: "button-download-windows" },
+  { label: "macOS", hint: "Download options", href: "https://www.cytracom.com/downloads", icon: Headphones, testId: "button-download-mac" },
+  { label: "iOS", hint: "Install guide", href: "https://help.cytracom.com/hc/en-us/articles/360027024311-Cytracom-Mobile-App-iOS-app-overview", icon: Phone, testId: "button-download-ios" },
+  { label: "Android", hint: "Install guide", href: "https://help.cytracom.com/hc/en-us/articles/360038374151-Cytracom-Mobile-Android-app-overview", icon: Phone, testId: "button-download-android" },
 ];
 
 const CALL_TYPE: Record<CallHistory["type"], { label: string; tone: "ok" | "info" | "bad" }> = {
@@ -84,10 +87,13 @@ function SoftphonePanel() {
         {SOFTPHONES.map((s) => {
           const Icon = s.icon;
           return (
-            <Button key={s.testId} variant="outline" className="h-auto flex-col gap-1.5 border-border bg-card py-4 hover:bg-accent" data-testid={s.testId}>
+            <Button key={s.testId} asChild variant="outline" className="h-auto flex-col gap-1.5 border-border bg-card py-4 hover:bg-accent">
+              <a href={s.href} target="_blank" rel="noopener noreferrer" data-testid={s.testId}>
               <Icon className="h-6 w-6 text-muted-foreground" aria-hidden="true" />
               <span className="text-sm font-medium">{s.label}</span>
               <span className="text-xs text-muted-foreground">{s.hint}</span>
+              <span className="sr-only">Opens the official installation page in a new tab</span>
+              </a>
             </Button>
           );
         })}
@@ -107,12 +113,7 @@ function PhoneSupportCallout() {
 }
 
 function SamplePhonePage() {
-  const [extension, setExtension] = useState("1001");
-  const [voicemailPin, setVoicemailPin] = useState("");
-
-  const handleSaveSettings = () => {
-    alert("Settings saved successfully!");
-  };
+  const extension = "1001";
 
   const columns: DataColumn<CallHistory>[] = [
     {
@@ -140,7 +141,7 @@ function SamplePhonePage() {
   return (
     <PhoneLayout>
       <Callout tone="info" title="Sample data">
-        The status, call counts and call history shown here are examples. Live phone figures appear once your Cytracom account is linked.
+        The status, call counts and call history shown here are examples. Settings and quick actions are unavailable in this preview.
       </Callout>
 
       <section className="grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="Phone figures">
@@ -156,14 +157,14 @@ function SamplePhonePage() {
         <Panel id="phone-settings" title="Phone settings" description="Extension and voicemail">
           <div className="space-y-4">
             <Field label="Extension Number" htmlFor="extension">
-              <Input id="extension" value={extension} onChange={(e) => setExtension(e.target.value)} className="border-border bg-background" data-testid="input-extension" />
+              <Input id="extension" value={extension} disabled className="border-border bg-background" data-testid="input-extension" />
             </Field>
             <Field label="Voicemail PIN" htmlFor="voicemail-pin">
               <Input
                 id="voicemail-pin"
                 type="password"
-                value={voicemailPin}
-                onChange={(e) => setVoicemailPin(e.target.value)}
+                disabled
+                value=""
                 placeholder="Enter new PIN"
                 className="border-border bg-background"
                 data-testid="input-voicemail-pin"
@@ -181,7 +182,7 @@ function SamplePhonePage() {
                 <dd className="text-foreground">Default</dd>
               </div>
             </dl>
-            <Button variant="brand" onClick={handleSaveSettings} className="w-full" data-testid="button-save-settings">
+            <Button variant="brand" disabled className="w-full" data-testid="button-save-settings">
               Save Settings
             </Button>
           </div>
@@ -201,15 +202,15 @@ function SamplePhonePage() {
 
       <Panel id="quick-actions" title="Quick actions">
         <div className="grid gap-3 sm:grid-cols-3">
-          <Button variant="outline" className="border-border bg-card hover:bg-accent" data-testid="button-check-voicemail">
+          <Button variant="outline" disabled className="border-border bg-card hover:bg-accent" data-testid="button-check-voicemail">
             <Volume2 aria-hidden="true" />
             Check Voicemail
           </Button>
-          <Button variant="outline" className="border-border bg-card hover:bg-accent" data-testid="button-update-greeting">
+          <Button variant="outline" disabled className="border-border bg-card hover:bg-accent" data-testid="button-update-greeting">
             <Mic aria-hidden="true" />
             Update Greeting
           </Button>
-          <Button variant="outline" className="border-border bg-card hover:bg-accent" data-testid="button-call-forwarding">
+          <Button variant="outline" disabled className="border-border bg-card hover:bg-accent" data-testid="button-call-forwarding">
             <Phone aria-hidden="true" />
             Call Forwarding
           </Button>
@@ -272,12 +273,34 @@ function LivePhoneData({ data }: { data: PhoneData }) {
         />
       </Panel>
 
+      {data.callHistory && <PhoneHistoryPanel history={data.callHistory} />}
+
       {data.unavailable.length > 0 && (
         <Callout tone="info" title="Not shown here yet" testId="callout-phone-gaps">
-          Phone status, call history and voicemail counts aren't connected to the portal yet. Use the Cytracom app for those.
+          Phone status and voicemail counts aren't connected. {data.unavailable.includes("recentCalls") && "Call history is also unavailable. "}Use the Cytracom app for those.
         </Callout>
       )}
     </>
+  );
+}
+
+function PhoneHistoryPanel({ history }: { history: PhoneHistory }) {
+  if (history.status !== "ok") return (
+    <Callout tone="info" title="Your call history" testId="callout-history-unavailable">
+      {history.status === "not_assigned" ? "No phone extension matches your sign-in email. Ask your account team to check the assignment." : "Call history could not be loaded. Your extension directory is still available."}
+    </Callout>
+  );
+  return (
+    <Panel id="phone-history" title="Your recent calls" description="Last 7 days. Only calls involving your assigned extension; outside numbers are masked." flush>
+      {history.truncated && <p className="px-4 py-3 text-sm text-muted-foreground">This is a limited set of calls. Use Cytracom for the full history.</p>}
+      <DataTable columns={[
+        { key: "date", header: "When", primary: true, cell: row => formatDeskTimestamp(row.startedAt) },
+        { key: "direction", header: "Direction", primary: true, cell: row => row.direction === "internal" ? "Internal" : row.direction === "inbound" ? "Inbound" : "Outbound" },
+        { key: "number", header: "Number", primary: true, cell: row => row.number ?? "Not shown" },
+        { key: "duration", header: "Duration", primary: true, cell: row => `${Math.floor(row.durationSeconds / 60)}:${String(Math.floor(row.durationSeconds % 60)).padStart(2, "0")}` },
+        { key: "answered", header: "Result", primary: true, cell: row => row.answered ? "Answered" : "Unanswered" },
+      ]} rows={history.calls} rowKey={row => row.id} caption="Your recent calls" empty={<EmptyState compact icon={Phone} title="No recent calls" description="No calls involving your assigned extension were returned for the last seven days." />} />
+    </Panel>
   );
 }
 

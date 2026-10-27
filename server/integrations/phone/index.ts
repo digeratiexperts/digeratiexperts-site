@@ -1,5 +1,6 @@
 import { loadCytracomPhoneData } from "./cytracom";
 import type { PhoneLoadResult } from "./types";
+import { loadCytracomHistory } from "./history";
 
 /**
  * Phone adapters behind GET /api/portal/phone. Today the only provider is
@@ -116,7 +117,17 @@ export async function loadPhoneData(opts: {
   if (!scope) return { notMapped: true };
   if (opts.provider === "cytracom") {
     const token = cytracomTokenFor(scope, opts.env);
-    return { data: await loadCytracomPhoneData(token, opts.userEmail, opts.fetchImpl) };
+    const data = await loadCytracomPhoneData(token, opts.userEmail, opts.fetchImpl);
+    if (opts.env.PORTAL_PHONE_CALL_HISTORY?.trim().toLowerCase() === "on") {
+      try {
+        data.callHistory = await loadCytracomHistory(token, data.myExtension?.extension ?? null, opts.fetchImpl);
+        if (data.callHistory.status === "ok") data.unavailable = data.unavailable.filter(gap => gap !== "recentCalls");
+      } catch {
+        const until = new Date();
+        data.callHistory = { status: "unavailable", since: new Date(until.getTime() - 7 * 86_400_000).toISOString(), until: until.toISOString(), calls: [], truncated: false };
+      }
+    }
+    return { data };
   }
   throw new PhoneConfigError(`no phone adapter for provider "${opts.provider}"`);
 }
