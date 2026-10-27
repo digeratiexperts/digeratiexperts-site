@@ -415,6 +415,16 @@ app.post(
 // Staff CSV import of manual portal records (server/portalManualRecords.ts):
 // up to 500 rows in one request, above the default 100kb body limit.
 app.use("/api/portal/admin/manual-records/import", express.json({ limit: "1mb" }));
+// Portal API responses are per-user. Default them to private, no-cache: no
+// shared cache keeps one, and a browser revalidates before reuse. A route that
+// must cache, or that needs no-store, sets its own header. Not no-store here:
+// Chromium never reports a no-store response as finished to DevTools, so the
+// login page would never reach networkidle in the browser smokes
+// (scripts/a11y-smoke.mjs) although the page itself loads normally.
+app.use("/api/portal", (_req, res, next) => {
+  res.setHeader("Cache-Control", "private, no-cache");
+  next();
+});
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());

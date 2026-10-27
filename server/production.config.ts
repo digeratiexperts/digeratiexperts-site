@@ -33,10 +33,6 @@ export const productionConfig = {
 
   // External Services
   services: {
-    stripe: {
-      secretKey: process.env.STRIPE_SECRET_KEY || process.env.STRIPE_LIVE_API_KEY,
-      webhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
-    },
     openai: {
       baseUrl: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL || process.env.OPENAI_BASE_URL,
       apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY,
@@ -58,7 +54,6 @@ export const productionConfig = {
   // Feature Flags
   features: {
     enableOpenAI: process.env.ENABLE_OPENAI !== 'false',
-    enableStripe: process.env.ENABLE_STRIPE !== 'false',
     enableZoho: process.env.ENABLE_ZOHO !== 'false',
   },
 };
