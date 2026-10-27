@@ -51,17 +51,17 @@ These are the dependencies worth knowing before picking anything up:
 
 | Section | Moves | Done | Open | Needs Joe |
 |---|---|---|---|---|
-| Start here (highest leverage) | 10 | 5 | 5 | 5 |
+| Start here (highest leverage) | 10 | 6 | 4 | 5 |
 | A. Quality and trust (11-24) | 14 | 5 | 9 | 0 |
 | B. Real-device validation (25-38) | 14 | 0 | 14 | 1 |
-| C. Installer integrity (39-48) | 10 | 0 | 10 | 1 |
+| C. Installer integrity (39-48) | 10 | 1 | 9 | 1 |
 | D. Signing and release (49-58) | 10 | 0 | 10 | 0 |
 | E. Hub and call-home agent (59-78) | 20 | 0 | 20 | 0 |
 | F. Remote assist (79-82) | 4 | 0 | 4 | 0 |
 | G. Client and dropship workflows (83-90) | 8 | 0 | 8 | 0 |
 | H. Sensitive data (91-96) | 6 | 0 | 6 | 0 |
 | I. Supportability and docs (97-104) | 8 | 0 | 8 | 1 |
-| **Total** | **104** | **10** | **94** | **8** |
+| **Total** | **104** | **12** | **92** | **8** |
 
 ## The moves
 
@@ -73,7 +73,7 @@ These are the dependencies worth knowing before picking anything up:
 - [x] **4** Add a local pre-push script that runs the same analyzer and Pester checks as CI. `agent` - [#722](https://github.com/digeratiexperts/digeratiexperts-site/issues/722)
 - [x] **5** Write the real-laptop audit-mode checklist (roadmap step 3). **agent + Joe** - [#723](https://github.com/digeratiexperts/digeratiexperts-site/issues/723)
   - *Joe runs the hardware side; the checklist itself is written by an agent.*
-- [ ] **6** Confirm the installer-trust policy in writing before any hash work starts. `agent` - [#724](https://github.com/digeratiexperts/digeratiexperts-site/issues/724)
+- [x] **6** Confirm the installer-trust policy in writing before any hash work starts. `agent` - [#724](https://github.com/digeratiexperts/digeratiexperts-site/issues/724)
   - *Gates every item in section C. Needs DE sign-off on the wording once drafted.*
 - [ ] **7** Buy the code-signing certificate. **Joe** - [#725](https://github.com/digeratiexperts/digeratiexperts-site/issues/725)
   - *Longest lead item. Gates all of section D.*
@@ -133,7 +133,7 @@ These are the dependencies worth knowing before picking anything up:
 - [ ] **46** Write the trust policy as a short document the technicians can read. `agent` - [#764](https://github.com/digeratiexperts/digeratiexperts-site/issues/764)
   - *Pairs with item 6, which is the written DE confirmation of the policy.*
 - [ ] **47** Test the refusal path for each mismatch type. `agent` - [#765](https://github.com/digeratiexperts/digeratiexperts-site/issues/765)
-- [ ] **48** Decide the outcome for installers that publish no hash. **Joe** - [#766](https://github.com/digeratiexperts/digeratiexperts-site/issues/766)
+- [x] **48** Decide the outcome for installers that publish no hash. **Joe** - [#766](https://github.com/digeratiexperts/digeratiexperts-site/issues/766)
   - *Blocks item 41.*
 
 ### D. Signing and release (49-58)
