@@ -34,7 +34,7 @@ describe("production deployment scripts", () => {
   });
 
   it("refuses a bundle holding the Turnstile secret and flags a missing site key", () => {
-    const deploy = readFileSync(deployScript, "utf8");
+    const deploy = readFileSync(deployScript, "utf8").replace(/\r\n/g, "\n");
     expect(deploy).toMatch(/grep -rqF -e "\$TURNSTILE_SECRET_KEY" dist\/public\/assets\/; then\n\s*fail /);
     expect(deploy).toMatch(/! grep -rqF -e "\$VITE_TURNSTILE_SITE_KEY" dist\/public\/assets\//);
     expect(deploy).toContain("TURNSTILE_SECRET_KEY is set but VITE_TURNSTILE_SITE_KEY is not");

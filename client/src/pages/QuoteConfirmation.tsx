@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { Calendar, Mail } from "lucide-react";
 import { PageTemplate } from "@/components/PageTemplate";
@@ -26,13 +26,19 @@ export default function QuoteConfirmation() {
   useSEO({
     title: "Quote Confirmation",
     description:
-      "Your IT services quote has been submitted. Review your recommended plan and schedule a consultation.",
+      "Your plan enquiry has been submitted. Review your preliminary suggestion and book a Cyber Risk Assessment to confirm fit, scope and pricing.",
     noIndex: true,
   });
 
   const [data, setData] = useState<ConfirmationData | null>(null);
   const [checked, setChecked] = useState(false);
   const [, setLocation] = useLocation();
+
+  useLayoutEffect(() => {
+    // The quiz contact step can be scrolled down. Start the new page at its
+    // hero before paint so its title doesn't arrive underneath the fixed nav.
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  }, []);
 
   useEffect(() => {
     const stored = sessionStorage.getItem("leadQuoteResult");
@@ -100,8 +106,8 @@ export default function QuoteConfirmation() {
     <PageTemplate
       layout="chapters"
       eyebrow="Quote match"
-      title="We've got your match"
-      subtitle={`Hi ${data.firstName} — we analyzed your needs and found a fit for ${data.company}.`}
+      title="Your plan enquiry is received"
+      subtitle={`Hi ${data.firstName} — your answers suggest a starting point for ${data.company}. We'll confirm fit, scope and pricing with you.`}
       breadcrumbs={[{ label: "Quote", href: "/quote-wizard" }, { label: "Confirmation" }]}
       showBackButton={false}
     >
@@ -110,13 +116,13 @@ export default function QuoteConfirmation() {
           <div className="grid gap-10 lg:grid-cols-12 lg:gap-14">
             <section className="lg:col-span-7">
               <Eyebrow tone="paper" className="mb-4">
-                Your personalized recommendation
+                A preliminary plan to discuss
               </Eyebrow>
               <h2 className="font-heading text-3xl font-semibold tracking-[-0.02em] text-de-magenta-paper-ink md:text-4xl">
                 {data.plan}
               </h2>
               <p className="mb-4 mt-8 font-mono text-xs font-semibold uppercase tracking-[0.16em] text-black/55">
-                Why this fits you:
+                Plan capabilities to discuss:
               </p>
               <ol className="border-t border-[var(--de-paper-hairline)]">
                 {data.reasons.map((reason, idx) => (

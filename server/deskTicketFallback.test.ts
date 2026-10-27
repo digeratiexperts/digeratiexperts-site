@@ -118,7 +118,10 @@ describe("DE Desk ticket failover", () => {
     expect(updateSpoolEntry({ ...entry, record: { ...t, deskEmailedAt: NOW.toISOString() } }, dir)).toBe(true);
     const [read] = listSpoolEntries<typeof t>(dir);
     expect(read.record).toMatchObject({ reference: t.reference, email: "client@example.com", deskEmailedAt: NOW.toISOString() });
-    expect(fs.statSync(path.join(dir, `${t.id}.json`)).mode & 0o777).toBe(0o600);
+    // NTFS ACLs are not represented by POSIX mode bits; keep Linux coverage.
+    if (process.platform !== "win32") {
+      expect(fs.statSync(path.join(dir, `${t.id}.json`)).mode & 0o777).toBe(0o600);
+    }
     fs.rmSync(dir, { recursive: true, force: true });
   });
 });

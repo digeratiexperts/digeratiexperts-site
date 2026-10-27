@@ -1,0 +1,2 @@
+# Vite's SSR test transform must see a single LF-terminated shebang line.
+scripts/sampleDataGuard.mjs text eol=lf
