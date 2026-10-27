@@ -43,13 +43,25 @@ body {
   position: relative;
 }
 
-/* Background image layer */
+/* The page is meant to sit on black. Every Zoho layer is made transparent below,
+   so html carries the black too: if the image fails, the page stays dark instead
+   of falling back to white. */
+html {
+  background: #000 !important;
+}
+
+/* Background image layer. Served from Zoho (the theme's own copy of the image):
+   the old digerati-experts.com/wp-content address no longer resolves, which left
+   the whole portal white. */
 body::before {
   content: "";
   position: fixed;
   inset: 0;
-  background: url("https://digerati-experts.com/wp-content/uploads/2025/02/Zoho_Portal.jpg")
-    no-repeat center center;
+  /* Plain black for now. The image is a large logo banner that sits behind page
+     text and makes it hard to read, most of all on phones. To bring it back,
+     swap the next line for:
+     background: #000 url("https://desk.zoho.com/portal/api/customThemes/171003000001991019/images/1290091000000089008?portalId=edbsn4186458b475160e31fbc7b56fb255a1d458714e9304b33963bb79b25aad1822c") no-repeat center center; */
+  background: #000;
   background-size: cover;
   opacity: 1;
   z-index: -2;
@@ -111,7 +123,10 @@ body > main,
   padding-right: 0 !important;
 }
 
-/* ===== GLOBAL CONTENT CARDS ===== */
+/* ===== GLOBAL CONTENT CARDS =====
+   The wildcards below also match Zoho's own wrappers (ProfileLeftContainer__,
+   ProfileRightContainer__, ...), which nest 5-6 deep. The reset after this rule
+   keeps the card on the outermost box only, so the boxes no longer stack. */
 .card,
 .panel,
 .box,
@@ -129,6 +144,55 @@ body > main,
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25) !important;
   border: 2px solid var(--yellow) !important;
   padding: 1.5rem !important;
+}
+
+/* :where() keeps this reset at the same weight as one class, so it beats the
+   wildcard rule above but loses to every explicit rule later in the file
+   (e.g. the black .TicketFormLeftContainer__part panel). */
+:where(.card, .panel, .box, [class*="card-"], [class*="panel-"], [class*="Container__"], [class*="Article"], [class*="Ticket"], [class*="List"])
+  :is(.card, .panel, .box, [class*="card-"], [class*="panel-"], [class*="Container__"], [class*="Article"], [class*="Ticket"], [class*="List"]) {
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+/* Keyboard skip-links box: the wildcard made it a card whose yellow edge
+   peeked out at the top-left corner. */
+.AppContainer__acbty_skip_links {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+/* Profile page: readable tabs and a primary button that is not black on black.
+   The theme maps Zoho's blue variables to yellow, which is unreadable on white,
+   and its button colours set primary text to #000 on a #000 button. */
+.ProfileTabs__tabName,
+.ProfileTabs__activeTab,
+.ProfileTabs__subTabActive {
+  color: var(--black) !important;
+}
+
+.ProfileTabs__activeTab,
+.ProfileTabs__subTabActive {
+  box-shadow: inset 0 -3px 0 var(--yellow) !important;
+}
+
+.Button__primary,
+.Button__primary:hover {
+  background: var(--black) !important;
+  border-color: var(--black) !important;
+  color: var(--yellow) !important;
+}
+
+.Button__secondary,
+.Button__secondary:hover {
+  background: var(--white) !important;
+  border: 1px solid var(--black) !important;
+  color: var(--black) !important;
 }
 
 /* De-blue body content links */
@@ -1567,15 +1631,27 @@ span.Button__primary:hover,
   flex-shrink: 0 !important;
 }
 
-.footer .avail-icon i {
-  color: #000 !important;
-  font-size: 1.125rem !important;
+/* Footer icons: footer.html holds empty <span class="icon icon-*">; each glyph
+   is an SVG used as a mask, painted in currentColor. */
+.footer .icon {
+  display: inline-block !important;
+  width: 18px !important;
+  height: 18px !important;
+  background-color: currentColor !important;
+  -webkit-mask: var(--icon) center / contain no-repeat;
+  mask: var(--icon) center / contain no-repeat;
 }
 
-/* Fallback if Font Awesome not loaded */
-.footer .avail-icon:not(:has(i))::before {
-  content: "⏰" !important;
-  font-size: 1.125rem !important;
+.footer .icon-clock { --icon: url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%20fill=%22none%22%20stroke=%22%23000%22%20stroke-width=%222%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%3E%3Ccircle%20cx=%2212%22%20cy=%2212%22%20r=%229%22/%3E%3Cpath%20d=%22M12%207v5l3%202%22/%3E%3C/svg%3E"); }
+.footer .icon-linkedin { --icon: url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%20fill=%22%23000%22%3E%3Cpath%20d=%22M4.98%203.5a2.5%202.5%200%201%201%200%205%202.5%202.5%200%200%201%200-5ZM3%209.5h4V21H3V9.5Zm6.5%200h3.8v1.6h.06c.53-1%201.83-2.06%203.77-2.06%204.03%200%204.77%202.65%204.77%206.1V21h-4v-5.13c0-1.22-.02-2.8-1.7-2.8-1.71%200-1.97%201.33-1.97%202.7V21h-4V9.5Z%22/%3E%3C/svg%3E"); }
+.footer .icon-x { --icon: url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%20fill=%22%23000%22%3E%3Cpath%20d=%22M17.75%203h3.07l-6.7%207.66L22%2021h-6.17l-4.83-6.32L5.47%2021H2.4l7.17-8.2L2%203h6.33l4.36%205.77L17.75%203Zm-1.08%2016.2h1.7L7.4%204.73H5.58L16.67%2019.2Z%22/%3E%3C/svg%3E"); }
+.footer .icon-github { --icon: url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%20fill=%22%23000%22%3E%3Cpath%20d=%22M12%202a10%2010%200%200%200-3.16%2019.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6%201%20.07%201.53%201.03%201.53%201.03.9%201.52%202.34%201.08%202.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.94%200-1.09.39-1.98%201.03-2.68-.1-.25-.45-1.27.1-2.65%200%200%20.84-.27%202.75%201.02a9.56%209.56%200%200%201%205%200c1.91-1.3%202.75-1.02%202.75-1.02.55%201.38.2%202.4.1%202.65.64.7%201.03%201.59%201.03%202.68%200%203.84-2.34%204.68-4.57%204.93.36.31.68.92.68%201.85v2.75c0%20.27.18.58.69.48A10%2010%200%200%200%2012%202Z%22/%3E%3C/svg%3E"); }
+.footer .icon-mail { --icon: url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%20fill=%22none%22%20stroke=%22%23000%22%20stroke-width=%222%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%3E%3Crect%20x=%223%22%20y=%225%22%20width=%2218%22%20height=%2214%22%20rx=%222%22/%3E%3Cpath%20d=%22m3%207%209%206%209-6%22/%3E%3C/svg%3E"); }
+.footer .icon-phone { --icon: url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%20fill=%22none%22%20stroke=%22%23000%22%20stroke-width=%222%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%3E%3Cpath%20d=%22M22%2016.9v3a2%202%200%200%201-2.2%202%2019.8%2019.8%200%200%201-8.6-3.1%2019.5%2019.5%200%200%201-6-6A19.8%2019.8%200%200%201%202.1%204.2%202%202%200%200%201%204.1%202h3a2%202%200%200%201%202%201.7c.1%201%20.4%201.9.7%202.8a2%202%200%200%201-.5%202.1L8%209.9a16%2016%200%200%200%206%206l1.3-1.3a2%202%200%200%201%202.1-.4c.9.3%201.8.6%202.8.7a2%202%200%200%201%201.7%202Z%22/%3E%3C/svg%3E"); }
+
+.footer .avail-icon,
+.footer .contact-icon {
+  color: #000 !important;
 }
 
 .footer .avail-status {
@@ -1662,23 +1738,9 @@ span.Button__primary:hover,
   flex-shrink: 0 !important;
 }
 
-.footer .contact-icon i {
-  color: #000 !important;
-  font-size: 1rem !important;
-}
 
-/* Fallback if Font Awesome not loaded */
-.footer .contact-item[href^="mailto"] .contact-icon:not(:has(i))::before {
-  content: "✉️" !important;
-  font-size: 1rem !important;
-}
 
-.footer .contact-item[href^="tel"] .contact-icon:not(:has(i))::before {
-  content: "📞" !important;
-  font-size: 1rem !important;
-}
-
-/* ===== SOCIAL ICONS - WORKS WITHOUT FONT AWESOME ===== */
+/* ===== SOCIAL ICONS (inline SVG in footer.html) ===== */
 
 .footer .social {
   display: flex !important;
@@ -1705,44 +1767,11 @@ span.Button__primary:hover,
   transform: translateY(-2px) !important;
 }
 
-/* Hide Font Awesome icons if they exist (since FA not loaded) */
-.footer .social a i {
-  display: none !important;
-}
-
-/* CSS fallback icons (work without Font Awesome) */
-.footer .social a[href*="twitter"]::before,
-.footer .social a[aria-label*="Twitter"]::before {
-  content: "𝕏" !important;
-  position: absolute !important;
+.footer .social a {
   color: #ffffff !important;
-  font-size: 1.125rem !important;
-  font-weight: 700 !important;
-  line-height: 1 !important;
 }
 
-.footer .social a[href*="linkedin"]::before,
-.footer .social a[aria-label*="LinkedIn"]::before {
-  content: "in" !important;
-  position: absolute !important;
-  color: #ffffff !important;
-  font-size: 1rem !important;
-  font-weight: 700 !important;
-  line-height: 1 !important;
-}
-
-.footer .social a[href*="github"]::before,
-.footer .social a[aria-label*="GitHub"]::before {
-  content: "⚙" !important;
-  position: absolute !important;
-  color: #ffffff !important;
-  font-size: 1.125rem !important;
-  font-weight: 700 !important;
-  line-height: 1 !important;
-}
-
-/* Icons turn black on hover */
-.footer .social a:hover::before {
+.footer .social a:hover {
   color: #000000 !important;
 }
 
@@ -1790,36 +1819,6 @@ span.Button__primary:hover,
   color: rgba(255,255,255,0.3) !important;
 }
 
-.footer .scroll-top {
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
-  gap: 0.25rem !important;
-  background: var(--yellow) !important;
-  border: 2px solid var(--yellow) !important;
-  border-radius: 8px !important;
-  padding: 0.5rem 0.75rem !important;
-  cursor: pointer !important;
-  transition: all 0.2s ease !important;
-}
-
-.footer .scroll-top:hover {
-  background: var(--white) !important;
-  transform: translateY(-2px) !important;
-}
-
-.footer .scroll-top i {
-  color: var(--black) !important;
-  font-size: 1.125rem !important;
-}
-
-.footer .scroll-top span {
-  font-size: 0.625rem !important;
-  text-transform: uppercase !important;
-  font-weight: 700 !important;
-  color: var(--black) !important;
-  letter-spacing: 0.05em !important;
-}
 
 /* ===== HOME PAGE WIDGET FIX ===== */
 
@@ -1974,12 +1973,12 @@ span.Button__primary:hover,
     font-size: 1rem !important;
   }
 
-  .footer-container {
+  .footer .footer-container {
     grid-template-columns: 1fr 1fr !important;
-    gap: 2.5rem;
+    gap: 2.5rem !important;
   }
 
-  .footer-brand {
+  .footer .footer-brand {
     grid-column: 1 / -1;
   }
 }
@@ -2173,9 +2172,9 @@ span.Button__primary:hover,
     margin-top: 3rem;
   }
 
-  .footer-container {
+  .footer .footer-container {
     grid-template-columns: 1fr !important;
-    gap: 2rem;
+    gap: 2rem !important;
     padding: 0 1.25rem !important;
   }
 
@@ -2206,6 +2205,55 @@ span.Button__primary:hover,
   .scroll-top::after,
   .AppContainer__backtop::after {
     font-size: 1.5rem !important;
+  }
+}
+
+/* Phone header layout. Zoho's own header styles out-rank the rules above, so on
+   phones the menu was squeezed into an 83px column (only "Home" visible) and the
+   fixed header covered the top of every page. Here the header scrolls with the
+   page and stacks: brand, buttons, then a swipeable tab row. */
+@media (max-width: 768px) {
+  .top-nav {
+    position: relative !important;
+    height: auto !important;
+  }
+
+  .top-nav-container {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    gap: 0.75rem !important;
+  }
+
+  .nav-left {
+    flex: 1 1 100% !important;
+  }
+
+  .nav-right {
+    order: 2 !important;
+    flex: 1 1 100% !important;
+    flex-wrap: wrap !important;
+    justify-content: flex-start !important;
+    gap: 0.5rem !important;
+  }
+
+  .nav-right .LoginDetail__loginContainer {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 0.5rem !important;
+  }
+
+  .nav-menu {
+    order: 3 !important;
+    flex: 1 1 100% !important;
+    width: 100% !important;
+    justify-content: flex-start !important;
+    overflow-x: auto !important;
+  }
+
+  .status-bar {
+    position: relative !important;
+    top: 0 !important;
   }
 }
 
