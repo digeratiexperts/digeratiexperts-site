@@ -4,7 +4,8 @@ The policy for anything DE Tech Tool downloads or installs on a client device. M
 [104-move tracker](DE-TECH-TOOL-TRACKER.md); it gates all of **section C** (installer integrity,
 moves 39-48). No hash work starts until this is confirmed.
 
-> **Status: PROPOSED — awaiting written confirmation from DE.**
+> **Status: CONFIRMED - Joe, 2026-10-26.** R5 decided the same day (see *Decided: the no-hash outcome*).
+> This policy is binding. Section C is authorised to start.
 > Move 6 is *confirming* this policy, not merely writing it. Until the sign-off at the bottom is
 > filled in, treat every rule below as the recommendation, not as binding. Nothing in section C
 > should be built on an unconfirmed policy.
@@ -49,8 +50,13 @@ If the vendor signs the installer, the signature is verified and the signer reco
 absent signature where the vendor normally signs is treated like a hash mismatch — a refusal, not a
 warning.
 
-**R5. A package with no vendor hash is an open decision.**
-This is the one rule this document cannot settle. See *Open decision* below.
+**R5. A package with no vendor hash is pinned on first trusted download, behind Authenticode where the vendor signs.**
+Where the vendor publishes no hash, the tool downloads once over TLS from the vendor, hashes the file and records
+that hash as the pin. **Every pin is labelled `pinned-first-download`, never `vendor-published`**, so nobody mistakes
+one for the other. Where the vendor signs the installer, a valid Authenticode signature from the expected publisher
+is required *before* the pin is accepted; a vendor who does not sign falls back to the plain first-download pin.
+This detects later tampering. It cannot detect a poisoned first fetch, which is why the label matters and why R4
+still applies wherever the vendor signs. See *Decided: the no-hash outcome* below.
 
 **R6. Re-verification is automated and rate-limited.**
 Hashes and signatures are re-checked in CI on a schedule, rate-limited so a vendor's CDN is not
@@ -108,23 +114,19 @@ That gap is what moves 39-48 close.
 
 ## Open decision — move 48
 
-**For installers where the vendor publishes no hash, what is the outcome?**
+**Decision, recorded 2026-10-26 by Joe: pin plus Authenticode where the vendor signs, pin on first trusted download otherwise.** This unblocks move 41 and the rest of section C.
 
-Two options, and this is Joe's to make (move 48 is marked as needing Joe). It blocks move 41.
+| Option | Meaning | Cost | Outcome |
+|---|---|---|---|
+| **A. Pin on first trusted download** | Download once over TLS from the vendor, hash it, record that hash as the pin, and verify every later use against it. | The first download is only as trustworthy as the TLS path and the vendor's host. It detects *later* tampering, not a poisoned first fetch. | **Chosen where the vendor does not sign** |
+| **B. Drop the package** | If the vendor publishes no hash, the tool does not install it. | Some genuinely useful tools get excluded; a technician may install them by hand instead, which is worse. | Rejected |
+| **C. Pin + Authenticode** | As A, but additionally require a valid Authenticode signature from the expected publisher before pinning. | Strongest. Fails for vendors who do not sign. | **Chosen where the vendor signs** |
 
-| Option | Meaning | Cost |
-|---|---|---|
-| **A. Pin on first trusted download** | Download once over TLS from the vendor, hash it, record that hash as the pin, and verify every later use against it. | The first download is only as trustworthy as the TLS path and the vendor's host. It detects *later* tampering, not a poisoned first fetch. |
-| **B. Drop the package** | If the vendor publishes no hash, the tool does not install it. | Some genuinely useful tools get excluded; a technician may install them by hand instead, which is worse. |
-| **C. Pin + Authenticode** | As A, but additionally require a valid Authenticode signature from the expected publisher before pinning. | Strongest. Fails for vendors who do not sign. |
+The labelling requirement is part of the decision, not an implementation detail: every pin is recorded as
+`pinned-first-download` rather than `vendor-published`, so nobody mistakes one for the other. `community.json`
+already distinguishes these and the UI already reports `sha256: set / not set`, so the reporting side is nearly there.
 
-The recommendation is **C where the vendor signs, A otherwise**, with every pin labelled in the
-catalog as `pinned-first-download` rather than `vendor-published` so nobody mistakes one for the
-other. The label matters: `community.json` already distinguishes these and the UI already shows
-`sha256: set / not set`, so the reporting side is nearly there.
-
-Until this is decided, section C should do the inventory (moves 39-40) and nothing that presumes an
-answer.
+Section C may now proceed past the inventory.
 
 ## What each move does against this policy
 
@@ -132,7 +134,7 @@ answer.
 |---|---|
 | 39 — inventory every installer source | Finds every subject of R1 |
 | 40 — record URL, vendor hash, whether verified | Establishes the R2 record |
-| 41 — flag the no-hash cases | Identifies the R5 population (blocked on 48) |
+| 41 — flag the no-hash cases | Applies R5 as decided |
 | 42 — re-check in CI, rate-limited | R6 |
 | 43 — check Authenticode | R4 |
 | 44 — alert on silent vendor change | R7 |
@@ -147,21 +149,21 @@ answer.
 |---|---|---|
 | Add or edit a package source / hash | DE engineering | Reviewed change citing the vendor's published value |
 | Raise a refusal to a pass | **Nobody** | Refusals are not overrideable (R10) |
-| Add a package with no hash | Nobody until move 48 decides | — |
+| Add a package with no hash | DE engineering | Only with a `pinned-first-download` label and, where the vendor signs, a verified Authenticode signature (R5) |
 | Change this policy | Joe | Re-confirm in writing below |
 
 ## Confirmation
 
-Move 6 is complete when this is filled in and the date is recorded in the tracker.
+Move 6 is complete: confirmed in writing and recorded here.
 
 > I have read this policy and confirm it as DE's installer trust policy.
 >
-> Name: ______________________  Date: ______________
+> **Confirmed by: Joe &nbsp;&nbsp; Date: 2026-10-26**
 >
-> Decision on R5 (move 48):  A / B / C / other: ______________
+> **Decision on R5 (move 48): C where the vendor signs, A otherwise** - pin plus Authenticode where the vendor
+> signs, pin on first trusted download where it does not. Every pin labelled `pinned-first-download`.
 >
-> Notes:
->
-> ______________________________________________________________
+> Notes: recorded from the 2026-10-26 plan review. Option B (drop the package) was rejected because a technician
+> would install such a tool by hand instead, which is worse than pinning it.
 
-Until that line is signed, section C is **not** authorised to start.
+Section C is **authorised to start**.
