@@ -40,6 +40,7 @@ import {
 import { registerPortalPasskeyEnrollmentRoutes } from "./portalPasskeyEnrollmentRoutes";
 import { registerPortalPasskeyLoginRoutes, type PortalMfaChallenge } from "./portalPasskeyLoginRoutes";
 import { sendStorageUnavailable } from "./storageUnavailableResponse";
+import { registerPortalDashboardRoute } from "./portalDashboardStats";
 import {
   parseZohoTicketId,
   validatePortalTicketUpload,
@@ -3672,123 +3673,18 @@ export async function registerRoutes(app: Express) {
   });
 
   // Portal Dashboard Stats - Enhanced with Zoho data (scoped to user)
-  app.get("/api/portal/dashboard", [authMiddleware], async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const { zohoDeskService } = await import("./zoho/zohoDesk");
-      const { zohoBillingService } = await import("./zoho/zohoBilling");
-      const { zohoClient } = await import("./zoho/zohoClient");
-      
-      let openTickets = 0;
-      let resolvedTickets = 0;
-      let pendingInvoices = 0;
-      let recentTickets: any[] = [];
-      let zohoDataFetched = false;
-      
-      const userEmail = req.user?.email;
-      
-      // Try to get Zoho data if connected - scoped to user
-      if (zohoClient.isConfigured() && userEmail) {
-        try {
-          // Get contact by email first to scope ticket queries
-          const contact = await zohoDeskService.getContactByEmail(userEmail);
-          
-          if (contact) {
-            // Get tickets for this specific contact
-            const contactTickets = await zohoDeskService.getTicketsByContact(contact.id);
-            
-            openTickets = contactTickets.filter(t => 
-              t.status?.toLowerCase() === "open" || t.status?.toLowerCase() === "in progress"
-            ).length;
-            resolvedTickets = contactTickets.filter(t => 
-              t.status?.toLowerCase() === "closed" || t.status?.toLowerCase() === "resolved"
-            ).length;
-            recentTickets = contactTickets.slice(0, 5).map(t => ({
-              id: t.id,
-              ticketNumber: t.ticketNumber,
-              subject: t.subject,
-              status: t.status?.toLowerCase() || "open",
-              priority: t.priority,
-              createdAt: t.createdTime,
-            }));
-            zohoDataFetched = true;
-          }
-        } catch (deskError) {
-          console.warn("Could not fetch Zoho Desk data for user:", deskError);
-        }
-        
-        try {
-          // Get invoices scoped to user's billing customer
-          const customer = await zohoBillingService.getCustomerByEmail(userEmail);
-          if (customer) {
-            const customerInvoices = await zohoBillingService.getInvoicesByCustomer(customer.customer_id);
-            pendingInvoices = customerInvoices.filter(inv => 
-              inv.status?.toLowerCase() === "unpaid" || inv.status?.toLowerCase() === "overdue"
-            ).length;
-          }
-        } catch (billingError) {
-          console.warn("Could not fetch Zoho Billing data for user:", billingError);
-        }
-      }
-      
-      // Fallback to local tickets if Zoho didn't return data
-      if (!zohoDataFetched) {
-        const tickets = await storage.getPortalTickets(req.userId || "");
-        openTickets = tickets.filter(t => t.status === "open" || (t.status as string) === "in-progress" || (t.status as string) === "in_progress").length;
-        resolvedTickets = tickets.filter(t => t.status === "resolved" || t.status === "closed").length;
-        recentTickets = tickets.slice(0, 5).map(t => ({
-          id: t.id,
-          ticketNumber: t.ticketNumber || `#TK${String(t.id).padStart(3, '0')}`,
-          subject: t.subject,
-          status: t.status,
-          priority: t.priority,
-          createdAt: t.createdAt,
-        }));
-      }
-      
-      // Get services from Zoho subscriptions
-      let services: any[] = [];
-      let zohoBillingFetched = false;
-      
-      if (zohoClient.isConfigured() && userEmail) {
-        try {
-          const customer = await zohoBillingService.getCustomerByEmail(userEmail);
-          if (customer) {
-            const subscriptions = await zohoBillingService.getSubscriptionsByCustomer(customer.customer_id);
-            services = subscriptions
-              .filter(sub => sub.status === "live" || sub.status === "active")
-              .map(sub => ({
-                id: sub.subscription_id,
-                serviceName: sub.plan?.name || sub.name,
-                status: sub.status,
-                amount: sub.amount,
-                nextBilling: sub.next_billing_at,
-                zohoLink: `https://billing.zoho.com/app#/subscriptions/${sub.subscription_id}`,
-              }));
-            zohoBillingFetched = true;
-          }
-        } catch (subError) {
-          console.warn("Could not fetch Zoho subscriptions for services:", subError);
-        }
-      }
-      
-      // Do not invent active services when Zoho returns none — empty is honest.
-      const dashboardStats = {
-        openTickets,
-        resolvedTickets,
-        activeServices: services.length,
-        pendingInvoices,
-        recentTickets,
-        services,
-        zohoConnected: zohoDataFetched || zohoBillingFetched,
-      };
-      
-      res.json(dashboardStats);
-    } catch (error: any) {
-      if (sendStorageUnavailable(res, error)) return;
-      console.error("[ERROR] Dashboard fetch failed:", error);
-      res.status(500).json({ message: "Failed to load dashboard" });
-    }
-  });
+  // W1 / journey 10: exact totals or null, never a zero for an unread source.
+  {
+    const { zohoDeskService } = await import("./zoho/zohoDesk");
+    const { zohoBillingService } = await import("./zoho/zohoBilling");
+    const { zohoClient } = await import("./zoho/zohoClient");
+    registerPortalDashboardRoute(app, authMiddleware, {
+      zohoConfigured: () => zohoClient.isConfigured(),
+      desk: zohoDeskService,
+      billing: zohoBillingService,
+      localTickets: (userId) => storage.getPortalTickets(userId),
+    });
+  }
 
   // Portal Billing - Get subscription and invoices from Zoho Billing
   app.get("/api/portal/billing", [authMiddleware], async (req: AuthenticatedRequest, res: Response) => {

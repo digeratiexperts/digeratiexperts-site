@@ -1,3 +1,4 @@
+import type { AxiosInstance } from "axios";
 import { zohoClient } from './zohoClient';
 import {
   clampPriorityForSource,
@@ -53,14 +54,28 @@ export interface ZohoDeskContact {
   accountName?: string;
 }
 
-class ZohoDeskService {
+/** Strict read: `{ ok: false }` means the provider could not be read. */
+export type StrictDeskRead<T> = { ok: true; value: T } | { ok: false };
+
+/** Zoho Desk's maximum page size for contact ticket lists. */
+export const STRICT_DESK_TICKET_LIMIT = 100;
+
+type DeskClientSource = { getDeskClient(): Promise<AxiosInstance> };
+
+function isDeskRow(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+export class ZohoDeskService {
+  constructor(private readonly source: DeskClientSource = zohoClient) {}
+
   private orgId: string | null = null;
   private defaultDepartmentId: string | null = null;
 
   private async getOrgId(): Promise<string> {
     if (this.orgId) return this.orgId;
     
-    const client = await zohoClient.getDeskClient();
+    const client = await this.source.getDeskClient();
     const response = await client.get('/organizations');
     
     if (response.data?.data?.[0]?.id) {
@@ -98,7 +113,7 @@ class ZohoDeskService {
     sortBy?: string;
   }): Promise<{ tickets: ZohoTicket[]; count: number }> {
     try {
-      const client = await zohoClient.getDeskClient();
+      const client = await this.source.getDeskClient();
       const orgId = await this.getOrgId();
       
       const response = await client.get('/tickets', {
@@ -123,7 +138,7 @@ class ZohoDeskService {
 
   async getTicketById(ticketId: string): Promise<ZohoTicket | null> {
     try {
-      const client = await zohoClient.getDeskClient();
+      const client = await this.source.getDeskClient();
       const orgId = await this.getOrgId();
       
       const response = await client.get(`/tickets/${ticketId}`, {
@@ -157,7 +172,7 @@ class ZohoDeskService {
     priority?: string;
   }): Promise<ZohoTicket> {
     try {
-      const client = await zohoClient.getDeskClient();
+      const client = await this.source.getDeskClient();
       const orgId = await this.getOrgId();
       
       const departmentId = data.departmentId || await this.getDefaultDepartmentId();
@@ -223,7 +238,7 @@ class ZohoDeskService {
 
   async updateTicket(ticketId: string, data: Partial<ZohoTicket>): Promise<ZohoTicket> {
     try {
-      const client = await zohoClient.getDeskClient();
+      const client = await this.source.getDeskClient();
       const orgId = await this.getOrgId();
       
       const response = await client.patch(`/tickets/${ticketId}`, data, {
@@ -242,7 +257,7 @@ class ZohoDeskService {
     from?: number;
   }): Promise<{ contacts: ZohoDeskContact[]; count: number }> {
     try {
-      const client = await zohoClient.getDeskClient();
+      const client = await this.source.getDeskClient();
       const orgId = await this.getOrgId();
       
       const response = await client.get('/contacts', {
@@ -265,7 +280,7 @@ class ZohoDeskService {
 
   async getContactByEmail(email: string): Promise<ZohoDeskContact | null> {
     try {
-      const client = await zohoClient.getDeskClient();
+      const client = await this.source.getDeskClient();
       const orgId = await this.getOrgId();
       
       const response = await client.get('/contacts/search', {
@@ -282,7 +297,7 @@ class ZohoDeskService {
 
   async getTicketsByContact(contactId: string): Promise<ZohoTicket[]> {
     try {
-      const client = await zohoClient.getDeskClient();
+      const client = await this.source.getDeskClient();
       const orgId = await this.getOrgId();
       
       const response = await client.get(`/contacts/${contactId}/tickets`, {
@@ -296,9 +311,64 @@ class ZohoDeskService {
     }
   }
 
+  /**
+   * Strict contact lookup: `{ ok: true, value: null }` is a validated
+   * no-match; any failure or malformed envelope is `{ ok: false }`.
+   * Zoho Desk answers a search with no match as HTTP 204; a 200 must carry `data`.
+   */
+  async findContactByEmailStrict(email: string): Promise<StrictDeskRead<{ id: string } | null>> {
+    try {
+      const client = await this.source.getDeskClient();
+      const orgId = await this.getOrgId();
+      const response = await client.get('/contacts/search', { headers: { orgId }, params: { email } });
+      // Only a verified 204 No Content is a no-match; an HTTP 200 with a
+      // null, missing or empty body is malformed, not proof of absence.
+      if (response?.status === 204) return { ok: true, value: null };
+      const data = response?.data;
+      if (response?.status !== 200) return { ok: false };
+      if (!isDeskRow(data) || !Array.isArray(data.data)) return { ok: false };
+      const first = data.data[0];
+      if (first === undefined) return { ok: true, value: null };
+      if (!isDeskRow(first) || typeof first.id !== "string" || !first.id) return { ok: false };
+      return { ok: true, value: { id: first.id } };
+    } catch {
+      console.warn('[zohoDesk] strict contact lookup unavailable');
+      return { ok: false };
+    }
+  }
+
+  /**
+   * Strict ticket list for one contact (provider order, as the legacy read), one page of up to
+   * STRICT_DESK_TICKET_LIMIT. `complete` is true only when the page came back
+   * short of the limit, so counts from it are exact totals. Rows without a
+   * string id and status make the whole read unavailable.
+   */
+  async listTicketsByContactStrict(contactId: string): Promise<StrictDeskRead<{ tickets: ZohoTicket[]; complete: boolean }>> {
+    try {
+      const client = await this.source.getDeskClient();
+      const orgId = await this.getOrgId();
+      const response = await client.get(`/contacts/${encodeURIComponent(contactId)}/tickets`, {
+        headers: { orgId },
+        params: { limit: STRICT_DESK_TICKET_LIMIT },
+      });
+      // Only a verified 204 No Content means the contact has no tickets; an
+      // HTTP 200 with a null, missing or empty body stays unavailable.
+      if (response?.status === 204) return { ok: true, value: { tickets: [], complete: true } };
+      const data = response?.data;
+      if (response?.status !== 200) return { ok: false };
+      if (!isDeskRow(data) || !Array.isArray(data.data)) return { ok: false };
+      const rows = data.data;
+      if (!rows.every((r) => isDeskRow(r) && typeof r.id === "string" && typeof r.status === "string")) return { ok: false };
+      return { ok: true, value: { tickets: rows as ZohoTicket[], complete: rows.length < STRICT_DESK_TICKET_LIMIT } };
+    } catch {
+      console.warn('[zohoDesk] strict contact ticket list unavailable');
+      return { ok: false };
+    }
+  }
+
   async getDepartments(): Promise<any[]> {
     try {
-      const client = await zohoClient.getDeskClient();
+      const client = await this.source.getDeskClient();
       const orgId = await this.getOrgId();
       
       const response = await client.get('/departments', {
@@ -345,7 +415,7 @@ class ZohoDeskService {
 
   async addTicketComment(ticketId: string, content: string): Promise<void> {
     try {
-      const client = await zohoClient.getDeskClient();
+      const client = await this.source.getDeskClient();
       const orgId = await this.getOrgId();
       await client.post(
         `/tickets/${ticketId}/comments`,
@@ -362,7 +432,7 @@ class ZohoDeskService {
 
   /** Like addTicketComment, but throws so the caller can tell the client it failed. */
   async addPublicTicketComment(ticketId: string, content: string): Promise<void> {
-    const client = await zohoClient.getDeskClient();
+    const client = await this.source.getDeskClient();
     const orgId = await this.getOrgId();
     await client.post(
       `/tickets/${ticketId}/comments`,
@@ -373,7 +443,7 @@ class ZohoDeskService {
 
   /** Desk accounts whose name matches `accountName`. Throws on transport/auth errors. */
   async searchAccountsByName(accountName: string): Promise<ZohoDeskAccount[]> {
-    const client = await zohoClient.getDeskClient();
+    const client = await this.source.getDeskClient();
     const orgId = await this.getOrgId();
     const response = await client.get('/accounts/search', {
       headers: { orgId },
@@ -406,7 +476,7 @@ class ZohoDeskService {
   }
 
   private async getPaged<T>(path: string, max: number, params: Record<string, unknown> = {}): Promise<T[]> {
-    const client = await zohoClient.getDeskClient();
+    const client = await this.source.getDeskClient();
     const orgId = await this.getOrgId();
     const pageSize = 100;
     const out: T[] = [];
@@ -424,7 +494,7 @@ class ZohoDeskService {
 
   /** Threads and comments on a ticket, as Desk returns them. */
   async getTicketConversations(ticketId: string): Promise<ZohoDeskConversation[]> {
-    const client = await zohoClient.getDeskClient();
+    const client = await this.source.getDeskClient();
     const orgId = await this.getOrgId();
     const response = await client.get(`/tickets/${ticketId}/conversations`, {
       headers: { orgId },
