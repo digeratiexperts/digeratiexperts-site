@@ -121,7 +121,7 @@ function Protect-DEText {
     if (-not $Text) { return $Text }
     $t = $Text
     foreach ($v in $script:DE.Redactions) { if ($v) { $t = $t.Replace($v, '[REDACTED]') } }
-    $t = [regex]::Replace($t, '(?i)\b(api[_ -]?key|token|secret|password|passwd|pwd|connect[_ -]?key|site[_ -]?token|org(anization)?[_ -]?key|recovery ?password|tap|temporary access pass)\b(\s*[:=]\s*)\S+', '$1$2[REDACTED]')
+    $t = [regex]::Replace($t, '(?i)\b(api[_ -]?key|token|secret|password|passwd|pwd|connect[_ -]?key|site[_ -]?token|org(?:anization)?[_ -]?key|recovery ?password|tap|temporary access pass)\b(\s*[:=]\s*)\S+', '$1$2[REDACTED]')
     $t = [regex]::Replace($t, '(?i)\bBearer\s+[A-Za-z0-9\-\._~\+\/]+=*', 'Bearer [REDACTED]')
     $t = [regex]::Replace($t, '(?<!\d)\d{6}([- ]?\d{6}){7}(?!\d)', '[REDACTED BITLOCKER KEY]')   # dashes, spaces or none
     $t = [regex]::Replace($t, '\b(AKIA|ASIA)[A-Z0-9]{16}\b', '[REDACTED AWS KEY]')
