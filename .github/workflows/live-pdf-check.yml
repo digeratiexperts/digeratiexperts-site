@@ -58,7 +58,7 @@ jobs:
           name: live-pdfs
           path: ${{ runner.temp }}/live-pdfs
           if-no-files-found: ignore
-          retention-days: 14
+          retention-days: 7
 
       - name: Open or update the live-PDF issue
         if: failure()
