@@ -192,6 +192,10 @@ When Joe says "add to to-do list", "put it on my to-do", "add that to my list" o
   - `area`: optional short tag (for example `Admin PC`, `Hardware tests`).
   - `notes`: optional detail: paths, PR numbers, links. Never secrets, keys or client credentials.
   - `from`: where it came from, for example `Claude Code · Intelligence-Hub` or `claude.ai`.
+  - `steps`: what Joe clicks to get it done, shown as a tickable checklist when he opens the task: `[{text, done: false}]`, 3–8 plain imperative steps taken from the repo docs or issue (exact commands, env var names, paths; never secret values).
+  - `links`: `[{label, url, kind}]`, `kind` one of `github`, `doc`, `console`, `vendor`, `site`. Only URLs you have checked: issues/PRs you read, repo files that exist, the live page, the vendor console.
+  - `statusHint`: optional one line when the task may already be done or is blocked, for example "#592 merged; only the tech levels are left".
+  Every new task gets `steps` and `links`; a task Joe cannot act on from the card alone is not finished.
   List the collection first (`action: "list"`) and skip anything already on it. To tick something off, `update` it with `done: true, doneAt: <epoch ms>` and the `if_version` you read. Then tell Joe in one line what you added.
 - **Codex / ChatGPT / Cursor / any agent that can't reach claude.ai artifacts:** you can't write to the list. Say so, and end your reply with a block Joe can paste into a Claude session, headed `Add to to-do list:`, one line per task as `group | title | notes`.
 - Only add what Joe asked for, or jobs your own handoff says only Joe can do. Don't add your own follow-up work.
