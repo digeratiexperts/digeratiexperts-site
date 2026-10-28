@@ -1,4 +1,6 @@
 import { useEffect } from 'react';
+import { useLocation } from 'wouter';
+import { reportPageReady } from '@/lib/analytics';
 import { registerPageCanonical } from '@/components/DefaultCanonical';
 
 interface SEOProps {
@@ -23,6 +25,7 @@ function buildFullTitle(title: string): string {
 }
 
 export function useSEO({ title, description, canonical, ogImage, noIndex }: SEOProps) {
+  const [location] = useLocation();
   useEffect(() => {
     const fullTitle = buildFullTitle(title);
     const metaDescription = description || DEFAULT_DESCRIPTION;
@@ -71,11 +74,13 @@ export function useSEO({ title, description, canonical, ogImage, noIndex }: SEOP
       updateOrCreateMetaTag('robots', 'index, follow');
     }
 
+    reportPageReady(window.location.pathname, fullTitle);
+
     return () => {
       registerPageCanonical(undefined);
       document.title = BASE_TITLE;
     };
-  }, [title, description, canonical, ogImage, noIndex]);
+  }, [location, title, description, canonical, ogImage, noIndex]);
 }
 
 export default useSEO;

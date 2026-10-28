@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Helmet } from "react-helmet-async";
+import { AnalyticsHelmet as Helmet } from "@/components/AnalyticsHelmet";
 import { Link } from "wouter";
 import { pricing } from "@/data/pricing";
 import { CTA } from "@/lib/ctaCopy";

@@ -1,0 +1,58 @@
+{
+  "vendorSdkExecuted": false,
+  "googleReceiptVerified": false,
+  "results": [
+    {
+      "scenario": "no consent, navigate, then grant",
+      "passed": true
+    },
+    {
+      "scenario": "initial view, SPA, back, forward, reload",
+      "passed": true
+    },
+    {
+      "scenario": "Helmet and useSEO pages have final titles",
+      "passed": true
+    },
+    {
+      "scenario": "delayed lazy route waits for metadata",
+      "passed": true
+    },
+    {
+      "scenario": "private direct load /portal/login",
+      "passed": true
+    },
+    {
+      "scenario": "private direct load /portal/tickets",
+      "passed": true
+    },
+    {
+      "scenario": "private direct load /login",
+      "passed": true
+    },
+    {
+      "scenario": "private direct load /internal/warehouse",
+      "passed": true
+    },
+    {
+      "scenario": "private direct load /official-network-planner",
+      "passed": true
+    },
+    {
+      "scenario": "public to portal and portal to public isolate documents",
+      "passed": true
+    },
+    {
+      "scenario": "portal hostname excludes SDKs",
+      "passed": true
+    },
+    {
+      "scenario": "marketing-only consent excludes Google SDK",
+      "passed": true
+    },
+    {
+      "scenario": "404 attribution and public render at three widths",
+      "passed": true
+    }
+  ]
+}

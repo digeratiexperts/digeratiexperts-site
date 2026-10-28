@@ -63,7 +63,7 @@ export function Skeleton({
 
 export function PageLoadingSkeleton() {
   return (
-    <div 
+    <div data-page-loading
       className="min-h-screen bg-[#0a0a0a] flex flex-col items-center justify-center p-8"
       role="status"
       aria-live="polite"

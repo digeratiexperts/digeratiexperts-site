@@ -1,6 +1,89 @@
 declare function gtag(...args: any[]): void;
 
 const CONSENT_KEY = "de_cookie_consent_v2";
+const GA_ID = "G-1YDMJ38SXD";
+let lastGaPagePath: string | undefined;
+let lastMarketingPagePath: string | undefined;
+let readyPage: { path: string; title: string } | undefined;
+let previousPublicLocation: string | undefined;
+let visit = 0;
+let pendingGaEvents: Array<{event: string; params?: Record<string, any>}> = [];
+let readinessObserver: MutationObserver | undefined;
+
+/** Called before a same-document path change, including back/forward. */
+export function beginPageVisit() {
+  visit++;
+  readinessObserver?.disconnect();
+  readinessObserver = undefined;
+  pendingGaEvents = [];
+  readyPage = undefined;
+  lastGaPagePath = undefined;
+  lastMarketingPagePath = undefined;
+}
+
+export function disableAnalytics() {
+  (window as any)[`ga-disable-${GA_ID}`] = true;
+}
+
+/** SEO hooks/Helmet signal completion, never the early route-change effect. */
+export function reportPageReady(path: string, title: string) {
+  if (inPortal() || path !== window.location.pathname || !title.trim()) return;
+  readyPage = { path, title };
+  const currentVisit = visit;
+  // Coalesce child/parent SEO effects in the same commit; parent metadata wins.
+  queueMicrotask(() => flushReadyPage(currentVisit));
+}
+
+function flushReadyPage(currentVisit: number) {
+  if (visit !== currentVisit || !readyPage || readyPage.path !== window.location.pathname || inPortal()) return;
+  if (document.querySelector?.("[data-page-loading]")) {
+    // Helmet can commit its title during concurrent rendering, before React
+    // reveals the lazy page. Resume on the actual Suspense reveal, not a timer.
+    if (!readinessObserver && typeof MutationObserver !== "undefined") {
+      readinessObserver = new MutationObserver(() => flushReadyPage(currentVisit));
+      readinessObserver.observe(document.getElementById?.("app-canvas") || document.documentElement, {
+        childList: true, subtree: true,
+      });
+    }
+    return;
+  }
+  readinessObserver?.disconnect();
+  readinessObserver = undefined;
+  analytics.pageView(readyPage.path, readyPage.title);
+}
+
+function publicReferrer(value: string): string {
+  try {
+    const url = new URL(value);
+    return isPortalContext(url.hostname, url.pathname) ? "" : url.origin + url.pathname;
+  } catch { return ""; }
+}
+
+function inPortal(): boolean {
+  return typeof window !== "undefined" &&
+    isPortalContext(window.location.hostname, window.location.pathname);
+}
+
+/** Basic consent mode: no Google tag request before analytics consent. */
+function initGoogleAnalytics(consent: ConsentConfig, page?: { page_location: string; page_referrer: string; page_title: string }): boolean {
+  const w = window as any;
+  w[`ga-disable-${GA_ID}`] = inPortal() || !consent.analytics;
+  if (inPortal() || !consent.analytics || w.__DE_GA_INIT__ || !page) return false;
+  // index.html supplies a denied-by-default dataLayer/gtag queue.
+  if (typeof gtag === "undefined") return false;
+  gtag("js", new Date());
+  gtag("config", GA_ID, {
+    send_page_view: false,
+    anonymize_ip: true,
+    ...page,
+  });
+  const script = document.createElement("script");
+  script.async = true;
+  script.src = `https://www.googletagmanager.com/gtag/js?id=${GA_ID}`;
+  document.head.appendChild(script);
+  w.__DE_GA_INIT__ = true;
+  return true;
+}
 
 export type ConsentConfig = {
   analytics: boolean;
@@ -13,7 +96,7 @@ function getConsent(): ConsentConfig {
     const stored = localStorage.getItem(CONSENT_KEY);
     if (stored) {
       const parsed = JSON.parse(stored);
-      return { analytics: !!parsed.analytics, marketing: !!parsed.marketing };
+      return { analytics: parsed?.analytics === true, marketing: parsed?.marketing === true };
     }
     const legacy = localStorage.getItem("de_cookie_consent");
     if (legacy === "accepted") return { analytics: true, marketing: true };
@@ -87,6 +170,7 @@ export function injectSearchVerificationTags() {
 }
 
 export function saveConsent(config: ConsentConfig) {
+  const previous = getConsent();
   try {
     localStorage.setItem(
       CONSENT_KEY,
@@ -94,31 +178,57 @@ export function saveConsent(config: ConsentConfig) {
     );
     localStorage.setItem("de_cookie_consent", config.analytics || config.marketing ? "accepted" : "rejected");
   } catch {}
+  // Disable collection before the consent update; denying storage alone can
+  // still permit cookieless pings from a previously loaded Google tag.
+  (window as any)[`ga-disable-${GA_ID}`] = inPortal() || !config.analytics;
+  if (!config.analytics) { lastGaPagePath = undefined; pendingGaEvents = []; }
+  if (!config.marketing) lastMarketingPagePath = undefined;
+  if (inPortal()) return;
   updateGtagConsent(config);
   updateClarityConsent(config);
   updateMetaConsent(config);
   updateBingConsent(config);
-  if (config.marketing || config.analytics) {
-    initAnalytics();
+  if ((previous.analytics && !config.analytics) || (previous.marketing && !config.marketing)) {
+    // Third-party SDKs cannot all be unloaded reliably. A new document starts
+    // with the reduced consent and no revoked SDKs (notably LinkedIn/Clarity).
+    disableAnalytics();
+    window.location.reload();
+    return;
+  }
+  if (config.marketing || config.analytics) initAnalytics();
+  // The initial SPA effect ran while consent was denied. Count only the
+  // current public page on a new grant, never replay pre-consent navigation.
+  if (((!previous.analytics && config.analytics) || (!previous.marketing && config.marketing)) &&
+      readyPage?.path === window.location.pathname) {
+    reportPageReady(readyPage.path, readyPage.title);
   }
 }
 
 /**
  * Signed-in client portal pages carry tickets, invoices and people. Marketing
  * analytics (GA, Meta, LinkedIn, Bing and Clarity session recording) never
- * load there, whatever the visitor accepted on the public site.
+ * load there, whatever the visitor accepted on the public site. Auth aliases,
+ * staff-only internal routes and the standalone challenger preview are also excluded.
  */
 export function isPortalContext(hostname: string, pathname: string): boolean {
   const host = hostname.toLowerCase();
   if (host === "portal.digeratiexperts.com" || host.startsWith("portal.")) return true;
-  return pathname === "/portal" || pathname.startsWith("/portal/");
+  const path = pathname.split(/[?#]/)[0].replace(/\/+$/, "").toLowerCase() || "/";
+  return path === "/portal" || path.startsWith("/portal/") ||
+    path === "/login" || path === "/signup" || path === "/agreement-gate" ||
+    path === "/internal" || path.startsWith("/internal/") ||
+    path === "/official-network-planner" || path === "/homepage-challenger";
 }
 
 export function initAnalytics() {
   injectSearchVerificationTags();
-  if (typeof window !== "undefined" && isPortalContext(window.location.hostname, window.location.pathname)) return;
+  if (inPortal()) {
+    (window as any)[`ga-disable-${GA_ID}`] = true;
+    return;
+  }
   const consent = getConsent();
   updateGtagConsent(consent);
+  initGoogleAnalytics(consent);
 
   // Microsoft Clarity (analytics-gated)
   const clarityId = import.meta.env.VITE_CLARITY_ID;
@@ -168,7 +278,6 @@ export function initAnalytics() {
     document.head.appendChild(n);
     fbq("consent", "grant");
     fbq("init", metaPixelId);
-    fbq("track", "PageView");
     f.__FB_INIT__ = true;
   }
 
@@ -205,6 +314,13 @@ export function initAnalytics() {
 }
 
 function fireGtag(event: string, params?: Record<string, any>) {
+  if (inPortal() || !getConsent().analytics) return;
+  if (!readyPage || readyPage.path !== window.location.pathname || !(window as any).__DE_GA_INIT__) {
+    // Preserve consented events from the current commit until its metadata is
+    // ready. Navigation/revocation discards this buffer; denied events never enter.
+    pendingGaEvents.push({ event, params });
+    return;
+  }
   try {
     if (typeof gtag === "undefined") return;
     gtag("event", event, { ...params, send_to: "G-1YDMJ38SXD" });
@@ -212,6 +328,7 @@ function fireGtag(event: string, params?: Record<string, any>) {
 }
 
 function fireMetaPixel(event: string, params?: Record<string, any>) {
+  if (inPortal()) return;
   try {
     const f = window as any;
     if (!f.fbq) return;
@@ -220,6 +337,7 @@ function fireMetaPixel(event: string, params?: Record<string, any>) {
 }
 
 function fireBing(event: string, params?: Record<string, any>) {
+  if (inPortal()) return;
   try {
     const w = window as any;
     if (!w.uetq) return;
@@ -303,19 +421,37 @@ export const analytics = {
   },
 
   pageView(path: string, title: string) {
+    if (inPortal() || isPortalContext(window.location.hostname, path.split(/[?#]/)[0])) {
+      (window as any)[`ga-disable-${GA_ID}`] = true;
+      lastGaPagePath = undefined;
+      return;
+    }
     const consent = getConsent();
-    if (consent.analytics) {
+    const page = {
+      page_location: window.location.origin + path.split(/[?#]/)[0],
+      page_referrer: previousPublicLocation ?? publicReferrer(document.referrer),
+      page_title: title,
+    };
+    const initialized = initGoogleAnalytics(consent, page);
+    if (consent.analytics && lastGaPagePath !== path) {
       try {
         if (typeof gtag !== "undefined") {
-          gtag("event", "page_view", {
-            page_path: path,
-            page_title: title,
-            send_to: "G-1YDMJ38SXD",
-          });
+          if (!initialized) {
+            // Keep subsequent automatic engagement events on the current page.
+            // update:true merges context without reinitializing the destination.
+            gtag("config", GA_ID, { update: true, send_page_view: false, ...page });
+          }
+          gtag("event", "page_view", { page_path: path, ...page, send_to: GA_ID });
+          lastGaPagePath = path;
+          previousPublicLocation = page.page_location;
+          const pending = pendingGaEvents;
+          pendingGaEvents = [];
+          for (const item of pending) fireGtag(item.event, item.params);
         }
       } catch {}
     }
-    if (consent.marketing) {
+    if (consent.marketing && lastMarketingPagePath !== path) {
+      lastMarketingPagePath = path;
       fireMetaPixel("PageView");
       try {
         const w = window as any;
