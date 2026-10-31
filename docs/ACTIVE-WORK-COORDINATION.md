@@ -75,7 +75,7 @@ Close the active GitHub issue/claim only when the state above is explicit and no
 
 ## Current open PRs and owners (snapshot)
 
-**Refreshed:** 2026-10-15 from GitHub, `origin/main` at `09c4e7f`. This table is a
+**Refreshed:** 2026-10-31 from GitHub, `origin/main` at `5dab4a3f`. This table is a
 snapshot for orientation; the live PR list is still the lock. Each PR is owned by the session or
 person that opened it (a Claude Code PR has its session link at the bottom of its body). Do not
 push to, rebase, close or merge it; the lead integrator's exception, on Joe's instruction, is in
@@ -83,8 +83,8 @@ push to, rebase, close or merge it; the lead integrator's exception, on Joe's in
 
 | PR | Draft | Branch | What it changes | Owner |
 | --- | --- | --- | --- | --- |
-| #593 | yes | `claude/org-representation-portal` | Portal: Hub-defined representatives, My Groups and group requests (needs DE approval and Hub PR 425 live) | Website design overhaul thread (Joe, 2026-10-15) |
-| #575 | yes | `concept/ai-background-check` | Concept: AI Background Check page (3 Exploration concepts; concept B shipped in #609) | Website design overhaul thread (Joe, 2026-10-15) |
+| #873 | no | `fix/mailclient-inventory-matches-clobber` | DE Migration PC scan: `$Matches` clobber fix + regression pin (issue #869; Hub schedule W1-10 lane) | OpenCode · MiMo-V2.6-Pro (W1-10 session) |
+| #864 | yes | `claude/loving-hopper-b5p8eg` | Zoho help center CSS: remove constructs Zoho's preview rejects (`zoho/help-center/`) | Claude Code session (left alone per Joe, 2026-10-31) |
 
 Cross-repo pending decisions and secrets: Intelligence Hub
 [`docs/OPEN-ITEMS-FOR-DE.md`](https://github.com/digeratiexperts/Intelligence-Hub/blob/master/docs/OPEN-ITEMS-FOR-DE.md).
