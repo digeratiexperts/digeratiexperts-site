@@ -1,12 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Play, Pause, Square, Volume2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
-
-let fallbackToastShown = false;
 
 type OpenAIVoice = "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer";
-
 const VOICES: { label: string; value: OpenAIVoice }[] = [
   { label: "Nova (warm)", value: "nova" },
   { label: "Alloy (neutral)", value: "alloy" },
@@ -22,361 +18,368 @@ interface BlogAudioPlayerProps {
   wordCount?: number;
   onWordChange?: (idx: number) => void;
 }
-
 type Mode = "openai" | "browser";
+type PlaybackState = "idle" | "loading" | "playing" | "paused";
+// SpeechSynthesis has one queue per window. A stale player must not cancel a
+// newer player's utterance when its delayed error or cleanup finally arrives.
+let activeBrowserNarration: {
+  utterance: SpeechSynthesisUtterance;
+  interrupt: () => void;
+} | null = null;
 
 function computeWordCharOffsets(text: string): number[] {
   const offsets: number[] = [];
-  const tokens = text.split(/(\s+)/);
   let pos = 0;
-  for (const tok of tokens) {
-    if (tok && !/^\s+$/.test(tok) && /[A-Za-z0-9\u00C0-\u024F]/.test(tok)) {
-      offsets.push(pos);
-    }
-    pos += tok.length;
+  for (const token of text.split(/(\s+)/)) {
+    if (token && !/^\s+$/.test(token) && /[A-Za-z0-9\u00C0-\u024F]/.test(token)) offsets.push(pos);
+    pos += token.length;
   }
   return offsets;
 }
 
 function pickPreferredBrowserVoice(): SpeechSynthesisVoice | null {
-  if (typeof window === "undefined" || !window.speechSynthesis) return null;
   const voices = window.speechSynthesis.getVoices();
-  if (!voices.length) return null;
-  const en = voices.filter((v) => v.lang.toLowerCase().startsWith("en"));
-  const pool = en.length ? en : voices;
-  const preferred =
-    pool.find((v) => /natural|enhanced|premium|neural/i.test(v.name)) ||
-    pool.find((v) => /samantha|google.*us|microsoft.*aria|jenny/i.test(v.name)) ||
-    pool[0];
-  return preferred || null;
+  const english = voices.filter(v => v.lang.toLowerCase().startsWith("en"));
+  const pool = english.length ? english : voices;
+  return pool.find(v => /natural|enhanced|premium|neural/i.test(v.name)) ||
+    pool.find(v => /samantha|google.*us|microsoft.*aria|jenny/i.test(v.name)) || pool[0] || null;
 }
 
-export function BlogAudioPlayer({
-  title: _title,
-  text,
-  wordCount = 0,
-  onWordChange,
-}: BlogAudioPlayerProps) {
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
+export function BlogAudioPlayer({ title, text, wordCount = 0, onWordChange }: BlogAudioPlayerProps) {
+  const [state, setState] = useState<PlaybackState>("idle");
   const [progress, setProgress] = useState(0);
   const [voice, setVoice] = useState<OpenAIVoice>("nova");
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mode, setMode] = useState<Mode>("openai");
   const [rate, setRate] = useState(1);
-
+  const stateRef = useRef(state);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const rateRef = useRef(rate);
-  rateRef.current = rate;
+  const blobUrlRef = useRef<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
-  const wordOffsetsRef = useRef<number[]>([]);
+  const attemptRef = useRef(0);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const rateRef = useRef(rate);
   const onWordChangeRef = useRef(onWordChange);
   const wordCountRef = useRef(wordCount);
-  const { toast } = useToast();
-  const browserSupportsSpeech =
-    typeof window !== "undefined" && "speechSynthesis" in window;
-
-  const notifyFallbackOnce = useCallback(() => {
-    if (fallbackToastShown) return;
-    fallbackToastShown = true;
-    toast({
-      title: "Using your device's voice",
-      description:
-        "Premium narration is temporarily unavailable. Word highlighting still works.",
-      duration: 5000,
-    });
-  }, [toast]);
-
+  rateRef.current = rate;
   onWordChangeRef.current = onWordChange;
   wordCountRef.current = wordCount;
+  const loading = state === "loading";
+  const isPlaying = state === "playing";
+  const isPaused = state === "paused";
+  const browserSupportsSpeech = typeof window !== "undefined" &&
+    typeof window.speechSynthesis?.speak === "function" &&
+    typeof SpeechSynthesisUtterance !== "undefined";
 
-  // Preload voices in some browsers (Chrome lazy-loads them).
-  useEffect(() => {
-    if (!browserSupportsSpeech) return;
-    const sv = window.speechSynthesis;
-    const trigger = () => sv.getVoices();
-    trigger();
-    sv.addEventListener?.("voiceschanged", trigger);
-    return () => sv.removeEventListener?.("voiceschanged", trigger);
-  }, [browserSupportsSpeech]);
+  const setPlaybackState = useCallback((next: PlaybackState) => {
+    stateRef.current = next;
+    setState(next);
+  }, []);
+  const clearTimer = useCallback(() => {
+    if (timerRef.current !== null) clearTimeout(timerRef.current);
+    timerRef.current = null;
+  }, []);
 
-  const stopBrowserSpeech = useCallback(() => {
-    if (!browserSupportsSpeech) return;
-    try {
-      window.speechSynthesis.cancel();
-    } catch {}
+  // Invalidate callbacks before cancel/pause: engines may deliver events later.
+  const cancelAttempt = useCallback(() => {
+    attemptRef.current++;
+    clearTimer();
+    abortRef.current?.abort();
+    abortRef.current = null;
+    const utterance = utteranceRef.current;
     utteranceRef.current = null;
-  }, [browserSupportsSpeech]);
-
-  // Mobile browsers (especially iOS Safari and Android Chrome) require
-  // speechSynthesis.speak() to be invoked from a user gesture. Our OpenAI
-  // fetch is async, so by the time we'd want to fall back, the gesture is
-  // gone and synthesis silently errors with "not-allowed" / "audio-busy".
-  // Solution: prime the engine on the first click with a tiny silent
-  // utterance so the audio context is unlocked for later fallback use.
-  const synthPrimedRef = useRef(false);
-  const primeSpeechSynthesis = useCallback(() => {
-    if (!browserSupportsSpeech || synthPrimedRef.current) return;
-    try {
-      const sv = window.speechSynthesis;
-      const u = new SpeechSynthesisUtterance(" ");
-      u.volume = 0;
-      u.rate = 10;
-      // Only mark as primed once the engine actually accepts the utterance.
-      // If the browser rejects (mobile quirks), allow re-priming on next click.
-      u.onstart = () => {
-        synthPrimedRef.current = true;
-      };
-      u.onend = () => {
-        synthPrimedRef.current = true;
-      };
-      u.onerror = () => {
-        synthPrimedRef.current = false;
-      };
-      sv.speak(u);
-    } catch {
-      synthPrimedRef.current = false;
+    if (utterance && activeBrowserNarration?.utterance === utterance) {
+      activeBrowserNarration = null;
+      try { window.speechSynthesis.cancel(); } catch { /* Already unavailable. */ }
     }
-  }, [browserSupportsSpeech]);
+    audioRef.current?.pause();
+  }, [clearTimer]);
+
+  const releaseAudio = useCallback(() => {
+    const audio = audioRef.current;
+    audioRef.current = null;
+    if (audio) {
+      audio.onplaying = audio.onpause = audio.onended = audio.ontimeupdate = null;
+      audio.onerror = audio.onwaiting = audio.onstalled = null;
+      audio.pause();
+      audio.removeAttribute("src");
+      audio.load();
+    }
+    if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current);
+    blobUrlRef.current = null;
+    setAudioUrl(null);
+  }, []);
 
   const stop = useCallback(() => {
-    const audio = audioRef.current;
-    if (audio) {
-      audio.pause();
-      audio.currentTime = 0;
-    }
-    stopBrowserSpeech();
-    setIsPlaying(false);
-    setIsPaused(false);
+    cancelAttempt();
+    if (audioRef.current) audioRef.current.currentTime = 0;
+    setPlaybackState("idle");
     setProgress(0);
+    setError(null);
     onWordChangeRef.current?.(-1);
-  }, [stopBrowserSpeech]);
+  }, [cancelAttempt, setPlaybackState]);
 
-  const cleanup = useCallback(() => {
-    if (audioUrl) {
-      URL.revokeObjectURL(audioUrl);
-      setAudioUrl(null);
-    }
-    if (abortRef.current) {
-      abortRef.current.abort();
-      abortRef.current = null;
-    }
-    stopBrowserSpeech();
-  }, [audioUrl, stopBrowserSpeech]);
+  const offerBrowserFallback = useCallback(() => {
+    cancelAttempt();
+    releaseAudio();
+    setMode("browser");
+    setPlaybackState("idle");
+    onWordChangeRef.current?.(-1);
+    setError(browserSupportsSpeech
+      ? "Tap Play for device voice."
+      : "Audio unavailable here.");
+  }, [browserSupportsSpeech, cancelAttempt, releaseAudio, setPlaybackState]);
 
-  const playBrowserFallback = useCallback(() => {
-    if (!browserSupportsSpeech) {
-      setError("Audio not supported on this device");
-      return false;
-    }
-    stopBrowserSpeech();
+  // Start/transition deadlines detect engines that accept a call but never respond.
+  // They never simulate progress or restart audio in the background.
+  const watchTransition = useCallback((attempt: number, message: string, delay = 12000) => {
+    clearTimer();
+    timerRef.current = setTimeout(() => {
+      if (attemptRef.current !== attempt) return;
+      stop();
+      setError(message);
+    }, delay);
+  }, [clearTimer, stop]);
 
-    const offsets = computeWordCharOffsets(text);
-    wordOffsetsRef.current = offsets;
-    const total = Math.max(1, offsets.length);
-
-    const utt = new SpeechSynthesisUtterance(text);
-    utteranceRef.current = utt;
-
-    const preferred = pickPreferredBrowserVoice();
-    if (preferred) utt.voice = preferred;
-    utt.rate = rateRef.current;
-    utt.pitch = 1.0;
-    utt.lang = preferred?.lang || "en-US";
-
-    utt.onstart = () => {
-      setIsPlaying(true);
-      setIsPaused(false);
-      setLoading(false);
-      setMode("browser");
+  const playAudio = useCallback((audio: HTMLAudioElement) => {
+    const attempt = ++attemptRef.current;
+    const current = () => attemptRef.current === attempt && audioRef.current === audio;
+    setPlaybackState("loading");
+    const started = () => {
+      if (!current()) return;
+      clearTimer();
+      setPlaybackState("playing");
       setError(null);
     };
-    utt.onboundary = (e: SpeechSynthesisEvent) => {
-      // Some engines fire char-level boundaries; only act on word-level
-      if (e.name && e.name !== "word") return;
-      const offs = wordOffsetsRef.current;
-      let idx = offs.length - 1;
-      for (let i = 0; i < offs.length; i++) {
-        if (offs[i] > e.charIndex) {
-          idx = i - 1;
-          break;
-        }
-      }
-      idx = Math.max(0, idx);
-      onWordChangeRef.current?.(idx);
-      setProgress(Math.min(99, Math.round((idx / total) * 100)));
+    const failed = (reason: unknown) => {
+      if (!current()) return;
+      if ((reason as { name?: string })?.name === "NotAllowedError") {
+        cancelAttempt();
+        setPlaybackState("idle");
+        setError("Audio blocked. Tap Play again.");
+      } else offerBrowserFallback();
     };
-    utt.onend = () => {
-      setIsPlaying(false);
-      setIsPaused(false);
+    audio.onplaying = started;
+    audio.onpause = () => {
+      if (!current()) return;
+      clearTimer();
+      setPlaybackState("paused");
+    };
+    audio.onended = () => {
+      if (!current()) return;
+      clearTimer();
+      setPlaybackState("idle");
       setProgress(100);
       onWordChangeRef.current?.(-1);
-      utteranceRef.current = null;
     };
-    utt.onerror = (e: SpeechSynthesisErrorEvent) => {
-      // Benign / transient errors that recover on next user click:
-      //   canceled, interrupted — we stopped or switched voices
-      //   not-allowed — gesture context was lost; next click re-primes
-      //   audio-busy — engine momentarily contended; retry recovers
-      const benign = ["canceled", "interrupted", "not-allowed", "audio-busy"];
-      if (!benign.includes(e.error)) {
-        setError("Tap play again to retry");
-      }
-      setIsPlaying(false);
-      setIsPaused(false);
-      utteranceRef.current = null;
+    audio.ontimeupdate = () => {
+      if (!current() || !Number.isFinite(audio.duration) || audio.duration <= 0) return;
+      const ratio = audio.currentTime / audio.duration;
+      setProgress(Math.min(100, Math.round(ratio * 100)));
+      if (wordCountRef.current > 0) onWordChangeRef.current?.(Math.min(wordCountRef.current - 1, Math.floor(ratio * wordCountRef.current)));
     };
-
+    audio.onerror = () => failed(audio.error);
+    audio.onwaiting = () => {
+      if (!current() || audio.paused) return;
+      setPlaybackState("loading");
+      watchTransition(attempt, "Audio stalled. Tap Play again.");
+    };
+    // A stalled download can still have enough buffered audio to keep playing.
+    audio.onstalled = () => { if (audio.readyState < 3) audio.onwaiting?.(new Event("waiting")); };
+    watchTransition(attempt, "Audio did not start. Tap Play.");
     try {
-      window.speechSynthesis.speak(utt);
-      return true;
-    } catch (err) {
-      setError("Tap play again to retry");
-      return false;
+      // play() must be handled for first play, resume AND replay. A void return
+      // on older browsers waits for the playing event instead.
+      const pending = audio.play();
+      if (pending) pending.then(() => {
+        if (!current()) {
+          if (audioRef.current !== audio || stateRef.current === "idle" || stateRef.current === "paused") audio.pause();
+          return;
+        }
+        if (!audio.paused) started();
+      }).catch(failed);
+    } catch (reason) { failed(reason); }
+  }, [cancelAttempt, clearTimer, offerBrowserFallback, setPlaybackState, watchTransition]);
+
+  const playBrowserVoice = useCallback(() => {
+    if (!browserSupportsSpeech) {
+      setError("Device voice unavailable here.");
+      return;
     }
-  }, [text, browserSupportsSpeech, stopBrowserSpeech]);
+    cancelAttempt();
+    setProgress(0);
+    onWordChangeRef.current?.(-1);
+    const attempt = attemptRef.current;
+    const current = () => attemptRef.current === attempt && utteranceRef.current === utterance;
+    const utterance = new SpeechSynthesisUtterance(text);
+    const ownsSpeech = () => current() && activeBrowserNarration?.utterance === utterance;
+    utteranceRef.current = utterance;
+    const offsets = computeWordCharOffsets(text);
+    const started = () => {
+      if (!ownsSpeech()) return;
+      clearTimer();
+      setPlaybackState("playing");
+      setError(null);
+    };
+    utterance.onstart = utterance.onresume = started;
+    utterance.onpause = () => {
+      if (!ownsSpeech()) return;
+      clearTimer();
+      setPlaybackState("paused");
+    };
+    utterance.onboundary = event => {
+      if (!ownsSpeech() || (event.name && event.name !== "word")) return;
+      let index = offsets.findIndex(offset => offset > event.charIndex) - 1;
+      if (index === -2) index = offsets.length - 1;
+      index = Math.max(0, index);
+      onWordChangeRef.current?.(index);
+      setProgress(Math.min(99, Math.round(index / Math.max(1, offsets.length) * 100)));
+    };
+    utterance.onend = () => {
+      if (!current()) return;
+      clearTimer();
+      utteranceRef.current = null;
+      if (activeBrowserNarration?.utterance === utterance) activeBrowserNarration = null;
+      setPlaybackState("idle");
+      setProgress(100);
+      onWordChangeRef.current?.(-1);
+    };
+    utterance.onerror = () => {
+      if (!current()) return;
+      utteranceRef.current = null;
+      if (activeBrowserNarration?.utterance === utterance) activeBrowserNarration = null;
+      stop();
+      setError("Device voice failed. Tap Play.");
+    };
+    setPlaybackState("loading");
+    watchTransition(attempt, "Device voice stalled. Tap Play.");
+    try {
+      // A fresh tap replaces any other narration queued on this page.
+      const previous = activeBrowserNarration;
+      activeBrowserNarration = null;
+      previous?.interrupt();
+      window.speechSynthesis.cancel();
+      activeBrowserNarration = {
+        utterance,
+        interrupt: () => { stop(); setError("Voice replaced. Tap Play."); },
+      };
+      const preferred = pickPreferredBrowserVoice();
+      if (preferred) utterance.voice = preferred;
+      utterance.lang = preferred?.lang || "en-US";
+      utterance.rate = rateRef.current;
+      // cancel() does not reset the global paused flag. Restore it on this
+      // explicit tap; a silent priming utterance is not a portable unlock.
+      if (window.speechSynthesis.paused) window.speechSynthesis.resume();
+      window.speechSynthesis.speak(utterance);
+    } catch {
+      stop();
+      setError("Device voice failed. Tap Play.");
+    }
+  }, [browserSupportsSpeech, cancelAttempt, clearTimer, setPlaybackState, stop, text, watchTransition]);
 
   const fetchAudio = useCallback(async () => {
-    if (!text) return;
-    setLoading(true);
-    setError(null);
-    cleanup();
-
+    cancelAttempt();
+    const attempt = attemptRef.current;
     const controller = new AbortController();
     abortRef.current = controller;
-
+    const current = () => attemptRef.current === attempt && !controller.signal.aborted;
+    setPlaybackState("loading");
+    clearTimer();
+    timerRef.current = setTimeout(() => { if (current()) offerBrowserFallback(); }, 30000);
     try {
-      const res = await fetch("/api/tts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, voice }),
-        signal: controller.signal,
+      const response = await fetch("/api/tts", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, voice }), signal: controller.signal,
       });
-
-      if (!res.ok) {
-        // Auto-fall back to browser speech on quota / server errors.
-        if (res.status === 429 || res.status >= 500) {
-          if (playBrowserFallback()) {
-            notifyFallbackOnce();
-            return;
-          }
-        }
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error || "Failed to generate audio");
-      }
-
-      const blob = await res.blob();
+      if (!current()) return;
+      if (!response.ok) { offerBrowserFallback(); return; }
+      const blob = await response.blob();
+      if (!current()) return;
+      if (!blob.size) { offerBrowserFallback(); return; }
+      clearTimer();
+      abortRef.current = null;
       const url = URL.createObjectURL(blob);
+      blobUrlRef.current = url;
       setAudioUrl(url);
-      setMode("openai");
-
       const audio = new Audio(url);
       audio.playbackRate = rateRef.current;
       audioRef.current = audio;
-
-      audio.addEventListener("ended", () => {
-        setIsPlaying(false);
-        setIsPaused(false);
-        setProgress(100);
-        onWordChangeRef.current?.(-1);
-      });
-      audio.addEventListener("timeupdate", () => {
-        if (audio.duration) {
-          const ratio = audio.currentTime / audio.duration;
-          setProgress(Math.round(ratio * 100));
-          if (wordCountRef.current > 0 && onWordChangeRef.current) {
-            const idx = Math.min(
-              wordCountRef.current - 1,
-              Math.floor(ratio * wordCountRef.current),
-            );
-            onWordChangeRef.current(idx);
-          }
-        }
-      });
-      audio.addEventListener("error", () => {
-        // Try browser fallback if HTML5 audio also fails
-        if (playBrowserFallback()) {
-          notifyFallbackOnce();
-        } else {
-          setError("Audio playback error");
-          setIsPlaying(false);
-        }
-      });
-
-      await audio.play();
-      setIsPlaying(true);
-      setIsPaused(false);
-    } catch (e: any) {
-      if (e.name === "AbortError") return;
-      // Last-ditch: try browser fallback if we haven't already.
-      if (mode !== "browser" && playBrowserFallback()) {
-        notifyFallbackOnce();
-        return;
-      }
-      setError(e.message || "Audio unavailable");
-    } finally {
-      setLoading(false);
+      playAudio(audio);
+    } catch {
+      if (current()) offerBrowserFallback();
     }
-  }, [text, voice, cleanup, playBrowserFallback, mode, notifyFallbackOnce]);
+  }, [cancelAttempt, clearTimer, offerBrowserFallback, playAudio, setPlaybackState, text, voice]);
 
   const togglePlay = useCallback(() => {
-    // Always clear any stale error from a prior attempt and prime the
-    // speech engine on this fresh user gesture so fallback works later.
+    if (!text.trim() || stateRef.current === "loading") return;
     setError(null);
-    primeSpeechSynthesis();
-
-    // Browser speech mode controls
-    if (mode === "browser" && (isPlaying || isPaused)) {
-      const sv = window.speechSynthesis;
-      if (isPaused) {
-        sv.resume();
-        setIsPaused(false);
-        setIsPlaying(true);
-      } else if (isPlaying) {
-        sv.pause();
-        setIsPaused(true);
-        setIsPlaying(false);
-      }
+    if (mode === "browser") {
+      const utterance = utteranceRef.current;
+      if (utterance && (stateRef.current === "playing" || stateRef.current === "paused")) {
+        if (activeBrowserNarration?.utterance !== utterance) {
+          stop();
+          setError("Voice replaced. Tap Play.");
+          return;
+        }
+        const wasPaused = stateRef.current === "paused";
+        setPlaybackState("loading");
+        watchTransition(attemptRef.current, "Device voice stalled. Tap Play.");
+        try {
+          if (wasPaused) window.speechSynthesis.resume();
+          else window.speechSynthesis.pause();
+        } catch { stop(); setError("Device voice failed. Tap Play."); }
+      } else playBrowserVoice(); // Always directly inside the reader's tap.
       return;
     }
-
-    // OpenAI audio mode controls
     const audio = audioRef.current;
-    if (!audioUrl && !isPlaying && !isPaused) {
-      fetchAudio();
-      return;
+    if (!audio) { void fetchAudio(); return; }
+    if (stateRef.current === "playing") audio.pause();
+    else {
+      if (stateRef.current === "idle" && !error) { audio.currentTime = 0; setProgress(0); }
+      playAudio(audio);
     }
-    if (audio) {
-      if (isPaused) {
-        audio.play();
-        setIsPaused(false);
-        setIsPlaying(true);
-        return;
-      }
-      if (isPlaying) {
-        audio.pause();
-        setIsPaused(true);
-        setIsPlaying(false);
-        return;
-      }
-      audio.currentTime = 0;
-      audio.play();
-      setIsPlaying(true);
-      setIsPaused(false);
-      setProgress(0);
-    }
-  }, [audioUrl, isPaused, isPlaying, mode, fetchAudio, primeSpeechSynthesis]);
+  }, [error, fetchAudio, mode, playAudio, playBrowserVoice, setPlaybackState, stop, text, watchTransition]);
 
   useEffect(() => {
-    return () => {
-      stop();
-      cleanup();
+    if (!browserSupportsSpeech) return;
+    const synth = window.speechSynthesis;
+    const loadVoices = () => { try { synth.getVoices(); } catch { /* Retry on Play. */ } };
+    loadVoices();
+    synth.addEventListener?.("voiceschanged", loadVoices);
+    return () => synth.removeEventListener?.("voiceschanged", loadVoices);
+  }, [browserSupportsSpeech]);
+
+  useEffect(() => {
+    stop();
+    releaseAudio();
+    setMode("openai");
+    return () => { cancelAttempt(); releaseAudio(); onWordChangeRef.current?.(-1); };
+  }, [text, title, voice, stop, cancelAttempt, releaseAudio]);
+
+  useEffect(() => {
+    const pageHidden = () => {
+      // Media may keep playing in the background. Pending starts and device
+      // speech stop explicitly rather than claiming a frozen engine is playing.
+      if (document.hidden && (utteranceRef.current || stateRef.current === "loading")) {
+        stop();
+        setError("Playback stopped. Tap Play.");
+      } else if (!document.hidden && audioRef.current && stateRef.current === "playing" && audioRef.current.paused) {
+        setPlaybackState("paused");
+      }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    const leave = () => stop();
+    document.addEventListener("visibilitychange", pageHidden);
+    document.addEventListener("freeze", leave);
+    window.addEventListener("pagehide", leave);
+    return () => {
+      document.removeEventListener("visibilitychange", pageHidden);
+      document.removeEventListener("freeze", leave);
+      window.removeEventListener("pagehide", leave);
+    };
+  }, [setPlaybackState, stop]);
+
 
   const statusLabel = loading
     ? "Loading…"
@@ -387,9 +390,9 @@ export function BlogAudioPlayer({
         : "Listen";
 
   return (
+    <div className="max-w-full" data-testid="blog-audio-player">
     <div
       className="flex w-fit max-w-full items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] py-1 pl-4 pr-2 sm:gap-3"
-      data-testid="blog-audio-player"
     >
       <Volume2 className="h-4 w-4 shrink-0 text-de-accent-ink" aria-hidden="true" />
       <span
@@ -407,7 +410,7 @@ export function BlogAudioPlayer({
         size="sm"
         className="h-11 w-11 rounded-full bg-de-accent hover:bg-de-accent p-0 disabled:opacity-50"
         onClick={togglePlay}
-        disabled={loading}
+        disabled={loading || !text.trim()}
         aria-label={isPlaying && !isPaused ? "Pause audio" : "Play audio"}
         data-testid="button-audio-play"
       >
@@ -426,7 +429,7 @@ export function BlogAudioPlayer({
         variant="ghost"
         className="h-11 w-11 rounded-full p-0 text-white/60 hover:text-white hover:bg-white/10"
         onClick={stop}
-        disabled={!isPlaying && !isPaused && !audioUrl}
+        disabled={!loading && !isPlaying && !isPaused && !audioUrl}
         aria-label="Stop audio"
         data-testid="button-audio-stop"
       >
@@ -452,7 +455,7 @@ export function BlogAudioPlayer({
           setRate(next);
           if (audioRef.current) audioRef.current.playbackRate = next;
           // Browser speech rate only applies on the next utterance.
-          if (mode === "browser" && (isPlaying || isPaused)) {
+          if (mode === "browser" && (loading || isPlaying || isPaused)) {
             stop();
           }
         }}
@@ -482,14 +485,10 @@ export function BlogAudioPlayer({
         onChange={(e) => {
           const v = e.target.value as OpenAIVoice;
           setVoice(v);
-          if (isPlaying || isPaused || audioUrl || mode === "browser") {
-            stop();
-            cleanup();
-            setMode("openai");
-          }
         }}
         className="hidden min-h-11 max-w-[120px] cursor-pointer border-none bg-transparent text-sm text-white/60 outline-none hover:text-white/80 focus-visible:ring-2 focus-visible:ring-[#ec4899] md:block"
         data-testid="select-audio-voice"
+        aria-label="Narration voice"
         title={
           mode === "browser"
             ? "Voice selection applies to premium narration only"
@@ -507,11 +506,9 @@ export function BlogAudioPlayer({
         ))}
       </select>
 
-      {error && !isPlaying && !isPaused && (
-        <span className="text-xs text-amber-300/90 hidden sm:inline">
-          {error}
-        </span>
-      )}
+    </div>
+      <span className="sr-only" aria-live="polite">{loading ? "Starting audio" : isPlaying ? "Audio playing" : isPaused ? "Audio paused" : "Audio stopped"}</span>
+      {error && <p role="status" className="mt-2 max-w-sm text-xs leading-relaxed text-amber-300/90">{error}</p>}
     </div>
   );
 }
