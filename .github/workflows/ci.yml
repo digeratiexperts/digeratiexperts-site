@@ -271,6 +271,54 @@ jobs:
           # without the snapshot (server/routeMeta.ts).
           ROUTE_META_BASE=http://127.0.0.1:3300 npm run check:route-meta
 
+  # Item 328: the security regression suite as its own named gate.
+  #
+  # These files also run inside "Unit tests", but a security failure buried in a
+  # general test run is indistinguishable from a routine regression. Naming the
+  # gate is what makes a security break visible as one - the same lesson as item
+  # 248 (a control that fails quietly is not a control).
+  #
+  # Scope is the store, the client portal and the payment surface, which is the
+  # most exposed part of this repository.
+  security-regression:
+    name: Security regression suite (item 328)
+    runs-on: ${{ fromJSON(vars.SITE_CI_RUNS_ON || '"ubuntu-latest"') }}
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      # Auth and tenant isolation: the controls that stop one client reading
+      # another's data, and the fail-closed paths behind them.
+      - name: Authentication, tenancy and fail-closed paths
+        run: >
+          npx vitest run
+          server/securityRegression.test.ts
+          server/portalAuthFailClosed.test.ts
+          server/portalAuthTokens.test.ts
+          server/legacyAuthRetired.test.ts
+          server/config/authSecrets.test.ts
+          server/integrations/tenantIdentity.test.ts
+
+      # Store, payments and file handling: checkout integrity, private storage,
+      # and the tenant file routes that serve downloads.
+      - name: Store, payments and file isolation
+        run: >
+          npx vitest run
+          server/secureStoreCheckout.test.ts
+          server/storage.tenantFiles.test.ts
+          server/portalTenantFileRoutes.test.ts
+
   # Production is a CyberPanel/OpenLiteSpeed VPS, not a Replit deployment.
   # This job is pinned to a repo-scoped production runner. Generic Linux
   # self-hosted runners (RackNerd security runner, Zorin laptop, etc.) are not
