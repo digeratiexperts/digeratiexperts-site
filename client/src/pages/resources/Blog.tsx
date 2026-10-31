@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { toWebImageUrl } from "@/lib/webImage";
 import { Link } from "wouter";
-import { Helmet } from "react-helmet-async";
+import { AnalyticsHelmet as Helmet } from "@/components/AnalyticsHelmet";
 import { MegaMenu } from "@/components/MegaMenu";
 import { DigeratiEnhancedFooterSection } from "@/pages/sections/DigeratiEnhancedFooterSection";
 import { Card, CardContent } from "@/components/ui/card";

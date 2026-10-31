@@ -6,7 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { HelmetProvider } from "react-helmet-async";
 import NotFound from "@/pages/not-found";
 import { lazy, Suspense, useEffect } from "react";
-import { analytics } from "@/lib/analytics";
+import { isAnalyticsDocumentContextCurrent } from "@/lib/analyticsNavigation";
 import { ScrollProgress } from "@/components/ScrollProgress";
 import { ExitIntentPopup } from "@/components/ExitIntentPopup";
 import { StickyCTABar } from "@/components/StickyCTABar";
@@ -213,6 +213,7 @@ const PublicStoreCheckout = lazy(() => import("@/pages/store/PublicStoreCheckout
 import { servicePageData, industryPageData, supportPageData } from "@/pages/routes/servicePages";
 
 function Router() {
+  if (!isAnalyticsDocumentContextCurrent()) return null;
   return (
     <Switch>
       {/* Homepage: v2 (Joe, 2026-10-22: approved). The previous homepage is kept at /concepts/home-classic (noindex). */}
@@ -1222,14 +1223,6 @@ function Router() {
   );
 }
 
-function SpaPageViews() {
-  const [location] = useLocation();
-  useEffect(() => {
-    analytics.pageView(location, document.title);
-  }, [location]);
-  return null;
-}
-
 /*
  * Page families keep one hue of their own. It only ever colours topical
  * signals â€” eyebrows, glyphs, chips, inline links â€” while the field, type,
@@ -1272,7 +1265,6 @@ function AppContent() {
       <DefaultCanonical />
       <SkipToContent />
       <ScrollProgress />
-      <SpaPageViews />
       <div
         id="app-canvas"
         data-accent={accent}

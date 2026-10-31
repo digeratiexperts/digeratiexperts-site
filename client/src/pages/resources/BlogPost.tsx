@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { toWebImageUrl } from "@/lib/webImage";
 import { useParams, Link, Redirect } from "wouter";
 import { useSEO } from "@/hooks/useSEO";
-import { Helmet } from "react-helmet-async";
+import { AnalyticsHelmet as Helmet } from "@/components/AnalyticsHelmet";
 import { MegaMenu } from "@/components/MegaMenu";
 import { DigeratiEnhancedFooterSection } from "@/pages/sections/DigeratiEnhancedFooterSection";
 import { ReadingProgressBar } from "@/components/ReadingProgressBar";

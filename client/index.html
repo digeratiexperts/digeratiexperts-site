@@ -7,9 +7,6 @@
     <!-- DNS Prefetch for faster resource loading -->
     <link rel="dns-prefetch" href="https://fonts.googleapis.com">
     <link rel="dns-prefetch" href="https://fonts.gstatic.com">
-    <link rel="dns-prefetch" href="https://www.googletagmanager.com">
-    <link rel="dns-prefetch" href="https://connect.facebook.net">
-    <link rel="dns-prefetch" href="https://bat.bing.com">
     
     <!-- Preconnect to critical domains (avoid unused font preload warnings from mismatched subset URLs) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -112,14 +109,9 @@
         'ad_personalization': 'denied',
         'wait_for_update': 500
       });
-      gtag('js', new Date());
-      gtag('config', 'G-1YDMJ38SXD', {
-        'send_page_view': true,
-        'anonymize_ip': true
-      });
+      // GA4 is initialized by lib/analytics.ts only after analytics consent,
+      // outside the client portal. The SPA owns manual pageviews.
     </script>
-    <!-- Google Analytics GA4 — loads after consent defaults are set -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-1YDMJ38SXD"></script>
   </head>
   <body>
     <div id="root"></div>

@@ -4,6 +4,9 @@ import App from "./App";
 import "./styles/brand-fonts.css";
 import "./index.css";
 import { initAnalytics } from "./lib/analytics";
+import { installAnalyticsNavigationBoundary } from "./lib/analyticsNavigation";
+
+installAnalyticsNavigationBoundary();
 
 const HomepageChallengerApp = lazy(() => import("./pages/HomepageChallengerApp"));
 const pathname = window.location.pathname.replace(/\/+$/, "") || "/";
