@@ -52,7 +52,7 @@ These are the dependencies worth knowing before picking anything up:
 | Section | Moves | Done | Open | Needs Joe |
 |---|---|---|---|---|
 | Start here (highest leverage) | 10 | 6 | 4 | 5 |
-| A. Quality and trust (11-24) | 14 | 5 | 9 | 0 |
+| A. Quality and trust (11-24) | 14 | 6 | 8 | 0 |
 | B. Real-device validation (25-38) | 14 | 0 | 14 | 1 |
 | C. Installer integrity (39-48) | 10 | 1 | 9 | 1 |
 | D. Signing and release (49-58) | 10 | 0 | 10 | 0 |
@@ -61,7 +61,7 @@ These are the dependencies worth knowing before picking anything up:
 | G. Client and dropship workflows (83-90) | 8 | 0 | 8 | 0 |
 | H. Sensitive data (91-96) | 6 | 0 | 6 | 0 |
 | I. Supportability and docs (97-104) | 8 | 0 | 8 | 1 |
-| **Total** | **104** | **12** | **92** | **8** |
+| **Total** | **104** | **13** | **91** | **8** |
 
 ## The moves
 
@@ -91,7 +91,7 @@ These are the dependencies worth knowing before picking anything up:
 - [x] **13** Automated check that client output contains none of the restricted fields. `agent` - [#731](https://github.com/digeratiexperts/digeratiexperts-site/issues/731)
 - [x] **14** Redaction tests: BitLocker recovery passwords never reach logs, state or receipts. `agent` - [#732](https://github.com/digeratiexperts/digeratiexperts-site/issues/732)
 - [x] **15** Test that Guardz keys and SentinelOne tokens are never persisted. `agent` - [#733](https://github.com/digeratiexperts/digeratiexperts-site/issues/733)
-- [ ] **16** Mutation-test the licence and fail-closed paths. `agent` - [#734](https://github.com/digeratiexperts/digeratiexperts-site/issues/734)
+- [x] **16** Mutation-test the licence and fail-closed paths. `agent` - [#734](https://github.com/digeratiexperts/digeratiexperts-site/issues/734)
 - [ ] **17** Audit every 'policy warn' path for fail-open risk. `agent` - [#735](https://github.com/digeratiexperts/digeratiexperts-site/issues/735)
 - [ ] **18** Drift check: exported module functions against the docs. `agent` - [#736](https://github.com/digeratiexperts/digeratiexperts-site/issues/736)
 - [ ] **19** Remove compatibility aliases once the installed base is checked. `agent` - [#737](https://github.com/digeratiexperts/digeratiexperts-site/issues/737)
