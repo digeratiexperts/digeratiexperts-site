@@ -1,7 +1,7 @@
 // Fixture-only lifecycle checks. Never calls the paid narration endpoint.
 // Run: node scripts/qa/blog-audio-check.mjs
 import assert from "node:assert/strict";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -10,8 +10,10 @@ import { build } from "esbuild";
 import { chromium } from "playwright";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
-const evidence = process.env.QA_EVIDENCE_DIR || path.join(tmpdir(), "de-narration-qa");
-await mkdir(evidence, { recursive: true });
+// QA_EVIDENCE_DIR is a path prefix; never reuse an existing run's evidence.
+const evidencePrefix = path.resolve(process.env.QA_EVIDENCE_DIR || path.join(tmpdir(), "de-narration-qa"));
+await mkdir(path.dirname(evidencePrefix), { recursive: true, mode: 0o700 });
+const evidence = await mkdtemp(`${evidencePrefix}-`);
 const bundle = await build({
   stdin: { contents: `import React from 'react';
 import { createRoot } from 'react-dom/client';
