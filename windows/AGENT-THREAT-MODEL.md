@@ -19,7 +19,7 @@ are the pattern for the Hub side of this one and are cited below as C-numbers; l
 [STORAGE.md](STORAGE.md); sensitive device fields -> moves 91-96.
 
 **How to use it.** §7 is the rule set section E follows, per job type. §8 maps every move 59-78 to the threat it answers.
-Nothing in §7 is weakened without DE approval (§14).
+Nothing in §7 is weakened without DE approval (§13).
 
 ---
 
