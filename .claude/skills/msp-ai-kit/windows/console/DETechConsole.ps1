@@ -298,7 +298,7 @@ Add-Type -AssemblyName PresentationFramework, PresentationCore, WindowsBase, Sys
 $null = Initialize-DEConsole -Root $ConsoleRoot -Mode Audit -DataDir $DataDir
 $settingsPath = Join-Path (Get-DEConsole).Dirs.State 'gui-settings.json'
 $Settings = @{ technician = "$Technician"; client = ''; mode = 'audit'; lastPage = $Page; hubEndpoint = ''; dryRun = $true }
-if (Test-Path -LiteralPath $settingsPath) { try { $loaded = ConvertTo-DEHashtable (Get-Content -LiteralPath $settingsPath -Raw -Encoding UTF8 | ConvertFrom-Json); foreach ($k in $loaded.Keys) { $Settings[$k] = $loaded[$k] } } catch { } }
+try { if (Test-Path -LiteralPath $settingsPath) { $loaded = ConvertTo-DEHashtable (Get-Content -LiteralPath $settingsPath -Raw -Encoding UTF8 | ConvertFrom-Json); foreach ($k in $loaded.Keys) { $Settings[$k] = $loaded[$k] } } } catch { }
 function Save-GuiSettings { try { $Settings | ConvertTo-Json | Set-Content -LiteralPath $settingsPath -Encoding UTF8 } catch { Write-DELog -Level WARN -Message "the technician's GUI settings could not be saved ($($_.Exception.Message)); this session's choices are not remembered" } }
 if ($Technician) { $Settings.technician = $Technician }
 if (-not $Settings.technician) { $Settings.technician = "$(Get-DEState -Path 'settings.technician')" }

@@ -128,7 +128,7 @@ if (-not $AuditOnly) { $argList += @('-Apply', '-Mode', 'dropship') } else { $ar
 $shell = (Get-Process -Id $PID).Path; if ([IO.Path]::GetFileNameWithoutExtension($shell) -notin @('powershell', 'pwsh')) { $shell = 'powershell.exe' }
 & $shell @argList
 $code = $LASTEXITCODE
-$result = $null; if (Test-Path -LiteralPath $resultFile) { try { $result = Get-Content -LiteralPath $resultFile -Raw -Encoding UTF8 | ConvertFrom-Json } catch { $result = $null } }
+$result = $null; try { if (Test-Path -LiteralPath $resultFile) { $result = Get-Content -LiteralPath $resultFile -Raw -Encoding UTF8 | ConvertFrom-Json } } catch { $result = $null }
 $overall = $(if ($result) { "$($result.overall)" } else { 'NO RESULT' })
 if ($code -eq 0 -and $overall -notlike 'READY*') { $code = 1 }   # exit 0 without a READY result is never reported as done
 if (-not $result -and $code -eq 0) { $code = 1 }
