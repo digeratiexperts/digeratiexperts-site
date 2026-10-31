@@ -322,5 +322,21 @@ Describe 'DE email migration' {
             @($r.accounts).Count | Should -Be 1
             if (@($r.notChecked).Count) { $r.status | Should -Be 'Partial' }
         }
+        It 'a saved Gmail credential in Credential Manager is listed, not crashed on' {
+            # regression pin for the $Matches clobber: the cmdkey branch read $Matches[1] after a second
+            # -match in the same condition, which rebinds $Matches - the captured target was lost and
+            # .Trim() on $null threw on every PC holding a saved credential. cmdkey.exe is shadowed so the
+            # branch runs on any machine; CI runners hold no credentials, which is exactly why the crash
+            # hid from CI and only showed up on a real PC.
+            function global:cmdkey.exe { @('Target: LegacyGeneric:target=imap.gmail.com (helen.x@gmail.com)', 'Type: Generic') }
+            try {
+                $r = Get-DEMailClientInventory -DeviceName 'TEST-PC'
+                $r.status | Should -BeIn @('Succeeded', 'Partial')
+                $cm = @($r.data | Where-Object { $_.where -eq 'Windows Credential Manager' })
+                $cm.Count | Should -BeGreaterThan 0 -Because 'the saved credential is the finding this scan exists to make'
+                $cm[0].what | Should -Match 'imap\.gmail\.com' -Because 'the captured target must survive the pattern match that follows it'
+                $cm[0].fix | Should -Match 'cmdkey /delete'
+            } finally { Remove-Item Function:\cmdkey.exe -ErrorAction SilentlyContinue }
+        }
     }
 }
