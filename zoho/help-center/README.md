@@ -18,6 +18,7 @@ Copy the current content out of Zoho before pasting, then **Save** and **Publish
 - Inline `<svg>` is stripped from the footer, and Font Awesome is not loaded. Icons are empty `<span class="icon icon-*">` drawn by `stylesheet.css` as CSS masks.
 - Use absolute links (`/portal/en/kb`). Relative links break on deeper pages such as `/portal/en/myarea/profile`.
 - Wildcard selectors such as `[class*="Container__"]` match Zoho's own nested wrappers. Scope new rules to a specific class.
+- The CSS editor's preview fails ("Oops, something went wrong while creating a preview") on newer CSS. Keep to what the original theme used: no `<` anywhere (even in comments), no `data:` URLs, no `:where()`/`:is()`, no `mask`.
 
 ## Testing a change before publishing
 
