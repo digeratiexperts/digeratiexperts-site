@@ -79,6 +79,7 @@ function Initialize-DEConsole {
     Protect-DEDataFolder -Path $base
     $script:DE.Dirs = $dirs
     $script:DE.LogFile = Join-Path $dirs.Logs ("techconsole-{0}.log" -f (Get-Date -Format 'yyyyMMdd-HHmmss'))
+    $null = Invoke-DELogPrune -Directory $dirs.Logs
     $script:DE.Evidence.Clear()
     $script:DE.GateCache = @{}
     Import-DEState | Out-Null
@@ -130,10 +131,44 @@ function Protect-DEText {
     return $t
 }
 
+function Invoke-DELogRotation {
+    <# Caps one log file and rotates it (move 98): a file at or past -MaxBytes becomes .1, the old .1
+       becomes .2, and only the newest -Keep rotated files survive. Returns $true when it rotated. #>
+    param([Parameter(Mandatory = $true)][string]$Path, [long]$MaxBytes = 5MB, [int]$Keep = 3)
+    if (-not (Test-Path -LiteralPath $Path)) { return $false }
+    $f = Get-Item -LiteralPath $Path -ErrorAction SilentlyContinue
+    if (-not $f -or $f.Length -lt $MaxBytes) { return $false }
+    for ($i = $Keep; $i -ge 1; $i--) {
+        $from = $(if ($i -eq 1) { $Path } else { "$Path.$($i - 1)" })
+        $to = "$Path.$i"
+        if (Test-Path -LiteralPath $to) { Remove-Item -LiteralPath $to -Force -WhatIf:$false }
+        if (Test-Path -LiteralPath $from) { Move-Item -LiteralPath $from -Destination $to -Force -WhatIf:$false }
+    }
+    return $true
+}
+
+function Invoke-DELogPrune {
+    <# Keeps the newest session logs so old runs cannot pile up forever (move 98). Rotated files
+       (.1, .2 ...) count as their session's. Returns how many files were seen before pruning. #>
+    param([Parameter(Mandatory = $true)][string]$Directory, [int]$Keep = 20)
+    $logs = @(Get-ChildItem -LiteralPath $Directory -Filter 'techconsole-*.log*' -File -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending)
+    foreach ($old in @($logs | Select-Object -Skip $Keep)) { Remove-Item -LiteralPath $old.FullName -Force -ErrorAction SilentlyContinue -WhatIf:$false }
+    return $logs.Count
+}
+
 function Write-DELog {
     param([Parameter(Mandatory = $true)][string]$Message, [ValidateSet('INFO', 'PASS', 'WARN', 'FAIL', 'STEP', 'PLAN', 'DEBUG')][string]$Level = 'INFO')
     $line = "{0} [{1}] {2}" -f (Get-Date -Format 'yyyy-MM-dd HH:mm:ss'), $Level, (Protect-DEText $Message)
-    if ($script:DE.LogFile) { try { Add-Content -LiteralPath $script:DE.LogFile -Value $line -Encoding UTF8 -WhatIf:$false } catch { } }
+    if ($script:DE.LogFile) {
+        try {
+            # the size cap (move 98): a runaway log rotates instead of filling the disk.
+            # settings.log.maxBytes / settings.log.keepFiles tune it; 5 MB and 3 rotated files by default.
+            $max = Get-DEState -Path 'settings.log.maxBytes'; if (-not $max) { $max = 5MB }
+            $keep = Get-DEState -Path 'settings.log.keepFiles'; if (-not $keep) { $keep = 3 }
+            $null = Invoke-DELogRotation -Path $script:DE.LogFile -MaxBytes ([long]$max) -Keep ([int]$keep)
+            Add-Content -LiteralPath $script:DE.LogFile -Value $line -Encoding UTF8 -WhatIf:$false
+        } catch { }
+    }
     if ($script:DE.LogSink) { try { & $script:DE.LogSink $line $Level } catch { } }
     if ($Level -ne 'DEBUG') {
         $color = switch ($Level) { 'PASS' { 'Green' } 'WARN' { 'Yellow' } 'FAIL' { 'Red' } 'STEP' { 'Cyan' } 'PLAN' { 'DarkGray' } default { 'Gray' } }
@@ -802,17 +837,25 @@ function Write-DEIntegrityEvidence {
     return $i
 }
 function Test-DEPackageTrust {
-    <# Applies the catalog trust policy to a file: sha256 must match when given; Authenticode must be valid and match the publisher when given; otherwise refuse unless -AllowUnverified. #>
-    param([Parameter(Mandatory = $true)][string]$Path, [string]$Sha256, [string]$Publisher, [switch]$AllowUnverified)
+    <# Applies the catalog trust policy to a file: sha256 must match when given; Authenticode must be valid and match the publisher when given; where the vendor signs (R4) a broken or absent signature is refused exactly like a hash mismatch - never overridable. #>
+    param([Parameter(Mandatory = $true)][string]$Path, [string]$Sha256, [string]$Publisher, [switch]$VendorSigns, [switch]$AllowUnverified)
     $reasons = @()
-    if (-not (Test-Path -LiteralPath $Path)) { return [pscustomobject]@{ Ok = $false; Reasons = @('file not found'); Sha256 = ''; Signature = $null } }
+    if (-not (Test-Path -LiteralPath $Path)) { return [pscustomobject]@{ Ok = $false; Reasons = @('file not found'); Sha256 = ''; Signature = $null; HardRefusal = $false } }
     $hash = Get-DEFileSha256 -Path $Path
-    if ($Sha256 -and $hash -ne $Sha256.ToLowerInvariant()) { $reasons += "sha256 mismatch (have $hash)" }
+    $hashMismatch = [bool]($Sha256 -and $hash -ne $Sha256.ToLowerInvariant())
+    # R3's message contract, matching Install-MspAiKit.ps1: both hashes, always
+    if ($hashMismatch) { $reasons += "sha256 mismatch (have $hash, want $($Sha256.ToLowerInvariant()))" }
     $sig = $null
-    if ($Publisher -or ($Path -match '\.(exe|msi|ps1|dll|msix|appx)$')) { $sig = Test-DEAuthenticode -Path $Path -Publisher $Publisher; if ($Publisher -and -not $sig.Ok) { $reasons += "signature: $($sig.Status) $($sig.Publisher)" } }
+    $sigRefused = $false
+    if ($Publisher -or $VendorSigns -or ($Path -match '\.(exe|msi|ps1|dll|msix|appx)$')) {
+        $sig = Test-DEAuthenticode -Path $Path -Publisher $Publisher
+        if (-not $sig.Ok -and ($Publisher -or $VendorSigns)) { $sigRefused = $true; $reasons += "signature: $($sig.Status) $($sig.Publisher)" }
+    }
     if (-not $Sha256 -and -not $Publisher) { $reasons += 'catalog entry has neither sha256 nor publisher' }
-    $ok = ($reasons.Count -eq 0) -or ($AllowUnverified -and -not ($Sha256 -and $hash -ne $Sha256.ToLowerInvariant()))
-    return [pscustomobject]@{ Ok = $ok; Reasons = $reasons; Sha256 = $hash; Signature = $sig; Overridden = ($AllowUnverified -and $reasons.Count -gt 0) }
+    # R3/R4: a hash mismatch, or a broken/absent signature where the vendor signs, is a refusal - never an overrideable warning
+    $hardRefusal = $hashMismatch -or ($VendorSigns -and $sigRefused)
+    $ok = ($reasons.Count -eq 0) -or ($AllowUnverified -and -not $hardRefusal)
+    return [pscustomobject]@{ Ok = $ok; Reasons = $reasons; Sha256 = $hash; Signature = $sig; HardRefusal = $hardRefusal; Overridden = ($AllowUnverified -and $reasons.Count -gt 0 -and -not $hardRefusal) }
 }
 function Invoke-DEJsonPost {
     <# POSTs a scrubbed JSON body. Bearer token comes from -TokenEnv (an environment variable name) or a runtime secret name, never from a file. #>
