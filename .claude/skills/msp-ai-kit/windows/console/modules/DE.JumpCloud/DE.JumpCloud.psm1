@@ -29,6 +29,13 @@ function Invoke-DEJumpCloudApi {
     if ($Method -eq 'GET' -and $null -ne $Body) { throw 'a GET request cannot carry a body (use -Method POST -Search for JumpCloud searches)' }
     if ($Search -and ($Method -ne 'POST' -or $Path -notlike '/search/*')) { throw '-Search is only for POST /search/... requests' }
     if (-not (Test-DESecret -Name 'JC_API_KEY')) { throw 'JumpCloud API key not provided this session (secret JC_API_KEY)' }
+    # PHI gate (issue #890): JumpCloud receives device identity and BitLocker escrow, so on a
+    # restricted device it needs a confirmed BAA first.
+    $gate = Test-DEVendorBaaAllowed -Vendor 'JumpCloud' -PhiRestricted:(Get-DEPhiRestricted)
+    if (-not $gate.allowed) {
+        Write-DELog -Level WARN -Message "JumpCloud call refused: $($gate.reason)"
+        throw "PHI-restricted device: the JumpCloud call is blocked ($($gate.reason))"
+    }
     $key = Get-DESecretPlain -Name 'JC_API_KEY'
     $uri = "$script:JcApi$(if ($V2) { '/v2' })$Path"
     $headers = @{ 'x-api-key' = $key; 'Accept' = 'application/json'; 'Content-Type' = 'application/json' }
