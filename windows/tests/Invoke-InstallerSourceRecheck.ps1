@@ -12,6 +12,8 @@
         ok              the file matches the recorded hash
         unpinned        no hash recorded yet (move 41 pins these; a finding until then)
         hash-mismatch   the file does not match the recorded hash - refuse and raise (R3/R7)
+        silent-change   hash-mismatch and the version did NOT change - the R7 ALERT case
+        version-change  hash-mismatch and the version moved - a finding of a different kind
         download-failed the source could not be fetched - a finding, not a pass
         not-checkable   winget / local sources have nothing to fetch (recorded, not verified)
 
@@ -57,6 +59,7 @@ function Get-DERecheckSources {
             Id            = $p.id
             Name          = $p.name
             Type          = "$($src.type)"
+            Version       = "$($src.version)"
             Location      = $(switch ("$($src.type)") { 'url' { "$($src.url)" } 'local' { "$($src.localPath)" } 'winget' { "$($src.id)" } default { '' } })
             Sha256        = $src.sha256
             Sha256Verified = [bool]$src.sha256Verified
@@ -71,6 +74,7 @@ function Compare-DESourceFile {
     param(
         [Parameter(Mandatory = $true)]$Source,
         [string]$ActualSha256 = '',
+        [string]$ActualVersion = '',
         [string]$Failure = ''
     )
     if ($Failure) { return @{ id = $Source.Id; finding = 'download-failed'; detail = $Failure } }
@@ -80,7 +84,26 @@ function Compare-DESourceFile {
     if ($ActualSha256.ToLowerInvariant() -eq "$($Source.Sha256)".ToLowerInvariant()) {
         return @{ id = $Source.Id; finding = 'ok'; detail = "sha256 matches the record" }
     }
+    # R7: hash-mismatch splits by version. A file that changes while its version does not is the
+    # suspicious case (a compromised or carelessly-rebuilt upstream) and gets the ALERT wording.
+    $recorded = "$($Source.Version)".Trim()
+    if ($recorded -and $ActualVersion.Trim() -and ($recorded -eq $ActualVersion.Trim())) {
+        return @{ id = $Source.Id; finding = 'silent-change'; detail = "sha256 mismatch for $($Source.Name) (have $ActualSha256, want $($Source.Sha256)) - CHANGED WITHOUT CHANGING ITS VERSION ($recorded). ALERT (R7): a vendor does not silently rebuild the same version." }
+    }
+    if ($recorded -and $ActualVersion.Trim() -and ($recorded -ne $ActualVersion.Trim())) {
+        return @{ id = $Source.Id; finding = 'version-change'; detail = "sha256 mismatch for $($Source.Name) (have $ActualSha256, want $($Source.Sha256)) - the version moved $recorded -> $($ActualVersion.Trim()); update the record in a reviewed change" }
+    }
     return @{ id = $Source.Id; finding = 'hash-mismatch'; detail = "sha256 mismatch for $($Source.Name) (have $ActualSha256, want $($Source.Sha256))" }
+}
+
+function Get-DEFileVersionLiteral {
+    <# The file's own version resource, or '' when it has none. Never throws. #>
+    param([Parameter(Mandatory = $true)][string]$Path)
+    try {
+        $vi = (Get-Item -LiteralPath $Path).VersionInfo
+        foreach ($v in @($vi.ProductVersion, $vi.FileVersion)) { if ("$v".Trim()) { return "$v".Trim() } }
+        return ''
+    } catch { return '' }
 }
 
 function Get-DEFileSha256Literal {
@@ -114,12 +137,13 @@ function Invoke-DEInstallerSourceRecheck {
             Invoke-WebRequest -Uri $s.Location -OutFile $tmp -UseBasicParsing -UserAgent 'DETechTool-SourceRecheck/1'
             $checked++
             $actual = Get-DEFileSha256Literal -Path $tmp
+            $actualVersion = Get-DEFileVersionLiteral -Path $tmp
         } catch {
-            $failure = $_.Exception.Message; $actual = ''
+            $failure = $_.Exception.Message; $actual = ''; $actualVersion = ''
         } finally {
             if (Test-Path -LiteralPath $tmp) { Remove-Item -LiteralPath $tmp -Force -ErrorAction SilentlyContinue }
         }
-        $r = Compare-DESourceFile -Source $s -ActualSha256 $actual -Failure $failure
+        $r = Compare-DESourceFile -Source $s -ActualSha256 $actual -ActualVersion $actualVersion -Failure $failure
         $rows += $r; if ($r.finding -notin @('ok', 'not-checkable')) { $findings += $r }
         if ($DelaySeconds -gt 0) { Start-Sleep -Seconds $DelaySeconds }   # R6: never hammer a vendor CDN
     }

@@ -34,11 +34,29 @@ Describe 'Installer source re-check (move 42)' {
             $r.finding | Should -Be 'ok' -Because 'the comparison is case-insensitive on hex'
         }
         It 'a changed file is a hash-mismatch finding with both hashes in the message' {
-            $s = [pscustomobject]@{ Id = 'wazuh-agent'; Name = 'Wazuh Agent'; Type = 'url'; Location = 'https://example/x.msi'; Sha256 = 'a' * 64; Sha256Verified = $true; Sha256From = 'vendor' }
+            $s = [pscustomobject]@{ Id = 'wazuh-agent'; Name = 'Wazuh Agent'; Type = 'url'; Location = 'https://example/x.msi'; Version = ''; Sha256 = 'a' * 64; Sha256Verified = $true; Sha256From = 'vendor' }
             $r = Compare-DESourceFile -Source $s -ActualSha256 ('b' * 64)
             $r.finding | Should -Be 'hash-mismatch' -Because 'R7: a change is a finding, not a silent update'
             $r.detail | Should -Match ('have ' + ('b' * 64))
             $r.detail | Should -Match ('want ' + ('a' * 64))
+        }
+        It 'a file changed without changing its version is the R7 ALERT' {
+            $s = [pscustomobject]@{ Id = 'wazuh-agent'; Name = 'Wazuh Agent'; Type = 'url'; Location = 'https://example/x.msi'; Version = '4.9.2'; Sha256 = 'a' * 64; Sha256Verified = $true; Sha256From = 'vendor' }
+            $r = Compare-DESourceFile -Source $s -ActualSha256 ('b' * 64) -ActualVersion '4.9.2'
+            $r.finding | Should -Be 'silent-change' -Because 'same version, different bytes: that is how a compromised upstream shows up'
+            $r.detail | Should -Match 'CHANGED WITHOUT CHANGING ITS VERSION'
+            $r.detail | Should -Match 'ALERT'
+        }
+        It 'a file changed along with its version is a version-change finding' {
+            $s = [pscustomobject]@{ Id = 'wazuh-agent'; Name = 'Wazuh Agent'; Type = 'url'; Location = 'https://example/x.msi'; Version = '4.9.2'; Sha256 = 'a' * 64; Sha256Verified = $true; Sha256From = 'vendor' }
+            $r = Compare-DESourceFile -Source $s -ActualSha256 ('b' * 64) -ActualVersion '4.10.0'
+            $r.finding | Should -Be 'version-change' -Because 'the version moved: still a finding, but a different kind from the silent one'
+            $r.detail | Should -Match '4\.9\.2 -> 4\.10\.0'
+        }
+        It 'when a version is unknown the mismatch stays a plain hash-mismatch' {
+            $s = [pscustomobject]@{ Id = 'x'; Name = 'X'; Type = 'url'; Location = 'https://example/x'; Version = ''; Sha256 = 'a' * 64; Sha256Verified = $true; Sha256From = 'pin' }
+            (Compare-DESourceFile -Source $s -ActualSha256 ('b' * 64) -ActualVersion '1.0').finding | Should -Be 'hash-mismatch'
+            (Compare-DESourceFile -Source $s -ActualSha256 ('b' * 64)).finding | Should -Be 'hash-mismatch'
         }
         It 'an unpinned source is a finding until it is pinned' {
             $s = [pscustomobject]@{ Id = 'jumpcloud-agent'; Name = 'JumpCloud Agent'; Type = 'url'; Location = 'https://example/x.msi'; Sha256 = $null; Sha256Verified = $false; Sha256From = 'no vendor hash (R5 pins on first trusted download)' }
