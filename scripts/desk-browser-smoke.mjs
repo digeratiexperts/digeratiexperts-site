@@ -61,9 +61,27 @@ async function newPage({ width, height }, { freshHints = false } = {}) {
     route.fulfill({ json: { sessionId: "smoke", reply: "Smoke reply." } }),
   );
   await page.goto(`${base}/`, { waitUntil: "networkidle", timeout: 90000 });
-  await page.waitForTimeout(500);
-  const reject = page.getByRole("button", { name: "Reject All" });
-  if (await reject.count()) await reject.first().click().catch(() => {});
+  // Every context has fresh consent storage. The banner appears after 1.2s;
+  // an optional early click can miss it and leave the phone launcher lifted.
+  const consentTimeout = 10000;
+  const banner = page.getByTestId("cookie-consent-banner");
+  let consentPhase = "show the first-visit cookie banner";
+  try {
+    await banner.waitFor({ state: "visible", timeout: consentTimeout });
+    consentPhase = "click the cookie banner's Reject All button";
+    await banner.getByRole("button", { name: "Reject All", exact: true }).click({ timeout: consentTimeout });
+    consentPhase = "remove the dismissed cookie banner";
+    await banner.waitFor({ state: "detached", timeout: consentTimeout });
+    consentPhase = "settle the dismissed cookie layout (--de-cookie-h: 0px)";
+    await page.waitForFunction(
+      () => getComputedStyle(document.documentElement).getPropertyValue("--de-cookie-h").trim() === "0px",
+      null,
+      { timeout: consentTimeout, polling: "raf" },
+    );
+  } catch (error) {
+    await context.close();
+    throw new Error(`DE Desk smoke consent setup (${width}x${height}) failed to ${consentPhase} (timeout ${consentTimeout}ms)`, { cause: error });
+  }
   return { context, page, errors };
 }
 
