@@ -24,6 +24,15 @@ function Get-DEWarrantyVendor {
 function Invoke-DEWarrantyWeb {
     <# One place for web calls, so tests replace it and every call has a timeout. #>
     param([Parameter(Mandatory = $true)][string]$Uri, [ValidateSet('GET', 'POST')][string]$Method = 'GET', $Body, [hashtable]$Headers = @{}, [switch]$Raw)
+    # PHI gate (issue #890): on a restricted device a warranty lookup sends the serial to a vendor,
+    # so it needs a confirmed BAA first. The gate reads the settled session decision, so callers do
+    # not each have to plumb the client profile through.
+    $vendor = Get-DEVendorFromUri -Uri $Uri
+    $gate = Test-DEVendorBaaAllowed -Vendor $vendor -PhiRestricted:(Get-DEPhiRestricted)
+    if (-not $gate.allowed) {
+        Write-DELog -Level WARN -Message "warranty lookup to $vendor refused: $($gate.reason)"
+        throw "PHI-restricted device: the warranty lookup to $vendor is blocked ($($gate.reason))"
+    }
     try { [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12 } catch { }
     $h = @{ 'User-Agent' = 'DE-TechTool (Digerati Experts; warranty lookup)' }; foreach ($k in $Headers.Keys) { $h[$k] = $Headers[$k] }
     if ($Raw) { return (Invoke-WebRequest -Uri $Uri -Method $Method -Headers $h -Body $Body -UseBasicParsing -TimeoutSec 30).Content }
