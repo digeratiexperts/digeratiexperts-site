@@ -54,6 +54,17 @@ The on-device engine is never disabled because the Hub is unavailable, and the r
 
 Do not expose an inbound management port on client laptops. The endpoint initiates an outbound TLS connection to a DE control-plane endpoint.
 
+**The gate and the decided rules (move 73, [AGENT-THREAT-MODEL.md](AGENT-THREAT-MODEL.md)).** No job type of
+`de.techconsole.job/v1` is enabled outside that document's per-job-type enable/deny rules. Joe decided its eight
+open decisions on 2026-10-31 (D1-D8 there): enable order `audit` → `maintenance` → `rescue` → `provision` →
+`takeover` → `deprovision`; jobs run technician-confirmed first and flip to unattended per type only after 30
+incident-free days on DE-internal devices, recorded as evidence; reviewer-key pinning is adopted (two offline
+hardware keys, primary + backup, both held by Joe); destructive families (`identity.*` applies, `apps.remove.*`,
+`deprov.agents`, security removals) run hands-on only while DE has one person, and mass impact is 10 devices;
+retention is 13 months for raw device evidence and 6 years for audit logs and compliance reports; the job key
+keeps its SOP-1 ceremony in an env file with a managed KMS/HSM before general availability (target Q1 2027);
+security alerts go to security@digeratiexperts.com.
+
 Recommended components:
 
 - **DE Tech Tool UI/CLI:** interactive technician experience, audit/apply, local evidence.
@@ -73,7 +84,7 @@ Recommended components:
 
 Remote jobs are immutable signed envelopes containing job id, account/device ids, action id + version, typed parameters, issued/expiry times, replay nonce, required privilege/approval, catalog/profile hashes and signature.
 
-The agent runs only allowlisted DE action IDs from a signed local catalog. Arbitrary remote PowerShell is not part of the normal control plane. Any future emergency shell must be a separate break-glass capability: disabled by default, just-in-time approved, short-lived and fully transcripted.
+The agent runs only allowlisted DE action IDs from a signed local catalog. Arbitrary remote PowerShell is not part of the normal control plane. The break-glass shell is **not built** (Joe, 2026-10-31, D4 in [AGENT-THREAT-MODEL.md](AGENT-THREAT-MODEL.md)); if it is ever revisited it must be a separate capability: disabled by default, just-in-time approved, short-lived and fully transcripted — never reachable from a job.
 
 ### Transport
 
