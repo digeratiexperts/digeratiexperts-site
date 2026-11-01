@@ -29,7 +29,14 @@ function Invoke-DEWarrantyWeb {
     if ($Raw) { return (Invoke-WebRequest -Uri $Uri -Method $Method -Headers $h -Body $Body -UseBasicParsing -TimeoutSec 30).Content }
     return (Invoke-RestMethod -Uri $Uri -Method $Method -Headers $h -Body $Body -TimeoutSec 30 -UseBasicParsing)
 }
-function ConvertTo-DEWarrantyDate { param($Value) if (-not $Value) { return $null }; try { return ([datetime]::Parse("$Value", [Globalization.CultureInfo]::InvariantCulture)).Date } catch { return $null } }
+function ConvertTo-DEWarrantyDate {
+    param($Value)
+    if (-not $Value) { return $null }
+    # Parse as written, not as an instant. [datetime]::Parse turns '2024-03-01T00:00:00Z' into a LOCAL
+    # time, so west of UTC it lands on 2024-02-29 17:00 and .Date reports the wrong day - a warranty
+    # that ends 1 March reads as 29 February. DateTimeOffset keeps the calendar date the vendor wrote.
+    try { return ([DateTimeOffset]::Parse("$Value", [Globalization.CultureInfo]::InvariantCulture)).Date } catch { return $null }
+}
 function New-DEWarrantyResult {
     <# One shape for every source: status active/expired/unknown/manual/not-applicable, the end date and days left. #>
     param([string]$Serial, [string]$Manufacturer, [string]$Vendor, [string]$Source, [array]$Entitlements = @(), [string]$CheckUrl, [string]$Detail, [string]$Status)
