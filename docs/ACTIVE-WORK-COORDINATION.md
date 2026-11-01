@@ -75,19 +75,27 @@ Close the active GitHub issue/claim only when the state above is explicit and no
 
 ## Current open PRs and owners (snapshot)
 
-**Refreshed:** 2026-10-31 from GitHub, `origin/main` at `5dab4a3f`. This table is a
+**Refreshed:** 2026-11-01 from GitHub, `origin/main` at `7826a8b7`. This table is a
 snapshot for orientation; the live PR list is still the lock. Each PR is owned by the session or
 person that opened it (a Claude Code PR has its session link at the bottom of its body). Do not
 push to, rebase, close or merge it; the lead integrator's exception, on Joe's instruction, is in
-`AGENTS.md` ("Who owns what right now").
+`AGENTS.md` ("Who owns what right now"). The W1-10 lane PRs each carry the same generated tracker
+projection, so they merge clean in any order.
 
 | PR | Draft | Branch | What it changes | Owner |
 | --- | --- | --- | --- | --- |
-| #876 | no | `techtool/section-h-move-91` | DE Tech Tool move 91: classify device evidence fields (device / personal / path / operational). Section H sensitive data lane; moves 92, 95, 96, 94 follow. | DE Tech Tool section H lane (OpenCode) |
-| #593 | yes | `claude/org-representation-portal` | Portal: Hub-defined representatives, My Groups and group requests (needs DE approval and Hub PR 425 live) | Website design overhaul thread (Joe, 2026-10-15) |
-| #575 | yes | `concept/ai-background-check` | Concept: AI Background Check page (3 Exploration concepts; concept B shipped in #609) | Website design overhaul thread (Joe, 2026-10-15) |
-| #873 | no | `fix/mailclient-inventory-matches-clobber` | DE Migration PC scan: `$Matches` clobber fix + regression pin (issue #869; Hub schedule W1-10 lane) | OpenCode · MiMo-V2.6-Pro (W1-10 session) |
-| #864 | yes | `claude/loving-hopper-b5p8eg` | Zoho help center CSS: remove constructs Zoho's preview rejects (`zoho/help-center/`) | Claude Code session (left alone per Joe, 2026-10-31) |
+| #897 | no | `techtool/move-40-trust-records` | Tech Tool move 40: installer source, vendor hash, verified-or-not trust records (section C lane) | DE Tech Tool section C lane (OpenCode) |
+| #896 | no | `techtool/move24-hub-payload-fuzz` | Tech Tool move 24: Hub payload builder fuzz (issue #742; Hub schedule W1-10 lane) | OpenCode · MiMo-V2.6-Pro (W1-10 session) |
+| #895 | no | `techtool/move-84-dropship-serials` | Tech Tool move 84: dropship kit against real serial samples (section G lane) | DE Tech Tool section G lane (OpenCode) |
+| #894 | no | `techtool/move-83-desk-ticket` | Tech Tool move 83: Zoho Desk ticket ID on the device record (section G lane) | DE Tech Tool section G lane (OpenCode) |
+| #893 | no | `techtool/move23-contract-secret-refusal` | Tech Tool move 23: contracts refuse secret-shaped keys (issue #741; W1-10 lane) | OpenCode · MiMo-V2.6-Pro (W1-10 session) |
+| #892 | no | `techtool/move22-contract-schema-tests` | Tech Tool move 22: a Pester test for every contract schema's validators (issue #740; W1-10 lane) | OpenCode · MiMo-V2.6-Pro (W1-10 session) |
+| #891 | no | `techtool/move21-launcher-ci-confirmation` | Tech Tool move 21: launcher tests confirmed on Windows CI + silent-skip guard (issue #739; W1-10 lane) | OpenCode · MiMo-V2.6-Pro (W1-10 session) |
+| #888 | no | `techtool/move20-changelog` | Tech Tool move 20: changelog entry per version, linked to its PR (issue #738; W1-10 lane) | OpenCode · MiMo-V2.6-Pro (W1-10 session) |
+| #887 | no | `techtool/move18-export-drift-check` | Tech Tool move 18: exported-module-functions vs docs drift check (issue #736; W1-10 lane) | OpenCode · MiMo-V2.6-Pro (W1-10 session) |
+| #886 | yes | `chatgpt/event-contact-receipt-20261101` | Live Briefings contact receipt claims fix | ChatGPT session |
+| #884 | no | `techtool/move-85-placeholder-serials` | Tech Tool move 85: OEM placeholder-serial refusal against a real serial list (section G lane) | DE Tech Tool section G lane (OpenCode) |
+| #882 | yes | `chatgpt/restore-v2-before-scenes-20261101` | Restore Homepage V2 before decorative scene bands | ChatGPT session |
 
 
 Cross-repo pending decisions and secrets: Intelligence Hub

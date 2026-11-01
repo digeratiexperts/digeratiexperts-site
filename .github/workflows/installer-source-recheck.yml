@@ -1,0 +1,43 @@
+name: Installer source re-check
+
+# Move 42 (#760): re-check installer hashes automatically in CI, rate-limited (R6).
+# A difference between a vendor's file and the record in console/catalog/packages.json
+# is a FINDING and fails the run - never a silent update (R7). Downloads are sequential
+# with a delay so a vendor's CDN is not hammered.
+
+on:
+  schedule:
+    - cron: '17 6 * * 1'   # Mondays 06:17 UTC, off the round hours
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: installer-source-recheck
+  cancel-in-progress: false
+
+env:
+  KIT: .claude/skills/msp-ai-kit
+
+jobs:
+  recheck:
+    name: Re-check installer sources (rate-limited)
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Re-check every installer source
+        shell: powershell
+        run: |
+          & "$env:KIT/windows/tests/Invoke-InstallerSourceRecheck.ps1" -DelaySeconds 30 -OutFile "$env:RUNNER_TEMP\installer-source-recheck.txt"
+          if ($LASTEXITCODE -eq 2) { throw 're-check could not complete' }
+          if ($LASTEXITCODE -eq 1) { Write-Host '::error::installer source findings present - see the report artifact'; exit 1 }
+      - name: Upload the re-check report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: installer-source-recheck
+          path: ${{ runner.temp }}/installer-source-recheck.txt
+          if-no-files-found: ignore
+          retention-days: 30

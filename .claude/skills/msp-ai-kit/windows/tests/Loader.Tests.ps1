@@ -138,8 +138,9 @@ Describe 'One-file installer' {
 }
 
 Describe 'Launchers pass the exit code through (cmd.exe)' {
-    BeforeAll { $script:Win = Split-Path -Parent $PSScriptRoot }
+    BeforeAll { $script:Win = Split-Path -Parent $PSScriptRoot; $global:DELauncherRan = @{ ExitCode = $false; ErrorLevel = $false } }
     It 'Start-DETechTool.cmd and its Start-DETechConsole.cmd alias return 2 for a refused headless run, not 0' -Skip:($env:OS -ne 'Windows_NT') {
+        $global:DELauncherRan.ExitCode = $true
         $data = Join-Path ([IO.Path]::GetTempPath()) ("de-launch-{0}" -f ([guid]::NewGuid()))
         foreach ($l in @('Start-DETechTool.cmd', 'Start-DETechConsole.cmd')) {
             & cmd.exe /c ('"{0}" -Headless -Client no-such-client -DataDir "{1}"' -f (Join-Path $script:Win $l), $data) | Out-Null
@@ -147,10 +148,20 @@ Describe 'Launchers pass the exit code through (cmd.exe)' {
         }
     }
     It 'launchers keep %ERRORLEVEL% out of ( ) blocks, where cmd expands it too early' {
+        $global:DELauncherRan.ErrorLevel = $true
         foreach ($l in @('Start-DETechTool.cmd', 'Start-DETechConsole.cmd', 'Start-MspAiKit.cmd')) {
             $text = Get-Content -LiteralPath (Join-Path $script:Win $l) -Raw
             $inBlock = [regex]::Matches($text, '\((?:[^()]|\([^()]*\))*\)') | Where-Object { $_.Value -match '%ERRORLEVEL%|errorlevel%' }
             @($inBlock).Count | Should -Be 0 -Because "$l"
         }
+    }
+    It 'both launcher tests really executed in this run (a silent skip would hide them)' -Skip:($env:OS -ne 'Windows_NT') {
+        # move 21: these two are the only tests that exercise the real launchers, and the exit-code
+        # one is -Skip off Windows. A widened skip, an exclude tag or a reordering must not be able
+        # to make the launcher contract quietly unverified - so each test above records that it ran,
+        # and this one fails when either did not. Confirmed on Windows CI in run 41262759351
+        # (522 passed / 0 failed / 0 skipped).
+        $global:DELauncherRan.ExitCode | Should -Be $true -Because 'the exit-code launcher test must execute in this run'
+        $global:DELauncherRan.ErrorLevel | Should -Be $true -Because 'the %ERRORLEVEL% launcher test must execute in this run'
     }
 }
