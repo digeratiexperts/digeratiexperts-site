@@ -31,6 +31,7 @@ Written while working through the plan. Each gates a section of it:
 |---|---|---|
 | [AUDIT-MODE-CHECKLIST.md](AUDIT-MODE-CHECKLIST.md) | 5 | Validating on a real DE Windows laptop in audit mode (roadmap step 3). Feeds move 25. |
 | [INSTALLER-TRUST-POLICY.md](INSTALLER-TRUST-POLICY.md) | 6 | Trust rules for every installer the tool downloads or runs. Gates all of section C. |
+| [AGENT-THREAT-MODEL.md](AGENT-THREAT-MODEL.md) | 73 | STRIDE threat model and the per-job-type enable/deny rules for the call-home agent. Gates all of section E. |
 
 ## Blocked and gated moves
 
