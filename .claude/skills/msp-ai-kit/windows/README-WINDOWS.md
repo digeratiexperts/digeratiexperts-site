@@ -298,6 +298,10 @@ handoffs and warranty. The shared contracts are in `console/contracts/`.
 - **Account number.** The client profile needs the client's Hub account number, set as
   `"hub": { "accountId": 123 }`. Without it the signed send is refused and the record is saved for
   manual upload.
+- **Desk ticket.** The device record carries the Zoho Desk ticket the work answers (`deskTicketId`), so the
+  Hub record and its evidence link back to the ticket. Pass `-DeskTicketId` to `New-DEHubPayload`, or save it
+  once per engagement with `Set-DEStateValue -Path 'work.deskTicketId' -Value 'DESK-1042'` (a ticket number
+  or a short code). A value that is not ticket-shaped is left out with a WARN, never sent.
 - **What is left out.** The Hub refuses a record with a secret-named key anywhere in it (`apiToken`,
   `mfaSeed`, `pin` and so on), whatever its value. So such keys are left out of the device record that is
   sent and of its saved copy, and the evidence line names them; local state and logs keep them as

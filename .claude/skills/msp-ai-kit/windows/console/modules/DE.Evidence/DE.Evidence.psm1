@@ -306,11 +306,17 @@ function Convert-DEHtmlToPdf {
 }
 
 function New-DEHubPayload {
-    <# The Intelligence Hub device record: identity, mapping, onboarding state, controls, verification timestamps, evidence references, exceptions. No secrets. #>
-    param([Parameter(Mandatory = $true)]$Record, [string]$BundleSha256 = '', [string]$BundlePath = '', [string]$Lifecycle)
+    <# The Intelligence Hub device record: identity, mapping, onboarding state, controls, verification timestamps, evidence references, exceptions. No secrets.
+       The Zoho Desk ticket behind the work (-DeskTicketId, else state work.deskTicketId) rides along so Hub evidence
+       links back to the ticket; a value that is not ticket-shaped is dropped with a WARN, never sent and never fatal. #>
+    param([Parameter(Mandatory = $true)]$Record, [string]$BundleSha256 = '', [string]$BundlePath = '', [string]$Lifecycle, [string]$DeskTicketId = '')
     $de = Get-DEConsole
     # deviceKey (<maker>:<SERIAL>) is how the Hub, the boot rescue and this tool name the same device (contracts\device.schema.json).
     $key = $null; try { if ($Record.serial) { $key = ConvertTo-DEDeviceKey -Manufacturer "$($Record.manufacturer)" -Serial "$($Record.serial)" } } catch { $key = $null }
+    # The Desk ticket: a ticket number (5-20 digits) or a short code like DESK-1042. The shape is the contract's
+    # (device.schema.json deskTicketId); anything else - including a recovery-password-shaped value - is left out.
+    $ticket = "$DeskTicketId"; if (-not $ticket) { $ticket = "$(Get-DEState -Path 'work.deskTicketId')" }
+    if ($ticket -and $ticket -notmatch '^(\d{5,20}|[A-Za-z][A-Za-z0-9-]{1,31})$') { Write-DELog -Level WARN -Message "the Desk ticket id is not ticket-shaped; left out of the device record"; $ticket = '' }
     $w = Get-DEState -Path 'warranty.current'
     $controls = @(Get-DEEvidence | Group-Object step | ForEach-Object { $last = $_.Group | Sort-Object timestamp -Descending | Select-Object -First 1; @{ control = $_.Name; module = $last.module; result = $last.result; verifiedAt = $last.timestamp } })
     return [ordered]@{
@@ -319,7 +325,7 @@ function New-DEHubPayload {
         # who ran which build under which licence: a copy that should not exist shows up here the first time it reports
         session = $(try { $ls = Get-DELicenseStatus; $bi = Get-DEBuildInfo; @{ technician = $ls.technician; licenseId = $ls.id; licenseState = $ls.state; buildId = $bi.buildId; issuedTo = $bi.issuedTo; integrity = "$(try { (Test-DEConsoleIntegrity).status } catch { 'unknown' })" } } catch { $null })
         warranty = $(if ($w) { @{ status = "$(Get-DEHashPath -Object $w -Path 'status')"; end = (Get-DEHashPath -Object $w -Path 'end'); source = (Get-DEHashPath -Object $w -Path 'source') } } else { $null })
-        client = $Record.client; site = $Record.site; device = @{ hostname = $Record.hostname; serial = $Record.serial; manufacturer = $Record.manufacturer; model = $Record.model; assetTag = $Record.assetTag; role = $Record.role; os = $Record.os }
+        client = $Record.client; site = $Record.site; deskTicketId = $(if ($ticket) { $ticket } else { $null }); device = @{ hostname = $Record.hostname; serial = $Record.serial; manufacturer = $Record.manufacturer; model = $Record.model; assetTag = $Record.assetTag; role = $Record.role; os = $Record.os }
         user = @{ assigned = $Record.assignedUser; localUserName = $Record.localUserName; jumpcloudUser = $Record.jumpcloudUser; email = $Record.email }
         onboarding = @{ mode = $Record.mode; readiness = $Record.readiness; areas = $Record.areas; started = $Record.started; completed = $Record.completed; technician = $Record.technician }
         controls = $controls; exceptions = $Record.exceptions
