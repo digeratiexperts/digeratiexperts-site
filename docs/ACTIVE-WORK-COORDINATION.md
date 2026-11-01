@@ -83,7 +83,8 @@ push to, rebase, close or merge it; the lead integrator's exception, on Joe's in
 
 | PR | Draft | Branch | What it changes | Owner |
 | --- | --- | --- | --- | --- |
-| #873 | no | `fix/mailclient-inventory-matches-clobber` | DE Migration PC scan: `$Matches` clobber fix + regression pin (issue #869; Hub schedule W1-10 lane) | OpenCode · MiMo-V2.6-Pro (W1-10 session) |
+| #887 | no | `techtool/move18-export-drift-check` | Tech Tool move 18: export-vs-docs drift check (issue #736; Hub schedule W1-10 lane) | OpenCode · MiMo-V2.6-Pro (W1-10 session) |
+| #873 | no | `fix/mailclient-inventory-matches-clobber` | DE Migration PC scan: `$Matches` clobber fix + regression pin (issue #869; W1-10 lane) | OpenCode · MiMo-V2.6-Pro (W1-10 session) |
 | #864 | yes | `claude/loving-hopper-b5p8eg` | Zoho help center CSS: remove constructs Zoho's preview rejects (`zoho/help-center/`) | Claude Code session (left alone per Joe, 2026-10-31) |
 
 Cross-repo pending decisions and secrets: Intelligence Hub
