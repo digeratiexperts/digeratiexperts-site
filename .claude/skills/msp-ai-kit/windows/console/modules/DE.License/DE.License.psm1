@@ -19,6 +19,7 @@ $ErrorActionPreference = 'Stop'
 
 $script:ExtraKeys = @()          # session-only additions (tests, a Hub key fetched this session)
 $script:PolicyOverride = $null
+$script:PolicyWarned = $false
 $script:Warned = @{}
 $script:RevocationWarned = @{}     # an unreadable revocation list is logged once per file, not on every check
 $script:RevocationMaxChars = 1048576
@@ -29,14 +30,36 @@ function Get-DELicenseRoot { return (Join-Path (Get-DEConsole).Root 'trust') }
 function Get-DELicensePolicy {
     if ($script:PolicyOverride) { return $script:PolicyOverride }
     $f = Join-Path (Get-DELicenseRoot) 'license-policy.json'
-    $p = $(if (Test-Path -LiteralPath $f) { Get-Content -LiteralPath $f -Raw -Encoding UTF8 | ConvertFrom-Json } else { $null })
+    # The probe and the parse are both guarded: a denied path or malformed JSON must read as "no
+    # policy", not escape as a throw and not silently pick a value. (Same shape as issue #834.)
+    $p = $null
+    try { if (Test-Path -LiteralPath $f) { $p = Get-Content -LiteralPath $f -Raw -Encoding UTF8 | ConvertFrom-Json } } catch { $p = $null }
     $g = { param($n, $d) if ($p -and $p.PSObject.Properties[$n] -and $null -ne $p.$n) { $p.$n } else { $d } }
-    return [pscustomobject]@{ enforce = $(if ("$(& $g 'enforce' 'warn')".Trim() -ieq 'warn') { 'warn' } else { 'required' }); maxTechnicianHours = [double](& $g 'maxTechnicianHours' 12); maxOrderDays = [double](& $g 'maxOrderDays' 45); clockSkewMinutes = [double](& $g 'clockSkewMinutes' 5); issuer = "$(& $g 'issuer' 'de-hub')"; audience = "$(& $g 'audience' 'de-techtool')" }
+
+    # Fail-open risk, audited under move 17: the permissive default ('warn') is right for a
+    # development checkout, but a real build whose policy file goes missing must not silently become
+    # permissive. A build with a watermark is held to 'required' when no policy is readable.
+    $build = ''
+    try { $build = "$((Get-DEBuildInfo).buildId)" } catch { $build = '' }
+    $isRealBuild = ($build -and $build -ne 'dev')
+    $defaultEnforce = $(if ($isRealBuild) { 'required' } else { 'warn' })
+
+    if (-not $p) {
+        if (-not $script:PolicyWarned) {
+            $script:PolicyWarned = $true
+            $why = if ($isRealBuild) { "this is build $build with no readable licence policy, so it fails closed" } else { 'development checkout' }
+            Write-DELog -Level WARN -Message "trust\license-policy.json is missing or unreadable; defaulting to enforce '$defaultEnforce' ($why)"
+        }
+    }
+
+    return [pscustomobject]@{ enforce = $(if ("$(& $g 'enforce' $defaultEnforce)".Trim() -ieq 'warn') { 'warn' } else { 'required' }); maxTechnicianHours = [double](& $g 'maxTechnicianHours' 12); maxOrderDays = [double](& $g 'maxOrderDays' 45); clockSkewMinutes = [double](& $g 'clockSkewMinutes' 5); issuer = "$(& $g 'issuer' 'de-hub')"; audience = "$(& $g 'audience' 'de-techtool')" }
 }
-function Set-DELicensePolicyOverride { <# Session only (tests, rehearsals). #> param($Policy) $script:PolicyOverride = $Policy; $script:Warned = @{} }
+function Set-DELicensePolicyOverride { <# Session only (tests, rehearsals). #> param($Policy) $script:PolicyOverride = $Policy; $script:Warned = @{}; $script:PolicyWarned = $false }
 function Get-DELicenseTrustedKeys {
     $f = Join-Path (Get-DELicenseRoot) 'license-keys.json'
-    $keys = @(); if (Test-Path -LiteralPath $f) { $keys = @((Get-Content -LiteralPath $f -Raw -Encoding UTF8 | ConvertFrom-Json).keys | Where-Object { $_ -and $_.kid -and $_.n -and $_.e }) }
+    # guarded like the policy read: a denied path or malformed JSON is "no keys", never a throw
+    $keys = @()
+    try { if (Test-Path -LiteralPath $f) { $keys = @((Get-Content -LiteralPath $f -Raw -Encoding UTF8 | ConvertFrom-Json).keys | Where-Object { $_ -and $_.kid -and $_.n -and $_.e }) } } catch { $keys = @() }
     return @($keys + $script:ExtraKeys)
 }
 function Add-DELicenseTrustedKey {
@@ -242,7 +265,7 @@ function Test-DELicenseFor {
 function Get-DEBuildInfo {
     <# The build watermark written by New-DEReleasePackage.ps1: build ID, when, and who the copy was issued to. #>
     $f = Join-Path (Get-DEConsole).Root 'BUILD.json'
-    if (Test-Path -LiteralPath $f) { try { $b = Get-Content -LiteralPath $f -Raw -Encoding UTF8 | ConvertFrom-Json; return [pscustomobject]@{ buildId = "$($b.buildId)"; builtAt = "$($b.builtAt)"; issuedTo = "$($b.issuedTo)"; channel = "$($b.channel)" } } catch { Write-DELog -Level WARN -Message "the build watermark BUILD.json could not be read ($($_.Exception.Message)); this copy is reported as build 'dev', which a build-bound licence will refuse" } }
+    try { if (Test-Path -LiteralPath $f) { $b = Get-Content -LiteralPath $f -Raw -Encoding UTF8 | ConvertFrom-Json; return [pscustomobject]@{ buildId = "$($b.buildId)"; builtAt = "$($b.builtAt)"; issuedTo = "$($b.issuedTo)"; channel = "$($b.channel)" } } } catch { Write-DELog -Level WARN -Message "the build watermark BUILD.json could not be read ($($_.Exception.Message)); this copy is reported as build 'dev', which a build-bound licence will refuse" }
     return [pscustomobject]@{ buildId = 'dev'; builtAt = $null; issuedTo = 'development checkout'; channel = 'dev' }
 }
 

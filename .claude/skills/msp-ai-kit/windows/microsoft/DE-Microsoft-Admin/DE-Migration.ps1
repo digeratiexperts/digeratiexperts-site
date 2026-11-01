@@ -848,7 +848,15 @@ function Get-DEMailClientInventory {
             }
             if ($t.current) {
                 if (Get-Command -Name 'cmdkey.exe' -ErrorAction SilentlyContinue) {
-                    foreach ($l in @(& cmdkey.exe /list 2>$null)) { if ("$l" -match '^\s*Target:\s*(.+)$' -and $Matches[1] -match $Pattern) { $found.Add([pscustomobject]@{ account = $t.name; where = 'Windows Credential Manager'; what = $Matches[1].Trim(); fix = "remove it: cmdkey /delete:`"$($Matches[1].Trim() -replace '^(LegacyGeneric|Domain):target=', '')`"" }) } }
+                    foreach ($l in @(& cmdkey.exe /list 2>$null)) {
+                        if ("$l" -match '^\s*Target:\s*(.+)$') {
+                            # the target is captured before the pattern match on purpose: a second -match in the
+                            # same condition rebinds $Matches, and reading $Matches[1] after it is $null whenever
+                            # $Pattern has no capture group - which threw on every PC holding a saved credential
+                            $credTarget = $Matches[1]
+                            if ($credTarget -match $Pattern) { $found.Add([pscustomobject]@{ account = $t.name; where = 'Windows Credential Manager'; what = $credTarget.Trim(); fix = "remove it: cmdkey /delete:`"$($credTarget.Trim() -replace '^(LegacyGeneric|Domain):target=', '')`"" }) }
+                        }
+                    }
                 }
             }
             else { $notChecked.Add("Credential Manager for $($t.name) (encrypted for that account: sign in as $($t.name) and run the scan without -AllProfiles)") }
