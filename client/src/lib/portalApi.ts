@@ -54,7 +54,7 @@ export function redirectToPortalLogin(returnTo?: string) {
   window.location.href = `${PORTAL_LOGIN}?${qs.toString()}`;
 }
 
-export async function portalFetch(url: string, options: RequestInit = {}) {
+export async function portalFetch(url: string, options: RequestInit = {}, notifySessionExpiry = true) {
   const headers = portalAuthHeaders(options.headers);
 
   if (options.body && typeof options.body === "string" && !headers["Content-Type"]) {
@@ -67,7 +67,7 @@ export async function portalFetch(url: string, options: RequestInit = {}) {
     credentials: "include",
   });
 
-  if (response.status === 401 && typeof window !== "undefined") {
+  if (response.status === 401 && notifySessionExpiry && typeof window !== "undefined") {
     // A background query must never hard-navigate away from a form or ticket
     // draft. The portal shell can present a re-auth prompt and explicitly call
     // redirectToPortalLogin after it has preserved the user's work.
@@ -79,8 +79,8 @@ export async function portalFetch(url: string, options: RequestInit = {}) {
   return response;
 }
 
-export async function portalGet<T>(url: string): Promise<T> {
-  const response = await portalFetch(url);
+export async function portalGet<T>(url: string, { notifySessionExpiry = true }: { notifySessionExpiry?: boolean } = {}): Promise<T> {
+  const response = await portalFetch(url, {}, notifySessionExpiry);
 
   if (!response.ok) {
     const text = await response.text();

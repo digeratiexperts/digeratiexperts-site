@@ -47,14 +47,20 @@ function listenForSessionChanges() {
     }
     if (event.key === "portalUserId" && cached && event.newValue === cached.id) return;
     if (event.key === null || ["portalUser", "portalUserId", "impersonatingCompany"].includes(event.key)) {
-      resetPortalSession();
+      // The incoming shared snapshot belongs to the other tab. Invalidating
+      // this document must not delete it and reset that tab in return.
+      invalidatePortalSession(false);
     }
   });
 }
 
 function notify() {
   const state = { ready: resolved, user: cached };
-  listeners.forEach((fn) => fn(state));
+  // A UI subscriber cannot prevent other subscribers, cleanup or server logout.
+  // Snapshot the set so subscription changes cannot extend this dispatch.
+  for (const listener of [...listeners]) {
+    try { listener(state); } catch { /* observers do not own session lifecycle */ }
+  }
 }
 
 function persist(user: PortalUserSession) {
@@ -72,7 +78,9 @@ export function ensurePortalSession(): Promise<PortalUserSession | null> {
   const requestEpoch = epoch;
   inflight = (async () => {
     try {
-      const me = await portalGet<{ user: PortalUserSession }>("/api/portal/me");
+      // This checker owns current 401/403 handling below. Background-query
+      // expiry events must not escape an outdated check before its epoch guard.
+      const me = await portalGet<{ user: PortalUserSession }>("/api/portal/me", { notifySessionExpiry: false });
       if (requestEpoch !== epoch) return null;
       if (me?.user && typeof me.user.id === "string" && me.user.id.trim().length > 0) {
         await setVerifiedPortalAppearanceContext(me.user);
@@ -99,17 +107,21 @@ export function ensurePortalSession(): Promise<PortalUserSession | null> {
   return inflight;
 }
 
-/** Forget the cached session (logout, impersonation change). */
-export function resetPortalSession() {
+function invalidatePortalSession(clearSnapshot: boolean) {
   epoch += 1;
   inflight = null;
   resolved = false;
   cached = null;
   // Preserve the cookie/token and selected-company markers for the existing
   // tenant switch flow; only the outgoing user's compatibility snapshot goes.
-  clearPortalUserSnapshot();
+  if (clearSnapshot) clearPortalUserSnapshot();
   clearPortalAppearanceScope();
   notify();
+}
+
+/** Forget the cached session (logout, impersonation change). */
+export function resetPortalSession() {
+  invalidatePortalSession(true);
 }
 
 export function usePortalSession(): SessionState {
@@ -126,7 +138,7 @@ export function usePortalSession(): SessionState {
 
   useEffect(() => {
     if (!state.ready) void ensurePortalSession();
-  }, [state.ready]);
+  }, [state]);
 
   return state;
 }

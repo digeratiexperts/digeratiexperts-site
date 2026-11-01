@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { clearPortalLocalSession, PORTAL_SESSION_RESET_EVENT, redirectToPortalLogin } from "./portalApi";
+import { clearPortalLocalSession, PORTAL_SESSION_RESET_EVENT, portalGet, redirectToPortalLogin } from "./portalApi";
 let values: Map<string, string>;
 let browser: EventTarget & { location: { pathname: string; search: string; href: string } };
 beforeEach(() => {
@@ -10,6 +10,15 @@ beforeEach(() => {
 });
 afterEach(() => vi.unstubAllGlobals());
 describe("owned portal cleanup", () => {
+  it("keeps expiry notifications for ordinary background queries", async () => {
+    const expired = vi.fn();
+    browser.addEventListener("de-portal-session-expired", expired);
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("Unauthorized", { status: 401 })));
+    await expect(portalGet("/api/portal/tickets")).rejects.toThrow("401:");
+    expect(expired).toHaveBeenCalledOnce();
+    expect(browser.location.href).toBe("");
+  });
+
   it("clears owned keys including legacy email and preserves unrelated Store/app data", () => {
     const reset = vi.fn();
     browser.addEventListener(PORTAL_SESSION_RESET_EVENT, reset);

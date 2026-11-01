@@ -28,6 +28,40 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals());
 
 describe("portal session epochs", () => {
+  it("isolates a throwing subscriber from verified state and later subscribers", async () => {
+    const session = await import("./portalSession");
+    const healthy = vi.fn();
+    session.subscribePortalSession(() => { throw new Error("EXAMPLE subscriber failure"); });
+    session.subscribePortalSession(healthy);
+    fetcher.mockResolvedValueOnce(response(userA));
+    await expect(session.ensurePortalSession()).resolves.toEqual(userA);
+    expect(healthy).toHaveBeenLastCalledWith({ ready: true, user: userA });
+  });
+
+  it("continues reset cleanup and notification after a subscriber throws", async () => {
+    const session = await import("./portalSession");
+    const healthy = vi.fn();
+    session.subscribePortalSession(() => { throw new Error("EXAMPLE subscriber failure"); });
+    session.subscribePortalSession(healthy);
+    values.set("userEmail", "EXAMPLE legacy email");
+    expect(() => session.resetPortalSession()).not.toThrow();
+    expect(values.has("userEmail")).toBe(false);
+    expect(healthy).toHaveBeenLastCalledWith({ ready: false, user: null });
+  });
+
+  it("still sends server logout and navigates when a subscriber throws", async () => {
+    const session = await import("./portalSession");
+    session.subscribePortalSession(() => { throw new Error("EXAMPLE subscriber failure"); });
+    values.set("portalToken", "EXAMPLE legacy token");
+    values.set("impersonatingCompany", "EXAMPLE selected company");
+    fetcher.mockResolvedValueOnce(new Response("{}", { status: 200 }));
+    await expect(session.signOutOfPortal()).resolves.toBeUndefined();
+    expect(fetcher).toHaveBeenCalledWith("/api/portal/logout", { method: "POST", credentials: "include" });
+    expect(values.has("portalToken")).toBe(false);
+    expect(values.has("impersonatingCompany")).toBe(false);
+    expect(browser.location.href).toBe("/portal/login");
+  });
+
   it("deduplicates the document's verified check and preserves legacy page readers", async () => {
     const session = await import("./portalSession");
     const { readPortalUser } = await import("@/lib/portalRoles");
@@ -61,6 +95,8 @@ describe("portal session epochs", () => {
 
   it("does not let an old unauthorized response redirect the new account", async () => {
     const session = await import("./portalSession");
+    const expired = vi.fn();
+    browser.addEventListener("de-portal-session-expired", expired);
     const old = deferred<Response>();
     fetcher.mockReturnValueOnce(old.promise).mockResolvedValueOnce(response(userB));
     const a = session.ensurePortalSession();
@@ -70,6 +106,19 @@ describe("portal session epochs", () => {
     await a;
     expect(browser.location.href).toBe("");
     expect(JSON.parse(values.get("portalUser")!)).toEqual(userB);
+    expect(expired).not.toHaveBeenCalled();
+  });
+
+  it.each([401, 403])("still redirects a current %i rejection and clears the outgoing state", async (status) => {
+    const session = await import("./portalSession");
+    const expired = vi.fn();
+    browser.addEventListener("de-portal-session-expired", expired);
+    values.set("userEmail", "EXAMPLE outgoing email");
+    fetcher.mockResolvedValueOnce(new Response("Unauthorized", { status }));
+    await expect(session.ensurePortalSession()).resolves.toBeNull();
+    expect(browser.location.href).toContain("/portal/login?");
+    expect(values.has("userEmail")).toBe(false);
+    expect(expired).not.toHaveBeenCalled();
   });
 
   it("invalidates on tenant/auth change events and ignores unrelated storage", async () => {
@@ -100,9 +149,10 @@ describe("portal session epochs", () => {
     expect(notify).not.toHaveBeenCalled();
     await expect(session.ensurePortalSession()).resolves.toEqual(userA);
     expect(fetcher).toHaveBeenCalledTimes(1);
+    values.set("portalUser", JSON.stringify(userB));
     browser.dispatchEvent(Object.assign(new Event("storage"), { key: "portalUser", newValue: JSON.stringify(userB) }));
     expect(notify).toHaveBeenLastCalledWith({ ready: false, user: null });
-    expect(values.has("portalUser")).toBe(false);
+    expect(JSON.parse(values.get("portalUser")!)).toEqual(userB);
   });
 
   it("purges outgoing snapshots on reset but preserves tenant-switch markers and other app data", async () => {
