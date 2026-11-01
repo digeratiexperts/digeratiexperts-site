@@ -109,7 +109,7 @@ function Get-DEPackageFile {
             } else { return @{ path = $path; trust = [pscustomobject]@{ Ok = $false; Reasons = @('not downloaded (planned)'); Sha256 = ''; Overridden = $false }; planned = $true } }
         }
     } else { throw "unknown source type '$type'" }
-    $trust = Test-DEPackageTrust -Path $path -Sha256 (Get-DEPkgProp $src 'sha256') -Publisher (Get-DEPkgProp $src 'publisher') -AllowUnverified:$AllowUnverified
+    $trust = Test-DEPackageTrust -Path $path -Sha256 (Get-DEPkgProp $src 'sha256') -Publisher (Get-DEPkgProp $src 'publisher') -VendorSigns:([bool](Get-DEPkgProp $src 'vendorSigns')) -AllowUnverified:$AllowUnverified
     return @{ path = $path; trust = $trust }
 }
 
