@@ -52,7 +52,8 @@ foreach ($i in $parsed) { $issues += ,$i }
 Write-Host ('fetched ' + $issues.Count + ' issues')
 
 $rows = foreach ($i in $issues) {
-    if ($i.title -notmatch '^\[TECHTOOL-(\d{3})\]\s*(.*)$') { continue }
+    # an [ACTIVE] claim prefix is stripped here: a claimed issue must still project (the title is restored at close)
+    if ($i.title -notmatch '^(?:\[ACTIVE\]\s*)?\[TECHTOOL-(\d{3})\]\s*(.*)$') { continue }
     # capture these before any further -match call overwrites $Matches
     $n = [int]$Matches[1]
     $text = $Matches[2].Trim()
@@ -126,6 +127,7 @@ Add-Line '| Document | Move | What it governs |'
 Add-Line '|---|---|---|'
 Add-Line '| [AUDIT-MODE-CHECKLIST.md](AUDIT-MODE-CHECKLIST.md) | 5 | Validating on a real DE Windows laptop in audit mode (roadmap step 3). Feeds move 25. |'
 Add-Line '| [INSTALLER-TRUST-POLICY.md](INSTALLER-TRUST-POLICY.md) | 6 | Trust rules for every installer the tool downloads or runs. Gates all of section C. |'
+Add-Line '| [AGENT-THREAT-MODEL.md](AGENT-THREAT-MODEL.md) | 73 | STRIDE threat model and the per-job-type enable/deny rules for the call-home agent. Gates all of section E. |'
 Add-Line ''
 Add-Line '## Blocked and gated moves'
 Add-Line ''

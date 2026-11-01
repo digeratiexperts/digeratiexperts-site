@@ -231,10 +231,12 @@ function Get-DEJumpCloudAgentState {
     $conf = $null; $systemKey = $null
     if ($script:IsWindowsHost) {
         $confPath = Join-Path $env:ProgramFiles 'JumpCloud\Plugins\Contrib\jcagent.conf'
-        if (Test-Path -LiteralPath $confPath) { try { $conf = Get-Content -LiteralPath $confPath -Raw -Encoding UTF8 | ConvertFrom-Json; $systemKey = $conf.systemKey } catch { } }
+        # the whole probe sits inside the try: Test-Path itself can throw when an ACL denies traversal,
+        # and under ErrorActionPreference=Stop that escapes and breaks discovery's never-throw contract
+        try { if (Test-Path -LiteralPath $confPath) { $conf = Get-Content -LiteralPath $confPath -Raw -Encoding UTF8 | ConvertFrom-Json; $systemKey = $conf.systemKey } } catch { }
     }
     $version = $null
-    if ($script:IsWindowsHost) { $exe = Join-Path $env:ProgramFiles 'JumpCloud\jumpcloud-agent.exe'; if (Test-Path -LiteralPath $exe) { try { $version = (Get-Item -LiteralPath $exe).VersionInfo.ProductVersion } catch { } } }
+    if ($script:IsWindowsHost) { $exe = Join-Path $env:ProgramFiles 'JumpCloud\jumpcloud-agent.exe'; try { if (Test-Path -LiteralPath $exe) { $version = (Get-Item -LiteralPath $exe).VersionInfo.ProductVersion } } catch { } }
     return @{ installed = ($svc.present -or [bool]$version); service = $svc; version = $version; systemKey = $systemKey; registered = [bool]$systemKey }
 }
 function Get-DESecurityAgentState {
@@ -337,9 +339,14 @@ function Get-DEDropboxState {
     $running = $false; $installed = $false; $folder = $null
     if ($script:IsWindowsHost) {
         $running = [bool](Get-Process -Name 'Dropbox' -ErrorAction SilentlyContinue)
-        $installed = (Test-Path -LiteralPath (Join-Path $env:LOCALAPPDATA 'Dropbox\Client\Dropbox.exe')) -or (Test-Path -LiteralPath (Join-Path $env:ProgramFiles 'Dropbox\Client\Dropbox.exe')) -or (Test-Path -LiteralPath (Join-Path ${env:ProgramFiles(x86)} 'Dropbox\Client\Dropbox.exe'))
+        # a bare Test-Path can throw on a denied path; keep the probe inside a try so discovery still
+        # returns its documented shape instead of escaping
+        $installed = $false
+        try {
+            $installed = (Test-Path -LiteralPath (Join-Path $env:LOCALAPPDATA 'Dropbox\Client\Dropbox.exe')) -or (Test-Path -LiteralPath (Join-Path $env:ProgramFiles 'Dropbox\Client\Dropbox.exe')) -or (Test-Path -LiteralPath (Join-Path ${env:ProgramFiles(x86)} 'Dropbox\Client\Dropbox.exe'))
+        } catch { }
         $info = Join-Path $env:LOCALAPPDATA 'Dropbox\info.json'
-        if (Test-Path -LiteralPath $info) { try { $j = Get-Content -LiteralPath $info -Raw -Encoding UTF8 | ConvertFrom-Json; foreach ($p in $j.PSObject.Properties) { $folder = $p.Value.path } } catch { } }
+        try { if (Test-Path -LiteralPath $info) { $j = Get-Content -LiteralPath $info -Raw -Encoding UTF8 | ConvertFrom-Json; foreach ($p in $j.PSObject.Properties) { $folder = $p.Value.path } } } catch { }
     }
     return @{ installed = $installed; running = $running; folder = $folder }
 }

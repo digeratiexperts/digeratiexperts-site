@@ -821,7 +821,7 @@ function Get-DELockScreenState {
     <# What the lock screen is set to, per layer: image, policy, and Spotlight for every profile. ok only when all hold. #>
     $img = Join-Path $env:ProgramData 'DE\Branding\lockscreen.png'
     $want = "$(Get-DEState -Path 'lockscreen.sha256')"
-    $have = $(if (Test-Path -LiteralPath $img) { try { Get-DEFileSha256 -Path $img } catch { $null } } else { $null })
+    $have = $(try { if (Test-Path -LiteralPath $img) { Get-DEFileSha256 -Path $img } else { $null } } catch { $null })
     $edition = Get-DEWindowsEdition
     $isHome = ($edition -match '^Core')
     $csp = ("$(Get-DERegistryValue -Path $script:LockCsp -Name 'LockScreenImagePath')" -ieq $img) -and ("$(Get-DERegistryValue -Path $script:LockCsp -Name 'LockScreenImageStatus')" -eq '1')
