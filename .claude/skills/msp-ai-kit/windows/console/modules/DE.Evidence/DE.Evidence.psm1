@@ -384,6 +384,103 @@ function Export-DEEvidenceBundle {
     return [pscustomobject]@{ folder = $OutDir; zip = $zip; sha256 = $bundleHash; record = $record; gaps = @($gaps).Count }
 }
 
+function Get-DERetentionPolicy {
+    <#
+        Move 93. The retention periods DE set (Joe, threat model D6, issue #727):
+
+            raw device evidence            13 months
+            audit logs and compliance      6 years
+
+        Three classes, because the files in one evidence bundle do not all expire together. The
+        discovery snapshot and evidence records are raw device data and go at 13 months; the reports
+        built from them are the compliance artefact and last 6 years; the run log is the audit trail
+        of who did what, and lasts with the reports.
+
+        Deliberately a table rather than scattered date arithmetic, so the periods can be read and
+        argued with in one place - the same reason as Get-DEEvidenceFieldClasses.
+    #>
+    return [ordered]@{
+        raw      = @{ months = 13; label = 'raw device evidence'; files = @('evidence.json', 'snapshot.json', 'asset.json', 'gaps.json', 'console.log', 'manifest.sha256') }
+        report   = @{ months = 72; label = 'compliance report';  files = @('report-internal.html', 'report-client.html', 'report-internal.pdf', 'report-client.pdf') }
+        auditlog = @{ months = 72; label = 'audit log';          files = @('techconsole-*.log') }
+    }
+}
+
+function Get-DERetentionClass {
+    <# The retention class of one file name: raw | report | auditlog | unknown.
+       An unknown name is 'unknown' and is NEVER deleted - same reasoning as the evidence field
+       classification default: a mistake here destroys data, so the safe direction is to keep it and
+       let someone add the name to the table. #>
+    param([Parameter(Mandatory = $true)][AllowEmptyString()][string]$Name)
+    if (-not "$Name".Trim()) { return 'unknown' }
+    $leaf = Split-Path -Leaf "$Name"
+    foreach ($k in @('raw', 'report', 'auditlog')) {
+        foreach ($pat in (Get-DERetentionPolicy)[$k].files) { if ($leaf -like $pat) { return $k } }
+    }
+    return 'unknown'
+}
+
+function Get-DERetentionCutoff {
+    param([Parameter(Mandatory = $true)][ValidateSet('raw', 'report', 'auditlog')][string]$Class, [datetime]$Now = (Get-Date))
+    return $Now.AddMonths(-1 * (Get-DERetentionPolicy)[$Class].months)
+}
+
+function Invoke-DERetentionSweep {
+    <#
+        Move 93: apply the retention periods to local evidence. Deletes each file once it is past its
+        class's age, and reports what went - counts and names, never contents.
+
+        -WhatIf lists what would go without deleting. A file whose class is unknown is kept and
+        reported as kept, so the sweep never silently destroys something nobody classified.
+
+        Returns @{ scanned; deleted; kept; bytes; items } where items carries one row per file acted
+        on, for the evidence record.
+    #>
+    [CmdletBinding(SupportsShouldProcess = $true)]
+    param([datetime]$Now = (Get-Date))
+    $de = Get-DEConsole
+    $roots = @(
+        @{ path = $de.Dirs.Evidence; recurse = $true },
+        @{ path = $de.Dirs.Logs; recurse = $true }
+    )
+    $deleted = 0; $kept = 0; $bytes = 0L; $items = @(); $scanned = 0
+    foreach ($r in $roots) {
+        if (-not $r.path -or -not (Test-Path -LiteralPath $r.path)) { continue }
+        foreach ($f in @(Get-ChildItem -LiteralPath $r.path -Recurse:($r.recurse) -File -ErrorAction SilentlyContinue)) {
+            $scanned++
+            $class = Get-DERetentionClass -Name $f.Name
+            if ($class -eq 'unknown') {
+                $kept++
+                $items += [pscustomobject]@{ file = $f.FullName; class = 'unknown'; action = 'kept'; reason = 'not classified; add it to Get-DERetentionPolicy if it should expire' }
+                continue
+            }
+            $cutoff = Get-DERetentionCutoff -Class $class -Now $Now
+            if ($f.LastWriteTime -ge $cutoff) {
+                $kept++
+                $items += [pscustomobject]@{ file = $f.FullName; class = $class; action = 'kept'; reason = "inside the $((Get-DERetentionPolicy)[$class].months)-month window" }
+                continue
+            }
+            $why = "$((Get-DERetentionPolicy)[$class].label) is $([int][math]::Round(($Now - $f.LastWriteTime).TotalDays)) days old, past the $((Get-DERetentionPolicy)[$class].months)-month retention"
+            if ($PSCmdlet.ShouldProcess($f.FullName, "delete ($why)")) {
+                try {
+                    $len = $f.Length
+                    Remove-Item -LiteralPath $f.FullName -Force -ErrorAction Stop
+                    $deleted++; $bytes += $len
+                    $items += [pscustomobject]@{ file = $f.FullName; class = $class; action = 'deleted'; reason = $why }
+                } catch {
+                    $items += [pscustomobject]@{ file = $f.FullName; class = $class; action = 'failed'; reason = $_.Exception.Message }
+                }
+            } else {
+                $items += [pscustomobject]@{ file = $f.FullName; class = $class; action = 'would delete'; reason = $why }
+            }
+        }
+    }
+    if ($deleted -gt 0 -or (@($items | Where-Object { $_.action -eq 'would delete' }).Count -gt 0)) {
+        Write-DELog -Level INFO -Message ("retention sweep: {0} deleted ({1} bytes), {2} kept, {3} scanned" -f $deleted, $bytes, $kept, $scanned)
+    }
+    return [pscustomobject]@{ scanned = $scanned; deleted = $deleted; kept = $kept; bytes = $bytes; items = $items }
+}
+
 function Convert-DEHtmlToPdf {
     <# Prints an HTML report to PDF with headless Edge (or Chrome). Returns the PDF path, or $null when no browser is available. Never throws. #>
     param([Parameter(Mandatory = $true)][string]$HtmlPath, [Parameter(Mandatory = $true)][string]$PdfPath, [int]$TimeoutSeconds = 60)
@@ -666,4 +763,4 @@ function Get-DEHubConnectionChecklist {
     return $items
 }
 
-Export-ModuleMember -Function Convert-DEHtmlToPdf, Get-DEReadiness, Get-DEGapReport, Get-DEEvidenceFieldClasses, Get-DEEvidenceFieldClass, Protect-DEPathText, Remove-DEPersonalFields, New-DEAssetRecord, ConvertTo-DEHtmlReport, Export-DEEvidenceBundle, New-DEHubPayload, Send-DEHubPayload, Send-DEHubWarranty, Format-DEHubSendStatus, Send-DEHubMigrationRecord, Test-DEHubReachable, Get-DEHubConnectionChecklist
+Export-ModuleMember -Function Convert-DEHtmlToPdf, Get-DEReadiness, Get-DEGapReport, Get-DEEvidenceFieldClasses, Get-DEEvidenceFieldClass, Protect-DEPathText, Remove-DEPersonalFields, Get-DERetentionPolicy, Get-DERetentionClass, Get-DERetentionCutoff, Invoke-DERetentionSweep, New-DEAssetRecord, ConvertTo-DEHtmlReport, Export-DEEvidenceBundle, New-DEHubPayload, Send-DEHubPayload, Send-DEHubWarranty, Format-DEHubSendStatus, Send-DEHubMigrationRecord, Test-DEHubReachable, Get-DEHubConnectionChecklist
