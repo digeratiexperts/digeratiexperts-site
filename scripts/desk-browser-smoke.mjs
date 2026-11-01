@@ -356,6 +356,11 @@ for (const viewport of [
           await page.waitForFunction(() => document.activeElement?.matches('[data-testid="button-open-asap-widget"]'), null, { timeout: 5000 });
           return (await focusInfo(page)).isLauncher;
         };
+        const readConsent = () => page.evaluate(() => [
+          localStorage.getItem("de_cookie_consent_v2"),
+          localStorage.getItem("de_cookie_consent"),
+        ]);
+        const consentBefore = await readConsent();
         await open(true);
         const fit = await panel.evaluate(el => {
           const r = el.getBoundingClientRect();
@@ -448,8 +453,8 @@ for (const viewport of [
         check("chooser", `${where}: outside controls retain their own focus`, await page.evaluate(() => document.activeElement?.id === "chooser-outside-focus-target"));
         await page.locator("#chooser-outside-focus-target").evaluate(el => el.remove());
         await settleConsent();
-        const stored = await page.evaluate(() => !!localStorage.getItem("de_cookie_consent_v2") || !!localStorage.getItem("de_cookie_consent"));
-        check("chooser", `${where}: chooser interactions preserve the chosen consent state`, stored === !consentPresent);
+        const consentAfter = await readConsent();
+        check("chooser", `${where}: chooser interactions preserve the chosen consent state`, JSON.stringify(consentAfter) === JSON.stringify(consentBefore) && consentAfter.some(Boolean) === !consentPresent);
         check("chooser", `${where}: no page errors`, errors.length === 0, errors.slice(0, 2).join(" | "));
       } catch (error) {
         check("chooser", `${where}: interaction sequence completes`, false, error.message);
