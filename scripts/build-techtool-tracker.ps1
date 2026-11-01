@@ -52,7 +52,8 @@ foreach ($i in $parsed) { $issues += ,$i }
 Write-Host ('fetched ' + $issues.Count + ' issues')
 
 $rows = foreach ($i in $issues) {
-    if ($i.title -notmatch '^\[TECHTOOL-(\d{3})\]\s*(.*)$') { continue }
+    # an [ACTIVE] claim prefix is stripped here: a claimed issue must still project (the title is restored at close)
+    if ($i.title -notmatch '^(?:\[ACTIVE\]\s*)?\[TECHTOOL-(\d{3})\]\s*(.*)$') { continue }
     # capture these before any further -match call overwrites $Matches
     $n = [int]$Matches[1]
     $text = $Matches[2].Trim()
