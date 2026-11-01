@@ -88,6 +88,42 @@ function Get-DEGapReport {
     return @($rows | Sort-Object phase, id)
 }
 
+function Get-DEEvidenceFieldClasses {
+    <#
+        Move 91: classify every field a device record can carry, so nothing is withheld by guesswork.
+        Four classes:
+
+          device      identifies the device (serial, model, asset tag). The Hub needs it: it is how
+                      the same machine is named across the tool, the boot rescue and the Hub.
+          personal    identifies a person (user names, email). The Hub manages devices, not people.
+          path        a filesystem path, which leaks a user name through its segments
+                      (C:\Users\<name>\...). The leaf name is often still useful; the path is not.
+          operational anything else - state, timestamps, results. Nothing to withhold.
+
+        Driven by a table rather than scattered -match calls so the classification can be read,
+        reviewed and tested as one thing. Used by Remove-DEPersonalFields at the Hub boundary
+        (move 92).
+    #>
+    return [ordered]@{
+        device      = @('serial', 'model', 'assetTag', 'hostname', 'manufacturer', 'deviceKey', 'role', 'os', 'bios', 'cpu', 'ramGB')
+        personal    = @('assignedUser', 'localUserName', 'jumpcloudUser', 'email', 'endUser', 'endUserEmail', 'technician', 'assigned', 'username', 'userName', 'user', 'samAccountName', 'upn', 'displayName', 'fullName')
+        path        = @('profilePath', 'profileDir', 'homeDir', 'documentsPath', 'folder', 'localAppData', 'appData', 'userProfile', 'path', 'localPath', 'home')
+        operational = @('schema', 'source', 'sentAt', 'lifecycle', 'client', 'site', 'readiness', 'areas', 'controls', 'exceptions', 'evidence', 'warranty', 'onboarding', 'session', 'started', 'completed', 'mode', 'buildId', 'issuedTo', 'licenseId', 'licenseState', 'integrity', 'status', 'result', 'verifiedAt', 'timestamp', 'step', 'module')
+    }
+}
+
+function Get-DEEvidenceFieldClass {
+    <# The class of one field name: device | personal | path | operational. Case-insensitive on the
+       name. An unknown field is operational - the safe default, because it withholds nothing and so
+       cannot silently hide something that should have been redacted. #>
+    param([Parameter(Mandatory = $true)][AllowEmptyString()][string]$Name)
+    $table = Get-DEEvidenceFieldClasses
+    foreach ($k in @('device', 'personal', 'path', 'operational')) {
+        foreach ($n in $table[$k]) { if ($n -ieq $Name) { return $k } }
+    }
+    return 'operational'
+}
+
 function New-DEAssetRecord {
     <# The documentation handoff: hardware, user, warranty, OS, encryption, management, agents, apps, network/site, readiness, technician, timestamps. #>
     param([Parameter(Mandatory = $true)]$Snapshot, $ClientProfile)
@@ -541,4 +577,4 @@ function Get-DEHubConnectionChecklist {
     return $items
 }
 
-Export-ModuleMember -Function Convert-DEHtmlToPdf, Get-DEReadiness, Get-DEGapReport, New-DEAssetRecord, ConvertTo-DEHtmlReport, Export-DEEvidenceBundle, New-DEHubPayload, Send-DEHubPayload, Send-DEHubWarranty, Format-DEHubSendStatus, Send-DEHubMigrationRecord, Test-DEHubReachable, Get-DEHubConnectionChecklist
+Export-ModuleMember -Function Convert-DEHtmlToPdf, Get-DEReadiness, Get-DEGapReport, Get-DEEvidenceFieldClasses, Get-DEEvidenceFieldClass, New-DEAssetRecord, ConvertTo-DEHtmlReport, Export-DEEvidenceBundle, New-DEHubPayload, Send-DEHubPayload, Send-DEHubWarranty, Format-DEHubSendStatus, Send-DEHubMigrationRecord, Test-DEHubReachable, Get-DEHubConnectionChecklist
