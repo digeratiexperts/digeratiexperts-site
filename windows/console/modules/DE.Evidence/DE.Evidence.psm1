@@ -481,6 +481,48 @@ function Invoke-DERetentionSweep {
     return [pscustomobject]@{ scanned = $scanned; deleted = $deleted; kept = $kept; bytes = $bytes; items = $items }
 }
 
+function Export-DEDiagnosticBundle {
+    <# The support bundle for DE engineering (move 97): what this copy is, its gates and gaps, and the
+       redacted console log. No secrets ever leave in it - everything is written through Remove-DESecretKeys
+       and Protect-DEText, and a final sweep compares every file against the registered secret values
+       (typed, JSON-escaped and HTML-encoded). A bundle that still contains one is deleted and withheld,
+       exactly like the evidence bundle (moves 14/15). #>
+    param([string]$OutDir)
+    $de = Get-DEConsole
+    $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
+    if (-not $OutDir) { $OutDir = Join-Path $de.Dirs.Evidence ("diagnostic-{0}-{1}" -f $env:COMPUTERNAME, $stamp) }
+    New-Item -ItemType Directory -Path $OutDir -Force -WhatIf:$false | Out-Null
+    $gaps = Get-DEGapReport
+    $diag = [ordered]@{
+        generated = (Get-Date).ToString('o'); consoleVersion = $de.ConsoleVersion
+        build = $(try { Get-DEBuildInfo } catch { $null })
+        license = $(try { $ls = Get-DELicenseStatus; @{ id = $ls.id; state = $ls.state; technician = $ls.technician } } catch { $null })
+        integrity = $(try { (Test-DEConsoleIntegrity).status } catch { 'unknown' })
+        mode = $de.Mode; dryRun = [bool]$de.DryRun
+        context = (Get-DEContext)
+        gates = @(Get-DEGateBoard)
+        gapCount = @($gaps).Count
+    }
+    # both layers: secret-named keys are dropped, registered secret values are redacted in the text
+    $json = Protect-DEText ((Remove-DESecretKeys -Object $diag) | ConvertTo-Json -Depth 6)
+    Set-Content -LiteralPath (Join-Path $OutDir 'diagnostic.json') -Value $json -Encoding UTF8 -WhatIf:$false
+    Set-Content -LiteralPath (Join-Path $OutDir 'gaps.txt') -Value (@($gaps | ForEach-Object { Protect-DEText ("{0} {1} | {2} | fix: {3}" -f $_.result, $_.id, $_.detail, $_.fix) })) -Encoding UTF8 -WhatIf:$false
+    if ($de.LogFile -and (Test-Path -LiteralPath $de.LogFile)) { (Get-Content -LiteralPath $de.LogFile | ForEach-Object { Protect-DEText $_ }) | Set-Content -LiteralPath (Join-Path $OutDir 'console.log') -Encoding UTF8 -WhatIf:$false }
+    $manifest = @(Get-ChildItem -LiteralPath $OutDir -File | Where-Object { $_ -and $_.Name -ne 'manifest.sha256' } | Sort-Object Name | ForEach-Object { "{0}  {1}" -f (Get-DEBundleFileHash -Path $_.FullName), $_.Name })
+    Set-Content -LiteralPath (Join-Path $OutDir 'manifest.sha256') -Value $manifest -Encoding ASCII -WhatIf:$false
+    $zip = "$OutDir.zip"
+    if (Test-Path -LiteralPath $zip) { Remove-Item -LiteralPath $zip -Force -WhatIf:$false }
+    Compress-Archive -Path (Join-Path $OutDir '*') -DestinationPath $zip -WhatIf:$false
+    $leak = $false
+    foreach ($f in Get-ChildItem -LiteralPath $OutDir -File) {
+        $txt = Get-Content -LiteralPath $f.FullName -Raw -Encoding UTF8 -ErrorAction SilentlyContinue
+        foreach ($v in $de.Redactions) { if ($v -and $txt) { foreach ($form in @($v, ($v | ConvertTo-Json -Compress).Trim('"'), [System.Net.WebUtility]::HtmlEncode($v))) { if ($form -and $txt.Contains($form)) { $leak = $true } } } }
+    }
+    if ($leak) { Remove-Item -LiteralPath $zip -Force -WhatIf:$false; Remove-Item -LiteralPath $OutDir -Recurse -Force -ErrorAction SilentlyContinue -WhatIf:$false; throw 'diagnostic bundle contained a registered secret and was withheld (zip and folder deleted); report this as a console bug' }
+    Add-DEEvidence -Step 'diagnostic.bundle' -Module 'evidence' -Before 'no bundle' -ActionTaken 'diagnostic bundle written' -Result 'INFO' -Verification $zip -Artifacts @($zip) | Out-Null
+    return [pscustomobject]@{ folder = $OutDir; zip = $zip; gaps = @($gaps).Count }
+}
+
 function Convert-DEHtmlToPdf {
     <# Prints an HTML report to PDF with headless Edge (or Chrome). Returns the PDF path, or $null when no browser is available. Never throws. #>
     param([Parameter(Mandatory = $true)][string]$HtmlPath, [Parameter(Mandatory = $true)][string]$PdfPath, [int]$TimeoutSeconds = 60)
@@ -763,4 +805,4 @@ function Get-DEHubConnectionChecklist {
     return $items
 }
 
-Export-ModuleMember -Function Convert-DEHtmlToPdf, Get-DEReadiness, Get-DEGapReport, Get-DEEvidenceFieldClasses, Get-DEEvidenceFieldClass, Protect-DEPathText, Remove-DEPersonalFields, Get-DERetentionPolicy, Get-DERetentionClass, Get-DERetentionCutoff, Invoke-DERetentionSweep, New-DEAssetRecord, ConvertTo-DEHtmlReport, Export-DEEvidenceBundle, New-DEHubPayload, Send-DEHubPayload, Send-DEHubWarranty, Format-DEHubSendStatus, Send-DEHubMigrationRecord, Test-DEHubReachable, Get-DEHubConnectionChecklist
+Export-ModuleMember -Function Convert-DEHtmlToPdf, Get-DEReadiness, Get-DEGapReport, Get-DEEvidenceFieldClasses, Get-DEEvidenceFieldClass, Protect-DEPathText, Remove-DEPersonalFields, Get-DERetentionPolicy, Get-DERetentionClass, Get-DERetentionCutoff, Invoke-DERetentionSweep, New-DEAssetRecord, ConvertTo-DEHtmlReport, Export-DEEvidenceBundle, Export-DEDiagnosticBundle, New-DEHubPayload, Send-DEHubPayload, Send-DEHubWarranty, Format-DEHubSendStatus, Send-DEHubMigrationRecord, Test-DEHubReachable, Get-DEHubConnectionChecklist
