@@ -1,0 +1,17 @@
+{
+  "_about": "BAA status per vendor, for the PHI-restricted mode (issue #890). On a PHI-restricted device nothing is sent to a vendor whose status here is not 'confirmed'. A blank, missing or unrecognised row is BLOCKED, not allowed - that is the whole point of the rule. Confirmations are Joe's to record; nothing else may write this file. See windows/VENDOR-BAA-STATUS.md for what each vendor receives.",
+  "_values": "confirmed | unconfirmed. Anything else reads as unconfirmed.",
+  "_updated": "2026-11-01",
+  "Dell": "unconfirmed",
+  "Lenovo": "unconfirmed",
+  "HP": "unconfirmed",
+  "JumpCloud": "unconfirmed",
+  "Guardz": "unconfirmed",
+  "SentinelOne": "unconfirmed",
+  "Blackpoint": "unconfirmed",
+  "MSP360": "unconfirmed",
+  "Microsoft": "unconfirmed",
+  "Wazuh": "unconfirmed",
+  "Timus": "unconfirmed",
+  "Intelligence Hub": "confirmed"
+}

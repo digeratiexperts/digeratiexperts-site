@@ -68,7 +68,7 @@ function Get-DECommunityToolPath {
             $dir = Split-Path -Parent $out; if (-not (Test-Path -LiteralPath $dir)) { New-Item -ItemType Directory -Path $dir -Force -WhatIf:$false | Out-Null }
             $uri = (Get-DECommunityCatalog).rawBase -replace '\{repo\}', $t.repo -replace '\{commit\}', $t.commit -replace '\{path\}', $f.path
             Invoke-DECommunityDownload -Uri $uri -OutFile $out
-            if (-not (Test-DEFileHash -Path $out -Sha256 $f.sha256)) { throw "$($t.name): $($f.path) does not match the reviewed sha256 (pinned commit $($t.commit.Substring(0, 12))); refusing the tool" }
+            if (-not (Test-DEFileHash -Path $out -Sha256 $f.sha256)) { $have = Get-DEFileSha256 -Path $out; throw "$($t.name): $($f.path) does not match the reviewed sha256 (have $have, want $($f.sha256)); refusing the tool (pinned commit $($t.commit.Substring(0, 12)))" }
         }
         if (Test-Path -LiteralPath $dest) { Remove-Item -LiteralPath $dest -Recurse -Force -WhatIf:$false }
         Move-Item -LiteralPath $tmp -Destination $dest -WhatIf:$false
@@ -141,7 +141,7 @@ function Get-DECommunityScriptPath {
     param([Parameter(Mandatory = $true)][string]$Key, [switch]$Offline)
     $s = Get-DECommunityScript -Key $Key
     # a script that needs its whole repo folder (Win11Debloat): the folder is pinned file by file and verified as one
-    if ($s.bundle) { $root = Get-DECommunityToolPath -Id $s.tool -Offline:$Offline; $f = Join-Path $root ($s.path -replace '/', [IO.Path]::DirectorySeparatorChar); if (-not (Test-DEFileHash -Path $f -Sha256 $s.sha256)) { throw "$Key does not match the reviewed sha256" }; return $f }
+    if ($s.bundle) { $root = Get-DECommunityToolPath -Id $s.tool -Offline:$Offline; $f = Join-Path $root ($s.path -replace '/', [IO.Path]::DirectorySeparatorChar); if (-not (Test-DEFileHash -Path $f -Sha256 $s.sha256)) { $have = Get-DEFileSha256 -Path $f; throw "$Key does not match the reviewed sha256 (have $have, want $($s.sha256))" }; return $f }
     $rel = $s.path -replace '/', [IO.Path]::DirectorySeparatorChar
     $staged = Join-Path (Join-Path (Join-Path (Split-Path -Parent (Get-DEConsole).Root) 'community') $s.tool) $rel
     $cache = Join-Path (Join-Path (Join-Path (Join-Path (Get-DEConsole).Dirs.Base 'community') $s.tool) $s.commit) $rel
@@ -152,7 +152,7 @@ function Get-DECommunityScriptPath {
     $uri = (Get-DECommunityCatalog).rawBase -replace '\{repo\}', $s.repo -replace '\{commit\}', $s.commit -replace '\{path\}', ($s.path -replace ' ', '%20')
     try {
         Invoke-DECommunityDownload -Uri $uri -OutFile $tmp
-        if (-not (Test-DEFileHash -Path $tmp -Sha256 $s.sha256)) { throw "$Key does not match the reviewed sha256 (pinned commit $($s.commit.Substring(0, 12))); refusing to run it" }
+        if (-not (Test-DEFileHash -Path $tmp -Sha256 $s.sha256)) { $have = Get-DEFileSha256 -Path $tmp; throw "$Key does not match the reviewed sha256 (have $have, want $($s.sha256)); refusing to run it (pinned commit $($s.commit.Substring(0, 12)))" }
         Move-Item -LiteralPath $tmp -Destination $cache -Force -WhatIf:$false
     } finally { if (Test-Path -LiteralPath $tmp) { Remove-Item -LiteralPath $tmp -Force -WhatIf:$false -ErrorAction SilentlyContinue } }
     return $cache
