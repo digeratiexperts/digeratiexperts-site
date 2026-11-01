@@ -295,6 +295,12 @@ handoffs and warranty. The shared contracts are in `console/contracts/`.
   (`manual`) or could not say (`unknown`), nothing is sent, and the evidence line and status line say why. The
   status line reports both sends. A headless run sends the warranty the same way, right after the device record
   it already sends at the end of every run (same Hub, secret and account number; `-WhatIf` sends nothing).
+- **Warranty cache and endpoint watch.** Warranty lookups are cached in state for `catalog/warranty.json`
+  `cacheDays` (7 days); `-Refresh` bypasses the cache, and a fallback to the maker's check page is never
+  cached. `windows/tests/Invoke-WarrantyEndpointCheck.ps1` probes every vendor endpoint and compares it
+  with `catalog/warranty-endpoints.snapshot.json`, so a moved page or a changed response shape is
+  noticed instead of silently degrading the lookup to `manual` (run it, or `-Update` the snapshot after
+  reviewing a legitimate vendor change).
 - **Account number.** The client profile needs the client's Hub account number, set as
   `"hub": { "accountId": 123 }`. Without it the signed send is refused and the record is saved for
   manual upload.

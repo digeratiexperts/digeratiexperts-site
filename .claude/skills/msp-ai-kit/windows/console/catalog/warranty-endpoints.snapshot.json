@@ -1,0 +1,119 @@
+﻿{
+    "version":  1,
+    "recorded":  "2026-10-31T17:50:58.3300174-07:00",
+    "note":  "Pinned by Invoke-WarrantyEndpointCheck.ps1 -Update. Exact status is informational; the check fails on unreachable, 5xx, a host change, a content-type class change, or a parser marker disappearing.",
+    "endpoints":  [
+                      {
+                          "key":  "dell.checkUrl",
+                          "url":  "https://www.dell.com/support/home/en-us/product-support/servicetag/PF3ABC12/overview",
+                          "host":  "www.dell.com",
+                          "status":  403,
+                          "contentType":  ""
+                      },
+                      {
+                          "key":  "dell.entitlementsUrl",
+                          "url":  "https://apigtwb2c.us.dell.com/PROD/sbil/eapi/v5/asset-entitlements?servicetags=PF3ABC12",
+                          "host":  "apigtwb2c.us.dell.com",
+                          "status":  401,
+                          "contentType":  ""
+                      },
+                      {
+                          "key":  "lenovo.checkUrl",
+                          "url":  "https://pcsupport.lenovo.com/us/en/warrantylookup",
+                          "host":  "pcsupport.lenovo.com",
+                          "status":  200,
+                          "contentType":  "text/html; charset=utf-8"
+                      },
+                      {
+                          "key":  "lenovo.productsUrl",
+                          "url":  "https://pcsupport.lenovo.com/us/en/api/v4/mse/getproducts?productId=PF3ABC12",
+                          "host":  "pcsupport.lenovo.com",
+                          "status":  200,
+                          "contentType":  "application/json; charset=utf-8"
+                      },
+                      {
+                          "key":  "hp.checkUrl",
+                          "url":  "https://support.hp.com/us-en/check-warranty",
+                          "host":  "support.hp.com",
+                          "status":  200,
+                          "contentType":  "text/html"
+                      },
+                      {
+                          "key":  "microsoft.checkUrl",
+                          "url":  "https://mybusinessservice.surface.com/",
+                          "host":  "mybusinessservice.surface.com",
+                          "status":  403,
+                          "contentType":  ""
+                      },
+                      {
+                          "key":  "apple.checkUrl",
+                          "url":  "https://checkcoverage.apple.com/",
+                          "host":  "checkcoverage.apple.com",
+                          "status":  200,
+                          "contentType":  "text/html; charset=utf-8"
+                      },
+                      {
+                          "key":  "acer.checkUrl",
+                          "url":  "https://www.acer.com/us-en/support/warranty",
+                          "host":  "www.acer.com",
+                          "status":  0,
+                          "contentType":  ""
+                      },
+                      {
+                          "key":  "asus.checkUrl",
+                          "url":  "https://www.asus.com/support/warranty-status-inquiry/",
+                          "host":  "www.asus.com",
+                          "status":  200,
+                          "contentType":  "text/html; charset=utf-8"
+                      },
+                      {
+                          "key":  "dynabook.checkUrl",
+                          "url":  "https://support.dynabook.com/",
+                          "host":  "support.dynabook.com",
+                          "status":  200,
+                          "contentType":  "text/html;charset=UTF-8"
+                      },
+                      {
+                          "key":  "samsung.checkUrl",
+                          "url":  "https://www.samsung.com/us/support/warranty/",
+                          "host":  "www.samsung.com",
+                          "status":  200,
+                          "contentType":  "text/html;charset=utf-8"
+                      },
+                      {
+                          "key":  "panasonic.checkUrl",
+                          "url":  "https://na.panasonic.com/us/support",
+                          "host":  "na.panasonic.com",
+                          "status":  200,
+                          "contentType":  "text/html; charset=UTF-8"
+                      },
+                      {
+                          "key":  "framework.checkUrl",
+                          "url":  "https://frame.work/support",
+                          "host":  "frame.work",
+                          "status":  200,
+                          "contentType":  "text/html; charset=utf-8"
+                      },
+                      {
+                          "key":  "msi.checkUrl",
+                          "url":  "https://www.msi.com/support",
+                          "host":  "www.msi.com",
+                          "status":  403,
+                          "contentType":  ""
+                      },
+                      {
+                          "key":  "getac.checkUrl",
+                          "url":  "https://support.getac.com/",
+                          "host":  "support.getac.com",
+                          "status":  200,
+                          "contentType":  "text/html; charset=utf-8"
+                      },
+                      {
+                          "key":  "gigabyte.checkUrl",
+                          "url":  "https://www.gigabyte.com/Support",
+                          "host":  "www.gigabyte.com",
+                          "status":  403,
+                          "contentType":  ""
+                      }
+                  ]
+}
