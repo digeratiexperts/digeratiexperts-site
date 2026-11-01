@@ -133,3 +133,92 @@ Describe 'Fail closed: the licence and the gates refuse rather than allow' {
         }
     }
 }
+
+# Move 17: "Audit every 'policy warn' path for fail-open risk" (#735).
+#
+# The audit found three places where the licence policy could relax itself without anyone noticing:
+# a missing trust\license-policy.json fell back to the permissive default even on a real build, and a
+# malformed policy or keys file threw instead of being read as absent. A release that loses a config
+# file must fail closed, not quietly become permissive.
+#
+# The permissive default is deliberate for a development checkout - License.Tests.ps1 asserts it -
+# so the fix keys on whether the build carries a watermark.
+
+Describe 'Fail closed: a missing or broken policy never relaxes a real build' {
+    BeforeAll {
+        . (Join-Path $PSScriptRoot 'TestHelpers.ps1')
+        $dir = Initialize-TestConsole
+        $global:Pol = @{ Dir = $dir; Empty = (Join-Path $dir 'empty-trust'); Broken = (Join-Path $dir 'broken-trust') }
+        New-Item -ItemType Directory -Path $global:Pol.Empty -Force | Out-Null
+        New-Item -ItemType Directory -Path $global:Pol.Broken -Force | Out-Null
+        Set-Content -LiteralPath (Join-Path $global:Pol.Broken 'license-policy.json') -Value '{ this is not json'
+        Set-Content -LiteralPath (Join-Path $global:Pol.Broken 'license-keys.json') -Value 'not json at all'
+    }
+    AfterAll { Set-DELicensePolicyOverride $null }
+
+    It 'a development checkout with no policy keeps the permissive default' {
+        Set-DELicensePolicyOverride $null
+        Mock -ModuleName DE.License Get-DELicenseRoot { $global:Pol.Empty }
+        Mock -ModuleName DE.License Get-DEBuildInfo { [pscustomobject]@{ buildId = 'dev'; builtAt = $null; issuedTo = 'development checkout'; channel = 'dev' } }
+        (Get-DELicensePolicy).enforce | Should -Be 'warn' -Because 'a dev checkout is meant to run unlicensed'
+    }
+
+    It 'a real build with no policy fails closed instead' {
+        # the fail-open risk this move exists for: a release whose policy file went missing must not
+        # silently become permissive
+        Set-DELicensePolicyOverride $null
+        Mock -ModuleName DE.License Get-DELicenseRoot { $global:Pol.Empty }
+        Mock -ModuleName DE.License Get-DEBuildInfo { [pscustomobject]@{ buildId = 'DE-1.11.0-20261027-abc123'; builtAt = '2026-10-27'; issuedTo = 'test-tech'; channel = 'release' } }
+        (Get-DELicensePolicy).enforce | Should -Be 'required' -Because 'a build with a watermark must never fall back to permissive'
+    }
+
+    It 'a readable policy still wins over the build default' {
+        Set-DELicensePolicyOverride $null
+        Mock -ModuleName DE.License Get-DELicenseRoot { $global:Pol.Broken }
+        Mock -ModuleName DE.License Get-DEBuildInfo { [pscustomobject]@{ buildId = 'DE-1.11.0-20261027-abc123'; builtAt = $null; issuedTo = 'test-tech'; channel = 'release' } }
+        # Broken holds unparseable files, so there is no readable policy and the build default applies
+        (Get-DELicensePolicy).enforce | Should -Be 'required'
+    }
+
+    It 'a malformed policy is read as absent, never as a throw' {
+        Set-DELicensePolicyOverride $null
+        Mock -ModuleName DE.License Get-DELicenseRoot { $global:Pol.Broken }
+        Mock -ModuleName DE.License Get-DEBuildInfo { [pscustomobject]@{ buildId = 'dev'; builtAt = $null; issuedTo = 'development checkout'; channel = 'dev' } }
+        # try/catch, not { ... } | Should -Not -Throw: a scriptblock runs in its own scope, so the
+        # assignment would never escape and the assertion would pass while proving nothing
+        $pol = $null
+        $threw = $false
+        try { $pol = Get-DELicensePolicy } catch { $threw = $true }
+        $threw | Should -Be $false -Because 'malformed policy is read as absent, not as a crash'
+        $pol | Should -Not -BeNullOrEmpty
+        $pol.enforce | Should -Be 'warn'
+    }
+
+    It 'a malformed key file yields no keys instead of throwing' {
+        # the extras a test may have registered are legitimate; what matters is that the broken file
+        # contributes nothing and nothing throws. Compare against the same module with no file at all.
+        Mock -ModuleName DE.License Get-DELicenseRoot { $global:Pol.Empty }
+        $baseline = @(Get-DELicenseTrustedKeys).Count
+        Mock -ModuleName DE.License Get-DELicenseRoot { $global:Pol.Broken }
+        $keys = $null
+        $threw = $false
+        try { $keys = @(Get-DELicenseTrustedKeys) } catch { $threw = $true }
+        $threw | Should -Be $false -Because 'a malformed key file must not crash the licence check'
+        @($keys).Count | Should -Be $baseline -Because 'the broken file must contribute nothing'
+    }
+
+    It 'the fallback is warned about, once, rather than happening silently' {
+        Set-DELicensePolicyOverride $null
+        Mock -ModuleName DE.License Get-DELicenseRoot { $global:Pol.Empty }
+        Mock -ModuleName DE.License Get-DEBuildInfo { [pscustomobject]@{ buildId = 'DE-1.11.0-20261027-abc123'; builtAt = $null; issuedTo = 'test-tech'; channel = 'release' } }
+        $log = (Get-DEConsole).LogFile
+        $before = (Get-Content -LiteralPath $log -Raw)
+        $null = Get-DELicensePolicy
+        $null = Get-DELicensePolicy
+        $after = (Get-Content -LiteralPath $log -Raw)
+        $added = $after.Substring($before.Length)
+        $added | Should -Match 'license-policy.json is missing or unreadable' -Because 'a silent fallback is the thing this move is about'
+        ([regex]::Matches($added, 'license-policy.json is missing or unreadable')).Count | Should -Be 1 -Because 'once, not on every check'
+        $added | Should -Match 'fails closed'
+    }
+}
