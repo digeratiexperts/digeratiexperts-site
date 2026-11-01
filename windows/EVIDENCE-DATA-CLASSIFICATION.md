@@ -18,9 +18,19 @@ retained - refers to the same four answers instead of inventing its own.
 | Class | Meaning | Goes to the Hub? | Examples |
 |---|---|---|---|
 | **device** | Identifies the machine | **Yes** | `serial`, `model`, `assetTag`, `hostname`, `manufacturer`, `deviceKey`, `role`, `os` |
-| **personal** | Identifies a person | **No** | `assignedUser`, `localUserName`, `jumpcloudUser`, `email`, `technician`, `endUserEmail`, `upn`, `displayName` |
+| **personal** | Identifies a person | **No** | `assignedUser`, `localUserName`, `jumpcloudUser`, `email`, `endUserEmail`, `upn`, `displayName` |
 | **path** | A filesystem path, which leaks a user name through its segments | **No** | `profilePath`, `profileDir`, `homeDir`, `documentsPath`, `userProfile`, `localAppData` |
 | **operational** | State, timestamps, results - nothing identifying | Yes | `readiness`, `areas`, `controls`, `exceptions`, `warranty`, `status`, `result` |
+
+### A deliberate exception: the technician name is ours
+
+`technician` and `issuedTo` look personal but classify as **operational**. The build is watermarked
+with who it was issued to, so a leaked copy names its source the first time it runs anywhere with a
+network ([PROTECTING-THE-TOOL.md](PROTECTING-THE-TOOL.md)). Redacting them would break that.
+
+The distinction is *whose* data it is. Section H is about the client's device data - the people who
+use the machine. DE's own accountability record of which technician ran which build is a different
+thing, and it is deliberately sent.
 
 ### Device fields are not optional
 
@@ -57,7 +67,7 @@ mistake hides information.
 
 | Move | Uses the classification to |
 |---|---|
-| **92** | Redact `personal` and `path` values from what goes to the Hub |
+| **92** | Omit `personal` keys and reduce `path` values to their leaf name in what goes to the Hub. **Never** send `[REDACTED]` - the Hub refuses that marker and fails the whole send |
 | 95 | Decide what encryption at rest must protect |
 | 96 | Decide which vendors count as receiving device data |
 
