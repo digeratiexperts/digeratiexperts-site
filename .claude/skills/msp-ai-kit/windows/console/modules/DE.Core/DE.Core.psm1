@@ -805,10 +805,11 @@ function Test-DEPackageTrust {
     <# Applies the catalog trust policy to a file: sha256 must match when given; Authenticode must be valid and match the publisher when given; where the vendor signs (R4) a broken or absent signature is refused exactly like a hash mismatch - never overridable. #>
     param([Parameter(Mandatory = $true)][string]$Path, [string]$Sha256, [string]$Publisher, [switch]$VendorSigns, [switch]$AllowUnverified)
     $reasons = @()
-    if (-not (Test-Path -LiteralPath $Path)) { return [pscustomobject]@{ Ok = $false; Reasons = @('file not found'); Sha256 = ''; Signature = $null } }
+    if (-not (Test-Path -LiteralPath $Path)) { return [pscustomobject]@{ Ok = $false; Reasons = @('file not found'); Sha256 = ''; Signature = $null; HardRefusal = $false } }
     $hash = Get-DEFileSha256 -Path $Path
     $hashMismatch = [bool]($Sha256 -and $hash -ne $Sha256.ToLowerInvariant())
-    if ($hashMismatch) { $reasons += "sha256 mismatch (have $hash)" }
+    # R3's message contract, matching Install-MspAiKit.ps1: both hashes, always
+    if ($hashMismatch) { $reasons += "sha256 mismatch (have $hash, want $($Sha256.ToLowerInvariant()))" }
     $sig = $null
     $sigRefused = $false
     if ($Publisher -or $VendorSigns -or ($Path -match '\.(exe|msi|ps1|dll|msix|appx)$')) {
@@ -819,7 +820,7 @@ function Test-DEPackageTrust {
     # R3/R4: a hash mismatch, or a broken/absent signature where the vendor signs, is a refusal - never an overrideable warning
     $hardRefusal = $hashMismatch -or ($VendorSigns -and $sigRefused)
     $ok = ($reasons.Count -eq 0) -or ($AllowUnverified -and -not $hardRefusal)
-    return [pscustomobject]@{ Ok = $ok; Reasons = $reasons; Sha256 = $hash; Signature = $sig; Overridden = ($AllowUnverified -and $reasons.Count -gt 0 -and -not $hardRefusal) }
+    return [pscustomobject]@{ Ok = $ok; Reasons = $reasons; Sha256 = $hash; Signature = $sig; HardRefusal = $hardRefusal; Overridden = ($AllowUnverified -and $reasons.Count -gt 0 -and -not $hardRefusal) }
 }
 function Invoke-DEJsonPost {
     <# POSTs a scrubbed JSON body. Bearer token comes from -TokenEnv (an environment variable name) or a runtime secret name, never from a file. #>

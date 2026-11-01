@@ -84,4 +84,44 @@ Describe 'Authenticode where the vendor signs (move 43)' {
             ($r.trust.Reasons -join '; ') | Should -Match 'signature'
         }
     }
+
+    Context 'R3: a refused download is deleted and the message names both hashes' {
+        It 'a cached download that mismatches is deleted and the reason carries have and want' {
+            $dir = Join-Path $global:M43.Dir 'r3-cache'
+            New-Item -ItemType Directory -Path $dir -Force | Out-Null
+            $cached = Join-Path $dir 'fake.msi'
+            Set-Content -LiteralPath $cached -Value 'poisoned bytes'
+            $poison = Get-DEFileSha256 -Path $cached
+            $pkg = @{ id = 'r3-url'; name = 'R3 URL'; source = @{ type = 'url'; url = 'https://example.com/fake.msi'; publisher = 'Some Vendor'; sha256 = ('a' * 64); sha256From = 'test' } }
+            Mock -ModuleName DE.Apps Get-DELocalPackagesDir { $dir }
+            $r = Get-DEPackageFile -Package $pkg
+            $r.trust.Ok | Should -Be $false -Because 'the hash does not match the record'
+            $r.trust.HardRefusal | Should -Be $true
+            $r.deleted | Should -Be $true -Because 'R3: the refused download is deleted, not left to be run by hand'
+            Test-Path -LiteralPath $cached | Should -Be $false
+            ($r.trust.Reasons -join '; ') | Should -Match ('have ' + $poison)
+            ($r.trust.Reasons -join '; ') | Should -Match ('want ' + ('a' * 64))
+        }
+        It 'a DE-supplied local file that mismatches is refused but kept for inspection' {
+            $pkg = @{ id = 'r3-local'; name = 'R3 Local'; source = @{ type = 'local'; localPath = (Split-Path -Leaf $global:M43.Fixture); publisher = 'Some Vendor'; sha256 = ('a' * 64); sha256From = 'test' } }
+            Mock -ModuleName DE.Apps Get-DELocalPackagesDir { $global:M43.Dir }
+            $r = Get-DEPackageFile -Package $pkg
+            $r.trust.Ok | Should -Be $false
+            $r.deleted | Should -Be $false -Because 'a DE-supplied file is evidence, not a download: refused but kept'
+            Test-Path -LiteralPath $global:M43.Fixture | Should -Be $true
+        }
+        It 'a download that matches is used and kept' {
+            $dir = Join-Path $global:M43.Dir 'r3-good'
+            New-Item -ItemType Directory -Path $dir -Force | Out-Null
+            $cached = Join-Path $dir 'good.msi'
+            Set-Content -LiteralPath $cached -Value 'fine bytes'
+            $real = Get-DEFileSha256 -Path $cached
+            $pkg = @{ id = 'r3-good'; name = 'R3 Good'; source = @{ type = 'url'; url = 'https://example.com/good.msi'; sha256 = $real; sha256From = 'test' } }
+            Mock -ModuleName DE.Apps Get-DELocalPackagesDir { $dir }
+            $r = Get-DEPackageFile -Package $pkg
+            $r.trust.Ok | Should -Be $true -Because 'the positive half keeps the refusal honest'
+            $r.deleted | Should -Be $false
+            Test-Path -LiteralPath $cached | Should -Be $true
+        }
+    }
 }
