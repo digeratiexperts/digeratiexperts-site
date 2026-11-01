@@ -109,8 +109,14 @@ function Get-DEPackageFile {
             } else { return @{ path = $path; trust = [pscustomobject]@{ Ok = $false; Reasons = @('not downloaded (planned)'); Sha256 = ''; Overridden = $false }; planned = $true } }
         }
     } else { throw "unknown source type '$type'" }
-    $trust = Test-DEPackageTrust -Path $path -Sha256 (Get-DEPkgProp $src 'sha256') -Publisher (Get-DEPkgProp $src 'publisher') -AllowUnverified:$AllowUnverified
-    return @{ path = $path; trust = $trust }
+    $trust = Test-DEPackageTrust -Path $path -Sha256 (Get-DEPkgProp $src 'sha256') -Publisher (Get-DEPkgProp $src 'publisher') -VendorSigns:([bool](Get-DEPkgProp $src 'vendorSigns')) -AllowUnverified:$AllowUnverified
+    $deleted = $false
+    if (-not $trust.Ok -and $type -eq 'url' -and (Get-DEPkgProp $trust 'HardRefusal')) {
+        # R3: a refused download is deleted, never left where a technician could run it by hand.
+        # A soft refusal keeps the file: the override path exists so someone can check it first.
+        if ($PSCmdlet.ShouldProcess($path, 'Delete refused download')) { Remove-Item -LiteralPath $path -Force -ErrorAction SilentlyContinue; $deleted = -not (Test-Path -LiteralPath $path) }
+    }
+    return @{ path = $path; trust = $trust; deleted = $deleted }
 }
 
 function Invoke-DEPackageInstall {
@@ -126,7 +132,12 @@ function Invoke-DEPackageInstall {
     if ($missing.Count) { throw "runtime secret(s) required: $($missing -join ', ')" }
     $file = Get-DEPackageFile -Package $pkg -AllowUnverified:$AllowUnverified
     if (Get-DEPkgProp $file 'planned') { return [pscustomobject]@{ ok = $false; planned = $true; detail = 'download planned' } }
-    if (-not $file.trust.Ok) { throw "trust policy refused $name : $($file.trust.Reasons -join '; '). Override with -AllowUnverified and a reason only after checking the file." }
+    if (-not $file.trust.Ok) {
+        $msg = "trust policy refused $name : $($file.trust.Reasons -join '; ')"
+        if (Get-DEPkgProp $file 'deleted') { $msg += '. The refused download was deleted (R3)' }
+        if (Get-DEPkgProp $file.trust 'HardRefusal') { $msg += '. This refusal is not overridable (R3/R4)' } else { $msg += '. Override with -AllowUnverified and a reason only after checking the file' }
+        throw $msg
+    }
     if ($file.trust.Overridden -and -not $OverrideReason.Trim()) { throw "an unverified installer for $name needs -OverrideReason (who checked the file and how)" }
     if ($file.trust.Overridden) { Add-DEEvidence -Step "apps.$Id.trust" -Module 'apps' -Before 'unverified file' -ActionTaken "override: $OverrideReason" -Result 'WARN' -Verification ($file.trust.Reasons -join '; ') -Remediation 'Add the sha256 or publisher to the catalog.' | Out-Null }
     $inst = Get-DEPkgProp $pkg 'install'
