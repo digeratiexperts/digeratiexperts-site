@@ -75,7 +75,7 @@ Close the active GitHub issue/claim only when the state above is explicit and no
 
 ## Current open PRs and owners (snapshot)
 
-**Refreshed:** 2026-10-31 from GitHub, `origin/main` at `5dab4a3f`. This table is a
+**Refreshed:** 2026-11-01 from GitHub, `origin/main` at `e3e44542`. This table is a
 snapshot for orientation; the live PR list is still the lock. Each PR is owned by the session or
 person that opened it (a Claude Code PR has its session link at the bottom of its body). Do not
 push to, rebase, close or merge it; the lead integrator's exception, on Joe's instruction, is in
@@ -83,6 +83,8 @@ push to, rebase, close or merge it; the lead integrator's exception, on Joe's in
 
 | PR | Draft | Branch | What it changes | Owner |
 | --- | --- | --- | --- | --- |
+| #888 | no | `techtool/move20-changelog` | Tech Tool move 20: changelog entry per version, linked to its PR (issue #738; Hub schedule W1-10 lane) | OpenCode · MiMo-V2.6-Pro (W1-10 session) |
+| #887 | no | `techtool/move18-export-drift-check` | Tech Tool move 18: export-vs-docs drift check (issue #736; Hub schedule W1-10 lane) | OpenCode · MiMo-V2.6-Pro (W1-10 session) |
 | #876 | no | `techtool/section-h-move-91` | DE Tech Tool move 91: classify device evidence fields (device / personal / path / operational). Section H sensitive data lane; moves 92, 95, 96, 94 follow. | DE Tech Tool section H lane (OpenCode) |
 | #593 | yes | `claude/org-representation-portal` | Portal: Hub-defined representatives, My Groups and group requests (needs DE approval and Hub PR 425 live) | Website design overhaul thread (Joe, 2026-10-15) |
 | #575 | yes | `concept/ai-background-check` | Concept: AI Background Check page (3 Exploration concepts; concept B shipped in #609) | Website design overhaul thread (Joe, 2026-10-15) |
