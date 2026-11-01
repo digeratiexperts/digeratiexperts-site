@@ -33,7 +33,7 @@
     { "key": "panasonic", "name": "Panasonic", "match": "(?i)^panasonic", "method": "manual", "confirmed": false, "checkUrl": "https://na.panasonic.com/us/support" },
     { "key": "framework", "name": "Framework", "match": "(?i)^framework", "method": "manual", "confirmed": false, "checkUrl": "https://frame.work/support", "note": "Framework warranty runs from the order date; use the order record." },
     { "key": "msi", "name": "MSI", "match": "(?i)^(micro-star|msi)", "method": "manual", "confirmed": false, "checkUrl": "https://www.msi.com/support" },
-    { "key": "getac", "name": "Getac", "match": "(?i)^getac", "method": "manual", "confirmed": false, "checkUrl": "https://www.getac.com/us/support/" },
+    { "key": "getac", "name": "Getac", "match": "(?i)^getac", "method": "manual", "confirmed": true, "checkUrl": "https://support.getac.com/", "note": "The old www.getac.com/us/support page is gone (404); the support portal at support.getac.com carries warranty status (found by the warranty endpoint check, move 88)." },
     { "key": "gigabyte", "name": "Gigabyte", "match": "(?i)^gigabyte", "method": "manual", "confirmed": false, "checkUrl": "https://www.gigabyte.com/Support" }
   ],
   "virtualModels": "(?i)(virtual machine|vmware|virtualbox|kvm|qemu|hvm domu|parallels)"
