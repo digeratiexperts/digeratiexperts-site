@@ -42,6 +42,14 @@
         "null"
       ]
     },
+    "deskTicketId": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Zoho Desk ticket this work answers (a ticket number or short code), so the Hub record and the evidence behind it link back to the ticket. Never a secret.",
+      "pattern": "^(\\d{5,20}|[A-Za-z][A-Za-z0-9-]{1,31})$"
+    },
     "device": {
       "type": "object",
       "required": [

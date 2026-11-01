@@ -22,7 +22,8 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Install-DETechConsole.
 It unpacks the newest `DE-TechTool*.zip` (or an older `DE-TechConsole*.zip`) into `DE-TechConsole\`, clears
 Windows' downloaded-file block, keeps the previous copy as `DE-TechConsole.previous`, and opens DE Tech Tool.
 The window title shows the version (for example `DE Tech Tool v1.10.3`), so you always know which build is
-running. The zip itself is not a script; do not pass it to `-File`.
+running. The zip itself is not a script; do not pass it to `-File`. What changed in each release:
+[CHANGELOG.md](CHANGELOG.md).
 
 ## Start
 
@@ -295,9 +296,19 @@ handoffs and warranty. The shared contracts are in `console/contracts/`.
   (`manual`) or could not say (`unknown`), nothing is sent, and the evidence line and status line say why. The
   status line reports both sends. A headless run sends the warranty the same way, right after the device record
   it already sends at the end of every run (same Hub, secret and account number; `-WhatIf` sends nothing).
+- **Warranty cache and endpoint watch.** Warranty lookups are cached in state for `catalog/warranty.json`
+  `cacheDays` (7 days); `-Refresh` bypasses the cache, and a fallback to the maker's check page is never
+  cached. `windows/tests/Invoke-WarrantyEndpointCheck.ps1` probes every vendor endpoint and compares it
+  with `catalog/warranty-endpoints.snapshot.json`, so a moved page or a changed response shape is
+  noticed instead of silently degrading the lookup to `manual` (run it, or `-Update` the snapshot after
+  reviewing a legitimate vendor change).
 - **Account number.** The client profile needs the client's Hub account number, set as
   `"hub": { "accountId": 123 }`. Without it the signed send is refused and the record is saved for
   manual upload.
+- **Desk ticket.** The device record carries the Zoho Desk ticket the work answers (`deskTicketId`), so the
+  Hub record and its evidence link back to the ticket. Pass `-DeskTicketId` to `New-DEHubPayload`, or save it
+  once per engagement with `Set-DEStateValue -Path 'work.deskTicketId' -Value 'DESK-1042'` (a ticket number
+  or a short code). A value that is not ticket-shaped is left out with a WARN, never sent.
 - **What is left out.** The Hub refuses a record with a secret-named key anywhere in it (`apiToken`,
   `mfaSeed`, `pin` and so on), whatever its value. So such keys are left out of the device record that is
   sent and of its saved copy, and the evidence line names them; local state and logs keep them as

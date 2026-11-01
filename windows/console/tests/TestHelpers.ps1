@@ -11,6 +11,10 @@ function Initialize-TestConsole {
     Import-DEConsoleModules -Root $script:ConsoleRoot
     $dir = Join-Path ([IO.Path]::GetTempPath()) ("de-console-test-{0}" -f ([guid]::NewGuid()))
     $null = Initialize-DEConsole -Root $script:ConsoleRoot -Mode Audit -DataDir $dir
+    # Settle the PHI decision so vendor gates are deterministic in tests. Default is NOT restricted,
+    # so existing suites keep exercising the ordinary path; a test that wants the restricted case
+    # settles it itself (see Phi.Tests.ps1).
+    Set-DEPhiDecision ([pscustomobject]@{ restricted = $false; vertical = 'not-healthcare'; client = $false; override = $false; reason = 'test default: not restricted' })
     return $dir
 }
 
