@@ -149,20 +149,24 @@ function Remove-DEPersonalFields {
         Move 92: withhold what identifies a person from anything sent to the Intelligence Hub.
 
         Deep-copies an object and, for every key whose class from Get-DEEvidenceFieldClass is
-        'personal' or 'path', replaces the value instead of copying it:
+        'personal' or 'path', does NOT copy the identifying value:
 
-          personal -> '[REDACTED]'          the Hub manages devices, not people
-          path     -> the leaf segment       the directory chain names the person; the file name
-                                             does not, and is often the useful part
+          personal -> the key is left out     the Hub manages devices, not people
+          path     -> the leaf segment only   the directory chain names the person; the file name
+                                              does not, and is often the useful part
+
+        IMPORTANT: the identifying value is DROPPED, never replaced with '[REDACTED]'. The Hub
+        refuses a payload containing that marker and fails the whole send (DE-TECH-TOOL-ARCHITECTURE.md
+        1.10.2 - that is exactly why secret-named keys are left out rather than sent redacted). Local
+        state and logs keep '[REDACTED]'; anything crossing the wire omits.
 
         A container is never flattened to a placeholder: 'user' is itself a personal name, but in the
         device record it is a BLOCK holding assigned/localUserName/jumpcloudUser/email, and replacing
-        the block with a string would fail contract validation (device.schema.json types it as
-        object|null). So a personal or path key holding a container recurses instead, and each leaf
-        inside is redacted on its own terms.
+        the block would change its shape. So a personal or path key holding a container recurses, and
+        each leaf inside is withheld on its own terms.
 
-        String values anywhere in the structure are also run through Protect-DEPathText, so a path
-        that leaked into a free-text field (a verification note, a remediation line) is scrubbed too.
+        String values anywhere are also run through Protect-DEPathText, so a path that leaked into a
+        free-text field (a verification note, a remediation line) is scrubbed too.
 
         'device' and 'operational' pass through untouched: the Hub needs the device key, and hiding
         a result would be worse than showing it.
@@ -177,10 +181,10 @@ function Remove-DEPersonalFields {
             $v = $Object[$k]
             $isContainer = ($v -is [System.Collections.IDictionary]) -or ($v -is [System.Collections.IEnumerable] -and $v -isnot [string]) -or ($v -is [psobject] -and $v.PSObject.Properties.Count -gt 0 -and $v -isnot [string])
             if ($isContainer) { $o[$k] = Remove-DEPersonalFields -Object $v }
-            elseif ($class -eq 'personal') { $o[$k] = '[REDACTED]' }
+            elseif ($class -eq 'personal') { continue }   # left out entirely, never sent as a marker
             elseif ($class -eq 'path') {
                 $leaf = if ("$v".Trim()) { "$(Split-Path -Leaf ("$v".Trim().TrimEnd('\', '/')))" } else { '' }
-                $o[$k] = $(if ($leaf) { $leaf } else { '[REDACTED]' })
+                if ($leaf) { $o[$k] = $leaf }   # an empty path carries nothing and is left out too
             } else { $o[$k] = Remove-DEPersonalFields -Object $v }
         }
         return $o
@@ -195,10 +199,10 @@ function Remove-DEPersonalFields {
             $v = $p.Value
             $isContainer = ($v -is [System.Collections.IDictionary]) -or ($v -is [System.Collections.IEnumerable] -and $v -isnot [string]) -or ($v -is [psobject] -and $v.PSObject.Properties.Count -gt 0 -and $v -isnot [string])
             if ($isContainer) { $o[$p.Name] = Remove-DEPersonalFields -Object $v }
-            elseif ($class -eq 'personal') { $o[$p.Name] = '[REDACTED]' }
+            elseif ($class -eq 'personal') { continue }
             elseif ($class -eq 'path') {
-                $leaf = if ("$($p.Value)".Trim()) { "$(Split-Path -Leaf ("$($p.Value)".Trim().TrimEnd('\', '/')))" } else { '' }
-                $o[$p.Name] = $(if ($leaf) { $leaf } else { '[REDACTED]' })
+                $leaf = if ("$v".Trim()) { "$(Split-Path -Leaf ("$v".Trim().TrimEnd('\', '/')))" } else { '' }
+                if ($leaf) { $o[$p.Name] = $leaf }
             } else { $o[$p.Name] = Remove-DEPersonalFields -Object $v }
         }
         return [pscustomobject]$o
