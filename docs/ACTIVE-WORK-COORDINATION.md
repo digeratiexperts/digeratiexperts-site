@@ -83,6 +83,7 @@ push to, rebase, close or merge it; the lead integrator's exception, on Joe's in
 
 | PR | Draft | Branch | What it changes | Owner |
 | --- | --- | --- | --- | --- |
+| #876 | no | `techtool/section-h-move-91` | DE Tech Tool move 91: classify device evidence fields (device / personal / path / operational). Section H sensitive data lane; moves 92, 95, 96, 94 follow. | DE Tech Tool section H lane (OpenCode) |
 | #593 | yes | `claude/org-representation-portal` | Portal: Hub-defined representatives, My Groups and group requests (needs DE approval and Hub PR 425 live) | Website design overhaul thread (Joe, 2026-10-15) |
 | #575 | yes | `concept/ai-background-check` | Concept: AI Background Check page (3 Exploration concepts; concept B shipped in #609) | Website design overhaul thread (Joe, 2026-10-15) |
 
