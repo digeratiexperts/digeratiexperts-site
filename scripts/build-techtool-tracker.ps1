@@ -52,7 +52,9 @@ foreach ($i in $parsed) { $issues += ,$i }
 Write-Host ('fetched ' + $issues.Count + ' issues')
 
 $rows = foreach ($i in $issues) {
-    if ($i.title -notmatch '^\[TECHTOOL-(\d{3})\]\s*(.*)$') { continue }
+    # an [ACTIVE] claim prefix is the documented concurrency lock (see the legend below), so a claimed
+    # issue keeps its tracker row while it is being worked: match it past, not around
+    if ($i.title -notmatch '^(?:\[ACTIVE\]\s*)?\[TECHTOOL-(\d{3})\]\s*(.*)$') { continue }
     # capture these before any further -match call overwrites $Matches
     $n = [int]$Matches[1]
     $text = $Matches[2].Trim()
