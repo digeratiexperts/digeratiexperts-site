@@ -79,7 +79,7 @@ function Initialize-DEConsole {
     Protect-DEDataFolder -Path $base
     $script:DE.Dirs = $dirs
     $script:DE.LogFile = Join-Path $dirs.Logs ("techconsole-{0}.log" -f (Get-Date -Format 'yyyyMMdd-HHmmss'))
-    Invoke-DELogPrune -Directory $dirs.Logs
+    $null = Invoke-DELogPrune -Directory $dirs.Logs
     $script:DE.Evidence.Clear()
     $script:DE.GateCache = @{}
     Import-DEState | Out-Null
