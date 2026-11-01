@@ -67,7 +67,7 @@ mistake hides information.
 
 | Move | Uses the classification to |
 |---|---|
-| **92** | Redact `personal` and `path` values from what goes to the Hub |
+| **92** | Omit `personal` keys and reduce `path` values to their leaf name in what goes to the Hub. **Never** send `[REDACTED]` - the Hub refuses that marker and fails the whole send |
 | 95 | Decide what encryption at rest must protect |
 | 96 | Decide which vendors count as receiving device data |
 
