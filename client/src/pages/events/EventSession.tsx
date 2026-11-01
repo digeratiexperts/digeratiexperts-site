@@ -6,13 +6,12 @@
  * date tile, countdown rings and calendar/time-zone row follow the shape of a
  * webinar registration page; the colour and type are DE's, nothing else's.
  *
- * TRUTH (Tier 0): a `planned` session says so beside the date, is noindex, and
- * the form registers interest rather than promising a seat or a join link that
- * does not exist yet. Registrations post to /api/contact, so each one becomes
- * a Zoho CRM lead the weekly pipeline review picks up.
+ * TRUTH (Tier 0): planned sessions are not public. The form posts interest to
+ * /api/contact; even a confirmed contact receipt proves neither webinar
+ * enrollment nor email delivery. HTTP success alone can lack a CRM receipt.
  */
 
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { Link, useRoute } from "wouter";
 import { useReducedMotion } from "framer-motion";
 import { ArrowRight, CalendarPlus, CheckCircle2, Clock, Globe2, Users } from "lucide-react";
@@ -67,7 +66,7 @@ function downloadIcs(session: DeEventSession) {
       {
         uid: `session-${session.slug}@digeratiexperts.com`,
         summary: `Digerati Experts: ${session.title}`,
-        description: `${session.summary}\n\nThe join link is emailed to registrants before the session.\n${window.location.origin}/events/${session.slug}`,
+        description: `${session.summary}\n\nCalendar reminder only; webinar enrollment is separate.\n${window.location.origin}/events/${session.slug}`,
         start: session.start.slice(0, 16),
         durationMinutes: session.durationMinutes,
         url: `${window.location.origin}/events/${session.slug}`,
@@ -123,15 +122,16 @@ function Ring({ value, max, label }: { value: number; max: number; label: string
 
 function RegistrationForm({ session }: { session: DeEventSession }) {
   const [state, setState] = useState<"idle" | "sending" | "done" | "error">("idle");
-  const [error, setError] = useState("");
-  const planned = session.status === "planned";
+  // React's disabled state lands on the next render; lock synchronously too.
+  const submitting = useRef(false);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const data = new FormData(event.currentTarget);
+    if (submitting.current) return;
+    submitting.current = true;
     setState("sending");
-    setError("");
     try {
+      const data = new FormData(event.currentTarget);
       const response = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -142,14 +142,23 @@ function RegistrationForm({ session }: { session: DeEventSession }) {
           company: String(data.get("company") ?? "").trim(),
           website_url: String(data.get("website_url") ?? ""),
           service: `Event registration: ${session.slug}`,
-          message: `${planned ? "Registered interest in" : "Registered for"} "${session.title}" (${session.start}, ${session.format}). Campaign: /go/${session.campaign}.`,
+          message: `Registered interest in "${session.title}" (${session.start}, ${session.format}). Campaign: /go/${session.campaign}.`,
         }),
       });
-      const result = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(result.error || "Registration failed");
+      const result: unknown = await response.json();
+      // /api/contact can return success:true with no CRM lead. Its generated
+      // contactId alone is not evidence of persistence or webinar enrollment.
+      if (
+        !response.ok || !result || typeof result !== "object" || Array.isArray(result) ||
+        !("success" in result) || result.success !== true ||
+        !("contactId" in result) || typeof result.contactId !== "string" || !result.contactId.trim() ||
+        !("zohoLeadId" in result) || typeof result.zohoLeadId !== "string" || !result.zohoLeadId.trim()
+      ) throw new Error("Unconfirmed contact receipt");
       setState("done");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Registration failed");
+    } catch {
+      // A failed response may follow a successful write. Preserve the form,
+      // never retry automatically, and never display arbitrary server errors.
+      submitting.current = false;
       setState("error");
     }
   }
@@ -158,11 +167,9 @@ function RegistrationForm({ session }: { session: DeEventSession }) {
     return (
       <div className="rounded-2xl border border-de-hairline bg-de-raised p-6" role="status">
         <CheckCircle2 className="h-8 w-8 text-[#D3126A]" aria-hidden="true" />
-        <h3 className="mt-3 text-xl font-semibold text-white">You're on the list</h3>
+        <h3 className="mt-3 text-xl font-semibold text-white">Interest received</h3>
         <p className="mt-2 text-sm text-de-muted-soft">
-          {planned
-            ? "We'll email you when the date is confirmed, with the join link before the session."
-            : "We'll email the join link before the session. Add it to your calendar so it doesn't slip."}
+          We've received your interest in this session. This does not confirm webinar enrollment or email delivery.
         </p>
         <Button
           type="button"
@@ -178,11 +185,11 @@ function RegistrationForm({ session }: { session: DeEventSession }) {
   }
 
   return (
-    <form onSubmit={onSubmit} className="rounded-2xl border border-de-hairline bg-de-raised p-6" aria-labelledby="register-heading">
+    <form onSubmit={onSubmit} className="rounded-2xl border border-de-hairline bg-de-raised p-6" aria-labelledby="register-heading" aria-busy={state === "sending"}>
       <h3 id="register-heading" className="text-xl font-semibold text-white">
-        {planned ? "Register your interest" : "Save your seat"}
+        Register your interest
       </h3>
-      <p className="mt-1 text-sm text-de-muted-soft">Free. One email with the join link, one reminder.</p>
+      <p className="mt-1 text-sm text-de-muted-soft">Send us your interest in this free session. This form does not reserve a seat or send a join link.</p>
       <div className="mt-5 grid gap-4">
         {[
           { id: "name", label: "Name", type: "text", autoComplete: "name", required: true },
@@ -210,17 +217,18 @@ function RegistrationForm({ session }: { session: DeEventSession }) {
       </div>
       {state === "error" ? (
         <p className="mt-3 text-sm text-red-300" role="alert">
-          {error}. Please try again, or call us.
+          We could not confirm receipt of your interest. Your request may have reached us. Please contact us before submitting again.
         </p>
       ) : null}
+      {state === "sending" ? <p className="sr-only" role="status">Sending your interest.</p> : null}
       <Button
         type="submit"
         size="lg"
         disabled={state === "sending"}
-        className="mt-5 w-full bg-[#D3126A] text-white transition duration-200 ease-out hover:bg-[#b50f5a] active:scale-[0.98]"
+        className="mt-5 h-11 w-full bg-[#D3126A] text-white transition duration-200 ease-out hover:bg-[#b50f5a] active:scale-[0.98]"
         data-testid="event-register-submit"
       >
-        {state === "sending" ? "Sending…" : planned ? "Register interest" : "Register"}
+        {state === "sending" ? "Sending…" : "Register interest"}
         <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
       </Button>
     </form>
@@ -315,7 +323,7 @@ export default function EventSession() {
             {session.presenter ? (
               <p className="mt-4 text-sm text-de-muted-soft">
                 Presented by <span className="text-white">{session.presenter}</span>
-                {session.platform ? <> · on {session.platform}; the join link is emailed the day before</> : null}
+                {session.platform ? <> · on {session.platform}</> : null}
               </p>
             ) : null}
 
@@ -420,7 +428,7 @@ export default function EventSession() {
                   </p>
                 </div>
               ) : (
-                <RegistrationForm session={session} />
+                <RegistrationForm key={session.slug} session={session} />
               )}
               {campaign ? (
                 <div className="mt-4 rounded-2xl border border-de-hairline p-5">
