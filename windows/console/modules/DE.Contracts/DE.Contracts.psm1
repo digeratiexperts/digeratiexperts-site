@@ -152,7 +152,7 @@ function ConvertTo-DEDeviceKey {
     <# <maker>:<SERIAL>, the same on the device, in WinPE and in the Hub. Maker comes from the manufacturer string. #>
     param([string]$Manufacturer, [Parameter(Mandatory = $true)][string]$Serial)
     $s = ($Serial.Trim().ToUpperInvariant() -replace '[^A-Z0-9-]', '')
-    if (-not $s -or $s -match '^(TOBEFILLEDBYOEM|DEFAULTSTRING|SYSTEMSERIALNUMBER|0+|NONE|NA)$') { throw "serial '$Serial' is not usable as a device key (blank or an OEM placeholder); type it from the chassis sticker" }
+    if (-not $s -or $s -match '^(TOBEFILLEDBYOEM|DEFAULTSTRING|SYSTEMSERIALNUMBER|SERIALNUMBER|CHASSISSERIALNUMBER|OEM|UNKNOWN|INVALID|NOTAPPLICABLE|NOTPROVIDED|NOSERIAL|NOSERIALNUMBER|0+|NONE|NA)$') { throw "serial '$Serial' is not usable as a device key (blank or an OEM placeholder); type it from the chassis sticker" }
     $m = "$Manufacturer".Trim().ToLowerInvariant()
     $maker = switch -Regex ($m) {
         '^dell' { 'dell' } '^lenovo' { 'lenovo' } '^(hp|hewlett)' { 'hp' } '^microsoft' { 'microsoft' } '^apple' { 'apple' } '^acer' { 'acer' } '^asus' { 'asus' }
