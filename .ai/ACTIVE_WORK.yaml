@@ -30,6 +30,27 @@
 
 version: 2
 claims:
+  - id: desk-chooser-height-20261101
+    issue: 918
+    owner: codex
+    subsystem: de-desk-chooser
+    branch: chatgpt/desk-chooser-height-20261101
+    base_sha: 8aad97b98cdd427d9b324ed68dfd6b04e59893c7
+    started: 2026-11-01
+    files:
+      - client/src/components/SiteBottomBar.tsx
+      - scripts/desk-browser-smoke.mjs (additional chooser cases; retain original 88)
+    status: implemented
+    note: >-
+      GitHub issue 918 is the authoritative lock. Joe approved the clipped
+      chooser fix and this separate issue. Local-only slice; no PR/source
+      publication, merge or deployment authorized. Depends on reviewed PR 877
+      head 45dd0db0 without changing that PR or claim 875's test-only scope.
+      Bound and scroll the existing chooser; preserve options, branding,
+      consent/privacy, keyboard focus and dismissal. Historical 882 CI geometry
+      was not recorded; preserve that uncertainty and all diagnostic artifacts.
+      Implementation remains local and unreleased. Test evidence and remaining
+      review/publication gates are recorded in the local acceptance manifest.
   - id: de-techtool-move73-agent-threat-model
     issue: 791
     owner: opencode

@@ -290,6 +290,176 @@ for (const viewport of [
   }
 }
 
+// 6. The chooser itself must fit short screens; a fitting Desk is not enough.
+// Keep consent present in half the cases: dismissing it must not hide a layout defect.
+{
+  const choices = [
+    ["ask-de-choice-support", "ticket"],
+    ["ask-de-choice-help", "chat"],
+    ["ask-de-choice-tools", "resources"],
+    ["ask-de-choice-feedback", "chat"],
+  ];
+  const expectedStops = [...choices.map(([id]) => id), "ask-de-choice-phone", "ask-de-close"];
+  const controlVisible = (page, selector = null) => page.evaluate((selector) => {
+    const el = selector ? document.querySelector(selector) : document.activeElement;
+    const clip = document.querySelector('[data-testid="ask-de-quick-menu-scroll"]') || document.querySelector('[data-testid="ask-de-quick-menu"]');
+    if (!el || !clip || !clip.contains(el)) return { visible: false, id: el?.getAttribute("data-testid") };
+    const r = el.getBoundingClientRect(), c = clip.getBoundingClientRect();
+    return { id: el.getAttribute("data-testid"), visible: r.top >= Math.max(0, c.top) - 1 && r.bottom <= Math.min(innerHeight, c.bottom) + 1 && r.left >= -1 && r.right <= innerWidth + 1, top: r.top, bottom: r.bottom };
+  }, selector);
+  for (const viewport of [
+    { name: "landscape-844x390", width: 844, height: 390 },
+    { name: "landscape-568x320", width: 568, height: 320 },
+    { name: "zoom200-720x450", width: 720, height: 450, scale: 2 },
+    { name: "narrow-320x568", width: 320, height: 568 },
+    { name: "390", width: 390, height: 844 },
+    { name: "768", width: 768, height: 1024 },
+    { name: "1440", width: 1440, height: 900 },
+  ]) {
+    for (const consentPresent of [true, false]) {
+      const where = `${viewport.name} consent-${consentPresent ? "present" : "rejected"}`;
+      const context = await browser.newContext({ viewport: { width: viewport.width, height: viewport.height }, deviceScaleFactor: viewport.scale || 1, reducedMotion: "reduce" });
+      try {
+        const page = await context.newPage();
+        const errors = [];
+        page.on("pageerror", error => errors.push(error.message));
+        await page.addInitScript(() => {
+          localStorage.setItem("de-desk-expand-hint", JSON.stringify({ used: true, shown: 3 }));
+          localStorage.setItem("de-desk-composer-hint", JSON.stringify({ used: true, shown: 3 }));
+        });
+        await page.route("**/api/portal/me", route => route.fulfill({ status: 401, json: { error: "Not signed in" } }));
+        await page.route("**/api/zoho/desk/status", route => route.fulfill({ json: { connected: true } }));
+        await page.route("**/api/public/advisor/chat", route => route.fulfill({ json: { sessionId: "smoke", reply: "Smoke reply." } }));
+        await page.goto(`${base}/`, { waitUntil: "networkidle", timeout: 90000 });
+        const banner = page.getByTestId("cookie-consent-banner");
+        await banner.waitFor({ state: "visible", timeout: 10000 });
+        if (!consentPresent) {
+          await banner.getByRole("button", { name: "Reject All", exact: true }).click();
+          await banner.waitFor({ state: "detached", timeout: 10000 });
+        }
+        const settleConsent = () => page.waitForFunction(present => {
+          const height = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--de-cookie-h"));
+          return present ? height > 0 : height === 0;
+        }, consentPresent, { timeout: 10000 });
+        const launcher = page.locator(LAUNCHER).first();
+        const panel = page.locator(CHOOSER);
+        const open = async (keyboard = false) => {
+          await settleConsent();
+          if (keyboard) { await launcher.focus(); await page.keyboard.press("Enter"); }
+          else await launcher.click({ timeout: 10000 });
+          await panel.waitFor({ state: "visible", timeout: 10000 });
+          // The existing chooser's entrance transition lasts 180ms, including reduced motion.
+          await page.waitForTimeout(300);
+        };
+        const returned = async () => {
+          await panel.waitFor({ state: "detached", timeout: 10000 });
+          await page.waitForFunction(() => document.activeElement?.matches('[data-testid="button-open-asap-widget"]'), null, { timeout: 5000 });
+          return (await focusInfo(page)).isLauncher;
+        };
+        await open(true);
+        const fit = await panel.evaluate(el => {
+          const r = el.getBoundingClientRect();
+          const cookie = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--de-cookie-h"));
+          return { top: r.top, bottom: r.bottom, right: r.right, left: r.left, height: r.height, limit: innerHeight - cookie, overflow: document.documentElement.scrollWidth - innerWidth };
+        });
+        const fits = fit.top >= -1 && fit.bottom <= fit.limit + 1 && fit.left >= -1 && fit.right <= viewport.width + 1;
+        check("chooser", `${where}: panel stays inside viewport and above consent`, fits, JSON.stringify(fit));
+        check("chooser", `${where}: no horizontal page overflow`, fit.overflow <= 2, `${fit.overflow}px`);
+        await page.screenshot({ path: `${outDir}/chooser-${where}.png` });
+        // A failed fit is already a red gate; avoid a pointless 30s click timeout on that same defect.
+        if (!fits) continue;
+        const stops = await panel.locator("button, a[href]").evaluateAll(elements => elements.map(el => el.getAttribute("data-testid")));
+        check("chooser", `${where}: every existing choice, phone and close is retained`, JSON.stringify(stops) === JSON.stringify(expectedStops), JSON.stringify(stops));
+        const seen = new Set();
+        let keyboardHidden = 0;
+        for (const key of [...Array(6).fill("Tab"), ...Array(6).fill("Shift+Tab")]) {
+          const focused = await controlVisible(page);
+          seen.add(focused.id);
+          if (!focused.visible) keyboardHidden++;
+          await page.keyboard.press(key);
+        }
+        check("chooser", `${where}: Tab and Shift+Tab keep every stop visible inside the chooser`, keyboardHidden === 0 && expectedStops.every(id => seen.has(id)), `${keyboardHidden} hidden/outside; ${JSON.stringify([...seen])}`);
+        await page.keyboard.press("Escape");
+        check("chooser", `${where}: Escape closes and restores launcher focus`, await returned());
+        for (const [id, tab] of choices) {
+          await open();
+          const choice = page.getByTestId(id);
+          await choice.scrollIntoViewIfNeeded();
+          const visible = await controlVisible(page, `[data-testid="${id}"]`);
+          check("chooser", `${where}: ${id} is fully reachable by pointer`, visible.visible, JSON.stringify(visible));
+          await choice.click({ timeout: 10000 });
+          await page.locator(MODAL).waitFor({ state: "visible", timeout: 15000 });
+          check("chooser", `${where}: ${id} opens its existing Desk tab`, await page.locator(MODAL).getAttribute("data-tab") === tab);
+          // The Desk deliberately ignores dismissal for 400ms after opening.
+          // Match the existing openFromChooser settlement before testing Close.
+          await page.waitForTimeout(600);
+          await page.getByTestId("button-close-widget").click();
+          await page.locator(MODAL).waitFor({ state: "detached", timeout: 10000 });
+          await page.waitForFunction(() => document.activeElement?.matches('[data-testid="button-open-asap-widget"]'), null, { timeout: 5000 });
+          check("chooser", `${where}: Desk close restores launcher after ${id}`, (await focusInfo(page)).isLauncher);
+        }
+        await open();
+        const scrollArea = page.getByTestId("ask-de-quick-menu-scroll");
+        const scrollSize = await scrollArea.evaluate(el => ({ content: el.scrollHeight, viewport: el.clientHeight }));
+        const pageY = await page.evaluate(() => scrollY);
+        await scrollArea.hover();
+        await page.mouse.wheel(0, scrollSize.content);
+        if (scrollSize.content > scrollSize.viewport + 1) {
+          await page.waitForFunction(() => document.querySelector('[data-testid="ask-de-quick-menu-scroll"]').scrollTop > 0, null, { timeout: 5000 });
+        }
+        check("chooser", `${where}: wheel scrolling stays in the chooser`, await page.evaluate(() => scrollY) === pageY);
+        const phone = page.getByTestId("ask-de-choice-phone");
+        await phone.scrollIntoViewIfNeeded();
+        await phone.click({ trial: true, timeout: 10000 });
+        check("chooser", `${where}: phone link is reachable without placing a call`, (await controlVisible(page, '[data-testid="ask-de-choice-phone"]')).visible && (await phone.getAttribute("href")).startsWith("tel:"));
+        await scrollArea.hover();
+        await page.mouse.wheel(0, -scrollSize.content);
+        await page.waitForFunction(() => document.querySelector('[data-testid="ask-de-quick-menu-scroll"]').scrollTop === 0, null, { timeout: 5000 });
+        await page.getByTestId("ask-de-close").click();
+        check("chooser", `${where}: Close remains reachable and restores focus`, await returned());
+        await open();
+        // Click inert page/scrim space: the logo at (2,2) can navigate home,
+        // which would test a document reload rather than outside dismissal.
+        const outside = await page.evaluate(() => {
+          const panel = document.querySelector('[data-testid="ask-de-quick-menu"]');
+          for (const y of [4, innerHeight / 4, innerHeight / 2, innerHeight - 4]) {
+            for (const x of [4, innerWidth / 2, innerWidth - 4]) {
+              const el = document.elementFromPoint(x, y);
+              if (el && !panel?.contains(el) && !el.closest('a, button, input, select, textarea, [role="button"], [tabindex]')) return { x, y };
+            }
+          }
+          return null;
+        });
+        if (!outside) throw new Error("No inert outside-dismissal point is available");
+        await page.mouse.click(outside.x, outside.y);
+        check("chooser", `${where}: outside dismissal and repeated opening restore focus`, await returned());
+        // An outside interactive target must keep focus instead of having it
+        // stolen back by the chooser's inert-space dismissal fallback.
+        await page.evaluate(() => {
+          const button = document.createElement("button");
+          button.id = "chooser-outside-focus-target";
+          button.textContent = "Outside focus test";
+          button.style.cssText = "position:fixed;top:0;left:0;z-index:20000;width:12px;height:12px;overflow:hidden";
+          document.body.append(button);
+        });
+        await open();
+        await page.locator("#chooser-outside-focus-target").click();
+        await panel.waitFor({ state: "detached", timeout: 10000 });
+        check("chooser", `${where}: outside controls retain their own focus`, await page.evaluate(() => document.activeElement?.id === "chooser-outside-focus-target"));
+        await page.locator("#chooser-outside-focus-target").evaluate(el => el.remove());
+        await settleConsent();
+        const stored = await page.evaluate(() => !!localStorage.getItem("de_cookie_consent_v2") || !!localStorage.getItem("de_cookie_consent"));
+        check("chooser", `${where}: chooser interactions preserve the chosen consent state`, stored === !consentPresent);
+        check("chooser", `${where}: no page errors`, errors.length === 0, errors.slice(0, 2).join(" | "));
+      } catch (error) {
+        check("chooser", `${where}: interaction sequence completes`, false, error.message);
+      } finally {
+        await context.close();
+      }
+    }
+  }
+}
+
 await browser.close();
 
 console.log(JSON.stringify(results, null, 2));
