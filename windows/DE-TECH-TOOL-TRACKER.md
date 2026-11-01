@@ -53,16 +53,16 @@ These are the dependencies worth knowing before picking anything up:
 | Section | Moves | Done | Open | Needs Joe |
 |---|---|---|---|---|
 | Start here (highest leverage) | 10 | 7 | 3 | 5 |
-| A. Quality and trust (11-24) | 14 | 8 | 6 | 0 |
+| A. Quality and trust (11-24) | 14 | 12 | 2 | 0 |
 | B. Real-device validation (25-38) | 14 | 0 | 14 | 1 |
-| C. Installer integrity (39-48) | 10 | 1 | 9 | 1 |
+| C. Installer integrity (39-48) | 10 | 2 | 8 | 1 |
 | D. Signing and release (49-58) | 10 | 0 | 10 | 0 |
 | E. Hub and call-home agent (59-78) | 20 | 1 | 19 | 0 |
 | F. Remote assist (79-82) | 4 | 0 | 4 | 0 |
 | G. Client and dropship workflows (83-90) | 8 | 0 | 8 | 0 |
-| H. Sensitive data (91-96) | 6 | 0 | 6 | 0 |
+| H. Sensitive data (91-96) | 6 | 1 | 5 | 0 |
 | I. Supportability and docs (97-104) | 8 | 1 | 7 | 1 |
-| **Total** | **104** | **18** | **86** | **8** |
+| **Total** | **104** | **24** | **80** | **8** |
 
 ## The moves
 
@@ -98,10 +98,10 @@ These are the dependencies worth knowing before picking anything up:
 - [ ] **19** Remove compatibility aliases once the installed base is checked. `agent` - [#737](https://github.com/digeratiexperts/digeratiexperts-site/issues/737)
   - *Overlaps item 104 (retire compatibility names). Keep one canonical issue and cross-link.*
 - [x] **20** Add a changelog entry per version, linked to its PR. `agent` - [#738](https://github.com/digeratiexperts/digeratiexperts-site/issues/738)
-- [ ] **21** Confirm the 2 Windows-only launcher tests run on Windows CI and report. `agent` - [#739](https://github.com/digeratiexperts/digeratiexperts-site/issues/739)
-- [ ] **22** Add a Pester test for every contract schema's validators. `agent` - [#740](https://github.com/digeratiexperts/digeratiexperts-site/issues/740)
-- [ ] **23** Test that the contracts refuse secret-shaped keys. `agent` - [#741](https://github.com/digeratiexperts/digeratiexperts-site/issues/741)
-- [ ] **24** Fuzz the Hub payload builder with malformed input. `agent` - [#742](https://github.com/digeratiexperts/digeratiexperts-site/issues/742)
+- [x] **21** Confirm the 2 Windows-only launcher tests run on Windows CI and report. `agent` - [#739](https://github.com/digeratiexperts/digeratiexperts-site/issues/739)
+- [x] **22** Add a Pester test for every contract schema's validators. `agent` - [#740](https://github.com/digeratiexperts/digeratiexperts-site/issues/740)
+- [x] **23** Test that the contracts refuse secret-shaped keys. `agent` - [#741](https://github.com/digeratiexperts/digeratiexperts-site/issues/741)
+- [x] **24** Fuzz the Hub payload builder with malformed input. `agent` - [#742](https://github.com/digeratiexperts/digeratiexperts-site/issues/742)
 
 ### B. Real-device validation (25-38)
 
@@ -123,7 +123,7 @@ These are the dependencies worth knowing before picking anything up:
 
 ### C. Installer integrity (39-48)
 
-- [ ] **39** Inventory every installer source in the catalog and playbooks. `agent` - [#757](https://github.com/digeratiexperts/digeratiexperts-site/issues/757)
+- [x] **39** Inventory every installer source in the catalog and playbooks. `agent` - [#757](https://github.com/digeratiexperts/digeratiexperts-site/issues/757)
 - [ ] **40** For each, record the URL, the vendor-published hash and whether it is verified. `agent` - [#758](https://github.com/digeratiexperts/digeratiexperts-site/issues/758)
 - [ ] **41** Flag installers with no vendor hash; choose pin-on-first-trusted-download or drop. `agent` - [#759](https://github.com/digeratiexperts/digeratiexperts-site/issues/759)
   - *Decision needed from Joe at item 48 before this is implemented.*
@@ -199,7 +199,7 @@ These are the dependencies worth knowing before picking anything up:
 
 - [ ] **91** Classify device evidence fields: serials, user names, profile paths. `agent` - [#809](https://github.com/digeratiexperts/digeratiexperts-site/issues/809)
 - [ ] **92** Redact user names and profile paths from evidence sent to the Hub; test it. `agent` - [#810](https://github.com/digeratiexperts/digeratiexperts-site/issues/810)
-- [ ] **93** Apply the retention period to local evidence bundles, once DE sets it. `agent` - [#811](https://github.com/digeratiexperts/digeratiexperts-site/issues/811)
+- [x] **93** Apply the retention period to local evidence bundles, once DE sets it. `agent` - [#811](https://github.com/digeratiexperts/digeratiexperts-site/issues/811)
   - *Blocked on item 9 (Joe sets the retention periods).*
 - [ ] **94** Log reads of evidence in the Hub (G4). `agent` - [#812](https://github.com/digeratiexperts/digeratiexperts-site/issues/812)
 - [ ] **95** Assess encryption at rest for local state and evidence. `agent` - [#813](https://github.com/digeratiexperts/digeratiexperts-site/issues/813)
