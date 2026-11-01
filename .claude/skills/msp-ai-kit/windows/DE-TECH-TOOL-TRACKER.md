@@ -52,17 +52,17 @@ These are the dependencies worth knowing before picking anything up:
 
 | Section | Moves | Done | Open | Needs Joe |
 |---|---|---|---|---|
-| Start here (highest leverage) | 10 | 6 | 4 | 5 |
-| A. Quality and trust (11-24) | 14 | 6 | 8 | 0 |
+| Start here (highest leverage) | 10 | 7 | 3 | 5 |
+| A. Quality and trust (11-24) | 14 | 12 | 2 | 0 |
 | B. Real-device validation (25-38) | 14 | 0 | 14 | 1 |
-| C. Installer integrity (39-48) | 10 | 1 | 9 | 1 |
+| C. Installer integrity (39-48) | 10 | 2 | 8 | 1 |
 | D. Signing and release (49-58) | 10 | 0 | 10 | 0 |
-| E. Hub and call-home agent (59-78) | 20 | 0 | 20 | 0 |
+| E. Hub and call-home agent (59-78) | 20 | 1 | 19 | 0 |
 | F. Remote assist (79-82) | 4 | 0 | 4 | 0 |
 | G. Client and dropship workflows (83-90) | 8 | 0 | 8 | 0 |
-| H. Sensitive data (91-96) | 6 | 0 | 6 | 0 |
-| I. Supportability and docs (97-104) | 8 | 0 | 8 | 1 |
-| **Total** | **104** | **13** | **91** | **8** |
+| H. Sensitive data (91-96) | 6 | 1 | 5 | 0 |
+| I. Supportability and docs (97-104) | 8 | 1 | 7 | 1 |
+| **Total** | **104** | **24** | **80** | **8** |
 
 ## The moves
 
@@ -80,7 +80,7 @@ These are the dependencies worth knowing before picking anything up:
   - *Longest lead item. Gates all of section D.*
 - [ ] **8** Confirm JumpCloud Remote Assist access and licensing. **Joe** - [#726](https://github.com/digeratiexperts/digeratiexperts-site/issues/726)
   - *Gates section F.*
-- [ ] **9** Set retention periods for device evidence (G8). **Joe** - [#727](https://github.com/digeratiexperts/digeratiexperts-site/issues/727)
+- [x] **9** Set retention periods for device evidence (G8). **Joe** - [#727](https://github.com/digeratiexperts/digeratiexperts-site/issues/727)
   - *Gates item 93.*
 - [ ] **10** Run the VPS go-live script, which unblocks the DE Tech Tool secrets and migrations. **Joe** - [#728](https://github.com/digeratiexperts/digeratiexperts-site/issues/728)
   - *See GO-LIVE.md.*
@@ -94,14 +94,14 @@ These are the dependencies worth knowing before picking anything up:
 - [x] **15** Test that Guardz keys and SentinelOne tokens are never persisted. `agent` - [#733](https://github.com/digeratiexperts/digeratiexperts-site/issues/733)
 - [x] **16** Mutation-test the licence and fail-closed paths. `agent` - [#734](https://github.com/digeratiexperts/digeratiexperts-site/issues/734)
 - [ ] **17** Audit every 'policy warn' path for fail-open risk. `agent` - [#735](https://github.com/digeratiexperts/digeratiexperts-site/issues/735)
-- [ ] **18** Drift check: exported module functions against the docs. `agent` - [#736](https://github.com/digeratiexperts/digeratiexperts-site/issues/736)
+- [x] **18** Drift check: exported module functions against the docs. `agent` - [#736](https://github.com/digeratiexperts/digeratiexperts-site/issues/736)
 - [ ] **19** Remove compatibility aliases once the installed base is checked. `agent` - [#737](https://github.com/digeratiexperts/digeratiexperts-site/issues/737)
   - *Overlaps item 104 (retire compatibility names). Keep one canonical issue and cross-link.*
-- [ ] **20** Add a changelog entry per version, linked to its PR. `agent` - [#738](https://github.com/digeratiexperts/digeratiexperts-site/issues/738)
-- [ ] **21** Confirm the 2 Windows-only launcher tests run on Windows CI and report. `agent` - [#739](https://github.com/digeratiexperts/digeratiexperts-site/issues/739)
-- [ ] **22** Add a Pester test for every contract schema's validators. `agent` - [#740](https://github.com/digeratiexperts/digeratiexperts-site/issues/740)
-- [ ] **23** Test that the contracts refuse secret-shaped keys. `agent` - [#741](https://github.com/digeratiexperts/digeratiexperts-site/issues/741)
-- [ ] **24** Fuzz the Hub payload builder with malformed input. `agent` - [#742](https://github.com/digeratiexperts/digeratiexperts-site/issues/742)
+- [x] **20** Add a changelog entry per version, linked to its PR. `agent` - [#738](https://github.com/digeratiexperts/digeratiexperts-site/issues/738)
+- [x] **21** Confirm the 2 Windows-only launcher tests run on Windows CI and report. `agent` - [#739](https://github.com/digeratiexperts/digeratiexperts-site/issues/739)
+- [x] **22** Add a Pester test for every contract schema's validators. `agent` - [#740](https://github.com/digeratiexperts/digeratiexperts-site/issues/740)
+- [x] **23** Test that the contracts refuse secret-shaped keys. `agent` - [#741](https://github.com/digeratiexperts/digeratiexperts-site/issues/741)
+- [x] **24** Fuzz the Hub payload builder with malformed input. `agent` - [#742](https://github.com/digeratiexperts/digeratiexperts-site/issues/742)
 
 ### B. Real-device validation (25-38)
 
@@ -123,7 +123,7 @@ These are the dependencies worth knowing before picking anything up:
 
 ### C. Installer integrity (39-48)
 
-- [ ] **39** Inventory every installer source in the catalog and playbooks. `agent` - [#757](https://github.com/digeratiexperts/digeratiexperts-site/issues/757)
+- [x] **39** Inventory every installer source in the catalog and playbooks. `agent` - [#757](https://github.com/digeratiexperts/digeratiexperts-site/issues/757)
 - [ ] **40** For each, record the URL, the vendor-published hash and whether it is verified. `agent` - [#758](https://github.com/digeratiexperts/digeratiexperts-site/issues/758)
 - [ ] **41** Flag installers with no vendor hash; choose pin-on-first-trusted-download or drop. `agent` - [#759](https://github.com/digeratiexperts/digeratiexperts-site/issues/759)
   - *Decision needed from Joe at item 48 before this is implemented.*
@@ -168,7 +168,7 @@ These are the dependencies worth knowing before picking anything up:
 - [ ] **70** Upload evidence with resumable retries and idempotency keys. `agent` - [#788](https://github.com/digeratiexperts/digeratiexperts-site/issues/788)
 - [ ] **71** Queue evidence offline with a size bound; never drop it silently. `agent` - [#789](https://github.com/digeratiexperts/digeratiexperts-site/issues/789)
 - [ ] **72** Build install, upgrade and uninstall for the agent, each signature-checked. `agent` - [#790](https://github.com/digeratiexperts/digeratiexperts-site/issues/790)
-- [ ] **73** Write a threat model for the agent before any job type is enabled. `agent` - [#791](https://github.com/digeratiexperts/digeratiexperts-site/issues/791)
+- [x] **73** Write a threat model for the agent before any job type is enabled. `agent` - [#791](https://github.com/digeratiexperts/digeratiexperts-site/issues/791)
   - *Hard gate: no job type is enabled before this exists.*
 - [ ] **74** Design the break-glass shell: disabled by default, time-limited, transcribed. `agent` - [#792](https://github.com/digeratiexperts/digeratiexperts-site/issues/792)
 - [ ] **75** Test that a stolen device key can be revoked and stops working. `agent` - [#793](https://github.com/digeratiexperts/digeratiexperts-site/issues/793)
@@ -199,7 +199,7 @@ These are the dependencies worth knowing before picking anything up:
 
 - [ ] **91** Classify device evidence fields: serials, user names, profile paths. `agent` - [#809](https://github.com/digeratiexperts/digeratiexperts-site/issues/809)
 - [ ] **92** Redact user names and profile paths from evidence sent to the Hub; test it. `agent` - [#810](https://github.com/digeratiexperts/digeratiexperts-site/issues/810)
-- [ ] **93** Apply the retention period to local evidence bundles, once DE sets it. `agent` - [#811](https://github.com/digeratiexperts/digeratiexperts-site/issues/811)
+- [x] **93** Apply the retention period to local evidence bundles, once DE sets it. `agent` - [#811](https://github.com/digeratiexperts/digeratiexperts-site/issues/811)
   - *Blocked on item 9 (Joe sets the retention periods).*
 - [ ] **94** Log reads of evidence in the Hub (G4). `agent` - [#812](https://github.com/digeratiexperts/digeratiexperts-site/issues/812)
 - [ ] **95** Assess encryption at rest for local state and evidence. `agent` - [#813](https://github.com/digeratiexperts/digeratiexperts-site/issues/813)
@@ -214,7 +214,7 @@ These are the dependencies worth knowing before picking anything up:
 - [ ] **101** Write a support runbook mapping each failure to its fix. `agent` - [#819](https://github.com/digeratiexperts/digeratiexperts-site/issues/819)
 - [ ] **102** A technician quick-start, checked with a real technician. **Joe** - [#820](https://github.com/digeratiexperts/digeratiexperts-site/issues/820)
 - [ ] **103** Keep DE-TECH-TOOL-ARCHITECTURE.md as the live done/open board. `agent` - [#821](https://github.com/digeratiexperts/digeratiexperts-site/issues/821)
-- [ ] **104** Retire compatibility names only after the installed base is checked. `agent` - [#822](https://github.com/digeratiexperts/digeratiexperts-site/issues/822)
+- [x] **104** Retire compatibility names only after the installed base is checked. `agent` - [#822](https://github.com/digeratiexperts/digeratiexperts-site/issues/822)
   - *Overlaps item 19 (remove compatibility aliases). Keep one canonical issue and cross-link.*
 
 ---
