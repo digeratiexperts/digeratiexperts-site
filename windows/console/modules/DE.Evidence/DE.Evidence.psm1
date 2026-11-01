@@ -106,9 +106,13 @@ function Get-DEEvidenceFieldClasses {
     #>
     return [ordered]@{
         device      = @('serial', 'model', 'assetTag', 'hostname', 'manufacturer', 'deviceKey', 'role', 'os', 'bios', 'cpu', 'ramGB')
-        personal    = @('assignedUser', 'localUserName', 'jumpcloudUser', 'email', 'endUser', 'endUserEmail', 'technician', 'assigned', 'username', 'userName', 'user', 'samAccountName', 'upn', 'displayName', 'fullName')
+        personal    = @('assignedUser', 'localUserName', 'jumpcloudUser', 'email', 'endUser', 'endUserEmail', 'assigned', 'username', 'userName', 'user', 'samAccountName', 'upn', 'displayName', 'fullName')
         path        = @('profilePath', 'profileDir', 'homeDir', 'documentsPath', 'folder', 'localAppData', 'appData', 'userProfile', 'path', 'localPath', 'home')
-        operational = @('schema', 'source', 'sentAt', 'lifecycle', 'client', 'site', 'readiness', 'areas', 'controls', 'exceptions', 'evidence', 'warranty', 'onboarding', 'session', 'started', 'completed', 'mode', 'buildId', 'issuedTo', 'licenseId', 'licenseState', 'integrity', 'status', 'result', 'verifiedAt', 'timestamp', 'step', 'module')
+        # 'technician' and 'issuedTo' look personal but are DE's own staff, recorded on purpose: the
+        # build is watermarked with who it was issued to so a leaked copy names its source the first
+        # time it runs with a network (PROTECTING-THE-TOOL.md). Redacting them would break that.
+        # Section H is about the CLIENT's device data - the people who use the machine - not ours.
+        operational = @('schema', 'source', 'sentAt', 'lifecycle', 'client', 'site', 'readiness', 'areas', 'controls', 'exceptions', 'evidence', 'warranty', 'onboarding', 'session', 'started', 'completed', 'mode', 'buildId', 'issuedTo', 'technician', 'licenseId', 'licenseState', 'integrity', 'status', 'result', 'verifiedAt', 'timestamp', 'step', 'module')
     }
 }
 
@@ -122,6 +126,84 @@ function Get-DEEvidenceFieldClass {
         foreach ($n in $table[$k]) { if ($n -ieq $Name) { return $k } }
     }
     return 'operational'
+}
+
+function Protect-DEPathText {
+    <# Scrubs user names out of filesystem paths inside free text. Keeps the leaf name, which is often
+       the useful part (recovery-key.txt), and drops the directory chain that names the person:
+       'C:\Users\jpetrovich\Documents\q3.docx' becomes '<path>\q3.docx'. #>
+    param([AllowNull()][AllowEmptyString()][string]$Text)
+    if (-not $Text) { return $Text }
+    $t = $Text
+    # drive-qualified paths: keep only the final segment
+    $t = [regex]::Replace($t, '(?i)[A-Z]:\\(?:[^\\\r\n"''<>|]*\\)*([^\\\r\n"''<>|]*)', '<path>\$1')
+    # UNC paths
+    $t = [regex]::Replace($t, '(?i)\\\\[^\\\r\n"''<>|]+\\(?:[^\\\r\n"''<>|]+\\)*([^\\\r\n"''<>|]*)', '<path>\$1')
+    # bare user-profile roots without a drive
+    $t = [regex]::Replace($t, '(?i)\bUsers\\[^\\\r\n"''<>|]+', 'Users\<user>')
+    return $t
+}
+
+function Remove-DEPersonalFields {
+    <#
+        Move 92: withhold what identifies a person from anything sent to the Intelligence Hub.
+
+        Deep-copies an object and, for every key whose class from Get-DEEvidenceFieldClass is
+        'personal' or 'path', replaces the value instead of copying it:
+
+          personal -> '[REDACTED]'          the Hub manages devices, not people
+          path     -> the leaf segment       the directory chain names the person; the file name
+                                             does not, and is often the useful part
+
+        A container is never flattened to a placeholder: 'user' is itself a personal name, but in the
+        device record it is a BLOCK holding assigned/localUserName/jumpcloudUser/email, and replacing
+        the block with a string would fail contract validation (device.schema.json types it as
+        object|null). So a personal or path key holding a container recurses instead, and each leaf
+        inside is redacted on its own terms.
+
+        String values anywhere in the structure are also run through Protect-DEPathText, so a path
+        that leaked into a free-text field (a verification note, a remediation line) is scrubbed too.
+
+        'device' and 'operational' pass through untouched: the Hub needs the device key, and hiding
+        a result would be worse than showing it.
+    #>
+    param([Parameter(Mandatory = $true)][AllowNull()]$Object)
+    if ($null -eq $Object) { return $null }
+    if ($Object -is [string]) { return (Protect-DEPathText $Object) }
+    if ($Object -is [System.Collections.IDictionary]) {
+        $o = [ordered]@{}
+        foreach ($k in @($Object.Keys)) {
+            $class = Get-DEEvidenceFieldClass -Name "$k"
+            $v = $Object[$k]
+            $isContainer = ($v -is [System.Collections.IDictionary]) -or ($v -is [System.Collections.IEnumerable] -and $v -isnot [string]) -or ($v -is [psobject] -and $v.PSObject.Properties.Count -gt 0 -and $v -isnot [string])
+            if ($isContainer) { $o[$k] = Remove-DEPersonalFields -Object $v }
+            elseif ($class -eq 'personal') { $o[$k] = '[REDACTED]' }
+            elseif ($class -eq 'path') {
+                $leaf = if ("$v".Trim()) { "$(Split-Path -Leaf ("$v".Trim().TrimEnd('\', '/')))" } else { '' }
+                $o[$k] = $(if ($leaf) { $leaf } else { '[REDACTED]' })
+            } else { $o[$k] = Remove-DEPersonalFields -Object $v }
+        }
+        return $o
+    }
+    if ($Object -is [System.Collections.IEnumerable] -and $Object -isnot [string]) {
+        $a = @(); foreach ($i in $Object) { $a += ,(Remove-DEPersonalFields -Object $i) }; return ,$a
+    }
+    if ($Object -is [psobject] -and $Object.PSObject.Properties.Count) {
+        $o = [ordered]@{}
+        foreach ($p in $Object.PSObject.Properties) {
+            $class = Get-DEEvidenceFieldClass -Name "$($p.Name)"
+            $v = $p.Value
+            $isContainer = ($v -is [System.Collections.IDictionary]) -or ($v -is [System.Collections.IEnumerable] -and $v -isnot [string]) -or ($v -is [psobject] -and $v.PSObject.Properties.Count -gt 0 -and $v -isnot [string])
+            if ($isContainer) { $o[$p.Name] = Remove-DEPersonalFields -Object $v }
+            elseif ($class -eq 'personal') { $o[$p.Name] = '[REDACTED]' }
+            elseif ($class -eq 'path') {
+                $leaf = if ("$($p.Value)".Trim()) { "$(Split-Path -Leaf ("$($p.Value)".Trim().TrimEnd('\', '/')))" } else { '' }
+                $o[$p.Name] = $(if ($leaf) { $leaf } else { '[REDACTED]' })
+            } else { $o[$p.Name] = Remove-DEPersonalFields -Object $v }
+        }
+        return [pscustomobject]$o
+    }
+    return $Object
 }
 
 function New-DEAssetRecord {
@@ -349,7 +431,7 @@ function New-DEHubPayload {
     $key = $null; try { if ($Record.serial) { $key = ConvertTo-DEDeviceKey -Manufacturer "$($Record.manufacturer)" -Serial "$($Record.serial)" } } catch { $key = $null }
     $w = Get-DEState -Path 'warranty.current'
     $controls = @(Get-DEEvidence | Group-Object step | ForEach-Object { $last = $_.Group | Sort-Object timestamp -Descending | Select-Object -First 1; @{ control = $_.Name; module = $last.module; result = $last.result; verifiedAt = $last.timestamp } })
-    return [ordered]@{
+    $payload = [ordered]@{
         schema = 'de.techconsole.device/v1'; source = "DETechConsole/$($de.ConsoleVersion)"; sentAt = (Get-Date).ToString('o')
         deviceKey = $key; lifecycle = $(if ($Lifecycle) { $Lifecycle } else { $null })
         # who ran which build under which licence: a copy that should not exist shows up here the first time it reports
@@ -361,6 +443,9 @@ function New-DEHubPayload {
         controls = $controls; exceptions = $Record.exceptions
         evidence = @{ bundleSha256 = $BundleSha256; bundleName = $(if ($BundlePath) { Split-Path -Leaf $BundlePath } else { '' }) }
     }
+    # move 92: withhold what identifies a person before this leaves the device. The Hub manages
+    # devices; the people who use them are not part of the record.
+    return (Remove-DEPersonalFields -Object $payload)
 }
 function Send-DEHubPayload {
     <#
@@ -577,4 +662,4 @@ function Get-DEHubConnectionChecklist {
     return $items
 }
 
-Export-ModuleMember -Function Convert-DEHtmlToPdf, Get-DEReadiness, Get-DEGapReport, Get-DEEvidenceFieldClasses, Get-DEEvidenceFieldClass, New-DEAssetRecord, ConvertTo-DEHtmlReport, Export-DEEvidenceBundle, New-DEHubPayload, Send-DEHubPayload, Send-DEHubWarranty, Format-DEHubSendStatus, Send-DEHubMigrationRecord, Test-DEHubReachable, Get-DEHubConnectionChecklist
+Export-ModuleMember -Function Convert-DEHtmlToPdf, Get-DEReadiness, Get-DEGapReport, Get-DEEvidenceFieldClasses, Get-DEEvidenceFieldClass, Protect-DEPathText, Remove-DEPersonalFields, New-DEAssetRecord, ConvertTo-DEHtmlReport, Export-DEEvidenceBundle, New-DEHubPayload, Send-DEHubPayload, Send-DEHubWarranty, Format-DEHubSendStatus, Send-DEHubMigrationRecord, Test-DEHubReachable, Get-DEHubConnectionChecklist

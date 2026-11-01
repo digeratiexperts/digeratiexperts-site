@@ -18,9 +18,16 @@ Describe 'Evidence fields are classified before anything is withheld' {
             }
         }
         It 'names every personal field the Hub does not need' {
-            foreach ($f in @('assignedUser', 'localUserName', 'jumpcloudUser', 'email', 'technician', 'endUserEmail')) {
+            foreach ($f in @('assignedUser', 'localUserName', 'jumpcloudUser', 'email', 'endUserEmail')) {
                 Get-DEEvidenceFieldClass -Name $f | Should -Be 'personal' -Because "$f identifies a person"
             }
+        }
+        It 'keeps the technician name, because it is ours and is recorded on purpose' {
+            # the build is watermarked with who it was issued to, so a leaked copy names its source
+            # the first time it runs with a network. Redacting it would break that. Section H is
+            # about the CLIENT's device data, not DE's own accountability record.
+            Get-DEEvidenceFieldClass -Name 'technician' | Should -Be 'operational'
+            Get-DEEvidenceFieldClass -Name 'issuedTo' | Should -Be 'operational'
         }
         It 'names every path field, which leaks a user name through its segments' {
             foreach ($f in @('profilePath', 'profileDir', 'homeDir', 'documentsPath', 'folder', 'userProfile')) {
@@ -51,6 +58,67 @@ Describe 'Evidence fields are classified before anything is withheld' {
                 $c = Get-DEEvidenceFieldClass -Name $k
                 $c | Should -BeIn @('device', 'personal', 'path', 'operational') -Because "$k must have a class"
             }
+        }
+    }
+}
+
+Describe 'What identifies a person never reaches the Hub' {
+    BeforeAll {
+        . (Join-Path $PSScriptRoot 'TestHelpers.ps1')
+        $null = Initialize-TestConsole
+        $global:SecH = @{
+            Record = New-DEAssetRecord -Snapshot @{
+                device    = @{ hostname = 'ALAMO-LAP-0231'; serial = 'PF3ABC12'; manufacturer = 'Dell'; model = 'Latitude 7450' }
+                profiles  = @{ list = @(@{ path = 'C:\Users\jpetrovich\Documents'; name = 'jpetrovich' }) }
+            } -ClientProfile (Get-DEClientProfile -Id 'alamo')
+        }
+    }
+
+    Context 'move 92: the Hub payload carries no user name and no profile path' {
+        BeforeAll {
+            $global:SecH.Payload = New-DEHubPayload -Record $global:SecH.Record -BundleSha256 ('a' * 64) -BundlePath 'C:\evidence\bundle.zip'
+            $global:SecH.Json = ($global:SecH.Payload | ConvertTo-Json -Depth 12)
+        }
+        It 'no user name appears anywhere in the payload' {
+            foreach ($who in @('jpetrovich', 'joe', 'sthompson')) {
+                $global:SecH.Json | Should -Not -Match ([regex]::Escape($who)) -Because "$who is a person, and the Hub manages devices"
+            }
+        }
+        It 'the user block is withheld rather than sent' {
+            $global:SecH.Payload.user.assigned | Should -Be '[REDACTED]'
+            $global:SecH.Payload.user.localUserName | Should -Be '[REDACTED]'
+            $global:SecH.Payload.user.email | Should -Be '[REDACTED]'
+        }
+        It 'no profile path survives - only the leaf name does' {
+            $global:SecH.Json | Should -Not -Match 'C:\\Users\\' -Because 'the directory chain is what names the person'
+            $global:SecH.Json | Should -Not -Match 'Users\\jpetrovich'
+        }
+        It 'a path in free text is scrubbed too, not just keyed fields' {
+            Protect-DEPathText 'see C:\Users\jpetrovich\Documents\q3-report.docx for detail' | Should -Be 'see <path>\q3-report.docx for detail'
+            Protect-DEPathText 'profile at \\server\share\jpetrovich\desktop' | Should -Not -Match 'jpetrovich'
+        }
+        It 'the leaf name survives, because it is the useful part' {
+            Protect-DEPathText 'C:\Users\jpetrovich\Documents\recovery-key.txt' | Should -Match 'recovery-key\.txt'
+        }
+        It 'the device still gets through - the Hub must be able to name the machine' {
+            $global:SecH.Payload.device.serial | Should -Be 'PF3ABC12'
+            $global:SecH.Payload.deviceKey | Should -Match 'PF3ABC12' -Because 'deviceKey is the shared identity across tool, rescue and Hub'
+            $global:SecH.Payload.device.hostname | Should -Be 'ALAMO-LAP-0231'
+        }
+        It 'the results still get through - withholding a verdict would be worse than showing it' {
+            $global:SecH.Payload.onboarding.readiness | Should -Not -BeNullOrEmpty
+            $global:SecH.Json | Should -Match 'readiness'
+        }
+        It 'the technician name survives, as the leak-tracing record it is meant to be' {
+            $global:SecH.Json | Should -Match 'technician'
+        }
+        It 'the payload still validates against the device contract' {
+            # the schema requires only schema, source, sentAt and device; the user block is optional
+            # and nullable, so withholding must not break validation
+            $global:SecH.Payload.schema | Should -Be 'de.techconsole.device/v1'
+            $global:SecH.Payload.source | Should -Not -BeNullOrEmpty
+            $global:SecH.Payload.sentAt | Should -Not -BeNullOrEmpty
+            $global:SecH.Payload.device | Should -Not -BeNullOrEmpty
         }
     }
 }
