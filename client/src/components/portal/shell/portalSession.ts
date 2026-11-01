@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { portalGet, redirectToPortalLogin } from "@/lib/portalApi";
-import { readPortalUser, type PortalUserSession } from "@/lib/portalRoles";
+import { clearPortalLocalSession, clearPortalUserSnapshot, PORTAL_SESSION_RESET_EVENT, portalGet, redirectToPortalLogin } from "@/lib/portalApi";
+import type { PortalUserSession } from "@/lib/portalRoles";
+import { clearPortalAppearanceScope, setVerifiedPortalAppearanceContext } from "./portalTheme";
 
 /**
  * One session check per page load, shared by every PortalLayout mount.
@@ -19,7 +20,37 @@ type SessionState = { ready: boolean; user: PortalUserSession | null };
 let inflight: Promise<PortalUserSession | null> | null = null;
 let resolved = false;
 let cached: PortalUserSession | null = null;
+let epoch = 0;
+let signingOut = false;
+let eventWindow: Window | null = null;
 const listeners = new Set<(state: SessionState) => void>();
+
+export function subscribePortalSession(listener: (state: SessionState) => void) {
+  listeners.add(listener);
+  return () => { listeners.delete(listener); };
+}
+
+function listenForSessionChanges() {
+  if (typeof window === "undefined" || eventWindow === window) return;
+  eventWindow = window;
+  window.addEventListener(PORTAL_SESSION_RESET_EVENT, () => resetPortalSession());
+  window.addEventListener("de-portal-auth-changed", () => resetPortalSession());
+  window.addEventListener("storage", (event) => {
+    // Same-account reauthentication in another tab must preserve this tab's
+    // unsaved work. These comparisons suppress invalidation only; disk never
+    // establishes a session or changes the verified principal.
+    if (event.key === "portalUser" && event.newValue && cached) {
+      try {
+        const incoming = JSON.parse(event.newValue);
+        if (incoming?.id === cached.id && incoming?.clientId === cached.clientId) return;
+      } catch { /* malformed snapshots invalidate */ }
+    }
+    if (event.key === "portalUserId" && cached && event.newValue === cached.id) return;
+    if (event.key === null || ["portalUser", "portalUserId", "impersonatingCompany"].includes(event.key)) {
+      resetPortalSession();
+    }
+  });
+}
 
 function notify() {
   const state = { ready: resolved, user: cached };
@@ -27,23 +58,30 @@ function notify() {
 }
 
 function persist(user: PortalUserSession) {
-  localStorage.setItem("portalUser", JSON.stringify(user));
-  localStorage.setItem("portalUserId", user.id || "portal-user");
-  if (user.email) localStorage.setItem("userEmail", user.email);
+  // Compatibility snapshot for existing page readers, never session authority.
+  // Migrating those readers and the Store's separate email capture is a later slice.
+  for (const [key, value] of [["portalUser", JSON.stringify(user)], ["portalUserId", user.id || "portal-user"]]) {
+    try { localStorage.setItem(key, value); } catch { /* memory remains usable */ }
+  }
 }
 
 export function ensurePortalSession(): Promise<PortalUserSession | null> {
+  listenForSessionChanges();
+  if (signingOut) return Promise.resolve(null);
   if (inflight) return inflight;
+  const requestEpoch = epoch;
   inflight = (async () => {
     try {
       const me = await portalGet<{ user: PortalUserSession }>("/api/portal/me");
-      if (me?.user) {
+      if (requestEpoch !== epoch) return null;
+      if (me?.user && typeof me.user.id === "string" && me.user.id.trim().length > 0) {
+        await setVerifiedPortalAppearanceContext(me.user);
+        if (requestEpoch !== epoch) return null;
         persist(me.user);
         cached = me.user;
-      } else {
-        cached = readPortalUser();
       }
     } catch (err) {
+      if (requestEpoch !== epoch) return null;
       const message = err instanceof Error ? err.message : "";
       const status = Number.parseInt(message.split(":")[0] ?? "", 10);
       if (status === 401 || status === 403) {
@@ -51,7 +89,8 @@ export function ensurePortalSession(): Promise<PortalUserSession | null> {
         redirectToPortalLogin(`${window.location.pathname}${window.location.search || ""}`);
         return null;
       }
-      cached = readPortalUser();
+      // Only retain a user verified in this document. Disk snapshots may belong
+      // to a previous account and cannot recover a failed session check.
     }
     resolved = true;
     notify();
@@ -62,40 +101,47 @@ export function ensurePortalSession(): Promise<PortalUserSession | null> {
 
 /** Forget the cached session (logout, impersonation change). */
 export function resetPortalSession() {
+  epoch += 1;
   inflight = null;
   resolved = false;
   cached = null;
+  // Preserve the cookie/token and selected-company markers for the existing
+  // tenant switch flow; only the outgoing user's compatibility snapshot goes.
+  clearPortalUserSnapshot();
+  clearPortalAppearanceScope();
+  notify();
 }
 
 export function usePortalSession(): SessionState {
   const [state, setState] = useState<SessionState>(() => ({
     ready: resolved,
-    user: resolved ? cached : readPortalUser(),
+    user: cached,
   }));
 
   useEffect(() => {
-    listeners.add(setState);
-    void ensurePortalSession();
+    const unsubscribe = subscribePortalSession(setState);
     if (resolved) setState({ ready: true, user: cached });
-    return () => {
-      listeners.delete(setState);
-    };
+    return unsubscribe;
   }, []);
+
+  useEffect(() => {
+    if (!state.ready) void ensurePortalSession();
+  }, [state.ready]);
 
   return state;
 }
 
 /** End the portal session here and on the server, then go to the login page. */
 export async function signOutOfPortal(): Promise<void> {
+  signingOut = true;
+  // Invalidate before waiting for the server: old /me responses are now inert.
+  resetPortalSession();
+  clearPortalLocalSession();
   try {
     await fetch("/api/portal/logout", { method: "POST", credentials: "include" });
   } catch {
     /* still clear local */
   }
-  localStorage.removeItem("portalUser");
-  localStorage.removeItem("portalToken");
-  localStorage.removeItem("portalUserId");
-  localStorage.removeItem("impersonatingCompany");
-  resetPortalSession();
+  clearPortalLocalSession();
   window.location.href = "/portal/login";
 }

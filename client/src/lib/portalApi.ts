@@ -19,23 +19,37 @@ function portalAuthHeaders(extra?: HeadersInit): Record<string, string> {
   return headers;
 }
 
-function clearPortalLocalSession() {
-  localStorage.removeItem("portalToken");
-  localStorage.removeItem("portalUser");
-  localStorage.removeItem("portalUserId");
-  localStorage.removeItem("impersonatingCompany");
+export const PORTAL_SESSION_RESET_EVENT = "de-portal-session-reset";
+
+export function clearPortalUserSnapshot() {
+  for (const key of ["portalUser", "portalUserId", "userEmail"]) {
+    try { localStorage.removeItem(key); } catch { /* storage is optional */ }
+  }
+}
+
+/** Purge only legacy keys owned by portal sign-in, even when storage is denied. */
+export function clearPortalLocalSession() {
+  clearPortalUserSnapshot();
+  for (const key of ["portalToken", "impersonatingCompany"]) {
+    try {
+      localStorage.removeItem(key);
+    } catch {
+      // One denied key must not prevent memory invalidation or navigation.
+    }
+  }
+  if (typeof window !== "undefined") window.dispatchEvent(new Event(PORTAL_SESSION_RESET_EVENT));
 }
 
 /** Redirect to canonical portal login (absolute host — never //login). */
 export function redirectToPortalLogin(returnTo?: string) {
   if (typeof window === "undefined") return;
+  clearPortalLocalSession();
   const path = window.location.pathname || "";
   if (path === PORTAL_LOGIN_PATH || path.startsWith(`${PORTAL_LOGIN_PATH}?`)) return;
 
   const dest = marketplaceReturnTo(returnTo || `${path}${window.location.search || ""}`);
   const safeReturn = dest === PORTAL_LOGIN_PATH ? PORTAL_DASHBOARD_PATH : dest;
 
-  clearPortalLocalSession();
   const qs = new URLSearchParams({ returnTo: safeReturn });
   window.location.href = `${PORTAL_LOGIN}?${qs.toString()}`;
 }

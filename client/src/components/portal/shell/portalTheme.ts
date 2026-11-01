@@ -16,6 +16,125 @@ const EVENT = "de-portal-theme-change";
 const LIGHT_QUERY = "(prefers-color-scheme: light)";
 const CONTRAST_KEY = "de-portal-contrast";
 const CONTRAST_EVENT = "de-portal-contrast-change";
+const SCOPE_EVENT = "de-portal-appearance-scope-change";
+export const PORTAL_APPEARANCE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+const SCOPED_PREFIX = "de-portal-appearance:v1:";
+type Appearance = { theme: PortalThemePreference; contrast: PortalContrast };
+const defaults = (): Appearance => ({ theme: "black", contrast: "none" });
+let memory = defaults();
+let scopeKey: string | null = null;
+let principal: string | null = null;
+let scopeEpoch = 0;
+let memoryExpiresAt = Infinity;
+let storageFallback = false;
+
+function announceScope() {
+  if (typeof window !== "undefined") window.dispatchEvent(new Event(SCOPE_EVENT));
+}
+
+function discardLegacyAppearance() {
+  // Global choices have no trustworthy owner. Never assign them to the next login.
+  for (const key of [STORAGE_KEY, CONTRAST_KEY]) {
+    try { localStorage.removeItem(key); } catch { /* storage is optional */ }
+  }
+}
+
+export function clearPortalAppearanceScope() {
+  scopeEpoch += 1;
+  scopeKey = null;
+  principal = null;
+  memory = defaults();
+  memoryExpiresAt = Infinity;
+  storageFallback = false;
+  discardLegacyAppearance();
+  announceScope();
+}
+
+/** Called only with the canonical /me response; this is never an auth decision. */
+export async function setVerifiedPortalAppearanceContext(user: { id?: string; clientId?: string | null; role?: string; accountClass?: string }) {
+  const validId = (value: unknown): value is string => typeof value === "string" && value.trim().length > 0 && value.length <= 256;
+  // /me currently returns a staff member's home client, not the acting company.
+  // Staff appearance stays in memory until the server exposes that verified scope.
+  const canSwitchCompany = user.role === "admin" || user.accountClass === "super_admin" || user.accountClass === "de_staff";
+  const next = !canSwitchCompany && validId(user.id) && (user.clientId == null || validId(user.clientId))
+    ? JSON.stringify([user.id, user.clientId ?? null]) : null;
+  if (next !== null && next === principal) return;
+  clearPortalAppearanceScope();
+  if (next === null) return;
+  principal = next;
+  const pendingEpoch = scopeEpoch;
+  try {
+    // No email, raw account ID or tenant ID goes into preference keys/values.
+    // The digest partitions a cache; it is pseudonymous, not proof of identity.
+    const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(next));
+    if (pendingEpoch !== scopeEpoch) return;
+    scopeKey = SCOPED_PREFIX + Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
+  } catch {
+    if (pendingEpoch !== scopeEpoch) return;
+    // No trustworthy persistent partition is available: use document memory.
+  }
+  scopeEpoch += 1;
+  memory = defaults();
+  readAppearance();
+  announceScope();
+}
+
+function readAppearance(): Appearance {
+  discardLegacyAppearance();
+  if (memoryExpiresAt <= Date.now()) memory = defaults();
+  if (!scopeKey || storageFallback) return memory;
+  let raw: string | null;
+  try {
+    raw = localStorage.getItem(scopeKey);
+  } catch {
+    return memory;
+  }
+  if (raw === null) {
+    if (!storageFallback) memory = defaults();
+    return memory;
+  }
+  try {
+    if (raw.length > 512) throw new Error("Oversized appearance cache");
+    const record = JSON.parse(raw);
+    const now = Date.now();
+    if (!record || Object.keys(record).sort().join(",") !== "contrast,expiresAt,savedAt,theme,version" || record.version !== 1 ||
+      !isThemePreference(record.theme) || !isContrast(record.contrast) ||
+      !Number.isSafeInteger(record.savedAt) || record.savedAt > now || record.savedAt < 0 ||
+      record.expiresAt !== record.savedAt + PORTAL_APPEARANCE_TTL_MS || record.expiresAt <= now) {
+      throw new Error("Invalid appearance cache");
+    }
+    memory = { theme: record.theme, contrast: record.contrast };
+    memoryExpiresAt = record.expiresAt;
+  } catch {
+    memory = defaults();
+    try { localStorage.removeItem(scopeKey); } catch { /* optional */ }
+  }
+  return memory;
+}
+
+function writeAppearance(next: Partial<Appearance>, expectedEpoch: number) {
+  if (expectedEpoch !== scopeEpoch) return false;
+  const appearance = { ...readAppearance(), ...next };
+  memory = appearance;
+  const savedAt = Date.now();
+  memoryExpiresAt = savedAt + PORTAL_APPEARANCE_TTL_MS;
+  if (scopeKey) {
+    try {
+      localStorage.setItem(scopeKey, JSON.stringify({ version: 1, savedAt, expiresAt: savedAt + PORTAL_APPEARANCE_TTL_MS, ...appearance }));
+      storageFallback = false;
+    } catch { storageFallback = true; }
+  }
+  return true;
+}
+
+/** Captures the current scope so a queued UI operation cannot write into another. */
+export function portalAppearanceWriter() {
+  const capturedEpoch = scopeEpoch;
+  return {
+    theme: (value: PortalThemePreference) => writePortalThemePreference(value, capturedEpoch),
+    contrast: (value: PortalContrast) => writePortalContrast(value, capturedEpoch),
+  };
+}
 
 /**
  * Joe, 2026-10-11: pure black is the initial portal theme. Existing saved
@@ -43,13 +162,7 @@ export function resolvePortalTheme(preference: PortalThemePreference, deviceWant
 }
 
 export function readPortalThemePreference(): PortalThemePreference {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (isThemePreference(stored)) return stored;
-  } catch {
-    /* private mode */
-  }
-  return DEFAULT_PORTAL_THEME_PREFERENCE;
+  return readAppearance().theme;
 }
 
 function deviceWantsLight(): boolean {
@@ -65,13 +178,9 @@ export function readPortalTheme(): PortalTheme {
   return resolvePortalTheme(readPortalThemePreference(), deviceWantsLight());
 }
 
-export function writePortalThemePreference(preference: PortalThemePreference) {
-  try {
-    localStorage.setItem(STORAGE_KEY, preference);
-  } catch {
-    /* private mode */
-  }
-  window.dispatchEvent(new CustomEvent(EVENT, { detail: preference }));
+export function writePortalThemePreference(preference: PortalThemePreference, expectedEpoch = scopeEpoch) {
+  if (!isThemePreference(preference) || !writeAppearance({ theme: preference }, expectedEpoch)) return;
+  if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent(EVENT, { detail: preference }));
 }
 
 /**
@@ -79,21 +188,24 @@ export function writePortalThemePreference(preference: PortalThemePreference) {
  * a setter. Follows the device live while the preference is "system".
  */
 export function usePortalTheme(): [PortalTheme, PortalThemePreference, (next: PortalThemePreference) => void] {
+  const [revision, setRevision] = useState(scopeEpoch);
   const [preference, setPreference] = useState<PortalThemePreference>(() =>
     typeof window === "undefined" ? DEFAULT_PORTAL_THEME_PREFERENCE : readPortalThemePreference(),
   );
   const [light, setLight] = useState<boolean>(() => deviceWantsLight());
 
   useEffect(() => {
-    const onChange = (event: Event) => {
-      const next = (event as CustomEvent<PortalThemePreference>).detail;
-      if (isThemePreference(next)) setPreference(next);
+    const onChange = () => {
+      setRevision(scopeEpoch);
+      setPreference(readPortalThemePreference());
     };
     const onStorage = (event: StorageEvent) => {
-      if (event.key === STORAGE_KEY || event.key === null) setPreference(readPortalThemePreference());
+      if (event.key === scopeKey || event.key === null) { memory = defaults(); storageFallback = false; onChange(); }
     };
     window.addEventListener(EVENT, onChange);
+    window.addEventListener(SCOPE_EVENT, onChange);
     window.addEventListener("storage", onStorage);
+    onChange();
 
     let media: MediaQueryList | null = null;
     const onMedia = (e: MediaQueryListEvent) => setLight(e.matches);
@@ -107,59 +219,52 @@ export function usePortalTheme(): [PortalTheme, PortalThemePreference, (next: Po
 
     return () => {
       window.removeEventListener(EVENT, onChange);
+      window.removeEventListener(SCOPE_EVENT, onChange);
       window.removeEventListener("storage", onStorage);
       media?.removeEventListener?.("change", onMedia);
     };
   }, []);
 
   const update = useCallback((next: PortalThemePreference) => {
-    setPreference(next);
-    writePortalThemePreference(next);
-  }, []);
+    writePortalThemePreference(next, revision);
+  }, [revision]);
 
   return [resolvePortalTheme(preference, light), preference, update];
 }
 
 export function readPortalContrast(): PortalContrast {
-  try {
-    const stored = localStorage.getItem(CONTRAST_KEY);
-    if (isContrast(stored)) return stored;
-  } catch {
-    /* private mode */
-  }
-  return "none";
+  return readAppearance().contrast;
 }
 
-export function writePortalContrast(contrast: PortalContrast) {
-  try {
-    localStorage.setItem(CONTRAST_KEY, contrast);
-  } catch {
-    /* private mode */
-  }
-  window.dispatchEvent(new CustomEvent(CONTRAST_EVENT, { detail: contrast }));
+export function writePortalContrast(contrast: PortalContrast, expectedEpoch = scopeEpoch) {
+  if (!isContrast(contrast) || !writeAppearance({ contrast }, expectedEpoch)) return;
+  if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent(CONTRAST_EVENT, { detail: contrast }));
 }
 
 export function usePortalContrast(): [PortalContrast, (next: PortalContrast) => void] {
+  const [revision, setRevision] = useState(scopeEpoch);
   const [contrast, setContrast] = useState<PortalContrast>(readPortalContrast);
   useEffect(() => {
-    const onChange = (event: Event) => {
-      const next = (event as CustomEvent<PortalContrast>).detail;
-      if (isContrast(next)) setContrast(next);
+    const onChange = () => {
+      setRevision(scopeEpoch);
+      setContrast(readPortalContrast());
     };
     const onStorage = (event: StorageEvent) => {
-      if (event.key === CONTRAST_KEY || event.key === null) setContrast(readPortalContrast());
+      if (event.key === scopeKey || event.key === null) { memory = defaults(); storageFallback = false; onChange(); }
     };
     window.addEventListener(CONTRAST_EVENT, onChange);
+    window.addEventListener(SCOPE_EVENT, onChange);
     window.addEventListener("storage", onStorage);
+    onChange();
     return () => {
       window.removeEventListener(CONTRAST_EVENT, onChange);
+      window.removeEventListener(SCOPE_EVENT, onChange);
       window.removeEventListener("storage", onStorage);
     };
   }, []);
   const update = useCallback((next: PortalContrast) => {
-    setContrast(next);
-    writePortalContrast(next);
-  }, []);
+    writePortalContrast(next, revision);
+  }, [revision]);
   return [contrast, update];
 }
 
