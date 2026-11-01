@@ -5,7 +5,7 @@
   "packages": [
     {
       "id": "jumpcloud-agent", "name": "JumpCloud Agent", "vendor": "JumpCloud", "category": "identity", "arch": "x64", "confirmed": true,
-      "source": { "type": "url", "url": "https://cdn02.jumpcloud.com/production/jcagent-msi-signed.msi", "publisher": "JumpCloud Inc.", "sha256": null, "sha256Verified": false, "sha256From": "no vendor-published hash (JumpCloud sidecar and docs checked 2026-10-31): R5 pins on first trusted download", "vendorSigns": true, "signatureFrom": "Authenticode Valid, signer CN=JumpCloud Inc, verified 2026-11-01 at first trusted download" },
+      "source": { "type": "url", "url": "https://cdn02.jumpcloud.com/production/jcagent-msi-signed.msi", "version": "evergreen", "publisher": "JumpCloud Inc.", "sha256": null, "sha256Verified": false, "sha256From": "no vendor-published hash (JumpCloud sidecar and docs checked 2026-10-31): R5 pins on first trusted download", "vendorSigns": true, "signatureFrom": "Authenticode Valid, signer CN=JumpCloud Inc, verified 2026-11-01 at first trusted download" },
       "install": { "type": "msi", "args": "/quiet /norestart JCINSTALLERARGUMENTS=\"-k {SECRET:JC_CONNECT_KEY}\"", "timeoutSeconds": 900, "successExitCodes": [0, 3010, 1641], "rebootExitCodes": [3010, 1641] },
       "detect": { "services": ["jumpcloud-agent"], "processes": ["jumpcloud-agent"], "paths": ["%ProgramFiles%\\JumpCloud\\jumpcloud-agent.exe"], "appNameRegex": "^JumpCloud Agent" },
       "secrets": ["JC_CONNECT_KEY"],
@@ -13,7 +13,7 @@
     },
     {
       "id": "jumpcloud-remote-assist", "name": "JumpCloud Remote Assist", "vendor": "JumpCloud", "category": "remote-support", "arch": "x64", "confirmed": false,
-      "source": { "type": "url", "url": "https://cdn02.jumpcloud.com/production/jumpcloud-remote-assist-agent.msi", "publisher": "JumpCloud Inc.", "sha256": null, "sha256Verified": false, "sha256From": "no vendor-published hash (JumpCloud sidecar and docs checked 2026-10-31): R5 pins on first trusted download", "vendorSigns": true, "signatureFrom": "JumpCloud signs its agent installers (jcagent-msi-signed.msi verified 2026-11-01); this URL returned 403 on 2026-11-01 - confirm it per the entry note" },
+      "source": { "type": "url", "url": "https://cdn02.jumpcloud.com/production/jumpcloud-remote-assist-agent.msi", "version": "evergreen", "publisher": "JumpCloud Inc.", "sha256": null, "sha256Verified": false, "sha256From": "no vendor-published hash (JumpCloud sidecar and docs checked 2026-10-31): R5 pins on first trusted download", "vendorSigns": true, "signatureFrom": "JumpCloud signs its agent installers (jcagent-msi-signed.msi verified 2026-11-01); this URL returned 403 on 2026-11-01 - confirm it per the entry note" },
       "install": { "type": "msi", "args": "/quiet /norestart", "timeoutSeconds": 600, "successExitCodes": [0, 3010], "rebootExitCodes": [3010] },
       "detect": { "services": ["jumpcloud-remote-assist"], "processes": ["jumpcloud-remote-assist"], "paths": ["%ProgramFiles%\\JumpCloud Remote Assist"], "appNameRegex": "^JumpCloud Remote Assist" },
       "notes": "Confirm the current MSI URL in the JumpCloud Remote Assist deployment guide; Remote Assist can also be pushed from the JumpCloud console."
@@ -63,7 +63,7 @@
     },
     {
       "id": "wazuh-agent", "name": "Wazuh Agent", "vendor": "Wazuh", "category": "security", "arch": "x64", "confirmed": false,
-      "source": { "type": "url", "url": "https://packages.wazuh.com/4.x/windows/wazuh-agent-4.9.2-1.msi", "publisher": "Wazuh", "sha256": null, "sha256Verified": false, "sha256From": "no vendor-published hash (packages.wazuh.com sidecars and Wazuh docs checked 2026-10-31): R5 pins on first trusted download", "vendorSigns": true, "signatureFrom": "Authenticode Valid, signer CN=Wazuh Inc, verified 2026-11-01 at first trusted download" },
+      "source": { "type": "url", "url": "https://packages.wazuh.com/4.x/windows/wazuh-agent-4.9.2-1.msi", "version": "4.9.2", "publisher": "Wazuh", "sha256": null, "sha256Verified": false, "sha256From": "no vendor-published hash (packages.wazuh.com sidecars and Wazuh docs checked 2026-10-31): R5 pins on first trusted download", "vendorSigns": true, "signatureFrom": "Authenticode Valid, signer CN=Wazuh Inc, verified 2026-11-01 at first trusted download" },
       "install": { "type": "msi", "args": "/q WAZUH_MANAGER=\"{VALUE:wazuh_manager}\" WAZUH_REGISTRATION_PASSWORD=\"{SECRET:WAZUH_REG_PASSWORD}\" WAZUH_AGENT_GROUP=\"{VALUE:wazuh_group}\"", "timeoutSeconds": 600, "successExitCodes": [0, 3010] },
       "detect": { "services": ["WazuhSvc"], "processes": ["wazuh-agent"], "paths": ["%ProgramFiles(x86)%\\ossec-agent"], "appNameRegex": "Wazuh Agent" },
       "secrets": ["WAZUH_REG_PASSWORD"], "settings": { "wazuh_manager": "", "wazuh_group": "default" },
@@ -78,7 +78,7 @@
     },
     {
       "id": "m365-apps", "name": "Microsoft 365 Apps for business/enterprise", "vendor": "Microsoft", "category": "apps", "arch": "x64", "confirmed": true,
-      "source": { "type": "url", "url": "https://officecdn.microsoft.com/pr/wsus/setup.exe", "publisher": "Microsoft Corporation", "sha256": null, "sha256Verified": false, "sha256From": "no vendor-published hash (Microsoft publishes none for the ODT bootstrapper, checked 2026-10-31): R5 pins on first trusted download", "vendorSigns": true, "signatureFrom": "Authenticode Valid, signer CN=Microsoft Corporation, verified 2026-11-01 at first trusted download" },
+      "source": { "type": "url", "url": "https://officecdn.microsoft.com/pr/wsus/setup.exe", "version": "evergreen", "publisher": "Microsoft Corporation", "sha256": null, "sha256Verified": false, "sha256From": "no vendor-published hash (Microsoft publishes none for the ODT bootstrapper, checked 2026-10-31): R5 pins on first trusted download", "vendorSigns": true, "signatureFrom": "Authenticode Valid, signer CN=Microsoft Corporation, verified 2026-11-01 at first trusted download" },
       "install": { "type": "odt", "args": "/configure \"{FILE_DIR}\\m365-config.xml\"", "timeoutSeconds": 3600, "successExitCodes": [0] },
       "detect": { "appNameRegex": "^Microsoft 365 Apps|^Microsoft Office", "paths": ["%ProgramFiles%\\Microsoft Office\\root\\Office16\\WINWORD.EXE"] },
       "settings": { "channel": "Current", "productId": "O365BusinessRetail", "excludeApps": ["Groove", "Lync", "Bing"] },
