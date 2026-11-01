@@ -3,7 +3,6 @@ import { useToast } from "@/hooks/use-toast";
 import { PhoneIcon } from "../icons";
 import { EMAIL_ADDRESS, INTEREST_OPTIONS, PHONE_DISPLAY, PHONE_HREF, THIRD_LANE_NAME } from "../content";
 import { HOME_CTA } from "../cta";
-import { HomeScene } from "../scene/HomeScene";
 
 type SubmitState = "idle" | "sending" | "sent";
 
@@ -90,7 +89,6 @@ function AssessmentForm(): JSX.Element {
 export function ContactSection(): JSX.Element {
   return (
     <section className="sec band t-ink contact" id="contact">
-      <HomeScene frame="close" />
       <div className="wrap">
         <div>
           <p className="mark">Cyber Risk Assessment</p>
