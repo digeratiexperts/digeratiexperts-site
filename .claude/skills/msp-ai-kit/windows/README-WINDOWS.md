@@ -22,7 +22,8 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Install-DETechConsole.
 It unpacks the newest `DE-TechTool*.zip` (or an older `DE-TechConsole*.zip`) into `DE-TechConsole\`, clears
 Windows' downloaded-file block, keeps the previous copy as `DE-TechConsole.previous`, and opens DE Tech Tool.
 The window title shows the version (for example `DE Tech Tool v1.10.3`), so you always know which build is
-running. The zip itself is not a script; do not pass it to `-File`.
+running. The zip itself is not a script; do not pass it to `-File`. What changed in each release:
+[CHANGELOG.md](CHANGELOG.md).
 
 ## Start
 
