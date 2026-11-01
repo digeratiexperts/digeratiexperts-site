@@ -84,10 +84,17 @@ Describe 'What identifies a person never reaches the Hub' {
                 $global:SecH.Json | Should -Not -Match ([regex]::Escape($who)) -Because "$who is a person, and the Hub manages devices"
             }
         }
-        It 'the user block is withheld rather than sent' {
-            $global:SecH.Payload.user.assigned | Should -Be '[REDACTED]'
-            $global:SecH.Payload.user.localUserName | Should -Be '[REDACTED]'
-            $global:SecH.Payload.user.email | Should -Be '[REDACTED]'
+        It 'the user block is left out rather than sent as a marker' {
+            # the Hub REFUSES a payload containing '[REDACTED]' and fails the whole send
+            # (DE-TECH-TOOL-ARCHITECTURE.md 1.10.2). So withholding means omitting.
+            @($global:SecH.Payload.user.PSObject.Properties.Name) | Should -Not -Contain 'assigned'
+            @($global:SecH.Payload.user.PSObject.Properties.Name) | Should -Not -Contain 'localUserName'
+            @($global:SecH.Payload.user.PSObject.Properties.Name) | Should -Not -Contain 'email'
+        }
+        It 'no [REDACTED] marker reaches the payload, because the Hub would refuse the send' {
+            # the regression this guards: redacting at the wire instead of omitting breaks every
+            # device send, and the failure looks like a Hub outage rather than a redaction bug
+            $global:SecH.Json | Should -Not -Match 'REDACTED' -Because 'the Hub refuses a payload carrying that marker'
         }
         It 'no profile path survives - only the leaf name does' {
             $global:SecH.Json | Should -Not -Match 'C:\\Users\\' -Because 'the directory chain is what names the person'
