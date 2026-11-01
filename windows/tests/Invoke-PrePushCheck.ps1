@@ -127,7 +127,7 @@ if (-not $SkipPester) {
         }
         if ($r.FailedCount -eq 0) { Write-Ok 'Pester suite green' }
         elseif ($r.FailedCount -le $FailuresAllowed) {
-            Write-Ok ($r.FailedCount + ' known failure(s) acknowledged (allowance ' + $FailuresAllowed + ')')
+            Write-Ok ("{0} known failure(s) acknowledged (allowance {1})" -f $r.FailedCount, $FailuresAllowed)
         }
     }
 }
