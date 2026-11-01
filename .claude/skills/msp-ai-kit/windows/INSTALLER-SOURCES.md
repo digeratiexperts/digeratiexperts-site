@@ -38,27 +38,30 @@ Trust record per source (move 40): `source.sha256` is the vendor-published hash 
 the vendor publishes no per-file hash (checked at the vendor's own sources on 2026-10-31), not that
 one is missing from the catalog. `verified` is `source.sha256Verified`: whether the recorded hash has
 been checked against the actual file. `source.sha256From` in the catalog names the provenance.
+`vendor signs` (move 43) is `source.vendorSigns`, checked by real Authenticode verification on
+2026-11-01 (`source.signatureFrom` holds the signer record): where the vendor signs, a broken or
+absent signature is a refusal exactly like a hash mismatch (R4).
 
-| id | name | source type | location | publisher recorded | vendor-published sha256 | verified |
-|---|---|---|---|---|---|---|
-| `jumpcloud-agent` | JumpCloud Agent | `url` | `https://cdn02.jumpcloud.com/production/jcagent-msi-signed.msi` | JumpCloud Inc. | none | no |
-| `jumpcloud-remote-assist` | JumpCloud Remote Assist | `url` | `https://cdn02.jumpcloud.com/production/jumpcloud-remote-assist-agent.msi` | JumpCloud Inc. | none | no |
-| `wazuh-agent` | Wazuh Agent | `url` | `https://packages.wazuh.com/4.x/windows/wazuh-agent-4.9.2-1.msi` | Wazuh | none | no |
-| `m365-apps` | Microsoft 365 Apps for business/enterprise | `url` | `https://officecdn.microsoft.com/pr/wsus/setup.exe` | Microsoft Corporation | none | no |
-| `sentinelone-agent` | SentinelOne Agent (managed) | `local` | `SentinelOneInstaller_windows_64bit.exe` | SentinelOne | none | no |
-| `guardz-agent` | Guardz Device Agent | `local` | `GuardzDeviceAgent.msi` | Guardz | none | no |
-| `blackpoint-snap` | Blackpoint SNAP Agent | `local` | `BlackpointSnapAgent.msi` | Blackpoint | none | no |
-| `pabx-policy` | Prisma Browser Extension policy (PABX, no private browsing) | `local` | `install-pabx_no-private-browsing.ps1` | Digerati Experts | none | no |
-| `msp360-backup` | MSP360 Managed Backup agent | `local` | `MSP360Backup.exe` | MSP360 | none | no |
-| `timus-connect` | Timus Connect | `local` | `TimusConnect.msi` | Timus | none | no |
-| `teams` | Microsoft Teams | `winget` | `Microsoft.Teams` | (none - R8: winget inherits winget's trust) | none | no |
-| `onedrive` | Microsoft OneDrive | `winget` | `Microsoft.OneDrive` | (none - R8: winget inherits winget's trust) | none | no |
-| `dropbox` | Dropbox | `winget` | `Dropbox.Dropbox` | (none - R8: winget inherits winget's trust) | none | no |
-| `edge` | Microsoft Edge | `winget` | `Microsoft.Edge` | (none - R8: winget inherits winget's trust) | none | no |
-| `chrome` | Google Chrome | `winget` | `Google.Chrome` | (none - R8: winget inherits winget's trust) | none | no |
-| `pdf-reader` | Adobe Acrobat Reader (64-bit) | `winget` | `Adobe.Acrobat.Reader.64-bit` | (none - R8: winget inherits winget's trust) | none | no |
-| `dell-command-update` | Dell Command \| Update | `winget` | `Dell.CommandUpdate` | (none - R8: winget inherits winget's trust) | none | no |
-| `powershell-7` | PowerShell 7 | `winget` | `Microsoft.PowerShell` | (none - R8: winget inherits winget's trust) | none | no |
+| id | name | source type | location | publisher recorded | vendor signs | vendor-published sha256 | verified |
+|---|---|---|---|---|---|---|---|
+| `jumpcloud-agent` | JumpCloud Agent | `url` | `https://cdn02.jumpcloud.com/production/jcagent-msi-signed.msi` | JumpCloud Inc. | yes - verified (CN=JumpCloud Inc) | none | no |
+| `jumpcloud-remote-assist` | JumpCloud Remote Assist | `url` | `https://cdn02.jumpcloud.com/production/jumpcloud-remote-assist-agent.msi` | JumpCloud Inc. | yes - vendor practice (file 403 on 2026-11-01) | none | no |
+| `wazuh-agent` | Wazuh Agent | `url` | `https://packages.wazuh.com/4.x/windows/wazuh-agent-4.9.2-1.msi` | Wazuh | yes - verified (CN=Wazuh, Inc) | none | no |
+| `m365-apps` | Microsoft 365 Apps for business/enterprise | `url` | `https://officecdn.microsoft.com/pr/wsus/setup.exe` | Microsoft Corporation | yes - verified (CN=Microsoft Corporation) | none | no |
+| `sentinelone-agent` | SentinelOne Agent (managed) | `local` | `SentinelOneInstaller_windows_64bit.exe` | SentinelOne | unknown - checked at use via publisher | none | no |
+| `guardz-agent` | Guardz Device Agent | `local` | `GuardzDeviceAgent.msi` | Guardz | unknown - checked at use via publisher | none | no |
+| `blackpoint-snap` | Blackpoint SNAP Agent | `local` | `BlackpointSnapAgent.msi` | Blackpoint | unknown - checked at use via publisher | none | no |
+| `pabx-policy` | Prisma Browser Extension policy (PABX, no private browsing) | `local` | `install-pabx_no-private-browsing.ps1` | Digerati Experts | unknown - checked at use via publisher | none | no |
+| `msp360-backup` | MSP360 Managed Backup agent | `local` | `MSP360Backup.exe` | MSP360 | unknown - checked at use via publisher | none | no |
+| `timus-connect` | Timus Connect | `local` | `TimusConnect.msi` | Timus | unknown - checked at use via publisher | none | no |
+| `teams` | Microsoft Teams | `winget` | `Microsoft.Teams` | (none - R8: winget inherits winget's trust) | n/a (R8) | none | no |
+| `onedrive` | Microsoft OneDrive | `winget` | `Microsoft.OneDrive` | (none - R8: winget inherits winget's trust) | n/a (R8) | none | no |
+| `dropbox` | Dropbox | `winget` | `Dropbox.Dropbox` | (none - R8: winget inherits winget's trust) | n/a (R8) | none | no |
+| `edge` | Microsoft Edge | `winget` | `Microsoft.Edge` | (none - R8: winget inherits winget's trust) | n/a (R8) | none | no |
+| `chrome` | Google Chrome | `winget` | `Google.Chrome` | (none - R8: winget inherits winget's trust) | n/a (R8) | none | no |
+| `pdf-reader` | Adobe Acrobat Reader (64-bit) | `winget` | `Adobe.Acrobat.Reader.64-bit` | (none - R8: winget inherits winget's trust) | n/a (R8) | none | no |
+| `dell-command-update` | Dell Command \| Update | `winget` | `Dell.CommandUpdate` | (none - R8: winget inherits winget's trust) | n/a (R8) | none | no |
+| `powershell-7` | PowerShell 7 | `winget` | `Microsoft.PowerShell` | (none - R8: winget inherits winget's trust) | n/a (R8) | none | no |
 
 Local packages are staged by DE into `%ProgramData%\DE\TechConsole\packages`
 (`localPackagesDir` in the catalog) and must be hashed at intake (R9).

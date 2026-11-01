@@ -802,17 +802,24 @@ function Write-DEIntegrityEvidence {
     return $i
 }
 function Test-DEPackageTrust {
-    <# Applies the catalog trust policy to a file: sha256 must match when given; Authenticode must be valid and match the publisher when given; otherwise refuse unless -AllowUnverified. #>
-    param([Parameter(Mandatory = $true)][string]$Path, [string]$Sha256, [string]$Publisher, [switch]$AllowUnverified)
+    <# Applies the catalog trust policy to a file: sha256 must match when given; Authenticode must be valid and match the publisher when given; where the vendor signs (R4) a broken or absent signature is refused exactly like a hash mismatch - never overridable. #>
+    param([Parameter(Mandatory = $true)][string]$Path, [string]$Sha256, [string]$Publisher, [switch]$VendorSigns, [switch]$AllowUnverified)
     $reasons = @()
     if (-not (Test-Path -LiteralPath $Path)) { return [pscustomobject]@{ Ok = $false; Reasons = @('file not found'); Sha256 = ''; Signature = $null } }
     $hash = Get-DEFileSha256 -Path $Path
-    if ($Sha256 -and $hash -ne $Sha256.ToLowerInvariant()) { $reasons += "sha256 mismatch (have $hash)" }
+    $hashMismatch = [bool]($Sha256 -and $hash -ne $Sha256.ToLowerInvariant())
+    if ($hashMismatch) { $reasons += "sha256 mismatch (have $hash)" }
     $sig = $null
-    if ($Publisher -or ($Path -match '\.(exe|msi|ps1|dll|msix|appx)$')) { $sig = Test-DEAuthenticode -Path $Path -Publisher $Publisher; if ($Publisher -and -not $sig.Ok) { $reasons += "signature: $($sig.Status) $($sig.Publisher)" } }
+    $sigRefused = $false
+    if ($Publisher -or $VendorSigns -or ($Path -match '\.(exe|msi|ps1|dll|msix|appx)$')) {
+        $sig = Test-DEAuthenticode -Path $Path -Publisher $Publisher
+        if (-not $sig.Ok -and ($Publisher -or $VendorSigns)) { $sigRefused = $true; $reasons += "signature: $($sig.Status) $($sig.Publisher)" }
+    }
     if (-not $Sha256 -and -not $Publisher) { $reasons += 'catalog entry has neither sha256 nor publisher' }
-    $ok = ($reasons.Count -eq 0) -or ($AllowUnverified -and -not ($Sha256 -and $hash -ne $Sha256.ToLowerInvariant()))
-    return [pscustomobject]@{ Ok = $ok; Reasons = $reasons; Sha256 = $hash; Signature = $sig; Overridden = ($AllowUnverified -and $reasons.Count -gt 0) }
+    # R3/R4: a hash mismatch, or a broken/absent signature where the vendor signs, is a refusal - never an overrideable warning
+    $hardRefusal = $hashMismatch -or ($VendorSigns -and $sigRefused)
+    $ok = ($reasons.Count -eq 0) -or ($AllowUnverified -and -not $hardRefusal)
+    return [pscustomobject]@{ Ok = $ok; Reasons = $reasons; Sha256 = $hash; Signature = $sig; Overridden = ($AllowUnverified -and $reasons.Count -gt 0 -and -not $hardRefusal) }
 }
 function Invoke-DEJsonPost {
     <# POSTs a scrubbed JSON body. Bearer token comes from -TokenEnv (an environment variable name) or a runtime secret name, never from a file. #>
