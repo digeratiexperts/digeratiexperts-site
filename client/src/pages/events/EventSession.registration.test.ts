@@ -2,7 +2,8 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } 
 import { chromium, type Browser, type BrowserContext, type Page, type Route } from "playwright";
 import { createServer, type ViteDevServer } from "vite";
 import { existsSync } from "node:fs";
-import { resolve } from "node:path";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { join, resolve } from "node:path";
 
 vi.setConfig({ testTimeout: 15_000 });
 
@@ -10,6 +11,7 @@ vi.setConfig({ testTimeout: 15_000 });
 // request is intercepted; these synthetic receipts never reach CRM or email.
 describe("Live Briefings contact receipt", () => {
   let server: ViteDevServer;
+  let fixture: string;
   let browser: Browser;
   let context: BrowserContext;
   let page: Page;
@@ -20,14 +22,47 @@ describe("Live Briefings contact receipt", () => {
   const values = { name: "Synthetic Visitor", email: "visitor@example.invalid", phone: "5550100123", company: "Synthetic Company" };
 
   beforeAll(async () => {
+    const started = performance.now();
+    const root = process.cwd();
+    // Follow the repository's real-component browser fixtures. Loading App
+    // scans unrelated lazy routes; CI's first cases timed out during cold
+    // startup. Give this actual page its own entry and disposable cache.
+    fixture = await mkdtemp(join(root, ".qa-event-receipt-"));
+    await writeFile(join(fixture, "index.html"), '<!doctype html><html lang="en"><head><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>EXAMPLE event receipt fixture</title></head><body><div id="root"></div><script type="module" src="/fixture.tsx"></script></body></html>');
+    await writeFile(join(fixture, "fixture.tsx"), `
+      import React from "react";
+      import { createRoot } from "react-dom/client";
+      import { HelmetProvider } from "react-helmet-async";
+      import { BookingProvider } from "@/contexts/BookingContext";
+      import EventSession from "@/pages/events/EventSession";
+      import "@/styles/brand-fonts.css";
+      import "@/index.css";
+      createRoot(document.getElementById("root")!).render(
+        <HelmetProvider><BookingProvider><EventSession /></BookingProvider></HelmetProvider>
+      );
+    `);
     server = await createServer({
-      configFile: resolve(process.cwd(), "vite.config.ts"),
+      configFile: false,
+      root: fixture,
+      cacheDir: join(fixture, ".vite"),
+      publicDir: resolve(root, "client/public"),
+      esbuild: { jsx: "automatic" },
+      optimizeDeps: { entries: ["index.html"] },
+      resolve: { alias: {
+        "@": resolve(root, "client/src"), "@shared": resolve(root, "shared"),
+        "@assets": resolve(root, "attached_assets"), "@brand": resolve(root, "brand"),
+      } },
       server: { host: "127.0.0.1", port: 0 },
     });
     await server.listen();
     const address = server.httpServer!.address();
     if (!address || typeof address === "string") throw new Error("Missing local test server address");
     base = `http://127.0.0.1:${address.port}`;
+    // Settle the static import graph before any case begins. This is setup,
+    // not a navigation retry; transform failures still fail the fixture.
+    if (!await server.transformRequest("/fixture.tsx")) throw new Error("Missing event fixture entry transform");
+    await server.waitForRequestsIdle();
+    console.info(`Event receipt fixture imports ready in ${Math.round(performance.now() - started)}ms`);
     browser = await chromium.launch({
       ...(existsSync("/usr/bin/chromium") ? { executablePath: "/usr/bin/chromium" } : {}),
       args: ["--no-sandbox"],
@@ -56,7 +91,13 @@ describe("Live Briefings contact receipt", () => {
   }, 120_000);
 
   afterEach(async () => { await context?.close(); });
-  afterAll(async () => { await browser?.close(); await server?.close(); });
+  afterAll(async () => {
+    try { await browser?.close(); }
+    finally {
+      try { await server?.close(); }
+      finally { if (fixture) await rm(fixture, { recursive: true, force: true }); }
+    }
+  });
 
   async function submit() { await page.getByTestId("event-register-submit").click(); }
   async function retained() {
