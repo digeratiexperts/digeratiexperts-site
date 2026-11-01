@@ -5,7 +5,7 @@ document is the **hard gate on section E (moves 59-78)**: no job type of `de.tec
 document exists, and none is enabled that its rules do not allow. Section E builds to this document; a pull request that
 flips a job type on must show the checklist rows for that type in §7 are met.
 
-**Status:** in force on merge. Decisions marked **JOE DECISION** (§12) gate the job types named beside them.
+**Status:** in force on merge. The eight decisions this document left open (D1-D8) were made by **Joe on 2026-10-31** and are recorded in §12; the rules below read as decided, and the job types they gate follow them.
 
 **Scope:** the call-home path described in [DE-TECH-TOOL-ARCHITECTURE.md](DE-TECH-TOOL-ARCHITECTURE.md) ("Call-home
 design"): the **DE Tech Agent Windows service**, its **Hub control plane** (Intelligence Hub), the **signed local
@@ -132,7 +132,7 @@ Every mitigation that is a move names it; every C-number is the Hub-side control
 |---|---|---|---|
 | R1 | Nobody can prove who ordered a job | Jobs carry `issuedBy` and a reason/ticket; every token, enrolment, job, delivery, result and refusal is written to the append-only audit (C16 pattern); device evidence records jobId, technician, licence and build | Audit assertions |
 | R2 | A technician denies a local change | The tool records technician + build ID + licence on every run (PROTECTING-THE-TOOL layer 7) | Existing evidence fields |
-| R3 | Evidence disappears | Hub-side copy of results; local deletions logged; retention policy once DE sets it (**93**, JOE DECISION D6) | Move 93 when unblocked |
+| R3 | Evidence disappears | Hub-side copy of results; local deletions logged; retention applied per Joe's periods (**93**, D6: raw evidence 13 months, audit/compliance 6 years) | Move 93 (move 9 decided) |
 | R4 | Enrolment is denied after the fact | Token issuance/consumption and device approval are audited; the pending-device approval names its approver (C18 pattern) | Enrolment audit tests |
 
 ### Information disclosure
@@ -155,7 +155,7 @@ Every mitigation that is a move names it; every C-number is the Hub-side control
 | D2 | One bad job bricks a device | Every action has verify/rollback; restart resumes (**31**); a forced failure rolls back (**32**); timeouts set from measured run times (**36**); a cancelled run leaves no half-applied state (**37**) | Moves 31, 32, 36, 37 |
 | D3 | The Hub is unreachable | Local functions keep working with no server (**76**); evidence queues offline, size-bounded, and is never dropped silently (**71**); stale cached lists never relax enforcement (licence precedent) | Move 76 test |
 | D4 | Clock skew invalidates everything (or extends it) | `net.time` gate before work that needs TLS; bounded validity windows; the monotonic latest-time floor stops clock-setback attacks (licence precedent) | Skew tests |
-| D5 | A mass job goes wrong fleet-wide | Mass-impact jobs need a person's approval even from the catalog (C8 pattern, threshold at JOE DECISION D5); staged rollout; fleet kill switch and per-account pause (**78**) | Move 78 + blast-radius tests |
+| D5 | A mass job goes wrong fleet-wide | Mass-impact jobs need a person's approval even from the catalog (C8 pattern; threshold **10 devices**, D5 decided 2026-10-31); staged rollout; fleet kill switch and per-account pause (**78**) | Move 78 + blast-radius tests |
 | D6 | The update channel is poisoned | Signed manifests only; self-test before swap; if the release key is doubted, the manifest is pulled and a fresh install carries the new key (Hub IR-3 pattern) | Move 99; IR runbook |
 
 ### Elevation of privilege
@@ -165,8 +165,8 @@ Every mitigation that is a move names it; every C-number is the Hub-side control
 | E1 | A job runs an action its job type does not allow | The **two-key check** of §7: the kind allowlist and the signed local catalog must both accept the action ID | Per-kind refusal tests (part of moves 59, 67) |
 | E2 | A local user escalates through the service | TB2 rules (S6); parameters arrive as data; the service never follows user-supplied paths | C10/C11-pattern tests |
 | E3 | A read-only job changes the device | The `audit` job type has no Apply/Remediate/Rollback at all (§7.1); elevation gates (`gate.elevated`) are enforced on the device regardless of who signed the job | Audit-kind mutation tests |
-| E4 | The break-glass shell is abused | A separate capability (**74**): disabled by default, just-in-time approved, short-lived, fully transcripted. **No job type enables it** (JOE DECISION D4) | Move 74 design review |
-| E5 | A compromised Hub signs arbitrary jobs (adversary 3) | Job-key tier-0 handling: ceremony and rotation (§9), key rotation (**64**), device revocation (**75**), kill switch (**78**), per-build reviewer-key pinning (C21 pattern, JOE DECISION D3); every delivered job is reviewable by payload hash | Rotation/revocation tests; audit drill |
+| E4 | The break-glass shell is abused | **Not built** (D4, decided 2026-10-31: defer, do not build; move 74 is answered by that decision). If it is ever revisited it is a separate capability: disabled by default, just-in-time approved, short-lived, fully transcripted, and **no job type enables it** | Decision recorded; nothing to test while it does not exist |
+| E5 | A compromised Hub signs arbitrary jobs (adversary 3) | Job-key tier-0 handling: ceremony and rotation (§9), key rotation (**64**), device revocation (**75**), kill switch (**78**), per-build reviewer-key pinning (C21 pattern) — **adopted**, D3: two offline hardware keys (primary + backup YubiKey), both held by Joe; every delivered job is reviewable by payload hash | Rotation/revocation tests; audit drill |
 | E6 | A job retargets another device or client | `deviceKey` shape and certificate binding; account mapping required; never infer tenant from hostname | Cross-device refusal tests |
 
 ## 6. Residual risks (honest list)
@@ -174,14 +174,15 @@ Every mitigation that is a move names it; every C-number is the Hub-side control
 - **PowerShell is readable and editable.** Enforcement is server-held value, integrity reporting and watermarking, not
   obfuscation (PROTECTING-THE-TOOL "the honest starting point"). An edited copy still has no secrets, no profiles and no
   Hub access.
-- **Adversary 3 can sign jobs** while the job key lives on the Hub server. Reviewer-key pinning (D3), rotation, revocation
+- **Adversary 3 can sign jobs** while the job key lives on the Hub server. Reviewer-key pinning (D3, decided), rotation, revocation
   and the kill switch narrow it; only a KMS/HSM (§9) closes it. Treat the VPS like a domain controller until then.
 - **No TPM means clonable software keys** until revocation catches up. Mitigation is detection speed (C20 pattern) and
   tested revocation (**75**).
 - **The de-sync HMAC envelope (A8) is one shared secret per deployment.** A leak forges events until it is rotated. Agent
   traffic does not use it; technician-initiated sends keep it until a per-device event identity supersedes them.
-- **Retention and BAA answers are Joe's (D6, moves 9/96).** Until they land: bounded queues, no silent deletion, flag for
-  DE.
+- **Retention is decided; the BAA answer is not.** Joe's periods (D6, 2026-10-31): raw device evidence 13 months,
+  audit logs and compliance reports 6 years (HIPAA documentation retention) — implemented by moves 9/93. BAA status
+  for vendors receiving device data (move 96) is still open.
 
 ## 7. Job types: enable and deny rules
 
@@ -207,10 +208,10 @@ The envelope's `actions` array names action IDs from the signed local catalog.
 - run while the fleet kill switch or the account's pause is active (move 78);
 - uninstall or impair the security stack (`security.*`) — the single exception is `deprov.agents` inside a
   `deprovision` job with two-person approval (§7.6);
-- enable or use the break-glass shell (move 74) — separate capability, disabled by default (D4);
+- build, enable or use the break-glass shell (move 74) — **not built** (D4, decided 2026-10-31: defer, do not build);
 - send unredacted secrets or personal data in results or evidence (redaction before egress and before caps);
 - re-run a non-idempotent action without its lease and idempotency key (moves 60, 70);
-- skip technician confirmation while its type is in "confirmed-plan" mode (JOE DECISION D2).
+- skip technician confirmation while its type is in confirmed-plan mode. **All types start technician-confirmed** (D2, decided 2026-10-31): a type flips to unattended only after 30 days on DE-internal devices with zero incidents, recorded as evidence.
 
 Action families referenced below are the registered catalog IDs (`Register-DEAction`):
 `order.*` `rescue.*` `net.*` `maint.*` `identity.*` `jumpcloud.*` `security.*` `apps.*` (`apps.<pkgId>`,
@@ -237,7 +238,7 @@ Attributes that carry weight: `Destructive`, `RequiresElevation`, `RequiresSecre
 | **Secrets** | `RequiresSecrets` actions (`S1_SITE_TOKEN`, `GUARDZ_ORG_KEY`, ...) resolve locally at run time — technician input or vault. **Never in the job envelope.** |
 | **Order rules** | Nothing that needs a restart runs on top of a pending reboot (`maint.pending-reboot` gate first). Anything user-visible asks the user first ("Not now" is honoured). |
 | **Approval** | None per job for non-destructive work; every applied action records its provenance: jobId, `issuedBy`, action id + version, result. |
-| **Enable when (moves)** | 7.1's list + 72 (signed install/upgrade/uninstall) + 76 (Hub-down test) + JOE DECISION D2. |
+| **Enable when (moves)** | 7.1's list + 72 (signed install/upgrade/uninstall) + 76 (Hub-down test) + the D2 rule (technician-confirmed first; unattended only after 30 incident-free days on DE-internal devices, evidenced). |
 
 ### 7.3 `provision` — new / dropship build-out
 
@@ -246,8 +247,8 @@ Attributes that carry weight: `Destructive`, `RequiresElevation`, `RequiresSecre
 | **ENABLE** | `order.*`, `net.*`, `maint.*`, `jumpcloud.*` (`agent` `user-mapping` `bind-user` `usergroup.*` `group.*` `policies` `go-extension` `device-trust`), `security.*`, `apps.*`, `baseline.*`, `browser.*`, `branding.*`, `ops.*`, `plan.*`, and the protect stage of `identity.*`: `identity.bitlocker` `identity.bitlocker-backup` `identity.breakglass` `identity.breakglass.verify` `identity.onedrive` `identity.hello`. |
 | **DENY** | The takeover-only identity steps: `identity.migrate` `identity.verify-migration` `identity.hello-reset` `identity.entra-leave` `identity.mdm-cleanup`; `deprov.*`; `rescue.*`; `apps.remove.*` except when the client profile's `apps.remove` list names the package **and** the job carries per-job approval (D5). |
 | **Order rules (enforced, not advisory)** | `order.verify-device` (dropship) -> `net.connectivity` / `net.time` -> `maint.pending-reboot` -> `jumpcloud.agent` -> BitLocker encrypted with the recovery password escrowed and proven (`identity.bitlocker` / `identity.bitlocker-backup`) -> everything else -> `apps.m365.readiness` last. |
-| **Approval** | `Destructive` actions (`apps.remove.*`) need a second approver per job (D5). |
-| **Enable when (moves)** | 7.2's list + 77 (queue load test) + JOE DECISION D5. |
+| **Approval** | `Destructive` actions (`apps.remove.*`) need a second approver per job (D5, decided 2026-10-31). **While DE has one person, destructive jobs are not run through the agent at all — hands-on only.** Mass-impact jobs (10+ devices) need a person's approval even from the catalog. |
+| **Enable when (moves)** | 7.2's list + 77 (queue load test) + the D5 rules (second approver exists, or the destructive families run hands-on). |
 
 ### 7.4 `takeover` — the full takeover runbook (highest impact)
 
@@ -256,8 +257,8 @@ Attributes that carry weight: `Destructive`, `RequiresElevation`, `RequiresSecre
 | **ENABLE** | Everything `provision` enables, plus `identity.migrate` `identity.verify-migration` `identity.hello-reset` `identity.entra-leave` `identity.mdm-cleanup`. |
 | **DENY** | `deprov.*`; `rescue.*`; `apps.remove.*` except per profile + approval; security removals (global list). |
 | **Order rules (the hard ones)** | Protect -> migrate -> leave: `identity.bitlocker-backup` **verified outside Entra before** `identity.entra-leave` ("leaving Entra can take the only copy of the recovery key with it"); `identity.verify-migration` **before** `identity.hello-reset` and the leave steps; a `rescue.handoff` for another device or one failing its contract is investigated, never marked reviewed. |
-| **Approval** | Every `identity.*` apply step: named technician on the job **and** a second approver (D5); before/after evidence recorded for each. |
-| **Enable when (moves)** | 7.3's list + 75/78 proven + JOE DECISION D1 + JOE DECISION D3 (recommended) + JOE DECISION D2. |
+| **Approval** | Every `identity.*` apply step is in the destructive family (D5, decided 2026-10-31): named technician on the job **and** a second approver; before/after evidence recorded for each. **While DE has one person these run hands-on at the device, not as agent jobs.** |
+| **Enable when (moves)** | 7.3's list + 75/78 proven + the D1 order + reviewer-key pinning in place (D3, decided: two offline hardware keys — primary + backup YubiKey, both held by Joe) + the D2 rule. |
 
 ### 7.5 `rescue` — rescue coordination
 
@@ -274,10 +275,10 @@ Attributes that carry weight: `Destructive`, `RequiresElevation`, `RequiresSecre
 | **ENABLE** | Only `deprov.agents` `deprov.branding` `deprov.breakglass` `deprov.data-preserved` `deprov.jumpcloud` (the tool's own rule: deprovision runs only the `deprov.*` actions that name it), plus read-only `Detect` of anything else for the final report. |
 | **DENY** | All other `Apply`; `identity.*`; security removals outside `deprov.agents`; anything touching client data. `deprov.data-preserved` **must verify data is preserved before any destructive step runs**. |
 | **Order rules** | Verify data preserved -> remove DE agents (incl. the DE-deployed security stack, `deprov.agents`) -> remove DE branding and break-glass -> leave the client a local administrator -> final read-only audit snapshot as evidence. |
-| **Approval** | **Two people for every destructive action** (D5); the job carries the ticket; the type stays disabled until D5 exists. |
-| **Enable when (moves)** | All of the above + 75, 78 + JOE DECISION D1 + D5. |
+| **Approval** | **Two people for every destructive action** (D5, decided 2026-10-31); the job carries the ticket. **While DE has one person, `deprovision` destructive steps are hands-on only — the agent does not run them.** |
+| **Enable when (moves)** | All of the above + 75, 78 + the D1 order + the D5 rules (second approver exists, or the destructive steps run hands-on). |
 
-### 7.7 Recommended enable order (JOE DECISION D1)
+### 7.7 Enable order (decided: Joe, 2026-10-31)
 
 | Order | Type | Risk | Why here |
 |---|---|---|---|
@@ -286,7 +287,7 @@ Attributes that carry weight: `Destructive`, `RequiresElevation`, `RequiresSecre
 | 3 | `rescue` | Read + review | Ships beside `audit`; the rescue itself is already safe offline |
 | 4 | `provision` | Write, new devices | Write path on devices with no client history to lose |
 | 5 | `takeover` | Write, identity | Highest impact; only after the protect-first invariants are tested |
-| 6 | `deprovision` | Destructive | Only with two-person approval and D5 in place |
+| 6 | `deprovision` | Destructive | Only with the D5 rules (two-person approval; hands-on while DE has one person) |
 
 ## 8. Move map — what section E must deliver, and the threat it answers
 
@@ -307,7 +308,7 @@ Attributes that carry weight: `Destructive`, `RequiresElevation`, `RequiresSecre
 | 71 | Offline evidence queue, size-bounded, never silently dropped | D3, I1 |
 | 72 | Install / upgrade / uninstall of the agent, each signature-checked | T3, D6 |
 | 73 | **This document** | Gates all of the above and every enable below |
-| 74 | Break-glass shell design (disabled by default, time-limited, transcribed) | E4 (D4: build or defer) |
+| 74 | Break-glass shell — **deferred: not built** (D4, decided 2026-10-31) | E4 answered by decision |
 | 75 | Stolen device key revocation stops the agent | S3, E5 |
 | 76 | Hub unreachable: local functions still run | D3 |
 | 77 | Load-test the Hub job queue | D1 |
@@ -324,7 +325,8 @@ Attributes that carry weight: `Destructive`, `RequiresElevation`, `RequiresSecre
   refusals (C20), reviewer-key pinning (C21).
 - **Job key custody (A6):** the same tier-0 treatment as the Hub's job key — two-person ceremony (Hub SOP-1), rotation
   yearly / on departure / on suspicion (SOP-2), kids recorded and keys never pasted into chat, tickets or AI tools.
-  JOE DECISION D7 covers moving signing into a KMS/HSM.
+  JOE DECISION D7 (decided 2026-10-31): env file + SOP-1 ceremony now; a managed KMS/HSM before general
+  availability, target Q1 2027.
 - **The de-sync HMAC envelope stays** for technician-initiated sends (device record, warranty, rescue handoff). Agent
   traffic uses per-device mTLS and signed jobs. The shared secret (A8) is never accepted as an agent credential.
 - **ADR 0022 applies to the operators.** AI agents and tooling that can change the Hub are adversary-5 class: task-scoped
@@ -338,7 +340,8 @@ Attributes that carry weight: `Destructive`, `RequiresElevation`, `RequiresSecre
 - Redact on the device before egress **and** before the output cap, so a secret crossing the cap is still whole (C9).
 - Results are capped; the offline queue is size-bounded and reports what it holds (71).
 - PII fields are classified (91) and redacted before upload (92): results carry state, not people.
-- Evidence reads are logged at the Hub (94). Retention (93) waits on D6.
+- Evidence reads are logged at the Hub (94). Retention (93) applies Joe's periods (D6, decided 2026-10-31): raw
+  device evidence **13 months**, audit logs and compliance reports **6 years** (HIPAA documentation retention).
 - BitLocker recovery passwords never reach jobs, logs, state or receipts (14); the rescue prompts and stores nothing.
 
 ## 11. Detection and response hooks
@@ -354,20 +357,21 @@ Attributes that carry weight: `Destructive`, `RequiresElevation`, `RequiresSecre
   and re-enrol rather than patch in place; after any suspected job-key compromise, review every delivered job by
   `payloadSha256` and device before resuming.
 
-## 12. Decisions that need Joe
+## 12. Decisions for Joe — decided 2026-10-31
 
-Marked **JOE DECISION** where they appear. Nothing in §7 that names one is enabled until it is answered.
+Marked **JOE DECISION** where they appear above. Joe made all eight on 2026-10-31 (via Claude, on Joe's explicit
+authority); the **Decision (Joe, 2026-10-31)** column is the answer section 7 now follows.
 
-| ID | Decision | Gates | Recommendation in this doc |
-|---|---|---|---|
-| D1 | Enable order of the six job types | All of §7 | Adopt §7.7: audit -> maintenance -> rescue -> provision -> takeover -> deprovision |
-| D2 | Do remote jobs run unattended, or does every job stay a technician-confirmed plan at first? | maintenance, provision, takeover | Start technician-confirmed (that is what `job.schema.json` says today); flip per type after a probation period on DE-internal devices |
-| D3 | Pin reviewer keys on client builds (C21 pattern: a job runs only with an offline reviewer's signature over the script hash)? | takeover, deprovision | Adopt once two reviewer keys exist; it is what stops an adversary-3 Hub compromise from running new code |
-| D4 | Build the break-glass shell at all (move 74)? | none — it is never a job type | Defer; if built: disabled by default, just-in-time approved, time-limited, fully transcripted, and never reachable from a job |
-| D5 | Approval thresholds: which families are "destructive", the second-person rule, the typed self-approval phrase, and the mass-impact number of devices | provision, takeover, deprovision | Destructive = `identity.*` applies, `apps.remove.*`, `deprov.agents`, security removals; second approver for each; mass impact at 25 devices (the C8 number) |
-| D6 | Retention periods for device evidence (moves 9 / 93) | evidence handling | Already open as move 9 (schedule gate J8); until set: bounded queues, no silent deletion |
-| D7 | Job-key custody: environment file now, KMS/HSM when? (Hub R1) | E5 residual risk | Env file with SOP-1 ceremony now; KMS/HSM on the roadmap, target before general availability |
-| D8 | Where agent security alerts are sent (the `ENDPOINT_ALERT_EMAIL` equivalent) | detection (§11) | A DE-attended mailbox, named by Joe |
+| ID | Decision | Gates | Recommendation in this doc | Decision (Joe, 2026-10-31) |
+|---|---|---|---|---|
+| D1 | Enable order of the six job types | All of §7 | Adopt §7.7: audit -> maintenance -> rescue -> provision -> takeover -> deprovision | **Adopt the §7.7 order.** |
+| D2 | Do remote jobs run unattended, or does every job stay a technician-confirmed plan at first? | maintenance, provision, takeover | Start technician-confirmed (that is what `job.schema.json` says today); flip per type after a probation period on DE-internal devices | **Technician-confirmed first.** A job type flips to unattended only after 30 days on DE-internal devices with zero incidents, recorded as evidence. |
+| D3 | Pin reviewer keys on client builds (C21 pattern: a job runs only with an offline reviewer's signature over the script hash)? | takeover, deprovision | Adopt once two reviewer keys exist; it is what stops an adversary-3 Hub compromise from running new code | **Adopted.** Reviewer-key pinning with two offline hardware keys (primary + backup YubiKey), both held by Joe. |
+| D4 | Build the break-glass shell at all (move 74)? | none - it is never a job type | Defer; if built: disabled by default, just-in-time approved, time-limited, fully transcripted, and never reachable from a job | **Defer. Do not build the break-glass shell.** Move 74 is answered by this decision. |
+| D5 | Approval thresholds: which families are "destructive", the second-person rule, the typed self-approval phrase, and the mass-impact number of devices | provision, takeover, deprovision | Destructive = `identity.*` applies, `apps.remove.*`, `deprov.agents`, security removals; second approver for each; mass impact at 25 devices (the C8 number) | **Destructive families as recommended; second approver required.** While DE has one person, destructive jobs are **not** run through the agent (hands-on only). Mass impact = **10 devices**. |
+| D6 | Retention periods for device evidence (moves 9 / 93) | evidence handling | Already open as move 9 (schedule gate J8); until set: bounded queues, no silent deletion | **Raw device evidence 13 months; audit logs and compliance reports 6 years** (HIPAA documentation retention). This also answers move 9 (#727, noted there). |
+| D7 | Job-key custody: environment file now, KMS/HSM when? (Hub R1) | E5 residual risk | Env file with SOP-1 ceremony now; KMS/HSM on the roadmap, target before general availability | **Env file + SOP-1 ceremony now; managed KMS/HSM before general availability, target Q1 2027.** |
+| D8 | Where agent security alerts are sent (the `ENDPOINT_ALERT_EMAIL` equivalent) | detection (§11) | A DE-attended mailbox, named by Joe | **`security@digeratiexperts.com`** (Joe to confirm the Zoho alias exists). |
 
 ## 13. Change control
 
