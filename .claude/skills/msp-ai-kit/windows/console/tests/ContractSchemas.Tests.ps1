@@ -36,6 +36,13 @@ Describe 'Every contract schema has its validators under test' {
             '^[A-Za-z0-9-]{1,64}$'               = 'proj-1'
             '^[a-z0-9.-]+\.[a-z]{2,}$'           = 'acme.example'
             '^[a-z0-9]+(\.[a-z0-9-]+)+$'         = 'security.guardz'
+            '^[a-z0-9]+(\.[A-Za-z0-9-]+)+$'      = 'jumpcloud.group.Alamo---Users'
+            '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' = '0b8f6d1e-3c4a-4d2b-9e7f-1a2b3c4d5e6f'
+            '^[1-9][0-9]{0,17}$'                 = '42'
+            '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,3})?Z$' = '2026-11-01T12:00:00Z'
+            '^[A-Za-z0-9_-]{22,86}$'             = 'AAAAAAAAAAAAAAAAAAAAAA'
+            '^[a-f0-9]{64}$'                     = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+            '^[A-Za-z0-9_-]{86}$'                = 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
         }
         # one value per JSON kind, for the type-mismatch cases
         $script:KindSamples = @{
