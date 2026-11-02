@@ -3,8 +3,8 @@
 # Decided by Joe, 2026-11-01 (issue #890). When a client is healthcare - or a device may hold PHI -
 # DE Tech Tool runs restricted:
 #
-#   1. system metadata only: no file contents, no document names, no user data
-#   2. evidence encrypted at rest for the whole retention window
+#   1. system metadata only: discovery never looks inside a user's data folders
+#   2. evidence encrypted at rest for the whole retention window (design: PHI-ENCRYPTION-AT-REST.md)
 #   3. nothing sent to a vendor without a confirmed BAA
 #
 # Three decisions in that, and each one is the conservative answer:
@@ -18,14 +18,18 @@
 Set-StrictMode -Version 3.0
 
 $script:Phi = @{
-    verticalCache = @{}     # accountId -> @{ vertical; fetchedAt }
+    factsCache     = @{}    # accountId -> @{ facts; fetchedAt }  (a good answer, kept for the tolerance window)
+    failures       = @{}    # accountId -> last failed attempt, so an offline Hub is not asked on every call
     deviceOverride = @{}    # deviceKey -> $true (a device may only ADD restriction)
-    decision = $null        # the settled decision for this session, set by Set-DEPhiDecision
+    decision       = $null  # the settled decision for this session, set by Set-DEPhiDecision
 }
 
+function Get-DEPhiCacheToleranceHours { return 24 }
+function Get-DEPhiFailureBackoffMinutes { return 5 }
+
 function Set-DEPhiDecision {
-    <# Records the settled decision for this session so the vendor gates do not each need the client
-       profile plumbed through them. Called once, when the device decides. #>
+    <# Records the settled decision for this session so the vendor gates and discovery do not each need
+       the client profile plumbed through them. Called once per profile, by Initialize-DEPhiDecision. #>
     param([Parameter(Mandatory = $true)]$State)
     $script:Phi.decision = $State
 }
@@ -38,7 +42,7 @@ function Get-DEPhiDecision {
 
 function Get-DEPhiRestricted {
     <# Shorthand for the gates: is this session restricted? Unknown (no decision recorded) is
-       restricted, because the gate must not open on a device nobody has cleared. #>
+       restricted, because nothing may open on a device nobody has cleared. #>
     $d = $script:Phi.decision
     if ($null -eq $d) { return $true }
     return [bool]$d.restricted
@@ -55,46 +59,48 @@ function Get-DEVendorFromUri {
     return 'unknown'
 }
 
-function Get-DEPhiCacheToleranceHours { return 24 }
-
-function Get-DEClientVertical {
+function Get-DEClientPhiFacts {
     <#
-        The client account's vertical from the Hub, for example 'healthcare'. The ONE place the tool
-        asks, so tests can replace it and no caller reaches for the network on its own.
+        What the Hub says about this client account: @{ vertical; phiRestricted; basis }, or $null when
+        that cannot be determined. The ONE place the tool asks, so tests replace it and no caller reaches
+        for the network on its own.
 
-        Returns the vertical string, or $null when it cannot be determined - which every caller must
-        treat as the restricted case. A cached value is used for Get-DEPhiCacheToleranceHours;
-        beyond that the Hub is asked again, and a failure keeps the stale answer only if there is
-        one to keep.
+        The Hub route is GET /api/techtool/account/:id/profile, signed like the event intake with the
+        runtime secret DE_HUB_SIGNING_SECRET. No secret, no endpoint, no account id, a refusal, a timeout or
+        an answer that is not shaped as expected all return $null - which every caller must treat as the
+        restricted case.
+
+        A good answer is used for Get-DEPhiCacheToleranceHours. A failure is remembered for
+        Get-DEPhiFailureBackoffMinutes so an offline Hub costs one short wait, not one per call, and a
+        stale good answer is kept in preference to none.
 
         Never throws: an unreachable Hub is 'unknown', not a crash.
     #>
-    param([Parameter(Mandatory = $true)][AllowNull()]$ClientProfile, [int]$TimeoutSec = 5)
-    $accountId = Get-DEHashPath -Object $ClientProfile -Path 'hub.accountId'
-    $key = "$accountId"
-    if (-not "$accountId".Trim()) { return $null }   # no account means no vertical: unknown
+    param([Parameter(Mandatory = $true)][AllowNull()]$ClientProfile)
+    $accountId = "$(Get-DEHashPath -Object $ClientProfile -Path 'hub.accountId')".Trim()
+    if ($accountId -notmatch '^[1-9]\d*$') { return $null }   # no usable account means no vertical: unknown
 
-    $hit = $script:Phi.verticalCache[$key]
-    if ($hit -and $hit.fetchedAt -and ((Get-Date) - $hit.fetchedAt).TotalHours -lt (Get-DEPhiCacheToleranceHours)) {
-        return "$($hit.vertical)"
-    }
+    $hit = $script:Phi.factsCache[$accountId]
+    if ($hit -and ((Get-Date) - $hit.fetchedAt).TotalHours -lt (Get-DEPhiCacheToleranceHours)) { return $hit.facts }
+    $failedAt = $script:Phi.failures[$accountId]
+    if ($failedAt -and ((Get-Date) - $failedAt).TotalMinutes -lt (Get-DEPhiFailureBackoffMinutes)) { return $(if ($hit) { $hit.facts } else { $null }) }
 
-    $hub = Get-DEHubConnectionChecklist
-    $endpoint = "$($hub.endpoint)".Trim()
-    if (-not $endpoint -or $endpoint -notmatch '^https://') { return $(if ($hit) { "$($hit.vertical)" } else { $null }) }
-
-    # The single Hub read for a vertical. Kept here, and here only, so a test replaces this function
-    # rather than stubbing an HTTP stack.
+    $stale = $(if ($hit) { $hit.facts } else { $null })
     try {
-        $r = Invoke-WebRequest -Uri ("$endpoint/api/techtool/account/{0}/profile" -f [uri]::EscapeDataString("$accountId")) -UseBasicParsing -TimeoutSec $TimeoutSec -ErrorAction Stop
-        $body = $r.Content | ConvertFrom-Json
+        $endpoint = "$(Get-DEState -Path 'settings.hub.endpoint')".Trim()
+        if (-not $endpoint -or -not (Test-DESecret -Name 'DE_HUB_SIGNING_SECRET')) { return $stale }   # nothing to ask with; not a failure to back off from
+        $base = ([uri]$endpoint).GetLeftPart([UriPartial]::Authority)
+        $body = Get-DEHubSigned -BaseUrl $base -Path ('/api/techtool/account/{0}/profile' -f $accountId) -Secret (Get-DESecretSecure -Name 'DE_HUB_SIGNING_SECRET')
         $vertical = "$($body.vertical)".Trim()
-        $script:Phi.verticalCache[$key] = @{ vertical = $vertical; fetchedAt = (Get-Date) }
-        return $vertical
+        # the Hub must answer with a boolean; anything else is an answer we do not understand
+        if (-not $vertical -or $body.phiRestricted -isnot [bool]) { throw 'the Hub answer is not shaped as expected' }
+        $facts = [pscustomobject]@{ vertical = $vertical; phiRestricted = [bool]$body.phiRestricted; basis = "$($body.basis)" }
+        $script:Phi.factsCache[$accountId] = @{ facts = $facts; fetchedAt = (Get-Date) }
+        $script:Phi.failures.Remove($accountId)
+        return $facts
     } catch {
-        # unreachable, refused or malformed: keep a stale answer if there is one, else unknown
-        if ($hit) { return "$($hit.vertical)" }
-        return $null
+        $script:Phi.failures[$accountId] = Get-Date
+        return $stale
     }
 }
 
@@ -117,42 +123,62 @@ function Get-DEPhiState {
         Is this device PHI-restricted, and why? The answer is a decision record, not a boolean, so
         the reason reaches the evidence bundle and someone can check the call.
 
-            restricted = true   the client's vertical is healthcare, or the device override added it,
-                                or the vertical could not be determined at all
-            restricted = false  only when the vertical is known AND is not healthcare AND no override
-                                asked for more
+            restricted = false  only when the Hub answered, the vertical is known and is not healthcare,
+                                the Hub says phiRestricted is false, AND no override asked for more
+            restricted = true   in every other case: healthcare, the Hub saying so for any other reason
+                                (a healthcare deal restricts whatever the vertical field says), an
+                                override, or no usable answer at all
 
-        The third clause is the fail-closed one: unknown vertical and unreachable Hub both land on
-        restricted, because the cost of being wrong in the permissive direction is a PHI leak.
+        The last clause is the fail-closed one: unknown vertical, unreachable Hub, no signing secret and
+        a malformed answer all land on restricted, because the cost of being wrong in the permissive
+        direction is a PHI leak.
     #>
     param([Parameter(Mandatory = $true)][AllowNull()]$ClientProfile, [string]$DeviceKey = '')
-    $vertical = Get-DEClientVertical -ClientProfile $ClientProfile
-    $known = "$vertical".Trim()
+    $facts = Get-DEClientPhiFacts -ClientProfile $ClientProfile
+    $vertical = $(if ($facts) { "$($facts.vertical)".Trim() } else { '' })
     $clientRestricted = $true
     $why = ''
-    if (-not $known) {
+    if (-not $facts -or -not $vertical) {
         $why = "the client's vertical could not be determined (unknown, or the Hub is unreachable); treating the device as PHI-restricted"
-    } elseif ($known -ieq 'healthcare') {
-        $clientRestricted = $true
+    } elseif ($vertical -ieq 'healthcare') {
         $why = "the client account's vertical is healthcare"
+    } elseif ($facts.phiRestricted -ne $false) {
+        $why = "the Hub marks the account PHI-restricted ($($facts.basis)), whatever its vertical ('$vertical')"
     } else {
         $clientRestricted = $false
-        $why = "the client account's vertical is '$known', not healthcare"
+        $why = "the client account's vertical is '$vertical', not healthcare, and the Hub does not mark it PHI-restricted"
     }
 
     $override = $false
-    if ($DeviceKey -and $script:Phi.deviceOverride.ContainsKey($DeviceKey)) {
-        $override = [bool]$script:Phi.deviceOverride[$DeviceKey]
-    }
+    if ($DeviceKey -and $script:Phi.deviceOverride.ContainsKey($DeviceKey)) { $override = [bool]$script:Phi.deviceOverride[$DeviceKey] }
     if ($override -and -not $clientRestricted) { $why = "$why; a per-device override made it restricted" }
 
     return [pscustomobject]@{
         restricted = [bool]($clientRestricted -or $override)
-        vertical   = $(if ($known) { $known } else { 'unknown' })
+        vertical   = $(if ($vertical) { $vertical } else { 'unknown' })
         client     = [bool]$clientRestricted
         override   = [bool]$override
         reason     = $why
     }
+}
+
+function Initialize-DEPhiDecision {
+    <#
+        Settles the session's PHI decision for this client and records it, so discovery, the vendor gates
+        and the evidence bundle all act on the same answer. Called at each production entry point once the
+        client profile is known (the headless run, the window, and a background job's own runspace, which
+        does not share this module's state).
+
+        A caller with no profile yet does not call it, and the session stays undecided - which reads as
+        restricted. So the first discovery of a window, run before the client is detected, is the
+        conservative one.
+    #>
+    param([Parameter(Mandatory = $true)][AllowNull()]$ClientProfile, [string]$DeviceKey = '')
+    $state = Get-DEPhiState -ClientProfile $ClientProfile -DeviceKey $DeviceKey
+    Set-DEPhiDecision -State $state
+    Write-DELog -Level $(if ($state.restricted) { 'WARN' } else { 'INFO' }) -Message "PHI mode: $(if ($state.restricted) { 'RESTRICTED' } else { 'not restricted' }) - $($state.reason)"
+    try { Add-DEEvidence -Step 'phi.decision' -Module 'phi' -Before 'undecided' -ActionTaken "$(if ($state.restricted) { 'PHI-restricted' } else { 'not PHI-restricted' }): $($state.reason)" -Result 'INFO' -Verification "vertical $($state.vertical)" | Out-Null } catch { Write-DELog -Level DEBUG -Message "PHI decision not added to the evidence: $($_.Exception.Message)" }
+    return $state
 }
 
 function Get-DEVendorBaaStatus {
@@ -199,4 +225,4 @@ function Test-DEVendorBaaAllowed {
     }
 }
 
-Export-ModuleMember -Function Get-DEClientVertical, Set-DEPhiDeviceOverride, Get-DEPhiState, Set-DEPhiDecision, Get-DEPhiDecision, Get-DEPhiRestricted, Get-DEVendorFromUri, Get-DEVendorBaaStatus, Test-DEVendorBaaAllowed
+Export-ModuleMember -Function Get-DEClientPhiFacts, Set-DEPhiDeviceOverride, Get-DEPhiState, Set-DEPhiDecision, Get-DEPhiDecision, Get-DEPhiRestricted, Initialize-DEPhiDecision, Get-DEVendorFromUri, Get-DEVendorBaaStatus, Test-DEVendorBaaAllowed
