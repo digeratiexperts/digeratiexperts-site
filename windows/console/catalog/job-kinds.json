@@ -1,0 +1,108 @@
+{
+  "schema": "de.techconsole.job-kinds/v1",
+  "source": "AGENT-THREAT-MODEL.md section 7, decisions D1-D8 (Joe, 2026-10-31)",
+  "note": "The kind allowlist is the first of the two keys every job needs (the signed local catalog, move 67, is the second). Patterns are -like wildcards over action ids; deny always wins; anything not enabled is refused. A kind is enabled only by a pull request that shows its section 7 checklist rows met (AGENT-THREAT-MODEL.md section 13), so every kind ships disabled and technician-confirmed (D2).",
+  "window": {
+    "maxLifetimeSeconds": 900,
+    "maxSkewSeconds": 300
+  },
+  "limits": {
+    "maxActions": 50,
+    "maxParamStringLength": 256,
+    "massImpactDevices": 10
+  },
+  "secondApproverExists": false,
+  "knownFamilies": ["order", "rescue", "net", "maint", "identity", "jumpcloud", "security", "apps", "baseline", "browser", "branding", "ops", "plan", "deprov"],
+  "globalDeny": ["security.remove*", "security.uninstall*", "security.*.remove", "security.*.uninstall"],
+  "kinds": {
+    "audit": {
+      "enabled": false,
+      "unattended": false,
+      "readOnly": true,
+      "enable": ["order.*", "net.*", "maint.*", "identity.*", "jumpcloud.*", "security.*", "apps.*", "baseline.*", "browser.*", "branding.*", "ops.*", "plan.*", "deprov.data-preserved"],
+      "deny": ["deprov.agents", "deprov.branding", "deprov.breakglass", "deprov.jumpcloud", "rescue.*"],
+      "detectOnly": [],
+      "applyAllowed": [],
+      "handsOnOnly": [],
+      "orderTiers": [],
+      "untiered": "free",
+      "requires": {}
+    },
+    "maintenance": {
+      "enabled": false,
+      "unattended": false,
+      "readOnly": false,
+      "enable": ["maint.*", "net.*", "ops.*", "browser.*", "apps.*", "security.*"],
+      "deny": ["apps.remove.*", "identity.*", "jumpcloud.*", "branding.*", "baseline.*", "deprov.*", "rescue.*", "plan.*"],
+      "detectOnly": [],
+      "applyAllowed": ["*"],
+      "handsOnOnly": [],
+      "orderTiers": [["maint.pending-reboot"]],
+      "untiered": "after",
+      "requires": {}
+    },
+    "rescue": {
+      "enabled": false,
+      "unattended": false,
+      "readOnly": false,
+      "enable": ["rescue.*", "maint.hardware", "net.connectivity", "identity.bitlocker"],
+      "deny": [],
+      "detectOnly": [],
+      "applyAllowed": ["rescue.handoff"],
+      "handsOnOnly": [],
+      "orderTiers": [],
+      "untiered": "free",
+      "requires": {}
+    },
+    "provision": {
+      "enabled": false,
+      "unattended": false,
+      "readOnly": false,
+      "enable": ["order.*", "net.*", "maint.*", "jumpcloud.*", "security.*", "apps.*", "baseline.*", "browser.*", "branding.*", "ops.*", "plan.*", "identity.bitlocker", "identity.bitlocker-backup", "identity.breakglass", "identity.breakglass.verify", "identity.onedrive", "identity.hello"],
+      "deny": ["identity.migrate", "identity.verify-migration", "identity.hello-reset", "identity.entra-leave", "identity.mdm-cleanup", "deprov.*", "rescue.*"],
+      "detectOnly": [],
+      "applyAllowed": ["*"],
+      "handsOnOnly": ["apps.remove.*"],
+      "orderTiers": [["order.verify-device"], ["net.connectivity", "net.time"], ["maint.pending-reboot"], ["jumpcloud.agent"], ["identity.bitlocker", "identity.bitlocker-backup"]],
+      "untiered": "after",
+      "last": ["apps.m365.readiness"],
+      "requires": {}
+    },
+    "takeover": {
+      "enabled": false,
+      "unattended": false,
+      "readOnly": false,
+      "enable": ["order.*", "net.*", "maint.*", "jumpcloud.*", "security.*", "apps.*", "baseline.*", "browser.*", "branding.*", "ops.*", "plan.*", "identity.bitlocker", "identity.bitlocker-backup", "identity.breakglass", "identity.breakglass.verify", "identity.onedrive", "identity.hello", "identity.migrate", "identity.verify-migration", "identity.hello-reset", "identity.entra-leave", "identity.mdm-cleanup"],
+      "deny": ["deprov.*", "rescue.*"],
+      "detectOnly": [],
+      "applyAllowed": ["*"],
+      "handsOnOnly": ["identity.*", "apps.remove.*"],
+      "orderTiers": [["identity.bitlocker", "identity.bitlocker-backup"], ["identity.migrate"], ["identity.verify-migration"], ["identity.hello-reset", "identity.entra-leave", "identity.mdm-cleanup"]],
+      "untiered": "free",
+      "last": ["apps.m365.readiness"],
+      "requires": {
+        "identity.entra-leave": ["identity.bitlocker-backup", "identity.verify-migration"],
+        "identity.hello-reset": ["identity.verify-migration"],
+        "identity.mdm-cleanup": ["identity.verify-migration"]
+      }
+    },
+    "deprovision": {
+      "enabled": false,
+      "unattended": false,
+      "readOnly": false,
+      "enable": ["deprov.agents", "deprov.branding", "deprov.breakglass", "deprov.data-preserved", "deprov.jumpcloud"],
+      "deny": ["identity.*", "rescue.*"],
+      "detectOnly": ["order.*", "net.*", "maint.*", "jumpcloud.*", "security.*", "apps.*", "baseline.*", "browser.*", "branding.*", "ops.*", "plan.*"],
+      "applyAllowed": ["deprov.*"],
+      "handsOnOnly": ["deprov.agents", "deprov.breakglass", "deprov.jumpcloud"],
+      "orderTiers": [["deprov.data-preserved"], ["deprov.agents", "deprov.jumpcloud"], ["deprov.branding", "deprov.breakglass"]],
+      "untiered": "free",
+      "requires": {
+        "deprov.agents": ["deprov.data-preserved"],
+        "deprov.jumpcloud": ["deprov.data-preserved"],
+        "deprov.branding": ["deprov.data-preserved"],
+        "deprov.breakglass": ["deprov.data-preserved"]
+      }
+    }
+  }
+}
