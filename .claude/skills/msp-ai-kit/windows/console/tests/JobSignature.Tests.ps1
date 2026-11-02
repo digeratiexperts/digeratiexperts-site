@@ -67,13 +67,13 @@ Describe 'DE.AgentTrust: a job is believed only when its signature and window ch
   "signature": "2cLK-QMZmckHAacaGUxWi2XtNEwesYZiQlOyFvZSqiZf-d_xpg1c1WbNjuQVFNC5wIsn8rmw6NNNuI20ED1WBQ"
 }
 '@ | ConvertFrom-Json
-            $payload = ConvertFrom-DEBase64Url $v.payload
+            $payload = ConvertFrom-DEAgentBase64Url $v.payload
             $sha = [Security.Cryptography.SHA256]::Create()
             (ConvertTo-Hex $sha.ComputeHash($payload)) | Should -Be $v.payloadSha256 -Because 'the base64url payload decodes to the very bytes the Hub hashed'
-            $pub = ConvertFrom-DEBase64Url $v.publicKey
-            (Test-DEEd25519Signature -PublicKey $pub -Message $payload -Signature (ConvertFrom-DEBase64Url $v.signature)) | Should -Be $true
+            $pub = ConvertFrom-DEAgentBase64Url $v.publicKey
+            (Test-DEEd25519Signature -PublicKey $pub -Message $payload -Signature (ConvertFrom-DEAgentBase64Url $v.signature)) | Should -Be $true
             $altered = $payload.Clone(); $altered[10] = $altered[10] -bxor 1
-            (Test-DEEd25519Signature -PublicKey $pub -Message $altered -Signature (ConvertFrom-DEBase64Url $v.signature)) | Should -Be $false
+            (Test-DEEd25519Signature -PublicKey $pub -Message $altered -Signature (ConvertFrom-DEAgentBase64Url $v.signature)) | Should -Be $false
             $text = [Text.Encoding]::UTF8.GetString($payload)
             $r = Test-DEJobSignature -SigningInput $text -Signature $v.signature -KeyId $v.kid -PinnedKeys @{ $v.kid = $v.publicKey }
             $r.Ok | Should -Be $true -Because $r.Why

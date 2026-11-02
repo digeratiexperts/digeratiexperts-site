@@ -199,7 +199,7 @@ if (-not ('DE.AgentTrust.Ed25519' -as [type])) {
     Add-Type -TypeDefinition $script:Ed25519Source -ReferencedAssemblies 'System.Numerics' -Language CSharp
 }
 
-function ConvertFrom-DEBase64Url {
+function ConvertFrom-DEAgentBase64Url {
     <# base64url, with or without padding, to bytes. Returns $null for anything that is not base64url. #>
     param([AllowNull()][AllowEmptyString()][string]$Text)
     if ([string]::IsNullOrEmpty($Text)) { return $null }
@@ -225,7 +225,7 @@ function Read-DEPinnedJobKeys {
     $raw = Get-Content -LiteralPath $Path -Raw -Encoding UTF8 | ConvertFrom-Json
     $keys = @{}
     foreach ($p in $raw.PSObject.Properties) {
-        $b = ConvertFrom-DEBase64Url "$($p.Value)"
+        $b = ConvertFrom-DEAgentBase64Url "$($p.Value)"
         if ($null -eq $b -or $b.Length -ne 32) { throw "pinned key '$($p.Name)' is not a base64url Ed25519 public key" }
         $keys[$p.Name] = "$($p.Value)"
     }
@@ -250,9 +250,9 @@ function Test-DEJobSignature {
     if ($PinnedKeys -is [System.Collections.IDictionary]) { if ($PinnedKeys.Contains($KeyId)) { $pin = $PinnedKeys[$KeyId] } }
     elseif ($null -ne $PinnedKeys) { $pp = $PinnedKeys.PSObject.Properties[$KeyId]; if ($pp) { $pin = $pp.Value } }
     if (-not $pin) { return (& $result $false 'unknown_key' "key id '$KeyId' is not pinned on this device") }
-    $pub = ConvertFrom-DEBase64Url "$pin"
+    $pub = ConvertFrom-DEAgentBase64Url "$pin"
     if ($null -eq $pub -or $pub.Length -ne 32) { return (& $result $false 'unknown_key' "the pin for '$KeyId' is not a usable Ed25519 key") }
-    $sig = ConvertFrom-DEBase64Url $Signature
+    $sig = ConvertFrom-DEAgentBase64Url $Signature
     if ($null -eq $sig -or $sig.Length -ne 64) { return (& $result $false 'bad_signature' 'the signature is not a base64url Ed25519 signature') }
     $bytes = [Text.Encoding]::UTF8.GetBytes($SigningInput)
     if (-not (Test-DEEd25519Signature -PublicKey $pub -Message $bytes -Signature $sig)) { return (& $result $false 'bad_signature' 'the signature does not match the signed bytes') }
@@ -335,4 +335,4 @@ function Confirm-DEJobAuthentic {
     return [pscustomobject]@{ Ok = $true; Code = ''; Why = 'authentic and inside its window' }
 }
 
-Export-ModuleMember -Function ConvertFrom-DEBase64Url, Test-DEEd25519Signature, Read-DEPinnedJobKeys, Test-DEJobSignature, Get-DETimeFloor, Update-DETimeFloor, Test-DEJobWindow, Confirm-DEJobAuthentic
+Export-ModuleMember -Function ConvertFrom-DEAgentBase64Url, Test-DEEd25519Signature, Read-DEPinnedJobKeys, Test-DEJobSignature, Get-DETimeFloor, Update-DETimeFloor, Test-DEJobWindow, Confirm-DEJobAuthentic
