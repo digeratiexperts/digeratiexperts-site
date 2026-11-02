@@ -100,5 +100,53 @@ Describe 'Installer trust records (move 40)' {
             }
         }
     }
+
+    # Move 41 (#759): R5 as decided in move 48 - no vendor hash means a pin on first trusted download,
+    # behind Authenticode where the vendor signs, and every pin says so. The failure these tests stop
+    # is a pin passing for a vendor-published hash, or a signed vendor pinned without the signature check.
+    Context 'pins are labelled and gated (move 41)' {
+        It 'every recorded hash carries a label, and no label sits without a hash' {
+            foreach ($p in $script:Packages) {
+                $label = "$($p.source.sha256Label)"
+                if ($null -ne $p.source.sha256) {
+                    $label | Should -BeIn @('pinned-first-download', 'vendor-published') -Because "$($p.id) must say what kind of hash it holds"
+                } else {
+                    $label | Should -BeNullOrEmpty -Because "$($p.id) has no hash to label"
+                }
+            }
+        }
+        It 'a pinned-first-download hash is never described as vendor-published' {
+            foreach ($p in $script:Packages) {
+                if ("$($p.source.sha256Label)" -eq 'pinned-first-download') {
+                    $p.source.sha256From | Should -Match '^pinned-first-download' -Because "$($p.id) provenance must lead with the pin label"
+                    $p.source.sha256From | Should -Not -Match 'vendor-published' -Because "$($p.id) must not borrow the vendor-published label"
+                }
+            }
+        }
+        It 'a pinned source whose vendor signs was pinned behind a valid Authenticode check' {
+            foreach ($p in $script:Packages) {
+                if ($null -ne $p.source.sha256 -and $p.source.vendorSigns) {
+                    $p.source.sha256Verified | Should -Be $true -Because "$($p.id) pin is recorded from a checked file"
+                    $p.source.sha256From | Should -Match 'Authenticode Valid, signer CN=' -Because "$($p.id) must record the signature check the pin sat behind (R5 option C)"
+                    $p.source.signatureFrom | Should -Match 'Authenticode Valid' -Because "$($p.id) must carry the signer record (R4)"
+                }
+            }
+        }
+        It 'a url source with no pin says UNPINNED instead of staying silently empty' {
+            foreach ($p in $script:Packages) {
+                if ("$($p.source.type)" -eq 'url' -and $null -eq $p.source.sha256) {
+                    $p.source.sha256From | Should -Match '^UNPINNED' -Because "$($p.id) downloads without a hash and the record must say why"
+                }
+            }
+        }
+        It 'a url source with a pin is checked at download: the catalog hash reaches the trust check' {
+            foreach ($p in $script:Packages) {
+                if ("$($p.source.type)" -eq 'url' -and $null -ne $p.source.sha256) {
+                    $p.source.sha256 | Should -Match '^[0-9a-f]{64}$'
+                    $p.source.sha256Verified | Should -Be $true
+                }
+            }
+        }
+    }
 }
 

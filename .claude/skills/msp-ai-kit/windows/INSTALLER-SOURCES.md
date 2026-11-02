@@ -34,20 +34,20 @@ sources with no vendor hash is move 41
 `Test-DEPackageTrust` before anything runs. `{SECRET:...}` and `{VALUE:...}` tokens in install
 arguments are runtime data and are not source locations.
 
-Trust record per source (move 40): `source.sha256` is the vendor-published hash - `none` below means
-the vendor publishes no per-file hash (checked at the vendor's own sources on 2026-10-31), not that
-one is missing from the catalog. `verified` is `source.sha256Verified`: whether the recorded hash has
+Trust record per source (moves 40-41): `source.sha256` is the recorded hash - `none` below means
+there is nothing to compare yet (no vendor publishes a per-file hash for these files, checked at the vendors' own sources on 2026-10-31), not that
+one is missing from the catalog. A hash shown is **never vendor-published**: it is a pin recorded on first trusted download (R5), labelled `source.sha256Label: pinned-first-download`. `verified` is `source.sha256Verified`: whether the recorded hash has
 been checked against the actual file. `source.sha256From` in the catalog names the provenance.
 `vendor signs` (move 43) is `source.vendorSigns`, checked by real Authenticode verification on
 2026-11-01 (`source.signatureFrom` holds the signer record): where the vendor signs, a broken or
 absent signature is a refusal exactly like a hash mismatch (R4).
 
-| id | name | source type | location | publisher recorded | vendor signs | vendor-published sha256 | verified |
+| id | name | source type | location | publisher recorded | vendor signs | recorded sha256 (pinned-first-download) | verified |
 |---|---|---|---|---|---|---|---|
-| `jumpcloud-agent` | JumpCloud Agent | `url` | `https://cdn02.jumpcloud.com/production/jcagent-msi-signed.msi` | JumpCloud Inc. | yes - verified (CN=JumpCloud Inc) | none | no |
-| `jumpcloud-remote-assist` | JumpCloud Remote Assist | `url` | `https://cdn02.jumpcloud.com/production/jumpcloud-remote-assist-agent.msi` | JumpCloud Inc. | yes - vendor practice (file 403 on 2026-11-01) | none | no |
-| `wazuh-agent` | Wazuh Agent | `url` | `https://packages.wazuh.com/4.x/windows/wazuh-agent-4.9.2-1.msi` | Wazuh | yes - verified (CN=Wazuh, Inc) | none | no |
-| `m365-apps` | Microsoft 365 Apps for business/enterprise | `url` | `https://officecdn.microsoft.com/pr/wsus/setup.exe` | Microsoft Corporation | yes - verified (CN=Microsoft Corporation) | none | no |
+| `jumpcloud-agent` | JumpCloud Agent | `url` | `https://cdn02.jumpcloud.com/production/jcagent-msi-signed.msi` | JumpCloud Inc. | yes - verified (CN=JumpCloud Inc) | b2189af92c730a6949eb640bdc292b6dd82069de93bb0e2710198d87d0439353 | yes |
+| `jumpcloud-remote-assist` | JumpCloud Remote Assist | `url` | `https://cdn02.jumpcloud.com/production/jumpcloud-remote-assist-agent.msi` | JumpCloud Inc. | yes - vendor practice (file 403 on 2026-11-01 and 2026-11-02; UNPINNED until the URL is confirmed) | none | no |
+| `wazuh-agent` | Wazuh Agent | `url` | `https://packages.wazuh.com/4.x/windows/wazuh-agent-4.9.2-1.msi` | Wazuh | yes - verified (CN=Wazuh, Inc) | 88b40d63185d308c898dc237b0d5ba0ee1ca2ab41e6b38db28d1d6b3b20a616d | yes |
+| `m365-apps` | Microsoft 365 Apps for business/enterprise | `url` | `https://officecdn.microsoft.com/pr/wsus/setup.exe` | Microsoft Corporation | yes - verified (CN=Microsoft Corporation) | c883ab32dffe4a371bb37411de83edc5d62ff31d315c5e3b59e830326bb4e322 | yes |
 | `sentinelone-agent` | SentinelOne Agent (managed) | `local` | `SentinelOneInstaller_windows_64bit.exe` | SentinelOne | unknown - checked at use via publisher | none | no |
 | `guardz-agent` | Guardz Device Agent | `local` | `GuardzDeviceAgent.msi` | Guardz | unknown - checked at use via publisher | none | no |
 | `blackpoint-snap` | Blackpoint SNAP Agent | `local` | `BlackpointSnapAgent.msi` | Blackpoint | unknown - checked at use via publisher | none | no |
