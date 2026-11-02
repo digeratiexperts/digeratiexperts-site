@@ -57,12 +57,12 @@ These are the dependencies worth knowing before picking anything up:
 | B. Real-device validation (25-38) | 14 | 0 | 14 | 1 |
 | C. Installer integrity (39-48) | 10 | 9 | 1 | 1 |
 | D. Signing and release (49-58) | 10 | 0 | 10 | 0 |
-| E. Hub and call-home agent (59-78) | 20 | 1 | 19 | 0 |
+| E. Hub and call-home agent (59-78) | 20 | 20 | 0 | 0 |
 | F. Remote assist (79-82) | 4 | 0 | 4 | 0 |
 | G. Client and dropship workflows (83-90) | 8 | 8 | 0 | 0 |
 | H. Sensitive data (91-96) | 6 | 1 | 5 | 0 |
 | I. Supportability and docs (97-104) | 8 | 7 | 1 | 1 |
-| **Total** | **104** | **45** | **59** | **8** |
+| **Total** | **104** | **64** | **40** | **8** |
 
 ## The moves
 
@@ -154,27 +154,27 @@ These are the dependencies worth knowing before picking anything up:
 
 ### E. Hub and call-home agent (59-78)
 
-- [ ] **59** Finalise the de.techconsole.job/v1 contract and its device validators. `agent` - [#777](https://github.com/digeratiexperts/digeratiexperts-site/issues/777)
-- [ ] **60** Design the Hub job-queue endpoints: lease, acknowledge, result. `agent` - [#778](https://github.com/digeratiexperts/digeratiexperts-site/issues/778)
-- [ ] **61** Design the one-time enrolment token exchange. `agent` - [#779](https://github.com/digeratiexperts/digeratiexperts-site/issues/779)
-- [ ] **62** Issue per-device client certificates in the Hub; support revocation. `agent` - [#780](https://github.com/digeratiexperts/digeratiexperts-site/issues/780)
-- [ ] **63** Use mTLS on the agent connection. `agent` - [#781](https://github.com/digeratiexperts/digeratiexperts-site/issues/781)
-- [ ] **64** Add certificate rotation. `agent` - [#782](https://github.com/digeratiexperts/digeratiexperts-site/issues/782)
-- [ ] **65** Verify job signatures on the device, including expiry. `agent` - [#783](https://github.com/digeratiexperts/digeratiexperts-site/issues/783)
-- [ ] **66** Keep a replay store of nonces on the device. `agent` - [#784](https://github.com/digeratiexperts/digeratiexperts-site/issues/784)
-- [ ] **67** Reject any action ID not in the signed local catalog. `agent` - [#785](https://github.com/digeratiexperts/digeratiexperts-site/issues/785)
-- [ ] **68** Build the Windows service skeleton, with no actions yet. `agent` - [#786](https://github.com/digeratiexperts/digeratiexperts-site/issues/786)
-- [ ] **69** Implement heartbeat and inventory deltas. `agent` - [#787](https://github.com/digeratiexperts/digeratiexperts-site/issues/787)
-- [ ] **70** Upload evidence with resumable retries and idempotency keys. `agent` - [#788](https://github.com/digeratiexperts/digeratiexperts-site/issues/788)
-- [ ] **71** Queue evidence offline with a size bound; never drop it silently. `agent` - [#789](https://github.com/digeratiexperts/digeratiexperts-site/issues/789)
-- [ ] **72** Build install, upgrade and uninstall for the agent, each signature-checked. `agent` - [#790](https://github.com/digeratiexperts/digeratiexperts-site/issues/790)
+- [x] **59** Finalise the de.techconsole.job/v1 contract and its device validators. `agent` - [#777](https://github.com/digeratiexperts/digeratiexperts-site/issues/777)
+- [x] **60** Design the Hub job-queue endpoints: lease, acknowledge, result. `agent` - [#778](https://github.com/digeratiexperts/digeratiexperts-site/issues/778)
+- [x] **61** Design the one-time enrolment token exchange. `agent` - [#779](https://github.com/digeratiexperts/digeratiexperts-site/issues/779)
+- [x] **62** Issue per-device client certificates in the Hub; support revocation. `agent` - [#780](https://github.com/digeratiexperts/digeratiexperts-site/issues/780)
+- [x] **63** Use mTLS on the agent connection. `agent` - [#781](https://github.com/digeratiexperts/digeratiexperts-site/issues/781)
+- [x] **64** Add certificate rotation. `agent` - [#782](https://github.com/digeratiexperts/digeratiexperts-site/issues/782)
+- [x] **65** Verify job signatures on the device, including expiry. `agent` - [#783](https://github.com/digeratiexperts/digeratiexperts-site/issues/783)
+- [x] **66** Keep a replay store of nonces on the device. `agent` - [#784](https://github.com/digeratiexperts/digeratiexperts-site/issues/784)
+- [x] **67** Reject any action ID not in the signed local catalog. `agent` - [#785](https://github.com/digeratiexperts/digeratiexperts-site/issues/785)
+- [x] **68** Build the Windows service skeleton, with no actions yet. `agent` - [#786](https://github.com/digeratiexperts/digeratiexperts-site/issues/786)
+- [x] **69** Implement heartbeat and inventory deltas. `agent` - [#787](https://github.com/digeratiexperts/digeratiexperts-site/issues/787)
+- [x] **70** Upload evidence with resumable retries and idempotency keys. `agent` - [#788](https://github.com/digeratiexperts/digeratiexperts-site/issues/788)
+- [x] **71** Queue evidence offline with a size bound; never drop it silently. `agent` - [#789](https://github.com/digeratiexperts/digeratiexperts-site/issues/789)
+- [x] **72** Build install, upgrade and uninstall for the agent, each signature-checked. `agent` - [#790](https://github.com/digeratiexperts/digeratiexperts-site/issues/790)
 - [x] **73** Write a threat model for the agent before any job type is enabled. `agent` - [#791](https://github.com/digeratiexperts/digeratiexperts-site/issues/791)
   - *Hard gate: no job type is enabled before this exists.*
-- [ ] **74** Design the break-glass shell: disabled by default, time-limited, transcribed. `agent` - [#792](https://github.com/digeratiexperts/digeratiexperts-site/issues/792)
-- [ ] **75** Test that a stolen device key can be revoked and stops working. `agent` - [#793](https://github.com/digeratiexperts/digeratiexperts-site/issues/793)
-- [ ] **76** Test the agent with the Hub unreachable and confirm local functions still run. `agent` - [#794](https://github.com/digeratiexperts/digeratiexperts-site/issues/794)
-- [ ] **77** Load-test the Hub job queue with many devices. `agent` - [#795](https://github.com/digeratiexperts/digeratiexperts-site/issues/795)
-- [ ] **78** Add a kill switch the Hub can use to stop all agent jobs. `agent` - [#796](https://github.com/digeratiexperts/digeratiexperts-site/issues/796)
+- [x] **74** Design the break-glass shell: disabled by default, time-limited, transcribed. `agent` - [#792](https://github.com/digeratiexperts/digeratiexperts-site/issues/792)
+- [x] **75** Test that a stolen device key can be revoked and stops working. `agent` - [#793](https://github.com/digeratiexperts/digeratiexperts-site/issues/793)
+- [x] **76** Test the agent with the Hub unreachable and confirm local functions still run. `agent` - [#794](https://github.com/digeratiexperts/digeratiexperts-site/issues/794)
+- [x] **77** Load-test the Hub job queue with many devices. `agent` - [#795](https://github.com/digeratiexperts/digeratiexperts-site/issues/795)
+- [x] **78** Add a global kill switch that halts all agent jobs. `agent` - [#796](https://github.com/digeratiexperts/digeratiexperts-site/issues/796)
 
 ### F. Remote assist (79-82)
 
