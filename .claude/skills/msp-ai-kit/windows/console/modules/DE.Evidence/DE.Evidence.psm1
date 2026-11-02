@@ -490,7 +490,8 @@ function Export-DEDiagnosticBundle {
     param([string]$OutDir)
     $de = Get-DEConsole
     $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
-    if (-not $OutDir) { $OutDir = Join-Path $de.Dirs.Evidence ("diagnostic-{0}-{1}" -f $env:COMPUTERNAME, $stamp) }
+    # a short random suffix: two bundles in the same second must never share a folder, or the withheld-bundle cleanup of one would delete the other
+    if (-not $OutDir) { $OutDir = Join-Path $de.Dirs.Evidence ("diagnostic-{0}-{1}-{2}" -f $env:COMPUTERNAME, $stamp, [guid]::NewGuid().ToString('N').Substring(0, 6)) }
     New-Item -ItemType Directory -Path $OutDir -Force -WhatIf:$false | Out-Null
     $gaps = Get-DEGapReport
     $diag = [ordered]@{
