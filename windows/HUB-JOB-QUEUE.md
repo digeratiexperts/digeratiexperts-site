@@ -157,7 +157,8 @@ Refused. A refusal is **data and a security event**, never silence (section 11 o
 
 `refusal.code` is one of: `bad_signature`, `unknown_key`, `expired`, `not_yet_valid`, `replayed_nonce`, `wrong_device`,
 `wrong_account`, `catalog_mismatch`, `kind_not_enabled`, `action_not_allowed`, `action_not_in_catalog`, `order_rule`,
-`hands_on_only`, `bad_parameters`, `schema`. `detail` is redacted on the device and never carries a parameter value.
+`hands_on_only`, `bad_parameters`, `schema`, `bad_window`, `catalog_unavailable`, `catalog_tampered`,
+`replay_store_full`, `replay_store_unreadable`, `time_floor_unreadable`. `detail` is redacted on the device and never carries a parameter value.
 Responses: `200` recorded; `404` unknown job or lease; `409` the lease expired or the job is already past this step.
 
 ### 3.3 `POST /jobs/{jobId}/result`
