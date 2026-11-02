@@ -28,8 +28,7 @@ Two layers, both provided by Windows, neither containing a key the tool generate
 | **2. File** | DPAPI, `LocalMachine` scope, one sealed file per evidence file | the evidence folder being copied off (backup, share, a technician's USB, another volume); a file read by something that cannot call DPAPI on that machine | an administrator, or any process that can run code on that machine as an account DPAPI will serve |
 | (existing) ACL | SYSTEM and Administrators only | other unprivileged users on the machine | an administrator (accepted, gap 4 of move 95) |
 
-Layer 2 is mandatory on a PHI-restricted device. Layer 1 is checked and reported, and what happens
-when it is absent is [a decision for Joe](#decisions-for-joe).
+Layer 2 is mandatory on a PHI-restricted device. Layer 1 is checked and reported, and when it is absent, Apply runs are blocked ([decided](#decisions-joe-2026-11-02)).
 
 The tool never holds a key. DPAPI holds it, in the OS, and rotates it. That is why "rotation never
 strands old evidence" can be a property of the design and not something we have to get right ourselves.
@@ -56,7 +55,7 @@ A log that is being appended to cannot be sealed as one DPAPI blob. The current 
 plaintext until it rotates or the session ends; every closed log is sealed. The exposure is bounded to
 one running session, the content is already redacted (`Protect-DEText` runs on every line), and on a
 PHI-restricted device discovery is metadata-only (part 2), so there is no PHI in it to expose. This is
-residual risk 3 below and a decision for Joe if he wants it closed.
+residual risk 3 below, and Joe accepted it on 2026-11-02 (see Decisions).
 
 ## Why DPAPI, and what was rejected
 
@@ -237,24 +236,25 @@ the OS master key, so rotation is covered two ways, and the gap between them is 
    (move 92), and that the sealed folder is not something to rely on across a reimage.
 5. **SSD remanence** of pre-sealing plaintext (above). Covered by BitLocker, not by us.
 
-## Decisions for Joe
+## Decisions (Joe, 2026-11-02)
 
-Both have a recommended default; the doc is written so it can proceed on the default.
+Both taken as recommended.
 
-**1. A PHI-restricted device with no BitLocker on the OS volume.** Layer 2 still applies, but it does
-not stop offline imaging.
+**1. A PHI-restricted device with no BitLocker on the OS volume - DECIDED: block Apply runs and report it.**
+Layer 2 still applies, but it does not stop offline imaging. Audit runs still work, so the tool can report
+that BitLocker is off. Implemented in 3e.
 
 | Option | Effect |
 |---|---|
-| **Block Apply runs and report it (recommended)** | The tool refuses to make changes on a PHI device whose volume is unprotected, names the fix, and an audit run still works. Consistent with fail-closed everywhere else in #890. |
+| **Block Apply runs and report it (decided)** | The tool refuses to make changes on a PHI device whose volume is unprotected, names the fix, and an audit run still works. Consistent with fail-closed everywhere else in #890. |
 | Warn, record `dpapi-only` in the evidence, continue | Never blocks work; relies on someone reading the warning. |
 | Block everything including audits | Strictest; also stops the audit that would tell you BitLocker is off. |
 
-**2. The live log.**
+**2. The live log - DECIDED: accept the one-session plaintext window.**
 
 | Option | Effect |
 |---|---|
-| **Accept the one-session plaintext window (recommended)** | Redacted content, metadata-only discovery, one session. No new mechanism. |
+| **Accept the one-session plaintext window (decided)** | Redacted content, metadata-only discovery, one session. No new mechanism. |
 | Seal the log per record | Closes the window; the log becomes a sequence of sealed records, which costs readability and a new read path for what is currently `Get-Content`. |
 
 ## How this fits the rest of section H
