@@ -55,14 +55,14 @@ These are the dependencies worth knowing before picking anything up:
 | Start here (highest leverage) | 10 | 7 | 3 | 5 |
 | A. Quality and trust (11-24) | 14 | 12 | 2 | 0 |
 | B. Real-device validation (25-38) | 14 | 0 | 14 | 1 |
-| C. Installer integrity (39-48) | 10 | 8 | 2 | 1 |
+| C. Installer integrity (39-48) | 10 | 9 | 1 | 1 |
 | D. Signing and release (49-58) | 10 | 0 | 10 | 0 |
 | E. Hub and call-home agent (59-78) | 20 | 1 | 19 | 0 |
 | F. Remote assist (79-82) | 4 | 0 | 4 | 0 |
-| G. Client and dropship workflows (83-90) | 8 | 0 | 8 | 0 |
+| G. Client and dropship workflows (83-90) | 8 | 8 | 0 | 0 |
 | H. Sensitive data (91-96) | 6 | 1 | 5 | 0 |
-| I. Supportability and docs (97-104) | 8 | 1 | 7 | 1 |
-| **Total** | **104** | **30** | **74** | **8** |
+| I. Supportability and docs (97-104) | 8 | 7 | 1 | 1 |
+| **Total** | **104** | **45** | **59** | **8** |
 
 ## The moves
 
@@ -127,7 +127,7 @@ These are the dependencies worth knowing before picking anything up:
 - [x] **40** For each, record the URL, the vendor-published hash and whether it is verified. `agent` - [#758](https://github.com/digeratiexperts/digeratiexperts-site/issues/758)
 - [ ] **41** Flag installers with no vendor hash; choose pin-on-first-trusted-download or drop. `agent` - [#759](https://github.com/digeratiexperts/digeratiexperts-site/issues/759)
   - *Decision needed from Joe at item 48 before this is implemented.*
-- [ ] **42** Re-check installer hashes automatically in CI, rate-limited. `agent` - [#760](https://github.com/digeratiexperts/digeratiexperts-site/issues/760)
+- [x] **42** Re-check installer hashes automatically in CI, rate-limited. `agent` - [#760](https://github.com/digeratiexperts/digeratiexperts-site/issues/760)
 - [x] **43** Check Authenticode signatures where the vendor provides them. `agent` - [#761](https://github.com/digeratiexperts/digeratiexperts-site/issues/761)
 - [x] **44** Alert when a vendor changes a file without changing its version. `agent` - [#762](https://github.com/digeratiexperts/digeratiexperts-site/issues/762)
 - [x] **45** Refuse any installer whose hash does not match, with a clear message. `agent` - [#763](https://github.com/digeratiexperts/digeratiexperts-site/issues/763)
@@ -186,14 +186,14 @@ These are the dependencies worth knowing before picking anything up:
 
 ### G. Client and dropship workflows (83-90)
 
-- [ ] **83** Put the Zoho Desk ticket ID on the device record, so evidence links back to the ticket. `agent` - [#801](https://github.com/digeratiexperts/digeratiexperts-site/issues/801)
-- [ ] **84** Test the dropship kit against real serial number samples. `agent` - [#802](https://github.com/digeratiexperts/digeratiexperts-site/issues/802)
-- [ ] **85** Test the OEM placeholder-serial refusal against a real serial list. `agent` - [#803](https://github.com/digeratiexperts/digeratiexperts-site/issues/803)
-- [ ] **86** Enforce Alamo-only branding with tests. `agent` - [#804](https://github.com/digeratiexperts/digeratiexperts-site/issues/804)
-- [ ] **87** Add a sanity test per bundle tier. `agent` - [#805](https://github.com/digeratiexperts/digeratiexperts-site/issues/805)
-- [ ] **88** Monitor vendor warranty endpoints for changes; set a cache policy. `agent` - [#806](https://github.com/digeratiexperts/digeratiexperts-site/issues/806)
-- [ ] **89** Test the 'refuse a device other than the ordered one' path with a wrong serial. `agent` - [#807](https://github.com/digeratiexperts/digeratiexperts-site/issues/807)
-- [ ] **90** Write a one-page client explainer of what the tool changes on their device. `agent` - [#808](https://github.com/digeratiexperts/digeratiexperts-site/issues/808)
+- [x] **83** Put the Zoho Desk ticket ID on the device record, so evidence links back to the ticket. `agent` - [#801](https://github.com/digeratiexperts/digeratiexperts-site/issues/801)
+- [x] **84** Test the dropship kit against real serial number samples. `agent` - [#802](https://github.com/digeratiexperts/digeratiexperts-site/issues/802)
+- [x] **85** Test the OEM placeholder-serial refusal against a real serial list. `agent` - [#803](https://github.com/digeratiexperts/digeratiexperts-site/issues/803)
+- [x] **86** Enforce Alamo-only branding with tests. `agent` - [#804](https://github.com/digeratiexperts/digeratiexperts-site/issues/804)
+- [x] **87** Add a sanity test per bundle tier. `agent` - [#805](https://github.com/digeratiexperts/digeratiexperts-site/issues/805)
+- [x] **88** Monitor vendor warranty endpoints for changes; set a cache policy. `agent` - [#806](https://github.com/digeratiexperts/digeratiexperts-site/issues/806)
+- [x] **89** Test the 'refuse a device other than the ordered one' path with a wrong serial. `agent` - [#807](https://github.com/digeratiexperts/digeratiexperts-site/issues/807)
+- [x] **90** Write a one-page client explainer of what the tool changes on their device. `agent` - [#808](https://github.com/digeratiexperts/digeratiexperts-site/issues/808)
 
 ### H. Sensitive data (91-96)
 
@@ -207,13 +207,13 @@ These are the dependencies worth knowing before picking anything up:
 
 ### I. Supportability and docs (97-104)
 
-- [ ] **97** Export a diagnostic bundle with a test that it contains no secrets. `agent` - [#815](https://github.com/digeratiexperts/digeratiexperts-site/issues/815)
-- [ ] **98** Cap log size and rotate the logs. `agent` - [#816](https://github.com/digeratiexperts/digeratiexperts-site/issues/816)
-- [ ] **99** Test the update flow against the signed manifest. `agent` - [#817](https://github.com/digeratiexperts/digeratiexperts-site/issues/817)
-- [ ] **100** Make crash reports carry no sensitive data. `agent` - [#818](https://github.com/digeratiexperts/digeratiexperts-site/issues/818)
-- [ ] **101** Write a support runbook mapping each failure to its fix. `agent` - [#819](https://github.com/digeratiexperts/digeratiexperts-site/issues/819)
+- [x] **97** Export a diagnostic bundle with a test that it contains no secrets. `agent` - [#815](https://github.com/digeratiexperts/digeratiexperts-site/issues/815)
+- [x] **98** Cap log size and rotate the logs. `agent` - [#816](https://github.com/digeratiexperts/digeratiexperts-site/issues/816)
+- [x] **99** Test the update flow against the signed manifest. `agent` - [#817](https://github.com/digeratiexperts/digeratiexperts-site/issues/817)
+- [x] **100** Make crash reports carry no sensitive data. `agent` - [#818](https://github.com/digeratiexperts/digeratiexperts-site/issues/818)
+- [x] **101** Write a support runbook mapping each failure to its fix. `agent` - [#819](https://github.com/digeratiexperts/digeratiexperts-site/issues/819)
 - [ ] **102** A technician quick-start, checked with a real technician. **Joe** - [#820](https://github.com/digeratiexperts/digeratiexperts-site/issues/820)
-- [ ] **103** Keep DE-TECH-TOOL-ARCHITECTURE.md as the live done/open board. `agent` - [#821](https://github.com/digeratiexperts/digeratiexperts-site/issues/821)
+- [x] **103** Keep DE-TECH-TOOL-ARCHITECTURE.md as the live done/open board. `agent` - [#821](https://github.com/digeratiexperts/digeratiexperts-site/issues/821)
 - [x] **104** Retire compatibility names only after the installed base is checked. `agent` - [#822](https://github.com/digeratiexperts/digeratiexperts-site/issues/822)
   - *Overlaps item 19 (remove compatibility aliases). Keep one canonical issue and cross-link.*
 
