@@ -85,8 +85,19 @@ function Get-DEClientVertical {
 
     # The single Hub read for a vertical. Kept here, and here only, so a test replaces this function
     # rather than stubbing an HTTP stack.
+    # The Hub answers only a request signed with this session's Hub signing secret (Hub #728:
+    # techconsole_to_hub HMAC over method, path, timestamp, event id and the body "{}"). No secret
+    # means no question asked: unknown, so restricted.
+    if (-not (Test-DESecret -Name 'DE_HUB_SIGNING_SECRET')) { return $(if ($hit) { "$($hit.vertical)" } else { $null }) }
     try {
-        $r = Invoke-WebRequest -Uri ("$endpoint/api/techtool/account/{0}/profile" -f [uri]::EscapeDataString("$accountId")) -UseBasicParsing -TimeoutSec $TimeoutSec -ErrorAction Stop
+        $path = "/api/techtool/account/{0}/profile" -f [uri]::EscapeDataString("$accountId")
+        $ts = (Get-Date).ToUniversalTime().ToString("yyyy-MM-dd'T'HH:mm:ss.fff'Z'", [Globalization.CultureInfo]::InvariantCulture)
+        $eventId = [guid]::NewGuid().ToString()
+        $bstr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR((Get-DESecretSecure -Name 'DE_HUB_SIGNING_SECRET'))
+        try { $sig = Get-DEHubSignature -Method 'GET' -Path $path -Timestamp $ts -EventId $eventId -Body '{}' -Secret ([Runtime.InteropServices.Marshal]::PtrToStringBSTR($bstr)) }
+        finally { [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($bstr) }
+        $headers = @{ 'X-DE-Event-ID' = $eventId; 'X-DE-Timestamp' = $ts; 'X-DE-Source' = 'techconsole'; 'X-DE-Signature' = $sig }
+        $r = Invoke-WebRequest -Uri ($endpoint.TrimEnd('/') + $path) -Headers $headers -UseBasicParsing -TimeoutSec $TimeoutSec -ErrorAction Stop
         $body = $r.Content | ConvertFrom-Json
         $vertical = "$($body.vertical)".Trim()
         $script:Phi.verticalCache[$key] = @{ vertical = $vertical; fetchedAt = (Get-Date) }
