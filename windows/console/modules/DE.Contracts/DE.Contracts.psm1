@@ -329,4 +329,173 @@ function Send-DEHubEvent {
     return (Invoke-DEHubHttp -Uri ($BaseUrl.TrimEnd('/') + $script:HubEventsPath) -Headers $headers -Body $body)
 }
 
-Export-ModuleMember -Function ConvertTo-DECanonicalJson, Get-DEHubSignature, New-DEHubEvent, Invoke-DEHubHttp, Send-DEHubEvent, Get-DEHubErrorReason, Get-DEContractsRoot, Get-DEContractSchema, Test-DEContract, Find-DEContractSecrets, Remove-DEContractSecretKeys, ConvertTo-DEDeviceKey, New-DEHandoff, Add-DEHandoffAction, Save-DEHandoff, Get-DEHandoffs, Confirm-DEHandoffReviewed
+# ------------------------------------------------------------------ job envelope (de.techconsole.job/v1, move 59)
+function Get-DEJobKindPolicy {
+    <# catalog/job-kinds.json: per job kind, which action ids it enables and denies (AGENT-THREAT-MODEL.md section 7), the window and the limits. -Path points a test at another copy. #>
+    param([string]$Path)
+    if (-not $Path) { $Path = Join-Path (Join-Path (Split-Path -Parent $script:ContractsRoot) 'catalog') 'job-kinds.json' }
+    return (Get-Content -LiteralPath $Path -Raw -Encoding UTF8 | ConvertFrom-Json)
+}
+function Test-DEJobPatternMatch {
+    param([string]$Id, $Patterns)
+    foreach ($p in @($Patterns)) { if ($p -and $Id -like $p) { return $true } }
+    return $false
+}
+function Get-DEJobActionDecision {
+    <#
+        Key one of the two-key check: may a job of -Kind run -ActionId? Deny always wins, anything not enabled is
+        refused, and the answer says whether the action may only be read (audit, detect-only) and whether it is hands-on
+        only while DE has one person (D5). Key two, the signed local catalog, is move 67.
+    #>
+    param([Parameter(Mandatory = $true)][string]$Kind, [Parameter(Mandatory = $true)][string]$ActionId, $Policy)
+    if (-not $Policy) { $Policy = Get-DEJobKindPolicy }
+    $result = { param($allowed, $readOnly, $hands, $why) [pscustomobject]@{ Kind = $Kind; ActionId = $ActionId; Allowed = $allowed; ReadOnly = $readOnly; HandsOnOnly = $hands; Why = $why } }
+    $kp = $Policy.kinds.PSObject.Properties[$Kind]
+    if (-not $kp) { return (& $result $false $true $false "unknown job kind '$Kind'") }
+    $k = $kp.Value
+    if (Test-DEJobPatternMatch $ActionId $Policy.globalDeny) { return (& $result $false $true $false "'$ActionId' is on the global deny list (security components are never removed by a job)") }
+    if (Test-DEJobPatternMatch $ActionId $k.deny) { return (& $result $false $true $false "'$ActionId' is denied for a $Kind job") }
+    if (Test-DEJobPatternMatch $ActionId $k.enable) {
+        $ro = ([bool]$k.readOnly) -or -not (Test-DEJobPatternMatch $ActionId $k.applyAllowed)
+        $hands = (-not $ro) -and (Test-DEJobPatternMatch $ActionId $k.handsOnOnly)
+        return (& $result $true $ro $hands 'enabled')
+    }
+    if (Test-DEJobPatternMatch $ActionId $k.detectOnly) { return (& $result $true $true $false 'read-only (detect) only') }
+    return (& $result $false $true $false "'$ActionId' is not enabled for a $Kind job")
+}
+function ConvertTo-DESortedTree {
+    <# A copy with the keys of every object in ordinal order: the canonical JSON keeps insertion order (as JSON.stringify does), and a signature must not depend on how the sender happened to order its keys. #>
+    param([AllowNull()]$Value)
+    switch (Get-DEJsonKind $Value) {
+        'object' {
+            $o = [ordered]@{}
+            $keys = [string[]]@(Get-DEContractKeys $Value)
+            [array]::Sort($keys, [StringComparer]::Ordinal)
+            foreach ($k in $keys) { $o[$k] = ConvertTo-DESortedTree -Value (Get-DEContractProp $Value $k).value }
+            return $o
+        }
+        'array' {
+            $list = New-Object System.Collections.Generic.List[object]
+            foreach ($el in @($Value)) { $list.Add((ConvertTo-DESortedTree -Value $el)) }
+            return , $list.ToArray()
+        }
+        default { return $Value }
+    }
+}
+function Get-DEJobSigningInput {
+    <# What the Ed25519 signature covers: the canonical JSON of the envelope with `signature` left out and every object's keys in ordinal order (JOB-CONTRACT.md). Encode it as UTF-8 before signing or verifying. #>
+    param([Parameter(Mandatory = $true)]$Job)
+    $o = [ordered]@{}
+    foreach ($k in (Get-DEContractKeys $Job)) { if ($k -ne 'signature') { $o[$k] = (Get-DEContractProp $Job $k).value } }
+    return (ConvertTo-DECanonicalJson (ConvertTo-DESortedTree -Value $o))
+}
+function Test-DEJobEnvelope {
+    <#
+        The device-side validator for a de.techconsole.job/v1 envelope: shape and secrets (the contract), no unknown
+        fields, this device and account, a short window that has not run out, the job kind enabled and each action
+        allowed by it, the kind's order rules, typed parameters, and the hands-on-only rule. An empty list means the
+        envelope may go on to signature verification (move 65) and the signed catalog (move 67); this function does not
+        verify the signature. Wrap the result in @(): it is a list of problems.
+    #>
+    param(
+        [Parameter(Mandatory = $true)]$Job, [Parameter(Mandatory = $true)][string]$DeviceKey, [Parameter(Mandatory = $true)][string]$AccountId,
+        [datetime]$Now = ([datetime]::UtcNow), $Policy
+    )
+    if (-not $Policy) { $Policy = Get-DEJobKindPolicy }
+    $problems = New-Object System.Collections.Generic.List[string]
+    foreach ($m in @(Test-DEContract -Name 'job' -Object $Job)) { $problems.Add("$m") }
+    $known = @((Get-DEContractSchema -Name 'job').properties.PSObject.Properties | ForEach-Object { $_.Name })
+    foreach ($key in (Get-DEContractKeys $Job)) { if ($known -notcontains $key) { $problems.Add("`$.${key}: not a field of de.techconsole.job/v1") } }
+    # fields that failed the contract cannot be trusted by any later check
+    if ($problems.Count) { return $problems.ToArray() }
+
+    $get = { param($n) (Get-DEContractProp $Job $n).value }
+    $kind = "$(& $get 'kind')"
+    $issuedBy = "$(& $get 'issuedBy')"
+    if ("$(& $get 'deviceKey')" -cne $DeviceKey) { $problems.Add("deviceKey: the job is for '$(& $get 'deviceKey')', this device is '$DeviceKey'") }
+    if ("$(& $get 'accountId')" -cne $AccountId) { $problems.Add("accountId: the job is for account '$(& $get 'accountId')', this device belongs to '$AccountId'") }
+
+    $formats = [string[]]@("yyyy-MM-dd'T'HH:mm:ss'Z'", "yyyy-MM-dd'T'HH:mm:ss.f'Z'", "yyyy-MM-dd'T'HH:mm:ss.ff'Z'", "yyyy-MM-dd'T'HH:mm:ss.fff'Z'")
+    $styles = [Globalization.DateTimeStyles]::AssumeUniversal -bor [Globalization.DateTimeStyles]::AdjustToUniversal
+    $parse = { param($s) $t = [datetime]::MinValue; if ([datetime]::TryParseExact("$s", $formats, [Globalization.CultureInfo]::InvariantCulture, $styles, [ref]$t)) { return $t }; return $null }
+    $issued = & $parse (& $get 'issuedAt')
+    $expires = & $parse (& $get 'expiresAt')
+    if ($null -eq $issued) { $problems.Add('issuedAt: not a real UTC time') }
+    if ($null -eq $expires) { $problems.Add('expiresAt: not a real UTC time') }
+    if ($null -ne $issued -and $null -ne $expires) {
+        $now = $Now.ToUniversalTime()
+        $max = [double]$Policy.window.maxLifetimeSeconds; $skew = [double]$Policy.window.maxSkewSeconds
+        if ($expires -le $issued) { $problems.Add('expiresAt: not after issuedAt') }
+        elseif (($expires - $issued).TotalSeconds -gt $max) { $problems.Add("expiresAt: the window is longer than the $max seconds a job may live") }
+        if ($issued -gt $now.AddSeconds($skew)) { $problems.Add("issuedAt: in the future by more than the $skew seconds of allowed clock skew") }
+        if ($now -gt $expires) { $problems.Add('expiresAt: the job has expired') }
+    }
+
+    $kp = $Policy.kinds.PSObject.Properties[$kind]
+    if (-not $kp) { $problems.Add("kind: '$kind' has no entry in catalog/job-kinds.json"); return $problems.ToArray() }
+    $k = $kp.Value
+    if (-not $k.enabled) { $problems.Add("kind: '$kind' jobs are not enabled (AGENT-THREAT-MODEL.md section 7: a type is enabled only by a PR that shows its checklist met)") }
+
+    $actions = @((& $get 'actions'))
+    if (-not $actions.Count) { $problems.Add('actions: a job with no actions is refused') }
+    if ($actions.Count -gt [int]$Policy.limits.maxActions) { $problems.Add("actions: more than the $($Policy.limits.maxActions) a job may carry") }
+    $seen = @{}
+    foreach ($a in $actions) { if ($seen.ContainsKey("$a")) { $problems.Add("actions: '$a' appears twice") }; $seen["$a"] = $true }
+    $approvals = @((& $get 'approvals') | Where-Object { $_ })
+    foreach ($a in $actions) {
+        $d = Get-DEJobActionDecision -Kind $kind -ActionId "$a" -Policy $Policy
+        if (-not $d.Allowed) { $problems.Add("actions: $($d.Why)"); continue }
+        if ($d.HandsOnOnly) {
+            if (-not [bool]$Policy.secondApproverExists) { $problems.Add("actions: '$a' is destructive and DE has one person, so it runs hands-on at the device, not as a job (D5)") }
+            elseif (-not @($approvals | Where-Object { "$_" -cne $issuedBy }).Count) { $problems.Add("actions: '$a' is destructive and needs a second approver different from issuedBy") }
+        }
+    }
+
+    # order rules: tiers must not go backwards, `last` actions come last, and a prerequisite comes earlier in the same job
+    $tiers = @($k.orderTiers)
+    $lastPatterns = $(if ($k.PSObject.Properties['last']) { @($k.last) } else { @() })
+    $maxTier = -1; $maxId = ''
+    for ($i = 0; $i -lt $actions.Count; $i++) {
+        $id = "$($actions[$i])"; $tier = -2
+        if (Test-DEJobPatternMatch $id $lastPatterns) { $tier = $tiers.Count + 1 }
+        else {
+            for ($t = 0; $t -lt $tiers.Count; $t++) { if (Test-DEJobPatternMatch $id $tiers[$t]) { $tier = $t; break } }
+            if ($tier -eq -2 -and "$($k.untiered)" -eq 'after') { $tier = $tiers.Count }
+        }
+        if ($tier -lt 0) { continue }
+        if ($tier -lt $maxTier) { $problems.Add("actions: '$id' comes after '$maxId', which the $kind order rules put later") }
+        if ($tier -gt $maxTier) { $maxTier = $tier; $maxId = $id }
+    }
+    foreach ($req in $k.requires.PSObject.Properties) {
+        $at = [array]::IndexOf([string[]]@($actions | ForEach-Object { "$_" }), $req.Name)
+        if ($at -lt 0) { continue }
+        foreach ($pre in @($req.Value)) {
+            $pat = [array]::IndexOf([string[]]@($actions | ForEach-Object { "$_" }), "$pre")
+            if ($pat -lt 0 -or $pat -gt $at) { $problems.Add("actions: '$($req.Name)' needs '$pre' earlier in the same job") }
+        }
+    }
+
+    # parameters are data, keyed by an action in this job, one level deep, scalars only
+    $params = & $get 'params'
+    if ($null -ne $params) {
+        foreach ($ak in (Get-DEContractKeys $params)) {
+            if ($seen.ContainsKey($ak) -eq $false) { $problems.Add("params.${ak}: not an action in this job"); continue }
+            $inner = (Get-DEContractProp $params $ak).value
+            if ($null -eq $inner) { continue }
+            if ((Get-DEJsonKind $inner) -ne 'object') { $problems.Add("params.${ak}: must be an object of named values"); continue }
+            foreach ($pk in (Get-DEContractKeys $inner)) {
+                if ($pk -cnotmatch '^[A-Za-z][A-Za-z0-9_]{0,63}$') { $problems.Add("params.${ak}.${pk}: not a valid parameter name"); continue }
+                $pv = (Get-DEContractProp $inner $pk).value
+                $pkind = Get-DEJsonKind $pv
+                if ($pkind -notin @('string', 'integer', 'number', 'boolean', 'null')) { $problems.Add("params.${ak}.${pk}: must be a single value, not $pkind") }
+                elseif ($pkind -eq 'string') {
+                    if ("$pv".Length -gt [int]$Policy.limits.maxParamStringLength) { $problems.Add("params.${ak}.${pk}: longer than $($Policy.limits.maxParamStringLength) characters") }
+                    if ("$pv" -match '[\x00-\x1f\x7f]') { $problems.Add("params.${ak}.${pk}: control characters are refused") }
+                }
+            }
+        }
+    }
+    return $problems.ToArray()
+}
+
+Export-ModuleMember -Function Get-DEJobKindPolicy, Get-DEJobActionDecision, Get-DEJobSigningInput, Test-DEJobEnvelope, ConvertTo-DECanonicalJson, Get-DEHubSignature, New-DEHubEvent, Invoke-DEHubHttp, Send-DEHubEvent, Get-DEHubErrorReason, Get-DEContractsRoot, Get-DEContractSchema, Test-DEContract, Find-DEContractSecrets, Remove-DEContractSecretKeys, ConvertTo-DEDeviceKey, New-DEHandoff, Add-DEHandoffAction, Save-DEHandoff, Get-DEHandoffs, Confirm-DEHandoffReviewed
