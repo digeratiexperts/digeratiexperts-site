@@ -88,6 +88,128 @@ function Get-DEGapReport {
     return @($rows | Sort-Object phase, id)
 }
 
+function Get-DEEvidenceFieldClasses {
+    <#
+        Move 91: classify every field a device record can carry, so nothing is withheld by guesswork.
+        Four classes:
+
+          device      identifies the device (serial, model, asset tag). The Hub needs it: it is how
+                      the same machine is named across the tool, the boot rescue and the Hub.
+          personal    identifies a person (user names, email). The Hub manages devices, not people.
+          path        a filesystem path, which leaks a user name through its segments
+                      (C:\Users\<name>\...). The leaf name is often still useful; the path is not.
+          operational anything else - state, timestamps, results. Nothing to withhold.
+
+        Driven by a table rather than scattered -match calls so the classification can be read,
+        reviewed and tested as one thing. Used by Remove-DEPersonalFields at the Hub boundary
+        (move 92).
+    #>
+    return [ordered]@{
+        device      = @('serial', 'model', 'assetTag', 'hostname', 'manufacturer', 'deviceKey', 'role', 'os', 'bios', 'cpu', 'ramGB')
+        personal    = @('assignedUser', 'localUserName', 'jumpcloudUser', 'email', 'endUser', 'endUserEmail', 'assigned', 'username', 'userName', 'user', 'samAccountName', 'upn', 'displayName', 'fullName')
+        path        = @('profilePath', 'profileDir', 'homeDir', 'documentsPath', 'folder', 'localAppData', 'appData', 'userProfile', 'path', 'localPath', 'home')
+        # 'technician' and 'issuedTo' look personal but are DE's own staff, recorded on purpose: the
+        # build is watermarked with who it was issued to so a leaked copy names its source the first
+        # time it runs with a network (PROTECTING-THE-TOOL.md). Redacting them would break that.
+        # Section H is about the CLIENT's device data - the people who use the machine - not ours.
+        operational = @('schema', 'source', 'sentAt', 'lifecycle', 'client', 'site', 'readiness', 'areas', 'controls', 'exceptions', 'evidence', 'warranty', 'onboarding', 'session', 'started', 'completed', 'mode', 'buildId', 'issuedTo', 'technician', 'licenseId', 'licenseState', 'integrity', 'status', 'result', 'verifiedAt', 'timestamp', 'step', 'module')
+    }
+}
+
+function Get-DEEvidenceFieldClass {
+    <# The class of one field name: device | personal | path | operational. Case-insensitive on the
+       name. An unknown field is operational - the safe default, because it withholds nothing and so
+       cannot silently hide something that should have been redacted. #>
+    param([Parameter(Mandatory = $true)][AllowEmptyString()][string]$Name)
+    $table = Get-DEEvidenceFieldClasses
+    foreach ($k in @('device', 'personal', 'path', 'operational')) {
+        foreach ($n in $table[$k]) { if ($n -ieq $Name) { return $k } }
+    }
+    return 'operational'
+}
+
+function Protect-DEPathText {
+    <# Scrubs user names out of filesystem paths inside free text. Keeps the leaf name, which is often
+       the useful part (recovery-key.txt), and drops the directory chain that names the person:
+       'C:\Users\jpetrovich\Documents\q3.docx' becomes '<path>\q3.docx'. #>
+    param([AllowNull()][AllowEmptyString()][string]$Text)
+    if (-not $Text) { return $Text }
+    $t = $Text
+    # drive-qualified paths: keep only the final segment
+    $t = [regex]::Replace($t, '(?i)[A-Z]:\\(?:[^\\\r\n"''<>|]*\\)*([^\\\r\n"''<>|]*)', '<path>\$1')
+    # UNC paths
+    $t = [regex]::Replace($t, '(?i)\\\\[^\\\r\n"''<>|]+\\(?:[^\\\r\n"''<>|]+\\)*([^\\\r\n"''<>|]*)', '<path>\$1')
+    # bare user-profile roots without a drive
+    $t = [regex]::Replace($t, '(?i)\bUsers\\[^\\\r\n"''<>|]+', 'Users\<user>')
+    return $t
+}
+
+function Remove-DEPersonalFields {
+    <#
+        Move 92: withhold what identifies a person from anything sent to the Intelligence Hub.
+
+        Deep-copies an object and, for every key whose class from Get-DEEvidenceFieldClass is
+        'personal' or 'path', does NOT copy the identifying value:
+
+          personal -> the key is left out     the Hub manages devices, not people
+          path     -> the leaf segment only   the directory chain names the person; the file name
+                                              does not, and is often the useful part
+
+        IMPORTANT: the identifying value is DROPPED, never replaced with '[REDACTED]'. The Hub
+        refuses a payload containing that marker and fails the whole send (DE-TECH-TOOL-ARCHITECTURE.md
+        1.10.2 - that is exactly why secret-named keys are left out rather than sent redacted). Local
+        state and logs keep '[REDACTED]'; anything crossing the wire omits.
+
+        A container is never flattened to a placeholder: 'user' is itself a personal name, but in the
+        device record it is a BLOCK holding assigned/localUserName/jumpcloudUser/email, and replacing
+        the block would change its shape. So a personal or path key holding a container recurses, and
+        each leaf inside is withheld on its own terms.
+
+        String values anywhere are also run through Protect-DEPathText, so a path that leaked into a
+        free-text field (a verification note, a remediation line) is scrubbed too.
+
+        'device' and 'operational' pass through untouched: the Hub needs the device key, and hiding
+        a result would be worse than showing it.
+    #>
+    param([Parameter(Mandatory = $true)][AllowNull()]$Object)
+    if ($null -eq $Object) { return $null }
+    if ($Object -is [string]) { return (Protect-DEPathText $Object) }
+    if ($Object -is [System.Collections.IDictionary]) {
+        $o = [ordered]@{}
+        foreach ($k in @($Object.Keys)) {
+            $class = Get-DEEvidenceFieldClass -Name "$k"
+            $v = $Object[$k]
+            $isContainer = ($v -is [System.Collections.IDictionary]) -or ($v -is [System.Collections.IEnumerable] -and $v -isnot [string]) -or ($v -is [psobject] -and $v.PSObject.Properties.Count -gt 0 -and $v -isnot [string])
+            if ($isContainer) { $o[$k] = Remove-DEPersonalFields -Object $v }
+            elseif ($class -eq 'personal') { continue }   # left out entirely, never sent as a marker
+            elseif ($class -eq 'path') {
+                $leaf = if ("$v".Trim()) { "$(Split-Path -Leaf ("$v".Trim().TrimEnd('\', '/')))" } else { '' }
+                if ($leaf) { $o[$k] = $leaf }   # an empty path carries nothing and is left out too
+            } else { $o[$k] = Remove-DEPersonalFields -Object $v }
+        }
+        return $o
+    }
+    if ($Object -is [System.Collections.IEnumerable] -and $Object -isnot [string]) {
+        $a = @(); foreach ($i in $Object) { $a += ,(Remove-DEPersonalFields -Object $i) }; return ,$a
+    }
+    if ($Object -is [psobject] -and $Object.PSObject.Properties.Count) {
+        $o = [ordered]@{}
+        foreach ($p in $Object.PSObject.Properties) {
+            $class = Get-DEEvidenceFieldClass -Name "$($p.Name)"
+            $v = $p.Value
+            $isContainer = ($v -is [System.Collections.IDictionary]) -or ($v -is [System.Collections.IEnumerable] -and $v -isnot [string]) -or ($v -is [psobject] -and $v.PSObject.Properties.Count -gt 0 -and $v -isnot [string])
+            if ($isContainer) { $o[$p.Name] = Remove-DEPersonalFields -Object $v }
+            elseif ($class -eq 'personal') { continue }
+            elseif ($class -eq 'path') {
+                $leaf = if ("$v".Trim()) { "$(Split-Path -Leaf ("$v".Trim().TrimEnd('\', '/')))" } else { '' }
+                if ($leaf) { $o[$p.Name] = $leaf }
+            } else { $o[$p.Name] = Remove-DEPersonalFields -Object $v }
+        }
+        return [pscustomobject]$o
+    }
+    return $Object
+}
+
 function New-DEAssetRecord {
     <# The documentation handoff: hardware, user, warranty, OS, encryption, management, agents, apps, network/site, readiness, technician, timestamps. #>
     param([Parameter(Mandatory = $true)]$Snapshot, $ClientProfile)
@@ -262,6 +384,145 @@ function Export-DEEvidenceBundle {
     return [pscustomobject]@{ folder = $OutDir; zip = $zip; sha256 = $bundleHash; record = $record; gaps = @($gaps).Count }
 }
 
+function Get-DERetentionPolicy {
+    <#
+        Move 93. The retention periods DE set (Joe, threat model D6, issue #727):
+
+            raw device evidence            13 months
+            audit logs and compliance      6 years
+
+        Three classes, because the files in one evidence bundle do not all expire together. The
+        discovery snapshot and evidence records are raw device data and go at 13 months; the reports
+        built from them are the compliance artefact and last 6 years; the run log is the audit trail
+        of who did what, and lasts with the reports.
+
+        Deliberately a table rather than scattered date arithmetic, so the periods can be read and
+        argued with in one place - the same reason as Get-DEEvidenceFieldClasses.
+    #>
+    return [ordered]@{
+        raw      = @{ months = 13; label = 'raw device evidence'; files = @('evidence.json', 'snapshot.json', 'asset.json', 'gaps.json', 'console.log', 'manifest.sha256') }
+        report   = @{ months = 72; label = 'compliance report';  files = @('report-internal.html', 'report-client.html', 'report-internal.pdf', 'report-client.pdf') }
+        auditlog = @{ months = 72; label = 'audit log';          files = @('techconsole-*.log') }
+    }
+}
+
+function Get-DERetentionClass {
+    <# The retention class of one file name: raw | report | auditlog | unknown.
+       An unknown name is 'unknown' and is NEVER deleted - same reasoning as the evidence field
+       classification default: a mistake here destroys data, so the safe direction is to keep it and
+       let someone add the name to the table. #>
+    param([Parameter(Mandatory = $true)][AllowEmptyString()][string]$Name)
+    if (-not "$Name".Trim()) { return 'unknown' }
+    $leaf = Split-Path -Leaf "$Name"
+    foreach ($k in @('raw', 'report', 'auditlog')) {
+        foreach ($pat in (Get-DERetentionPolicy)[$k].files) { if ($leaf -like $pat) { return $k } }
+    }
+    return 'unknown'
+}
+
+function Get-DERetentionCutoff {
+    param([Parameter(Mandatory = $true)][ValidateSet('raw', 'report', 'auditlog')][string]$Class, [datetime]$Now = (Get-Date))
+    return $Now.AddMonths(-1 * (Get-DERetentionPolicy)[$Class].months)
+}
+
+function Invoke-DERetentionSweep {
+    <#
+        Move 93: apply the retention periods to local evidence. Deletes each file once it is past its
+        class's age, and reports what went - counts and names, never contents.
+
+        -WhatIf lists what would go without deleting. A file whose class is unknown is kept and
+        reported as kept, so the sweep never silently destroys something nobody classified.
+
+        Returns @{ scanned; deleted; kept; bytes; items } where items carries one row per file acted
+        on, for the evidence record.
+    #>
+    [CmdletBinding(SupportsShouldProcess = $true)]
+    param([datetime]$Now = (Get-Date))
+    $de = Get-DEConsole
+    $roots = @(
+        @{ path = $de.Dirs.Evidence; recurse = $true },
+        @{ path = $de.Dirs.Logs; recurse = $true }
+    )
+    $deleted = 0; $kept = 0; $bytes = 0L; $items = @(); $scanned = 0
+    foreach ($r in $roots) {
+        if (-not $r.path -or -not (Test-Path -LiteralPath $r.path)) { continue }
+        foreach ($f in @(Get-ChildItem -LiteralPath $r.path -Recurse:($r.recurse) -File -ErrorAction SilentlyContinue)) {
+            $scanned++
+            $class = Get-DERetentionClass -Name $f.Name
+            if ($class -eq 'unknown') {
+                $kept++
+                $items += [pscustomobject]@{ file = $f.FullName; class = 'unknown'; action = 'kept'; reason = 'not classified; add it to Get-DERetentionPolicy if it should expire' }
+                continue
+            }
+            $cutoff = Get-DERetentionCutoff -Class $class -Now $Now
+            if ($f.LastWriteTime -ge $cutoff) {
+                $kept++
+                $items += [pscustomobject]@{ file = $f.FullName; class = $class; action = 'kept'; reason = "inside the $((Get-DERetentionPolicy)[$class].months)-month window" }
+                continue
+            }
+            $why = "$((Get-DERetentionPolicy)[$class].label) is $([int][math]::Round(($Now - $f.LastWriteTime).TotalDays)) days old, past the $((Get-DERetentionPolicy)[$class].months)-month retention"
+            if ($PSCmdlet.ShouldProcess($f.FullName, "delete ($why)")) {
+                try {
+                    $len = $f.Length
+                    Remove-Item -LiteralPath $f.FullName -Force -ErrorAction Stop
+                    $deleted++; $bytes += $len
+                    $items += [pscustomobject]@{ file = $f.FullName; class = $class; action = 'deleted'; reason = $why }
+                } catch {
+                    $items += [pscustomobject]@{ file = $f.FullName; class = $class; action = 'failed'; reason = $_.Exception.Message }
+                }
+            } else {
+                $items += [pscustomobject]@{ file = $f.FullName; class = $class; action = 'would delete'; reason = $why }
+            }
+        }
+    }
+    if ($deleted -gt 0 -or (@($items | Where-Object { $_.action -eq 'would delete' }).Count -gt 0)) {
+        Write-DELog -Level INFO -Message ("retention sweep: {0} deleted ({1} bytes), {2} kept, {3} scanned" -f $deleted, $bytes, $kept, $scanned)
+    }
+    return [pscustomobject]@{ scanned = $scanned; deleted = $deleted; kept = $kept; bytes = $bytes; items = $items }
+}
+
+function Export-DEDiagnosticBundle {
+    <# The support bundle for DE engineering (move 97): what this copy is, its gates and gaps, and the
+       redacted console log. No secrets ever leave in it - everything is written through Remove-DESecretKeys
+       and Protect-DEText, and a final sweep compares every file against the registered secret values
+       (typed, JSON-escaped and HTML-encoded). A bundle that still contains one is deleted and withheld,
+       exactly like the evidence bundle (moves 14/15). #>
+    param([string]$OutDir)
+    $de = Get-DEConsole
+    $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
+    if (-not $OutDir) { $OutDir = Join-Path $de.Dirs.Evidence ("diagnostic-{0}-{1}" -f $env:COMPUTERNAME, $stamp) }
+    New-Item -ItemType Directory -Path $OutDir -Force -WhatIf:$false | Out-Null
+    $gaps = Get-DEGapReport
+    $diag = [ordered]@{
+        generated = (Get-Date).ToString('o'); consoleVersion = $de.ConsoleVersion
+        build = $(try { Get-DEBuildInfo } catch { $null })
+        license = $(try { $ls = Get-DELicenseStatus; @{ id = $ls.id; state = $ls.state; technician = $ls.technician } } catch { $null })
+        integrity = $(try { (Test-DEConsoleIntegrity).status } catch { 'unknown' })
+        mode = $de.Mode; dryRun = [bool]$de.DryRun
+        context = (Get-DEContext)
+        gates = @(Get-DEGateBoard)
+        gapCount = @($gaps).Count
+    }
+    # both layers: secret-named keys are dropped, registered secret values are redacted in the text
+    $json = Protect-DEText ((Remove-DESecretKeys -Object $diag) | ConvertTo-Json -Depth 6)
+    Set-Content -LiteralPath (Join-Path $OutDir 'diagnostic.json') -Value $json -Encoding UTF8 -WhatIf:$false
+    Set-Content -LiteralPath (Join-Path $OutDir 'gaps.txt') -Value (@($gaps | ForEach-Object { Protect-DEText ("{0} {1} | {2} | fix: {3}" -f $_.result, $_.id, $_.detail, $_.fix) })) -Encoding UTF8 -WhatIf:$false
+    if ($de.LogFile -and (Test-Path -LiteralPath $de.LogFile)) { (Get-Content -LiteralPath $de.LogFile | ForEach-Object { Protect-DEText $_ }) | Set-Content -LiteralPath (Join-Path $OutDir 'console.log') -Encoding UTF8 -WhatIf:$false }
+    $manifest = @(Get-ChildItem -LiteralPath $OutDir -File | Where-Object { $_ -and $_.Name -ne 'manifest.sha256' } | Sort-Object Name | ForEach-Object { "{0}  {1}" -f (Get-DEBundleFileHash -Path $_.FullName), $_.Name })
+    Set-Content -LiteralPath (Join-Path $OutDir 'manifest.sha256') -Value $manifest -Encoding ASCII -WhatIf:$false
+    $zip = "$OutDir.zip"
+    if (Test-Path -LiteralPath $zip) { Remove-Item -LiteralPath $zip -Force -WhatIf:$false }
+    Compress-Archive -Path (Join-Path $OutDir '*') -DestinationPath $zip -WhatIf:$false
+    $leak = $false
+    foreach ($f in Get-ChildItem -LiteralPath $OutDir -File) {
+        $txt = Get-Content -LiteralPath $f.FullName -Raw -Encoding UTF8 -ErrorAction SilentlyContinue
+        foreach ($v in $de.Redactions) { if ($v -and $txt) { foreach ($form in @($v, ($v | ConvertTo-Json -Compress).Trim('"'), [System.Net.WebUtility]::HtmlEncode($v))) { if ($form -and $txt.Contains($form)) { $leak = $true } } } }
+    }
+    if ($leak) { Remove-Item -LiteralPath $zip -Force -WhatIf:$false; Remove-Item -LiteralPath $OutDir -Recurse -Force -ErrorAction SilentlyContinue -WhatIf:$false; throw 'diagnostic bundle contained a registered secret and was withheld (zip and folder deleted); report this as a console bug' }
+    Add-DEEvidence -Step 'diagnostic.bundle' -Module 'evidence' -Before 'no bundle' -ActionTaken 'diagnostic bundle written' -Result 'INFO' -Verification $zip -Artifacts @($zip) | Out-Null
+    return [pscustomobject]@{ folder = $OutDir; zip = $zip; gaps = @($gaps).Count }
+}
+
 function Convert-DEHtmlToPdf {
     <# Prints an HTML report to PDF with headless Edge (or Chrome). Returns the PDF path, or $null when no browser is available. Never throws. #>
     param([Parameter(Mandatory = $true)][string]$HtmlPath, [Parameter(Mandatory = $true)][string]$PdfPath, [int]$TimeoutSeconds = 60)
@@ -306,25 +567,34 @@ function Convert-DEHtmlToPdf {
 }
 
 function New-DEHubPayload {
-    <# The Intelligence Hub device record: identity, mapping, onboarding state, controls, verification timestamps, evidence references, exceptions. No secrets. #>
-    param([Parameter(Mandatory = $true)]$Record, [string]$BundleSha256 = '', [string]$BundlePath = '', [string]$Lifecycle)
+    <# The Intelligence Hub device record: identity, mapping, onboarding state, controls, verification timestamps, evidence references, exceptions. No secrets.
+       The Zoho Desk ticket behind the work (-DeskTicketId, else state work.deskTicketId) rides along so Hub evidence
+       links back to the ticket; a value that is not ticket-shaped is dropped with a WARN, never sent and never fatal. #>
+    param([Parameter(Mandatory = $true)]$Record, [string]$BundleSha256 = '', [string]$BundlePath = '', [string]$Lifecycle, [string]$DeskTicketId = '')
     $de = Get-DEConsole
     # deviceKey (<maker>:<SERIAL>) is how the Hub, the boot rescue and this tool name the same device (contracts\device.schema.json).
     $key = $null; try { if ($Record.serial) { $key = ConvertTo-DEDeviceKey -Manufacturer "$($Record.manufacturer)" -Serial "$($Record.serial)" } } catch { $key = $null }
+    # The Desk ticket: a ticket number (5-20 digits) or a short code like DESK-1042. The shape is the contract's
+    # (device.schema.json deskTicketId); anything else - including a recovery-password-shaped value - is left out.
+    $ticket = "$DeskTicketId"; if (-not $ticket) { $ticket = "$(Get-DEState -Path 'work.deskTicketId')" }
+    if ($ticket -and $ticket -notmatch '^(\d{5,20}|[A-Za-z][A-Za-z0-9-]{1,31})$') { Write-DELog -Level WARN -Message "the Desk ticket id is not ticket-shaped; left out of the device record"; $ticket = '' }
     $w = Get-DEState -Path 'warranty.current'
     $controls = @(Get-DEEvidence | Group-Object step | ForEach-Object { $last = $_.Group | Sort-Object timestamp -Descending | Select-Object -First 1; @{ control = $_.Name; module = $last.module; result = $last.result; verifiedAt = $last.timestamp } })
-    return [ordered]@{
+    $payload = [ordered]@{
         schema = 'de.techconsole.device/v1'; source = "DETechConsole/$($de.ConsoleVersion)"; sentAt = (Get-Date).ToString('o')
         deviceKey = $key; lifecycle = $(if ($Lifecycle) { $Lifecycle } else { $null })
         # who ran which build under which licence: a copy that should not exist shows up here the first time it reports
         session = $(try { $ls = Get-DELicenseStatus; $bi = Get-DEBuildInfo; @{ technician = $ls.technician; licenseId = $ls.id; licenseState = $ls.state; buildId = $bi.buildId; issuedTo = $bi.issuedTo; integrity = "$(try { (Test-DEConsoleIntegrity).status } catch { 'unknown' })" } } catch { $null })
         warranty = $(if ($w) { @{ status = "$(Get-DEHashPath -Object $w -Path 'status')"; end = (Get-DEHashPath -Object $w -Path 'end'); source = (Get-DEHashPath -Object $w -Path 'source') } } else { $null })
-        client = $Record.client; site = $Record.site; device = @{ hostname = $Record.hostname; serial = $Record.serial; manufacturer = $Record.manufacturer; model = $Record.model; assetTag = $Record.assetTag; role = $Record.role; os = $Record.os }
+        client = $Record.client; site = $Record.site; deskTicketId = $(if ($ticket) { $ticket } else { $null }); device = @{ hostname = $Record.hostname; serial = $Record.serial; manufacturer = $Record.manufacturer; model = $Record.model; assetTag = $Record.assetTag; role = $Record.role; os = $Record.os }
         user = @{ assigned = $Record.assignedUser; localUserName = $Record.localUserName; jumpcloudUser = $Record.jumpcloudUser; email = $Record.email }
         onboarding = @{ mode = $Record.mode; readiness = $Record.readiness; areas = $Record.areas; started = $Record.started; completed = $Record.completed; technician = $Record.technician }
         controls = $controls; exceptions = $Record.exceptions
         evidence = @{ bundleSha256 = $BundleSha256; bundleName = $(if ($BundlePath) { Split-Path -Leaf $BundlePath } else { '' }) }
     }
+    # move 92: withhold what identifies a person before this leaves the device. The Hub manages
+    # devices; the people who use them are not part of the record.
+    return (Remove-DEPersonalFields -Object $payload)
 }
 function Send-DEHubPayload {
     <#
@@ -541,4 +811,4 @@ function Get-DEHubConnectionChecklist {
     return $items
 }
 
-Export-ModuleMember -Function Convert-DEHtmlToPdf, Get-DEReadiness, Get-DEGapReport, New-DEAssetRecord, ConvertTo-DEHtmlReport, Export-DEEvidenceBundle, New-DEHubPayload, Send-DEHubPayload, Send-DEHubWarranty, Format-DEHubSendStatus, Send-DEHubMigrationRecord, Test-DEHubReachable, Get-DEHubConnectionChecklist
+Export-ModuleMember -Function Convert-DEHtmlToPdf, Get-DEReadiness, Get-DEGapReport, Get-DEEvidenceFieldClasses, Get-DEEvidenceFieldClass, Protect-DEPathText, Remove-DEPersonalFields, Get-DERetentionPolicy, Get-DERetentionClass, Get-DERetentionCutoff, Invoke-DERetentionSweep, New-DEAssetRecord, ConvertTo-DEHtmlReport, Export-DEEvidenceBundle, Export-DEDiagnosticBundle, New-DEHubPayload, Send-DEHubPayload, Send-DEHubWarranty, Format-DEHubSendStatus, Send-DEHubMigrationRecord, Test-DEHubReachable, Get-DEHubConnectionChecklist

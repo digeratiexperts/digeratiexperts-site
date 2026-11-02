@@ -110,18 +110,20 @@ if ($Headless) { & {
     # outcome from data, never from stdout or from an exit code a wrapper might lose.
     function Exit-DEHeadless {
         param([int]$Code, [string]$Overall, [string]$Message = '', [string]$Next = '', [string]$Bundle = '', [switch]$RestartRequired)
-        if ($Message) { Write-Host $Message }
+        # crash reports carry no sensitive data (move 100): an exception message is printed and stored
+        # only through Protect-DEText, so a credential in a parse error never reaches RMM transcripts
+        if ($Message) { Write-Host (Protect-DEText $Message) }
         Write-Host ("RESULT: {0}{1}" -f $Overall, $(if ($Bundle) { "; bundle $Bundle" } else { '' }))
         if ($Next) { Write-Host "NEXT: $Next" }
         # no BOM in the result file: RMM and first boot parse it
-        if ($ResultFile) { try { [ordered]@{ schema = 'de.techconsole.result/v1'; overall = $Overall; exitCode = $Code; restartRequired = [bool]$RestartRequired; message = (Protect-DEText $Message); next = (Protect-DEText $Next); bundle = $Bundle; at = (Get-Date).ToString('o') } | ConvertTo-Json | ForEach-Object { [IO.File]::WriteAllText($ResultFile, $_, (New-Object Text.UTF8Encoding $false)) } } catch { Write-Host "could not write $ResultFile : $($_.Exception.Message)" } }
+        if ($ResultFile) { try { [ordered]@{ schema = 'de.techconsole.result/v1'; overall = $Overall; exitCode = $Code; restartRequired = [bool]$RestartRequired; message = (Protect-DEText $Message); next = (Protect-DEText $Next); bundle = $Bundle; at = (Get-Date).ToString('o') } | ConvertTo-Json | ForEach-Object { [IO.File]::WriteAllText($ResultFile, $_, (New-Object Text.UTF8Encoding $false)) } } catch { Write-Host ("could not write {0} : {1}" -f $ResultFile, (Protect-DEText $_.Exception.Message)) } }
         try { Clear-DESecrets } catch { }
         exit $Code
     }
     # an unexpected error still leaves by the one way out (RESULT line + -ResultFile), never as a bare crash with no result
     trap {
         $where = $(if ($_.InvocationInfo -and $_.InvocationInfo.ScriptLineNumber) { " ($([IO.Path]::GetFileName($_.InvocationInfo.ScriptName)) line $($_.InvocationInfo.ScriptLineNumber))" } else { '' })
-        Exit-DEHeadless -Code 1 -Overall 'ERROR' -Message ("ERROR: {0}{1}. Nothing after this point ran." -f $_.Exception.Message, $where) -Next 'Send the console log and evidence folder to DE engineering; the run can be repeated once the cause is fixed.'
+        Exit-DEHeadless -Code 1 -Overall 'ERROR' -Message ("ERROR: {0}{1}. Nothing after this point ran." -f (Protect-DEText "$($_.Exception.Message)"), $where) -Next 'Send the console log and evidence folder to DE engineering; the run can be repeated once the cause is fixed.'
     }
     $null = Initialize-DEConsole -Root $ConsoleRoot -Mode $(if ($Apply) { 'Apply' } else { 'Audit' }) -DataDir $DataDir -DryRun:$WhatIfPreference
     $null = Clear-DERebootQueueIfRestarted   # restarts already done since they were queued no longer hold phases back
@@ -298,7 +300,7 @@ Add-Type -AssemblyName PresentationFramework, PresentationCore, WindowsBase, Sys
 $null = Initialize-DEConsole -Root $ConsoleRoot -Mode Audit -DataDir $DataDir
 $settingsPath = Join-Path (Get-DEConsole).Dirs.State 'gui-settings.json'
 $Settings = @{ technician = "$Technician"; client = ''; mode = 'audit'; lastPage = $Page; hubEndpoint = ''; dryRun = $true }
-if (Test-Path -LiteralPath $settingsPath) { try { $loaded = ConvertTo-DEHashtable (Get-Content -LiteralPath $settingsPath -Raw -Encoding UTF8 | ConvertFrom-Json); foreach ($k in $loaded.Keys) { $Settings[$k] = $loaded[$k] } } catch { } }
+try { if (Test-Path -LiteralPath $settingsPath) { $loaded = ConvertTo-DEHashtable (Get-Content -LiteralPath $settingsPath -Raw -Encoding UTF8 | ConvertFrom-Json); foreach ($k in $loaded.Keys) { $Settings[$k] = $loaded[$k] } } } catch { }
 function Save-GuiSettings { try { $Settings | ConvertTo-Json | Set-Content -LiteralPath $settingsPath -Encoding UTF8 } catch { Write-DELog -Level WARN -Message "the technician's GUI settings could not be saved ($($_.Exception.Message)); this session's choices are not remembered" } }
 if ($Technician) { $Settings.technician = $Technician }
 if (-not $Settings.technician) { $Settings.technician = "$(Get-DEState -Path 'settings.technician')" }
@@ -1896,7 +1898,9 @@ $Win.Add_Closed({ Clear-DESecrets; Save-GuiSettings })
 $Win.Dispatcher.Add_UnhandledException({
     param($src, $e)
     $e.Handled = $true
-    $msg = "Unexpected error: $($e.Exception.Message)"
+    # crash reports carry no sensitive data (move 100): the message goes through redaction before it
+    # reaches the log or the status bar
+    $msg = "Unexpected error: " + (Protect-DEText $e.Exception.Message)
     try { Write-DELog -Level FAIL -Message $msg } catch { }
     try { Set-Status $msg } catch { }
 })

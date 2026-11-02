@@ -24,12 +24,28 @@ function Get-DEWarrantyVendor {
 function Invoke-DEWarrantyWeb {
     <# One place for web calls, so tests replace it and every call has a timeout. #>
     param([Parameter(Mandatory = $true)][string]$Uri, [ValidateSet('GET', 'POST')][string]$Method = 'GET', $Body, [hashtable]$Headers = @{}, [switch]$Raw)
+    # PHI gate (issue #890): on a restricted device a warranty lookup sends the serial to a vendor,
+    # so it needs a confirmed BAA first. The gate reads the settled session decision, so callers do
+    # not each have to plumb the client profile through.
+    $vendor = Get-DEVendorFromUri -Uri $Uri
+    $gate = Test-DEVendorBaaAllowed -Vendor $vendor -PhiRestricted:(Get-DEPhiRestricted)
+    if (-not $gate.allowed) {
+        Write-DELog -Level WARN -Message "warranty lookup to $vendor refused: $($gate.reason)"
+        throw "PHI-restricted device: the warranty lookup to $vendor is blocked ($($gate.reason))"
+    }
     try { [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12 } catch { }
     $h = @{ 'User-Agent' = 'DE-TechTool (Digerati Experts; warranty lookup)' }; foreach ($k in $Headers.Keys) { $h[$k] = $Headers[$k] }
     if ($Raw) { return (Invoke-WebRequest -Uri $Uri -Method $Method -Headers $h -Body $Body -UseBasicParsing -TimeoutSec 30).Content }
     return (Invoke-RestMethod -Uri $Uri -Method $Method -Headers $h -Body $Body -TimeoutSec 30 -UseBasicParsing)
 }
-function ConvertTo-DEWarrantyDate { param($Value) if (-not $Value) { return $null }; try { return ([datetime]::Parse("$Value", [Globalization.CultureInfo]::InvariantCulture)).Date } catch { return $null } }
+function ConvertTo-DEWarrantyDate {
+    param($Value)
+    if (-not $Value) { return $null }
+    # Parse as written, not as an instant. [datetime]::Parse turns '2024-03-01T00:00:00Z' into a LOCAL
+    # time, so west of UTC it lands on 2024-02-29 17:00 and .Date reports the wrong day - a warranty
+    # that ends 1 March reads as 29 February. DateTimeOffset keeps the calendar date the vendor wrote.
+    try { return ([DateTimeOffset]::Parse("$Value", [Globalization.CultureInfo]::InvariantCulture)).Date } catch { return $null }
+}
 function New-DEWarrantyResult {
     <# One shape for every source: status active/expired/unknown/manual/not-applicable, the end date and days left. #>
     param([string]$Serial, [string]$Manufacturer, [string]$Vendor, [string]$Source, [array]$Entitlements = @(), [string]$CheckUrl, [string]$Detail, [string]$Status)

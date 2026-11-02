@@ -30,6 +30,30 @@
 
 version: 2
 claims:
+  - id: de-techtool-move73-agent-threat-model
+    issue: 791
+    owner: opencode
+    subsystem: msp-ai-kit
+    branch: techtool/move-73-agent-threat-model
+    base_sha: 5dab4a3f
+    files:
+      - .claude/skills/msp-ai-kit/windows/AGENT-THREAT-MODEL.md (new)
+      - .claude/skills/msp-ai-kit/windows/DE-TECH-TOOL-TRACKER.md (Plan documents row)
+      - .claude/skills/msp-ai-kit/scripts/build-techtool-tracker.ps1 (same row, so regeneration keeps it)
+      - .ai/ACTIVE_WORK.yaml (this claim)
+    status: active
+    started: 2026-10-31
+    note: >-
+      DE Tech Tool move 73 (issue 791), Tech Center schedule row W2-7: the STRIDE
+      threat model for the call-home agent plus the explicit per-job-type
+      enable/deny list that gates all of section E (moves 59-78). Docs only; no
+      tool code changes. Ownership is already claimed in the Intelligence-Hub
+      work ledger (Hub PR 672, W2-6/W2-7); this row mirrors it in this repo's
+      register. Decisions the doc leaves to Joe are marked D1-D8 in its section
+      12. Overlap check 2026-10-31: open PRs 870-873 touch windows/ modules and
+      tests only; PR 873 touches docs/ACTIVE-WORK-COORDINATION.md, not this
+      file; no open PR touches these four files. Joe merges; after merge close
+      issue 791 and re-run build-techtool-tracker.ps1 to tick its row.
   - id: w1-dashboard-truth
     owner: claude
     subsystem: portal-home
