@@ -193,6 +193,7 @@ function Start-DEBackgroundJob {
         if ($JobProfileId) {
             $JobProfile = Get-DEClientProfile -Id $JobProfileId
             if ($JobPlan) { $JobProfile = New-DEComposedProfile -ClientProfile $JobProfile -Bundle "$($JobPlan['bundle'])" -AddOn @($JobPlan['addOns'] | Where-Object { $_ }) -Solution @($JobPlan['solutions'] | Where-Object { $_ }) }
+            $null = Initialize-DEPhiDecision -ClientProfile $JobProfile   # this runspace does not share the window's PHI decision
             $null = Initialize-DEWorkflow -ClientProfile $JobProfile -Mode $JobMode
         }
     }

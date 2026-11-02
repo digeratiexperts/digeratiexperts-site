@@ -329,4 +329,29 @@ function Send-DEHubEvent {
     return (Invoke-DEHubHttp -Uri ($BaseUrl.TrimEnd('/') + $script:HubEventsPath) -Headers $headers -Body $body)
 }
 
-Export-ModuleMember -Function ConvertTo-DECanonicalJson, Get-DEHubSignature, New-DEHubEvent, Invoke-DEHubHttp, Send-DEHubEvent, Get-DEHubErrorReason, Get-DEContractsRoot, Get-DEContractSchema, Test-DEContract, Find-DEContractSecrets, Remove-DEContractSecretKeys, ConvertTo-DEDeviceKey, New-DEHandoff, Add-DEHandoffAction, Save-DEHandoff, Get-DEHandoffs, Confirm-DEHandoffReviewed
+function Invoke-DEHubHttpGet {
+    <# The only network GET for the Hub, so tests replace it. Short timeout: callers that ask the Hub a question must not stall a window. #>
+    param([Parameter(Mandatory = $true)][string]$Uri, [Parameter(Mandatory = $true)][hashtable]$Headers, [int]$TimeoutSec = 5)
+    try { [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12 } catch { Write-Verbose "TLS 1.2 flag not set: $($_.Exception.Message)" }
+    return (Invoke-RestMethod -Uri $Uri -Method Get -Headers $Headers -TimeoutSec $TimeoutSec -UseBasicParsing)
+}
+function Get-DEHubSigned {
+    <#
+        A signed GET to <BaseUrl><Path>, same envelope as Send-DEHubEvent: X-DE-Signature over method, path,
+        timestamp, event id and the body, which for a GET is '{}' (what the Hub reads from an empty request).
+        The path signed is the request path with no query. HTTPS only. -Secret is a SecureString, unwrapped
+        only here in memory. Returns the parsed response; a refusal throws, and callers treat that as 'unknown'.
+    #>
+    param([Parameter(Mandatory = $true)][string]$BaseUrl, [Parameter(Mandatory = $true)][string]$Path, [Parameter(Mandatory = $true)][securestring]$Secret, [int]$TimeoutSec = 5)
+    if ($BaseUrl -notmatch '^https://') { throw "Hub URL must be https:// (got '$BaseUrl')" }
+    if ($Path -notmatch '^/' -or $Path -match '[?#]') { throw "the signed path must start with / and carry no query (got '$Path')" }
+    $eventId = [guid]::NewGuid().ToString()
+    $ts = (Get-Date).ToUniversalTime().ToString("yyyy-MM-dd'T'HH:mm:ss.fff'Z'", [Globalization.CultureInfo]::InvariantCulture)
+    $bstr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($Secret)
+    try { $plain = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($bstr); $sig = Get-DEHubSignature -Method 'GET' -Path $Path -Timestamp $ts -EventId $eventId -Body '{}' -Secret $plain }
+    finally { [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($bstr); $plain = $null }
+    $headers = @{ 'X-DE-Event-ID' = $eventId; 'X-DE-Timestamp' = $ts; 'X-DE-Source' = 'techconsole'; 'X-DE-Signature' = $sig }
+    return (Invoke-DEHubHttpGet -Uri ($BaseUrl.TrimEnd('/') + $Path) -Headers $headers -TimeoutSec $TimeoutSec)
+}
+
+Export-ModuleMember -Function Invoke-DEHubHttpGet, Get-DEHubSigned, ConvertTo-DECanonicalJson, Get-DEHubSignature, New-DEHubEvent, Invoke-DEHubHttp, Send-DEHubEvent, Get-DEHubErrorReason, Get-DEContractsRoot, Get-DEContractSchema, Test-DEContract, Find-DEContractSecrets, Remove-DEContractSecretKeys, ConvertTo-DEDeviceKey, New-DEHandoff, Add-DEHandoffAction, Save-DEHandoff, Get-DEHandoffs, Confirm-DEHandoffReviewed
