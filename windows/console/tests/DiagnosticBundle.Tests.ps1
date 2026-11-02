@@ -1,4 +1,4 @@
-# Move 97 (issue 815): export a diagnostic bundle with a test that it contains no secrets. The bundle
+﻿# Move 97 (issue 815): export a diagnostic bundle with a test that it contains no secrets. The bundle
 # is what a technician hands to DE engineering when something is wrong, so it is held to the same rule
 # as the evidence bundle (moves 14/15): every file goes through the redaction, and a final sweep
 # deletes the bundle rather than hand over anything that still contains a registered secret - typed,
@@ -46,5 +46,30 @@ Describe 'Diagnostic bundle export' {
         $before = @(Get-ChildItem -LiteralPath $evi -Filter 'diagnostic-*' -ErrorAction SilentlyContinue).Count
         (Get-DEThrown { Export-DEDiagnosticBundle }) | Should -Match 'withheld'
         @(Get-ChildItem -LiteralPath $evi -Filter 'diagnostic-*' -ErrorAction SilentlyContinue).Count | Should -Be $before -Because 'a withheld bundle leaves nothing behind: zip and folder both go'
+    }
+}
+
+Describe 'Diagnostic bundle folders never collide' {
+    BeforeAll {
+        . (Join-Path $PSScriptRoot 'TestHelpers.ps1')
+        $global:DETest = @{ Dir = Initialize-TestConsole }
+    }
+
+    It 'two bundles written in the same second get different folders and both survive' {
+        Mock -ModuleName DE.Evidence Get-Date { param($Format) if ($Format) { '20261101-120000' } else { [datetime]::Now } }
+        $a = Export-DEDiagnosticBundle
+        $b = Export-DEDiagnosticBundle
+        $a.folder | Should -Not -Be $b.folder
+        $a.zip | Should -Not -Be $b.zip
+        foreach ($p in @($a.folder, $a.zip, $b.folder, $b.zip)) { Test-Path -LiteralPath $p | Should -Be $true }
+    }
+    It 'a withheld bundle never takes an earlier bundle from the same second with it' {
+        Mock -ModuleName DE.Evidence Get-Date { param($Format) if ($Format) { '20261101-130000' } else { [datetime]::Now } }
+        $keep = Export-DEDiagnosticBundle
+        Set-DESecret -Name 'WEIRD2' -Plain 'x&y<z>w'
+        Add-Content -LiteralPath (Get-DEConsole).LogFile -Value ('escaped ' + [System.Net.WebUtility]::HtmlEncode('x&y<z>w') + ' form')
+        (Get-DEThrown { Export-DEDiagnosticBundle }) | Should -Match 'withheld'
+        Test-Path -LiteralPath $keep.folder | Should -Be $true -Because 'the earlier bundle is a different folder even inside the same second'
+        Test-Path -LiteralPath $keep.zip | Should -Be $true
     }
 }
