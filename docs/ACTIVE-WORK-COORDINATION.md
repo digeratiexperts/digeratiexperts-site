@@ -84,6 +84,7 @@ projection, so they merge clean in any order.
 
 | PR | Draft | Branch | What it changes | Owner |
 | --- | --- | --- | --- | --- |
+| #923 | no | `techtool/phi-encryption-design` | Tech Tool #890 part 3: PHI encryption-at-rest design doc (docs only; DPAPI + BitLocker, rotation that never strands evidence) | DE Tech Tool section H lane (OpenCode, W3-6) |
 | #897 | no | `techtool/move-40-trust-records` | Tech Tool move 40: installer source, vendor hash, verified-or-not trust records (section C lane) | DE Tech Tool section C lane (OpenCode) |
 | #896 | no | `techtool/move24-hub-payload-fuzz` | Tech Tool move 24: Hub payload builder fuzz (issue #742; Hub schedule W1-10 lane) | OpenCode · MiMo-V2.6-Pro (W1-10 session) |
 | #895 | no | `techtool/move-84-dropship-serials` | Tech Tool move 84: dropship kit against real serial samples (section G lane) | DE Tech Tool section G lane (OpenCode) |
