@@ -26,6 +26,10 @@ Describe 'Exported module functions and the docs do not drift apart' {
 
         # names whose docs entry is a plan that is not built yet: name -> who builds it
         $script:Planned = @{
+            'Protect-DEBytes' = 'PHI encryption at rest 3a (#890 part 3, PHI-ENCRYPTION-AT-REST.md): the DPAPI provider; the design doc is merged ahead of the code'
+            'Unprotect-DEBytes' = 'PHI encryption at rest 3a (#890 part 3): the matching read, behind the same provider seam'
+            'Read-DESealedFile' = 'PHI encryption at rest 3c (#890 part 3): the one function every reader of a sealed file goes through'
+            'Get-DEProtectionInventory' = 'PHI encryption at rest 3d (#890 part 3): counts of sealed files by format version and scheme, and the unreadable ones'
             'Run-DEHubJobs' = 'moves 59-78 (E. Hub and call-home agent): the job-runner entry GO-LIVE.md orders; DE-HubWorker.ps1 carries the loop it will call'
         }
 
