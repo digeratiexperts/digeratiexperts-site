@@ -70,9 +70,9 @@ bypassed by a new probe.
 
 These are **personal** and **path** class under [EVIDENCE-DATA-CLASSIFICATION.md](EVIDENCE-DATA-CLASSIFICATION.md):
 they stay on the device (moves 91 and 92 keep them off the Hub and client reports), and part 3
-encrypts them at rest. If a stricter reading is wanted - withholding these too on a restricted
-device - it breaks client detection and the OneDrive gate unless each is given a replacement, so it
-needs a decision rather than a default.
+encrypts them at rest. **Joe confirmed this scope on 2026-11-02**: "user data" means what users
+created, not how the OS is configured. A stricter reading - withholding these too - would break client
+detection and the OneDrive gate unless each is given a replacement, so it would be its own piece of work.
 
 ## The vendor gate
 
