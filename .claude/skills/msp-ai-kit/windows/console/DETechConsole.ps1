@@ -203,6 +203,7 @@ if ($Headless) { & {
         Remove-Item -LiteralPath ("Env:\" + $ev.Name) -ErrorAction SilentlyContinue
     }
     try { $clientProf = New-DEComposedProfile -ClientProfile $baseProfile -Bundle $Bundle -AddOn $AddOn -Solution $Solution } catch { Exit-DEHeadless -Code 2 -Overall 'REFUSED' -Message "REFUSED: $($_.Exception.Message)" }
+    $null = Initialize-DEPhiDecision -ClientProfile $clientProf   # PHI mode is settled before discovery so a restricted device is never read as unrestricted
     $snap = Get-DEDiscoverySnapshot
     if ($Mode -eq 'auto') {
         $rec = Get-DERecommendedMode -Snapshot $snap -ClientProfile $clientProf
@@ -663,7 +664,7 @@ function Invoke-Discovery {
         if (-not $S.Profile -and $match.best) { $S.Profile = New-DEComposedProfile -ClientProfile (Get-DEClientProfile -Id $match.best.id); $UI.HdrClientWhy.Text = "detected ($($match.confidence)): $($match.best.reasons -join '; ')" }
         if ($S.Profile) {
             $null = New-DEProvisioningContext -Snapshot $S.Snapshot -ClientId $S.Profile.id -Mode $S.Mode -Technician $Settings.technician
-            $null = Initialize-DEWorkflow -ClientProfile $S.Profile -Mode $S.Mode
+            $null = Initialize-DEPhiDecision -ClientProfile $S.Profile; $null = Initialize-DEWorkflow -ClientProfile $S.Profile -Mode $S.Mode
         }
         Update-Header; Show-Page $S.CurrentPage
     }
@@ -754,7 +755,7 @@ function Start-DEScan {
         if (-not $S.Profile) { Update-Header; Show-Page 'Scan'; Set-Status 'Scan finished. Pick the client so every category is checked against its plan.'; return }
         if (-not $S.ModeChosen) { $rec = Get-DERecommendedMode -Snapshot $S.Snapshot -ClientProfile $S.Profile; $S.Mode = $rec.mode; $S.RecommendedReason = $rec.reason }
         $null = New-DEProvisioningContext -Snapshot $S.Snapshot -ClientId $S.Profile.id -Mode $S.Mode -Technician $Settings.technician
-        $null = Initialize-DEWorkflow -ClientProfile $S.Profile -Mode $S.Mode
+        $null = Initialize-DEPhiDecision -ClientProfile $S.Profile; $null = Initialize-DEWorkflow -ClientProfile $S.Profile -Mode $S.Mode
         Start-DEAuditAll
     }
 }
@@ -1023,6 +1024,7 @@ function Use-ClientAndMode {
     if ($S.Mode -ne 'dropship') { Set-DEStateValue -Path 'order' -Value $null }   # an order only applies to its dropship run
     if ($Technician) { $Settings.technician = $Technician }
     Save-GuiSettings
+    $null = Initialize-DEPhiDecision -ClientProfile $S.Profile
     $ids = @(Initialize-DEWorkflow -ClientProfile $S.Profile -Mode $S.Mode)
     if ($S.Snapshot) { $null = New-DEProvisioningContext -Snapshot $S.Snapshot -ClientId $S.Profile.id -Mode $S.Mode -Technician $Settings.technician }
     $planName = $(if ($S.Profile.plan.bundleName) { $S.Profile.plan.bundleName } elseif (@($S.Profile.plan.solutions).Count) { 'standalone ' + (@($S.Profile.plan.solutions) -join ', ') } else { 'client profile' })

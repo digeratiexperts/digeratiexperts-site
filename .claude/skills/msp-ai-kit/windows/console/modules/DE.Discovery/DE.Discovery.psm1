@@ -1,4 +1,4 @@
-﻿#Requires -Version 5.1
+#Requires -Version 5.1
 <#
 .SYNOPSIS
     DE Tech Tool discovery engines: device, identity (dsregcmd), MDM
@@ -292,6 +292,29 @@ function Get-DEBitLockerState {
 }
 
 # ------------------------------------------------------------------ OneDrive
+function Get-DEFolderSample {
+    <#
+        The ONE place discovery looks inside a user's data folder, and it reads names only to count
+        them and add up sizes - never contents. On a PHI-restricted device (issue #890) it does not
+        look at all: the folder is never enumerated, so no document name, count, size or date is read.
+
+        Returns @{ inspected; files; sizeMB }. inspected = $false means "not looked at", which is
+        different from "looked and found nothing" - callers must not read the nulls as empty.
+    #>
+    param([AllowNull()][AllowEmptyString()][string]$Folder)
+    $r = @{ inspected = $false; files = $null; sizeMB = $null }
+    if (-not $Folder) { return $r }
+    if (Get-DEPhiRestricted) { return $r }
+    try {
+        if (-not (Test-Path -LiteralPath $Folder)) { return $r }
+        $items = @(Get-ChildItem -LiteralPath $Folder -Recurse -File -Force -ErrorAction SilentlyContinue | Select-Object -First 5000)
+        $r.files = $items.Count
+        $r.sizeMB = [math]::Round((($items | Measure-Object Length -Sum).Sum) / 1MB, 0)
+        $r.inspected = $true
+    } catch { $r = @{ inspected = $false; files = $null; sizeMB = $null } }
+    return $r
+}
+
 function Get-DEOneDriveState {
     <# Accounts under HKCU\Software\Microsoft\OneDrive\Accounts, KFM, process, sync-health hints (never treats a running process as health). #>
     $accounts = @(); $running = $false
@@ -313,10 +336,10 @@ function Get-DEOneDriveState {
                 $folder = $p.UserFolder
                 $kfm = @{ desktop = [bool]($p.KfmFoldersProtectedNow -band 2); documents = [bool]($p.KfmFoldersProtectedNow -band 1); pictures = [bool]($p.KfmFoldersProtectedNow -band 4) }
                 if (-not $p.PSObject.Properties['KfmFoldersProtectedNow']) { $kfm = @{ desktop = $null; documents = $null; pictures = $null } }
-                $size = $null; $files = $null
-                if ($folder -and (Test-Path -LiteralPath $folder)) { try { $items = @(Get-ChildItem -LiteralPath $folder -Recurse -File -Force -ErrorAction SilentlyContinue | Select-Object -First 5000); $files = $items.Count; $size = [math]::Round((($items | Measure-Object Length -Sum).Sum) / 1MB, 0) } catch { } }
+                $sample = Get-DEFolderSample -Folder $folder
+                $size = $sample.sizeMB; $files = $sample.files
                 $dedupe = "$($p.UserEmail)|$folder"; if ($seen.ContainsKey($dedupe)) { continue }; $seen[$dedupe] = $true   # HKCU and HKU\<sid> can be the same hive
-                $accounts += @{ owner = $rt.owner; ownerSid = $rt.sid; key = $k.PSChildName; type = $(if ($k.PSChildName -eq 'Personal') { 'personal' } else { 'business' }); email = $p.UserEmail; tenant = $p.DisplayName; folder = $folder; configured = [bool]$folder; kfm = $kfm; sampleFiles = $files; sampleSizeMB = $size; lastSignIn = $p.LastSignInTime }
+                $accounts += @{ owner = $rt.owner; ownerSid = $rt.sid; key = $k.PSChildName; type = $(if ($k.PSChildName -eq 'Personal') { 'personal' } else { 'business' }); email = $p.UserEmail; tenant = $p.DisplayName; folder = $folder; configured = [bool]$folder; kfm = $kfm; sampleFiles = $files; sampleSizeMB = $size; dataInspected = [bool]$sample.inspected; lastSignIn = $p.LastSignInTime }
             }
         }
         }
@@ -329,7 +352,8 @@ function Get-DEOneDriveState {
     if ($business.Count) {
         $anyKfm = [bool]($business | Where-Object { $_ -and $_.kfm.desktop -or $_.kfm.documents -or $_.kfm.pictures })
         $meaningful = [bool]($business | Where-Object { $_ -and $_.sampleFiles -gt 20 })
-        if ($anyKfm) { $classification = 'active-with-kfm' } elseif ($meaningful) { $classification = 'active-without-kfm' } else { $classification = 'configured-little-data' }
+        # a restricted device never looks inside the folder, so 'little data' would be a guess presented as a finding
+        if ($anyKfm) { $classification = 'active-with-kfm' } elseif ($meaningful) { $classification = 'active-without-kfm' } elseif (Get-DEPhiRestricted) { $classification = 'configured-data-not-inspected' } else { $classification = 'configured-little-data' }
     }
     if ($accounts.Count -and -not $running) { $classification = "$classification (client not running)" }
     return @{ running = $running; accounts = $accounts; businessAccounts = $business; shellFolders = $shellFolders; classification = $classification; healthKnown = $false; collectedAt = (Get-Date).ToString('o') }
@@ -495,4 +519,4 @@ function Get-DEDiscoverySnapshot {
     return $snap
 }
 
-Export-ModuleMember -Function Get-DESetupState, Get-DEDeviceLifecycle, Get-DEDeviceInventory, Get-DEPendingReboot, ConvertFrom-DEDsregcmd, Get-DEIdentityState, Find-DEProfileForUser, Get-DEMdmState, Get-DEJumpCloudAgentState, Get-DESecurityAgentState, Get-DEServiceState, Get-DEBitLockerState, Get-DEOneDriveState, Get-DEDropboxState, Get-DEWindowsUpdateState, Get-DEInstalledApps, Find-DEApp, Get-DENetworkState, Test-DEConnectivity, Get-DEBrowserState, Get-DEDiscoverySnapshot
+Export-ModuleMember -Function Get-DEFolderSample, Get-DESetupState, Get-DEDeviceLifecycle, Get-DEDeviceInventory, Get-DEPendingReboot, ConvertFrom-DEDsregcmd, Get-DEIdentityState, Find-DEProfileForUser, Get-DEMdmState, Get-DEJumpCloudAgentState, Get-DESecurityAgentState, Get-DEServiceState, Get-DEBitLockerState, Get-DEOneDriveState, Get-DEDropboxState, Get-DEWindowsUpdateState, Get-DEInstalledApps, Find-DEApp, Get-DENetworkState, Test-DEConnectivity, Get-DEBrowserState, Get-DEDiscoverySnapshot
