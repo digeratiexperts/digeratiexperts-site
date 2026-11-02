@@ -70,6 +70,25 @@ Describe 'HUB-JOB-QUEUE.md (design only) is consistent with itself' {
             $codes.Count | Should -BeGreaterThan 10
             $codes | Should -Contain $ex.refusal.code
         }
+        It 'lists every refusal code the device modules can return, so the Hub and the agent speak one list' {
+            $m = [regex]::Match($script:Text, '`refusal\.code` is one of: (.*?)\. `detail`', 'Singleline')
+            $listed = @([regex]::Matches($m.Groups[1].Value, '`([a-z_]+)`') | ForEach-Object { $_.Groups[1].Value })
+            $emitted = New-Object System.Collections.Generic.List[string]
+            foreach ($name in @('DE.AgentTrust', 'DE.AgentReplay', 'DE.AgentCatalog')) {
+                $p = Join-Path $script:Win "agent\$name.psm1"
+                if (-not (Test-Path -LiteralPath $p)) { continue }
+                $src = [IO.File]::ReadAllText($p)
+                foreach ($mm in [regex]::Matches($src, '(?:\$false|\$r \$false|\$result \$false) ''([a-z_]+)''|Code = ''([a-z_]+)''')) {
+                    $code = if ($mm.Groups[1].Success) { $mm.Groups[1].Value } else { $mm.Groups[2].Value }
+                    if ($code) { $emitted.Add($code) }
+                }
+            }
+            if ($emitted.Count) {
+                $emitted.Count | Should -BeGreaterThan 8 -Because 'the scan must be reading real refusal codes'
+                $missing = @($emitted | Sort-Object -Unique | Where-Object { $listed -notcontains $_ })
+                ($missing -join ', ') | Should -BeNullOrEmpty -Because 'a refusal the agent can send must be one the Hub knows'
+            }
+        }
         It 'every error code a response names is in the error table' {
             $table = [regex]::Match($script:Text, '## 9\. Errors(.*?)## 10\.', 'Singleline').Groups[1].Value
             $tableCodes = @([regex]::Matches($table, '\|\s*`([a-z_]+)`\s*\|') | ForEach-Object { $_.Groups[1].Value })
