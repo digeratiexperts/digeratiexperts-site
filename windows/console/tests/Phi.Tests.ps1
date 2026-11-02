@@ -72,6 +72,34 @@ Describe 'PHI-restricted mode: decide conservatively, gate the vendors' {
         }
     }
 
+    Context 'the Hub read is signed, and without the signing secret nothing is asked (Hub #728)' {
+        AfterEach { Clear-DESecrets }
+        It 'signs the GET exactly as the Hub verifies it and reads the vertical' {
+            Mock -ModuleName DE.Phi Get-DEHubConnectionChecklist { [pscustomobject]@{ endpoint = 'https://hub.example' } }
+            Mock -ModuleName DE.Phi Invoke-WebRequest { $global:PhiCall = @{ Uri = $Uri; Headers = $Headers }; [pscustomobject]@{ Content = '{"vertical":"general","phiRestricted":false}' } }
+            Set-DESecret -Name 'DE_HUB_SIGNING_SECRET' -Plain 'phi-test-secret-0123456789'
+            $v = Get-DEClientVertical -ClientProfile @{ hub = @{ accountId = 'ACC-SIGN-1' } }
+            $v | Should -Be 'general'
+            $global:PhiCall.Uri | Should -Be 'https://hub.example/api/techtool/account/ACC-SIGN-1/profile'
+            $h = $global:PhiCall.Headers
+            $h['X-DE-Source'] | Should -Be 'techconsole'
+            $expected = Get-DEHubSignature -Method 'GET' -Path '/api/techtool/account/ACC-SIGN-1/profile' -Timestamp $h['X-DE-Timestamp'] -EventId $h['X-DE-Event-ID'] -Body '{}' -Secret 'phi-test-secret-0123456789'
+            $h['X-DE-Signature'] | Should -Be $expected
+        }
+        It 'produces the Hub''s known-answer signature byte for byte (cross-check with Hub techtool-account-profile.test.ts)' {
+            # Same inputs, same expected hex as the Hub's own test of signDeSyncRequest. If this fails,
+            # the Hub would answer 401 to every signed vertical read.
+            $sig = Get-DEHubSignature -Method 'GET' -Path '/api/techtool/account/42/profile' -Timestamp '2026-11-02T03:00:00.000Z' -EventId '0d6c6f0e-3f1c-4b7a-8b9e-2a1d3c4b5e6f' -Body '{}' -Secret 'kat-secret-for-cross-check-0123456789'
+            $sig | Should -Be '27a4472f167db03740c82f4f649c722efd9397c6075783c8c31445a017080026'
+        }
+        It 'with no signing secret it does not call the Hub and stays unknown (restricted)' {
+            Mock -ModuleName DE.Phi Get-DEHubConnectionChecklist { [pscustomobject]@{ endpoint = 'https://hub.example' } }
+            Mock -ModuleName DE.Phi Invoke-WebRequest { throw 'must not be called' }
+            Get-DEClientVertical -ClientProfile @{ hub = @{ accountId = 'ACC-SIGN-2' } } | Should -BeNullOrEmpty
+            Should -Invoke -ModuleName DE.Phi Invoke-WebRequest -Times 0 -Exactly
+        }
+    }
+
     Context 'the BAA gate blocks unconfirmed vendors on a restricted device' {
         It 'an unconfirmed vendor is BLOCKED, not warned' {
             $g = Test-DEVendorBaaAllowed -Vendor 'Guardz' -PhiRestricted
