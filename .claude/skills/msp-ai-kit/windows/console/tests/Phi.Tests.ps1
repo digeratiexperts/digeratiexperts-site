@@ -72,6 +72,28 @@ Describe 'PHI-restricted mode: decide conservatively, gate the vendors' {
         }
     }
 
+    Context 'the Hub read is signed, and without the signing secret nothing is asked (Hub #728)' {
+        AfterEach { Clear-DESecrets }
+        It 'signs the GET exactly as the Hub verifies it and reads the vertical' {
+            Mock -ModuleName DE.Phi Get-DEHubConnectionChecklist { [pscustomobject]@{ endpoint = 'https://hub.example' } }
+            Mock -ModuleName DE.Phi Invoke-WebRequest { $global:PhiCall = @{ Uri = $Uri; Headers = $Headers }; [pscustomobject]@{ Content = '{"vertical":"general","phiRestricted":false}' } }
+            Set-DESecret -Name 'DE_HUB_SIGNING_SECRET' -Plain 'phi-test-secret-0123456789'
+            $v = Get-DEClientVertical -ClientProfile @{ hub = @{ accountId = 'ACC-SIGN-1' } }
+            $v | Should -Be 'general'
+            $global:PhiCall.Uri | Should -Be 'https://hub.example/api/techtool/account/ACC-SIGN-1/profile'
+            $h = $global:PhiCall.Headers
+            $h['X-DE-Source'] | Should -Be 'techconsole'
+            $expected = Get-DEHubSignature -Method 'GET' -Path '/api/techtool/account/ACC-SIGN-1/profile' -Timestamp $h['X-DE-Timestamp'] -EventId $h['X-DE-Event-ID'] -Body '{}' -Secret 'phi-test-secret-0123456789'
+            $h['X-DE-Signature'] | Should -Be $expected
+        }
+        It 'with no signing secret it does not call the Hub and stays unknown (restricted)' {
+            Mock -ModuleName DE.Phi Get-DEHubConnectionChecklist { [pscustomobject]@{ endpoint = 'https://hub.example' } }
+            Mock -ModuleName DE.Phi Invoke-WebRequest { throw 'must not be called' }
+            Get-DEClientVertical -ClientProfile @{ hub = @{ accountId = 'ACC-SIGN-2' } } | Should -BeNullOrEmpty
+            Should -Invoke -ModuleName DE.Phi Invoke-WebRequest -Times 0 -Exactly
+        }
+    }
+
     Context 'the BAA gate blocks unconfirmed vendors on a restricted device' {
         It 'an unconfirmed vendor is BLOCKED, not warned' {
             $g = Test-DEVendorBaaAllowed -Vendor 'Guardz' -PhiRestricted
