@@ -52,6 +52,14 @@ What to do:
 - **Still stuck?** Stop and escalate to DE engineering with the message text and the client name.
   A refusal is the tool working, not the tool broken.
 
+## After a vendor update, the pin refuses
+
+Some pinned sources are `evergreen` - the vendor serves a new file from the same address (JumpCloud agent, the Office deployment tool). When one updates, installs refuse until the pin is reviewed. That is the pin doing its job, not a fault.
+
+- Engineering runs `tests\Update-InstallerPin.ps1 -Id <package>`. It downloads twice, checks the signature where the vendor signs, and prints the old and new hash and file version.
+- With `-Apply` it writes the new pin for review. Nothing is committed or installed; the catalog change goes through a normal PR (rule R10).
+- Technicians never do this and never edit the catalog.
+
 ## What never happens
 
 - The tool never installs a file whose fingerprint or signature failed.

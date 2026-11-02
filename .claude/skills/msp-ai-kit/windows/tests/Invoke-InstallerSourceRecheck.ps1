@@ -15,6 +15,7 @@
         silent-change   hash-mismatch and the version did NOT change - the R7 ALERT case
         version-change  hash-mismatch and the version moved - a finding of a different kind
         download-failed the source could not be fetched - a finding, not a pass
+        acknowledged    a download-failed the catalog acknowledges until a stated date (not a finding until it expires)
         not-checkable   winget / local sources have nothing to fetch (recorded, not verified)
 
     Rate limiting: sources are fetched one at a time with -DelaySeconds between downloads
@@ -64,6 +65,8 @@ function Get-DERecheckSources {
             Sha256        = $src.sha256
             Sha256Verified = [bool]$src.sha256Verified
             Sha256From    = "$($src.sha256From)"
+            AckReason     = "$($src.recheckAcknowledged.reason)"
+            AckUntil      = "$($src.recheckAcknowledged.until)"
         }
     }
     return $rows
@@ -75,9 +78,18 @@ function Compare-DESourceFile {
         [Parameter(Mandatory = $true)]$Source,
         [string]$ActualSha256 = '',
         [string]$ActualVersion = '',
-        [string]$Failure = ''
+        [string]$Failure = '',
+        [datetime]$Today = (Get-Date)
     )
-    if ($Failure) { return @{ id = $Source.Id; finding = 'download-failed'; detail = $Failure } }
+    if ($Failure) {
+        # a known-unfetchable source is acknowledged until a stated date, then it is a finding again
+        $until = [datetime]::MinValue
+        if ("$($Source.AckUntil)" -and [datetime]::TryParseExact("$($Source.AckUntil)", 'yyyy-MM-dd', [Globalization.CultureInfo]::InvariantCulture, [Globalization.DateTimeStyles]::None, [ref]$until)) {
+            if ($until.Date -ge $Today.Date) { return @{ id = $Source.Id; finding = 'acknowledged'; detail = "$Failure - acknowledged until $($until.ToString('yyyy-MM-dd')): $($Source.AckReason)" } }
+            return @{ id = $Source.Id; finding = 'download-failed'; detail = "$Failure - the acknowledgement expired on $($until.ToString('yyyy-MM-dd')); confirm the source or renew the acknowledgement in a reviewed change" }
+        }
+        return @{ id = $Source.Id; finding = 'download-failed'; detail = $Failure }
+    }
     if ($Source.Type -eq 'winget' -or $Source.Type -eq 'local') { return @{ id = $Source.Id; finding = 'not-checkable'; detail = "$($Source.Type) source has nothing to re-fetch; checked at install time instead" } }
     if (-not $ActualSha256) { return @{ id = $Source.Id; finding = 'not-checkable'; detail = 'nothing fetched in this run (offline)' } }
     if (-not $Source.Sha256) { return @{ id = $Source.Id; finding = 'unpinned'; detail = "no hash recorded ($($Source.Sha256From))" } }
@@ -125,7 +137,7 @@ function Invoke-DEInstallerSourceRecheck {
     foreach ($s in $Sources) {
         if ($Offline -or $s.Type -ne 'url') {
             $r = Compare-DESourceFile -Source $s
-            $rows += $r; if ($r.finding -notin @('ok', 'not-checkable')) { $findings += $r }
+            $rows += $r; if ($r.finding -notin @('ok', 'not-checkable', 'acknowledged')) { $findings += $r }
             continue
         }
         if (-not $WorkDir) { $WorkDir = Join-Path ([IO.Path]::GetTempPath()) ('de-recheck-' + [guid]::NewGuid()) }
@@ -144,7 +156,7 @@ function Invoke-DEInstallerSourceRecheck {
             if (Test-Path -LiteralPath $tmp) { Remove-Item -LiteralPath $tmp -Force -ErrorAction SilentlyContinue }
         }
         $r = Compare-DESourceFile -Source $s -ActualSha256 $actual -ActualVersion $actualVersion -Failure $failure
-        $rows += $r; if ($r.finding -notin @('ok', 'not-checkable')) { $findings += $r }
+        $rows += $r; if ($r.finding -notin @('ok', 'not-checkable', 'acknowledged')) { $findings += $r }
         if ($DelaySeconds -gt 0) { Start-Sleep -Seconds $DelaySeconds }   # R6: never hammer a vendor CDN
     }
     return @{ rows = $rows; findings = $findings; checked = $checked }
