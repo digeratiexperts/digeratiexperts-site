@@ -107,6 +107,27 @@ Describe 'Pin refresh and recheck acknowledgement' {
         }
     }
 
+    Context 'Remote Assist uses the documented managed deployment model' {
+        It 'is not fetched or counted as a failed installer download' {
+            $catalogPath = Join-Path (Join-Path $script:Windows 'console') 'catalog\packages.json'
+            $ra = Get-DERecheckSources -Catalog $catalogPath | Where-Object { $_.Id -eq 'jumpcloud-remote-assist' }
+            $ra.Type | Should -Be 'managed'
+            $ra.Location | Should -Be 'https://www.jumpcloud.com/support/get-started-remote-assist'
+            $ra.ManagedBy | Should -Be 'JumpCloud'
+            $ra.AckUntil | Should -BeNullOrEmpty
+            $result = Compare-DESourceFile -Source $ra -Today ([datetime]'2026-11-15')
+            $result.finding | Should -Be 'managed'
+            $result.detail | Should -Match 'device check-in'
+            (Compare-DESourceFile -Source $ra -Failure '403' -Today ([datetime]'2026-11-15')).finding | Should -Be 'download-failed' -Because 'a managed capability must never use the download acknowledgement path'
+            Mock Invoke-WebRequest { throw 'a managed capability must never be fetched' }
+            $run = Invoke-DEInstallerSourceRecheck -Sources @($ra) -DelaySeconds 0
+            $run.checked | Should -Be 0
+            $run.findings | Should -BeNullOrEmpty
+            $run.rows[0].finding | Should -Be 'managed'
+            Should -Invoke Invoke-WebRequest -Times 0
+        }
+    }
+
     Context 'the catalog states its acknowledgements properly' {
         It 'every acknowledgement has a reason and an ISO date, and only sits on a url source' {
             $cat = (Get-Content -LiteralPath (Join-Path (Join-Path $script:Windows 'console') 'catalog\packages.json') -Raw -Encoding UTF8 | ConvertFrom-Json).packages

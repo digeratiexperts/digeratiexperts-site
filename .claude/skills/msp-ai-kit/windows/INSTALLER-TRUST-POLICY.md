@@ -78,10 +78,7 @@ when they enter the catalog, and that hash checked before use, exactly like a do
 "DE supplied it" is not a trust argument; the file can still be wrong or replaced.
 
 **R10. The catalog is not the escape hatch.**
-Nobody edits `packages.json` to make a refusal go away. If a package legitimately changes, the
-recorded hash is updated in a reviewed change with the vendor's own published value and a note
-saying where it came from. Editing a hash to match a file you already have defeats the whole
-mechanism.
+Nobody edits `packages.json` to make a refusal go away. A vendor-published hash is recorded when available; otherwise a pin is created or refreshed only through the reviewed R5 procedure, behind Authenticode when the vendor signs. The provenance records how the file was obtained and, on refresh, the previous pin. A managed capability has no package hash to refresh. Editing a hash to match an untrusted file defeats the whole mechanism.
 
 **R11. The tool's own updates verify before replacement.**
 Release packages are code-signed and sha256-pinned; the endpoint verifies signature and hash
@@ -90,31 +87,25 @@ before anything is replaced. No unsigned server-supplied script executes. (Alrea
 
 ## Current state
 
-Measured against this policy today (18 packages in `packages.json`):
+Measured against this reviewed stack (18 catalog records):
 
-| Source type | Count | Hash pinned | Publisher recorded | Meets policy |
-|---|---|---|---|---|
-| `url` | 4 | **0 of 4** | 4 of 4 | **No** — R2 fails |
-| `local` | 6 | **0 of 6** | 6 of 6 | **No** — R9 fails |
-| `winget` | 8 | 0 of 8 | 0 of 8 | R8: recorded as winget |
-| **Total** | **18** | **0 of 18** | 10 of 18 | |
+| Source type | Count | Hash pinned | Publisher recorded | State |
+|---|---:|---:|---:|---|
+| `url` | 3 | **3 of 3** | 3 of 3 | Direct files are pinned and signature-checked where the vendor signs |
+| `local` | 6 | **0 of 6** | 6 of 6 | R9 intake hash is still required before use |
+| `winget` | 8 | n/a | n/a | R8: trust inherited from winget |
+| `managed` | 1 | n/a | JumpCloud | Provider-managed lifecycle; no installer file is fetched by DE |
+| **Total** | **18** | **3 direct-file pins** | 10 direct/local records | |
 
-**No package in the catalog has a pinned SHA-256.** The four `url` packages download from vendor
-hosts and are used without any hash check at all:
+Remote Assist is a **managed capability**, not an unpinned URL package. JumpCloud's official guide describes an organization-level Remote Assist Service that installs, upgrades, or removes the application on compatible managed devices during check-in. The entry carries that provenance and the guide URL. It does not assert that JumpCloud has no separate authorized installer; none has been verified for this catalog. The temporary `recheckAcknowledged` exception is removed because there is no direct Remote Assist URL to recheck.
 
-- JumpCloud Agent — `https://cdn02.jumpcloud.com/production/jcagent-msi-signed.msi`
-- JumpCloud Remote Assist — `https://cdn02.jumpcloud.com/production/jumpcloud-remote-assist-agent.msi`
-- Wazuh Agent
-- Microsoft 365 Apps for business/enterprise
+The three direct `url` packages are JumpCloud Agent, Wazuh Agent, and Microsoft 365 Apps. Their recorded first-download pins and Authenticode checks remain enforced by `Test-DEPackageTrust`. `community.json` separately pins SHA-256 per tool and verifies it.
 
-`community.json`, by contrast, **does** pin SHA-256 per tool and verifies it. So the mechanism
-exists and works; it has simply not been applied to `packages.json` yet.
+The direct/local file gap remaining is R9 intake plus future reviewed pin refreshes.
 
-That gap is what moves 39-48 close.
+## Move 48 decision
 
-## Open decision — move 48
-
-**Decision, recorded 2026-10-26 by Joe: pin plus Authenticode where the vendor signs, pin on first trusted download otherwise.** This unblocks move 41 and the rest of section C.
+**Decision, recorded 2026-10-26 by Joe: pin plus Authenticode where the vendor signs, pin on first trusted download otherwise.** The #947/#948 stack implements this for direct URL sources; merge and CI remain pending.
 
 | Option | Meaning | Cost | Outcome |
 |---|---|---|---|

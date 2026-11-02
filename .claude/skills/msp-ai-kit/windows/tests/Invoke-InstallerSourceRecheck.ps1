@@ -16,6 +16,7 @@
         version-change  hash-mismatch and the version moved - a finding of a different kind
         download-failed the source could not be fetched - a finding, not a pass
         acknowledged    a download-failed the catalog acknowledges until a stated date (not a finding until it expires)
+        managed         a provider-managed capability; no installer file is fetched
         not-checkable   winget / local sources have nothing to fetch (recorded, not verified)
 
     Rate limiting: sources are fetched one at a time with -DelaySeconds between downloads
@@ -61,7 +62,9 @@ function Get-DERecheckSources {
             Name          = $p.name
             Type          = "$($src.type)"
             Version       = "$($src.version)"
-            Location      = $(switch ("$($src.type)") { 'url' { "$($src.url)" } 'local' { "$($src.localPath)" } 'winget' { "$($src.id)" } default { '' } })
+            Location      = $(switch ("$($src.type)") { 'url' { "$($src.url)" } 'local' { "$($src.localPath)" } 'winget' { "$($src.id)" } 'managed' { "$($src.documentationUrl)" } default { '' } })
+            ManagedBy     = "$($src.managedBy)"
+            Mechanism     = "$($src.mechanism)"
             Sha256        = $src.sha256
             Sha256Verified = [bool]$src.sha256Verified
             Sha256From    = "$($src.sha256From)"
@@ -81,6 +84,10 @@ function Compare-DESourceFile {
         [string]$Failure = '',
         [datetime]$Today = (Get-Date)
     )
+    if ($Source.Type -eq 'managed') {
+        if ($Failure) { return @{ id = $Source.Id; finding = 'download-failed'; detail = "managed capability was incorrectly treated as a direct download: $Failure" } }
+        return @{ id = $Source.Id; finding = 'managed'; detail = "provider-managed by $($Source.ManagedBy): $($Source.Mechanism) (no installer file fetched)" }
+    }
     if ($Failure) {
         # a known-unfetchable source is acknowledged until a stated date, then it is a finding again
         $until = [datetime]::MinValue
@@ -137,7 +144,7 @@ function Invoke-DEInstallerSourceRecheck {
     foreach ($s in $Sources) {
         if ($Offline -or $s.Type -ne 'url') {
             $r = Compare-DESourceFile -Source $s
-            $rows += $r; if ($r.finding -notin @('ok', 'not-checkable', 'acknowledged')) { $findings += $r }
+            $rows += $r; if ($r.finding -notin @('ok', 'not-checkable', 'acknowledged', 'managed')) { $findings += $r }
             continue
         }
         if (-not $WorkDir) { $WorkDir = Join-Path ([IO.Path]::GetTempPath()) ('de-recheck-' + [guid]::NewGuid()) }
@@ -156,7 +163,7 @@ function Invoke-DEInstallerSourceRecheck {
             if (Test-Path -LiteralPath $tmp) { Remove-Item -LiteralPath $tmp -Force -ErrorAction SilentlyContinue }
         }
         $r = Compare-DESourceFile -Source $s -ActualSha256 $actual -ActualVersion $actualVersion -Failure $failure
-        $rows += $r; if ($r.finding -notin @('ok', 'not-checkable', 'acknowledged')) { $findings += $r }
+        $rows += $r; if ($r.finding -notin @('ok', 'not-checkable', 'acknowledged', 'managed')) { $findings += $r }
         if ($DelaySeconds -gt 0) { Start-Sleep -Seconds $DelaySeconds }   # R6: never hammer a vendor CDN
     }
     return @{ rows = $rows; findings = $findings; checked = $checked }

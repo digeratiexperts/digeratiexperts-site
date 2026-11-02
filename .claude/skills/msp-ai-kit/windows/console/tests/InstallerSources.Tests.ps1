@@ -45,10 +45,22 @@ Describe 'Installer source inventory (move 39)' {
                     'url' { "$($src.url)" }
                     'local' { "$($src.localPath)" }
                     'winget' { "$($src.id)" }
+                    'managed' { "$($src.documentationUrl)" }
                     default { throw "package $($p.id) has unknown source type '$($src.type)'" }
                 }
                 $script:InventoryText.Contains($location) | Should -Be $true -Because "$($p.id) source '$location' must appear in the inventory"
             }
+        }
+        It 'a managed capability has documented provider lifecycle metadata and no direct download or pin' {
+            $ra = $script:Packages | Where-Object { $_.id -eq 'jumpcloud-remote-assist' }
+            $ra.source.type | Should -Be 'managed'
+            $ra.source.managedBy | Should -Be 'JumpCloud'
+            $ra.source.mechanism | Should -Match 'device check-in'
+            $ra.source.documentationUrl | Should -Be 'https://www.jumpcloud.com/support/get-started-remote-assist'
+            $ra.source.PSObject.Properties['url'] | Should -BeNullOrEmpty
+            $ra.source.sha256 | Should -BeNullOrEmpty
+            $ra.source.recheckAcknowledged | Should -BeNullOrEmpty
+            $ra.install.type | Should -Be 'managed'
         }
     }
 

@@ -70,10 +70,24 @@ Describe 'Installer trust records (move 40)' {
                     'url' { "$($p.source.url)" }
                     'local' { "$($p.source.localPath)" }
                     'winget' { "$($p.source.id)" }
+                    'managed' { "$($p.source.documentationUrl)" }
                     default { '' }
                 }
                 $location | Should -Not -BeNullOrEmpty -Because "$($p.id) source must carry its location"
             }
+        }
+    }
+
+    Context 'JumpCloud Remote Assist is a managed capability, not a downloadable package' {
+        It 'has no package URL, pin, installer signature claim, or expired-download acknowledgement' {
+            $ra = $script:Packages | Where-Object { $_.id -eq 'jumpcloud-remote-assist' }
+            $ra.source.type | Should -Be 'managed'
+            $ra.source.PSObject.Properties['url'] | Should -BeNullOrEmpty
+            $ra.source.sha256 | Should -BeNullOrEmpty
+            $ra.source.sha256Verified | Should -Be $false
+            $ra.source.vendorSigns | Should -BeNullOrEmpty
+            $ra.source.recheckAcknowledged | Should -BeNullOrEmpty
+            $ra.install.type | Should -Be 'managed'
         }
     }
 

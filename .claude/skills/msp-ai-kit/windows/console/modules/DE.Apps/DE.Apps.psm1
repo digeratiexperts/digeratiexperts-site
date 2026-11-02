@@ -91,6 +91,7 @@ function Get-DEPackageFile {
     param([Parameter(Mandatory = $true)]$Package, [switch]$AllowUnverified)
     $src = Get-DEPkgProp $Package 'source'
     $type = Get-DEPkgProp $src 'type'
+    if ($type -eq 'managed') { throw "refusing to download provider-managed capability '$($Package.name)' ($($src.managedBy)); use its documented provider deployment workflow" }
     if ($type -eq 'winget') { return @{ path = $null; trust = [pscustomobject]@{ Ok = $true; Reasons = @(); Sha256 = ''; Signature = $null; Overridden = $false }; winget = (Get-DEPkgProp $src 'id') } }
     $dir = Get-DELocalPackagesDir
     if ($type -eq 'local') { $path = Join-Path $dir (Get-DEPkgProp $src 'localPath') }
@@ -187,6 +188,7 @@ function Invoke-DEPackageUninstall {
     param([Parameter(Mandatory = $true)][string]$Id, [int]$TimeoutSeconds = 900)
     $pkg = Get-DEPackage -Id $Id
     $src = Get-DEPkgProp $pkg 'source'
+    if ((Get-DEPkgProp $src 'type') -eq 'managed') { throw "refusing to uninstall provider-managed capability '$($pkg.name)' through the package engine; change its provider setting instead" }
     $rx = Get-DEPkgProp (Get-DEPkgProp $pkg 'detect') 'appNameRegex'
     $apps = @(); if ($rx) { $apps = @(Find-DEApp -NamePattern $rx | Where-Object { $_ }) }
     $exe = $null; $argList = @()
@@ -297,6 +299,7 @@ function Register-DEAppsActions {
     $lob = @(Get-DEHashPath -Object $ClientProfile -Path 'apps.lineOfBusiness' | Where-Object { $null -ne $_ })
     foreach ($id in ($required + $lob | Select-Object -Unique)) {
         $pkg = $null; try { $pkg = Get-DEPackage -Id $id } catch { Write-DELog -Level WARN -Message "profile requires unknown package '$id'"; continue }
+        if ((Get-DEPkgProp (Get-DEPkgProp $pkg 'source') 'type') -eq 'managed') { continue } # managed capabilities have their own provider action, never a package install action
         $pkgId = $id
         $mfr = Get-DEPkgProp $pkg 'applicableManufacturer'
         Register-DEAction -Id "apps.$pkgId" -Module 'apps' -Title "Install $($pkg.name)" -Phase 9 -Gates @('gate.elevated') -RequiresElevation -RequiresSecrets @(@(Get-DEPkgProp $pkg 'secrets' | Where-Object { $null -ne $_ }) | Where-Object { $_ }) `

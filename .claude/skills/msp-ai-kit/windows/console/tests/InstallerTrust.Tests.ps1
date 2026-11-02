@@ -76,6 +76,10 @@ Describe 'Authenticode where the vendor signs (move 43)' {
     }
 
     Context 'the install path honours the catalog claim' {
+        It 'a provider-managed capability is refused before local path resolution or download' {
+            $pkg = @{ id = 'managed-test'; name = 'JumpCloud Remote Assist'; source = @{ type = 'managed'; managedBy = 'JumpCloud'; documentationUrl = 'https://www.jumpcloud.com/support/get-started-remote-assist' } }
+            { Get-DEPackageFile -Package $pkg } | Should -Throw '*provider-managed capability*'
+        }
         It 'Get-DEPackageFile refuses a staged local file whose vendor signs but the file is unsigned' {
             $pkg = @{ id = 'm43-test'; name = 'M43 Test'; source = @{ type = 'local'; localPath = (Split-Path -Leaf $global:M43.Fixture); publisher = 'JumpCloud Inc.'; vendorSigns = $true; sha256 = $global:M43.Hash; sha256From = 'test' } }
             Mock -ModuleName DE.Apps Get-DELocalPackagesDir { $global:M43.Dir }

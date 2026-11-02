@@ -1,18 +1,14 @@
 # Installer source inventory
 
 Move 39 of the [104-move tracker](DE-TECH-TOOL-TRACKER.md) ([#757](https://github.com/digeratiexperts/digeratiexperts-site/issues/757)).
-The complete list of every installer source the DE Tech Tool downloads, stages or executes - the
-subject list of rule R1 in [INSTALLER-TRUST-POLICY.md](INSTALLER-TRUST-POLICY.md). Every row below
-is an object the trust policy applies to.
+The complete list of every direct installer source and provider-managed deployment capability the DE Tech Tool tracks. Direct files are subject to rule R1 in [INSTALLER-TRUST-POLICY.md](INSTALLER-TRUST-POLICY.md); managed capability records identify the vendor that controls deployment and are never downloaded by the package engine.
 
 `console/tests/InstallerSources.Tests.ps1` keeps this file honest in both directions: a source that
 exists in the catalog or playbooks must be listed here, and every id listed here must still exist
 in the catalog or playbooks. Adding an installer anywhere without adding it here fails the suite.
 
-Recorded 2026-10-31 from `console/catalog/packages.json`, `console/catalog/community.json`,
-`console/catalog/vendors.json` and `playbooks/`. The URL, the vendor-published hash and whether it
-is verified are recorded per source in `packages.json` (`source.url` / `source.localPath` /
-`source.id`, `source.sha256`, `source.sha256Verified`), with `source.sha256From` naming where the
+Recorded 2026-11-02 from `console/catalog/packages.json`, `console/catalog/community.json`,
+`console/catalog/vendors.json` and `playbooks/`. A source's type, location, recorded hash and verification state are in `packages.json` (`source.url` / `source.localPath` / `source.id` / `source.documentationUrl`, `source.sha256`, `source.sha256Verified`), with `source.sha256From` naming where the
 answer came from (move 40, [#758](https://github.com/digeratiexperts/digeratiexperts-site/issues/758));
 the table below carries the same record and the tests keep the two in step. The outcome for
 sources with no vendor hash is move 41
@@ -22,7 +18,7 @@ sources with no vendor hash is move 41
 
 | Policy scope (R1) | Lives in | Count | What it is |
 |---|---|---|---|
-| The 18 packages in the package catalog | `console/catalog/packages.json` | 18 | Installers the Technician Console installs, upgrades and repairs through `Invoke-DEPackageInstall` |
+| 17 direct packages + 1 managed capability record in the package catalog | `console/catalog/packages.json` | 18 | Direct installers handled by `Invoke-DEPackageInstall`, plus explicit provider-managed capability records (which do not use that function) |
 | The community tools | `console/catalog/community.json` | 10 tools (396 pinned files, 15 pinned scripts) | Reviewed community PowerShell, downloaded at one pinned commit and refused on any file-hash mismatch |
 | Anything referenced from `console/catalog/vendors.json` | `console/catalog/vendors.json` | 0 installers | Admin, client, partner, docs and status portal URLs only - no file the tool downloads or runs |
 | Any installer named in a playbook | `playbooks/*.ps1` | 22 playbooks, 0 installer sources | Generated launchers; each delegates to the console catalog by bundle or solution id and names no installer of its own |
@@ -30,22 +26,20 @@ sources with no vendor hash is move 41
 
 ## A. `console/catalog/packages.json` - the approved package catalog (18)
 
-`Invoke-DEPackageInstall` is the only install path; every entry below goes through
-`Test-DEPackageTrust` before anything runs. `{SECRET:...}` and `{VALUE:...}` tokens in install
+`Invoke-DEPackageInstall` is the only direct package install path; every downloadable/local executable entry below goes through
+`Test-DEPackageTrust` before anything runs. A `managed` capability is never fetched or run here. `{SECRET:...}` and `{VALUE:...}` tokens in install
 arguments are runtime data and are not source locations.
 
-Trust record per source (moves 40-41): `source.sha256` is the recorded hash - `none` below means
-there is nothing to compare yet (no vendor publishes a per-file hash for these files, checked at the vendors' own sources on 2026-10-31), not that
-one is missing from the catalog. A hash shown is **never vendor-published**: it is a pin recorded on first trusted download (R5), labelled `source.sha256Label: pinned-first-download`. `verified` is `source.sha256Verified`: whether the recorded hash has
+Trust record per source (moves 40-41): `source.sha256` records a hash for direct files. `none` means no file hash is recorded; for a `managed` capability, no installer file is fetched by DE and a package hash is not applicable. A hash shown is **never vendor-published**: it is a pin recorded on first trusted download (R5), labelled `source.sha256Label: pinned-first-download`. `verified` is `source.sha256Verified`: whether the recorded hash has
 been checked against the actual file. `source.sha256From` in the catalog names the provenance.
 `vendor signs` (move 43) is `source.vendorSigns`, checked by real Authenticode verification on
 2026-11-01 (`source.signatureFrom` holds the signer record): where the vendor signs, a broken or
 absent signature is a refusal exactly like a hash mismatch (R4).
 
-| id | name | source type | location | publisher recorded | vendor signs | recorded sha256 (pinned-first-download) | verified |
+| id | name | source type | location | publisher recorded | vendor signs / lifecycle | recorded sha256 (pinned-first-download) | verified |
 |---|---|---|---|---|---|---|---|
 | `jumpcloud-agent` | JumpCloud Agent | `url` | `https://cdn02.jumpcloud.com/production/jcagent-msi-signed.msi` | JumpCloud Inc. | yes - verified (CN=JumpCloud Inc) | b2189af92c730a6949eb640bdc292b6dd82069de93bb0e2710198d87d0439353 | yes |
-| `jumpcloud-remote-assist` | JumpCloud Remote Assist | `url` | `https://cdn02.jumpcloud.com/production/jumpcloud-remote-assist-agent.msi` | JumpCloud Inc. | yes - vendor practice (file 403 on 2026-11-01 and 2026-11-02; UNPINNED until the URL is confirmed) | none | no |
+| `jumpcloud-remote-assist` | JumpCloud Remote Assist | `managed` | `https://www.jumpcloud.com/support/get-started-remote-assist` | JumpCloud Inc. | n/a - provider controls lifecycle | none - no independent package | no - managed capability |
 | `wazuh-agent` | Wazuh Agent | `url` | `https://packages.wazuh.com/4.x/windows/wazuh-agent-4.9.2-1.msi` | Wazuh | yes - verified (CN=Wazuh, Inc) | 88b40d63185d308c898dc237b0d5ba0ee1ca2ab41e6b38db28d1d6b3b20a616d | yes |
 | `m365-apps` | Microsoft 365 Apps for business/enterprise | `url` | `https://officecdn.microsoft.com/pr/wsus/setup.exe` | Microsoft Corporation | yes - verified (CN=Microsoft Corporation) | c883ab32dffe4a371bb37411de83edc5d62ff31d315c5e3b59e830326bb4e322 | yes |
 | `sentinelone-agent` | SentinelOne Agent (managed) | `local` | `SentinelOneInstaller_windows_64bit.exe` | SentinelOne | unknown - checked at use via publisher | none | no |

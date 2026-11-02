@@ -240,9 +240,9 @@ function Register-DEJumpCloudActions {
         -Detect { $p = Get-DEJumpCloudPolicySummary; @{ registered = $p.registered; failedCount = @($p.failed).Count; failed = (@($p.failed) -join ', ') } } -Desired { @{ registered = $true; failedCount = 0 } } `
         -ManualAction 'Open the system in the JumpCloud console > Policies and read the failing policy result; patch and software policies report here too.'
 
-    Register-DEAction -Id 'jumpcloud.remote-assist' -Module 'jumpcloud' -Title 'JumpCloud Remote Assist installed' -Phase 8 -Gates @('gate.elevated') -RequiresElevation `
+    Register-DEAction -Id 'jumpcloud.remote-assist' -Module 'jumpcloud' -Title 'JumpCloud Remote Assist managed by organization policy' -Phase 8 -Gates @('gate.elevated') -RequiresElevation `
         -Detect { $c = Get-DEJumpCloudComponents; @{ installed = $c.remoteAssist.present } } -Desired { @{ installed = $true } } `
-        -Apply { param($s) $r = Invoke-DEPackageInstall -Id 'jumpcloud-remote-assist' -ClientProfile $ClientProfile; if (-not $r.ok -and -not (Get-DEJcProp $r 'planned')) { throw $r.detail }; $r.detail }.GetNewClosure()
+        -ManualAction 'In JumpCloud Admin Portal > Settings > Features > Remote Access, a Manager or higher confirms Remote Assist Service is enabled for the organization. Supported managed devices install or upgrade Remote Assist on their next check-in; disabling the service removes it on check-in. Verify app presence, then test a Remote Assist session. DE Tech Tool does not download or run a separate MSI.'
 
     if (Get-DEHashPath -Object $ClientProfile -Path 'identity.jumpcloudDeviceTrust') {
         Register-DEAction -Id 'jumpcloud.device-trust' -Module 'jumpcloud' -Title 'JumpCloud Device Trust certificate present (Conditional Access)' -Phase 8 `

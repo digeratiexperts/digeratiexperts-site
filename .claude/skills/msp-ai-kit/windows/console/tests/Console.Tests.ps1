@@ -259,8 +259,12 @@ Describe 'Packages and trust policy' {
         $f = Join-Path ([IO.Path]::GetTempPath()) 'fake-installer.msi'; Set-Content -LiteralPath $f -Value 'not an installer'
         (Test-DEPackageTrust -Path $f -Sha256 ('0' * 64)).Ok | Should -Be $false
     }
-    It 'every package without winget declares a publisher or sha256' {
-        foreach ($p in Get-DEPackages) { if ($p.source.type -ne 'winget') { ([bool]$p.source.PSObject.Properties['publisher'] -or [bool]$p.source.PSObject.Properties['sha256']) | Should -Be $true } }
+    It 'every direct package without winget declares a publisher or sha256' {
+        foreach ($p in Get-DEPackages) { if ($p.source.type -notin @('winget', 'managed')) { ([bool]$p.source.PSObject.Properties['publisher'] -or [bool]$p.source.PSObject.Properties['sha256']) | Should -Be $true } }
+    }
+    It 'the Remote Assist package engine cannot download or uninstall a provider-managed capability' {
+        { Get-DEPackageFile -Package (Get-DEPackage -Id 'jumpcloud-remote-assist') } | Should -Throw '*provider-managed capability*'
+        { Invoke-DEPackageUninstall -Id 'jumpcloud-remote-assist' } | Should -Throw '*provider-managed capability*'
     }
 }
 
@@ -371,6 +375,11 @@ Describe 'Secret vault, device trust and PDF helpers' {
         $p.identity.jumpcloudDeviceTrust = $true
         Register-DEJumpCloudActions -ClientProfile $p
         (Get-DEAction -Id 'jumpcloud.device-trust').Module | Should -Be 'jumpcloud'
+        $ra = Get-DEAction -Id 'jumpcloud.remote-assist'
+        $ra.Title | Should -Match 'managed by organization policy'
+        $ra.ManualAction | Should -Match 'Settings > Features > Remote Access'
+        $ra.ManualAction | Should -Match 'device check-in'
+        $ra.Apply | Should -BeNullOrEmpty -Because 'JumpCloud, not the DE package installer, owns this application lifecycle'
     }
     It 'device trust state never throws and reports no certificate off Windows' {
         $t = Get-DEDeviceTrustState
