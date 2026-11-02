@@ -86,6 +86,12 @@ Describe 'PHI-restricted mode: decide conservatively, gate the vendors' {
             $expected = Get-DEHubSignature -Method 'GET' -Path '/api/techtool/account/ACC-SIGN-1/profile' -Timestamp $h['X-DE-Timestamp'] -EventId $h['X-DE-Event-ID'] -Body '{}' -Secret 'phi-test-secret-0123456789'
             $h['X-DE-Signature'] | Should -Be $expected
         }
+        It 'produces the Hub''s known-answer signature byte for byte (cross-check with Hub techtool-account-profile.test.ts)' {
+            # Same inputs, same expected hex as the Hub's own test of signDeSyncRequest. If this fails,
+            # the Hub would answer 401 to every signed vertical read.
+            $sig = Get-DEHubSignature -Method 'GET' -Path '/api/techtool/account/42/profile' -Timestamp '2026-11-02T03:00:00.000Z' -EventId '0d6c6f0e-3f1c-4b7a-8b9e-2a1d3c4b5e6f' -Body '{}' -Secret 'kat-secret-for-cross-check-0123456789'
+            $sig | Should -Be '27a4472f167db03740c82f4f649c722efd9397c6075783c8c31445a017080026'
+        }
         It 'with no signing secret it does not call the Hub and stays unknown (restricted)' {
             Mock -ModuleName DE.Phi Get-DEHubConnectionChecklist { [pscustomobject]@{ endpoint = 'https://hub.example' } }
             Mock -ModuleName DE.Phi Invoke-WebRequest { throw 'must not be called' }
