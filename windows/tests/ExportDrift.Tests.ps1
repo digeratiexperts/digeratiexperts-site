@@ -80,11 +80,17 @@ Describe 'Exported module functions and the docs do not drift apart' {
             param([string[]]$SearchRoots = @($script:Win))
             $surface = Get-DEExportSurface
             $artifacts = Get-DEArtifactNames
+            # a name is a command name only if it starts with a PowerShell verb (the approved ones, plus any verb the product's own
+            # functions, scripts and planned names already use): `AGENT-DEVICE` or `Per-DEVICE` is prose, not a command
+            $verbs = New-Object System.Collections.Generic.HashSet[string]
+            foreach ($v in @((Get-Verb).Verb)) { [void]$verbs.Add($v) }
+            foreach ($k in (@($surface.Keys) + @($artifacts.Keys) + @($script:Planned.Keys))) { if ("$k" -cmatch '^([A-Z][a-z]+)-DE[A-Za-z0-9]+$') { [void]$verbs.Add($Matches[1]) } }
+            $pattern = '\b(?:' + (($verbs | Sort-Object) -join '|') + ')-DE[A-Za-z0-9]+\b'
             $dead = @{}
             foreach ($root in $SearchRoots) {
                 foreach ($d in @(Get-ChildItem -Path $root -Recurse -Filter '*.md' -File)) {
                     $t = [IO.File]::ReadAllText($d.FullName)
-                    foreach ($n in [regex]::Matches($t, '\b[A-Za-z]+-DE[A-Za-z]+\b')) {
+                    foreach ($n in [regex]::Matches($t, $pattern)) {
                         $v = $n.Value
                         if ($surface.ContainsKey($v) -or $artifacts.ContainsKey($v) -or $script:Planned.ContainsKey($v)) { continue }
                         if (-not $dead.ContainsKey($v)) { $dead[$v] = $d.Name }
@@ -126,6 +132,12 @@ Describe 'Exported module functions and the docs do not drift apart' {
                 $dead = Find-DEDocDeadNames -SearchRoots @($probe)
                 $dead.ContainsKey('Invoke-DEFrobnicate') | Should -Be $true -Because 'a name that resolves nowhere must be reported'
                 $dead.ContainsKey('Write-DELog') | Should -Be $false -Because 'a real exported function must not be reported'
+                $prose = Join-Path $probe 'prose'; New-Item -ItemType Directory -Path $prose -Force | Out-Null
+                Set-Content -LiteralPath (Join-Path $prose 'prose-doc.md') -Value 'See AGENT-DEVICE-CERTIFICATES.md and the Per-DEVICE rules, but also run `Deploy-DEFrobnicate`.'
+                $p = Find-DEDocDeadNames -SearchRoots @($prose)
+                $p.ContainsKey('AGENT-DEVICE') | Should -Be $false -Because 'a file name in capitals is prose, not a command'
+                $p.ContainsKey('Per-DEVICE') | Should -Be $false -Because 'prose with a capitalised word is not a command'
+                $p.ContainsKey('Deploy-DEFrobnicate') | Should -Be $true -Because 'a verb the product itself uses (Deploy-DETechConsole) is still a command verb'
             } finally { Remove-Item -LiteralPath $probe -Recurse -Force -ErrorAction SilentlyContinue }
         }
     }
