@@ -172,6 +172,15 @@ function AskDELauncherButton({ compact = false }: { compact?: boolean }) {
       if (!target) return;
       if (popoverRef.current?.contains(target) || launcherRef.current?.contains(target)) return;
       setShowMenu(false);
+      const element = target instanceof Element ? target : target.parentElement;
+      if (!element?.closest('a[href], button, input, select, textarea, [tabindex], [contenteditable="true"]')) {
+        // The trap restores focus during pointerdown; the browser can then blur
+        // it to BODY. Restore after that default action, without stealing focus
+        // from an outside control or a newly focused element.
+        requestAnimationFrame(() => {
+          if (document.activeElement === document.body) launcherRef.current?.focus();
+        });
+      }
     };
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -303,12 +312,12 @@ function AskDELauncherButton({ compact = false }: { compact?: boolean }) {
             transition={{ duration: 0.18, ease: "easeOut" }}
             className={
               isMobile
-                ? "fixed inset-x-0 bottom-0 z-50 max-h-[85vh] overflow-y-auto rounded-t-2xl border-t border-white/10 bg-[#0b0b0d] p-5 text-left text-[#f5f5f4] shadow-2xl"
-                : "absolute right-0 z-20 w-[min(380px,calc(100vw-1.5rem))] overflow-visible rounded-[24px] border border-white/10 bg-[#0b0b0d] p-5 text-left text-[#f5f5f4] shadow-[0_30px_80px_rgba(0,0,0,0.62),0_8px_24px_rgba(0,0,0,0.42)]"
+                ? "fixed inset-x-0 z-50 rounded-t-2xl border-t border-white/10 bg-[#0b0b0d] text-left text-[#f5f5f4] shadow-2xl"
+                : "absolute right-0 z-20 w-[min(380px,calc(100vw-1.5rem))] overflow-visible rounded-[24px] border border-white/10 bg-[#0b0b0d] text-left text-[#f5f5f4] shadow-[0_30px_80px_rgba(0,0,0,0.62),0_8px_24px_rgba(0,0,0,0.42)]"
             }
             style={
               isMobile
-                ? { paddingBottom: "max(1.25rem, env(safe-area-inset-bottom))" }
+                ? { bottom: "var(--de-cookie-h, 0px)" }
                 : { bottom: "calc(100% + var(--de-store-cart-h, 0px) + 1rem)" }
             }
             role="dialog"
@@ -319,7 +328,18 @@ function AskDELauncherButton({ compact = false }: { compact?: boolean }) {
             {!isMobile && (
               <div className="pointer-events-none absolute -bottom-2 right-7 h-4 w-4 rotate-45 border-b border-r border-white/10 bg-[#0b0b0d]" aria-hidden="true" />
             )}
-
+            {/* Keep the arrow outside the scroll area. Focus and native scrolling
+                can reach every choice even above lifted chrome on short screens. */}
+            <div
+              data-testid="ask-de-quick-menu-scroll"
+              className="relative overflow-y-auto overscroll-contain rounded-[inherit] bg-[#0b0b0d] p-5 text-left text-[#f5f5f4]"
+              style={{
+                maxHeight: isMobile
+                  ? "min(85dvh, calc(100dvh - var(--de-cookie-h, 0px) - 1rem))"
+                  : "calc(100dvh - var(--de-chrome-inset, 0.75rem) - var(--de-cookie-h, 0px) - var(--de-unified-bar-h, 3.5rem) - var(--de-store-cart-h, 0px) - 2rem)",
+                ...(isMobile ? { paddingBottom: "max(1.25rem, env(safe-area-inset-bottom))" } : {}),
+              }}
+            >
             <div className="mb-5 flex items-start justify-between gap-4 pr-8">
               <div>
                 <p className="text-[24px] font-semibold leading-tight tracking-[-0.035em] text-[#f5f5f4]">Ask DE</p>
@@ -375,6 +395,7 @@ function AskDELauncherButton({ compact = false }: { compact?: boolean }) {
             >
               <X className="h-4.5 w-4.5" style={{ width: 18, height: 18 }} aria-hidden="true" />
             </button>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
