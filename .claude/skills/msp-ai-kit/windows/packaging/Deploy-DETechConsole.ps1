@@ -47,7 +47,7 @@ try {
         [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
         $PackagePath = Join-Path $env:TEMP ("de-techconsole-{0}.zip" -f ([guid]::NewGuid()))
         Write-DeployLog STEP "downloading $PackageUrl"
-        Invoke-WebRequest -Uri $PackageUrl -OutFile $PackagePath -UseBasicParsing
+        Invoke-WebRequest -Uri $PackageUrl -OutFile $PackagePath -UseBasicParsing -TimeoutSec 60
     }
     $hash = (Get-FileHash -LiteralPath $PackagePath -Algorithm SHA256).Hash
     if ($hash -ne $Sha256.ToUpperInvariant()) { Write-DeployLog FAIL "sha256 mismatch: got $hash, expected $($Sha256.ToUpperInvariant()); package refused"; exit 3 }

@@ -288,8 +288,8 @@ function Install-NodeWithWinget {
         [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
         New-Item -ItemType Directory -Path $dest -Force | Out-Null
         $zip = Join-Path $dest "$name.zip"
-        Invoke-WebRequest -Uri "$base/$name.zip" -OutFile $zip -UseBasicParsing
-        $sums = (Invoke-WebRequest -Uri "$base/SHASUMS256.txt" -UseBasicParsing).Content
+        Invoke-WebRequest -Uri "$base/$name.zip" -OutFile $zip -UseBasicParsing -TimeoutSec 60
+        $sums = (Invoke-WebRequest -Uri "$base/SHASUMS256.txt" -UseBasicParsing -TimeoutSec 60).Content
         $want = ($sums -split "`n" | Where-Object { $_ -match [regex]::Escape("$name.zip") } | Select-Object -First 1) -replace '\s+.*$', ''
         $have = (Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash.ToLowerInvariant()
         if (-not $want -or $have -ne $want.ToLowerInvariant()) { Remove-Item -LiteralPath $zip -Force; throw "sha256 mismatch for $name.zip (have $have, want $want)" }
@@ -622,7 +622,7 @@ function Update-Kit {
         New-Item -ItemType Directory -Path $tmp -Force | Out-Null
         $zip = Join-Path $tmp 'kit.zip'
         [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
-        Invoke-WebRequest -Uri $url -OutFile $zip -UseBasicParsing
+        Invoke-WebRequest -Uri $url -OutFile $zip -UseBasicParsing -TimeoutSec 60
         $have = (Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash.ToLowerInvariant()
         if ($UpdateSha256 -and $have -ne $UpdateSha256.ToLowerInvariant()) { throw "sha256 mismatch (have $have)" }
         if (-not $UpdateSha256) { Write-KitLog -Level WARN -Message "no expected sha256 given; downloaded file sha256 $have" }
