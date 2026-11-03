@@ -104,7 +104,7 @@ function Get-DEPackageFile {
                 try { [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12 } catch { }
                 # a dropped download must not be cached as the package: write .partial, move into place when complete
                 $tmp = "$path.partial"
-                try { Invoke-WebRequest -Uri $url -OutFile $tmp -UseBasicParsing; Move-Item -LiteralPath $tmp -Destination $path -Force }
+                try { Invoke-WebRequest -Uri $url -OutFile $tmp -UseBasicParsing -TimeoutSec 60; Move-Item -LiteralPath $tmp -Destination $path -Force }
                 finally { if (Test-Path -LiteralPath $tmp) { Remove-Item -LiteralPath $tmp -Force -ErrorAction SilentlyContinue } }
             } else { return @{ path = $path; trust = [pscustomobject]@{ Ok = $false; Reasons = @('not downloaded (planned)'); Sha256 = ''; Overridden = $false }; planned = $true } }
         }
