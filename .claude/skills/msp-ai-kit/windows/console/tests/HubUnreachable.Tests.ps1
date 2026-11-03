@@ -127,6 +127,27 @@ Describe 'With the Hub unreachable, the tool still works and says what happened'
             $calls | Should -BeGreaterThan 2 -Because 'the scan must be looking at the Hub calls'
             ($bad -join ', ') | Should -BeNullOrEmpty -Because 'an unreachable Hub must not be able to hold the tool'
         }
+        It 'no shipped script makes a web call without a timeout of at most a minute (Hub or not)' {
+            $kit = Split-Path -Parent $script:Win
+            $files = @(Get-ChildItem -Path $kit -Recurse -File | Where-Object { $_.Extension -in @('.ps1', '.psm1') -and $_.FullName -notmatch '[\\/]tests[\\/]' })
+            $files.Count | Should -BeGreaterThan 40 -Because 'the scan must be looking at the shipped tree'
+            $calls = 0; $bad = New-Object System.Collections.Generic.List[string]
+            foreach ($f in $files) {
+                $lines = @(Get-Content -LiteralPath $f.FullName)
+                for ($i = 0; $i -lt $lines.Count; $i++) {
+                    if ($lines[$i] -match '^\s*#') { continue }
+                    if ($lines[$i] -notmatch 'Invoke-RestMethod\s+-|Invoke-WebRequest\s+-') { continue }
+                    $calls++
+                    $window = ($lines[$i..([Math]::Min($i + 2, $lines.Count - 1))] -join ' ')
+                    $m = [regex]::Match($window, '-TimeoutSec\s+(\$?\w+)')
+                    $ok = $m.Success
+                    if ($ok -and $m.Groups[1].Value -match '^\d+$' -and [int]$m.Groups[1].Value -gt 60) { $ok = $false }
+                    if (-not $ok) { $bad.Add("$($f.Name):$($i + 1)") }
+                }
+            }
+            $calls | Should -BeGreaterThan 15 -Because 'the scan must be reading the real call sites'
+            ($bad -join ', ') | Should -BeNullOrEmpty -Because 'a download or call with no time bound can hang the tool on a dead network'
+        }
         It 'the scan sees a call without a timeout (a planted one)' {
             $line = 'return (Invoke-RestMethod -Uri $Uri -Method Post -Body $b)'
             $line -match 'Invoke-RestMethod\s+-' | Should -Be $true
