@@ -148,6 +148,10 @@ Key handling: `KIE_AI_API_KEY` (`KIE_API_KEY` is accepted as an alias) and `RECR
 **`docs/CONTENT-TOOLING-PLAN.md`** is Joe's adopted decision (2026-10-04) on which outside tools DE uses for work general assistants can't do well on their own (vector icons, video, voice, live SEO data) and for webmaster-grade finishing (Lighthouse, axe, image optimization, JSON-LD), across the Website, Store, Client Portal and Intelligence Hub. Read it before reaching for an outside generator, builder or SEO tool; do not adopt a tool from its "Not using" list without Joe. Wired in this repo: Chrome DevTools MCP (`.mcp.json`, `.cursor/mcp.json`; Codex and Gemini setup in the plan), `npm run smoke:a11y` in CI, and `vite-imagetools` in `vite.config.ts`.
 
 <!-- >>> DE token-discipline (managed; edit in DE\Governance\repo-kit) >>> -->
+## Storage provisioning: manual and automatic are separate policies (DE standard, 2026-11-04)
+
+Moving files to OneDrive, SharePoint, Google Drive, Zoho WorkDrive or any other store has two policies, and they stay separate, always. A person's manual move is that person's action. An automatic provision or backup is DE's action, so DE owns it if controlled data (ITAR / export-controlled, CUI, PHI, credentials) lands where it is not allowed or not safe. Automatic paths are deny-by-default, classify before copy, fail closed, and are audited apart from manual moves. Never share one flag, list or helper between the two. The full policy lives in the Intelligence Hub repo: `docs/STORAGE-PROVISIONING-POLICY.md`. Say in your PR whether a path is manual or automatic.
+
 ## Token discipline (DE operating standard)
 
 Execution rules for every agent in this repo (Claude / Claude Code, Cursor, ChatGPT / Codex). Company-wide AI spend and routing policy is NOT here — it lives in `C:\Users\Joe\DE\Governance\AI-STACK.md`. These rules never override this repo's own instructions above, Completion Program lane ownership, or stop gates.
