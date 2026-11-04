@@ -67,6 +67,10 @@ it lives here too because the kie.ai skills are in this repo and an agent workin
 would not otherwise see it.
 
 <!-- >>> DE token-discipline (managed; edit in DE\Governance\repo-kit) >>> -->
+## Storage provisioning: manual and automatic are separate policies (DE standard, 2026-11-04)
+
+Moving files to OneDrive, SharePoint, Google Drive, Zoho WorkDrive or any other store has two policies, and they stay separate, always. A person's manual move is that person's action. An automatic provision or backup is DE's action, so DE owns it if controlled data (ITAR / export-controlled, CUI, PHI, credentials) lands where it is not allowed or not safe. Automatic paths are deny-by-default, classify before copy, fail closed, and are audited apart from manual moves. Never share one flag, list or helper between the two. The full policy lives in the Intelligence Hub repo: `docs/STORAGE-PROVISIONING-POLICY.md`. Say in your PR whether a path is manual or automatic.
+
 ## Token discipline (DE operating standard)
 Follow the "Token discipline" section in `AGENTS.md` in this repo. Key rules: one slice = one fresh session started from a handoff · declare the slice before coding · search before reading · stop after two failed attempts and checkpoint · economy models for mechanical work · end with the handoff block (`C:\Users\Joe\DE\Governance\AI-HANDOFF-STANDARD.md`). Spend/routing policy: `C:\Users\Joe\DE\Governance\AI-STACK.md` — not in this repo.
 <!-- <<< DE token-discipline (managed) <<< -->
