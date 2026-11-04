@@ -5,6 +5,8 @@
  * including CyberPanel/OpenLiteSpeed.
  */
 
+import { turnstileUnconfiguredMode } from './middleware/security';
+
 export const productionConfig = {
   // Server Configuration
   server: {
@@ -96,7 +98,11 @@ export function collectProductionConfigWarnings(): string[] {
     warnings.push('SESSION_SECRET is not set (used as an OAuth state-signing fallback)');
   }
   if (!process.env.TURNSTILE_SECRET_KEY) {
-    warnings.push('TURNSTILE_SECRET_KEY is not set — Turnstile verification fails open without it');
+    if (turnstileUnconfiguredMode() === 'ci-smoke-bypass') {
+      warnings.push('TURNSTILE_SECRET_KEY is not set — Turnstile skipped for the CI memory-only smoke run only');
+    } else {
+      warnings.push('TURNSTILE_SECRET_KEY is not set — Turnstile fails closed: portal sign-in, registration, password reset, verification resend and the public solution request are REFUSED until it is set');
+    }
   }
   if (
     !process.env.ZOHO_PAYMENTS_ACCOUNT_ID ||

@@ -45,7 +45,7 @@ Other agent sessions work this repo at the same time. Before editing, check:
 
 1. **All open PRs** (drafts included) and their changed files — the authoritative lock (`docs/ACTIVE-WORK-COORDINATION.md`). An open PR owns its files until it merges or closes.
 2. **Intelligence Hub [`docs/OPEN-ITEMS-FOR-DE.md`](https://github.com/digeratiexperts/Intelligence-Hub/blob/master/docs/OPEN-ITEMS-FOR-DE.md)** — every pending DE decision, secret and manual step, the thread/PR each blocks, and the "Not for agents to touch" PR list. Read it before asking Joe anything. (Added by Hub PR #397; until that merges, read it on that PR.)
-3. The **current open PRs and owners** table in `docs/ACTIVE-WORK-COORDINATION.md`, then `.ai/ACTIVE_WORK.yaml` as a mirror.
+3. Open `[ACTIVE]` GitHub issues (owners of local-only work; see "Open PRs and owners" in `docs/ACTIVE-WORK-COORDINATION.md`), then `.ai/ACTIVE_WORK.yaml` as a mirror.
 
 Never push to, rebase, close, merge or approve another session's branch or PR. **Exception (Joe, 2026-10-15):** the lead integrator (`docs/AI-ENGINEERING-GOVERNANCE.md`) may update, fix and merge another session's PR when acting on Joe's instruction. It updates branches with merge commits only (never a rebase or force-push), reviews the change itself before merging, and quotes Joe's instruction in the merge commit. It merges only after CI, the security checks and the concurrency audit (`docs/PR-CONCURRENCY-AUDIT.md`) pass, and only within approvals Joe has already given. Every other agent keeps the no-merge rule. This exception covers the website only: Intelligence Hub merges to `master` still need Joe's explicit approval for each merge (Hub `docs/RELEASE-GOVERNANCE.md`), and a merge never counts as a production deploy or as LIVE.
 

@@ -215,9 +215,9 @@ set +a
 if [ -z "${VITE_TURNSTILE_SITE_KEY:-}" ] && [ -n "${TURNSTILE_SECRET_KEY:-}" ]; then
   log "WARN: TURNSTILE_SECRET_KEY is set but VITE_TURNSTILE_SITE_KEY is not in $SHARED_ENV; portal sign-in will reject every attempt"
 elif [ -z "${VITE_TURNSTILE_SITE_KEY:-}" ]; then
-  log "WARN: VITE_TURNSTILE_SITE_KEY is not set in $SHARED_ENV; portal sign-in ships without bot protection"
+  log "WARN: neither Turnstile key is in $SHARED_ENV; production fails closed and will refuse portal sign-in, registration, password reset and solution requests"
 elif [ -z "${TURNSTILE_SECRET_KEY:-}" ]; then
-  log "WARN: TURNSTILE_SECRET_KEY is not set in $SHARED_ENV; the challenge shows but the server does not verify it"
+  log "WARN: TURNSTILE_SECRET_KEY is not set in $SHARED_ENV; production fails closed and will refuse portal sign-in, registration, password reset and solution requests"
 fi
 
 log "Building production bundle"

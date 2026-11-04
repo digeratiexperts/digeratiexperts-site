@@ -4079,14 +4079,6 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  // Legacy Stripe path removed — return clear guidance
-  app.post("/api/portal/payment/checkout", [authMiddleware], async (_req: AuthenticatedRequest, res: Response) => {
-    res.status(410).json({
-      error: "Card checkout via Stripe has been replaced. Use Zoho Payments.",
-      use: "/api/portal/payment/zoho",
-    });
-  });
-
   // ===== PORTAL ORDER ROUTES =====
   
   // List orders for authenticated client
@@ -5604,7 +5596,6 @@ export async function registerRoutes(app: Express) {
       const [order] = await db.select().from(storeOrders).where(
         or(
           eq(storeOrders.id, id),
-          eq(storeOrders.stripeSessionId, id),
           eq(storeOrders.zohoPaymentSessionId, id)
         )
       ).limit(1);
@@ -5678,7 +5669,6 @@ export async function registerRoutes(app: Express) {
       const [order] = await db.select().from(storeOrders).where(
         or(
           eq(storeOrders.id, id),
-          eq(storeOrders.stripeSessionId, id),
           eq(storeOrders.zohoPaymentSessionId, id)
         )
       ).limit(1);
