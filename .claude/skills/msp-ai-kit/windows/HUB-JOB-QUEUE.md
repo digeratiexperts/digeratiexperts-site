@@ -1,5 +1,8 @@
 # Hub job queue for the DE Tech Agent: lease, acknowledge, result
 
+> **Retired runtime (2026-11-05).** The PowerShell DE Tech Agent this was written for is retired; the Intelligence Hub's
+> Go endpoint agent is the one endpoint runtime. Kept as design input. See [PS-AGENT-RETIREMENT.md](PS-AGENT-RETIREMENT.md).
+
 **Move 60** of the 104-move plan ([issue #778](https://github.com/digeratiexperts/digeratiexperts-site/issues/778)).
 **Design only.** Nothing in this document is built, enabled or sent anywhere. It specifies the device-facing job-queue
 endpoints that the Hub implements and the DE Tech Agent calls, so that moves 61-72 and 75-78 build against one contract.

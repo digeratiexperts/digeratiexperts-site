@@ -1,8 +1,11 @@
 # Load-testing the Hub job queue
 
+> **Retired runtime (2026-11-05).** The PowerShell DE Tech Agent this was written for is retired; the Intelligence Hub's
+> Go endpoint agent is the one endpoint runtime. Kept as design input. See [PS-AGENT-RETIREMENT.md](PS-AGENT-RETIREMENT.md).
+
 **Move 77** of the 104-move plan ([issue #795](https://github.com/digeratiexperts/digeratiexperts-site/issues/795)).
 **Harness only. This has not been run against a real Hub, because the queue it would test (the move 60 design) is not built.**
-What exists is the instrument, `windows/agent/DE.AgentLoadTest.psm1`, and the instrument is itself tested, so that when the queue
+What existed is the instrument, `windows/agent/DE.AgentLoadTest.psm1` (retired 2026-11-05, kept in git at `296721de`; the Hub keeps it as a Hub-side test), and the instrument was itself tested, so that when the queue
 exists the numbers it produces can be trusted. It answers **D1** (the queue or one device is flooded) of
 [AGENT-THREAT-MODEL.md](AGENT-THREAT-MODEL.md).
 
