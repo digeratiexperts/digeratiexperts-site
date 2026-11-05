@@ -33,6 +33,19 @@ Describe 'Exported module functions and the docs do not drift apart' {
             'Run-DEHubJobs' = 'moves 59-78 (E. Hub and call-home agent): the job-runner entry GO-LIVE.md orders; DE-HubWorker.ps1 carries the loop it will call'
         }
 
+        # Design docs for the retired PowerShell DE Tech Agent (PS-AGENT-RETIREMENT.md) still name the functions of the
+        # modules that were removed; they are kept as input for the Hub's Go agent, not as instructions to run anything.
+        # A doc is exempt only while it carries the retired banner AND is linked from PS-AGENT-RETIREMENT.md.
+        $script:RetiredBanner = '**Retired runtime (2026-11-05).**'
+        $script:RetiredDocs = @{}
+        $retirement = Join-Path $script:Win 'PS-AGENT-RETIREMENT.md'
+        if (Test-Path -LiteralPath $retirement) {
+            foreach ($m in [regex]::Matches([IO.File]::ReadAllText($retirement), '\]\(([A-Z0-9-]+\.md)\)')) {
+                $doc = Join-Path $script:Win $m.Groups[1].Value
+                if ((Test-Path -LiteralPath $doc) -and ([IO.File]::ReadAllText($doc).Contains($script:RetiredBanner))) { $script:RetiredDocs[$m.Groups[1].Value] = $true }
+            }
+        }
+
         function script:Get-DEExportSurface {
             <# Every name a module actually exposes: functions it defines (or dot-sources) that its
                Export-ModuleMember patterns cover. Returns @{ Name = module } for the whole tree. #>
@@ -89,6 +102,7 @@ Describe 'Exported module functions and the docs do not drift apart' {
             $dead = @{}
             foreach ($root in $SearchRoots) {
                 foreach ($d in @(Get-ChildItem -Path $root -Recurse -Filter '*.md' -File)) {
+                    if ($d.DirectoryName -eq $script:Win -and $script:RetiredDocs.ContainsKey($d.Name)) { continue }
                     $t = [IO.File]::ReadAllText($d.FullName)
                     foreach ($n in [regex]::Matches($t, $pattern)) {
                         $v = $n.Value
@@ -106,6 +120,13 @@ Describe 'Exported module functions and the docs do not drift apart' {
             $dead = Find-DEDocDeadNames
             $msg = ($dead.GetEnumerator() | Sort-Object Key | ForEach-Object { "$($_.Key) ($($_.Value))" }) -join '; '
             $dead.Count | Should -Be 0 -Because ("documented but missing from the product surface: " + $msg)
+        }
+    }
+
+    Context 'the retired-doc exemption stays narrow' {
+        It 'covers only the retired agent design docs, each still marked retired' {
+            @($script:RetiredDocs.Keys).Count | Should -BeGreaterThan 0 -Because 'PS-AGENT-RETIREMENT.md links the retired design docs'
+            foreach ($k in $script:RetiredDocs.Keys) { $k | Should -Match '^(AGENT-|HUB-JOB-QUEUE|HUB-QUEUE-LOAD-TEST|JOB-CONTRACT)' -Because "only the retired agent design docs are exempt, not $k" }
         }
     }
 
