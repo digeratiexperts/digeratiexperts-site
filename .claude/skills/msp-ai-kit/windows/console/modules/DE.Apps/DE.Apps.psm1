@@ -15,10 +15,141 @@ $script:IsWindowsHost = ($env:OS -eq 'Windows_NT')
 
 function Get-DEPkgProp { param($Object, [string]$Name) if ($null -eq $Object) { return $null }; if ($Object -is [System.Collections.IDictionary]) { if ($Object.Contains($Name)) { return $Object[$Name] }; return $null }; $p = $Object.PSObject.Properties[$Name]; if ($p) { return $p.Value }; return $null }
 
-function Get-DEPackageCatalog {
+# ------------------------------------------------------------------ package catalog: Hub first, bundled fallback
+# The Intelligence Hub's install-kit catalog is the primary source (cross-repo review 2026-11-04, step 5). It is
+# read with a TECHCONSOLE_TO_HUB_SECRET-signed GET, the same envelope as the PHI account profile. When the Hub
+# is not configured, cannot be reached, or answers with something this tool will not trust, the bundled
+# catalog\packages.json is used. Either way every file still goes through Get-DEPackageFile and
+# Test-DEPackageTrust: the sha256 pin and the Authenticode publisher check do not depend on where the entry came from.
+$script:HubCatalogPath = '/api/techtool/install-kits/catalog'
+$script:HubCatalogSchema = 'de.techtool.package-catalog/v1'
+$script:PackageCatalogCache = @{ catalog = $null; source = $null; reason = ''; fetchedAt = $null; failedAt = $null }
+
+function Get-DEPackageCatalogCacheMinutes { return 15 }      # a good Hub answer is reused this long
+function Get-DEPackageCatalogBackoffMinutes { return 5 }    # after a failure, the bundled copy is used this long before asking again
+
+function Reset-DEPackageCatalogCache {
+    <# Forgets the cached Hub answer and any failure backoff (tests, and the Settings page after the Hub is reconfigured). #>
+    $script:PackageCatalogCache = @{ catalog = $null; source = $null; reason = ''; fetchedAt = $null; failedAt = $null }
+}
+
+function Get-DEBundledPackageCatalog {
+    <# The catalog shipped with the tool (catalog\packages.json): the offline fallback and the pin floor for the Hub's copy. #>
     $de = Get-DEConsole
     $path = Join-Path $de.Root 'catalog\packages.json'
     return (Get-Content -LiteralPath $path -Raw -Encoding UTF8 | ConvertFrom-Json)
+}
+
+function Test-DEHubPackageCatalog {
+    <#
+        Decides whether a catalog the Hub sent may replace the bundled one. Returns the problems found; an empty list
+        means it may. Fail closed: one bad entry rejects the whole answer, so the tool never runs a mix of sources.
+
+        Shape: the schema id, a non-empty packages list, unique ids, a known source and install type, https-only URLs,
+        a bare file name for local installers (no path that could leave the packages folder), a 64-hex sha256 when one
+        is given, and secret names in the {SECRET:NAME} form.
+
+        Pins: every url or local entry carries a sha256 or a publisher (the same rule Test-DEPackageTrust applies). For a
+        package the bundled catalog also lists, the Hub may move a pin (a new version has a new hash) but may never
+        weaken it: it cannot drop a sha256 or a publisher the bundled entry has, change the publisher, or turn
+        vendorSigns off. A weaker Hub entry is refused, not merged.
+    #>
+    param([Parameter(Mandatory = $true)][AllowNull()]$Catalog, $Bundled)
+    $problems = New-Object System.Collections.Generic.List[string]
+    if ($null -eq $Catalog) { $problems.Add('no catalog in the answer'); return @($problems) }
+    if ("$(Get-DEPkgProp $Catalog 'schema')" -ne $script:HubCatalogSchema) { $problems.Add("schema is '$(Get-DEPkgProp $Catalog 'schema')', expected '$script:HubCatalogSchema'") }
+    $pkgs = @(Get-DEPkgProp $Catalog 'packages' | Where-Object { $null -ne $_ })
+    if (-not $pkgs.Count) { $problems.Add('the catalog lists no packages'); return @($problems) }
+    $floor = @{}
+    if ($Bundled) { foreach ($b in @(Get-DEPkgProp $Bundled 'packages' | Where-Object { $null -ne $_ })) { $bid = "$(Get-DEPkgProp $b 'id')"; if ($bid) { $floor[$bid] = $b } } }
+    $seen = @{}
+    foreach ($p in $pkgs) {
+        $id = "$(Get-DEPkgProp $p 'id')"
+        if ($id -notmatch '^[a-z0-9][a-z0-9-]{0,63}$') { $problems.Add("package id '$id' is not a catalog id"); continue }
+        if ($seen.ContainsKey($id)) { $problems.Add("$id is listed twice"); continue }
+        $seen[$id] = $true
+        if (-not "$(Get-DEPkgProp $p 'name')".Trim()) { $problems.Add("$id has no name") }
+        $src = Get-DEPkgProp $p 'source'
+        $type = "$(Get-DEPkgProp $src 'type')"
+        $sha = Get-DEPkgProp $src 'sha256'
+        $pub = "$(Get-DEPkgProp $src 'publisher')".Trim()
+        switch ($type) {
+            'url' { if ("$(Get-DEPkgProp $src 'url')" -notmatch '^https://[^\s]+$') { $problems.Add("$id url is not https") } }
+            'local' { if ("$(Get-DEPkgProp $src 'localPath')" -notmatch '^[A-Za-z0-9][A-Za-z0-9 ._()-]{0,127}$' -or "$(Get-DEPkgProp $src 'localPath')" -match '\.\.') { $problems.Add("$id localPath must be a bare file name") } }
+            'winget' { if ("$(Get-DEPkgProp $src 'id')" -notmatch '^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$') { $problems.Add("$id winget id is not valid") } }
+            'managed' { }   # provider-managed capability (#950): never downloaded or run by the package engine
+            default { $problems.Add("$id source type '$type' is unknown") }
+        }
+        if ($null -ne $sha -and "$sha" -ne '' -and "$sha" -notmatch '^[0-9a-fA-F]{64}$') { $problems.Add("$id sha256 is not 64 hex characters") }
+        if ($type -in @('url', 'local') -and -not $sha -and -not $pub) { $problems.Add("$id has neither sha256 nor publisher") }
+        $inst = Get-DEPkgProp $p 'install'
+        if ($type -ne 'managed' -and "$(Get-DEPkgProp $inst 'type')" -notin @('msi', 'exe', 'ps1', 'odt', 'winget')) { $problems.Add("$id install type '$(Get-DEPkgProp $inst 'type')' is unknown") }
+        foreach ($s in @(Get-DEPkgProp $p 'secrets' | Where-Object { $null -ne $_ })) { if ("$s" -notmatch '^[A-Z0-9_]+$') { $problems.Add("$id secret name '$s' is not valid") } }
+        if ($floor.ContainsKey($id)) {
+            $bsrc = Get-DEPkgProp $floor[$id] 'source'
+            $bsha = Get-DEPkgProp $bsrc 'sha256'; $bpub = "$(Get-DEPkgProp $bsrc 'publisher')".Trim()
+            if ($bsha -and -not $sha) { $problems.Add("$id drops the bundled sha256 pin") }
+            if ($bpub -and -not $pub) { $problems.Add("$id drops the bundled publisher") }
+            elseif ($bpub -and $pub -ne $bpub) { $problems.Add("$id changes the publisher from '$bpub' to '$pub'") }
+            if ([bool](Get-DEPkgProp $bsrc 'vendorSigns') -and -not [bool](Get-DEPkgProp $src 'vendorSigns')) { $problems.Add("$id turns vendorSigns off") }
+            if ("$(Get-DEPkgProp $bsrc 'type')" -ne 'winget' -and $type -eq 'winget') { $problems.Add("$id moves from a pinned installer to winget") }
+        }
+    }
+    return @($problems)
+}
+
+function Get-DEHubPackageCatalog {
+    <#
+        Asks the Hub for its install-kit catalog. Returns @{ catalog; reason }: catalog is $null when the Hub is not
+        configured (reason 'not configured'), cannot be reached, or sends something Test-DEHubPackageCatalog refuses.
+        Never throws. Never logs the secret: Get-DEHubSigned unwraps it only in memory.
+    #>
+    param($Bundled)
+    $endpoint = "$(Get-DEState -Path 'settings.hub.endpoint')".Trim()
+    if (-not $endpoint -or -not (Test-DESecret -Name 'DE_HUB_SIGNING_SECRET')) { return @{ catalog = $null; reason = 'not configured' } }
+    try {
+        $base = ([uri]$endpoint).GetLeftPart([UriPartial]::Authority)
+        $body = Get-DEHubSigned -BaseUrl $base -Path $script:HubCatalogPath -Secret (Get-DESecretSecure -Name 'DE_HUB_SIGNING_SECRET') -TimeoutSec 10
+    } catch {
+        return @{ catalog = $null; reason = "Hub unreachable or refused: $(Protect-DEText $_.Exception.Message)" }
+    }
+    $problems = @(Test-DEHubPackageCatalog -Catalog $body -Bundled $Bundled)
+    if ($problems.Count) { return @{ catalog = $null; reason = "Hub catalog refused: $(($problems | Select-Object -First 5) -join '; ')" } }
+    return @{ catalog = $body; reason = 'Hub install-kit catalog' }
+}
+
+function Get-DEPackageCatalog {
+    <#
+        The package catalog the tool installs from: the Hub's when it is configured and its answer passes
+        Test-DEHubPackageCatalog, otherwise the bundled catalog\packages.json. -Bundled skips the Hub.
+        A good Hub answer is cached for Get-DEPackageCatalogCacheMinutes; a failure falls back for
+        Get-DEPackageCatalogBackoffMinutes, so an offline Hub costs one short wait, not one per package.
+    #>
+    param([switch]$Bundled)
+    $bundledCatalog = Get-DEBundledPackageCatalog
+    if ($Bundled) { return $bundledCatalog }
+    $c = $script:PackageCatalogCache
+    if ($c.source -eq 'hub' -and $c.fetchedAt -and ((Get-Date) - $c.fetchedAt).TotalMinutes -lt (Get-DEPackageCatalogCacheMinutes)) { return $c.catalog }
+    if ($c.failedAt -and ((Get-Date) - $c.failedAt).TotalMinutes -lt (Get-DEPackageCatalogBackoffMinutes)) { return $bundledCatalog }
+    $hub = Get-DEHubPackageCatalog -Bundled $bundledCatalog
+    if ($hub.catalog) {
+        if ($c.source -ne 'hub') { Write-DELog -Level INFO -Message 'package catalog: using the Hub install-kit catalog' }
+        $script:PackageCatalogCache = @{ catalog = $hub.catalog; source = 'hub'; reason = $hub.reason; fetchedAt = (Get-Date); failedAt = $null }
+        return $hub.catalog
+    }
+    if ($hub.reason -ne 'not configured') {
+        if ($c.reason -ne $hub.reason) { Write-DELog -Level WARN -Message "package catalog: using the bundled packages.json ($($hub.reason))" }
+        $script:PackageCatalogCache = @{ catalog = $null; source = 'bundled'; reason = $hub.reason; fetchedAt = $null; failedAt = (Get-Date) }
+    } else {
+        $script:PackageCatalogCache = @{ catalog = $null; source = 'bundled'; reason = $hub.reason; fetchedAt = $null; failedAt = $null }
+    }
+    return $bundledCatalog
+}
+
+function Get-DEPackageCatalogSource {
+    <# Where the last Get-DEPackageCatalog answer came from: Source 'hub' or 'bundled' (or $null before the first read) and why. #>
+    $c = $script:PackageCatalogCache
+    return [pscustomobject]@{ Source = $c.source; Reason = $c.reason; FetchedAt = $c.fetchedAt }
 }
 function Get-DEPackages { param([string]$Category) $p = @((Get-DEPackageCatalog).packages); if ($Category) { $p = @($p | Where-Object { $_ -and $_.category -eq $Category }) }; return $p }
 function Get-DEPackage { param([Parameter(Mandatory = $true)][string]$Id) $p = Get-DEPackages | Where-Object { $_ -and $_.id -eq $Id } | Select-Object -First 1; if (-not $p) { throw "package '$Id' not in catalog" }; return $p }
@@ -331,4 +462,4 @@ function Register-DEAppsActions {
         -ManualAction 'Sign the end user into Office, Outlook, Teams and OneDrive with their work account after the identity migration; the console verifies, it cannot enter their credentials.'
 }
 
-Export-ModuleMember -Function Resolve-DEWingetOrRepair, Get-DEWingetPath, Get-DEPackageCatalog, Get-DEPackages, Get-DEPackage, Get-DELocalPackagesDir, Resolve-DEPackageTokens, Test-DEPackageInstalled, Get-DEPackageFile, Invoke-DEPackageInstall, Invoke-DEPackageUninstall, New-DEOfficeConfigXml, Get-DEM365Readiness, Get-DECloudStorageState, Register-DEAppsActions, Get-DEPkgProp, Expand-DEPath
+Export-ModuleMember -Function Resolve-DEWingetOrRepair, Get-DEWingetPath, Get-DEPackageCatalog, Get-DEBundledPackageCatalog, Get-DEHubPackageCatalog, Test-DEHubPackageCatalog, Get-DEPackageCatalogSource, Reset-DEPackageCatalogCache, Get-DEPackageCatalogCacheMinutes, Get-DEPackageCatalogBackoffMinutes, Get-DEPackages, Get-DEPackage, Get-DELocalPackagesDir, Resolve-DEPackageTokens, Test-DEPackageInstalled, Get-DEPackageFile, Invoke-DEPackageInstall, Invoke-DEPackageUninstall, New-DEOfficeConfigXml, Get-DEM365Readiness, Get-DECloudStorageState, Register-DEAppsActions, Get-DEPkgProp, Expand-DEPath

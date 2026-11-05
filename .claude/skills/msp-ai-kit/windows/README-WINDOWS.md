@@ -248,6 +248,33 @@ DE fills in the real download source and hash:
 - Wazuh
 - Timus
 
+### Where the catalog comes from: the Hub first, `packages.json` as fallback
+
+The Intelligence Hub's install-kit catalog is the primary source (cross-repo review 2026-11-04, step 5).
+When Settings has a Hub endpoint and `DE_HUB_SIGNING_SECRET` is set, `Get-DEPackageCatalog` asks
+`GET /api/techtool/install-kits/catalog` on the Hub's origin, signed exactly like the PHI account profile
+(`X-DE-Signature` with `TECHCONSOLE_TO_HUB_SECRET`). The answer is the `packages.json` package shape under
+`schema: "de.techtool.package-catalog/v1"`. A good answer is reused for 15 minutes.
+
+The bundled `console\catalog\packages.json` is used instead when:
+
+- the Hub is not configured (no endpoint or no signing secret: nothing unsigned is ever sent);
+- the Hub is offline, refuses the signature, or does not have the route yet (404); the tool then waits
+  5 minutes before asking again;
+- the Hub's answer fails `Test-DEHubPackageCatalog`. One bad entry rejects the whole answer, so the tool
+  never runs a mix of sources. Refused: a wrong schema, duplicate ids, an unknown source or install type,
+  a non-https URL, a local installer path that is not a bare file name, a malformed sha256, an installer
+  with neither sha256 nor publisher, and, for a package the bundled catalog also lists, any weaker pin
+  (a dropped sha256 or publisher, a different publisher, `vendorSigns` turned off, or a pinned installer
+  swapped for winget). The Hub may move a pin to a new version's hash; it may not weaken one.
+
+Whichever source wins, every file still goes through `Get-DEPackageFile` and `Test-DEPackageTrust`: the
+sha256 pin (R3) and the Authenticode publisher check (R4) do not depend on where the entry came from.
+`Get-DEPackageCatalogSource` says which source the last read used and why; the log records each switch.
+
+**Hub side:** the signed route is not on the Hub yet. Until it ships, the tool reads the 404 as offline
+and keeps using `packages.json`, which is today's behaviour.
+
 ## Boot rescue (WinPE)
 
 The rescue is for a device whose Windows will not boot, or should not be booted. It works with no
