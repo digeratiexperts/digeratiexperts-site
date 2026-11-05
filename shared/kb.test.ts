@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatKbNumber, inlineText, KB_NUMBER_RE, outline, parseInline, parseKbBody, safeHref } from "./kb";
+import { formatKbNumber, inlineText, KB_NUMBER_RE, noteKind, outline, outlineTree, parseInline, parseKbBody, safeHref } from "./kb";
 import { KB_SEED } from "./kbSeed";
 
 describe("safeHref", () => {
@@ -66,6 +66,48 @@ describe("parseKbBody", () => {
 
   it("treats a stray pipe line as a paragraph instead of looping forever", () => {
     expect(parseKbBody("| not a table\nnext line").map((b) => b.t)).toEqual(["p"]);
+  });
+});
+
+describe("callout markers", () => {
+  it("reads GitHub-style markers on the first line and keeps the legacy forms", () => {
+    const blocks = parseKbBody(
+      ["> [!TIP]", "> Use the **app**.", "", "> [!important] Back up first.", "", "> [!WARNING] Data loss.", "", "> [!CAUTION] Same as warning.", "", "> ! Old warning", "", "> Plain note", "", "> [!NOTE] Explicit note"].join("\n"),
+    );
+    const notes = blocks.filter((b): b is Extract<(typeof blocks)[number], { t: "note" }> => b.t === "note");
+    expect(notes.map((n) => [n.tone, n.label])).toEqual([
+      ["tip", "Tip"],
+      ["warn", "Important"],
+      ["warn", "Warning"],
+      ["warn", "Warning"],
+      ["warn", "Important"],
+      ["info", "Note"],
+      ["info", "Note"],
+    ]);
+    expect(inlineText(notes[0].c)).toBe("Use the app.");
+    expect(inlineText(notes[1].c)).toBe("Back up first.");
+  });
+
+  it("leaves an unknown marker in the text as an ordinary note", () => {
+    expect(noteKind("[!FOO] text")).toEqual({ tone: "info", label: "Note", text: "[!FOO] text" });
+  });
+
+  it("does not turn a marker into markup or a link", () => {
+    const [note] = parseKbBody("> [!TIP] [x](javascript:alert) <b>hi</b>");
+    expect(note.t).toBe("note");
+    if (note.t !== "note") return;
+    expect(note.c.some((x) => x.t === "link")).toBe(false);
+    expect(inlineText(note.c)).toBe("x <b>hi</b>");
+  });
+});
+
+describe("outlineTree", () => {
+  it("lists h2 and h3 with their level and skips h4", () => {
+    expect(outlineTree(parseKbBody("# A\n## B\n### C\n# D"))).toEqual([
+      { id: "a", text: "A", level: 2 },
+      { id: "b", text: "B", level: 3 },
+      { id: "d", text: "D", level: 2 },
+    ]);
   });
 });
 
