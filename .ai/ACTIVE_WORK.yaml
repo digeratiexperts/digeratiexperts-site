@@ -5084,9 +5084,15 @@ claims:
       - shared/kb.ts, shared/kb.test.ts (callout markers, h2/h3 outline)
       - zoho/help-center/stylesheet.css, zoho/help-center/README.md (separate commit)
       - artifacts/visual-qa/kb-jumpcloud-layout/**
-    status: pr-open
+    status: merged
+    pr: "962"
+    merged: 2026-11-05 (ca244410)
     note: >-
       Joe, 2026-11-05: copy the docs layout pattern of jumpcloud.com/support
       (left category tree, centre reading column, right "On this page") for the
       knowledge base. Layout only; no third-party branding, copy or assets.
       Draft PR; the coordinator merges on Joe's approval.
+      Released 2026-11-05 after merge. Joe: "keep stars, merge 962"; public
+      articles stay behind portal login ("I want clients to login first"), so
+      no public article API. MERGED, not yet verified LIVE; the Zoho help
+      center CSS is a manual paste, not published.
