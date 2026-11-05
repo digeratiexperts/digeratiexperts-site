@@ -81,6 +81,18 @@ const statements = [
   )`,
   `CREATE INDEX IF NOT EXISTS sync_projections_account_idx
     ON sync_projections (canonical_account_id)`,
+  // Legacy shared-secret retirement (observe): one row per direction per UTC
+  // hour, counting DE-Sync uses of TECHSALES_SYNC_TOKEN / WEBSITE_LEAD_WEBHOOK_SECRET
+  // instead of the scoped secret. Never stores a secret. Same shape as the Hub's table.
+  `CREATE TABLE IF NOT EXISTS de_sync_legacy_credential_uses (
+    direction text NOT NULL,
+    hour_bucket timestamptz NOT NULL,
+    uses integer NOT NULL DEFAULT 0,
+    last_used_at timestamptz NOT NULL,
+    last_route text,
+    last_source text,
+    PRIMARY KEY (direction, hour_bucket)
+  )`,
 ];
 
 let schemaPromise: Promise<void> | null = null;

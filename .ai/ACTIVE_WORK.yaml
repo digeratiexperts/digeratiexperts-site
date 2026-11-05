@@ -5048,3 +5048,25 @@ claims:
       help." label sliding out on hover or keyboard focus. This changes the
       2026-10-03 launcher decision (label always beside the badge from sm), so
       Joe confirms the screenshots before merge.
+  - id: de-sync-legacy-secret-retirement
+    issue: 957
+    owner: claude
+    subsystem: hub-integration-auth
+    branch: claude/legacy-secret-observe (PR 1) -> claude/legacy-secret-remove (PR 2, held, stacked)
+    base_sha: 296721de3a49ecb3515a41cd2e028a9c2abba736
+    started: 2026-11-05
+    files:
+      - server/integrations/deSyncAuth.ts
+      - server/integrations/deSyncLegacyCredential.ts (new) + deSyncLegacyCredential.test.ts, deSyncLegacyObserve.test.ts (new)
+      - server/integrations/ensureDeSyncSchema.ts (additive CREATE TABLE de_sync_legacy_credential_uses)
+      - server/integrations/techSalesClient.ts (outbound secret resolution only; the legacy lead-webhook sender is untouched)
+      - server/integrations/deSyncRoutes.ts (health summary + admin-only per-direction endpoint)
+    status: active
+    note: >-
+      Website half of retiring TECHSALES_SYNC_TOKEN / WEBSITE_LEAD_WEBHOOK_SECRET
+      as the DE-Sync fallback (Hub #841 merged 6a56dd72, Hub #842 held). PR 1
+      observes: one warning per direction per hour, every use counted, health
+      reports null/"unknown" (never 0) when the count is unreadable. PR 2
+      deletes the fallback and merges only after BOTH sides show 7 days at
+      zero (Hub docs/runbooks/de-sync-legacy-secret-retirement.md). Joe
+      approved the work 2026-11-05; the coordinator merges PR 1 on his say-so.

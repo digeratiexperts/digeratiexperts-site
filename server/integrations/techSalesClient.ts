@@ -6,7 +6,7 @@ import { retainHubAccountMapping } from "./backfillHubIdentity";
 import { logger } from "../logger";
 import { getClient, setClient } from "../portalAuthStore";
 import { assertMutationAllowed } from "../stagingReviewGuard";
-import { buildSignedHeaders, newEventId, resolveScopedSecret } from "./deSyncAuth";
+import { buildSignedHeaders, newEventId, outboundSecret } from "./deSyncAuth";
 import type { DeSyncEnvelope, DeSyncEventType } from "./deSyncContract";
 import { SERVICE_REQUEST_HUB_EVENT, SERVICE_REQUEST_HUB_PATH } from "@shared/serviceRequests";
 import { representationProjectionSchema, type RepresentationProjection } from "@shared/representation";
@@ -90,19 +90,12 @@ export function hubOrigin(): string | null {
   }
 }
 
-function syncToken(): string {
-  return resolveScopedSecret("portal_to_hub").secret;
-}
-
-function websiteToken(): string {
-  return resolveScopedSecret("website_to_hub").secret;
-}
-
 async function signedGet<T>(pathWithQuery: string, direction: "website_to_hub" | "portal_to_hub"): Promise<T | null> {
   const base = hubApiBase();
-  const secret = resolveScopedSecret(direction).secret;
+  const apiPath = pathWithQuery.startsWith("/api") ? pathWithQuery : `/api${pathWithQuery}`;
+  const secret = base ? outboundSecret(direction, apiPath) : "";
   if (!base || !secret) return null;
-  const url = `${base.replace(/\/api$/, "")}${pathWithQuery.startsWith("/api") ? pathWithQuery : `/api${pathWithQuery}`}`;
+  const url = `${base.replace(/\/api$/, "")}${apiPath}`;
   const parsed = new URL(url);
   const headers = buildSignedHeaders({
     method: "GET",
@@ -248,7 +241,7 @@ export async function fetchHubCompanyDocuments(
   portalClientId?: string | null,
 ): Promise<HubCompanyDocumentsResponse | null> {
   const base = hubApiBase();
-  const token = syncToken();
+  const token = base ? outboundSecret("portal_to_hub", "/api/webhooks/portal/company-documents") : "";
   if (!base || !token) {
     logger.warn("TechSales document bridge skipped — TECHSALES_HUB_URL/SYNC_URL or TOKEN not set");
     return null;
@@ -294,7 +287,7 @@ export async function fetchHubRepresentation(accountId: string, portalClientId?:
   const cached = representationCache.get(key);
   if (cached && Date.now() - cached.at < REPRESENTATION_CACHE_MS) return cached.value;
   const base = hubApiBase();
-  const token = syncToken();
+  const token = base && /^\d+$/.test(accountId) ? outboundSecret("portal_to_hub", "/api/webhooks/portal/representation") : "";
   if (!base || !token || !/^\d+$/.test(accountId)) return null;
   const params = new URLSearchParams({ accountId });
   if (portalClientId) params.set("portalClientId", portalClientId);
@@ -323,7 +316,7 @@ export async function fetchHubCompanyOrders(
   portalClientId?: string | null,
 ): Promise<HubCompanyOrdersResponse | null> {
   const base = hubApiBase();
-  const token = syncToken();
+  const token = base ? outboundSecret("portal_to_hub", "/api/webhooks/portal/company-orders") : "";
   if (!base || !token) {
     logger.warn("TechSales orders bridge skipped — TECHSALES_HUB_URL/SYNC_URL or TOKEN not set");
     return null;
@@ -356,7 +349,7 @@ export async function fetchHubContractDownload(
   portalClientId?: string | null,
 ): Promise<{ buffer: Buffer; contentType: string; fileName: string } | null> {
   const base = hubApiBase();
-  const token = syncToken();
+  const token = base ? outboundSecret("portal_to_hub", "/api/webhooks/portal/company-documents/:id/download") : "";
   if (!base || !token) return null;
   const qs = new URLSearchParams();
   if (accountId) qs.set("accountId", accountId);
@@ -456,13 +449,15 @@ export async function deliverEnvelopeToHub(
     throw new Error(`Site worker does not deliver destination=${destination}`);
   }
   const origin = hubOrigin();
-  const secret =
-    envelope.source === "portal" ? resolveScopedSecret("portal_to_hub").secret : websiteToken();
-  if (!origin || !secret) {
+  if (!origin) {
+    throw new Error("Hub destination not configured");
+  }
+  const path = hubPathForEnvelope(envelope.source, envelope.eventType);
+  const secret = outboundSecret(envelope.source === "portal" ? "portal_to_hub" : "website_to_hub", path);
+  if (!secret) {
     throw new Error("Hub destination not configured");
   }
 
-  const path = hubPathForEnvelope(envelope.source, envelope.eventType);
   const body = JSON.stringify(envelope);
   const headers = buildSignedHeaders({
     method: "POST",
@@ -516,9 +511,9 @@ export async function deliverEnvelopeToHub(
 
 export async function fetchPublicCatalog(): Promise<Record<string, unknown> | null> {
   const origin = hubOrigin();
-  const secret = websiteToken();
-  if (!origin || !secret) return null;
   const path = "/api/integrations/v1/public-catalog";
+  const secret = origin ? outboundSecret("website_to_hub", path) : "";
+  if (!origin || !secret) return null;
   const headers = buildSignedHeaders({
     method: "GET",
     path,
@@ -540,9 +535,9 @@ export async function fetchPublicCatalog(): Promise<Record<string, unknown> | nu
 /** Staff-safe Hub catalog (tiers + SKUs with internal cost). Never for Door 2. */
 export async function fetchStaffCatalog(): Promise<Record<string, unknown> | null> {
   const origin = hubOrigin();
-  const secret = websiteToken();
-  if (!origin || !secret) return null;
   const path = "/api/integrations/v1/staff-catalog";
+  const secret = origin ? outboundSecret("website_to_hub", path) : "";
+  if (!origin || !secret) return null;
   const headers = buildSignedHeaders({
     method: "GET",
     path,
@@ -571,9 +566,9 @@ export type HubConnectorHealth = {
 /** Pax8 connector health from Hub. AUTH_REQUIRED until DE supplies credentials. */
 export async function fetchPax8ConnectorHealth(): Promise<HubConnectorHealth | null> {
   const origin = hubOrigin();
-  const secret = websiteToken();
-  if (!origin || !secret) return null;
   const path = "/api/integrations/v1/connectors/pax8/health";
+  const secret = origin ? outboundSecret("website_to_hub", path) : "";
+  if (!origin || !secret) return null;
   const headers = buildSignedHeaders({
     method: "GET",
     path,
