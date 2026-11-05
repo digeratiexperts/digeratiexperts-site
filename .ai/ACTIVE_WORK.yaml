@@ -30,6 +30,31 @@
 
 version: 2
 claims:
+  - id: tech-tool-private-repo-20261105
+    issue: 964
+    owner: claude
+    subsystem: msp-ai-kit
+    branch: claude/tech-tool-remove
+    base_sha: 296721de3a49ecb3515a41cd2e028a9c2abba736
+    started: 2026-11-05
+    files:
+      - .claude/skills/msp-ai-kit/windows/ (removed; moved to digeratiexperts/de-tech-tool)
+      - .claude/skills/msp-ai-kit/scripts/build-techtool-tracker.ps1 (removed; moved)
+      - .claude/skills/msp-ai-kit/TECH-TOOL-MOVED.md (new pointer)
+      - .claude/skills/msp-ai-kit/SKILL.md, README.md, UPSTREAM.md, upstream.lock
+      - .github/workflows/msp-ai-kit.yml (Tech Tool Windows jobs dropped)
+      - .github/workflows/installer-source-recheck.yml (removed; moved)
+      - .gitignore, AGENTS.md, docs/DE-SYSTEM-INTEGRATION.md
+      - .ai/ACTIVE_WORK.yaml (this claim)
+    status: active
+    note: >-
+      Joe 2026-11-05: move the Tech Tool to a private repo, "Everything is
+      approved". Staging branch claude/tech-tool-extract (orphan, filter-repo of
+      .claude/skills/msp-ai-kit at 296721de) is pushed to de-tech-tool:main by
+      the coordinator. This removal PR stays draft until de-tech-tool has the
+      history and open Tech Tool PRs 947, 948, 950, 961, 963 have landed here
+      (then re-cut the extract) or been re-targeted at de-tech-tool. Other
+      claims below that list windows/ paths are left for their owners.
   - id: desk-chooser-height-20261101
     issue: 918
     owner: codex
@@ -5070,3 +5095,29 @@ claims:
       deletes the fallback and merges only after BOTH sides show 7 days at
       zero (Hub docs/runbooks/de-sync-legacy-secret-retirement.md). Joe
       approved the work 2026-11-05; the coordinator merges PR 1 on his say-so.
+  - id: kb-docs-layout
+    issue: 960
+    owner: claude
+    subsystem: knowledge-base
+    branch: claude/kb-docs-layout
+    base_sha: 296721de
+    started: 2026-11-05
+    files:
+      - client/src/components/kb/docs/** (new shared docs-layout components + lazy CSS)
+      - client/src/pages/portal/kb/PortalKbArticle.tsx, client/src/pages/portal/PortalKB.tsx, client/src/pages/support/KnowledgeBase.tsx
+      - client/src/components/portal/kb/KbRenderer.tsx, client/src/pages/portal/kb/AdminKb.tsx (syntax help line only)
+      - shared/kb.ts, shared/kb.test.ts (callout markers, h2/h3 outline)
+      - zoho/help-center/stylesheet.css, zoho/help-center/README.md (separate commit)
+      - artifacts/visual-qa/kb-jumpcloud-layout/**
+    status: merged
+    pr: "962"
+    merged: 2026-11-05 (ca244410)
+    note: >-
+      Joe, 2026-11-05: copy the docs layout pattern of jumpcloud.com/support
+      (left category tree, centre reading column, right "On this page") for the
+      knowledge base. Layout only; no third-party branding, copy or assets.
+      Draft PR; the coordinator merges on Joe's approval.
+      Released 2026-11-05 after merge. Joe: "keep stars, merge 962"; public
+      articles stay behind portal login ("I want clients to login first"), so
+      no public article API. MERGED, not yet verified LIVE; the Zoho help
+      center CSS is a manual paste, not published.

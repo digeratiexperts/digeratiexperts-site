@@ -37,7 +37,7 @@ const CHEATSHEET = [
   ["**bold**  *italic*  `code`", "inline styles"],
   ["- item / 1. item", "lists (indent 2 spaces to nest)"],
   ["| A | B |\\n|---|---|\\n| 1 | 2 |", "table with dark header"],
-  ["> note  /  > ! warning", "callouts"],
+  ["> note  /  > ! warning  /  > [!TIP] text  (also [!NOTE] [!IMPORTANT] [!WARNING])", "callouts"],
   ["[text](/portal/requests)", "links (portal paths, https, mailto)"],
   ["{{license-policy}}", "the reader's live company licence policy"],
 ];
