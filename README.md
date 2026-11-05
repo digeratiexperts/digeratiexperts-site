@@ -1,3 +1,47 @@
+# DE Tech Tool (private)
+
+The DE Tech Tool, DE Technician Console and DE Microsoft Admin, with the MSP AI Kit they bundle.
+This repository is **private**. It was split out of the public website repository
+`digeratiexperts/digeratiexperts-site` on 2026-11-05 with its full commit history
+(`git filter-repo --subdirectory-filter .claude/skills/msp-ai-kit`).
+
+## Layout
+
+The repository root is the kit root, so every path the tool uses is unchanged:
+
+| Path | What |
+|---|---|
+| `windows/` | The DE Tech Tool: `console/`, `microsoft/`, `rescue/`, `agent/`, `packaging/`, `tests/`, plan docs |
+| `windows/Start-DETechTool.cmd` | Technician launcher (`Start-DETechConsole.cmd` is the compatibility alias) |
+| `windows/packaging/New-DEReleasePackage.ps1` | Builds the watermarked release zip (`DE-TechTool-v<version>-<buildId>.zip`); the zip holds this whole folder as `msp-ai-kit\` |
+| `kit.config.json`, `modules/`, `scripts/`, `profiles/`, `examples/` | The MSP AI Kit that the tool's AI Toolkit page renders (`windows/Install-MspAiKit.ps1` needs `scripts/build.mjs` beside it) |
+
+Why the kit came too: the release zip, the installer lifecycle test, the mutation check and the
+AI-pack loader all expect `windows/` to sit inside a kit root. Moving `windows/` alone to the root
+would have broken them and meant rewriting paths while other work was in flight.
+
+## Run the tests
+
+```powershell
+Invoke-Pester -Path windows/tests, windows/console/tests     # Windows PowerShell 5.1, Pester 5.x
+windows/tests/Invoke-GuiSmoke.ps1 -OutDir $env:TEMP\de-smoke  # WPF smoke, every page
+node --test scripts/build.test.mjs                            # kit builder
+```
+
+CI (`.github/workflows/ci.yml`) runs the same on `windows-latest` and `ubuntu-latest`.
+`.github/workflows/installer-source-recheck.yml` re-checks pinned installer hashes weekly.
+
+## What changed from the website copy
+
+- `scripts/sync-facts.mjs --check` compared the packs with the website's `shared/companyContact.ts`.
+  That file is not in this repository, so CI skips the check. Run it from a website checkout
+  (`--site <path>` is not supported yet), or retire it here; see the website PR that removed this folder.
+- Everything else is byte-identical to website `main` at `ca244410` (includes #961).
+
+Security: see `SECURITY.md`. Plan and status: `windows/DE-TECH-TOOL-TRACKER.md`.
+
+---
+
 # MSP AI Kit for Digerati Experts
 
 Copy-paste AI instruction packs for an MSP/MSSP team, generated from one

@@ -1,0 +1,30 @@
+# Build output and generated trust files (never committed)
+windows/packaging/out/
+windows/integrity.json
+windows/community/
+windows/console/BUILD.json
+
+# Rendered kit packs and vendored third-party kits
+artifacts/
+node_modules/
+
+# Local runs: logs, evidence, smoke renders, Pester output
+*.log
+TestResults*.xml
+testResults.xml
+
+# Keys and secrets: never in this repository
+.env
+.env.*
+*.pfx
+*.p12
+*.pem
+*.key
+*.snk
+
+# Editors and OS
+.vs/
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store

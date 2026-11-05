@@ -1,0 +1,261 @@
+name: CI
+
+# Split from the website repo's msp-ai-kit.yml on 2026-11-05. The repository root is the kit
+# root, so KIT is ".". Linux: the Node builder and eval harness. Windows: PSScriptAnalyzer,
+# Pester under Windows PowerShell 5.1, a real build/install/verify, a headless Technician Console
+# audit, a WPF smoke of every page, and an unsigned test setup with its install lifecycle.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  KIT: "."
+
+jobs:
+  kit:
+    name: Builder, evals, facts, installers (Linux)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+      - name: Builder tests
+        run: node --test $KIT/scripts/build.test.mjs
+      - name: Config and module check
+        run: node $KIT/scripts/build.mjs --check
+      - name: Committed example is current
+        run: node $KIT/scripts/build.mjs --verify $KIT/examples/digerati-experts
+      - name: Overlay profile builds
+        run: node $KIT/scripts/build.mjs --config $KIT/profiles/example-client-overlay.json --dry-run --quiet
+      - name: Eval cases are well formed and golden outputs score
+        run: node $KIT/scripts/eval.mjs --score-golden
+      - name: Install targets (dry run against a scratch repo)
+        run: |
+          mkdir -p /tmp/scratch-repo && printf '# Scratch\n' > /tmp/scratch-repo/CLAUDE.md
+          node $KIT/scripts/install-targets.mjs --pack $KIT/examples/digerati-experts --repo /tmp/scratch-repo --all
+          node $KIT/scripts/install-targets.mjs --pack $KIT/examples/digerati-experts --repo /tmp/scratch-repo --all | grep -c "NO CHANGE" | xargs test 4 -eq
+          node $KIT/scripts/install-targets.mjs --pack $KIT/examples/digerati-experts --repo /tmp/scratch-repo --all --remove
+      - name: Upstream installer parses and lists
+        run: |
+          bash -n $KIT/scripts/install-upstream.sh
+          bash $KIT/scripts/install-upstream.sh --list
+          bash $KIT/scripts/install-upstream.sh --dry-run --only cmmc
+
+  windows-loader:
+    name: Windows loader and Technician Console (PowerShell 5.1 + WPF)
+    runs-on: windows-latest
+    timeout-minutes: 30   # full 5.1 Pester suite plus build/install smoke runs 12-20+ min on hosted runners
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+      - name: Install PSScriptAnalyzer and Pester
+        shell: pwsh
+        run: |
+          Set-PSRepository PSGallery -InstallationPolicy Trusted
+          Install-Module PSScriptAnalyzer -Scope CurrentUser -Force
+          Install-Module Pester -MinimumVersion 5.5 -MaximumVersion 5.99.99 -Scope CurrentUser -Force   # Pester 6 drops Assert-MockCalled; the suite is written for 5
+      - name: Install Pester for Windows PowerShell 5.1
+        shell: powershell
+        run: |
+          [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
+          Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Scope CurrentUser -Force | Out-Null
+          Install-Module Pester -MinimumVersion 5.5 -MaximumVersion 5.99.99 -Scope CurrentUser -Force -SkipPublisherCheck
+      - name: PSScriptAnalyzer
+        shell: pwsh
+        run: |
+          $results = Invoke-ScriptAnalyzer -Path "$env:KIT/windows" -Recurse -Settings "$env:KIT/windows/tests/PSScriptAnalyzerSettings.psd1"
+          $results | Format-Table -AutoSize | Out-String | Write-Host
+          $errors = @($results | Where-Object Severity -eq 'Error')
+          if ($errors.Count) { throw "PSScriptAnalyzer reported $($errors.Count) error(s)" }
+      - name: Parse under Windows PowerShell 5.1
+        shell: powershell
+        run: |
+          $errs = $null
+          foreach ($f in Get-ChildItem "$env:KIT/windows" -Recurse -Include *.ps1, *.psm1) {
+            [void][System.Management.Automation.Language.Parser]::ParseFile($f.FullName, [ref]$null, [ref]$errs)
+            if ($errs.Count) { $errs | ForEach-Object { Write-Host "$($f.Name):$($_.Extent.StartLineNumber) $($_.Message)" }; throw "parse errors in $($f.Name)" }
+          }
+          Write-Host "all scripts parse under $($PSVersionTable.PSVersion)"
+      - name: Kit builder tests on Windows (paths, line endings)
+        shell: pwsh
+        run: |
+          node --test "$env:KIT/scripts/build.test.mjs"
+          if ($LASTEXITCODE -ne 0) { throw "builder tests failed on Windows" }
+          node "$env:KIT/scripts/build.mjs" --verify "$env:KIT/examples/digerati-experts"
+          if ($LASTEXITCODE -ne 0) { throw "example pack drifted on a Windows checkout" }
+      - name: Pester tests (Windows PowerShell 5.1)
+        shell: powershell
+        run: |
+          Import-Module Pester -MinimumVersion 5.5 -MaximumVersion 5.99.99
+          $cfg = New-PesterConfiguration
+          $cfg.Run.Path = @("$env:KIT/windows/tests", "$env:KIT/windows/console/tests")
+          $cfg.Run.Exit = $true
+          $cfg.Output.Verbosity = 'Detailed'
+          Invoke-Pester -Configuration $cfg
+      - name: Dry run of everything (5.1)
+        shell: powershell
+        run: |
+          & "$env:KIT/windows/Install-MspAiKit.ps1" -Action All -NonInteractive -WhatIf -OutDir "$env:RUNNER_TEMP\packs-dry"
+          if ($LASTEXITCODE -ne 0) { throw "dry run exit $LASTEXITCODE" }
+      - name: Build, install, verify for real (5.1)
+        shell: powershell
+        run: |
+          & "$env:KIT/windows/Install-MspAiKit.ps1" -Action All -NonInteractive -OutDir "$env:RUNNER_TEMP\packs"
+          if ($LASTEXITCODE -ne 0) { throw "All exit $LASTEXITCODE" }
+          if (-not (Test-Path "$env:RUNNER_TEMP\packs\INDEX.md")) { throw "pack not written" }
+          if (-not (Test-Path "$env:USERPROFILE\.claude\skills\msp-ai-kit\SKILL.md")) { throw "skill link not reachable" }
+          & "$env:KIT/windows/Install-MspAiKit.ps1" -Action Clipboard -NonInteractive -OutDir "$env:RUNNER_TEMP\packs"
+          & "$env:KIT/windows/Install-MspAiKit.ps1" -Action Uninstall -NonInteractive
+          if ($LASTEXITCODE -ne 0) { throw "Uninstall exit $LASTEXITCODE" }
+      - name: 32-bit host relaunches in 64-bit and keeps the exit code (RMM agents)
+        shell: cmd
+        run: |
+          %SystemRoot%\SysWOW64\WindowsPowerShell\v1.0\powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%KIT%\windows\console\DETechConsole.ps1" -Headless -Client no-such-client -DataDir "%RUNNER_TEMP%\de-console-32"
+          if %ERRORLEVEL% NEQ 2 (echo expected exit 2 from a refused run under a 32-bit host & exit /b 1)
+          echo 32-bit host: exit code passed through
+          rem echo leaves ERRORLEVEL at 2, which cmd would hand back as the step's result
+          exit /b 0
+      - name: Technician Console headless audit (5.1, changes nothing)
+        shell: powershell
+        run: |
+          & "$env:KIT/windows/console/DETechConsole.ps1" -Headless -Client alamo -Mode takeover -DataDir "$env:RUNNER_TEMP\de-console"
+          $code = $LASTEXITCODE
+          # A CI runner is not an Alamo laptop, so NOT READY (1) or BLOCKED (2) is the honest answer; a crash is not.
+          if ($code -notin @(0, 1, 2)) { throw "headless console exit $code" }
+          $zip = @(Get-ChildItem "$env:RUNNER_TEMP\de-console\evidence" -Recurse -Filter *.zip)
+          if (-not $zip.Count) { throw 'no evidence bundle written' }
+          Write-Host "headless exit $code; bundle $($zip[0].FullName)"
+          exit 0
+      - name: WPF window smoke (every page, 100 and 200 percent scale, no window shown)
+        shell: powershell
+        run: |
+          & "$env:KIT/windows/tests/Invoke-GuiSmoke.ps1" -OutDir "$env:RUNNER_TEMP\de-smoke"
+          if ($LASTEXITCODE -ne 0) { throw "GUI smoke exit $LASTEXITCODE" }
+      - name: Page renders into the log (small JPEGs, base64, for visual review where artifacts can't be downloaded)
+        if: always()
+        shell: powershell
+        run: |
+          Add-Type -AssemblyName System.Drawing
+          $codec = [Drawing.Imaging.ImageCodecInfo]::GetImageEncoders() | Where-Object { $_.MimeType -eq 'image/jpeg' }
+          $q = New-Object Drawing.Imaging.EncoderParameters 1; $q.Param[0] = New-Object Drawing.Imaging.EncoderParameter ([Drawing.Imaging.Encoder]::Quality, [long]62)
+          foreach ($f in @(Get-ChildItem "$env:RUNNER_TEMP\de-smoke" -Filter '*-96dpi.png' -ErrorAction SilentlyContinue | Sort-Object Name)) {
+            $img = [Drawing.Image]::FromFile($f.FullName)
+            try {
+              $w = [Math]::Min(1000, $img.Width); $h = [int]($img.Height * $w / $img.Width)
+              $bmp = New-Object Drawing.Bitmap $w, $h; $g = [Drawing.Graphics]::FromImage($bmp); $g.InterpolationMode = 'HighQualityBicubic'; $g.DrawImage($img, 0, 0, $w, $h); $g.Dispose()
+              $ms = New-Object IO.MemoryStream; $bmp.Save($ms, $codec, $q); $bmp.Dispose()
+              $b64 = [Convert]::ToBase64String($ms.ToArray())
+              Write-Host "===RENDER-BEGIN $($f.BaseName) ${w}x${h}==="
+              for ($i = 0; $i -lt $b64.Length; $i += 3000) { Write-Host ('RENDER:' + $b64.Substring($i, [Math]::Min(3000, $b64.Length - $i))) }
+              Write-Host "===RENDER-END $($f.BaseName)==="
+            } finally { $img.Dispose() }
+          }
+      - name: Collect logs into the workspace
+        if: always()
+        shell: powershell
+        run: |
+          $dest = Join-Path $env:GITHUB_WORKSPACE 'ci-artifacts'
+          New-Item -ItemType Directory -Path $dest -Force | Out-Null
+          foreach ($src in @("$env:ProgramData\DE\logs", "$env:LOCALAPPDATA\DE\logs", "$env:RUNNER_TEMP\de-smoke", "$env:RUNNER_TEMP\de-console\logs")) {
+            if (Test-Path $src) { Copy-Item -Path $src -Destination (Join-Path $dest (Split-Path $src -Leaf)) -Recurse -Force -ErrorAction SilentlyContinue }
+          }
+          Get-ChildItem "$env:RUNNER_TEMP\de-console\evidence" -Recurse -Include report-*.html -ErrorAction SilentlyContinue | Copy-Item -Destination $dest -ErrorAction SilentlyContinue
+          if (Test-Path "$env:RUNNER_TEMP\packs\INDEX.md") { Copy-Item "$env:RUNNER_TEMP\packs\INDEX.md" $dest }
+      - name: Upload receipts, logs and smoke renders
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: msp-ai-kit-windows-logs
+          path: ci-artifacts
+          if-no-files-found: ignore
+          retention-days: 7
+
+  standalone-installer:
+    name: Standalone setup build and lifecycle (unsigned test)
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Build isolated test release and setup
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $iscc = Join-Path ([Environment]::GetFolderPath('ProgramFilesX86')) 'Inno Setup 6\ISCC.exe'
+          if (-not (Test-Path -LiteralPath $iscc)) { throw 'Inno Setup 6 compiler missing on runner; configure approved build toolchain' }
+          $out = Join-Path $env:RUNNER_TEMP 'de-installer-build'
+          & "$env:KIT/windows/packaging/New-DEReleasePackage.ps1" -IssuedTo ci-installer -SkipSigning -NoCommunity -Channel test -OutDir $out
+          if ($LASTEXITCODE) { throw "release build exit $LASTEXITCODE" }
+          $zip = @(Get-ChildItem $out -Filter 'DE-TechTool*.zip')
+          if ($zip.Count -ne 1) { throw 'expected exactly one release zip' }
+          $extract = Join-Path $env:RUNNER_TEMP 'de-installer-payload'
+          Expand-Archive -LiteralPath $zip[0].FullName -DestinationPath $extract
+          $payload = Join-Path $extract 'msp-ai-kit'
+          $version = (Get-Content "$payload/windows/console/VERSION" -Raw).Trim()
+          & $iscc "/DPayloadDir=$payload" "/DProductVersion=$version" "/DOutputPath=$out" "$env:KIT/windows/packaging/DETechTool.iss"
+          if ($LASTEXITCODE) { throw "installer compile exit $LASTEXITCODE" }
+          $setup = @(Get-ChildItem $out -Filter '*.exe')
+          if ($setup.Count -ne 1) { throw 'expected exactly one setup exe' }
+          $hash = (Get-FileHash -LiteralPath $setup[0].FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash  $($setup[0].Name)" | Set-Content "$($setup[0].FullName).sha256" -Encoding ASCII
+          "UNSIGNED TEST BUILD. Not a production release. Community tools omitted." | Set-Content "$out/TEST-BUILD.txt"
+      - name: Real version upgrade, downgrade refusal, obsolete files and installed ACLs
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $out = Join-Path $env:RUNNER_TEMP 'de-installer-build'
+          $setup = @(Get-ChildItem $out -Filter '*.exe')[0]
+          $payload = Join-Path $env:RUNNER_TEMP 'de-installer-payload\msp-ai-kit'
+          $iscc = Join-Path ([Environment]::GetFolderPath('ProgramFilesX86')) 'Inno Setup 6\ISCC.exe'
+          & "$env:KIT/windows/tests/Invoke-InstallerLifecycle.ps1" -SetupPath $setup.FullName -PayloadDir $payload -CompilerPath $iscc -OutDir $out
+          if ($LASTEXITCODE -ne 0) { throw "installer lifecycle exit $LASTEXITCODE" }
+      - name: Render appearance concepts from staged release
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $console = Join-Path $env:RUNNER_TEMP 'de-installer-payload\msp-ai-kit\windows\console\DETechConsole.ps1'
+          $out = Join-Path $env:RUNNER_TEMP 'de-installer-build'
+          foreach ($appearance in @('Operations','Precision')) {
+            & $console -SmokeTest -Appearance $appearance -SmokeClient alamo -SmokeOut "$out/appearance-$appearance" -DataDir "$env:RUNNER_TEMP/de-appearance-$appearance"
+            if ($LASTEXITCODE -ne 0) { throw "$appearance render smoke exit $LASTEXITCODE" }
+          }
+          Add-Type -AssemblyName System.Drawing
+          foreach ($appearance in @('Operations','Precision')) {
+            foreach ($page in @('Storage','Dashboard','Scan')) {
+              $png = Join-Path $out "appearance-$appearance/$page-96dpi.png"
+              if (-not (Test-Path -LiteralPath $png)) { throw "missing appearance render $png" }
+              $img = [Drawing.Image]::FromFile($png)
+              try {
+                $bmp = New-Object Drawing.Bitmap 1000, ([int]($img.Height * 1000 / $img.Width))
+                $g = [Drawing.Graphics]::FromImage($bmp)
+                $g.DrawImage($img, 0, 0, $bmp.Width, $bmp.Height); $g.Dispose()
+                $ms = New-Object IO.MemoryStream
+                try { $bmp.Save($ms, [Drawing.Imaging.ImageFormat]::Jpeg); $b64 = [Convert]::ToBase64String($ms.ToArray()) }
+                finally { $ms.Dispose(); $bmp.Dispose() }
+                Write-Host "===RENDER-BEGIN $appearance-$page==="
+                for ($i=0; $i -lt $b64.Length; $i+=3000) { Write-Host ('RENDER:' + $b64.Substring($i,[Math]::Min(3000,$b64.Length-$i))) }
+                Write-Host "===RENDER-END $appearance-$page==="
+              } finally { $img.Dispose() }
+            }
+          }
+      - name: Upload unsigned test setup and lifecycle logs
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: DE-TechTool-unsigned-test-setup
+          path: ${{ runner.temp }}/de-installer-build
+          if-no-files-found: error
+          retention-days: 7
