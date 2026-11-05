@@ -30,6 +30,28 @@
 
 version: 2
 claims:
+  - id: de-techtool-one-endpoint-runtime-20261105
+    issue: null
+    owner: claude
+    subsystem: msp-ai-kit
+    branch: claude/techtool-hub-install-catalog (PR A) + claude/techtool-retire-ps-agent (PR B, stacked on A)
+    base_sha: 296721de3a49ecb3515a41cd2e028a9c2abba736
+    started: 2026-11-05
+    files:
+      - .claude/skills/msp-ai-kit/windows/console/modules/DE.Apps/DE.Apps.psm1 (Get-DEPackageCatalog hunk only)
+      - .claude/skills/msp-ai-kit/windows/console/tests/HubPackageCatalog.Tests.ps1
+      - .claude/skills/msp-ai-kit/windows/README-WINDOWS.md (Packages section)
+      - .claude/skills/msp-ai-kit/windows/agent/** (removed, PR B)
+      - .claude/skills/msp-ai-kit/windows/console/tests/Agent*.Tests.ps1, Job{Catalog,Replay,Signature}.Tests.ps1, HubQueueLoadTest.Tests.ps1 (removed, PR B)
+      - .claude/skills/msp-ai-kit/windows/AGENT-*.md, HUB-JOB-QUEUE.md, HUB-QUEUE-LOAD-TEST.md, PS-AGENT-RETIREMENT.md (PR B)
+    status: active
+    note: >-
+      Cross-repo review 2026-11-04 step 5 (Intelligence-Hub
+      docs/architecture/2026-11-04-cross-repo-review.md), Joe 2026-11-05 "finish
+      the review's projects". Drafts only, no merge. packages.json is NOT
+      touched (no change to packages or pins), so the techtool stack #947 ->
+      #948 -> #950 keeps sole ownership of the catalog, INSTALLER-*.md and the
+      trust tests; the DE.Apps hunk here is disjoint from #950's three lines.
   - id: desk-chooser-height-20261101
     issue: 918
     owner: codex
@@ -5074,3 +5096,29 @@ claims:
       set on production and on the staging review instance, otherwise portal
       sign-in is refused after deploy. Checked open PRs 877/882/947/948/950: no
       file overlap.
+  - id: kb-docs-layout
+    issue: 960
+    owner: claude
+    subsystem: knowledge-base
+    branch: claude/kb-docs-layout
+    base_sha: 296721de
+    started: 2026-11-05
+    files:
+      - client/src/components/kb/docs/** (new shared docs-layout components + lazy CSS)
+      - client/src/pages/portal/kb/PortalKbArticle.tsx, client/src/pages/portal/PortalKB.tsx, client/src/pages/support/KnowledgeBase.tsx
+      - client/src/components/portal/kb/KbRenderer.tsx, client/src/pages/portal/kb/AdminKb.tsx (syntax help line only)
+      - shared/kb.ts, shared/kb.test.ts (callout markers, h2/h3 outline)
+      - zoho/help-center/stylesheet.css, zoho/help-center/README.md (separate commit)
+      - artifacts/visual-qa/kb-jumpcloud-layout/**
+    status: merged
+    pr: "962"
+    merged: 2026-11-05 (ca244410)
+    note: >-
+      Joe, 2026-11-05: copy the docs layout pattern of jumpcloud.com/support
+      (left category tree, centre reading column, right "On this page") for the
+      knowledge base. Layout only; no third-party branding, copy or assets.
+      Draft PR; the coordinator merges on Joe's approval.
+      Released 2026-11-05 after merge. Joe: "keep stars, merge 962"; public
+      articles stay behind portal login ("I want clients to login first"), so
+      no public article API. MERGED, not yet verified LIVE; the Zoho help
+      center CSS is a manual paste, not published.

@@ -1,10 +1,11 @@
 import { Fragment, type ReactNode } from "react";
 import { Link } from "wouter";
-import { AlertTriangle, Info } from "lucide-react";
+import { AlertTriangle, Info, Lightbulb } from "lucide-react";
 import { DocTable } from "./DocTable";
 import { LivePolicyBlock } from "@/components/portal/licensing/LicensePolicyTables";
-import { parseKbBody, type Block, type Inline } from "@shared/kb";
+import { inlineText, parseKbBody, type Block, type Inline } from "@shared/kb";
 import { cn } from "@/lib/utils";
+import "@/components/kb/docs/kbDocs.css";
 
 /**
  * Renders a knowledge article body (shared/kb.ts dialect) as React elements.
@@ -70,9 +71,15 @@ export function KbBody({ body }: { body: string }) {
                   ? "mt-5 mb-1.5 text-base font-bold text-foreground scroll-mt-24"
                   : "mt-4 mb-1 text-sm font-bold uppercase tracking-wide text-muted-foreground scroll-mt-24";
             const H = (`h${b.level}` as "h2" | "h3" | "h4");
+            // h2/h3 carry a "#" anchor (shown on hover and keyboard focus) so a section can be linked.
             return (
-              <H key={i} id={b.id} className={cls}>
+              <H key={i} id={b.id} className={cn("kb-heading", cls)}>
                 {renderInline(b.c)}
+                {b.level < 4 && (
+                  <a href={`#${b.id}`} className="kb-anchor" aria-label={`Link to section: ${inlineText(b.c)}`}>
+                    #
+                  </a>
+                )}
               </H>
             );
           }
@@ -86,17 +93,26 @@ export function KbBody({ body }: { body: string }) {
             return <Fragment key={i}>{renderList(b)}</Fragment>;
           case "table":
             return <DocTable key={i} head={b.head.map(renderInline)} rows={b.rows.map((r) => r.map(renderInline))} />;
-          case "note":
+          case "note": {
+            const Icon = b.tone === "warn" ? AlertTriangle : b.tone === "tip" ? Lightbulb : Info;
             return (
               <div
                 key={i}
                 role="note"
-                className={cn("pt-callout my-4 flex gap-3 rounded-lg border px-4 py-3 text-sm", b.tone === "warn" ? "pt-tone-warn" : "pt-tone-info")}
+                aria-label={b.label}
+                className={cn(
+                  "pt-callout kb-callout my-4 flex gap-3 rounded-lg border px-4 py-3 text-sm",
+                  b.tone === "warn" ? "pt-tone-warn" : b.tone === "tip" ? "pt-tone-ok" : "pt-tone-info",
+                )}
               >
-                {b.tone === "warn" ? <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" /> : <Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />}
-                <p>{renderInline(b.c)}</p>
+                <Icon className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+                <div>
+                  <span className="kb-callout-label">{b.label}</span>
+                  <p>{renderInline(b.c)}</p>
+                </div>
               </div>
             );
+          }
           case "hr":
             return <hr key={i} className="my-6 border-border" />;
           case "live":
