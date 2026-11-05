@@ -70,9 +70,10 @@ describe("de-sync contract", () => {
 
 describe("de-sync auth", () => {
   beforeEach(() => {
-    process.env.TECHSALES_SYNC_TOKEN = "legacy-token-value";
+    // The legacy shared-secret fallback is gone: each direction signs with its scoped secret.
+    delete process.env.TECHSALES_SYNC_TOKEN;
     delete process.env.WEBSITE_TO_HUB_SECRET;
-    delete process.env.HUB_TO_WEBSITE_SECRET;
+    process.env.HUB_TO_WEBSITE_SECRET = "scoped-hub-to-website-value";
   });
 
   it("accepts HMAC over the canonical string", () => {
@@ -85,7 +86,7 @@ describe("de-sync auth", () => {
       timestamp,
       eventId,
       body,
-      secret: "legacy-token-value",
+      secret: "scoped-hub-to-website-value",
     });
     const result = verifySignedRequest(
       mockReq({
@@ -115,7 +116,7 @@ describe("lifecycle A–H", () => {
     resetHubProjections();
     delete process.env.DATABASE_URL;
     process.env.TECHSALES_HUB_URL = "https://techsales.example.test";
-    process.env.TECHSALES_SYNC_TOKEN = "legacy-token-value";
+    process.env.WEBSITE_TO_HUB_SECRET = "scoped-website-to-hub-value";
   });
 
   afterEach(() => {

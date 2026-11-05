@@ -84,8 +84,8 @@ Optional; DE Sync is off without them.
 | `TECHSALES_HUB_URL` | config | `server/integrations/deSyncRoutes.ts`, `server/integrations/techSalesClient.ts` | Hub base URL. |
 | `TECHSALES_BASE_URL` | config | `server/integrations/techSalesClient.ts` | Legacy alias of the Hub URL. |
 | `TECHSALES_SYNC_URL` | config | `server/routes.ts`, `server/integrations/deSyncRoutes.ts` | Hub sync endpoint. |
-| `TECHSALES_SYNC_TOKEN` | secret | `server/integrations/deSyncAuth.ts` | Bearer token for the sync. |
-| `WEBSITE_LEAD_WEBHOOK_SECRET` | secret | `server/integrations/deSyncAuth.ts` | Signs website lead webhooks to the Hub. |
+| `TECHSALES_SYNC_TOKEN` | secret | (none on DE-Sync) | Retired as the DE-Sync fallback; no direction accepts or signs with it. Keep until the Hub's `/api/webhooks/website-lead` is retired. |
+| `WEBSITE_LEAD_WEBHOOK_SECRET` | secret | (none on DE-Sync) | Same as above: retired as the DE-Sync fallback; the Hub's website-lead route still checks it. |
 | `WEBSITE_TO_HUB_SECRET` | secret | `server/integrations/deSyncAuth.ts` | Website → Hub signing secret. |
 | `PORTAL_TO_HUB_SECRET` | secret | `server/serviceRequestHubSync.ts`, `server/integrations/deSyncAuth.ts` | Portal → Hub signing secret. |
 | `HUB_TO_WEBSITE_SECRET` | secret | `server/integrations/deSyncAuth.ts` | Verifies Hub → website calls. |

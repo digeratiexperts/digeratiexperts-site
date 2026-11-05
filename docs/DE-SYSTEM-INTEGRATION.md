@@ -85,15 +85,21 @@ Portal commands fail closed on disabled users, viewer role, and claimed Hub/port
 
 Existing surface only — not Zoho Agent Studio. Hub `POST /api/webhooks/zoho/events` (`agent.response`) now requires at least one tenant id. Website documents the same scopes/ids in `server/integrations/zohoAgentsReadiness.ts`. Missing: Hub `/api/integrations/v1/*` receivers (website still falls back to legacy lead webhook), Hub `sync_identities` table, Zoho Books customer id on portal clients, Marketing Automation / SEO product (no existing integration — do not invent).
 
-## Secrets (migration)
+## Secrets
 
 ```
-WEBSITE_TO_HUB_SECRET  → else TECHSALES_SYNC_TOKEN / WEBSITE_LEAD_WEBHOOK_SECRET
-PORTAL_TO_HUB_SECRET   → else same legacy
-HUB_TO_WEBSITE_SECRET  / HUB_TO_PORTAL_SECRET  (new; required for push)
+WEBSITE_TO_HUB_SECRET   PORTAL_TO_HUB_SECRET
+HUB_TO_WEBSITE_SECRET   HUB_TO_PORTAL_SECRET
 ```
 
-Log `legacy integration credential used`. Never log secret values. Do not remove legacy until a later cleanup PR.
+One scoped secret per direction, the same value on the site and the Hub, all
+required. The legacy `TECHSALES_SYNC_TOKEN` / `WEBSITE_LEAD_WEBHOOK_SECRET`
+fallback was removed (2026-11, after 7 days at zero legacy uses on both sides):
+a direction without its scoped secret answers 503 "Integration not configured"
+inbound and is not sent outbound, and the log names the missing variable once
+per direction per hour (`de_sync.scoped_secret_missing`). A legacy secret
+presented on any direction gets 401. Fix by setting the scoped secret, never by
+putting the legacy secret back. Admin view: `GET /api/integrations/legacy-credential-health`.
 
 ## Reliability
 
