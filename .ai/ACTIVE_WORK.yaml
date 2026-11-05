@@ -52,31 +52,34 @@ claims:
       Intelligence-Hub #849 (288ff306). Plan Intelligence-Hub
       docs/architecture/portal-reads-hub-plan.md, approved by Joe 2026-11-05
       via coordinator session_01DFj2KKYXK9VsNEKAohFuHu. LICENSE_BOARD_SOURCE
-      defaults to portal: no behaviour change on merge. Draft PR only, no
-      merge. techSalesClient.ts is also touched by #958/#959 (other hunks);
+      defaults to portal: no behaviour change on merge. PR 967; Joe
+      2026-11-05: "merge #967". techSalesClient.ts is also touched by #958/#959 (other hunks);
       this change is an append and does not use resolveScopedSecret.
-  - id: de-techtool-one-endpoint-runtime-20261105
-    issue: null
+  - id: tech-tool-private-repo-20261105
+    issue: 964
     owner: claude
     subsystem: msp-ai-kit
-    branch: claude/techtool-hub-install-catalog (PR A) + claude/techtool-retire-ps-agent (PR B, stacked on A)
+    branch: claude/tech-tool-remove
     base_sha: 296721de3a49ecb3515a41cd2e028a9c2abba736
     started: 2026-11-05
     files:
-      - .claude/skills/msp-ai-kit/windows/console/modules/DE.Apps/DE.Apps.psm1 (Get-DEPackageCatalog hunk only)
-      - .claude/skills/msp-ai-kit/windows/console/tests/HubPackageCatalog.Tests.ps1
-      - .claude/skills/msp-ai-kit/windows/README-WINDOWS.md (Packages section)
-      - .claude/skills/msp-ai-kit/windows/agent/** (removed, PR B)
-      - .claude/skills/msp-ai-kit/windows/console/tests/Agent*.Tests.ps1, Job{Catalog,Replay,Signature}.Tests.ps1, HubQueueLoadTest.Tests.ps1 (removed, PR B)
-      - .claude/skills/msp-ai-kit/windows/AGENT-*.md, HUB-JOB-QUEUE.md, HUB-QUEUE-LOAD-TEST.md, PS-AGENT-RETIREMENT.md (PR B)
+      - .claude/skills/msp-ai-kit/windows/ (removed; moved to digeratiexperts/de-tech-tool)
+      - .claude/skills/msp-ai-kit/scripts/build-techtool-tracker.ps1 (removed; moved)
+      - .claude/skills/msp-ai-kit/TECH-TOOL-MOVED.md (new pointer)
+      - .claude/skills/msp-ai-kit/SKILL.md, README.md, UPSTREAM.md, upstream.lock
+      - .github/workflows/msp-ai-kit.yml (Tech Tool Windows jobs dropped)
+      - .github/workflows/installer-source-recheck.yml (removed; moved)
+      - .gitignore, AGENTS.md, docs/DE-SYSTEM-INTEGRATION.md
+      - .ai/ACTIVE_WORK.yaml (this claim)
     status: active
     note: >-
-      Cross-repo review 2026-11-04 step 5 (Intelligence-Hub
-      docs/architecture/2026-11-04-cross-repo-review.md), Joe 2026-11-05 "finish
-      the review's projects". Drafts only, no merge. packages.json is NOT
-      touched (no change to packages or pins), so the techtool stack #947 ->
-      #948 -> #950 keeps sole ownership of the catalog, INSTALLER-*.md and the
-      trust tests; the DE.Apps hunk here is disjoint from #950's three lines.
+      Joe 2026-11-05: move the Tech Tool to a private repo, "Everything is
+      approved". Staging branch claude/tech-tool-extract (orphan, filter-repo of
+      .claude/skills/msp-ai-kit at 296721de) is pushed to de-tech-tool:main by
+      the coordinator. This removal PR stays draft until de-tech-tool has the
+      history and open Tech Tool PRs 947, 948, 950, 961, 963 have landed here
+      (then re-cut the extract) or been re-targeted at de-tech-tool. Other
+      claims below that list windows/ paths are left for their owners.
   - id: desk-chooser-height-20261101
     issue: 918
     owner: codex

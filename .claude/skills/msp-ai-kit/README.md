@@ -20,16 +20,10 @@ Cursor and Copilot all follow the same playbooks in the same voice.
 3. **Check before you paste.** `--check` validates the config and modules and
    confirms the ChatGPT and Custom GPT budgets; `--dry-run` shows the plan.
 
-## Windows: DE Technician Console
+## Windows: DE Tech Tool (moved)
 
-`windows\Start-DETechConsole.cmd` opens the DE Technician Console. It is one DE-styled window for the
-AI Toolkit and every endpoint job: provisioning, Entra to JumpCloud migration with break-glass,
-BitLocker and OneDrive gates, the security stack (Guardz primary, Blackpoint backup, SentinelOne, PABX),
-apps, OS baseline, browser policy, branding, network, the Vendor Admin Center, and evidence with
-Intelligence Hub handoff.
-
-`windows\Start-MspAiKit.cmd` opens the console on the AI Toolkit page, which builds these packs. RMM
-runs use `-Headless`, and packaging covers signing, RMM deploy and Intune. See `windows\README-WINDOWS.md`.
+The DE Technician Console, the Windows AI Toolkit loader and the rest of the DE Tech Tool moved to
+the private repository `digeratiexperts/de-tech-tool` on 2026-11-05. See `TECH-TOOL-MOVED.md`.
 
 ## What is inside
 
@@ -104,7 +98,6 @@ npm run test:msp-ai-kit
 ```
 
 That runs the builder tests, `--check`, the example drift check, the eval goldens and the company-facts
-check. The Windows side has Pester suites for the loader and the Technician Console engine. It also has
-PSScriptAnalyzer and a GUI smoke that renders every page at 100 and 200 percent. CI runs these under
-Windows PowerShell 5.1 in `.github/workflows/msp-ai-kit.yml`. See `windows/README-WINDOWS.md` to run
-them locally.
+check. CI runs them in `.github/workflows/msp-ai-kit.yml`, on Linux and on Windows for paths and line
+endings. The Tech Tool's Pester, PSScriptAnalyzer, GUI smoke and installer jobs moved with it to
+`digeratiexperts/de-tech-tool`.
