@@ -9,6 +9,11 @@
  * | tables | with a |---| separator, "> " notes ("> !" for a warning),
  * "---" rules, and the live block {{license-policy}} (the reader's own
  * company licence policy tables).
+ *
+ * Callouts may also open with a GitHub-style marker on their first line:
+ * "> [!NOTE]", "> [!TIP]", "> [!IMPORTANT]" or "> [!WARNING]" ("[!CAUTION]" is
+ * read as WARNING). The marker only picks the tone and the label; the text is
+ * parsed like any other note, so it adds no new markup or link surface.
  */
 
 export function formatKbNumber(n: number): string {
@@ -74,9 +79,29 @@ export type Block =
   | { t: "p"; c: Inline[] }
   | { t: "list"; ordered: boolean; items: ListItem[] }
   | { t: "table"; head: Inline[][]; rows: Inline[][][] }
-  | { t: "note"; tone: "info" | "warn"; c: Inline[] }
+  | { t: "note"; tone: KbNoteTone; label: KbNoteLabel; c: Inline[] }
   | { t: "hr" }
   | { t: "live"; name: "license-policy" };
+
+export type KbNoteTone = "info" | "tip" | "warn";
+export type KbNoteLabel = "Note" | "Tip" | "Important" | "Warning";
+
+const NOTE_MARKERS: Record<string, { tone: KbNoteTone; label: KbNoteLabel }> = {
+  NOTE: { tone: "info", label: "Note" },
+  TIP: { tone: "tip", label: "Tip" },
+  IMPORTANT: { tone: "warn", label: "Important" },
+  WARNING: { tone: "warn", label: "Warning" },
+  CAUTION: { tone: "warn", label: "Warning" },
+};
+
+/** Tone and label of a callout from its joined text; returns the text without the marker. */
+export function noteKind(text: string): { tone: KbNoteTone; label: KbNoteLabel; text: string } {
+  const m = text.match(/^\[!([A-Za-z]+)\]\s*/);
+  const marker = m ? NOTE_MARKERS[m[1].toUpperCase()] : undefined;
+  if (m && marker) return { ...marker, text: text.slice(m[0].length) };
+  if (text.startsWith("!")) return { tone: "warn", label: "Important", text: text.slice(1).trim() };
+  return { tone: "info", label: "Note", text };
+}
 
 export function safeHref(href: string): string | null {
   const h = href.trim();
@@ -206,10 +231,8 @@ export function parseKbBody(body: string): Block[] {
         parts.push(lines[i].trim().replace(/^>\s?/, ""));
         i += 1;
       }
-      let text = parts.join(" ");
-      const warn = text.startsWith("!");
-      if (warn) text = text.slice(1).trim();
-      blocks.push({ t: "note", tone: warn ? "warn" : "info", c: parseInline(text) });
+      const kind = noteKind(parts.join(" ").trim());
+      blocks.push({ t: "note", tone: kind.tone, label: kind.label, c: parseInline(kind.text) });
     } else {
       // The first line is always consumed (a stray "|" line is a paragraph), so the loop advances.
       const parts: string[] = [trimmed];
@@ -236,4 +259,11 @@ export function parseKbBody(body: string): Block[] {
 /** The h2 headings, for an "On this page" list. */
 export function outline(blocks: Block[]): Array<{ id: string; text: string }> {
   return blocks.filter((b): b is Extract<Block, { t: "h" }> => b.t === "h" && b.level === 2).map((b) => ({ id: b.id, text: inlineText(b.c) }));
+}
+
+/** The h2 and h3 headings with their level, for a docs-style "On this page" rail. */
+export function outlineTree(blocks: Block[]): Array<{ id: string; text: string; level: 2 | 3 }> {
+  return blocks
+    .filter((b): b is Extract<Block, { t: "h" }> => b.t === "h" && (b.level === 2 || b.level === 3))
+    .map((b) => ({ id: b.id, text: inlineText(b.c), level: b.level as 2 | 3 }));
 }
