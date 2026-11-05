@@ -1,5 +1,8 @@
 # DE Tech Agent threat model (call-home agent)
 
+> **Retired runtime (2026-11-05).** The PowerShell DE Tech Agent this was written for is retired; the Intelligence Hub's
+> Go endpoint agent is the one endpoint runtime. Kept as design input. See [PS-AGENT-RETIREMENT.md](PS-AGENT-RETIREMENT.md).
+
 **Move 73** of the 104-move plan ([issue #791](https://github.com/digeratiexperts/digeratiexperts-site/issues/791)). This
 document is the **hard gate on section E (moves 59-78)**: no job type of `de.techconsole.job/v1` is enabled before this
 document exists, and none is enabled that its rules do not allow. Section E builds to this document; a pull request that

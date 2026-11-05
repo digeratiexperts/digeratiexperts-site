@@ -26,7 +26,7 @@ The current canonical architecture and README document these capabilities; this 
 | Product control | Device-bound Hub licences, revocations, build binding, watermarked builds, integrity/signing, packaging/Intune deployment, Settings |
 | Boot rescue | WinPE USB/ISO, typed BitLocker unlock without logging secrets, profile preservation, driver export, disk health, boot repair, stuck-update revert, offline/signed handoff |
 
-An outbound DE Tech Agent with mTLS and allowlisted signed jobs is a **roadmap item**, not a completed agent. Do not describe an arbitrary remote PowerShell service as included.
+The endpoint agent is the Intelligence Hub's Go agent (the PowerShell DE Tech Agent is retired, [PS-AGENT-RETIREMENT.md](PS-AGENT-RETIREMENT.md)); it is not yet piloted on a real device. Do not describe an arbitrary remote PowerShell service as included.
 
 ## Added by this branch
 

@@ -58,7 +58,10 @@ Describe 'AGENT-BREAK-GLASS.md (design only): the shell stays unbuilt, and what 
     }
 
     Context 'the decision stays true in the code' {
-        It 'no file in the agent tree holds a remote-shell capability' {
+        It 'the PowerShell agent tree is retired (cross-repo review 2026-11-04 step 5): the Go agent in the Hub is the one runtime' {
+            Test-Path -LiteralPath (Join-Path $script:Win 'agent') | Should -Be $false -Because 'see PS-AGENT-RETIREMENT.md; a second endpoint agent must not come back here'
+        }
+        It 'no file in the agent tree holds a remote-shell capability (vacuous while the tree is retired)' {
             $dir = Join-Path $script:Win 'agent'
             $files = @(Get-ChildItem -Path $dir -File -ErrorAction SilentlyContinue | Where-Object { $_.Extension -in @('.ps1', '.psm1', '.cmd', '.bat', '.cs') })
             $bad = New-Object System.Collections.Generic.List[string]

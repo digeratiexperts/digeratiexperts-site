@@ -1,5 +1,8 @@
 # The break-glass shell: deferred, and what must hold if it is ever revisited
 
+> **Retired runtime (2026-11-05).** The PowerShell DE Tech Agent this was written for is retired; the Intelligence Hub's
+> Go endpoint agent is the one endpoint runtime. Kept as design input. See [PS-AGENT-RETIREMENT.md](PS-AGENT-RETIREMENT.md).
+
 **Move 74** of the 104-move plan ([issue #792](https://github.com/digeratiexperts/digeratiexperts-site/issues/792)).
 **Design only, and the design is a decision: do not build it.** Joe decided this on 2026-10-31 (decision **D4** in
 [AGENT-THREAT-MODEL.md](AGENT-THREAT-MODEL.md) section 12): *"Defer. Do not build the break-glass shell."* Move 74 asked for a design
