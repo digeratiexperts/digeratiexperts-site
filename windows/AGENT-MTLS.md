@@ -1,5 +1,8 @@
 # mTLS on the agent connection
 
+> **Retired runtime (2026-11-05).** The PowerShell DE Tech Agent this was written for is retired; the Intelligence Hub's
+> Go endpoint agent is the one endpoint runtime. Kept as design input. See [PS-AGENT-RETIREMENT.md](PS-AGENT-RETIREMENT.md).
+
 **Move 63** of the 104-move plan ([issue #781](https://github.com/digeratiexperts/digeratiexperts-site/issues/781)).
 **Design only.** Nothing here is built, enabled or sent anywhere. It specifies how the DE Tech Agent and the Hub
 authenticate each other on every connection, so that the service (68), heartbeat (69), evidence upload (70) and the job

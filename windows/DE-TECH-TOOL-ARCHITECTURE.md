@@ -25,7 +25,7 @@ the same files, and `DE.Contracts` validates them on the device and in WinPE.
 | `de.techconsole.order/v1` | DE / Hub | dropship kit, first boot |
 | `de.techconsole.handoff/v1` | rescue | on-device (the `rescue.handoff` step), Hub |
 | `de.techconsole.warranty/v1` | on-device (`DE.Warranty`) | Hub |
-| `de.techconsole.job/v1` | Hub | on-device (planned: the signed DE Tech Agent) |
+| `de.techconsole.job/v1` | Hub | on-device (the Intelligence Hub's Go endpoint agent; the PowerShell DE Tech Agent is retired, PS-AGENT-RETIREMENT.md) |
 | `de.email-migration.record/v1` | DE Microsoft Admin (`Export-DEMigrationRecord`), sent by the on-device Email migration page | Hub (IT Operations) |
 
 Microsoft 365 admin jobs use their own signed contract, `de.msadmin.job/v1`, between the Hub and the DE Microsoft
@@ -68,7 +68,7 @@ security alerts go to security@digeratiexperts.com.
 Recommended components:
 
 - **DE Tech Tool UI/CLI:** interactive technician experience, audit/apply, local evidence.
-- **DE Tech Agent Windows service:** optional background service using the same action engine; no arbitrary shell by default.
+- **Endpoint agent:** the Intelligence Hub's Go endpoint agent (`agent/` in Intelligence-Hub) is the one endpoint runtime; no arbitrary shell. The PowerShell DE Tech Agent service is retired ([PS-AGENT-RETIREMENT.md](PS-AGENT-RETIREMENT.md)).
 - **DE Control Plane:** Intelligence Hub service for device registration, heartbeat, job queue, signed profile/catalog distribution and evidence intake.
 - **Remote-assist provider adapter:** JumpCloud Remote Assist first. A self-hosted MeshCentral deployment can be integrated later for attended/unattended remote sessions instead of building a remote-desktop protocol into DE Tech Tool.
 
@@ -135,6 +135,6 @@ Release packages are code-signed and sha256-pinned. The server advertises versio
    1.10.5: the DE Windows baseline owns the pre-logon authorized-use/security-monitoring notice. `windows.logonNotice` in each client profile selects DE standard wording, client-approved custom wording, or an explicit disabled state; the tool writes Windows `LegalNoticeCaption`/`LegalNoticeText`, verifies exact desired state before reporting success, records the pre-DE values once, and restores them on rollback. The DE default names the client as the business context and Digerati Experts only as an authorized technology service provider where applicable.
    1.11.0: the Intelligence Hub canonical identity/location/network standard v1.0.0 is projected into DE Tech Tool through `DE.Naming`: internal users are `firstname.lastname`, external users keep final `-ext`, human admin/privileged identities use `-admin`/`-priv` independently of Tech 1/2/3 RBAC, endpoint `DE-BreakGlass` stays separate from two tenant emergency identities, stable hostnames use `<CLIENT>-<ROLE>-<ASSET4>`, location is a separate hierarchy, and net-new client `/16` → site `/20` → functional `/24` plans are generated only from a Hub-assigned block. Existing takeover identities and networks remain explicit inherited/adopted exceptions instead of being renamed or renumbered blindly.
    1.10.3: the Evidence page's Send to Intelligence Hub sends the latest warranty lookup after the device record, as its own signed `device.warranty` event (`DE.Evidence` `Send-DEHubWarranty`; the Hub accepts that event type (Intelligence-Hub `techconsole-contract.ts`), but no tool code sent it, so warranty reached the Hub only inside the device record). Only a confirmed answer goes (active or expired with an end date, recomputed for the day, or not-applicable); no lookup, a fallback to the maker's check page or `unknown` sends nothing and records a WARN saying why. The status line reports both sends. DE Microsoft Admin 0.6.0: the Hub worker runs Exchange Online and Azure jobs unattended, signing in with the Graph app's certificate only when such a job has verified (`-ExchangeOrganization`, `-AzureSubscriptionId`), signing out at the end, and posting a job it cannot sign in for as Failed with what is missing.
-6. Build the outbound-only DE Tech Agent with mTLS, signed jobs and evidence sync.
+6. ~~Build the outbound-only DE Tech Agent with mTLS, signed jobs and evidence sync.~~ Superseded 2026-11-05: the Hub's Go endpoint agent is the one runtime ([PS-AGENT-RETIREMENT.md](PS-AGENT-RETIREMENT.md)).
 7. Integrate remote assist as a provider rather than building a remote-desktop protocol first.
 8. Add connected fleet/device views to Intelligence Hub Tech Hub.

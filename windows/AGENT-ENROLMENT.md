@@ -1,5 +1,8 @@
 # One-time enrolment token exchange for the DE Tech Agent
 
+> **Retired runtime (2026-11-05).** The PowerShell DE Tech Agent this was written for is retired; the Intelligence Hub's
+> Go endpoint agent is the one endpoint runtime. Kept as design input. See [PS-AGENT-RETIREMENT.md](PS-AGENT-RETIREMENT.md).
+
 **Move 61** of the 104-move plan ([issue #779](https://github.com/digeratiexperts/digeratiexperts-site/issues/779)).
 **Design only.** Nothing here is built, enabled or sent anywhere. It specifies how a device becomes a known, approved
 member of the fleet, so that certificates (62), mTLS (63), rotation (64) and revocation (75) build against one exchange.

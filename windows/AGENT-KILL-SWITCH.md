@@ -1,5 +1,8 @@
 ﻿# The kill switch: stopping every agent job
 
+> **Retired runtime (2026-11-05).** The PowerShell DE Tech Agent this was written for is retired; the Intelligence Hub's
+> Go endpoint agent is the one endpoint runtime. Kept as design input. See [PS-AGENT-RETIREMENT.md](PS-AGENT-RETIREMENT.md).
+
 **Move 78** of the 104-move plan ([issue #796](https://github.com/digeratiexperts/digeratiexperts-site/issues/796)).
 It answers **D5** (a mass job goes wrong fleet-wide) and **E5** (a compromised Hub signs jobs) of
 [AGENT-THREAT-MODEL.md](AGENT-THREAT-MODEL.md). A kill switch has two halves. **This change builds the device half.** The Hub half is
@@ -11,7 +14,7 @@ Joe's explicit merge approval there. Until the Hub half exists, the device half 
 | Half | What it does | Where | State |
 |---|---|---|---|
 | Hub | A fleet-wide or one-account pause. Any staff member pauses, only an owner_admin resumes. Every lease answers `423` while it is in force, and **nothing is delivered if the pause state cannot be read** | Intelligence-Hub, the job queue and its pause table | Designed (move 60), **not built** |
-| Device | Honours the pause: no new work, a running job stops before its next action, and it never un-pauses itself | `windows/agent/DE.AgentPause.psm1` | **Built here** |
+| Device | Honours the pause: no new work, a running job stops before its next action, and it never un-pauses itself | was `windows/agent/DE.AgentPause.psm1` | **Retired 2026-11-05**; to be ported to the Hub's Go agent (PS-AGENT-RETIREMENT.md) |
 
 ## 2. What the device does
 

@@ -1,5 +1,8 @@
 # The `de.techconsole.job/v1` contract
 
+> **Retired runtime (2026-11-05).** The PowerShell DE Tech Agent this was written for is retired; the Intelligence Hub's
+> Go endpoint agent is the one endpoint runtime. Kept as design input. See [PS-AGENT-RETIREMENT.md](PS-AGENT-RETIREMENT.md).
+
 **Move 59** of the 104-move plan ([issue #777](https://github.com/digeratiexperts/digeratiexperts-site/issues/777)).
 This is the envelope the DE Tech Agent will obey as SYSTEM, so it is sealed, short-lived, bound to one account and one
 device, and refused unless its job kind allows every action it names. It answers threats T1, T6 and E1 of
