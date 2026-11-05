@@ -74,6 +74,9 @@ sudo -u diger7051 bash deploy/vps/deploy.sh production
 
 The script:
 
+0. Refuses to start unless `shared/.env` has both `TURNSTILE_SECRET_KEY` and
+   `VITE_TURNSTILE_SITE_KEY` (production fails closed without the secret, so a
+   release without them would lock clients out of portal sign-in)
 1. Fetches `DEPLOY_BRANCH` (default `main`) into the bare mirror
 2. Builds a fresh release under `releases/<timestamp>/`
 3. Validates the build and scans the bundle for internal/credential leaks
