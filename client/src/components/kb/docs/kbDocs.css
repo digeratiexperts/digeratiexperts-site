@@ -1,0 +1,684 @@
+/* ===== Knowledge base docs layout (issue #960, Joe 2026-11-05) =====
+ * Docs-style layout: a category tree on the left, a reading column in the
+ * middle, "On this page" on the right; plus the help-centre index pieces.
+ * Layout pattern only; colours come from the current DE tokens.
+ *
+ * Imported by the lazy KB chunks, so it never lands in the entry stylesheet
+ * (scripts/check-bundle-budget.mjs). Breakpoints are container queries: the
+ * portal's own sidebar takes ~256px, so the viewport is the wrong ruler.
+ *
+ * Two tones share every component:
+ *   .kbd-tone-portal  portal theme tokens (light / dark / black / console)
+ *   .kbd-tone-paper   the public site's warm-paper field
+ */
+
+.kbd-tone-portal {
+  --kbd-bg: hsl(var(--card));
+  --kbd-sunken: hsl(var(--muted) / 0.5);
+  --kbd-line: hsl(var(--border));
+  --kbd-ink: hsl(var(--foreground));
+  --kbd-muted: hsl(var(--muted-foreground));
+  --kbd-link: rgb(var(--pt-brand));
+  --kbd-hover: hsl(var(--accent));
+  --kbd-ring: hsl(var(--ring));
+  --kbd-sticky-top: 72px; /* portal top bar (56px) + 16px */
+}
+
+.kbd-tone-paper {
+  --kbd-bg: #ffffff;
+  --kbd-sunken: #f1eee9;
+  --kbd-line: var(--de-paper-hairline);
+  --kbd-ink: #1a1228;
+  --kbd-muted: #3a3448;
+  --kbd-link: var(--de-magenta-paper-ink);
+  --kbd-hover: #f7f5f2;
+  --kbd-ring: #d3126a;
+  --kbd-sticky-top: 96px;
+}
+
+/* ---------- three-column article shell ---------- */
+
+.kbd {
+  container-type: inline-size;
+  container-name: kbd;
+  max-width: 1320px;
+  margin-inline: auto;
+}
+
+.kbd-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 32px;
+  align-items: start;
+}
+
+.kbd-nav-col,
+.kbd-toc-col {
+  display: none;
+}
+
+.kbd-center {
+  min-width: 0;
+  max-width: 780px;
+  width: 100%;
+  margin-inline: auto;
+}
+
+.kbd-sticky {
+  position: sticky;
+  top: var(--kbd-sticky-top);
+  max-height: calc(100dvh - var(--kbd-sticky-top) - 16px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+
+/* Narrow: the category tree folds into a toggle above the article. */
+.kbd-drawer-bar {
+  display: flex;
+  margin-bottom: 16px;
+}
+
+.kbd-drawer-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--kbd-line);
+  border-radius: 10px;
+  background: var(--kbd-bg);
+  color: var(--kbd-ink);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+.kbd-drawer-toggle:hover {
+  background: var(--kbd-hover);
+}
+.kbd-drawer-toggle svg {
+  transition: transform 150ms ease;
+}
+.kbd-drawer-toggle[aria-expanded="true"] svg.kbd-chevron {
+  transform: rotate(180deg);
+}
+
+.kbd-drawer {
+  margin-bottom: 20px;
+  padding: 8px;
+  border: 1px solid var(--kbd-line);
+  border-radius: 12px;
+  background: var(--kbd-bg);
+  max-height: min(70dvh, 560px);
+  overflow-y: auto;
+}
+
+/* Inline "On this page" for widths without the right rail. */
+.kbd-toc-inline {
+  margin: 20px 0 4px;
+  border: 1px solid var(--kbd-line);
+  border-radius: 10px;
+  background: var(--kbd-sunken);
+}
+.kbd-toc-inline > summary {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 14px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--kbd-ink);
+  list-style: none;
+}
+.kbd-toc-inline > summary::-webkit-details-marker {
+  display: none;
+}
+.kbd-toc-inline > summary::after {
+  content: "";
+  margin-left: auto;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(45deg);
+  opacity: 0.6;
+}
+.kbd-toc-inline[open] > summary::after {
+  transform: rotate(225deg);
+}
+.kbd-toc-inline .kbd-toc {
+  padding: 0 8px 10px;
+}
+
+@container kbd (min-width: 900px) {
+  .kbd-grid {
+    grid-template-columns: 240px minmax(0, 1fr);
+  }
+  .kbd-nav-col {
+    display: block;
+  }
+  .kbd-drawer-bar,
+  .kbd-drawer {
+    display: none;
+  }
+}
+
+@container kbd (min-width: 1100px) {
+  .kbd-grid {
+    grid-template-columns: 240px minmax(0, 1fr) 216px;
+  }
+  .kbd-toc-col {
+    display: block;
+  }
+  .kbd-toc-inline {
+    display: none;
+  }
+}
+
+@container kbd (min-width: 1280px) {
+  .kbd-grid {
+    grid-template-columns: 264px minmax(0, 1fr) 232px;
+    gap: 40px;
+  }
+}
+
+/* ---------- left: category tree ---------- */
+
+.kbd-side {
+  font-size: 0.875rem;
+}
+.kbd-side-title {
+  padding: 4px 10px 10px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--kbd-muted);
+}
+.kbd-side ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.kbd-side-home,
+.kbd-side-cat {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 36px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  color: var(--kbd-ink);
+  font-weight: 600;
+  text-align: left;
+}
+.kbd-side-home:hover,
+.kbd-side-cat:hover {
+  background: var(--kbd-hover);
+}
+.kbd-side-cat .kbd-count {
+  margin-left: auto;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--kbd-muted);
+  font-variant-numeric: tabular-nums;
+}
+.kbd-side-cat svg.kbd-chevron {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  color: var(--kbd-muted);
+  transition: transform 150ms ease;
+}
+.kbd-side-cat[aria-expanded="true"] svg.kbd-chevron {
+  transform: rotate(90deg);
+}
+.kbd-side-articles {
+  margin: 2px 0 6px 17px !important;
+  padding-left: 8px !important;
+  border-left: 1px solid var(--kbd-line);
+}
+.kbd-side-articles a {
+  display: block;
+  padding: 6px 10px;
+  border-radius: 6px;
+  color: var(--kbd-muted);
+  line-height: 1.35;
+}
+.kbd-side-articles a:hover {
+  color: var(--kbd-ink);
+  background: var(--kbd-hover);
+}
+.kbd-side-articles a[aria-current="page"] {
+  color: var(--kbd-link);
+  font-weight: 600;
+  background: color-mix(in srgb, var(--kbd-link) 10%, transparent);
+  box-shadow: inset 2px 0 0 var(--kbd-link);
+}
+
+/* ---------- right: on this page ---------- */
+
+.kbd-toc-title {
+  margin: 0 0 8px;
+  padding-left: 12px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--kbd-muted);
+}
+.kbd-toc ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-left: 1px solid var(--kbd-line);
+}
+.kbd-toc a {
+  display: block;
+  margin-left: -1px;
+  padding: 5px 10px 5px 12px;
+  border-left: 2px solid transparent;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--kbd-muted);
+}
+.kbd-toc a[data-level="3"] {
+  padding-left: 24px;
+  font-size: 0.78rem;
+}
+.kbd-toc a:hover {
+  color: var(--kbd-ink);
+}
+.kbd-toc a[aria-current="true"] {
+  color: var(--kbd-link);
+  border-left-color: var(--kbd-link);
+  font-weight: 600;
+}
+
+/* ---------- centre: the article ---------- */
+
+.kbd-crumbs ol {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 14px;
+  padding: 0;
+  list-style: none;
+  font-size: 0.8125rem;
+  color: var(--kbd-muted);
+}
+.kbd-crumbs a {
+  color: var(--kbd-link);
+}
+.kbd-crumbs a:hover {
+  text-decoration: underline;
+}
+.kbd-crumbs [aria-current="page"] {
+  color: var(--kbd-ink);
+}
+
+.kbd-article .kb-body {
+  font-size: 1rem;
+  line-height: 1.7;
+}
+.kbd-article .kb-body p {
+  margin: 0.85em 0;
+}
+.kbd-article .kb-body li {
+  line-height: 1.65;
+}
+.kbd-article .kb-body h2 {
+  margin-top: 2.25rem;
+  font-size: 1.375rem;
+  line-height: 1.3;
+  scroll-margin-top: 12px;
+}
+.kbd-article .kb-body h3 {
+  margin-top: 1.5rem;
+  font-size: 1.0625rem;
+  scroll-margin-top: 12px;
+}
+
+/* The root's scroll-padding clears the marketing nav (index.css, --de-nav-offset).
+   Inside the portal the only fixed chrome is the 56px top bar, so fragment jumps
+   from "On this page" land just below it instead of ~140px down the screen. */
+html:has(.kbd.kbd-tone-portal) {
+  scroll-padding-top: var(--kbd-portal-bar, 72px);
+}
+.kbd-article .kb-body h2:first-child {
+  margin-top: 0.5rem;
+}
+.kbd-article .kb-body img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 10px;
+  border: 1px solid var(--kbd-line);
+}
+.kbd-article .kb-body a {
+  color: var(--kbd-link);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* Heading anchors: shown on hover and on keyboard focus. */
+.kb-heading {
+  position: relative;
+}
+.kb-anchor {
+  margin-left: 8px;
+  padding: 0 4px;
+  border-radius: 4px;
+  color: var(--kbd-muted, currentColor);
+  font-weight: 500;
+  text-decoration: none !important;
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+.kb-heading:hover .kb-anchor,
+.kb-anchor:focus-visible {
+  opacity: 1;
+}
+.kb-anchor:hover {
+  color: var(--kbd-link, currentColor);
+}
+@media (hover: none) {
+  .kb-anchor {
+    display: none;
+  }
+}
+
+/* Callouts: Note / Tip / Important / Warning. */
+.kb-callout {
+  margin: 1.25rem 0;
+}
+.kb-callout-label {
+  display: block;
+  margin-bottom: 2px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgb(var(--pt-tone));
+}
+.kbd-article .kb-callout {
+  font-size: 0.9375rem;
+  line-height: 1.6;
+}
+
+/* After the body: feedback, related, more. */
+.kbd-after {
+  margin-top: 28px;
+  display: grid;
+  gap: 20px;
+}
+.kbd-feedback {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px;
+  border: 1px solid var(--kbd-line);
+  border-radius: 12px;
+  background: var(--kbd-sunken);
+}
+
+.kbd-section-title {
+  margin: 0 0 10px;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  color: var(--kbd-ink);
+}
+
+.kbd-link-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--kbd-line);
+}
+.kbd-link-list li {
+  border-bottom: 1px solid var(--kbd-line);
+}
+.kbd-link-list a {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 11px 4px;
+  color: var(--kbd-link);
+  font-weight: 500;
+}
+.kbd-link-list a:hover {
+  background: var(--kbd-hover);
+}
+.kbd-link-list .kbd-meta {
+  margin-left: auto;
+  flex: none;
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--kbd-muted);
+}
+
+/* ---------- help-centre index ---------- */
+
+.kbd-hero {
+  padding: 28px 0 8px;
+  text-align: center;
+}
+.kbd-hero h1 {
+  margin: 6px 0 0;
+  font-size: clamp(1.75rem, 1.2rem + 2vw, 2.5rem);
+  font-weight: 600;
+  line-height: 1.15;
+  color: var(--kbd-ink);
+}
+.kbd-hero p {
+  margin: 10px auto 0;
+  max-width: 560px;
+  color: var(--kbd-muted);
+}
+.kbd-eyebrow {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--kbd-link);
+}
+
+.kbd-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: 640px;
+  margin: 22px auto 0;
+  border: 1px solid var(--kbd-line);
+  border-radius: 12px;
+  background: var(--kbd-bg);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.06);
+}
+.kbd-search:focus-within {
+  border-color: var(--kbd-ring);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--kbd-ring) 28%, transparent);
+}
+.kbd-search svg {
+  position: absolute;
+  left: 16px;
+  width: 20px;
+  height: 20px;
+  color: var(--kbd-muted);
+  pointer-events: none;
+}
+.kbd-search input {
+  width: 100%;
+  height: 52px;
+  padding: 0 16px 0 48px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--kbd-ink);
+  font-size: 1rem;
+  outline: none;
+}
+.kbd-search input::placeholder {
+  color: var(--kbd-muted);
+  opacity: 0.85;
+}
+
+.kbd-block-title {
+  margin: 0 0 14px;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--kbd-ink);
+}
+
+.kbd-cards {
+  container-type: inline-size;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+@media (min-width: 560px) {
+  .kbd-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1024px) {
+  .kbd-cards[data-cols="3"] {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .kbd-cards[data-cols="4"] {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1280px) {
+  .kbd-cards[data-cols="4"] {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.kbd-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  height: 100%;
+  padding: 18px;
+  border: 1px solid var(--kbd-line);
+  border-radius: 14px;
+  background: var(--kbd-bg);
+  color: var(--kbd-ink);
+  text-align: left;
+  transition: border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
+}
+a.kbd-card:hover,
+button.kbd-card:hover {
+  border-color: color-mix(in srgb, var(--kbd-link) 45%, var(--kbd-line));
+  box-shadow: 0 6px 18px -10px rgb(0 0 0 / 0.35);
+}
+@media (prefers-reduced-motion: no-preference) {
+  a.kbd-card:hover,
+  button.kbd-card:hover {
+    transform: translateY(-1px);
+  }
+}
+.kbd-card-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.kbd-card-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--kbd-link) 10%, transparent);
+  color: var(--kbd-link);
+}
+.kbd-card-icon svg {
+  width: 20px;
+  height: 20px;
+}
+.kbd-card-title {
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--kbd-ink);
+}
+.kbd-card-sub {
+  font-size: 0.75rem;
+  color: var(--kbd-muted);
+}
+.kbd-card-text {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--kbd-muted);
+}
+.kbd-card-list {
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--kbd-line);
+}
+.kbd-card-list li {
+  padding: 9px 0;
+  border-bottom: 1px solid var(--kbd-line);
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: var(--kbd-ink);
+}
+.kbd-card-list li:last-child {
+  border-bottom: 0;
+}
+.kbd-card-cta {
+  margin-top: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--kbd-link);
+}
+
+.kbd-still {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 22px 24px;
+  border: 1px solid var(--kbd-line);
+  border-radius: 14px;
+  background: var(--kbd-sunken);
+}
+.kbd-still h2 {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--kbd-ink);
+}
+.kbd-still p {
+  margin: 4px 0 0;
+  font-size: 0.9rem;
+  color: var(--kbd-muted);
+}
+
+/* Shared focus ring for everything above. */
+.kbd-tone-portal :is(a, button, summary):focus-visible,
+.kbd-tone-paper :is(a, button, summary):focus-visible {
+  outline: 2px solid var(--kbd-ring);
+  outline-offset: 2px;
+}
+
+/* On the public paper field the search sits in the content column, left-aligned with the headings below it. */
+.kbd-tone-paper .kbd-search {
+  margin-left: 0;
+  margin-top: 0;
+}

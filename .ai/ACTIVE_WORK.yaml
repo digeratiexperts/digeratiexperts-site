@@ -5070,3 +5070,23 @@ claims:
       help." label sliding out on hover or keyboard focus. This changes the
       2026-10-03 launcher decision (label always beside the badge from sm), so
       Joe confirms the screenshots before merge.
+  - id: kb-docs-layout
+    issue: 960
+    owner: claude
+    subsystem: knowledge-base
+    branch: claude/kb-docs-layout
+    base_sha: 296721de
+    started: 2026-11-05
+    files:
+      - client/src/components/kb/docs/** (new shared docs-layout components + lazy CSS)
+      - client/src/pages/portal/kb/PortalKbArticle.tsx, client/src/pages/portal/PortalKB.tsx, client/src/pages/support/KnowledgeBase.tsx
+      - client/src/components/portal/kb/KbRenderer.tsx, client/src/pages/portal/kb/AdminKb.tsx (syntax help line only)
+      - shared/kb.ts, shared/kb.test.ts (callout markers, h2/h3 outline)
+      - zoho/help-center/stylesheet.css, zoho/help-center/README.md (separate commit)
+      - artifacts/visual-qa/kb-jumpcloud-layout/**
+    status: pr-open
+    note: >-
+      Joe, 2026-11-05: copy the docs layout pattern of jumpcloud.com/support
+      (left category tree, centre reading column, right "On this page") for the
+      knowledge base. Layout only; no third-party branding, copy or assets.
+      Draft PR; the coordinator merges on Joe's approval.
