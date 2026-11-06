@@ -5149,14 +5149,18 @@ claims:
       - server/integrations/msGraph.ts (+ tests), docs/runbooks/msgraph-certificate-auth.md
       - design/DESIGN-AUTHORITY.md (new index section), retired-banners on retired design rule files
       - docs/reports/stale-branches-2026-11-06.md
-    status: active
+    status: merged
+    pr: "975, 976, 977, 978"
+    merged: 2026-11-06 (976 6bffa6be, 977 886480e3, 975 2ee6ad68, 978 7eff0c0b)
     note: >-
       Website items of the 2026-11-04 cross-repo review (Intelligence-Hub
       docs/architecture/2026-11-04-cross-repo-review.md). Joe, 2026-11-06:
       "finish all those projects", "all approved", "you're approved to handle
       this all". One draft PR per slice. #955 (Stripe dead code, Turnstile
       fail-closed) was open and left alone; the coordinator merged it
-      (627eea17) during the session. No branch deleted.
+      (627eea17) during the session. No branch deleted. Released 2026-11-06:
+      all four PRs MERGED, not yet verified LIVE. Env template and
+      SECRETS-REQUIRED follow-up in the review-followup PR.
   - id: tickets-source-switch
     owner: claude
     subsystem: portal-tickets
