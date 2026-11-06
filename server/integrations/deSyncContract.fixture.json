@@ -80,5 +80,78 @@
       "secret": "test-secret",
       "signature": "191e6664e6f48e245ab93977c0f1e1fb5fae829b9a447717d18e9ea9e982f492"
     }
+  },
+  "reads": {
+    "portalLicenses": {
+      "contract": "de.hub.licenses/v1",
+      "direction": "portal_to_hub",
+      "method": "GET",
+      "path": "/api/webhooks/portal/licenses",
+      "query": {
+        "required": [
+          "accountId"
+        ],
+        "optional": [
+          "portalClientId"
+        ]
+      },
+      "auth": {
+        "source": "portal",
+        "scopedSecretEnv": "PORTAL_TO_HUB_SECRET",
+        "signsQuery": true,
+        "legacySecret": "refused"
+      },
+      "responseFields": [
+        "contract",
+        "accountId",
+        "generatedAt",
+        "items",
+        "totals"
+      ],
+      "itemFields": [
+        "productId",
+        "kind",
+        "vendor",
+        "product",
+        "category",
+        "catalogKey",
+        "sku",
+        "chocoPackage",
+        "seats"
+      ],
+      "seatFields": [
+        "total",
+        "fromPool",
+        "toOrder"
+      ],
+      "totalsFields": [
+        "products",
+        "seats",
+        "fromPool",
+        "toOrder"
+      ],
+      "kinds": [
+        "license",
+        "app"
+      ],
+      "seatSources": [
+        "pool",
+        "order"
+      ],
+      "errors": {
+        "401": "unsigned, bad signature, or legacy secret",
+        "409": "accountId missing, unknown, or not the portalClientId's account",
+        "503": "integration not configured or tables not pushed"
+      },
+      "signingSample": {
+        "method": "GET",
+        "path": "/api/webhooks/portal/licenses?accountId=41",
+        "timestamp": "2026-11-05T16:00:00.000Z",
+        "eventId": "66666666-6666-4666-8666-666666666666",
+        "body": "{}",
+        "secret": "test-secret",
+        "signature": "b2aeb8e22aad503bec5b3a1aeb281f8498af9af855946f2e1e609b5a31968b00"
+      }
+    }
   }
 }
