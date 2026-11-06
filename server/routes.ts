@@ -169,6 +169,20 @@ import {
   startDeskTicketSyncWorker,
   ticketInScope,
 } from "./portalDeskTickets";
+import { createHubTicketClient } from "./integrations/hubTicketClient";
+import { hubPriorityFromPortal, type HubTicket } from "./integrations/hubTicketsContract";
+import {
+  canSeeHubTicket,
+  hubAssignedTo,
+  hubFailureFields,
+  hubIdempotencyKey,
+  hubTicketToListed,
+  mergePortalAndHubTickets,
+  parseHubAssignedTo,
+  parseHubPortalTicketId,
+  recordTicketReconciliation,
+  ticketsSource,
+} from "./ticketsSource";
 import { RESEND_COOLDOWN_MS } from "./portalVerificationThrottle";
 import {
   initPortalApprovals,
@@ -853,6 +867,9 @@ export async function registerRoutes(app: Express) {
       .filter((u: any) => u?.clientId === client.id && u?.email)
       .map((u: any) => String(u.email)),
   });
+  // TICKETS_SOURCE=hub (server/ticketsSource.ts): the portal and widget write
+  // tickets through the Hub ticket API; default desk keeps the paths below.
+  const hubTickets = createHubTicketClient();
   startDeskTicketSyncWorker(
     deskTicketSync,
     Number(process.env.PORTAL_DESK_TICKET_SYNC_MS ?? 5 * 60_000),
@@ -1913,13 +1930,14 @@ export async function registerRoutes(app: Express) {
           companyName: org.companyName,
           isInternal: org.isInternal,
           zohoTicketId: parseZohoTicketId(t.assignedTo),
+          hubTicketId: parseHubAssignedTo(t.assignedTo),
         };
       };
 
       if (isAdmin && !scopedClientId) {
         const tickets = await storage.getPortalTickets(undefined);
         return res.json({
-          tickets: tickets.map(toListed).map(({ zohoTicketId: _z, ...t }) => ({ ...t, source: "portal" })),
+          tickets: tickets.map(toListed).map(({ zohoTicketId: _z, hubTicketId: _h, ...t }) => ({ ...t, source: "portal" })),
           desk: { scope: "all-local", syncedAt: null, error: null },
         });
       }
@@ -1928,7 +1946,7 @@ export async function registerRoutes(app: Express) {
         // A signed-in user with no company: only what they opened themselves.
         const own = await storage.getPortalTickets(req.userId || "");
         return res.json({
-          tickets: own.map(toListed).map(({ zohoTicketId: _z, ...t }) => ({ ...t, source: "portal" })),
+          tickets: own.map(toListed).map(({ zohoTicketId: _z, hubTicketId: _h, ...t }) => ({ ...t, source: "portal" })),
           desk: { scope: "own", syncedAt: null, error: null },
         });
       }
@@ -1940,6 +1958,24 @@ export async function registerRoutes(app: Express) {
         .map(toListed);
 
       const client = portalClients.get(scopedClientId);
+      const listCtx = { clientId: scopedClientId, companyName: client?.companyName || scope.companyName || null };
+
+      // TICKETS_SOURCE=hub: the account's tickets come from the Hub. A Hub
+      // that cannot answer falls through to the Desk list, so the page still
+      // shows the company's tickets.
+      if (ticketsSource() === "hub" && client?.hubAccountId) {
+        const fromHub = await hubTickets.list({ accountId: String(client.hubAccountId), portalClientId: client.id });
+        if (fromHub.ok) {
+          const visibleHub = isAdmin
+            ? fromHub.data.tickets
+            : fromHub.data.tickets.filter((t) => canSeeHubTicket(req.user, t));
+          return res.json({
+            tickets: mergePortalAndHubTickets(local, visibleHub, listCtx),
+            desk: { scope: "company", source: "hub", linked: true, syncedAt: fromHub.data.generatedAt, error: null },
+          });
+        }
+      }
+
       const desk = client
         ? await deskTicketSync.getTicketsForClient(deskSnapshot(client))
         : null;
@@ -1949,10 +1985,7 @@ export async function registerRoutes(app: Express) {
         : deskTickets.filter((t) => canSeeDeskTicket(req.user, t, desk?.scope));
 
       res.json({
-        tickets: mergePortalAndDeskTickets(local, visibleDesk, {
-          clientId: scopedClientId,
-          companyName: client?.companyName || scope.companyName || null,
-        }),
+        tickets: mergePortalAndDeskTickets(local.map(({ hubTicketId: _h, ...t }) => t), visibleDesk, listCtx),
         desk: {
           scope: "company",
           linked: !!desk?.linked,
@@ -1998,6 +2031,38 @@ export async function registerRoutes(app: Express) {
       }
     }
     return { ticket, clientId: client?.id || null, companyName: client?.companyName || null };
+  }
+
+  /**
+   * Load a Hub-only ticket (`hub-<id>`) for the caller, or answer the request.
+   * The Hub only returns tickets of the account named in the signed query, so
+   * the company the caller is scoped to is the tenant check; a non-admin also
+   * needs canSeeHubTicket. An unscoped admin has no account to ask with.
+   */
+  async function loadScopedHubTicket(req: AuthenticatedRequest, res: Response, hubTicketId: number) {
+    const isAdmin = req.user?.role === "admin";
+    const scope = portalCompanyContext(req);
+    const scopedClientId = isAdmin ? scope.impersonatingCompanyId : scope.companyId;
+    const client = scopedClientId ? portalClients.get(scopedClientId) : undefined;
+    if (!client?.hubAccountId) {
+      res.status(404).json({ error: "Ticket not found" });
+      return null;
+    }
+    const tenant = { accountId: String(client.hubAccountId), portalClientId: client.id };
+    const found = await hubTickets.get(tenant, hubTicketId);
+    if (!found.ok) {
+      if (found.reason === "refused" && (found.status === 404 || found.status === 409)) {
+        res.status(404).json({ error: "Ticket not found" });
+      } else {
+        res.status(503).json({ error: "Tickets are unavailable right now. Please try again in a moment." });
+      }
+      return null;
+    }
+    if (!isAdmin && !canSeeHubTicket(req.user, found.data.ticket)) {
+      res.status(403).json({ error: "Access denied" });
+      return null;
+    }
+    return { tenant, ticket: found.data.ticket as HubTicket, conversation: found.data.conversation, client };
   }
 
   // Create new ticket
@@ -2053,9 +2118,43 @@ export async function registerRoutes(app: Express) {
         category: category || "general",
       });
 
+      // TICKETS_SOURCE=hub: the Hub takes the ticket first (Desk gets it
+      // through the Hub sync). Otherwise, or when the Hub cannot take it, the
+      // Desk path below runs as before and a reconciliation note records the miss.
+      let hubTicketId: number | null = null;
+      let hubMiss: ReturnType<typeof hubFailureFields> | null = null;
+      const ticketHubAccountId = resolvedClientId ? portalClients.get(resolvedClientId)?.hubAccountId ?? null : null;
+      if (ticketsSource() === "hub") {
+        if (!ticketHubAccountId) {
+          hubMiss = hubFailureFields({ reason: "no_account" });
+        } else {
+          const created = await hubTickets.create(
+            { accountId: String(ticketHubAccountId), portalClientId: resolvedClientId },
+            {
+              idempotencyKey: hubIdempotencyKey("portal", ticketNumber),
+              channel: "client_portal",
+              subject: String(subject).slice(0, 200),
+              description: String(description).slice(0, 8000),
+              priority: hubPriorityFromPortal(priority),
+              requesterEmail: String(userEmail).trim().toLowerCase(),
+              requesterName: req.user?.fullName ? String(req.user.fullName).slice(0, 120) : null,
+              portalReference: ticketNumber,
+            },
+          );
+          if (created.ok) {
+            hubTicketId = created.data.ticket.id;
+            try {
+              await storage.updatePortalTicket(ticket.id, { assignedTo: hubAssignedTo(hubTicketId) });
+            } catch {}
+          } else {
+            hubMiss = hubFailureFields(created);
+          }
+        }
+      }
+
       // Sync to Zoho Desk (non-blocking — local ticket succeeds regardless)
       let zohoTicketId: string | null = null;
-      try {
+      if (hubTicketId == null) try {
         const { zohoDeskService } = await import("./zoho/zohoDesk");
         const { zohoClient } = await import("./zoho/zohoClient");
         
@@ -2095,7 +2194,7 @@ export async function registerRoutes(app: Express) {
       } catch (zohoError: any) {
         console.warn("Could not sync ticket to Zoho Desk:", zohoError?.message || zohoError);
       }
-      if (!zohoTicketId) {
+      if (hubTicketId == null && !zohoTicketId) {
         // desk-ticket-failover: the portal keeps its own row, and the Desk gets
         // the ticket by email now and by API when the token works again.
         try {
@@ -2117,6 +2216,22 @@ export async function registerRoutes(app: Express) {
         }
       }
 
+      if (hubMiss) {
+        recordTicketReconciliation({
+          kind: "create",
+          channel: "client_portal",
+          ...hubMiss,
+          handedTo: "desk",
+          reference: ticketNumber,
+          portalClientId: resolvedClientId,
+          hubAccountId: ticketHubAccountId ? String(ticketHubAccountId) : null,
+          deskTicketId: zohoTicketId,
+          requesterEmail: userEmail,
+          subject: String(subject).slice(0, 200),
+          hubTicketId: null,
+        });
+      }
+
       res.status(201).json({
         success: true,
         ticket: {
@@ -2125,11 +2240,13 @@ export async function registerRoutes(app: Express) {
           isInternal: target.isInternal,
         },
         zohoTicketId,
+        ...(hubTicketId != null ? { hubTicketId } : {}),
       });
       logSecurityEvent("TICKET_CREATED", req, {
         ticketId: ticket.id,
         ticketNumber,
         zohoTicketId,
+        hubTicketId,
         clientId: resolvedClientId,
         isInternal: target.isInternal,
       });
@@ -2212,6 +2329,23 @@ export async function registerRoutes(app: Express) {
   app.get("/api/portal/tickets/:id", [authMiddleware], async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { id } = req.params;
+      const hubOnlyId = parseHubPortalTicketId(id);
+      if (hubOnlyId != null) {
+        const loaded = await loadScopedHubTicket(req, res, hubOnlyId);
+        if (!loaded) return;
+        return res.json({
+          ticket: {
+            ...hubTicketToListed(loaded.ticket, { clientId: loaded.client.id, companyName: loaded.client.companyName || null }),
+            comments: loaded.conversation.map((m) => ({
+              id: `hub-${m.id}`,
+              author: m.from === "client" ? m.authorName || "Client" : "Support",
+              role: m.from === "client" ? "Client" : "Support",
+              content: m.body,
+              timestamp: m.at,
+            })),
+          },
+        });
+      }
       const deskTicketId = parseDeskPortalTicketId(id);
       if (deskTicketId) {
         const loaded = await loadScopedDeskTicket(req, res, deskTicketId);
@@ -2282,6 +2416,51 @@ export async function registerRoutes(app: Express) {
         return res.status(400).json({ error: "Content is required" });
       }
 
+      const hubOnlyId = parseHubPortalTicketId(id);
+      if (hubOnlyId != null) {
+        const loaded = await loadScopedHubTicket(req, res, hubOnlyId);
+        if (!loaded) return;
+        const sent = await hubTickets.reply(loaded.tenant, hubOnlyId, {
+          idempotencyKey: hubIdempotencyKey("reply"),
+          authorName: String(req.user?.fullName || req.user?.email || "Client").slice(0, 120),
+          authorEmail: String(req.user?.email || "").trim().toLowerCase(),
+          body: String(content).slice(0, 8000),
+        });
+        if (!sent.ok) {
+          // The Hub took the read a moment ago; when its Desk copy is known,
+          // the reply still reaches DE through Desk and the miss is noted.
+          const deskCopy = loaded.ticket.deskTicketId;
+          if (deskCopy && sent.reason !== "refused") {
+            try {
+              const author = req.user?.fullName || req.user?.email || "Client";
+              await zohoDeskService.addPublicTicketComment(deskCopy, `${author}:\n${String(content).slice(0, 8000)}`);
+              recordTicketReconciliation({
+                kind: "reply",
+                channel: "client_portal",
+                ...hubFailureFields(sent),
+                handedTo: "desk",
+                reference: loaded.ticket.number,
+                portalClientId: loaded.client.id,
+                hubAccountId: loaded.tenant.accountId,
+                deskTicketId: deskCopy,
+                requesterEmail: String(req.user?.email || ""),
+                subject: null,
+                hubTicketId: hubOnlyId,
+              });
+              res.json({ success: true });
+              logSecurityEvent("TICKET_COMMENT_ADDED", req, { ticketId: id, zohoTicketId: deskCopy, hubMissed: true });
+              return;
+            } catch (deskError: any) {
+              console.warn("Could not post reply to Zoho Desk after the Hub missed it:", deskError?.message || deskError);
+            }
+          }
+          return res.status(502).json({ error: "We couldn't send that reply just now. Please try again in a moment." });
+        }
+        res.json({ success: true });
+        logSecurityEvent("TICKET_COMMENT_ADDED", req, { ticketId: id, hubTicketId: hubOnlyId });
+        return;
+      }
+
       const deskTicketId = parseDeskPortalTicketId(id);
       if (deskTicketId) {
         const loaded = await loadScopedDeskTicket(req, res, deskTicketId);
@@ -2324,6 +2503,41 @@ export async function registerRoutes(app: Express) {
           zohoTicketId,
           `${author}:\n${String(content).slice(0, 8000)}`,
         );
+      }
+
+      // A portal ticket created through the Hub (`hub:<id>`): the reply goes
+      // to the Hub too. The comment is already stored here, so a Hub miss
+      // loses nothing; it is noted for reconciliation.
+      const linkedHubId = parseHubAssignedTo(ticket.assignedTo);
+      const ticketClient = ticket.clientId ? portalClients.get(ticket.clientId) : undefined;
+      if (linkedHubId != null) {
+        const accountId = ticketClient?.hubAccountId ? String(ticketClient.hubAccountId) : null;
+        const replyKey = hubIdempotencyKey("reply", comment.id);
+        void (async () => {
+          const sent = accountId
+            ? await hubTickets.reply({ accountId, portalClientId: ticketClient!.id }, linkedHubId, {
+                idempotencyKey: replyKey,
+                authorName: String(req.user?.fullName || req.user?.email || "Client").slice(0, 120),
+                authorEmail: String(req.user?.email || "").trim().toLowerCase(),
+                body: String(content).slice(0, 8000),
+              })
+            : ({ ok: false, reason: "no_account" } as const);
+          if (!sent.ok) {
+            recordTicketReconciliation({
+              kind: "reply",
+              channel: "client_portal",
+              ...hubFailureFields(sent),
+              handedTo: "portal_only",
+              reference: ticket.ticketNumber || null,
+              portalClientId: ticket.clientId || null,
+              hubAccountId: accountId,
+              deskTicketId: null,
+              requesterEmail: String(req.user?.email || ""),
+              subject: null,
+              hubTicketId: linkedHubId,
+            });
+          }
+        })().catch((err) => console.warn("[TICKETS-SOURCE] Hub reply failed:", err?.message || err));
       }
 
       res.json({ success: true, comment });

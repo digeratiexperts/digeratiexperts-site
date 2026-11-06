@@ -5109,3 +5109,29 @@ claims:
       articles stay behind portal login ("I want clients to login first"), so
       no public article API. MERGED, not yet verified LIVE; the Zoho help
       center CSS is a manual paste, not published.
+  - id: tickets-source-switch
+    owner: claude
+    subsystem: portal-tickets
+    branch: claude/tickets-source-switch
+    base_sha: 8fcd3fabf6c181039c1340e0be0ee87b108f4836
+    started: 2026-11-06
+    files:
+      - server/ticketsSource.ts, server/ticketsSource.test.ts (new)
+      - server/integrations/hubTicketClient.ts, server/integrations/hubTicketsContract.ts (new)
+      - server/integrations/deSyncContract.fixture.json (reads.portalTickets), server/integrations/deSyncContract.parity.test.ts
+      - server/widgetTicketRoute.ts (hub branch before the Desk path; options), server/widgetTicketRoute.hub.test.ts (new)
+      - "server/routes.ts (/api/portal/tickets list, create, detail, comments: hub branches only)"
+      - server/portalDeskTickets.ts (ListedPortalTicket.source adds "hub")
+      - server/publicSolutionSpool.ts (ticketReconciliationSpoolDir)
+      - docs/TICKETS-SOURCE-SWITCH.md (new), docs/SECRETS-REQUIRED.md, deploy/vps/env.production.example
+    status: active
+    note: >-
+      Cross-repo review step 3, Tickets. Joe 2026-11-05: "Hub first then sync
+      with desk but if desk is first then sync with hub"; approvals relayed by
+      coordinator session_01DFj2KKYXK9VsNEKAohFuHu ("all approved", "you're
+      approved to handle this all", 2026-11-06). TICKETS_SOURCE=desk|hub,
+      default desk, so merging changes nothing. Hub half: Intelligence-Hub
+      PR 909 (signed portal ticket API). Overlap check 2026-11-06: open PRs
+      877, 882, 955, 959, 968, 969 do not touch these files. Draft PR; the
+      coordinator merges on Joe's approval. Not LIVE until TICKETS_SOURCE=hub
+      is set after OPEN-ITEMS C10 and verified.
