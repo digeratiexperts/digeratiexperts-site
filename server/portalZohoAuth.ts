@@ -16,16 +16,18 @@ import { createHash, createHmac, randomBytes, timingSafeEqual } from "crypto";
 import type { Request, Response } from "express";
 import { resolveJwtSecret } from "./config/authSecrets";
 import { zohoDefaultDc } from "./zoho/oauth/dc";
+import { callZohoTokenEndpoint, ZohoTokenError } from "./zoho/oauth/token-endpoint";
 
 // ZOHO_OIDC_ISSUER wins (the portal sign-in client's issuer); otherwise the
 // accounts host of the server's Zoho data center (ZOHO_ACCOUNTS_SERVER, US by
-// default). Sign-in is a separate client from the API token manager.
+// default). Sign-in is a separate client from the API token manager; its one
+// authorization_code exchange still goes through server/zoho/oauth's token
+// endpoint helper, the only code that calls Zoho's token URL.
 const ACCOUNTS_BASE = (process.env.ZOHO_OIDC_ISSUER || zohoDefaultDc().accounts).replace(
   /\/$/,
   "",
 );
 const AUTH_URL = `${ACCOUNTS_BASE}/oauth/v2/auth`;
-const TOKEN_URL = `${ACCOUNTS_BASE}/oauth/v2/token`;
 const USERINFO_URL = `${ACCOUNTS_BASE}/oauth/v2/userinfo`;
 const SCOPE = "openid email profile";
 
@@ -195,30 +197,21 @@ export async function exchangeZohoAuthCode(opts: {
   refreshToken?: string;
 }> {
   const cfg = getZohoPortalConfig();
-  const body = new URLSearchParams({
-    grant_type: "authorization_code",
-    client_id: cfg.clientId,
-    client_secret: cfg.clientSecret,
-    redirect_uri: cfg.redirectUri,
-    code: opts.code,
-    code_verifier: opts.codeVerifier,
-  });
-
-  const resp = await fetch(TOKEN_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body,
-  });
-  const json = (await resp.json().catch(() => ({}))) as Record<string, unknown>;
-  if (!resp.ok || typeof json.access_token !== "string") {
-    const err = typeof json.error === "string" ? json.error : `HTTP ${resp.status}`;
-    throw new Error(`Zoho token exchange failed: ${err}`);
+  try {
+    const got = await callZohoTokenEndpoint(ACCOUNTS_BASE, {
+      grant_type: "authorization_code",
+      client_id: cfg.clientId,
+      client_secret: cfg.clientSecret,
+      redirect_uri: cfg.redirectUri,
+      code: opts.code,
+      code_verifier: opts.codeVerifier,
+    });
+    return { accessToken: got.accessToken, idToken: got.idToken, refreshToken: got.refreshToken };
+  } catch (err) {
+    // Zoho's error code only (or the HTTP status), as before: never its text.
+    const code = err instanceof ZohoTokenError ? err.code : "network";
+    throw new Error(`Zoho token exchange failed: ${code}`);
   }
-  return {
-    accessToken: json.access_token,
-    idToken: typeof json.id_token === "string" ? json.id_token : undefined,
-    refreshToken: typeof json.refresh_token === "string" ? json.refresh_token : undefined,
-  };
 }
 
 export async function fetchZohoUserInfo(accessToken: string): Promise<{

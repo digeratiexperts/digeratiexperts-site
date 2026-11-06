@@ -1,17 +1,23 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { booksCall, resetZohoBooksToken, ZOHO_ACCOUNTS_TOKEN_URL, zohoBooksTaxConfig } from "./zohoBooksTax";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { clearZohoConnectTestEnv, seedZohoConnectGrant, TEST_CONNECT_CLIENT, TEST_CONNECT_REFRESH, zohoTokenUrl } from "../zoho/oauth/testing/connectGrant";
+import { booksCall, resetZohoBooksToken, zohoBooksTaxConfig, type ZohoBooksTaxConfig } from "./zohoBooksTax";
 
-const config = zohoBooksTaxConfig({
+const ZOHO_ACCOUNTS_TOKEN_URL = zohoTokenUrl();
+const BOOKS_ENV = {
   ZOHO_BOOKS_ORGANIZATION_ID: "693714437",
-  ZOHO_BOOKS_REFRESH_TOKEN: "1000.fake.refresh",
-  ZOHO_BOOKS_CLIENT_ID: "1000.FAKECLIENT",
-  ZOHO_BOOKS_CLIENT_SECRET: "fake-secret",
   ZOHO_BOOKS_TAX_CONTACT_ID: "1957016000000600001",
   ZOHO_BOOKS_SERVICE_ITEM_ID: "1957016000000500001",
-})!;
+};
+let config: ZohoBooksTaxConfig;
+
+beforeEach(async () => {
+  resetZohoBooksToken();
+  await seedZohoConnectGrant({ products: ["books"] });
+  config = zohoBooksTaxConfig(BOOKS_ENV)!;
+});
+afterEach(() => clearZohoConnectTestEnv());
 
 describe("Zoho Books client for Pay Now tax", () => {
-  beforeEach(() => resetZohoBooksToken());
 
   it("refreshes the token once and reuses it until it nears expiry", async () => {
     let issued = 0;
@@ -78,9 +84,32 @@ describe("Zoho Books client for Pay Now tax", () => {
     expect(throttled).toHaveBeenCalledTimes(1);
 
     resetZohoBooksToken();
+    await seedZohoConnectGrant({ products: ["books"] });
     const down = vi.fn(async () => new Response("<html>bad gateway</html>", { status: 502 }));
     expect(await booksCall(config, { method: "GET", path: "/items/1" }, { fetchImpl: down as unknown as typeof fetch, nowMs: 0 }))
       .toMatchObject({ ok: false, failure: "unreachable" });
+  });
+
+  it("is not configured, and never calls Zoho, without a Connect grant that covers Books", async () => {
+    resetZohoBooksToken();
+    await seedZohoConnectGrant({ products: ["crm", "desk", "payments"] });
+    expect(zohoBooksTaxConfig(BOOKS_ENV)).toBeNull();
+    const fetchImpl = vi.fn();
+    expect(await booksCall(config, { method: "GET", path: "/items/1" }, { fetchImpl: fetchImpl as unknown as typeof fetch }))
+      .toMatchObject({ ok: false, failure: "auth" });
+    expect(fetchImpl).not.toHaveBeenCalled();
+  });
+
+  it("refreshes with the Connect client only", async () => {
+    const fetchImpl = vi.fn(async (url: string, init?: RequestInit) =>
+      url === ZOHO_ACCOUNTS_TOKEN_URL
+        ? new Response(JSON.stringify({ access_token: "tok", expires_in: 3600 }), { status: 200 })
+        : new Response(JSON.stringify({ code: 0 }), { status: 200 }),
+    );
+    await booksCall(config, { method: "GET", path: "/items/1" }, { fetchImpl: fetchImpl as unknown as typeof fetch, nowMs: 0 });
+    const params = new URLSearchParams(fetchImpl.mock.calls[0][1]!.body as URLSearchParams);
+    expect(params.get("client_id")).toBe(TEST_CONNECT_CLIENT.id);
+    expect(params.get("refresh_token")).toBe(TEST_CONNECT_REFRESH);
   });
 
   it("never logs the refresh token or the client secret", async () => {
@@ -89,8 +118,8 @@ describe("Zoho Books client for Pay Now tax", () => {
     const reply = await booksCall(config, { method: "GET", path: "/items/1" }, { fetchImpl: fetchImpl as unknown as typeof fetch });
     expect(reply).toMatchObject({ ok: false, failure: "auth" });
     const logged = JSON.stringify(warn.mock.calls);
-    expect(logged).not.toContain("1000.fake.refresh");
-    expect(logged).not.toContain("fake-secret");
+    expect(logged).not.toContain(TEST_CONNECT_REFRESH);
+    expect(logged).not.toContain(TEST_CONNECT_CLIENT.secret);
     warn.mockRestore();
   });
 });

@@ -1,20 +1,18 @@
 /**
  * Mirrors Intelligence Hub lib/zoho-oauth/manager.test.ts: budget, backoff,
  * error kinds, client pinning, persistence, DC hosts, Connect + revoke.
- * Adapted to the website's sources: legacy env tokens with their own client
- * (instead of the Hub's per-product DB rows), and the ZOHO_CONNECT_ENABLED flag.
+ * Adapted to the website: the Zoho Connect grant is the only credential
+ * (issue #974; no legacy Self Client env tokens), behind ZOHO_CONNECT_ENABLED.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DeadlineError } from "../../deadline";
 import { isZohoAccountsServer, zohoDcFromUrl, zohoDefaultDc } from "./dc";
 import {
   REFRESH_BUDGET,
-  fingerprint,
   resetZohoRuntimeForTests,
   UNIFIED_PROVIDER,
   ZohoAuthUnavailableError,
   ZohoProductAuth,
-  type LegacyEnvSource,
   type ZohoAuthProblem,
   type ZohoProductAuthConfig,
 } from "./manager";
@@ -54,40 +52,50 @@ const ENV_KEYS = [
   "ZOHO_CONNECT_ENABLED",
   "ZOHO_CLIENT_ID_API",
   "ZOHO_CLIENT_SECRET_API",
-  "ZOHO_DESK_CLIENT_ID",
-  "ZOHO_DESK_CLIENT_SECRET",
   "ZOHO_ACCOUNTS_SERVER",
 ];
 const savedEnv: Record<string, string | undefined> = {};
 
-let legacy: LegacyEnvSource[] = [];
-
 const CRM: ZohoProductAuthConfig = {
   product: "crm",
-  legacySources: () => legacy,
   notConfigured: (m, problem) => new NotConnected(m, problem),
 };
 
-const legacyCrm = (client = { id: "crm-client", secret: "crm-secret" }): LegacyEnvSource => ({
-  label: "ZOHO_REFRESH_TOKEN",
-  refreshToken: "rt-legacy",
-  client,
-});
+const GRANT = "rt-grant";
 
-function setup(replies: Parameters<typeof mockFetch>[0], opts: { connectEnabled?: boolean } = {}) {
+/**
+ * A product auth on a fresh memory store. By default the store holds a Connect
+ * grant ("rt-grant", minted by connect-client, all scopes, never used yet).
+ */
+function setup(
+  replies: Parameters<typeof mockFetch>[0],
+  opts: { connectEnabled?: boolean; grant?: false | { clientId?: string; scope?: string | null; accountsServer?: string } } = {},
+) {
   let clock = 1_700_000_000_000;
   const store = new MemoryZohoTokenStore();
+  if (opts.grant !== false) {
+    const g = opts.grant ?? {};
+    void store.saveGrant({
+      provider: UNIFIED_PROVIDER,
+      refreshToken: GRANT,
+      clientId: g.clientId ?? "connect-client",
+      scope: g.scope ?? null,
+      ...(g.accountsServer ? { accountsServer: g.accountsServer } : {}),
+    });
+    store.rows.get(UNIFIED_PROVIDER)!.authStatus = null;
+  }
   const http = mockFetch(replies);
   const auth = new ZohoProductAuth(CRM, {
     store,
     fetchImpl: http.fn,
     now: () => clock,
-    connectEnabled: () => opts.connectEnabled ?? false,
+    connectEnabled: () => opts.connectEnabled ?? true,
   });
   return {
     store,
     http,
     auth,
+    grantRow: () => store.rows.get(UNIFIED_PROVIDER),
     advance: (ms: number) => {
       clock += ms;
     },
@@ -100,9 +108,8 @@ beforeEach(() => {
     savedEnv[k] = process.env[k];
     delete process.env[k];
   }
-  process.env.ZOHO_CLIENT_ID_API = "crm-client";
-  process.env.ZOHO_CLIENT_SECRET_API = "crm-secret";
-  legacy = [legacyCrm()];
+  process.env.ZOHO_CONNECT_CLIENT_ID = "connect-client";
+  process.env.ZOHO_CONNECT_CLIENT_SECRET = "connect-secret";
   resetZohoRuntimeForTests();
 });
 
@@ -136,9 +143,11 @@ describe("ZohoProductAuth access tokens", () => {
     const b = await t.auth.getAccess();
     expect(a.token).toBe("at-1");
     expect(b.token).toBe("at-1");
+    expect(a.source).toBe("unified");
     expect(t.http.calls).toHaveLength(1);
     expect(t.http.calls[0].url).toBe("https://accounts.zoho.com/oauth/v2/token");
-    expect(t.http.calls[0].params?.get("client_id")).toBe("crm-client");
+    expect(t.http.calls[0].params?.get("client_id")).toBe("connect-client");
+    expect(t.http.calls[0].params?.get("refresh_token")).toBe(GRANT);
   });
 
   it("refreshes once for concurrent callers (single flight)", async () => {
@@ -151,47 +160,36 @@ describe("ZohoProductAuth access tokens", () => {
   it("persists the access token (encrypted at rest by the DB store) so a restart does not burn a refresh", async () => {
     const t = setup([tokenOk()]);
     await t.auth.getAccess();
-    const state = t.store.states.get(fingerprint("rt-legacy"));
-    expect(state).toMatchObject({ accessToken: "at-1", authStatus: "ok", clientId: "crm-client" });
-    // The env refresh token itself is never copied into the store.
-    expect(JSON.stringify([...t.store.states.values()])).not.toContain("rt-legacy");
+    expect(t.grantRow()).toMatchObject({ accessToken: "at-1", authStatus: "ok", clientId: "connect-client" });
+    // Nothing is written to the old per-token state rows any more.
+    expect(t.store.states.size).toBe(0);
 
     resetZohoRuntimeForTests();
-    const fresh = new ZohoProductAuth(CRM, { store: t.store, fetchImpl: t.http.fn, now: t.now, connectEnabled: () => false });
+    const fresh = new ZohoProductAuth(CRM, { store: t.store, fetchImpl: t.http.fn, now: t.now, connectEnabled: () => true });
     expect((await fresh.getAccess()).token).toBe("at-1");
     expect(t.http.calls).toHaveLength(1);
   });
 
-  it("refreshes each legacy token with the client its product names (client pinning)", async () => {
-    legacy = [legacyCrm({ id: "desk-client", secret: "desk-secret" })];
+  it("refreshes the grant with the Connect client, and does not call Zoho when that client is gone", async () => {
     const t = setup([tokenOk()]);
     await t.auth.getAccess();
-    expect(t.http.calls[0].params?.get("client_id")).toBe("desk-client");
-    expect(t.http.calls[0].params?.get("client_secret")).toBe("desk-secret");
-  });
-
-  it("refreshes a Connect grant with the client that minted it, and does not call Zoho when it is gone", async () => {
-    process.env.ZOHO_DESK_CLIENT_ID = "desk-client";
-    process.env.ZOHO_DESK_CLIENT_SECRET = "desk-secret";
-    legacy = [];
-    const t = setup([tokenOk()], { connectEnabled: true });
-    await t.store.saveGrant({ provider: UNIFIED_PROVIDER, refreshToken: "rt-unified", clientId: "desk-client", scope: null });
-    t.store.rows.get(UNIFIED_PROVIDER)!.authStatus = null;
-    await t.auth.getAccess();
-    expect(t.http.calls[0].params?.get("client_id")).toBe("desk-client");
+    expect(t.http.calls[0].params?.get("client_id")).toBe("connect-client");
+    expect(t.http.calls[0].params?.get("client_secret")).toBe("connect-secret");
 
     resetZohoRuntimeForTests();
-    delete process.env.ZOHO_DESK_CLIENT_ID;
-    const gone = setup([tokenOk()], { connectEnabled: true });
-    await gone.store.saveGrant({ provider: UNIFIED_PROVIDER, refreshToken: "rt-unified-2", clientId: "desk-client", scope: null });
+    delete process.env.ZOHO_CONNECT_CLIENT_ID;
+    const gone = setup([tokenOk()]);
     await expect(gone.auth.getAccess()).rejects.toBeInstanceOf(NotConnected);
     expect(gone.http.calls).toHaveLength(0);
     expect((await gone.auth.status()).state).toBe("needs_reconnect");
   });
 
-  it("does not call Zoho when a legacy token has no client", async () => {
-    legacy = [{ label: "ZOHO_REFRESH_TOKEN", refreshToken: "rt-legacy", client: null }];
-    const t = setup([tokenOk()]);
+  it("never refreshes with a legacy Self Client, even when the grant names one", async () => {
+    // A grant pinned to the old API Self Client cannot be refreshed: only the
+    // Connect client may mint API tokens (issue #974).
+    process.env.ZOHO_CLIENT_ID_API = "crm-client";
+    process.env.ZOHO_CLIENT_SECRET_API = "crm-secret";
+    const t = setup([tokenOk()], { grant: { clientId: "crm-client" } });
     await expect(t.auth.getAccess()).rejects.toMatchObject({ problem: "client" });
     expect(t.http.calls).toHaveLength(0);
   });
@@ -230,7 +228,7 @@ describe("ZohoProductAuth failure handling", () => {
     t.advance(25_000);
     await expect(t.auth.getAccess()).rejects.toBeInstanceOf(ZohoAuthUnavailableError);
     expect(t.http.calls).toHaveLength(2);
-    const state = t.store.states.get(fingerprint("rt-legacy"));
+    const state = t.grantRow();
     expect(state?.authStatus).toBe("degraded");
     expect(state?.failureCount).toBe(2);
   });
@@ -243,7 +241,7 @@ describe("ZohoProductAuth failure handling", () => {
         throw new Error("ECONNRESET");
       },
       now: t.now,
-      connectEnabled: () => false,
+      connectEnabled: () => true,
     });
     await expect(auth.getAccess()).rejects.toBeInstanceOf(ZohoAuthUnavailableError);
     expect((await auth.status()).state).toBe("degraded");
@@ -303,26 +301,11 @@ describe("ZohoProductAuth failure handling", () => {
 });
 
 describe("ZohoProductAuth sources", () => {
-  const unifiedGrant = async (store: MemoryZohoTokenStore, scope: string) => {
-    await store.saveGrant({
-      provider: UNIFIED_PROVIDER,
-      refreshToken: "rt-unified",
-      clientId: "connect-client",
-      accountsServer: "https://accounts.zoho.eu",
-      apiDomain: "https://www.zohoapis.eu",
-      scope,
+  it("uses the Zoho Connect grant when it covers the product, in its own DC", async () => {
+    const t = setup([tokenOk("unified-at")], {
+      grant: { scope: ZOHO_PRODUCT_SCOPES.crm.join(" "), accountsServer: "https://accounts.zoho.eu" },
     });
-    store.rows.get(UNIFIED_PROVIDER)!.authStatus = null;
-  };
-
-  beforeEach(() => {
-    process.env.ZOHO_CONNECT_CLIENT_ID = "connect-client";
-    process.env.ZOHO_CONNECT_CLIENT_SECRET = "connect-secret";
-  });
-
-  it("prefers the Zoho Connect grant when it covers the product, in its own DC", async () => {
-    const t = setup([tokenOk("unified-at")], { connectEnabled: true });
-    await unifiedGrant(t.store, ZOHO_PRODUCT_SCOPES.crm.join(" "));
+    t.grantRow()!.apiDomain = "https://www.zohoapis.eu";
     const a = await t.auth.getAccess();
     expect(a.token).toBe("unified-at");
     expect(a.source).toBe("unified");
@@ -331,26 +314,40 @@ describe("ZohoProductAuth sources", () => {
     expect(t.http.calls[0].params?.get("client_id")).toBe("connect-client");
   });
 
-  it("ignores the Connect grant while ZOHO_CONNECT_ENABLED is off", async () => {
-    const t = setup([tokenOk("legacy-at")], { connectEnabled: false });
-    await unifiedGrant(t.store, ZOHO_PRODUCT_SCOPES.crm.join(" "));
-    const a = await t.auth.getAccess();
-    expect(a.source).toBe("env");
-  });
-
-  it("ignores a Zoho Connect grant that lacks this product's scopes", async () => {
-    const t = setup([tokenOk("legacy-at")], { connectEnabled: true });
-    await unifiedGrant(t.store, "Desk.tickets.ALL");
-    const a = await t.auth.getAccess();
-    expect(a.source).toBe("env");
-  });
-
-  it("is not_configured with no credential at all", async () => {
-    legacy = [];
-    const t = setup([tokenOk()]);
-    expect((await t.auth.status()).state).toBe("not_configured");
+  it("is not_configured while ZOHO_CONNECT_ENABLED is off, and says so", async () => {
+    const t = setup([tokenOk()], { connectEnabled: false });
+    const st = await t.auth.status();
+    expect(st.state).toBe("not_configured");
+    expect(st.reason).toMatch(/ZOHO_CONNECT_ENABLED/);
     await expect(t.auth.getAccess()).rejects.toMatchObject({ problem: "not_configured" });
     expect(t.http.calls).toHaveLength(0);
+  });
+
+  it("is not_configured when the grant lacks this product's scopes, and asks for a reconnect", async () => {
+    const t = setup([tokenOk()], { grant: { scope: "Desk.tickets.ALL" } });
+    const st = await t.auth.status();
+    expect(st.state).toBe("not_configured");
+    expect(st.reason).toContain("/api/zoho/connect");
+    expect(st.reason).toContain("ZohoCRM.modules.READ");
+    await expect(t.auth.getAccess()).rejects.toMatchObject({ problem: "not_configured" });
+    expect(t.http.calls).toHaveLength(0);
+  });
+
+  it("is not_configured with no grant, naming the Connect client settings and never a legacy token", async () => {
+    process.env.ZOHO_CLIENT_ID_API = "crm-client";
+    process.env.ZOHO_CLIENT_SECRET_API = "crm-secret";
+    process.env.ZOHO_REFRESH_TOKEN = "legacy-refresh";
+    try {
+      const t = setup([tokenOk()], { grant: false });
+      const st = await t.auth.status();
+      expect(st.state).toBe("not_configured");
+      expect(st.reason).toContain("ZOHO_CONNECT_CLIENT_ID");
+      expect(st.reason).not.toMatch(/REFRESH_TOKEN|self.?client/i);
+      await expect(t.auth.getAccess()).rejects.toMatchObject({ problem: "not_configured" });
+      expect(t.http.calls).toHaveLength(0);
+    } finally {
+      delete process.env.ZOHO_REFRESH_TOKEN;
+    }
   });
 });
 
@@ -424,9 +421,10 @@ describe("scopes + data centers", () => {
     expect(zohoDefaultDc({ ZOHO_ACCOUNTS_SERVER: "https://accounts.zoho.eu.attacker.net" }).accounts).toBe("https://accounts.zoho.com");
   });
 
-  it("refreshes legacy env tokens in the configured DC", async () => {
-    process.env.ZOHO_ACCOUNTS_SERVER = "https://accounts.zoho.eu";
-    const t = setup([tokenOk("eu-at", { api_domain: "https://www.zohoapis.eu" })]);
+  it("refreshes the grant in the DC it was granted in", async () => {
+    const t = setup([tokenOk("eu-at", { api_domain: "https://www.zohoapis.eu" })], {
+      grant: { accountsServer: "https://accounts.zoho.eu" },
+    });
     const a = await t.auth.getAccess();
     expect(t.http.calls[0].url).toBe("https://accounts.zoho.eu/oauth/v2/token");
     expect(a.apiDomain).toBe("https://www.zohoapis.eu");
@@ -542,12 +540,8 @@ describe("Zoho Connect", () => {
 });
 
 describe("database source availability (#668)", () => {
-  it.each(["revoked", "missing client", "rejected refresh"] as const)("prefers an unreadable Connect grant over a %s fallback failure, then retries the recovered grant", async (failure) => {
-    const t = setup([{ status: 400, body: { error: "invalid_code" } }], { connectEnabled: true });
-    if (failure === "missing client") legacy = [{ ...legacyCrm(), client: null }];
-    if (failure === "revoked") await t.store.writeState(fingerprint("rt-legacy"), {
-      authStatus: "revoked", nextAttemptAt: new Date(t.now() + 3_600_000), lastError: "fixture revoked",
-    });
+  it("reports an unreadable Connect grant as degraded, then retries the recovered grant", async () => {
+    const t = setup([{ status: 400, body: { error: "invalid_code" } }], { grant: false });
     const originalRead = t.store.read.bind(t.store);
     let unavailable = true;
     const read = vi.spyOn(t.store, "read").mockImplementation(async (provider, onUnavailable?: () => void) => {
@@ -558,10 +552,10 @@ describe("database source availability (#668)", () => {
     await expect(t.auth.getAccess()).rejects.toBeInstanceOf(ZohoAuthUnavailableError);
     await expect(t.auth.getAccess()).rejects.toThrow(/database unavailable/i);
     expect(read).toHaveBeenCalledTimes(3);
-    expect(t.http.calls).toHaveLength(failure === "rejected refresh" ? 1 : 0);
+    expect(t.http.calls).toHaveLength(0);
 
     await t.store.saveGrant({
-      provider: UNIFIED_PROVIDER, refreshToken: "fixture-oauth-recovery-refresh", clientId: "crm-client",
+      provider: UNIFIED_PROVIDER, refreshToken: "fixture-oauth-recovery-refresh", clientId: "connect-client",
       scope: ZOHO_PRODUCT_SCOPES.crm.join(" "), accessToken: "fixture-oauth-recovery-access",
       accessExpiresAt: new Date(t.now() + 3_600_000),
     });
@@ -569,32 +563,19 @@ describe("database source availability (#668)", () => {
     expect(await t.auth.getAccess()).toMatchObject({ source: "unified", token: "fixture-oauth-recovery-access" });
     expect(await t.auth.status()).toMatchObject({ state: "connected", source: "unified" });
     expect(read).toHaveBeenCalledTimes(4);
-    expect(t.http.calls).toHaveLength(failure === "rejected refresh" ? 1 : 0);
-  });
-
-  it.each(["revoked", "missing client", "rejected refresh"] as const)("keeps a %s fallback failure a reconnect error when Connect was read successfully", async (failure) => {
-    const t = setup([{ status: 400, body: { error: "invalid_code" } }], { connectEnabled: true });
-    if (failure === "missing client") legacy = [{ ...legacyCrm(), client: null }];
-    if (failure === "revoked") await t.store.writeState(fingerprint("rt-legacy"), {
-      authStatus: "revoked", nextAttemptAt: new Date(t.now() + 3_600_000), lastError: "fixture revoked",
-    });
-    await expect(t.auth.getAccess()).rejects.toMatchObject({ problem: failure === "missing client" ? "client" : "revoked" });
-    expect(await t.auth.status()).toMatchObject({ state: "needs_reconnect" });
-    expect(t.http.calls).toHaveLength(failure === "rejected refresh" ? 1 : 0);
+    expect(t.http.calls).toHaveLength(0);
   });
 
   it("keeps a genuinely revoked readable Connect grant a reconnect error", async () => {
-    legacy = [];
-    const t = setup([{ status: 400, body: { error: "invalid_code" } }], { connectEnabled: true });
-    await t.store.saveGrant({ provider: UNIFIED_PROVIDER, refreshToken: "fixture-oauth-revoked-refresh", clientId: "crm-client", scope: ZOHO_PRODUCT_SCOPES.crm.join(" ") });
+    const t = setup([{ status: 400, body: { error: "invalid_code" } }], { grant: false });
+    await t.store.saveGrant({ provider: UNIFIED_PROVIDER, refreshToken: "fixture-oauth-revoked-refresh", clientId: "connect-client", scope: ZOHO_PRODUCT_SCOPES.crm.join(" ") });
     await expect(t.auth.getAccess()).rejects.toMatchObject({ problem: "revoked" });
     expect(await t.auth.status()).toMatchObject({ state: "needs_reconnect", source: "unified" });
     expect(t.http.calls).toHaveLength(1);
   });
 
   it("reports a failed grant read as degraded and retries immediately until recovery", async () => {
-    legacy = [];
-    const { auth, store, http } = setup([], { connectEnabled: true });
+    const { auth, store, http } = setup([], { grant: false });
     const read = vi.spyOn(store, "read")
       .mockRejectedValueOnce(new DeadlineError("token store", 30))
       .mockRejectedValueOnce(new Error("Connection terminated unexpectedly"));
@@ -608,28 +589,15 @@ describe("database source availability (#668)", () => {
   });
 
   it("does not turn a failed grant read into a reconnect error on access", async () => {
-    legacy = [];
-    const { auth, store, http } = setup([], { connectEnabled: true });
+    const { auth, store, http } = setup([], { grant: false });
     vi.spyOn(store, "read").mockRejectedValue(new DeadlineError("token store", 30));
     await expect(auth.hasCredentials()).rejects.toBeInstanceOf(ZohoAuthUnavailableError);
     await expect(auth.getAccess()).rejects.toBeInstanceOf(ZohoAuthUnavailableError);
     expect(http.calls).toHaveLength(0);
   });
 
-  it("does not cache a failed legacy state read or probe during the outage", async () => {
-    const { auth, store, http } = setup([]);
-    const readState = vi.spyOn(store, "readState").mockRejectedValueOnce(new DeadlineError("token state", 30));
-    const probe = vi.fn();
-    expect(await auth.check(probe)).toMatchObject({ state: "degraded", source: "env" });
-    expect(await auth.status()).toMatchObject({ state: "unknown", source: "env" });
-    expect(readState).toHaveBeenCalledTimes(2);
-    expect(probe).not.toHaveBeenCalled();
-    expect(http.calls).toHaveLength(0);
-  });
-
   it("keeps a successful missing grant not_configured and cacheable", async () => {
-    legacy = [];
-    const { auth, store } = setup([], { connectEnabled: true });
+    const { auth, store } = setup([], { grant: false });
     const read = vi.spyOn(store, "read");
     expect(await auth.status()).toMatchObject({ state: "not_configured" });
     expect(await auth.status()).toMatchObject({ state: "not_configured" });
