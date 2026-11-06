@@ -3,6 +3,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { signDeSyncRequest } from "./deSyncAuth";
+import { HUB_LICENSES_CONTRACT, HUB_LICENSES_PATH, hubLicenseItemSchema, hubLicensesProjectionSchema } from "./hubLicensesContract";
 import {
   DE_SYNC_EVENT_TYPES,
   DE_SYNC_SOURCES,
@@ -27,6 +28,32 @@ const fixture = JSON.parse(
       body: string;
       secret: string;
       signature: string;
+    };
+  };
+  reads: {
+    portalLicenses: {
+      contract: string;
+      direction: string;
+      method: string;
+      path: string;
+      query: { required: string[]; optional: string[] };
+      auth: { source: string; scopedSecretEnv: string; signsQuery: boolean; legacySecret: string };
+      responseFields: string[];
+      itemFields: string[];
+      seatFields: string[];
+      totalsFields: string[];
+      kinds: string[];
+      seatSources: string[];
+      errors: Record<string, string>;
+      signingSample: {
+        method: string;
+        path: string;
+        timestamp: string;
+        eventId: string;
+        body: string;
+        secret: string;
+        signature: string;
+      };
     };
   };
 };
@@ -55,6 +82,39 @@ describe("de-sync contract parity", () => {
   it("signs the same canonical string the Hub verifies", () => {
     const sample = fixture.signing.sample;
     expect(fixture.signing.timestampSkewMs).toBe(5 * 60 * 1000);
+    expect(
+      signDeSyncRequest({
+        method: sample.method,
+        path: sample.path,
+        timestamp: sample.timestamp,
+        eventId: sample.eventId,
+        body: sample.body,
+        secret: sample.secret,
+      }),
+    ).toBe(sample.signature);
+  });
+
+  it("pins the Hub licences read (reads.portalLicenses, de.hub.licenses/v1)", () => {
+    const read = fixture.reads.portalLicenses;
+    expect(read.contract).toBe(HUB_LICENSES_CONTRACT);
+    expect(read.direction).toBe("portal_to_hub");
+    expect(read.method).toBe("GET");
+    expect(read.path).toBe(HUB_LICENSES_PATH);
+    expect(read.query).toEqual({ required: ["accountId"], optional: ["portalClientId"] });
+    // Scoped secret only, query covered by the signature, legacy refused.
+    expect(read.auth).toEqual({ source: "portal", scopedSecretEnv: "PORTAL_TO_HUB_SECRET", signsQuery: true, legacySecret: "refused" });
+
+    // The site's parser accepts exactly the fields the Hub pins, no more, no fewer.
+    expect(Object.keys(hubLicensesProjectionSchema.shape).sort()).toEqual([...read.responseFields].sort());
+    expect(Object.keys(hubLicenseItemSchema.shape).sort()).toEqual([...read.itemFields].sort());
+    expect(Object.keys(hubLicenseItemSchema.shape.seats.shape).sort()).toEqual([...read.seatFields].sort());
+    expect(Object.keys(hubLicensesProjectionSchema.shape.totals.shape).sort()).toEqual([...read.totalsFields].sort());
+    expect([...hubLicenseItemSchema.shape.kind.options]).toEqual(read.kinds);
+    expect(read.seatSources).toEqual(["pool", "order"]);
+    expect(Object.keys(read.errors).sort()).toEqual(["401", "409", "503"]);
+
+    const sample = read.signingSample;
+    expect(sample.path.startsWith(`${read.path}?accountId=`)).toBe(true);
     expect(
       signDeSyncRequest({
         method: sample.method,

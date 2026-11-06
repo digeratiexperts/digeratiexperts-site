@@ -30,28 +30,6 @@
 
 version: 2
 claims:
-  - id: de-techtool-one-endpoint-runtime-20261105
-    issue: null
-    owner: claude
-    subsystem: msp-ai-kit
-    branch: claude/techtool-hub-install-catalog (PR A) + claude/techtool-retire-ps-agent (PR B, stacked on A)
-    base_sha: 296721de3a49ecb3515a41cd2e028a9c2abba736
-    started: 2026-11-05
-    files:
-      - .claude/skills/msp-ai-kit/windows/console/modules/DE.Apps/DE.Apps.psm1 (Get-DEPackageCatalog hunk only)
-      - .claude/skills/msp-ai-kit/windows/console/tests/HubPackageCatalog.Tests.ps1
-      - .claude/skills/msp-ai-kit/windows/README-WINDOWS.md (Packages section)
-      - .claude/skills/msp-ai-kit/windows/agent/** (removed, PR B)
-      - .claude/skills/msp-ai-kit/windows/console/tests/Agent*.Tests.ps1, Job{Catalog,Replay,Signature}.Tests.ps1, HubQueueLoadTest.Tests.ps1 (removed, PR B)
-      - .claude/skills/msp-ai-kit/windows/AGENT-*.md, HUB-JOB-QUEUE.md, HUB-QUEUE-LOAD-TEST.md, PS-AGENT-RETIREMENT.md (PR B)
-    status: active
-    note: >-
-      Cross-repo review 2026-11-04 step 5 (Intelligence-Hub
-      docs/architecture/2026-11-04-cross-repo-review.md), Joe 2026-11-05 "finish
-      the review's projects". Drafts only, no merge. packages.json is NOT
-      touched (no change to packages or pins), so the techtool stack #947 ->
-      #948 -> #950 keeps sole ownership of the catalog, INSTALLER-*.md and the
-      trust tests; the DE.Apps hunk here is disjoint from #950's three lines.
   - id: desk-chooser-height-20261101
     issue: 918
     owner: codex
@@ -84,7 +62,9 @@ claims:
       - .claude/skills/msp-ai-kit/windows/DE-TECH-TOOL-TRACKER.md (Plan documents row)
       - .claude/skills/msp-ai-kit/scripts/build-techtool-tracker.ps1 (same row, so regeneration keeps it)
       - .ai/ACTIVE_WORK.yaml (this claim)
-    status: active
+    status: merged
+    pr: 874
+    merge_sha: 3cf40a3d26ee4d9813daf2fecdac1c1aaac4243c
     started: 2026-10-31
     note: >-
       DE Tech Tool move 73 (issue 791), Tech Center schedule row W2-7: the STRIDE
@@ -109,7 +89,9 @@ claims:
       - server/zoho/zohoBilling.ts, server/zoho/zohoDesk.ts (additive strict read methods + injectable client; legacy methods unchanged)
       - server/portalDeskTickets.ts, server/portalDeskTickets.test.ts (summarizeTicketStatuses, normalizeLocalTicketStatus)
       - scripts/qa/w1-dashboard-truth.mjs, artifacts/visual-qa/w1-dashboard-truth/**
-    status: active
+    status: merged
+    pr: 850
+    merge_sha: fe73e60111ca163aeeece76f79d7d7eb31da8a94
     started: 2026-10-26
     note: >-
       Delivery sizing W1 / journey 10: unknown is not zero, waiting-on-you is only
@@ -125,7 +107,9 @@ claims:
       - tailwind.config.ts, client/index.html, client/src/index.css (one family)
       - client/src/components/PageTemplate.tsx (no statement colon)
       - client/src/components/home/HomeChapter.tsx, client/src/components/site/chapters.tsx, client/src/components/site/SolutionsRelationshipTable.tsx (sentence-case labels)
-    status: active
+    status: merged
+    pr: 827
+    merge_sha: cbd98752dded06a8a459a67950b0a22ee70dcf58
     started: 2026-10-24
   - id: home-v2-scene-story
     owner: claude
@@ -185,7 +169,8 @@ claims:
     files:
       - client/src/pages/versions/v8/** (homepage V8 only: one CTA system, canonical names, visitor copy, section consolidation)
       - docs/lanes/lane-h-homepage.md, docs/lanes/lane-h-phase0.md (log and Phase 0 report)
-    status: active
+    status: merged
+    merge_sha: 6bf320822aa82cb61480293ace89b39cd27b56e5
     started: 2026-10-22
     note: >-
       Lane H, Wave 1 (docs/plans/opencode/lane-h-homepage.md + lane-h-update-1.md).
@@ -290,7 +275,8 @@ claims:
       - scripts/export-dex-kit.ts (new)
       - docs/DEX-INTEGRATION.md (new)
       - .ai/ACTIVE_WORK.yaml (this claim; home-mesh-concept closeout)
-    status: active
+    status: merged
+    merge_sha: 39e2add08ee07afa3f77c31942c58a29c2653b34
     started: 2026-10-21
     note: >-
       Dex mascot presence on /concepts/mascots only: tweened emotions, nine
@@ -386,7 +372,8 @@ claims:
       - client/src/pages/concepts/home-chapters.css (dark-ink token re-point + text-fill repairs on white card surfaces; light-theme poster/doc fixes)
       - client/src/pages/concepts/HomeChapters.tsx (founder img fetchPriority → lowercase attr; no route/SEO changes)
       - scripts/qa/home-chapters-legibility.mjs, artifacts/visual-qa/home-chapters-legibility/** (new computed-style audit)
-    status: active
+    status: merged
+    merge_sha: bb3a9f4878dd73614a1d1908111187ae7d67e98f
     started: 2026-10-21
     note: >-
       Computed-style legibility audit on /concepts/home-chapters: axe 0,
@@ -408,7 +395,9 @@ claims:
       - client/src/pages/DigeratiHomepage.tsx (homepage useSEO title matches routeMeta "/")
       - client/src/pages/DigeratiHomepage.title.test.ts
       - package.json, package-lock.json (express-async-errors only)
-    status: active
+    status: merged
+    pr: 679
+    merge_sha: 059b6d80e87b401336facccbc4bcade3d716046b
     started: 2026-10-21
     note: >-
       Bug hunt on current main. Fixed: async route throws never reached error
@@ -499,7 +488,9 @@ claims:
       - server/db.ts (markDatabaseDown only)
       - server/healthProbe.ts
       - server/healthProbe.test.ts
-    status: active
+    status: merged
+    pr: 665
+    merge_sha: 72c176ff057c1dcb7561cc4c9c541688cf66085f
     started: 2026-10-20
     note: >-
       2026-10-20 04:44-13:43 UTC: the live process lost Neon after boot and
@@ -5098,6 +5089,28 @@ claims:
       set on production and on the staging review instance, otherwise portal
       sign-in is refused after deploy. Checked open PRs 877/882/947/948/950: no
       file overlap.
+  - id: de-sync-legacy-secret-retirement
+    issue: 957
+    owner: claude
+    subsystem: hub-integration-auth
+    branch: claude/legacy-secret-observe (PR 1) -> claude/legacy-secret-remove (PR 2, held, stacked)
+    base_sha: 296721de3a49ecb3515a41cd2e028a9c2abba736
+    started: 2026-11-05
+    files:
+      - server/integrations/deSyncAuth.ts
+      - server/integrations/deSyncLegacyCredential.ts (new) + deSyncLegacyCredential.test.ts, deSyncLegacyObserve.test.ts (new)
+      - server/integrations/ensureDeSyncSchema.ts (additive CREATE TABLE de_sync_legacy_credential_uses)
+      - server/integrations/techSalesClient.ts (outbound secret resolution only; the legacy lead-webhook sender is untouched)
+      - server/integrations/deSyncRoutes.ts (health summary + admin-only per-direction endpoint)
+    status: active
+    note: >-
+      Website half of retiring TECHSALES_SYNC_TOKEN / WEBSITE_LEAD_WEBHOOK_SECRET
+      as the DE-Sync fallback (Hub #841 merged 6a56dd72, Hub #842 held). PR 1
+      observes: one warning per direction per hour, every use counted, health
+      reports null/"unknown" (never 0) when the count is unreadable. PR 2
+      deletes the fallback and merges only after BOTH sides show 7 days at
+      zero (Hub docs/runbooks/de-sync-legacy-secret-retirement.md). Joe
+      approved the work 2026-11-05; the coordinator merges PR 1 on his say-so.
   - id: kb-docs-layout
     issue: 960
     owner: claude
