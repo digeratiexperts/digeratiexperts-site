@@ -55,31 +55,6 @@ claims:
       defaults to portal: no behaviour change on merge. PR 967; Joe
       2026-11-05: "merge #967". techSalesClient.ts is also touched by #958/#959 (other hunks);
       this change is an append and does not use resolveScopedSecret.
-  - id: tech-tool-private-repo-20261105
-    issue: 964
-    owner: claude
-    subsystem: msp-ai-kit
-    branch: claude/tech-tool-remove
-    base_sha: 296721de3a49ecb3515a41cd2e028a9c2abba736
-    started: 2026-11-05
-    files:
-      - .claude/skills/msp-ai-kit/windows/ (removed; moved to digeratiexperts/de-tech-tool)
-      - .claude/skills/msp-ai-kit/scripts/build-techtool-tracker.ps1 (removed; moved)
-      - .claude/skills/msp-ai-kit/TECH-TOOL-MOVED.md (new pointer)
-      - .claude/skills/msp-ai-kit/SKILL.md, README.md, UPSTREAM.md, upstream.lock
-      - .github/workflows/msp-ai-kit.yml (Tech Tool Windows jobs dropped)
-      - .github/workflows/installer-source-recheck.yml (removed; moved)
-      - .gitignore, AGENTS.md, docs/DE-SYSTEM-INTEGRATION.md
-      - .ai/ACTIVE_WORK.yaml (this claim)
-    status: active
-    note: >-
-      Joe 2026-11-05: move the Tech Tool to a private repo, "Everything is
-      approved". Staging branch claude/tech-tool-extract (orphan, filter-repo of
-      .claude/skills/msp-ai-kit at 296721de) is pushed to de-tech-tool:main by
-      the coordinator. This removal PR stays draft until de-tech-tool has the
-      history and open Tech Tool PRs 947, 948, 950, 961, 963 have landed here
-      (then re-cut the extract) or been re-targeted at de-tech-tool. Other
-      claims below that list windows/ paths are left for their owners.
   - id: desk-chooser-height-20261101
     issue: 918
     owner: codex
