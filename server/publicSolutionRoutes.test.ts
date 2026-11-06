@@ -300,13 +300,26 @@ describe("public solution Door 2 API", () => {
   describe("in production, when the database refuses the submit (#243: never lost)", () => {
     let originalEnv: string | undefined;
     let originalSmoke: string | undefined;
+    let originalTurnstile: string | undefined;
     let emitSpy: ReturnType<typeof vi.spyOn>;
+    let turnstileFetch: ReturnType<typeof vi.spyOn>;
+    // Production fails closed without a Turnstile secret (2026-11-04), so these
+    // run as production does: a secret is set and Cloudflare accepts the token.
+    const realFetch = globalThis.fetch;
+    const prodSubmit = (extra: Record<string, unknown> = {}) => fourFieldSubmit({ turnstileToken: "prod-turnstile-token", ...extra });
 
     beforeEach(() => {
       originalEnv = process.env.NODE_ENV;
       originalSmoke = process.env.DE_SMOKE_ALLOW_MEMORY_ONLY;
       process.env.NODE_ENV = "production";
       delete process.env.DE_SMOKE_ALLOW_MEMORY_ONLY;
+      originalTurnstile = process.env.TURNSTILE_SECRET_KEY;
+      process.env.TURNSTILE_SECRET_KEY = "test-turnstile-secret";
+      turnstileFetch = vi.spyOn(globalThis, "fetch").mockImplementation(async (input: string | URL | Request, init?: RequestInit) => {
+        const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
+        if (url !== "https://challenges.cloudflare.com/turnstile/v0/siteverify") return realFetch(input, init);
+        return new Response(JSON.stringify({ success: true }), { headers: { "Content-Type": "application/json" } });
+      });
       emitSpy = vi.spyOn(eventBus, "emit").mockImplementation(async () => undefined as any);
       vi.mocked(writeSpoolEntry).mockReset().mockReturnValue(true);
       vi.mocked(syncPublicSolutionRequestToCrm).mockReset().mockResolvedValue("pending");
@@ -316,13 +329,16 @@ describe("public solution Door 2 API", () => {
 
     afterEach(() => {
       emitSpy.mockRestore();
+      turnstileFetch.mockRestore();
+      if (originalTurnstile === undefined) delete process.env.TURNSTILE_SECRET_KEY;
+      else process.env.TURNSTILE_SECRET_KEY = originalTurnstile;
       process.env.NODE_ENV = originalEnv;
       if (originalSmoke === undefined) delete process.env.DE_SMOKE_ALLOW_MEMORY_ONLY;
       else process.env.DE_SMOKE_ALLOW_MEMORY_ONLY = originalSmoke;
     });
 
     it("accepts it from the disk spool, tells sales directly, and leaves the lead event to recovery", async () => {
-      const response = await fourFieldSubmit({ idempotencyKey: "spool-test" });
+      const response = await prodSubmit({ idempotencyKey: "spool-test" });
       expect(response.status).toBe(200);
       const body = await response.json();
       expect(body.durable).toBe("spool");
@@ -341,14 +357,14 @@ describe("public solution Door 2 API", () => {
       vi.mocked(writeSpoolEntry).mockReturnValue(false);
       vi.mocked(notificationService.sendSolutionRequestFallback).mockResolvedValue(false);
       vi.mocked(syncPublicSolutionRequestToCrm).mockResolvedValue("recorded");
-      const body = await (await fourFieldSubmit({ idempotencyKey: "crm-only-test" })).json();
+      const body = await (await prodSubmit({ idempotencyKey: "crm-only-test" })).json();
       expect(body.durable).toBe("crm");
       expect(body.crm).toBe("recorded");
     });
 
     it("accepts it from the email alone when disk and CRM both refuse it", async () => {
       vi.mocked(writeSpoolEntry).mockReturnValue(false);
-      const response = await fourFieldSubmit({ idempotencyKey: "email-only-test" });
+      const response = await prodSubmit({ idempotencyKey: "email-only-test" });
       expect(response.status).toBe(200);
       expect((await response.json()).durable).toBe("email");
     });
@@ -356,7 +372,7 @@ describe("public solution Door 2 API", () => {
     it("asks for a retry only when all three fail, and lets the retry be a real submit", async () => {
       vi.mocked(writeSpoolEntry).mockReturnValue(false);
       vi.mocked(notificationService.sendSolutionRequestFallback).mockResolvedValue(false);
-      const refused = await fourFieldSubmit({ idempotencyKey: "durability-test" });
+      const refused = await prodSubmit({ idempotencyKey: "durability-test" });
       expect(refused.status).toBe(503);
       expect((await refused.json()).code).toBe("DURABLE_STORAGE_REQUIRED");
       expect(emitSpy).not.toHaveBeenCalledWith(EventTypes.LEAD_CREATED, expect.anything());
@@ -364,7 +380,7 @@ describe("public solution Door 2 API", () => {
 
       // Once any layer holds, the same submit is accepted and is not a replay.
       vi.mocked(writeSpoolEntry).mockReturnValue(true);
-      const accepted = await fourFieldSubmit({ idempotencyKey: "durability-test" });
+      const accepted = await prodSubmit({ idempotencyKey: "durability-test" });
       expect(accepted.status).toBe(200);
       const acceptedBody = await accepted.json();
       expect(acceptedBody.replayed).toBe(false);
@@ -520,8 +536,8 @@ describe("public solution Door 2 API", () => {
   });
 
   // The contact step's Turnstile check (Joe, 2026-10-14): the same verifyTurnstile
-  // as portal sign-in. The tests above run with no TURNSTILE_SECRET_KEY, which is
-  // the fail-open path local dev uses; these set one, as production does.
+  // as portal sign-in. Most tests above run with no TURNSTILE_SECRET_KEY outside
+  // production, the permissive path local dev uses; these set one, as production does.
   describe("with Turnstile configured", () => {
     const SECRET = "test-turnstile-secret";
     const GOOD_TOKEN = "valid-turnstile-token";

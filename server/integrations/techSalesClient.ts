@@ -10,6 +10,7 @@ import { buildSignedHeaders, newEventId, outboundSecret, SCOPED_SECRET_ENV } fro
 import type { DeSyncEnvelope, DeSyncEventType } from "./deSyncContract";
 import { SERVICE_REQUEST_HUB_EVENT, SERVICE_REQUEST_HUB_PATH } from "@shared/serviceRequests";
 import { representationProjectionSchema, type RepresentationProjection } from "@shared/representation";
+import { hubLicensesProjectionSchema, type HubLicensesProjection } from "./hubLicensesContract";
 
 export type HubCompanyDocumentsResponse = {
   success?: boolean;
@@ -607,3 +608,52 @@ export async function pingHub(): Promise<{ ok: boolean; latencyMs: number; statu
 }
 
 export { signedGet };
+
+/**
+ * One account's licence seats from the Hub (contract de.hub.licenses/v1,
+ * GET /api/webhooks/portal/licenses). Read by the licence board when
+ * LICENSE_BOARD_SOURCE is `shadow` or `hub` (server/licenseBoardHubSource.ts).
+ *
+ * Signed portal_to_hub with the SCOPED secret only: this Hub route refuses the
+ * legacy shared secret, so there is no fallback to it here, and with no
+ * PORTAL_TO_HUB_SECRET the read is skipped. The signature covers the query
+ * (portalBridgeHeaders), because the tenant rides in ?accountId=. The
+ * canonical Hub accounts.id (portal_clients.hub_account_id) is required:
+ * there is no company-name fallback. Not cached: the Hub answers no-store.
+ *
+ * Returns null (caller falls back to the portal's own data) when the Hub is
+ * not configured, unreachable, refuses the request, or answers with anything
+ * that does not match the contract or is for another account.
+ */
+export async function fetchHubLicenses(
+  accountId: string,
+  portalClientId?: string | null,
+): Promise<HubLicensesProjection | null> {
+  const base = hubApiBase();
+  const secret = (process.env.PORTAL_TO_HUB_SECRET || "").trim();
+  if (!base || !secret) {
+    logger.warn("Hub licences read skipped: TECHSALES_HUB_URL/SYNC_URL or PORTAL_TO_HUB_SECRET not set");
+    return null;
+  }
+  if (!/^\d+$/.test(accountId)) return null;
+  const params = new URLSearchParams({ accountId });
+  if (portalClientId) params.set("portalClientId", portalClientId);
+  const url = `${base}/webhooks/portal/licenses?${params.toString()}`;
+  try {
+    const res = await fetch(url, { method: "GET", headers: { ...portalBridgeHeaders(url, secret), Accept: "application/json" } });
+    const body = await res.json().catch(() => null);
+    if (!res.ok) {
+      logger.warn("Hub licences read failed", { status: res.status, code: (body as { code?: unknown } | null)?.code, accountId });
+      return null;
+    }
+    const parsed = hubLicensesProjectionSchema.safeParse(body);
+    if (!parsed.success || String(parsed.data.accountId) !== accountId) {
+      logger.warn("Hub licences did not match contract", { accountId });
+      return null;
+    }
+    return parsed.data;
+  } catch (err: any) {
+    logger.error("Hub licences read error", err, { accountId });
+    return null;
+  }
+}

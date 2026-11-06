@@ -26,7 +26,7 @@ Startup logs a warning without these; the named feature degrades.
 | Name | Kind | Where used | Notes |
 |---|---|---|---|
 | `SESSION_SECRET` | secret | `server/production.config.ts`, `server/portalZohoAuth.ts` | OAuth state-signing fallback. |
-| `TURNSTILE_SECRET_KEY` | secret | `server/production.config.ts`, `server/middleware/security.ts` | Server-side Turnstile verification; fails open without it. Pair with `VITE_TURNSTILE_SITE_KEY` at build time. |
+| `TURNSTILE_SECRET_KEY` | secret | `server/production.config.ts`, `server/middleware/security.ts` | Server-side Turnstile verification. **Required in production:** without it, production fails closed and refuses portal sign-in, registration, password reset, verification resend and the public solution request (503 `TURNSTILE_UNCONFIGURED`), logged once at boot, and `deploy/vps/deploy.sh` refuses to deploy staging or production without it (or with it but no `VITE_TURNSTILE_SITE_KEY`). Development stays permissive; CI's memory-only smoke (`DE_SMOKE_ALLOW_MEMORY_ONLY=1` with no `DATABASE_URL`) is the only production-mode exception. Pair with `VITE_TURNSTILE_SITE_KEY` at build time. |
 | `ZOHO_PAYMENTS_ACCOUNT_ID` | config | `server/production.config.ts`, `server/index.ts` | Online card checkout. Without it and the signing key, checkout and webhook verification are off. |
 | `ZOHO_PAYMENTS_SIGNING_KEY` | secret | `server/production.config.ts`, `server/index.ts` | Zoho Payments webhook signature. |
 
@@ -87,10 +87,11 @@ Optional; DE Sync is off without them.
 | `TECHSALES_SYNC_TOKEN` | secret | (none on DE-Sync) | Retired as the DE-Sync fallback; no direction accepts or signs with it. Keep until the Hub's `/api/webhooks/website-lead` is retired. |
 | `WEBSITE_LEAD_WEBHOOK_SECRET` | secret | (none on DE-Sync) | Same as above: retired as the DE-Sync fallback; the Hub's website-lead route still checks it. |
 | `WEBSITE_TO_HUB_SECRET` | secret | `server/integrations/deSyncAuth.ts` | Website → Hub signing secret. |
-| `PORTAL_TO_HUB_SECRET` | secret | `server/serviceRequestHubSync.ts`, `server/integrations/deSyncAuth.ts` | Portal → Hub signing secret. |
+| `PORTAL_TO_HUB_SECRET` | secret | `server/serviceRequestHubSync.ts`, `server/integrations/deSyncAuth.ts`, `server/integrations/techSalesClient.ts` | Portal → Hub signing secret. The Hub licence read (`fetchHubLicenses`) uses only this; the legacy secret is refused there. |
 | `HUB_TO_WEBSITE_SECRET` | secret | `server/integrations/deSyncAuth.ts` | Verifies Hub → website calls. |
 | `HUB_TO_PORTAL_SECRET` | secret | `server/integrations/deSyncAuth.ts` | Verifies Hub → portal calls. |
 | `DE_SYNC_REQUIRE_SIGNED` | config | `server/integrations/deSyncAuth.ts`, `server/integrations/techSalesClient.ts` | Flag: reject unsigned inbound sync. |
+| `LICENSE_BOARD_SOURCE` | config | `server/licenseBoardHubSource.ts` | Where the licence board reads company seats: `portal` (default, unset), `shadow` (portal page, Hub differences logged), `hub` (Hub seats, portal fallback per company). Needs `portal_clients.hub_account_id`. |
 
 ## Portal integrations
 
@@ -209,7 +210,7 @@ Safe defaults; set only to override.
 | `DB_CONNECTION_TIMEOUT` | config | `server/production.config.ts` | Default 5000 ms. |
 | `DE_PRODUCTION_DB_MARKERS` | config | `server/index.ts` | Hostnames that mark a production database. |
 | `DE_STAGING_REVIEW` | config | `server/stagingReviewGuard.ts` | Staging review mode: locks outbound mutations. |
-| `TURNSTILE_ENFORCE` | config | `server/middleware/security.ts` | `1` makes Turnstile fail closed when `TURNSTILE_SECRET_KEY` is missing. |
+| `TURNSTILE_ENFORCE` | config | `server/middleware/security.ts` | `1` makes Turnstile fail closed when `TURNSTILE_SECRET_KEY` is missing in any environment, including development and the CI smoke. Production already fails closed without it. |
 | `PDF_CHROMIUM_PATH` | config | `server/pdf/renderHtmlToPdf.ts` | Chromium for PDF rendering. |
 | `PDF_MAX_CONCURRENT_RENDERS` | config | `server/pdf/renderHtmlToPdf.ts` | PDF render concurrency. |
 | `PYTHON` | config | `server/pdf/renderHtmlToPdf.ts` | Python for the PDF pipeline (also `PYTHON_BIN`). |
@@ -221,7 +222,7 @@ Safe defaults; set only to override.
 | `THREAT_FEED_STARTUP_DELAY_MS` | config | `server/services/threat-intel/ingest.ts` | Delay before the first feed refresh. |
 | `ENABLE_DEV_PORTAL_BOOTSTRAP` | config | `server/portalAuthStore.ts` | Development only: seed a portal admin. Never set in production. |
 | `DEV_PORTAL_ADMIN_PASSWORD_HASH` | secret | `server/portalAuthStore.ts` | Development only: the seeded admin's hash. |
-| `DE_SMOKE_ALLOW_MEMORY_ONLY` | config | `server/healthProbe.ts`, `server/production.config.ts` | CI smoke only: allow no `DATABASE_URL`. |
+| `DE_SMOKE_ALLOW_MEMORY_ONLY` | config | `server/healthProbe.ts`, `server/production.config.ts`, `server/middleware/security.ts` | CI smoke only: allow no `DATABASE_URL`. With no `DATABASE_URL` it also skips Turnstile when no secret is set; with a database it does not. |
 | `REPLIT_SERVER_PORT` | config | `server/index.ts` | Replit-era; unused on the VPS. |
 | `REPL_ID` | config | `vite.config.ts` | Replit-era; unused on the VPS. |
 | `REPL_OWNER` | config | `server/index.ts`, `server/vite.ts` | Replit-era; unused on the VPS. |

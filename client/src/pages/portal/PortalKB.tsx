@@ -2,14 +2,16 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Stars } from "@/components/portal/kb/kbUi";
-import { Input } from "@/components/ui/input";
 import { PortalLayout } from "./PortalLayout";
-import { Search, BookOpen, Eye } from "lucide-react";
+import { BookOpen, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { portalGet } from "@/lib/portalApi";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Callout, EmptyState, Panel, Token } from "@/components/portal/ui";
+import { KbCard, KbCardGrid, KbHelpHero, KbSearchField, KbStillHaveQuestions, KbToneScope } from "@/components/kb/docs/KbIndexParts";
+import { KB_CATEGORY_META, categoryIcon, orderCategories } from "@/components/kb/docs/kbCategories";
+import type { KbArticleSummary } from "@shared/kb";
 
 interface KBArticle {
   /** The article number (KB0000001); the article page is /portal/kb/:id. */
@@ -42,7 +44,35 @@ export default function PortalKB() {
     queryFn: () => portalGet<KBArticle[]>("/api/portal/kb"),
   });
 
-  const categories = Array.from(new Set(articles.map((a) => a.category).filter(Boolean)));
+  const highlights = useQuery({
+    queryKey: ["/api/portal/kb/highlights"],
+    queryFn: () => portalGet<{ mostViewed: KbArticleSummary[]; mostUseful: KbArticleSummary[] }>("/api/portal/kb/highlights"),
+  });
+
+  const categories = orderCategories(articles.map((a) => a.category).filter(Boolean));
+  const countIn = (c: string) => articles.filter((a) => a.category === c).length;
+  const browsing = !search.trim() && !selectedCategory;
+  const popular = (highlights.data?.mostViewed ?? []).slice(0, 3);
+
+  // Keep ?q= / ?category= in the address so a filtered view can be shared or reloaded.
+  const syncUrl = (q: string, c: string | null) => {
+    if (typeof window === "undefined") return;
+    const u = new URL(window.location.href);
+    if (q) u.searchParams.set("q", q);
+    else u.searchParams.delete("q");
+    if (c) u.searchParams.set("category", c);
+    else u.searchParams.delete("category");
+    window.history.replaceState(window.history.state, "", u.pathname + u.search);
+  };
+  const chooseCategory = (c: string | null) => {
+    setSelectedCategory(c);
+    syncUrl(search, c);
+    if (c) window.requestAnimationFrame(() => document.getElementById("kb-articles")?.scrollIntoView({ block: "start" }));
+  };
+  const onSearch = (q: string) => {
+    setSearch(q);
+    syncUrl(q, selectedCategory);
+  };
 
   const filteredArticles = articles.filter((article) => {
     const q = search.toLowerCase();
@@ -57,31 +87,63 @@ export default function PortalKB() {
   });
 
   return (
-    <PortalLayout title="Knowledge Base" description="Answers to common questions and how-to guides for the services DE manages for you.">
-      <div className="space-y-4">
+    <PortalLayout title="Knowledge Base" hideHeader>
+      <div className="space-y-8">
+        <KbToneScope tone="portal">
+          <KbHelpHero eyebrow="Knowledge Base" title="How can we help?" lede="Answers to common questions and how-to guides for the services DE manages for you.">
+            <KbSearchField id="kb-search" label="Search articles" placeholder="Search articles…" value={search} onChange={onSearch} testId="input-search-kb" />
+          </KbHelpHero>
+        </KbToneScope>
+
         {isError && (
           <Callout tone="bad" title="Articles couldn't be loaded">
             {error instanceof Error ? error.message : "Unknown error"}
           </Callout>
         )}
 
+        {browsing && categories.length > 0 && (
+          <KbToneScope tone="portal">
+            <section aria-labelledby="kb-cat-title">
+              <h2 id="kb-cat-title" className="kbd-block-title">
+                Browse by category
+              </h2>
+              <KbCardGrid cols={4}>
+                {categories.map((c) => (
+                  <KbCard
+                    key={c}
+                    icon={categoryIcon(c)}
+                    title={c}
+                    sub={`${countIn(c)} article${countIn(c) === 1 ? "" : "s"}`}
+                    text={KB_CATEGORY_META[c]?.blurb}
+                    onSelect={() => chooseCategory(c)}
+                    testId={`card-category-${c.toLowerCase().replace(/\s+/g, "-")}`}
+                  />
+                ))}
+              </KbCardGrid>
+            </section>
+          </KbToneScope>
+        )}
+
+        {browsing && popular.length > 0 && (
+          <KbToneScope tone="portal">
+            <section aria-labelledby="kb-popular-title">
+              <h2 id="kb-popular-title" className="kbd-block-title">
+                Popular articles
+              </h2>
+              <KbCardGrid cols={3}>
+                {popular.map((a) => (
+                  <KbCard key={a.number} icon={categoryIcon(a.category)} title={a.title} sub={a.category} text={a.summary} cta="Read article" href={`/portal/kb/${a.number}`} />
+                ))}
+              </KbCardGrid>
+            </section>
+          </KbToneScope>
+        )}
+
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-          <div className="relative lg:w-80 lg:shrink-0">
-            <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" aria-hidden="true" />
-            <Input
-              type="search"
-              placeholder="Search articles..."
-              aria-label="Search articles"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="h-9 border-border bg-card pl-9"
-              data-testid="input-search-kb"
-            />
-          </div>
           <div role="group" aria-label="Filter by category" className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 lg:mx-0 lg:flex-wrap lg:px-0 lg:pb-0">
             <button
               type="button"
-              onClick={() => setSelectedCategory(null)}
+              onClick={() => chooseCategory(null)}
               aria-pressed={selectedCategory === null}
               className={chipClass(selectedCategory === null)}
               data-testid="button-category-all"
@@ -92,7 +154,7 @@ export default function PortalKB() {
               <button
                 key={category}
                 type="button"
-                onClick={() => setSelectedCategory(category)}
+                onClick={() => chooseCategory(category)}
                 aria-pressed={selectedCategory === category}
                 className={chipClass(selectedCategory === category)}
                 data-testid={`button-category-${category?.toLowerCase().replace(/\s+/g, '-')}`}
@@ -161,7 +223,7 @@ export default function PortalKB() {
               description={articles.length === 0 ? "Guides appear here as DE publishes them for your tenant." : "Try another category or clear the search."}
               action={
                 articles.length > 0 ? (
-                  <Button variant="outline" size="sm" className="border-border bg-card hover:bg-accent" onClick={() => { setSelectedCategory(null); setSearch(""); }}>
+                  <Button variant="outline" size="sm" className="border-border bg-card hover:bg-accent" onClick={() => { chooseCategory(null); onSearch(""); }}>
                     Clear filters
                   </Button>
                 ) : undefined
@@ -169,6 +231,19 @@ export default function PortalKB() {
             />
           )}
         </Panel>
+
+        <KbToneScope tone="portal">
+          <KbStillHaveQuestions
+            text="If the answer isn't here, open a ticket and a DE technician will help."
+            action={
+              <Button asChild>
+                <Link href="/portal/tickets/create" data-testid="button-kb-submit-ticket">
+                  Submit a ticket
+                </Link>
+              </Button>
+            }
+          />
+        </KbToneScope>
       </div>
     </PortalLayout>
   );

@@ -1,0 +1,125 @@
+[
+  {
+    "file": "public-index-390.png",
+    "label": "public-index-390.png",
+    "overflow": false,
+    "scrollWidth": 390,
+    "axe": []
+  },
+  {
+    "file": "public-index-768.png",
+    "label": "public-index-768.png",
+    "overflow": false,
+    "scrollWidth": 768,
+    "axe": []
+  },
+  {
+    "file": "public-index-1440.png",
+    "label": "public-index-1440.png",
+    "overflow": false,
+    "scrollWidth": 1440,
+    "axe": []
+  },
+  {
+    "file": "portal-index-light-390.png",
+    "label": "portal-index-light-390.png",
+    "overflow": false,
+    "scrollWidth": 390,
+    "axe": []
+  },
+  {
+    "file": "portal-index-light-768.png",
+    "label": "portal-index-light-768.png",
+    "overflow": false,
+    "scrollWidth": 768,
+    "axe": []
+  },
+  {
+    "file": "portal-index-light-1440.png",
+    "label": "portal-index-light-1440.png",
+    "overflow": false,
+    "scrollWidth": 1440,
+    "axe": []
+  },
+  {
+    "file": "portal-article-light-390.png",
+    "label": "portal-article-light-390.png",
+    "overflow": false,
+    "scrollWidth": 390,
+    "axe": []
+  },
+  {
+    "file": "portal-article-light-768.png",
+    "label": "portal-article-light-768.png",
+    "overflow": false,
+    "scrollWidth": 768,
+    "axe": []
+  },
+  {
+    "file": "portal-article-light-1440.png",
+    "label": "portal-article-light-1440.png",
+    "overflow": false,
+    "scrollWidth": 1440,
+    "axe": []
+  },
+  {
+    "file": "portal-index-black-390.png",
+    "label": "portal-index-black-390.png",
+    "overflow": false,
+    "scrollWidth": 390,
+    "axe": []
+  },
+  {
+    "file": "portal-index-black-768.png",
+    "label": "portal-index-black-768.png",
+    "overflow": false,
+    "scrollWidth": 768,
+    "axe": []
+  },
+  {
+    "file": "portal-index-black-1440.png",
+    "label": "portal-index-black-1440.png",
+    "overflow": false,
+    "scrollWidth": 1440,
+    "axe": []
+  },
+  {
+    "file": "portal-article-black-390.png",
+    "label": "portal-article-black-390.png",
+    "overflow": false,
+    "scrollWidth": 390,
+    "axe": []
+  },
+  {
+    "file": "portal-article-black-768.png",
+    "label": "portal-article-black-768.png",
+    "overflow": false,
+    "scrollWidth": 768,
+    "axe": []
+  },
+  {
+    "file": "portal-article-black-1440.png",
+    "label": "portal-article-black-1440.png",
+    "overflow": false,
+    "scrollWidth": 1440,
+    "axe": []
+  },
+  {
+    "file": "drawer-open-390.png",
+    "label": "drawer-open-390.png",
+    "overflow": false,
+    "scrollWidth": 390,
+    "axe": []
+  },
+  {
+    "keyboard": {
+      "tocHash": "#company-owned-phones-and-tablets",
+      "tocTargetInView": true,
+      "activeAfterJump": "Company-owned phones and tablets",
+      "drawerExpanded": "true",
+      "focusInDrawer": true,
+      "drawerClosedOnEscape": true,
+      "focusReturnedToToggle": true
+    }
+  }
+]
