@@ -16,14 +16,14 @@
 - **Status**: ✅ Connected  
 - **Environment Variables**: JUMPCLOUD_API_KEY
 - **Features**: Device management, inventory, policy deployment
-- **Setup**: `server/services/vendor-integration-scaffold.ts` → JumpCloudIntegration class
+- **Setup**: `server/integrations/jumpcloud.ts` (the TODO-only scaffold class was removed 2026-11-04)
 - **Next**: Build admin endpoints for device sync
 
 ### Coro.net
-- **Status**: ✅ Existing integration scaffold / credentials recorded
+- **Status**: Credentials recorded; no integration code yet
 - **Environment Variables**: CORO_CLIENT_ID, CORO_CLIENT_SECRET
 - **Features**: Security monitoring, threat alerts, compliance
-- **Setup**: `server/services/vendor-integration-scaffold.ts` → CoroIntegration class
+- **Setup**: no server integration in this repo yet (the TODO-only scaffold class was removed 2026-11-04)
 - **Note**: Integration presence does not establish current DE vendor-selection status; use Hub Vendor Intelligence for that decision.
 
 ---

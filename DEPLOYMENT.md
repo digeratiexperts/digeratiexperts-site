@@ -75,9 +75,9 @@ curl -fsS https://digeratiexperts.com/healthz
 
 | Path / method | Why |
 |---------------|-----|
-| PM2 / `ecosystem.config.js` | Superseded by systemd |
+| PM2 / `ecosystem.config.js` / `.cjs` | Superseded by systemd; stubs removed 2026-11-04 |
 | `/root/Replit-Site` | Not production code path |
-| `scripts/deploy.sh` | Obsolete; exits with pointer to `deploy/vps` |
+| `scripts/deploy.sh` | Obsolete; stub removed 2026-11-04. Use `deploy/vps/deploy.sh` |
 | Manual root restart after every git pull | `deploy.sh` restarts + verifies |
 
 ## Staging

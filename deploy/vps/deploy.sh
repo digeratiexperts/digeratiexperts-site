@@ -90,6 +90,23 @@ node -e 'const [a,b]=process.versions.node.split(".").map(Number);process.exit(a
   || fail "Node 20.9+ required, found $(node --version)"
 
 [ -f "$SHARED_ENV" ] || fail "$SHARED_ENV missing — create it before deploying (see deploy/vps/env.production.example)"
+
+# Turnstile keys, checked before anything is fetched, built or changed. Both
+# staging and production run NODE_ENV=production, where a missing
+# TURNSTILE_SECRET_KEY makes the server refuse portal sign-in, registration,
+# password reset and solution requests (server/middleware/security.ts), and a
+# secret without the public site key in the bundle rejects every sign-in.
+# Either way the release would lock clients out, so it is refused here. The
+# fix is to set both keys from the same Cloudflare widget in $SHARED_ENV.
+# shellcheck disable=SC1090
+TURNSTILE_KEYS="$(set -a; . "$SHARED_ENV" >/dev/null 2>&1; printf '%s:%s' "${TURNSTILE_SECRET_KEY:+secret}" "${VITE_TURNSTILE_SITE_KEY:+site}")"
+case "$TURNSTILE_KEYS" in
+  secret:site) ;;
+  :*) fail "TURNSTILE_SECRET_KEY is not set in $SHARED_ENV; this release would refuse portal sign-in, registration, password reset and solution requests — refusing to deploy" ;;
+  *) fail "TURNSTILE_SECRET_KEY is set but VITE_TURNSTILE_SITE_KEY is not in $SHARED_ENV; portal sign-in would reject every attempt — refusing to deploy" ;;
+esac
+unset TURNSTILE_KEYS
+
 mkdir -p "$RELEASES_DIR" "$LOG_DIR"
 
 # Client vault master key (server/portalClientVault.ts). One key for the whole
@@ -209,16 +226,8 @@ set -a
 # shellcheck disable=SC1090
 . "$SHARED_ENV"
 set +a
-# Turnstile needs both keys from the same Cloudflare widget: the site key in
-# the bundle (renders the challenge) and the secret on the server (verifies
-# it). A secret without the site key rejects every portal sign-in.
-if [ -z "${VITE_TURNSTILE_SITE_KEY:-}" ] && [ -n "${TURNSTILE_SECRET_KEY:-}" ]; then
-  log "WARN: TURNSTILE_SECRET_KEY is set but VITE_TURNSTILE_SITE_KEY is not in $SHARED_ENV; portal sign-in will reject every attempt"
-elif [ -z "${VITE_TURNSTILE_SITE_KEY:-}" ]; then
-  log "WARN: VITE_TURNSTILE_SITE_KEY is not set in $SHARED_ENV; portal sign-in ships without bot protection"
-elif [ -z "${TURNSTILE_SECRET_KEY:-}" ]; then
-  log "WARN: TURNSTILE_SECRET_KEY is not set in $SHARED_ENV; the challenge shows but the server does not verify it"
-fi
+# Both Turnstile keys were checked in the preflight above (the deploy refuses
+# without them); the site key reaches the bundle through this sourcing.
 
 log "Building production bundle"
 npm run build
