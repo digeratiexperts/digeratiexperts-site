@@ -5061,6 +5061,32 @@ claims:
       help." label sliding out on hover or keyboard focus. This changes the
       2026-10-03 launcher decision (label always beside the badge from sm), so
       Joe confirms the screenshots before merge.
+  - id: website-hygiene-stripe-turnstile-20261104
+    owner: claude
+    subsystem: server-platform, deploy-docs, governance-docs
+    branch: claude/hygiene-stripe-turnstile-20261104
+    base_sha: 296721de3a49ecb3515a41cd2e028a9c2abba736
+    files:
+      - server/stripeService.ts, server/stripeClient.ts, server/webhookHandlers.ts (removed; unimported stubs)
+      - server/routes.ts (410 /api/portal/payment/checkout removed; stripeSessionId dropped from two order lookups)
+      - package.json, package-lock.json (stripe dependency removed)
+      - server/services/vendor-integration-scaffold.ts (removed), VENDOR_SETUP_STATUS.md (two pointer lines)
+      - scripts/deploy.sh, ecosystem.config.js, ecosystem.config.cjs (removed), deploy/vps/README.md, DEPLOYMENT.md
+      - 16 root report .md files moved to docs/archive/ (git mv) + docs/archive/README.md (new)
+      - docs/ACTIVE-WORK-COORDINATION.md (snapshot table replaced by pointer), AGENTS.md (one line)
+      - server/middleware/security.ts (Turnstile fails closed in production), server/middleware/turnstile.test.ts (new)
+      - server/production.config.ts (boot warning text), docs/SECRETS-REQUIRED.md, deploy/vps/env.production.example, deploy/vps/deploy.sh (preflight refuses without both Turnstile keys; Joe 2026-11-05), scripts/deployScripts.test.ts
+      - server/publicSolutionRoutes.test.ts (production-mode block sets a Turnstile secret)
+      - .ai/ACTIVE_WORK.yaml (this claim)
+    status: active
+    started: 2026-11-04
+    note: >-
+      Slice from the 2026-11-04 cross-repo review (website/portal hygiene).
+      Maintenance Mode, one draft PR, not merged by the agent. Turnstile
+      fail-closed has a merge precondition: Joe confirms TURNSTILE_SECRET_KEY is
+      set on production and on the staging review instance, otherwise portal
+      sign-in is refused after deploy. Checked open PRs 877/882/947/948/950: no
+      file overlap.
   - id: de-sync-legacy-secret-retirement
     issue: 957
     owner: claude
