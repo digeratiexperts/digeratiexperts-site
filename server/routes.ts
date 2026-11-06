@@ -1419,11 +1419,18 @@ export async function registerRoutes(app: Express) {
   // License patch bay: DE's vendor licence pool, company seats, assignments (server/licenseBoardRoutes.ts).
   registerLicenseBoardRoutes(app, {
     adminGuards: [authMiddleware, requirePermission("licenses.manage"), validateInput],
-    listClients: () => portalClients.values().map((c: any) => ({ id: c.id, companyName: c.companyName })),
-    getClient: serviceRequestDeps.getClient,
+    listClients: () =>
+      portalClients.values().map((c: any) => ({ id: c.id, companyName: c.companyName, hubAccountId: c.hubAccountId ?? null })),
+    getClient: (id) => {
+      const c: any = portalClients.get(id);
+      return c ? { id: c.id, companyName: c.companyName, hubAccountId: c.hubAccountId ?? null } : undefined;
+    },
     listClientUsers: serviceRequestDeps.listClientUsers,
     listDepartments: serviceRequestDeps.listDepartments!,
     fetchHubCatalog: async () => (await import("./integrations/techSalesClient")).fetchStaffCatalog(),
+    // LICENSE_BOARD_SOURCE=portal (default) | shadow | hub: server/licenseBoardHubSource.ts.
+    fetchHubLicenses: async (accountId, portalClientId) =>
+      (await import("./integrations/techSalesClient")).fetchHubLicenses(accountId, portalClientId),
     jumpcloud: {
       configured: () => jumpcloudConfigured(),
       ensureChocoApp: (name, pkg, orgId) => jumpcloudEnsureChocoApp(name, pkg, orgId),
