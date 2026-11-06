@@ -91,6 +91,9 @@ Optional; DE Sync is off without them.
 | `HUB_TO_WEBSITE_SECRET` | secret | `server/integrations/deSyncAuth.ts` | Verifies Hub → website calls. |
 | `HUB_TO_PORTAL_SECRET` | secret | `server/integrations/deSyncAuth.ts` | Verifies Hub → portal calls. |
 | `DE_SYNC_REQUIRE_SIGNED` | config | `server/integrations/deSyncAuth.ts`, `server/integrations/techSalesClient.ts` | Flag: reject unsigned inbound sync. |
+| `TICKETS_SOURCE` | config | `server/ticketsSource.ts` | Where portal and widget tickets go: `desk` (default, unset) or `hub` (Hub ticket API, signed with `PORTAL_TO_HUB_SECRET` only; Desk via the Hub sync; Desk path + reconciliation note when the Hub misses). Order: `docs/TICKETS-SOURCE-SWITCH.md`. |
+| `HUB_TICKETS_TIMEOUT_MS` | config | `server/integrations/hubTicketClient.ts` | Per-call timeout for the Hub ticket API (default 8000). |
+| `TICKET_RECONCILIATION_SPOOL_DIR` | config | `server/publicSolutionSpool.ts` | Where tickets that missed the Hub are noted (default `<site>/shared/spool/ticket-reconciliation`). |
 | `LICENSE_BOARD_SOURCE` | config | `server/licenseBoardHubSource.ts` | Where the licence board reads company seats: `portal` (default, unset), `shadow` (portal page, Hub differences logged), `hub` (Hub seats, portal fallback per company). Needs `portal_clients.hub_account_id`. |
 
 ## Portal integrations
