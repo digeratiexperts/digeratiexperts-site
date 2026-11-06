@@ -9,7 +9,7 @@ describe("legacy lead webhook fallback", () => {
 
   beforeEach(() => {
     process.env.TECHSALES_HUB_URL = "https://techsales.example.test";
-    process.env.TECHSALES_SYNC_TOKEN = "legacy-token-value";
+    process.env.WEBSITE_TO_HUB_SECRET = "legacy-token-value";
     process.env.TECHSALES_SYNC_URL = "https://hooks.example.test/lead";
     delete process.env.DE_SYNC_REQUIRE_SIGNED;
   });
