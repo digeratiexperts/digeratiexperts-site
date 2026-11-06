@@ -563,6 +563,8 @@ Branches move. Before removing anything, re-run step 1 on that day.
 
 ## Open PRs (excluded)
 
+Update, later on 2026-11-06: #955 merged into `main` (`627eea17`) after this scan, so `claude/hygiene-stripe-turnstile-20261104` now belongs in group 1.
+
 | Branch | Head | Last commit | PR |
 |---|---|---|---|
 | `chatgpt/desk-consent-smoke-20261101` | `c368abe1` | 2026-11-02 | #877 |

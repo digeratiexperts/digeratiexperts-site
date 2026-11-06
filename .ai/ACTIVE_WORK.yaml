@@ -5127,4 +5127,5 @@ claims:
       docs/architecture/2026-11-04-cross-repo-review.md). Joe, 2026-11-06:
       "finish all those projects", "all approved", "you're approved to handle
       this all". One draft PR per slice. #955 (Stripe dead code, Turnstile
-      fail-closed) confirmed still open and left alone. No branch deleted.
+      fail-closed) was open and left alone; the coordinator merged it
+      (627eea17) during the session. No branch deleted.
