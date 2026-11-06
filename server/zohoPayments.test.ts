@@ -2,36 +2,31 @@
 import crypto from "crypto";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ZohoPaymentsService } from "./zohoPayments";
+import { resetZohoOAuthForTests } from "./zoho/oauth";
+import { clearZohoConnectTestEnv, seedZohoConnectGrant, TEST_CONNECT_CLIENT, zohoTokenUrl } from "./zoho/oauth/testing/connectGrant";
 
 const ENV_KEYS = [
   "ZOHO_PAYMENTS_ACCOUNT_ID",
-  "ZOHO_PAYMENTS_CLIENT_ID",
-  "ZOHO_PAYMENTS_CLIENT_SECRET",
-  "ZOHO_PAYMENTS_REFRESH_TOKEN",
   "ZOHO_PAYMENTS_SIGNING_KEY",
-  "ZOHO_CLIENT_ID_API",
-  "ZOHO_CLIENT_SECRET_API",
-  "ZOHO_CLIENT_ID",
-  "ZOHO_CLIENT_SECRET",
 ] as const;
 
 const savedEnv = Object.fromEntries(ENV_KEYS.map((key) => [key, process.env[key]]));
 
 function configurePaymentsEnv() {
   process.env.ZOHO_PAYMENTS_ACCOUNT_ID = "acct_123456";
-  process.env.ZOHO_PAYMENTS_CLIENT_ID = "client_123456";
-  process.env.ZOHO_PAYMENTS_CLIENT_SECRET = "secret_123456";
-  process.env.ZOHO_PAYMENTS_REFRESH_TOKEN = "refresh_123456";
   process.env.ZOHO_PAYMENTS_SIGNING_KEY = "signing_123456";
 }
 
 describe("ZohoPaymentsService", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
+    resetZohoOAuthForTests();
     configurePaymentsEnv();
+    await seedZohoConnectGrant();
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
+    clearZohoConnectTestEnv();
     for (const key of ENV_KEYS) {
       const original = savedEnv[key];
       if (original === undefined) delete process.env[key];
@@ -75,9 +70,10 @@ describe("ZohoPaymentsService", () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
 
     const [tokenUrl, tokenInit] = fetchMock.mock.calls[0];
-    expect(String(tokenUrl)).toBe("https://accounts.zoho.com/oauth/v2/token");
+    expect(String(tokenUrl)).toBe(zohoTokenUrl("https://accounts.zoho.com"));
     expect(tokenInit?.method).toBe("POST");
     expect(String(tokenInit?.body)).toContain("grant_type=refresh_token");
+    expect(String(tokenInit?.body)).toContain(`client_id=${TEST_CONNECT_CLIENT.id}`);
 
     const [sessionUrl, sessionInit] = fetchMock.mock.calls[1];
     expect(String(sessionUrl)).toContain("/api/v1/paymentsessions?account_id=acct_123456");

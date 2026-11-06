@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { AxiosAdapter } from "axios";
 import { ZohoClient } from "./zohoClient";
 import { resetZohoOAuthForTests } from "./oauth";
+import { clearZohoConnectTestEnv, seedZohoConnectGrant } from "./oauth/testing/connectGrant";
 
 // Real axios here (zohoClient.desk.test.ts mocks it): the 401 interceptor is
 // exercised end to end with a fake adapter in place of the network.
@@ -31,19 +32,17 @@ function adapter(answer: (authorization: string) => number) {
   return { fn, seen };
 }
 
-beforeEach(() => {
+beforeEach(async () => {
   resetZohoOAuthForTests();
   vi.useFakeTimers();
   vi.setSystemTime(new Date("2026-10-10T12:00:00Z"));
   vi.stubEnv("DE_STAGING_REVIEW", "0");
-  vi.stubEnv("ZOHO_CLIENT_ID_API", "crm-client");
-  vi.stubEnv("ZOHO_CLIENT_SECRET_API", "crm-secret");
-  vi.stubEnv("ZOHO_REFRESH_TOKEN", "crm-refresh");
-  vi.stubEnv("ZOHO_DESK_REFRESH_TOKEN", "desk-refresh");
+  await seedZohoConnectGrant();
   vi.spyOn(console, "log").mockImplementation(() => {});
   vi.spyOn(console, "warn").mockImplementation(() => {});
 });
 afterEach(() => {
+  clearZohoConnectTestEnv();
   vi.useRealTimers();
   vi.unstubAllEnvs();
   vi.unstubAllGlobals();

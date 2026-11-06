@@ -49,14 +49,10 @@ function safeText(value: unknown, maxLength: number): string {
 
 export class ZohoPaymentsService {
   private readonly accountId: string;
-  private readonly clientId: string;
-  private readonly clientSecret: string;
-  private readonly refreshToken: string;
   private readonly signingKey: string;
   /**
-   * Token manager (server/zoho/oauth): the Zoho Connect grant when it covers
-   * Payments, else ZOHO_PAYMENTS_REFRESH_TOKEN with the client resolved below.
-   * Cached and persisted access token, single-flight refresh, refresh budget,
+   * Token manager (server/zoho/oauth): the Zoho Connect grant, the only
+   * credential (issue #974). Cached and persisted access token, single-flight refresh, refresh budget,
    * classified errors.
    */
   readonly auth: ZohoProductAuth;
@@ -64,7 +60,7 @@ export class ZohoPaymentsService {
   private dc: ZohoDcUrls = zohoDefaultDc();
   /**
    * Cached live readiness (#263). `isConfigured()` only proves env vars exist;
-   * this proves the OAuth client + refresh token still mint a token.
+   * this proves the Zoho Connect grant still mints a token.
    */
   readonly readiness: PaymentReadiness = createPaymentReadiness({
     isConfigured: () => this.isConfigured(),
@@ -73,31 +69,11 @@ export class ZohoPaymentsService {
 
   constructor() {
     this.accountId = process.env.ZOHO_PAYMENTS_ACCOUNT_ID || "";
-    this.clientId =
-      process.env.ZOHO_PAYMENTS_CLIENT_ID ||
-      process.env.ZOHO_CLIENT_ID_API ||
-      process.env.ZOHO_CLIENT_ID ||
-      "";
-    this.clientSecret =
-      process.env.ZOHO_PAYMENTS_CLIENT_SECRET ||
-      process.env.ZOHO_CLIENT_SECRET_API ||
-      process.env.ZOHO_CLIENT_SECRET ||
-      "";
-    this.refreshToken = process.env.ZOHO_PAYMENTS_REFRESH_TOKEN || "";
     this.signingKey = process.env.ZOHO_PAYMENTS_SIGNING_KEY || "";
     this.auth = createZohoProductAuth({
       product: "payments",
-      legacySources: () =>
-        this.legacyCredentialsSet()
-          ? [{ label: "ZOHO_PAYMENTS_REFRESH_TOKEN", refreshToken: this.refreshToken, client: { id: this.clientId, secret: this.clientSecret } }]
-          : [],
-      notConfiguredReason: () => "set ZOHO_PAYMENTS_REFRESH_TOKEN and its client, or connect Zoho",
       notConfigured: (message) => new Error(message),
     });
-  }
-
-  private legacyCredentialsSet(): boolean {
-    return [this.clientId, this.clientSecret, this.refreshToken].every((value) => this.looksConfigured(value));
   }
 
   private looksConfigured(value: string): boolean {
@@ -112,8 +88,7 @@ export class ZohoPaymentsService {
   isConfigured(): boolean {
     // Review instances never move money, regardless of credentials.
     if (isStagingReview()) return false;
-    const credentials = this.legacyCredentialsSet() || zohoConnectCovers("payments");
-    return credentials && [this.accountId, this.signingKey].every((value) => this.looksConfigured(value));
+    return zohoConnectCovers("payments") && [this.accountId, this.signingKey].every((value) => this.looksConfigured(value));
   }
 
   /** Payments health from stored state (no Zoho call). */
@@ -125,7 +100,7 @@ export class ZohoPaymentsService {
   private async getAccess(): Promise<ZohoAccess> {
     if (!this.isConfigured()) {
       throw new Error(
-        "Zoho Payments is not configured. Set account ID, OAuth client credentials, a Zoho Payments refresh token, and the webhook signing key.",
+        "Zoho Payments is not configured. Set ZOHO_PAYMENTS_ACCOUNT_ID and ZOHO_PAYMENTS_SIGNING_KEY, and connect Zoho at /api/zoho/connect so the grant covers Payments.",
       );
     }
     try {

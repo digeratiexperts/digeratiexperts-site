@@ -1,15 +1,21 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { clearZohoConnectTestEnv, seedZohoConnectGrant, zohoTokenUrl } from "../zoho/oauth/testing/connectGrant";
 import { checkSalesTaxReadiness } from "./salesTaxReadiness";
-import { resetZohoBooksToken, ZOHO_ACCOUNTS_TOKEN_URL, ZOHO_BOOKS_API } from "./zohoBooksTax";
+import { resetZohoBooksToken, ZOHO_BOOKS_API, ZOHO_BOOKS_CONNECT_MISSING } from "./zohoBooksTax";
+
+const ZOHO_ACCOUNTS_TOKEN_URL = zohoTokenUrl();
+
+/** Forget token state and store the Connect grant (covering Books) again. */
+async function resetBooks(products: Array<"crm" | "desk" | "books" | "payments"> = ["books"]) {
+  resetZohoBooksToken();
+  await seedZohoConnectGrant({ products });
+}
 
 const ORG = "693714437";
 const ITEM = "1957016000000500001";
 const CONTACT = "1957016000000600001";
 const env = {
   ZOHO_BOOKS_ORGANIZATION_ID: ORG,
-  ZOHO_BOOKS_REFRESH_TOKEN: "1000.fake.refresh",
-  ZOHO_BOOKS_CLIENT_ID: "1000.FAKECLIENT",
-  ZOHO_BOOKS_CLIENT_SECRET: "fake-secret",
   ZOHO_BOOKS_TAX_CONTACT_ID: CONTACT,
   ZOHO_BOOKS_SERVICE_ITEM_ID: ITEM,
 };
@@ -39,7 +45,8 @@ const run = (fetchImpl: ReturnType<typeof zoho>, overrides: Record<string, strin
   checkSalesTaxReadiness({ env: { ...env, ...overrides }, fetchImpl: fetchImpl as unknown as typeof fetch });
 
 describe("Zoho Books sales tax readiness for staff Pay Now", () => {
-  beforeEach(() => resetZohoBooksToken());
+  beforeEach(() => resetBooks());
+  afterEach(() => clearZohoConnectTestEnv());
 
   it("is NOT_CONFIGURED without the Books settings, names them, and never calls Zoho", async () => {
     const fetchImpl = zoho({});
@@ -47,22 +54,22 @@ describe("Zoho Books sales tax readiness for staff Pay Now", () => {
     expect(r).toMatchObject({ status: "NOT_CONFIGURED", provider: "zoho_books", checks: { connection: "missing" } });
     expect(r.missingSettings).toEqual([
       "ZOHO_BOOKS_ORGANIZATION_ID",
-      "ZOHO_BOOKS_REFRESH_TOKEN",
-      "ZOHO_BOOKS_CLIENT_ID",
-      "ZOHO_BOOKS_CLIENT_SECRET",
       "ZOHO_BOOKS_TAX_CONTACT_ID",
       "ZOHO_BOOKS_SERVICE_ITEM_ID",
     ]);
     expect(fetchImpl).not.toHaveBeenCalled();
   });
 
-  it("borrows the API self-client when no Books client is named", async () => {
-    const { ZOHO_BOOKS_CLIENT_ID: _id, ZOHO_BOOKS_CLIENT_SECRET: _secret, ...rest } = env;
-    const r = await checkSalesTaxReadiness({
-      env: { ...rest, ZOHO_CLIENT_ID_API: "1000.APICLIENT", ZOHO_CLIENT_SECRET_API: "api-secret" },
-      fetchImpl: zoho({}) as unknown as typeof fetch,
+  it("is NOT_CONFIGURED without a Connect grant that covers Books, even with the old Books Self Client settings", async () => {
+    await resetBooks(["crm", "desk", "payments"]);
+    const fetchImpl = zoho({});
+    const r = await run(fetchImpl, {
+      ZOHO_BOOKS_REFRESH_TOKEN: "1000.fake.refresh",
+      ZOHO_BOOKS_CLIENT_ID: "1000.FAKECLIENT",
+      ZOHO_BOOKS_CLIENT_SECRET: "fake-secret",
     });
-    expect(r.status).toBe("READY");
+    expect(r).toMatchObject({ status: "NOT_CONFIGURED", missingSettings: [ZOHO_BOOKS_CONNECT_MISSING] });
+    expect(fetchImpl).not.toHaveBeenCalled();
   });
 
   it("is READY only with a tax registration, an active service item and an active contact", async () => {
@@ -92,14 +99,14 @@ describe("Zoho Books sales tax readiness for staff Pay Now", () => {
     expect(r).toMatchObject({ status: "INCOMPLETE", checks: { taxRegistration: "missing" } });
     expect(r.message).toMatch(/Sales Tax Automation/);
     // A top-level flag is not where Books keeps it, so it never counts.
-    resetZohoBooksToken();
+    await resetBooks();
     const topLevel = await run(zoho({ org: { code: 0, organization: { organization_id: ORG, is_tax_registered: true } } }));
     expect(topLevel.checks.taxRegistration).toBe("missing");
   });
 
   it("is INCOMPLETE when the service item or the contact is missing or inactive", async () => {
     expect((await run(zoho({ item: 404 }))).checks.serviceItem).toBe("missing");
-    resetZohoBooksToken();
+    await resetBooks();
     const inactive = await run(zoho({ contact: { code: 0, contact: { contact_id: CONTACT, status: "inactive" } } }));
     expect(inactive).toMatchObject({ status: "INCOMPLETE", checks: { taxContact: "missing" } });
   });
@@ -107,14 +114,15 @@ describe("Zoho Books sales tax readiness for staff Pay Now", () => {
   it("is AUTH_REQUIRED when Zoho refuses the refresh token", async () => {
     const r = await run(zoho({ token: { error: "invalid_code" } }));
     expect(r.status).toBe("AUTH_REQUIRED");
-    expect(r.message).toMatch(/ZOHO_BOOKS_REFRESH_TOKEN/);
+    expect(r.message).toMatch(/\/api\/zoho\/connect/);
+    expect(r.message).not.toMatch(/REFRESH_TOKEN|self-client/i);
   });
 
   it("is UNKNOWN, never READY, when a scope is missing or Books does not answer", async () => {
     const forbidden = await run(zoho({ org: 403 }));
     expect(forbidden.status).toBe("UNKNOWN");
     expect(forbidden.message).toMatch(/scope/);
-    resetZohoBooksToken();
+    await resetBooks();
     const down = await run(zoho({ org: 500 }));
     expect(down.status).toBe("UNKNOWN");
   });
