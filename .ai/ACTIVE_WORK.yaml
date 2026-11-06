@@ -5077,6 +5077,8 @@ claims:
       - server/middleware/security.ts (Turnstile fails closed in production), server/middleware/turnstile.test.ts (new)
       - server/production.config.ts (boot warning text), docs/SECRETS-REQUIRED.md, deploy/vps/env.production.example, deploy/vps/deploy.sh (preflight refuses without both Turnstile keys; Joe 2026-11-05), scripts/deployScripts.test.ts
       - server/publicSolutionRoutes.test.ts (production-mode block sets a Turnstile secret)
+      - shared/schema.ts, server/storage.ts, server/services/orderFulfillment.behavior.test.ts (Stripe columns unused; step 1, stacked PR, Joe 2026-11-05)
+      - migrations/0025_drop_retired_stripe_columns.sql, scripts/stripeColumnsMigration.test.ts (step 2, held until step 1 is LIVE)
       - .ai/ACTIVE_WORK.yaml (this claim)
     status: active
     started: 2026-11-04
@@ -5135,6 +5137,26 @@ claims:
       articles stay behind portal login ("I want clients to login first"), so
       no public article API. MERGED, not yet verified LIVE; the Zoho help
       center CSS is a manual paste, not published.
+  - id: cross-repo-review-website-20261106
+    issue: 974
+    owner: claude
+    subsystem: zoho-oauth, msgraph-auth, design-authority-index, repo-hygiene
+    branch: claude/zoho-connect-only-20261106, claude/graph-cert-auth-20261106, claude/design-rules-index-20261106, claude/stale-branches-report-20261106
+    base_sha: 8fcd3fabf6c181039c1340e0be0ee87b108f4836
+    started: 2026-11-06
+    files:
+      - server/zoho/** , server/zohoPayments.ts, server/portalZohoAuth.ts, server/services/zohoBooksTax.ts (+ tests), docs/ZOHO-OAUTH-INVENTORY.md
+      - server/integrations/msGraph.ts (+ tests), docs/runbooks/msgraph-certificate-auth.md
+      - design/DESIGN-AUTHORITY.md (new index section), retired-banners on retired design rule files
+      - docs/reports/stale-branches-2026-11-06.md
+    status: active
+    note: >-
+      Website items of the 2026-11-04 cross-repo review (Intelligence-Hub
+      docs/architecture/2026-11-04-cross-repo-review.md). Joe, 2026-11-06:
+      "finish all those projects", "all approved", "you're approved to handle
+      this all". One draft PR per slice. #955 (Stripe dead code, Turnstile
+      fail-closed) was open and left alone; the coordinator merged it
+      (627eea17) during the session. No branch deleted.
   - id: tickets-source-switch
     owner: claude
     subsystem: portal-tickets

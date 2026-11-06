@@ -39,6 +39,7 @@ import { zohoPayments } from "./zohoPayments";
 import { zohoClient } from "./zoho/zohoClient";
 import { zohoHealthStates } from "./zoho/zohoHealth";
 import { withDeadline } from "./deadline";
+import { msGraphHealth } from "./integrations/msGraph";
 import { evaluatePaymentSucceeded, unpaidOrderCondition } from "./zohoPaymentWebhook";
 import { setupCrossServiceHandlers } from "./crossServiceHandler";
 import { eventBus, EventTypes } from "./eventBus";
@@ -160,6 +161,10 @@ app.all("/api/health", cookieParser(), async (req, res) => {
       // degraded, needs_reconnect, not_configured, or unknown before first use.
       zoho: await withDeadline(zohoHealthStates(), HEALTH_ZOHO_DEADLINE_MS, "zoho token health").catch(() => null),
       openai: openaiConfigured ? "configured" : "not_configured",
+      // Microsoft Graph (licence pushes): certificate, secret (with a warning
+      // to move to the certificate), invalid or not_configured. No Microsoft
+      // call, env var names only. Staff view only (publicHealthView drops it).
+      msGraph: msGraphHealth(),
       // Solution requests waiting on disk for the database (#243). A count, and whether the folder takes writes.
       solutionSpool: { pending: spoolPendingCount(), writable: spoolWritable(spoolDir()) },
       // Store quote requests waiting on disk for the database (#240).
