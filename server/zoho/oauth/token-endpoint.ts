@@ -94,7 +94,7 @@ export async function callZohoTokenEndpoint(
 ): Promise<ZohoTokenResponse> {
   let resp: Response;
   try {
-    resp = await fetchImpl(`${accountsServer.replace(/\/$/, "")}${ZOHO_TOKEN_PATH}`, {
+    resp = await fetchImpl(`${accountsServer.replace(/\/$/, "")}/oauth/v2/token`, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams(params),
@@ -149,7 +149,7 @@ export async function revokeZohoRefreshToken(
 ): Promise<boolean> {
   try {
     const resp = await fetchImpl(
-      `${accountsServer.replace(/\/$/, "")}${ZOHO_TOKEN_PATH}/revoke`,
+      `${accountsServer.replace(/\/$/, "")}/oauth/v2/token/revoke`,
       {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
