@@ -47,13 +47,26 @@ jobs:
                 if (m) { branch = m[1]; break; }
               }
               if (branch) {
+                // When the branch was last *pushed* (GitHub's activity log), not the commit's own
+                // timestamp: commits made hours earlier and pushed now still renew the lease.
+                // Falls back to the head commit time if the activity log can't be read.
+                let pushed = null;
                 try {
-                  const { data } = await github.rest.repos.getBranch({ owner, repo, branch });
-                  const pushed = Date.parse(data.commit.commit.committer.date);
-                  if (pushed > last) last = pushed;
+                  const { data } = await github.rest.repos.listActivities({ owner, repo, ref: branch, per_page: 10 });
+                  const hit = (data || []).find((a) => ['push', 'force_push', 'branch_creation', 'merge_queue_merge', 'pr_merge'].includes(a.activity_type));
+                  if (hit) pushed = Date.parse(hit.timestamp);
                 } catch (e) {
-                  core.info(`#${issue.number}: branch ${branch} not found on ${repo} (${e.status})`);
+                  core.info(`#${issue.number}: activity log unreadable for ${branch} (${e.status}); using commit time`);
                 }
+                if (pushed === null) {
+                  try {
+                    const { data } = await github.rest.repos.getBranch({ owner, repo, branch });
+                    pushed = Date.parse(data.commit.commit.committer.date);
+                  } catch (e) {
+                    core.info(`#${issue.number}: branch ${branch} not found on ${repo} (${e.status})`);
+                  }
+                }
+                if (pushed !== null && pushed > last) last = pushed;
               }
               const idleH = ((now - last) / 3600000).toFixed(1);
               if (now - last < staleMs) { core.info(`#${issue.number}: live (${idleH}h idle)`); continue; }
