@@ -30,31 +30,6 @@
 
 version: 2
 claims:
-  - id: portal-reads-hub-licences-20261105
-    issue: null
-    owner: claude
-    subsystem: license-board
-    branch: claude/portal-reads-hub-licences
-    base_sha: b65ae035c32d9583b1337ec269f42550b0e6a545
-    started: 2026-11-05
-    files:
-      - server/integrations/techSalesClient.ts (fetchHubLicenses appended at the end + one import line only)
-      - server/integrations/hubLicensesContract.ts (new), server/integrations/hubLicenses.test.ts (new)
-      - server/integrations/deSyncContract.fixture.json (reads.portalLicenses, byte-identical to the Hub fixture)
-      - server/integrations/deSyncContract.parity.test.ts (pins reads.portalLicenses)
-      - server/licenseBoardHubSource.ts (new), server/licenseBoardHubSource.test.ts (new)
-      - server/licenseBoardRoutes.ts (board GET + company GET seat source only), server/licenseBoardRoutes.hubSource.test.ts (new)
-      - server/routes.ts (licence board deps: hubAccountId, fetchHubLicenses)
-      - docs/SECRETS-REQUIRED.md (LICENSE_BOARD_SOURCE row, PORTAL_TO_HUB_SECRET note)
-    status: active
-    note: >-
-      Portal reads the Hub, area 1 (licences), website side. Hub side merged:
-      Intelligence-Hub #849 (288ff306). Plan Intelligence-Hub
-      docs/architecture/portal-reads-hub-plan.md, approved by Joe 2026-11-05
-      via coordinator session_01DFj2KKYXK9VsNEKAohFuHu. LICENSE_BOARD_SOURCE
-      defaults to portal: no behaviour change on merge. PR 967; Joe
-      2026-11-05: "merge #967". techSalesClient.ts is also touched by #958/#959 (other hunks);
-      this change is an append and does not use resolveScopedSecret.
   - id: desk-chooser-height-20261101
     issue: 918
     owner: codex
