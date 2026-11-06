@@ -1,5 +1,7 @@
 # Homepage versions
 
+> **Retired / reference only (2026-11-06).** No version below is the homepage, and none is a design rule. `/` has served Homepage v2 (`client/src/pages/homepage-v2/`) since 2026-10-23; Version 8, the homepage before it, is at `/concepts/home-classic`. The "Status" lines in `registry.ts` predate that switch. Status of every version and every other rules source: `design/DESIGN-AUTHORITY.md` §5.
+
 Every homepage the site has had or is considering stays reachable at
 `/version-<n>`, listed at `/versions`, so nothing is lost when the next
 one lands and any of them can be referenced in future development.
