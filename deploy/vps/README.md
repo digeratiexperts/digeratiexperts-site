@@ -31,7 +31,7 @@ portal.digeratiexperts.com) on the CyberPanel/OpenLiteSpeed VPS
 ```
 /home/digeratiexperts.com/             (staging: /home/staging.digeratiexperts.com/)
 ├── public_html/          # CyberPanel-managed; placeholder only (app is proxied)
-├── app/                  # bare git mirror of digeratiexperts/Replit-Site
+├── app/                  # bare git mirror of digeratiexperts/digeratiexperts-site
 ├── releases/<timestamp>/ # built releases (last 3 kept)
 ├── current -> releases/<timestamp>    # active release (atomic symlink)
 ├── shared/
@@ -74,6 +74,9 @@ sudo -u diger7051 bash deploy/vps/deploy.sh production
 
 The script:
 
+0. Refuses to start unless `shared/.env` has both `TURNSTILE_SECRET_KEY` and
+   `VITE_TURNSTILE_SITE_KEY` (production fails closed without the secret, so a
+   release without them would lock clients out of portal sign-in)
 1. Fetches `DEPLOY_BRANCH` (default `main`) into the bare mirror
 2. Builds a fresh release under `releases/<timestamp>/`
 3. Validates the build and scans the bundle for internal/credential leaks
@@ -172,8 +175,8 @@ For a fresh host: install `digeratiexperts-site.service` with
 | Obsolete | Why |
 |---|---|
 | `/root/Replit-Site` + PM2 | Former layout; not production |
-| `scripts/deploy.sh` (rsync to `public_html`) | Conflicts with OLS→Node proxy |
-| `ecosystem.config.js` | PM2 config; superseded by systemd |
+| `scripts/deploy.sh` (rsync to `public_html`) | Conflicts with OLS→Node proxy; removed 2026-11-04 |
+| `ecosystem.config.js` / `.cjs` | PM2 config; superseded by systemd; removed 2026-11-04 |
 | Manual root `systemctl restart` after every deploy | `deploy.sh` performs restart + verify |
 
 ## Zero-downtime restarts (socket activation)
