@@ -5080,7 +5080,13 @@ claims:
       - shared/schema.ts, server/storage.ts, server/services/orderFulfillment.behavior.test.ts (Stripe columns unused; step 1, stacked PR, Joe 2026-11-05)
       - migrations/0025_drop_retired_stripe_columns.sql, scripts/stripeColumnsMigration.test.ts (step 2, held until step 1 is LIVE)
       - .ai/ACTIVE_WORK.yaml (this claim)
-    status: active
+    status: merged
+    pr: 955
+    merge_sha: 627eea1731d86b240fac20e9998025833d500235
+    follow_up_prs:
+      - 956 (8fcd3fab, stale claims retired)
+      - 968 (ac394898, Stripe columns unused; live before 969)
+      - 969 (6f7fa65f, migration 0025 drops the four Stripe columns after archiving their values)
     started: 2026-11-04
     note: >-
       Slice from the 2026-11-04 cross-repo review (website/portal hygiene).
