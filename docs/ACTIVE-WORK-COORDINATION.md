@@ -8,6 +8,8 @@ A claim committed only on an unmerged feature branch is invisible to agents that
 
 ## Authoritative lock order
 
+**Agent Relay (Joe, 2026-11-05).** Claude, OpenCode and ChatGPT share ownership of **relay tasks**: issues labelled `relay` in this repo or Intelligence-Hub. The issue is the live lock and handoff: claim with a `RELAY CLAIM` comment, post `RELAY PULSE` while working, end with `RELAY HANDOFF` so the next agent continues from your last pushed SHA. A lease idle for 3 hours expires and anyone may take over. Protocol: Intelligence-Hub `docs/AGENT-RELAY.md` ([issue #886](https://github.com/digeratiexperts/Intelligence-Hub/issues/886)). Board: [open relay tasks](https://github.com/search?q=org%3Adigeratiexperts+label%3Arelay+is%3Aopen&type=issues). The YAML mirror and ledger row are still written, with the issue link; the relay issue counts as the GitHub-visible lock in the order below.
+
 Before editing code, every agent must inspect, in this order:
 
 1. **Open GitHub issues** marked or titled `ACTIVE`, `P0`, `IN PROGRESS`, recovery, or otherwise clearly describing current implementation ownership.
