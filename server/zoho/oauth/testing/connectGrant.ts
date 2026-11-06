@@ -3,8 +3,11 @@
  * way /api/zoho/connect would, so product modules (CRM, Desk, Books,
  * Payments) find their only credential. Imported by tests only.
  *
- * The values are fixtures, never real credentials.
+ * The values are fixtures, never real credentials. They are generated per
+ * test run rather than written as string literals, so no constant credential
+ * exists in non-test source (CodeQL js/hardcoded-credentials).
  */
+import { randomBytes } from "node:crypto";
 import {
   invalidateZohoSources,
   refreshZohoConnectSnapshot,
@@ -17,8 +20,10 @@ import {
   type ZohoProduct,
 } from "../index";
 
-export const TEST_CONNECT_CLIENT = { id: "connect-client", secret: "connect-secret" } as const;
-export const TEST_CONNECT_REFRESH = "test-connect-refresh";
+const fixture = (label: string) => `${label}-${randomBytes(6).toString("hex")}`;
+
+export const TEST_CONNECT_CLIENT = { id: fixture("connect-client"), secret: fixture("connect-secret") } as const;
+export const TEST_CONNECT_REFRESH = fixture("test-connect-refresh");
 
 const ALL_PRODUCTS: ZohoProduct[] = ["crm", "desk", "books", "payments"];
 
