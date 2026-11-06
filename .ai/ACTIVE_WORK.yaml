@@ -5172,7 +5172,9 @@ claims:
       - server/portalDeskTickets.ts (ListedPortalTicket.source adds "hub")
       - server/publicSolutionSpool.ts (ticketReconciliationSpoolDir)
       - docs/TICKETS-SOURCE-SWITCH.md (new), docs/SECRETS-REQUIRED.md, deploy/vps/env.production.example
-    status: active
+    status: merged
+    pr: "980"
+    merge_sha: c58ca527
     note: >-
       Cross-repo review step 3, Tickets. Joe 2026-11-05: "Hub first then sync
       with desk but if desk is first then sync with hub"; approvals relayed by
@@ -5183,3 +5185,6 @@ claims:
       877, 882, 955, 959, 968, 969 do not touch these files. Draft PR; the
       coordinator merges on Joe's approval. Not LIVE until TICKETS_SOURCE=hub
       is set after OPEN-ITEMS C10 and verified.
+      Released 2026-11-06: PR 980 merged as c58ca527 (Hub PR 909 merged
+      before it). Files released. Runtime unchanged (TICKETS_SOURCE=desk);
+      switch-on order in docs/TICKETS-SOURCE-SWITCH.md.
