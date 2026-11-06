@@ -4,6 +4,8 @@
 
 Authoritative multi-agent policy: **`docs/AI-ENGINEERING-GOVERNANCE.md`**. GitHub-visible active issues + open PRs are the authoritative concurrency locks; **`.ai/ACTIVE_WORK.yaml`** is a mirror only. Required procedure: **`docs/ACTIVE-WORK-COORDINATION.md`**. This policy is mandatory for Claude Code, Cursor, Antigravity/Gemini, ChatGPT-assisted repository work, and other agents.
 
+**Agent Relay (Joe, 2026-11-05).** Claude, OpenCode and ChatGPT share ownership of **relay tasks**: issues labelled `relay` in this repo or Intelligence-Hub. The issue is the live lock and handoff: claim with a `RELAY CLAIM` comment, post `RELAY PULSE` while working, end with `RELAY HANDOFF` so the next agent continues from your last pushed SHA. A lease idle for 3 hours expires and anyone may take over. Protocol: Intelligence-Hub `docs/AGENT-RELAY.md` ([issue #886](https://github.com/digeratiexperts/Intelligence-Hub/issues/886)). Board: [open relay tasks](https://github.com/search?q=org%3Adigeratiexperts+label%3Arelay+is%3Aopen&type=issues). The YAML mirror and ledger row are still written, with the issue link; the relay issue counts as the GitHub-visible lock in the order below.
+
 Default authority: Joe is final product/release authority; Claude Code is the default lead website implementation/integration agent; Cursor and Antigravity/Gemini are specialist/review agents unless Joe explicitly reassigns the role for a specific task. There is only one website integration authority at a time.
 
 Every agent must use an isolated branch/worktree, check open active GitHub issues + all current open PRs + relevant remote branches before editing, then inspect the YAML mirror. Reconcile against current `origin/main` before merge, and treat `MERGED` and `LIVE` as separate states. Specialist agents do not independently merge/deploy website work by default.
@@ -34,7 +36,7 @@ Task ledger: `docs/SITE-VISUAL-TASKS.md` (Tier 3 for design decisions; its owner
 - Full authority matrix: `docs/REPOSITORY-AUTHORITY.md`.
 - Website source-of-truth details: `docs/SOURCE-OF-TRUTH.md`.
 - Ecosystem rule (always apply): `.cursor/rules/de-ecosystem.mdc`. This website is a GitHub-owned **content/application projection**. Intelligence Hub is the **operational control plane**.
-- Canonical identity/location/network rule: Intelligence Hub `docs/de-canonical/08_DE_IDENTITY_LOCATION_NETWORK_STANDARD.md` is authoritative. This repo projects it through `shared/canonicalIdentityLocationNetwork.ts`; DE Tech Tool projects it through `windows/CANONICAL-IDENTITY-LOCATION-NETWORK.md` + `DE.Naming`. Do not invent a different username suffix, privilege-account class, hostname/location code, VLAN convention, or client CIDR rule in website/Store/Portal/Tech Tool code.
+- Canonical identity/location/network rule: Intelligence Hub `docs/de-canonical/08_DE_IDENTITY_LOCATION_NETWORK_STANDARD.md` is authoritative. This repo projects it through `shared/canonicalIdentityLocationNetwork.ts`; DE Tech Tool projects it through `windows/CANONICAL-IDENTITY-LOCATION-NETWORK.md` + `DE.Naming` in the private repo `digeratiexperts/de-tech-tool`. Do not invent a different username suffix, privilege-account class, hostname/location code, VLAN convention, or client CIDR rule in website/Store/Portal/Tech Tool code.
 - Ecosystem **scoreboard** is Hub Issue [#122](https://github.com/digeratiexperts/Intelligence-Hub/issues/122) (charter `docs/DE-ECOSYSTEM-CHARTER.md`, ratified PR #123 / `5354a8b`). Do **not** copy ECO-001–030 into this repo. Do **not** call the ecosystem finished until #122’s completion gate passes.
 
 If an old Cursor task, chat, PR description, screenshot, or migration note conflicts with current GitHub state and the authority files above, treat the old instruction as stale and re-check before acting.
@@ -139,7 +141,7 @@ Reusable skill packs live in `.claude/skills/<name>/SKILL.md` (Claude Code disco
 | `skill-builder` | Create or audit a skill | No |
 | `wat-framework` | Workflows / Agents / Tools pattern for automation projects | Depends on tools built |
 | `trigger-dev`, `trigger-ref` | Trigger.dev automations (in a dedicated Trigger.dev project, never deployed via this repo's CI) | Trigger.dev usage |
-| `msp-ai-kit` | MSP/MSSP operating prompts and instruction packs from `kit.config.json` (ChatGPT, Custom GPT, Claude, Cursor, Copilot); optional clone of external MSP kits into `artifacts/msp-ai-kit/vendor/` | No |
+| `msp-ai-kit` | MSP/MSSP operating prompts and instruction packs from `kit.config.json` (ChatGPT, Custom GPT, Claude, Cursor, Copilot); optional clone of external MSP kits into `artifacts/msp-ai-kit/vendor/`. The DE Tech Tool that used to sit under its `windows/` is now the private repo `digeratiexperts/de-tech-tool` | No |
 
 Key handling: `KIE_AI_API_KEY` (`KIE_API_KEY` is accepted as an alias) and `RECRAFT_API_KEY` (paid plan only) come from the environment or the gitignored `.env`; `.env.example` is the template. Never commit, print or paste a key. Generated images are ILLUSTRATIVE candidates under `artifacts/kie-ai/` until they pass `design/IMAGERY.md` review.
 

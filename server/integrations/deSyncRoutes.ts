@@ -16,6 +16,7 @@ import { addPortalSseClient } from "./portalSse";
 import type { DeSyncEventType } from "./deSyncContract";
 import { getClient, listUniqueUsers } from "../portalAuthStore";
 import { ensureDeSyncSchema } from "./ensureDeSyncSchema";
+import { loadDirectionCredentialHealth } from "./deSyncLegacyCredential";
 import { logger } from "../logger";
 import { assertPortalCommandAllowed } from "./tenantIdentity";
 import { toPublicCatalog } from "./clientProjection";
@@ -106,6 +107,7 @@ export function registerDeSyncRoutes(app: Express, authMiddleware: AuthMiddlewar
     const oldestPendingMs = await getOldestPendingAgeMs();
     const pending = (await listOutbox("pending")).length;
     const failed = (await listOutbox("failed")).length;
+    const credential = await loadDirectionCredentialHealth();
     const status = healthStatus({
       configured: Boolean(hubUrl),
       reachable: ping.ok,
@@ -120,8 +122,25 @@ export function registerDeSyncRoutes(app: Express, authMiddleware: AuthMiddlewar
         httpStatus: ping.status,
       },
       outbox: { pending, failed, oldestPendingMs },
+      // Legacy shared-secret retirement gate, value-free summary: "ready" only
+      // when all four directions have their scoped secret and 0 legacy uses in
+      // 7 days; "unknown" (never "ready") when the count cannot be read.
+      // Per-direction detail: GET /api/integrations/legacy-credential-health (admin).
+      legacySecretRetirement: { state: credential.state, windowDays: credential.windowDays },
     });
   });
+
+  // Per direction: scoped secret NAME + set/not set, legacy env NAMES that are
+  // set, and the 7-day legacy use count (null + countError when unreadable,
+  // never 0). Admin only. Never returns a secret value.
+  app.get(
+    "/api/integrations/legacy-credential-health",
+    [authMiddleware],
+    async (req: AuthedRequest, res: Response) => {
+      if (req.user?.role !== "admin") return res.status(403).json({ error: "Admin only" });
+      res.json(await loadDirectionCredentialHealth());
+    },
+  );
 
   app.get("/api/integrations/v1/public-catalog", requireDeSyncSchema, async (_req: Request, res: Response) => {
     const cached = await getCatalogSnapshot();

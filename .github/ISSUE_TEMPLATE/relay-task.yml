@@ -1,0 +1,41 @@
+name: Relay task
+description: "Work any agent (Claude, OpenCode, ChatGPT) can pick up and hand off. Protocol: Intelligence-Hub docs/AGENT-RELAY.md (issue digeratiexperts/Intelligence-Hub#886)."
+title: "Relay: "
+labels: ["relay", "relay:open"]
+body:
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: One or two sentences. What should exist when this is done?
+    validations:
+      required: true
+  - type: textarea
+    id: stands
+    attributes:
+      label: Where it stands
+      description: What already exists (branch, PR, SHA, files, chats) and what is missing.
+    validations:
+      required: true
+  - type: textarea
+    id: done
+    attributes:
+      label: Done when
+      description: Checkable acceptance criteria, including tests and screenshots.
+    validations:
+      required: true
+  - type: input
+    id: files
+    attributes:
+      label: Files likely touched
+  - type: textarea
+    id: gates
+    attributes:
+      label: Stop gates (needs Joe)
+      description: Anything only Joe can do or approve. Write "none" if none. Add the needs:joe label if any.
+    validations:
+      required: true
+  - type: input
+    id: first
+    attributes:
+      label: First step for whoever claims it

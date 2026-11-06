@@ -87,10 +87,11 @@ Optional; DE Sync is off without them.
 | `TECHSALES_SYNC_TOKEN` | secret | `server/integrations/deSyncAuth.ts` | Bearer token for the sync. |
 | `WEBSITE_LEAD_WEBHOOK_SECRET` | secret | `server/integrations/deSyncAuth.ts` | Signs website lead webhooks to the Hub. |
 | `WEBSITE_TO_HUB_SECRET` | secret | `server/integrations/deSyncAuth.ts` | Website → Hub signing secret. |
-| `PORTAL_TO_HUB_SECRET` | secret | `server/serviceRequestHubSync.ts`, `server/integrations/deSyncAuth.ts` | Portal → Hub signing secret. |
+| `PORTAL_TO_HUB_SECRET` | secret | `server/serviceRequestHubSync.ts`, `server/integrations/deSyncAuth.ts`, `server/integrations/techSalesClient.ts` | Portal → Hub signing secret. The Hub licence read (`fetchHubLicenses`) uses only this; the legacy secret is refused there. |
 | `HUB_TO_WEBSITE_SECRET` | secret | `server/integrations/deSyncAuth.ts` | Verifies Hub → website calls. |
 | `HUB_TO_PORTAL_SECRET` | secret | `server/integrations/deSyncAuth.ts` | Verifies Hub → portal calls. |
 | `DE_SYNC_REQUIRE_SIGNED` | config | `server/integrations/deSyncAuth.ts`, `server/integrations/techSalesClient.ts` | Flag: reject unsigned inbound sync. |
+| `LICENSE_BOARD_SOURCE` | config | `server/licenseBoardHubSource.ts` | Where the licence board reads company seats: `portal` (default, unset), `shadow` (portal page, Hub differences logged), `hub` (Hub seats, portal fallback per company). Needs `portal_clients.hub_account_id`. |
 
 ## Portal integrations
 
