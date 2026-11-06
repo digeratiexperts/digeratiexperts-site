@@ -1,6 +1,5 @@
 import { objectIcon } from "../content";
 import { HOME_CTA } from "../cta";
-import { HomeScene } from "../scene/HomeScene";
 
 const CHALLENGES = [
   { icon: "lock", title: "Ransomware & malware", text: "Threat detection and rapid response to stop attacks before damage occurs." },
@@ -14,7 +13,6 @@ const CHALLENGES = [
 export function ChallengesSection(): JSX.Element {
   return (
     <section className="sec alt t-signal" id="challenges">
-      <HomeScene frame="gaps" />
       <div className="wrap">
         <div className="head">
           <div>
