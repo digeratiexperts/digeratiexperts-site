@@ -5077,6 +5077,8 @@ claims:
       - server/middleware/security.ts (Turnstile fails closed in production), server/middleware/turnstile.test.ts (new)
       - server/production.config.ts (boot warning text), docs/SECRETS-REQUIRED.md, deploy/vps/env.production.example, deploy/vps/deploy.sh (preflight refuses without both Turnstile keys; Joe 2026-11-05), scripts/deployScripts.test.ts
       - server/publicSolutionRoutes.test.ts (production-mode block sets a Turnstile secret)
+      - shared/schema.ts, server/storage.ts, server/services/orderFulfillment.behavior.test.ts (Stripe columns unused; step 1, stacked PR, Joe 2026-11-05)
+      - migrations/0025_drop_retired_stripe_columns.sql, scripts/stripeColumnsMigration.test.ts (step 2, held until step 1 is LIVE)
       - .ai/ACTIVE_WORK.yaml (this claim)
     status: active
     started: 2026-11-04

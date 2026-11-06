@@ -1643,8 +1643,6 @@ export const storeProducts = pgTable("store_products", {
   imageUrl: text("image_url"),
   sortOrder: integer("sort_order").default(0),
   isActive: boolean("is_active").default(true),
-  stripePriceId: text("stripe_price_id"), // For Stripe checkout
-  stripeProductId: text("stripe_product_id"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -1709,8 +1707,6 @@ export const storeOrders = pgTable("store_orders", {
   subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull(),
   tax: decimal("tax", { precision: 10, scale: 2 }).default("0"),
   total: decimal("total", { precision: 10, scale: 2 }).notNull(),
-  stripeSessionId: text("stripe_session_id"),
-  stripePaymentIntentId: text("stripe_payment_intent_id"),
   zohoPaymentId: text("zoho_payment_id"),
   zohoPaymentSessionId: text("zoho_payment_session_id"),
   billingEmail: text("billing_email"),
