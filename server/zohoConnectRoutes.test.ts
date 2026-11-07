@@ -12,7 +12,7 @@ import { resetZohoOAuthForTests } from "./zoho/oauth";
 
 const complete = vi.fn();
 const disconnect = vi.fn(async () => true);
-const health = { configured: true, state: "connected" as const, source: "env" as const };
+const health = { configured: true, state: "connected" as const, source: "unified" as const };
 
 const OWNER = { id: "owner-1", email: "admin@digeratiexperts.com", role: "admin" };
 let currentUser: Record<string, unknown> | null = OWNER;

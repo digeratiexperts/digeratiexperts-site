@@ -175,8 +175,6 @@ interface MemStoreOrder {
   subtotal: string;
   tax: string;
   total: string;
-  stripeSessionId: string | null;
-  stripePaymentIntentId: string | null;
   zohoPaymentId: string | null;
   billingEmail: string | null;
   billingName: string | null;
@@ -751,8 +749,6 @@ export class MemStorage implements IStorage {
       subtotal: order.subtotal || "0",
       tax: order.tax || "0",
       total: order.total || "0",
-      stripeSessionId: order.stripeSessionId || null,
-      stripePaymentIntentId: order.stripePaymentIntentId || null,
       zohoPaymentId: order.zohoPaymentId || null,
       billingEmail: order.billingEmail || null,
       billingName: order.billingName || null,
@@ -1299,8 +1295,6 @@ export class DatabaseStorage implements IStorage {
         subtotal: order.subtotal || "0",
         tax: order.tax || "0",
         total: order.total || "0",
-        stripeSessionId: order.stripeSessionId || null,
-        stripePaymentIntentId: order.stripePaymentIntentId || null,
         zohoPaymentId: order.zohoPaymentId || null,
         billingEmail: order.billingEmail || null,
         billingName: order.billingName || null,

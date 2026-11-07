@@ -86,11 +86,17 @@ function readSessionId(req: Request): string {
   return fromCookie.trim().slice(0, 80);
 }
 
-/** A hidden field no person fills in. A value there is a bot, and a bot gets a quiet 400 and no record. */
-function honeypotTripped(body: unknown): boolean {
+/**
+ * A hidden field no person fills in. A value there is a bot, and a bot gets a quiet 400 and no record.
+ * Any filled value counts, not only strings: a JSON number, boolean or array is just as much a bot,
+ * and a string-only check let `{"website": 1}` through.
+ */
+export function honeypotTripped(body: unknown): boolean {
   if (!body || typeof body !== "object") return false;
   const input = body as Record<string, unknown>;
-  return [input.company_website, input.website, input.fax].some((value) => typeof value === "string" && value.trim() !== "");
+  return [input.company_website, input.website, input.fax].some(
+    (value) => value !== undefined && value !== null && String(value).trim() !== "",
+  );
 }
 
 function ensureSession(req: Request, res: Response): string {

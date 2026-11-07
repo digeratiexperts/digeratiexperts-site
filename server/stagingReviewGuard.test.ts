@@ -56,19 +56,20 @@ describe("staging review guard", () => {
 describe("credential-independent lockdown", () => {
   it("reports Zoho as unconfigured even when credentials are present", async () => {
     process.env.DE_STAGING_REVIEW = "1";
-    process.env.ZOHO_CLIENT_ID = "test-id";
-    process.env.ZOHO_CLIENT_SECRET = "test-secret";
-    process.env.ZOHO_REFRESH_TOKEN = "test-refresh";
 
     vi.resetModules();
+    // A Zoho Connect grant covering CRM and the Desk: credentials present.
+    const { seedZohoConnectGrant, clearZohoConnectTestEnv } = await import("./zoho/oauth/testing/connectGrant");
+    await seedZohoConnectGrant();
     const { zohoClient } = await import("./zoho/zohoClient");
 
     // This is the whole point of the switch: credentials present, writes still refused.
     expect(zohoClient.isConfigured()).toBe(false);
     expect(zohoClient.isDeskConfigured()).toBe(false);
 
-    delete process.env.ZOHO_CLIENT_ID;
-    delete process.env.ZOHO_CLIENT_SECRET;
-    delete process.env.ZOHO_REFRESH_TOKEN;
+    process.env.DE_STAGING_REVIEW = "0";
+    expect(zohoClient.isConfigured()).toBe(true);
+    expect(zohoClient.isDeskConfigured()).toBe(true);
+    clearZohoConnectTestEnv();
   });
 });

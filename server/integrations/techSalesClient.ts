@@ -6,10 +6,11 @@ import { retainHubAccountMapping } from "./backfillHubIdentity";
 import { logger } from "../logger";
 import { getClient, setClient } from "../portalAuthStore";
 import { assertMutationAllowed } from "../stagingReviewGuard";
-import { buildSignedHeaders, newEventId, resolveScopedSecret } from "./deSyncAuth";
+import { buildSignedHeaders, newEventId, outboundSecret } from "./deSyncAuth";
 import type { DeSyncEnvelope, DeSyncEventType } from "./deSyncContract";
 import { SERVICE_REQUEST_HUB_EVENT, SERVICE_REQUEST_HUB_PATH } from "@shared/serviceRequests";
 import { representationProjectionSchema, type RepresentationProjection } from "@shared/representation";
+import { hubLicensesProjectionSchema, type HubLicensesProjection } from "./hubLicensesContract";
 
 export type HubCompanyDocumentsResponse = {
   success?: boolean;
@@ -90,19 +91,12 @@ export function hubOrigin(): string | null {
   }
 }
 
-function syncToken(): string {
-  return resolveScopedSecret("portal_to_hub").secret;
-}
-
-function websiteToken(): string {
-  return resolveScopedSecret("website_to_hub").secret;
-}
-
 async function signedGet<T>(pathWithQuery: string, direction: "website_to_hub" | "portal_to_hub"): Promise<T | null> {
   const base = hubApiBase();
-  const secret = resolveScopedSecret(direction).secret;
+  const apiPath = pathWithQuery.startsWith("/api") ? pathWithQuery : `/api${pathWithQuery}`;
+  const secret = base ? outboundSecret(direction, apiPath) : "";
   if (!base || !secret) return null;
-  const url = `${base.replace(/\/api$/, "")}${pathWithQuery.startsWith("/api") ? pathWithQuery : `/api${pathWithQuery}`}`;
+  const url = `${base.replace(/\/api$/, "")}${apiPath}`;
   const parsed = new URL(url);
   const headers = buildSignedHeaders({
     method: "GET",
@@ -248,7 +242,7 @@ export async function fetchHubCompanyDocuments(
   portalClientId?: string | null,
 ): Promise<HubCompanyDocumentsResponse | null> {
   const base = hubApiBase();
-  const token = syncToken();
+  const token = base ? outboundSecret("portal_to_hub", "/api/webhooks/portal/company-documents") : "";
   if (!base || !token) {
     logger.warn("TechSales document bridge skipped — TECHSALES_HUB_URL/SYNC_URL or TOKEN not set");
     return null;
@@ -294,7 +288,7 @@ export async function fetchHubRepresentation(accountId: string, portalClientId?:
   const cached = representationCache.get(key);
   if (cached && Date.now() - cached.at < REPRESENTATION_CACHE_MS) return cached.value;
   const base = hubApiBase();
-  const token = syncToken();
+  const token = base && /^\d+$/.test(accountId) ? outboundSecret("portal_to_hub", "/api/webhooks/portal/representation") : "";
   if (!base || !token || !/^\d+$/.test(accountId)) return null;
   const params = new URLSearchParams({ accountId });
   if (portalClientId) params.set("portalClientId", portalClientId);
@@ -323,7 +317,7 @@ export async function fetchHubCompanyOrders(
   portalClientId?: string | null,
 ): Promise<HubCompanyOrdersResponse | null> {
   const base = hubApiBase();
-  const token = syncToken();
+  const token = base ? outboundSecret("portal_to_hub", "/api/webhooks/portal/company-orders") : "";
   if (!base || !token) {
     logger.warn("TechSales orders bridge skipped — TECHSALES_HUB_URL/SYNC_URL or TOKEN not set");
     return null;
@@ -356,7 +350,7 @@ export async function fetchHubContractDownload(
   portalClientId?: string | null,
 ): Promise<{ buffer: Buffer; contentType: string; fileName: string } | null> {
   const base = hubApiBase();
-  const token = syncToken();
+  const token = base ? outboundSecret("portal_to_hub", "/api/webhooks/portal/company-documents/:id/download") : "";
   if (!base || !token) return null;
   const qs = new URLSearchParams();
   if (accountId) qs.set("accountId", accountId);
@@ -436,6 +430,51 @@ export function readHubDeliveryResult(body: unknown): {
   return { canonicalAccountId, duplicate: record.duplicate === true };
 }
 
+/** The secret the Hub's /webhooks/website-lead checks; "" when not set. */
+export function leadWebhookSecret(): string {
+  return (process.env.WEBSITE_LEAD_WEBHOOK_SECRET || "").trim();
+}
+
+const LEAD_WEBHOOK_WARN_INTERVAL_MS = 60 * 60 * 1000;
+let lastLeadWebhookWarnAt: number | null = null;
+
+/** Test seam. */
+export function _resetLeadWebhookWarning(): void {
+  lastLeadWebhookWarnAt = null;
+}
+
+/**
+ * The signed Hub route answered 404/405 and the lead went to the legacy
+ * webhook instead. One warning per hour (no secret, path only); every use is
+ * counted in de_sync_legacy_credential_uses under "website_lead_webhook".
+ * Never throws and never waits on the database.
+ */
+function noteLeadWebhookFallbackUse(webhookUrl: string, signedPath: string): void {
+  try {
+    let route = "";
+    try {
+      route = new URL(webhookUrl).pathname;
+    } catch {
+      route = "";
+    }
+    const now = Date.now();
+    if (lastLeadWebhookWarnAt == null || now - lastLeadWebhookWarnAt >= LEAD_WEBHOOK_WARN_INTERVAL_MS) {
+      lastLeadWebhookWarnAt = now;
+      logger.warn("Lead sent to the legacy Hub webhook because the signed route answered 404/405 (logged once per hour; every use is counted)", {
+        event: "de_sync.lead_webhook_fallback_used",
+        route,
+        signedRoute: signedPath.split("?")[0],
+        secretEnv: "WEBSITE_LEAD_WEBHOOK_SECRET",
+      });
+    }
+    void import("./deSyncLegacyCredential")
+      .then((m) => m.recordLegacyCredentialUse({ direction: "website_lead_webhook", route, source: "website", at: new Date(now) }))
+      .catch(() => undefined);
+  } catch {
+    /* observation must never break delivery */
+  }
+}
+
 export function legacyLeadWebhookAllowed(url: string): boolean {
   if (!url || process.env.DE_SYNC_REQUIRE_SIGNED === "1") return false;
   try {
@@ -456,13 +495,15 @@ export async function deliverEnvelopeToHub(
     throw new Error(`Site worker does not deliver destination=${destination}`);
   }
   const origin = hubOrigin();
-  const secret =
-    envelope.source === "portal" ? resolveScopedSecret("portal_to_hub").secret : websiteToken();
-  if (!origin || !secret) {
+  if (!origin) {
+    throw new Error("Hub destination not configured");
+  }
+  const path = hubPathForEnvelope(envelope.source, envelope.eventType);
+  const secret = outboundSecret(envelope.source === "portal" ? "portal_to_hub" : "website_to_hub", path);
+  if (!secret) {
     throw new Error("Hub destination not configured");
   }
 
-  const path = hubPathForEnvelope(envelope.source, envelope.eventType);
   const body = JSON.stringify(envelope);
   const headers = buildSignedHeaders({
     method: "POST",
@@ -479,13 +520,18 @@ export async function deliverEnvelopeToHub(
     return readHubDeliveryResult(data);
   }
 
-  // Compatibility: lead-like website commands can still hit the live webhook.
-  // That webhook takes the raw secret as a bearer token, so it is refused once
-  // DE_SYNC_REQUIRE_SIGNED=1 (signed-only on both directions) and never sent
-  // over plain HTTP.
+  // Compatibility: lead-like website commands can still hit the Hub's
+  // /webhooks/website-lead. That route checks WEBSITE_LEAD_WEBHOOK_SECRET on
+  // its own (not a DE-Sync scoped secret), so it gets exactly that secret, in
+  // one header. Without it the fallback is skipped (it could only 401). It is
+  // refused once DE_SYNC_REQUIRE_SIGNED=1 and never sent over plain HTTP.
+  // Every use is counted (direction "website_lead_webhook") so the route can
+  // be retired on evidence.
   const legacyUrl = (process.env.TECHSALES_SYNC_URL || "").trim();
+  const webhookSecret = leadWebhookSecret();
   const isLeadLike = envelope.eventType === "lead.created" || envelope.eventType === "assessment.submitted" || envelope.eventType === "consultation.booked" || envelope.eventType === "referral.submitted";
-  if (legacyLeadWebhookAllowed(legacyUrl) && isLeadLike && (response.status === 404 || response.status === 405)) {
+  if (webhookSecret && legacyLeadWebhookAllowed(legacyUrl) && isLeadLike && (response.status === 404 || response.status === 405)) {
+    noteLeadWebhookFallbackUse(legacyUrl, path);
     const payload = envelope.payload || {};
     const legacyBody = JSON.stringify({
       id: envelope.entityId,
@@ -500,8 +546,7 @@ export async function deliverEnvelopeToHub(
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${secret}`,
-        "x-de-sync-token": secret,
+        "x-de-sync-token": webhookSecret,
       },
       body: legacyBody,
     });
@@ -516,9 +561,9 @@ export async function deliverEnvelopeToHub(
 
 export async function fetchPublicCatalog(): Promise<Record<string, unknown> | null> {
   const origin = hubOrigin();
-  const secret = websiteToken();
-  if (!origin || !secret) return null;
   const path = "/api/integrations/v1/public-catalog";
+  const secret = origin ? outboundSecret("website_to_hub", path) : "";
+  if (!origin || !secret) return null;
   const headers = buildSignedHeaders({
     method: "GET",
     path,
@@ -540,9 +585,9 @@ export async function fetchPublicCatalog(): Promise<Record<string, unknown> | nu
 /** Staff-safe Hub catalog (tiers + SKUs with internal cost). Never for Door 2. */
 export async function fetchStaffCatalog(): Promise<Record<string, unknown> | null> {
   const origin = hubOrigin();
-  const secret = websiteToken();
-  if (!origin || !secret) return null;
   const path = "/api/integrations/v1/staff-catalog";
+  const secret = origin ? outboundSecret("website_to_hub", path) : "";
+  if (!origin || !secret) return null;
   const headers = buildSignedHeaders({
     method: "GET",
     path,
@@ -571,9 +616,9 @@ export type HubConnectorHealth = {
 /** Pax8 connector health from Hub. AUTH_REQUIRED until DE supplies credentials. */
 export async function fetchPax8ConnectorHealth(): Promise<HubConnectorHealth | null> {
   const origin = hubOrigin();
-  const secret = websiteToken();
-  if (!origin || !secret) return null;
   const path = "/api/integrations/v1/connectors/pax8/health";
+  const secret = origin ? outboundSecret("website_to_hub", path) : "";
+  if (!origin || !secret) return null;
   const headers = buildSignedHeaders({
     method: "GET",
     path,
@@ -610,3 +655,52 @@ export async function pingHub(): Promise<{ ok: boolean; latencyMs: number; statu
 }
 
 export { signedGet };
+
+/**
+ * One account's licence seats from the Hub (contract de.hub.licenses/v1,
+ * GET /api/webhooks/portal/licenses). Read by the licence board when
+ * LICENSE_BOARD_SOURCE is `shadow` or `hub` (server/licenseBoardHubSource.ts).
+ *
+ * Signed portal_to_hub with the SCOPED secret only: this Hub route refuses the
+ * legacy shared secret, so there is no fallback to it here, and with no
+ * PORTAL_TO_HUB_SECRET the read is skipped. The signature covers the query
+ * (portalBridgeHeaders), because the tenant rides in ?accountId=. The
+ * canonical Hub accounts.id (portal_clients.hub_account_id) is required:
+ * there is no company-name fallback. Not cached: the Hub answers no-store.
+ *
+ * Returns null (caller falls back to the portal's own data) when the Hub is
+ * not configured, unreachable, refuses the request, or answers with anything
+ * that does not match the contract or is for another account.
+ */
+export async function fetchHubLicenses(
+  accountId: string,
+  portalClientId?: string | null,
+): Promise<HubLicensesProjection | null> {
+  const base = hubApiBase();
+  const secret = (process.env.PORTAL_TO_HUB_SECRET || "").trim();
+  if (!base || !secret) {
+    logger.warn("Hub licences read skipped: TECHSALES_HUB_URL/SYNC_URL or PORTAL_TO_HUB_SECRET not set");
+    return null;
+  }
+  if (!/^\d+$/.test(accountId)) return null;
+  const params = new URLSearchParams({ accountId });
+  if (portalClientId) params.set("portalClientId", portalClientId);
+  const url = `${base}/webhooks/portal/licenses?${params.toString()}`;
+  try {
+    const res = await fetch(url, { method: "GET", headers: { ...portalBridgeHeaders(url, secret), Accept: "application/json" } });
+    const body = await res.json().catch(() => null);
+    if (!res.ok) {
+      logger.warn("Hub licences read failed", { status: res.status, code: (body as { code?: unknown } | null)?.code, accountId });
+      return null;
+    }
+    const parsed = hubLicensesProjectionSchema.safeParse(body);
+    if (!parsed.success || String(parsed.data.accountId) !== accountId) {
+      logger.warn("Hub licences did not match contract", { accountId });
+      return null;
+    }
+    return parsed.data;
+  } catch (err: any) {
+    logger.error("Hub licences read error", err, { accountId });
+    return null;
+  }
+}

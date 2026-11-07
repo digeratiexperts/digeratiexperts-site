@@ -53,21 +53,56 @@ export function validateCSRFToken(req: Request, res: Response, next: NextFunctio
 }
 
 // ==================== CLOUDFLARE TURNSTILE BOT PROTECTION ====================
+export type TurnstileUnconfiguredMode = 'reject' | 'ci-smoke-bypass' | 'dev-bypass';
+
+/**
+ * What verifyTurnstile does when TURNSTILE_SECRET_KEY is missing.
+ *
+ * Production fails closed (2026-11-04 review): the protected form is refused.
+ * The one production exception is CI's memory-only smoke run, recognised by
+ * DE_SMOKE_ALLOW_MEMORY_ONLY=1 *and* no DATABASE_URL, which a real deployment
+ * cannot satisfy (it refuses to boot without a database). Development and
+ * tests stay permissive. TURNSTILE_ENFORCE=1 forces fail-closed anywhere.
+ */
+export function turnstileUnconfiguredMode(env: NodeJS.ProcessEnv = process.env): TurnstileUnconfiguredMode {
+  if (env.TURNSTILE_ENFORCE === '1') return 'reject';
+  if (env.NODE_ENV === 'production') {
+    if (env.DE_SMOKE_ALLOW_MEMORY_ONLY === '1' && !env.DATABASE_URL) return 'ci-smoke-bypass';
+    return 'reject';
+  }
+  return 'dev-bypass';
+}
+
+/** Cloudflare siteverify budget. Same order as the other outbound checks (googleReviews 8 s). */
+export const TURNSTILE_VERIFY_TIMEOUT_MS = 8000;
+
+export const TURNSTILE_UNCONFIGURED_ERROR =
+  'This form is temporarily unavailable because bot protection is not configured on our side. Please try again later or call us.';
+
+// Logged once per process, not on every request (boot logs it as well, via
+// collectProductionConfigWarnings in production.config.ts).
+let turnstileUnconfiguredLogged = false;
+export function resetTurnstileUnconfiguredLogForTests(): void {
+  turnstileUnconfiguredLogged = false;
+}
+
 export async function verifyTurnstile(req: Request, res: Response, next: NextFunction) {
   const turnstileToken = req.body.turnstileToken || req.body['cf-turnstile-response'];
-  
+
   if (!process.env.TURNSTILE_SECRET_KEY) {
-    // Set TURNSTILE_ENFORCE=1 to fail closed when the secret is missing.
-    // Default remains fail-open so a config gap cannot lock out all logins,
-    // but in production it is logged as a security event, not a quiet skip.
-    if (process.env.TURNSTILE_ENFORCE === '1') {
-      console.error('[SECURITY] TURNSTILE_UNCONFIGURED_REJECT - enforcement on, secret missing');
-      return res.status(503).json({ error: 'Verification is temporarily unavailable. Please try again later.' });
+    const mode = turnstileUnconfiguredMode();
+    if (!turnstileUnconfiguredLogged) {
+      turnstileUnconfiguredLogged = true;
+      if (mode === 'reject') {
+        console.error('[SECURITY] TURNSTILE_UNCONFIGURED_REJECT - TURNSTILE_SECRET_KEY missing; protected forms are refused (fail closed)');
+      } else if (mode === 'ci-smoke-bypass') {
+        console.warn('[SECURITY] Turnstile not configured - skipped for the CI memory-only smoke run');
+      } else {
+        console.warn('[SECURITY] Turnstile not configured - skipping verification (development)');
+      }
     }
-    if (process.env.NODE_ENV === 'production') {
-      console.error('[SECURITY] TURNSTILE_UNCONFIGURED - bot protection is OFF in production (set TURNSTILE_SECRET_KEY)');
-    } else {
-      console.warn('[SECURITY] Turnstile not configured - skipping verification');
+    if (mode === 'reject') {
+      return res.status(503).json({ error: TURNSTILE_UNCONFIGURED_ERROR, code: 'TURNSTILE_UNCONFIGURED' });
     }
     return next();
   }
@@ -93,6 +128,9 @@ export async function verifyTurnstile(req: Request, res: Response, next: NextFun
   }
   
   try {
+    // A hung Cloudflare call must not hold the request open. On timeout the
+    // fetch rejects and the catch below answers: 500 in production (fail
+    // closed), next() in development, the same as any other verify error.
     const response = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -100,7 +138,8 @@ export async function verifyTurnstile(req: Request, res: Response, next: NextFun
         secret: process.env.TURNSTILE_SECRET_KEY,
         response: turnstileToken,
         remoteip: req.ip || ''
-      }).toString()
+      }).toString(),
+      signal: AbortSignal.timeout(TURNSTILE_VERIFY_TIMEOUT_MS),
     });
     
     const data = await response.json();

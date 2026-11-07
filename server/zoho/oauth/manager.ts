@@ -1,7 +1,7 @@
 /**
  * Zoho OAuth token manager — the one place the website turns refresh tokens
  * into access tokens. CRM, Desk, Books and Payments each go through a
- * ZohoProductAuth instead of calling /oauth/v2/token themselves.
+ * ZohoProductAuth instead of calling Zoho's token endpoint themselves.
  *
  * Ported from Intelligence Hub lib/zoho-oauth/manager.ts. Rules
  * (docs/ZOHO-OAUTH-INVENTORY.md, Zoho token limits):
@@ -14,17 +14,19 @@
  *    failures ever surface as "needs reconnect"; throttling and network/5xx
  *    errors are `degraded` with a backoff (issue #418).
  *  - A refresh token is always refreshed with the client that minted it: the
- *    Connect grant's stored client_id, or the product's own env client rule
- *    (e.g. resolveDeskOAuthConfig), never "whichever env client resolves first".
+ *    Connect grant's stored client_id, never "whichever env client resolves first".
+ *  - The Zoho Connect grant is the ONLY credential (2026-11-06, issue #974).
+ *    The legacy per-product Self Client env refresh tokens are no longer read
+ *    anywhere; a guard test
+ *    (noDirectTokenCalls.test.ts) keeps it that way.
  *
- * Local deviations from the Hub: legacy credentials are env refresh tokens
- * supplied by each product's `legacySources()` (with their own client), their
- * state persists by fingerprint (store.readState/writeState), the Connect
- * grant is used only while ZOHO_CONNECT_ENABLED is on, and `notConfigured`
- * learns whether the product is unconfigured or needs a reconnect.
+ * Local deviations from the Hub: the grant is used only while
+ * ZOHO_CONNECT_ENABLED is on (off = every product is not_configured), and
+ * `notConfigured` learns whether the product is unconfigured or needs a
+ * reconnect.
  */
 import { createHash } from "node:crypto";
-import { zohoDcFromUrl, zohoDefaultDc, type ZohoDcUrls } from "./dc";
+import { zohoDcFromUrl, type ZohoDcUrls } from "./dc";
 import {
   callZohoTokenEndpoint,
   ZohoTokenError,
@@ -82,15 +84,7 @@ export interface ZohoClientCreds {
   secret: string;
 }
 
-/** Every env client pair the website knows about, in no particular priority. */
-const KNOWN_CLIENT_ENV: ReadonlyArray<readonly [string, string]> = [
-  ["ZOHO_CONNECT_CLIENT_ID", "ZOHO_CONNECT_CLIENT_SECRET"],
-  ["ZOHO_CLIENT_ID_API", "ZOHO_CLIENT_SECRET_API"],
-  ["ZOHO_DESK_CLIENT_ID", "ZOHO_DESK_CLIENT_SECRET"],
-  ["ZOHO_BOOKS_CLIENT_ID", "ZOHO_BOOKS_CLIENT_SECRET"],
-  ["ZOHO_PAYMENTS_CLIENT_ID", "ZOHO_PAYMENTS_CLIENT_SECRET"],
-  ["ZOHO_CLIENT_ID", "ZOHO_CLIENT_SECRET"],
-];
+const CONNECT_CLIENT_ENV = ["ZOHO_CONNECT_CLIENT_ID", "ZOHO_CONNECT_CLIENT_SECRET"] as const;
 
 function envPair(pair: readonly [string, string]): ZohoClientCreds | null {
   const id = process.env[pair[0]]?.trim();
@@ -98,18 +92,19 @@ function envPair(pair: readonly [string, string]): ZohoClientCreds | null {
   return id && secret ? { id, secret } : null;
 }
 
-/** The secret for a specific client id, from any known env pair. */
+/**
+ * The secret for a grant's stored client id. Only the Zoho Connect client can
+ * refresh a grant: the legacy Self Clients and the portal sign-in client are
+ * never used for API tokens.
+ */
 export function clientById(clientId: string): ZohoClientCreds | null {
-  for (const pair of KNOWN_CLIENT_ENV) {
-    const c = envPair(pair);
-    if (c && c.id === clientId) return c;
-  }
-  return null;
+  const c = envPair(CONNECT_CLIENT_ENV);
+  return c && c.id === clientId ? c : null;
 }
 
 /** Client used by the server-based Zoho Connect flow. */
 export function connectClient(): ZohoClientCreds | null {
-  return envPair(["ZOHO_CONNECT_CLIENT_ID", "ZOHO_CONNECT_CLIENT_SECRET"]);
+  return envPair(CONNECT_CLIENT_ENV);
 }
 
 /** Feature flag for Zoho Connect: its routes, and products using its grant. */
@@ -134,7 +129,7 @@ interface CredentialRuntime {
 
 const runtimes = new Map<string, CredentialRuntime>();
 
-/** Non-reversible id for a refresh token: runtime and env-state key, safe to log. */
+/** Non-reversible id for a refresh token: runtime key, safe to log. */
 export function fingerprint(refreshToken: string): string {
   return createHash("sha256").update(refreshToken).digest("hex").slice(0, 24);
 }
@@ -192,28 +187,17 @@ export function invalidateZohoSources(): void {
 
 // ---- product auth ---------------------------------------------------------------
 
-/** A legacy env refresh token and the client its product refreshes it with. */
-export interface LegacyEnvSource {
-  /** The env var the refresh token came from: a name, never a value. */
-  label: string;
-  refreshToken: string;
-  client: ZohoClientCreds | null;
-}
-
 /** Why a product cannot get a token: nothing set up, or Zoho refused it. */
 export type ZohoAuthProblem = "not_configured" | "revoked" | "client";
 
 export interface ZohoProductAuthConfig {
   product: ZohoProduct;
-  /** Legacy env credentials in priority order; read on every source resolve. */
-  legacySources: () => LegacyEnvSource[];
-  /** Why there are no legacy sources (names missing settings, never values). */
-  notConfiguredReason?: () => string | null;
   /** Product-specific error so existing callers keep their failure paths. */
   notConfigured: (message: string, problem: ZohoAuthProblem) => Error;
 }
 
-export type ZohoSourceKind = "unified" | "env";
+/** Where a token came from. Only the Zoho Connect grant remains. */
+export type ZohoSourceKind = "unified";
 
 interface CredentialSource {
   kind: ZohoSourceKind;
@@ -221,7 +205,7 @@ interface CredentialSource {
   refreshToken: string;
   client: ZohoClientCreds | null;
   clientProblem: string | null;
-  /** Persisted state (grant row or env state row). */
+  /** Persisted state (the grant row). */
   row: ZohoTokenState | null;
   orgId: string | null;
   apiDomain: string | null;
@@ -270,8 +254,9 @@ export interface ZohoProductAuthDeps {
 }
 
 export class ZohoProductAuth {
-  private lastGoodToken: string | null = null;
   private sourcesCache: { at: number; gen: number; sources: CredentialSource[] } | null = null;
+  /** Scope of the stored grant at the last resolve (null = no grant), for messages. */
+  private grantScope: string | null = null;
   private lastProbeOkAt = 0;
   private apiAuthFailure: { at: number; message: string } | null = null;
   private probeInflight: Promise<ZohoProductHealth> | null = null;
@@ -344,48 +329,14 @@ export class ZohoProductAuth {
         return null;
       }
     };
-    const seen = new Set<string>();
-    const push = (s: CredentialSource) => {
-      if (seen.has(s.refreshToken)) return;
-      seen.add(s.refreshToken);
-      out.push(s);
-    };
-
     if (this.connectEnabled()) {
       const unified = await read((onUnavailable) => this.deps.store.read(UNIFIED_PROVIDER, onUnavailable));
+      this.grantScope = unified ? unified.scope ?? "" : null;
       if (unified && scopesCover(unified.scope, ZOHO_PRODUCT_SCOPES[this.config.product])) {
-        push(this.sourceFromGrant(unified));
+        out.push(this.sourceFromGrant(unified));
       }
-    }
-    for (const legacy of this.config.legacySources()) {
-      const token = legacy.refreshToken.trim();
-      if (!token || seen.has(token)) continue;
-      const row = await read((onUnavailable) => this.deps.store.readState(fingerprint(token), onUnavailable));
-      // Every legacy env token lives in the server's configured DC.
-      const dc = zohoDefaultDc();
-      push({
-        kind: "env",
-        label: legacy.label,
-        refreshToken: token,
-        client: legacy.client,
-        clientProblem: legacy.client ? null : "Zoho OAuth client id/secret are not configured on the server.",
-        row,
-        orgId: null,
-        apiDomain: row?.apiDomain ?? null,
-        accountsServer: dc.accounts,
-      });
     }
 
-    // The source that last worked goes first (after unified, which always wins
-    // when it covers this product).
-    if (this.lastGoodToken) {
-      const i = out.findIndex((s) => s.refreshToken === this.lastGoodToken);
-      const firstNonUnified = out.findIndex((s) => s.kind !== "unified");
-      if (i > 0 && firstNonUnified >= 0 && i > firstNonUnified) {
-        const [s] = out.splice(i, 1);
-        out.splice(firstNonUnified, 0, s);
-      }
-    }
     if (!unavailable) this.sourcesCache = { at: this.now(), gen: sourcesGeneration, sources: out };
     return { sources: out, unavailable };
   }
@@ -407,11 +358,7 @@ export class ZohoProductAuth {
 
   private async persist(src: CredentialSource, patch: ZohoStatePatch) {
     try {
-      if (src.kind === "unified") {
-        await this.deps.store.patch(UNIFIED_PROVIDER, src.refreshToken, patch);
-      } else {
-        await this.deps.store.writeState(fingerprint(src.refreshToken), patch);
-      }
+      await this.deps.store.patch(UNIFIED_PROVIDER, src.refreshToken, patch);
     } catch (err) {
       this.log("warn", "could not persist token state", {
         error: err instanceof Error ? err.message : String(err),
@@ -526,11 +473,18 @@ export class ZohoProductAuth {
   }
 
   private notConfiguredMessage(): string {
-    const why = this.config.notConfiguredReason?.() ?? null;
-    return `${this.label()} is not connected${why ? `: ${why}` : ""}. Use Zoho Connect (docs/ZOHO-OAUTH-INVENTORY.md), or set its legacy refresh token.`;
+    let why: string;
+    if (!this.connectEnabled()) {
+      why = "Zoho Connect is off (ZOHO_CONNECT_ENABLED is not true)";
+    } else if (this.grantScope === null) {
+      why = "no Zoho Connect grant is stored; connect Zoho at /api/zoho/connect (needs ZOHO_CONNECT_CLIENT_ID and ZOHO_CONNECT_CLIENT_SECRET)";
+    } else {
+      why = `the Zoho Connect grant does not cover its scopes (${ZOHO_PRODUCT_SCOPES[this.config.product].join(", ")}); reconnect Zoho at /api/zoho/connect`;
+    }
+    return `${this.label()} is not connected: ${why}. See docs/ZOHO-OAUTH-INVENTORY.md.`;
   }
 
-  /** Any credential at all (Connect grant covering this product, or env). */
+  /** Whether the Zoho Connect grant covering this product is available. */
   async hasCredentials(): Promise<boolean> {
     const { sources, unavailable } = await this.resolveSources();
     if (!sources.length && unavailable) throw new ZohoAuthUnavailableError(DATABASE_UNAVAILABLE_MESSAGE, null);
@@ -573,7 +527,6 @@ export class ZohoProductAuth {
       }
 
       if (rt.accessToken && rt.accessExpiresAt - now > ACCESS_SKEW_MS) {
-        this.lastGoodToken = src.refreshToken;
         return this.accessFrom(src, rt.accessToken);
       }
 
@@ -602,7 +555,6 @@ export class ZohoProductAuth {
 
       try {
         const token = await this.refresh(src, rt);
-        this.lastGoodToken = src.refreshToken;
         return this.accessFrom(src, token);
       } catch (err) {
         const e = err as ZohoTokenError;
@@ -614,7 +566,7 @@ export class ZohoProductAuth {
       }
     }
 
-    // Failed fallbacks cannot establish that an unreadable grant needs reconnecting.
+    // A failed read cannot establish that the grant needs reconnecting.
     if (unavailable) throw new ZohoAuthUnavailableError(DATABASE_UNAVAILABLE_MESSAGE, null);
     if (temporary) {
       const t = temporary as { message: string; retryAt: number };
@@ -665,7 +617,6 @@ export class ZohoProductAuth {
   /** Install a just-minted grant's access token so the first call needs no refresh. */
   primeAccessToken(refreshToken: string, accessToken: string, expiresInSec: number): void {
     primeZohoAccessToken(refreshToken, accessToken, expiresInSec, this.now());
-    this.lastGoodToken = refreshToken;
   }
 
   /** Forget cached sources + probe results (after a new grant). */
@@ -673,7 +624,6 @@ export class ZohoProductAuth {
     this.sourcesCache = null;
     this.lastProbeOkAt = 0;
     this.apiAuthFailure = null;
-    this.lastGoodToken = null;
   }
 
   // ---- health ----

@@ -20,7 +20,7 @@ import {
  * Nothing is sent to the customer. Zoho Payments still charges the card; Books
  * only supplies the number.
  *
- * The server's own Books token (a self-client refresh token) needs, for tax:
+ * The server's Books token (from the Zoho Connect grant) needs, for tax:
  *   ZohoBooks.estimates.CREATE, ZohoBooks.estimates.DELETE,
  *   ZohoBooks.settings.READ, ZohoBooks.contacts.READ
  * and, to record paid orders (server/services/zohoBooksInvoice.ts):
@@ -28,21 +28,17 @@ import {
  *   ZohoBooks.invoices.READ, ZohoBooks.customerpayments.CREATE
  * Nothing that deletes invoices, payments or customers, or changes settings.
  *
- * Tokens come from the token manager (server/zoho/oauth): the Zoho Connect
- * grant when it covers Books, else ZOHO_BOOKS_REFRESH_TOKEN with the client
- * below. Throttling and Zoho outages read as "unreachable", never "auth".
+ * Tokens come from the token manager (server/zoho/oauth), from the Zoho
+ * Connect grant only (issue #974: no Self Client refresh token any more).
+ * Throttling and Zoho outages read as "unreachable", never "auth".
  */
 
-/** Books API and token endpoint for the server's data center (ZOHO_ACCOUNTS_SERVER; US by default). */
+/** Books API for the server's data center (ZOHO_ACCOUNTS_SERVER; US by default). */
 export const ZOHO_BOOKS_API = `${zohoDefaultDc().api}/books/v3`;
-export const ZOHO_ACCOUNTS_TOKEN_URL = `${zohoDefaultDc().accounts}/oauth/v2/token`;
 const BOOKS_TIMEOUT_MS = 8000;
 
 export interface ZohoBooksTaxConfig {
   organizationId: string;
-  clientId: string;
-  clientSecret: string;
-  refreshToken: string;
   /** The contact every tax-check estimate is drafted on. */
   contactId: string;
   /** The Books item whose tax category covers people-delivered services. */
@@ -50,12 +46,12 @@ export interface ZohoBooksTaxConfig {
   itemOverrides: Partial<Record<StoreCategory, string>>;
 }
 
+/** What `missingZohoBooksTaxSettings` names when no Connect grant covers Books. */
+export const ZOHO_BOOKS_CONNECT_MISSING = "Zoho Connect grant with the Books scopes (/api/zoho/connect)";
+
 /** Server settings Pay Now needs before it can ask Books for tax, by name. */
 export const ZOHO_BOOKS_TAX_SETTINGS = [
   "ZOHO_BOOKS_ORGANIZATION_ID",
-  "ZOHO_BOOKS_REFRESH_TOKEN",
-  "ZOHO_BOOKS_CLIENT_ID",
-  "ZOHO_BOOKS_CLIENT_SECRET",
   "ZOHO_BOOKS_TAX_CONTACT_ID",
   "ZOHO_BOOKS_SERVICE_ITEM_ID",
 ] as const;
@@ -64,27 +60,14 @@ function setting(env: NodeJS.ProcessEnv, name: string): string {
   return env[name]?.trim() ?? "";
 }
 
-/** The Books client falls back to the API self-client that already serves Desk. */
-function clientCredentials(env: NodeJS.ProcessEnv): { clientId: string; clientSecret: string } {
-  return {
-    clientId: setting(env, "ZOHO_BOOKS_CLIENT_ID") || setting(env, "ZOHO_CLIENT_ID_API"),
-    clientSecret: setting(env, "ZOHO_BOOKS_CLIENT_SECRET") || setting(env, "ZOHO_CLIENT_SECRET_API"),
-  };
-}
-
 /**
  * Which settings are missing or malformed. Empty means Pay Now can ask Books.
- * With a Zoho Connect grant that covers Books, the refresh token and client
- * settings are not needed.
+ * The token comes from the Zoho Connect grant, which must cover Books.
  */
 export function missingZohoBooksTaxSettings(env: NodeJS.ProcessEnv = process.env): string[] {
-  const { clientId, clientSecret } = clientCredentials(env);
-  const viaConnect = zohoConnectCovers("books");
   const missing: string[] = [];
   if (!BOOKS_ID_PATTERN.test(setting(env, "ZOHO_BOOKS_ORGANIZATION_ID"))) missing.push("ZOHO_BOOKS_ORGANIZATION_ID");
-  if (!viaConnect && !setting(env, "ZOHO_BOOKS_REFRESH_TOKEN")) missing.push("ZOHO_BOOKS_REFRESH_TOKEN");
-  if (!viaConnect && !clientId) missing.push("ZOHO_BOOKS_CLIENT_ID");
-  if (!viaConnect && !clientSecret) missing.push("ZOHO_BOOKS_CLIENT_SECRET");
+  if (!zohoConnectCovers("books")) missing.push(ZOHO_BOOKS_CONNECT_MISSING);
   if (!BOOKS_ID_PATTERN.test(setting(env, "ZOHO_BOOKS_TAX_CONTACT_ID"))) missing.push("ZOHO_BOOKS_TAX_CONTACT_ID");
   if (!BOOKS_ID_PATTERN.test(setting(env, "ZOHO_BOOKS_SERVICE_ITEM_ID"))) missing.push("ZOHO_BOOKS_SERVICE_ITEM_ID");
   return missing;
@@ -92,12 +75,8 @@ export function missingZohoBooksTaxSettings(env: NodeJS.ProcessEnv = process.env
 
 export function zohoBooksTaxConfig(env: NodeJS.ProcessEnv = process.env): ZohoBooksTaxConfig | null {
   if (missingZohoBooksTaxSettings(env).length > 0) return null;
-  const { clientId, clientSecret } = clientCredentials(env);
   return {
     organizationId: setting(env, "ZOHO_BOOKS_ORGANIZATION_ID"),
-    clientId,
-    clientSecret,
-    refreshToken: setting(env, "ZOHO_BOOKS_REFRESH_TOKEN"),
     contactId: setting(env, "ZOHO_BOOKS_TAX_CONTACT_ID"),
     serviceItemId: setting(env, "ZOHO_BOOKS_SERVICE_ITEM_ID"),
     itemOverrides: parseTaxItemOverrides(env.ZOHO_BOOKS_TAX_ITEMS),
@@ -119,19 +98,15 @@ export type BooksReply = { ok: true; body: any } | { ok: false; failure: BooksFa
 class BooksAuthError extends Error {}
 
 /**
- * The Books token manager for this config. Built per call so the config (and
- * the test seams in `options`) decide the legacy credential; the access token,
- * single-flight refresh, budget and backoff are shared per refresh token
- * inside the manager, so building one is cheap and never mints a token.
+ * The Books token manager. Built per call so the test seams in `options` apply;
+ * the access token, single-flight refresh, budget and backoff are shared per
+ * refresh token inside the manager, so building one is cheap and never mints
+ * a token.
  */
-function booksAuth(config: ZohoBooksTaxConfig, options: BooksCallOptions): ZohoProductAuth {
+function booksAuth(options: BooksCallOptions): ZohoProductAuth {
   return new ZohoProductAuth(
     {
       product: "books",
-      legacySources: () =>
-        config.refreshToken
-          ? [{ label: "ZOHO_BOOKS_REFRESH_TOKEN", refreshToken: config.refreshToken, client: { id: config.clientId, secret: config.clientSecret } }]
-          : [],
       notConfigured: (message) => new BooksAuthError(message),
     },
     {
@@ -151,7 +126,7 @@ function booksAuth(config: ZohoBooksTaxConfig, options: BooksCallOptions): ZohoP
 export async function zohoBooksTokenHealth(env: NodeJS.ProcessEnv = process.env): Promise<ZohoProductHealth> {
   const config = zohoBooksTaxConfig(env);
   if (!config) return { configured: false, state: "not_configured", source: null };
-  return booksAuth(config, {}).status();
+  return booksAuth({}).status();
 }
 
 /** Test seam. */
@@ -176,7 +151,7 @@ export async function booksCall(
   options: BooksCallOptions = {},
 ): Promise<BooksReply> {
   const fetchImpl = options.fetchImpl ?? fetch;
-  const auth = booksAuth(config, options);
+  const auth = booksAuth(options);
   let rejected: string | undefined;
   for (let attempt = 0; attempt < 2; attempt++) {
     let bearer: string;

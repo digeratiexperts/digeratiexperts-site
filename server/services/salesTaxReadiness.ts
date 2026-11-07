@@ -91,7 +91,7 @@ export async function checkSalesTaxReadiness(
       status: "AUTH_REQUIRED",
       checks: { connection: "set", taxRegistration: "unknown", serviceItem: "unknown", taxContact: "unknown" },
       missingSettings,
-      message: "Zoho refused the Books token. Generate a new self-client code with the Books scopes in docs/STORE-WAREHOUSE.md and replace ZOHO_BOOKS_REFRESH_TOKEN on the server.",
+      message: "Zoho refused the Books token. Reconnect Zoho at /api/zoho/connect so the grant covers the Books scopes (docs/ZOHO-OAUTH-INVENTORY.md).",
     };
   }
 

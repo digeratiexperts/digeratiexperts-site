@@ -10,6 +10,18 @@ import { isZohoAuthUnavailableError, type ZohoConnectionState } from "./zoho/oau
 import { PRIMARY_PHONE } from "@shared/companyContact";
 import { deskTicketSchema } from "@shared/deskTicket";
 import { fallbackTicket, saveTicketOutsideDesk, type DeskFallbackOutcome, type FallbackTicket } from "./deskTicketFallback";
+import { getClient as portalAuthGetClient } from "./portalAuthStore";
+import { createHubTicketClient, type HubTicketClient } from "./integrations/hubTicketClient";
+import { hubPriorityFromPortal } from "./integrations/hubTicketsContract";
+import {
+  hubAssignedTo,
+  hubFailureFields,
+  hubIdempotencyKey,
+  recordTicketReconciliation,
+  ticketsSource,
+  type ReconciliationDeps,
+  type TicketsSource,
+} from "./ticketsSource";
 
 /**
  * The public DE Desk "Get Support" ticket, and a status probe for the desk it
@@ -214,6 +226,12 @@ export interface WidgetTicketRouteOptions {
   probeDeadlineMs?: number;
   /** Where a ticket goes when the Desk API does not take it. Tests pass a stub. */
   fallback?: (ticket: FallbackTicket, options: { acknowledge?: boolean }) => Promise<DeskFallbackOutcome>;
+  /** TICKETS_SOURCE (server/ticketsSource.ts); tests pin it. */
+  ticketsSource?: () => TicketsSource;
+  /** The Hub ticket API client; tests pass one over a mocked Hub. */
+  hubTickets?: HubTicketClient;
+  /** Where reconciliation notes go; tests capture them. */
+  reconciliation?: ReconciliationDeps;
 }
 
 export function registerWidgetTicketRoute(app: Express, options: WidgetTicketRouteOptions = {}): void {
@@ -221,6 +239,8 @@ export function registerWidgetTicketRoute(app: Express, options: WidgetTicketRou
   const statusLimiter = options.statusRateLimiter ?? deskStatusRateLimiter;
   const fallback = options.fallback ?? ((ticket, opts) => saveTicketOutsideDesk(ticket, opts));
   const probeDeadlineMs = options.probeDeadlineMs ?? DESK_PROBE_DEADLINE_MS;
+  const sourceOf = options.ticketsSource ?? (() => ticketsSource());
+  const hubTickets = options.hubTickets ?? createHubTicketClient();
 
   app.get(DESK_STATUS_PATH, statusLimiter, async (_req: Request, res: Response) => {
     res.set("Cache-Control", "no-store");
@@ -301,6 +321,74 @@ export function registerWidgetTicketRoute(app: Express, options: WidgetTicketRou
         });
       };
 
+      // TICKETS_SOURCE=hub: the Hub ticket engine is the master and Desk
+      // gets the ticket through the Hub sync. When the Hub cannot take it,
+      // the ticket continues down the Desk path below and a reconciliation
+      // note records that it missed the Hub.
+      const portalUser = portalAuthGetUser(String(email));
+      if (sourceOf() === "hub") {
+        const hubAccountId = portalUser?.clientId ? portalAuthGetClient(portalUser.clientId)?.hubAccountId ?? null : null;
+        const visitorName = typeof name === "string" && name.trim() ? name.trim().slice(0, 120) : null;
+        const hubDescription = typeof advisorSessionId === "string" && advisorSessionId.trim()
+          ? `${description}\n\n---\nDE Desk session: ${advisorSessionId.trim()}`
+          : String(description);
+        const created = await hubTickets.create(
+          hubAccountId ? { accountId: String(hubAccountId), portalClientId: portalUser?.clientId ?? null } : null,
+          {
+            idempotencyKey: hubIdempotencyKey("widget"),
+            channel: "website_widget",
+            subject: String(subject).slice(0, 200),
+            description: hubDescription.slice(0, 8000),
+            priority: hubPriorityFromPortal(priorityValue),
+            requesterEmail: String(email).trim().toLowerCase(),
+            requesterName: visitorName,
+          },
+        );
+        if (created.ok) {
+          const hubTicket = created.data.ticket;
+          if (portalUser?.clientId && portalUser?.id) {
+            try {
+              const localTicket = await storage.createPortalTicket({
+                clientId: portalUser.clientId,
+                createdBy: portalUser.id,
+                ticketNumber: hubTicket.number,
+                subject,
+                description: hubDescription,
+                status: "open",
+                priority: hubTicket.priority === "critical" ? "high" : hubTicket.priority,
+                category: "de-desk",
+              });
+              await storage.updatePortalTicket(localTicket.id, { assignedTo: hubAssignedTo(hubTicket.id) });
+            } catch (localErr: any) {
+              console.warn("Could not mirror widget ticket to portal:", localErr?.message || localErr);
+            }
+          }
+          logSecurityEvent("WIDGET_TICKET_CREATED", req, { email, ticketNumber: hubTicket.number, hubTicketId: hubTicket.id });
+          return res.json({
+            success: true,
+            ticketNumber: hubTicket.number,
+            hubTicketId: hubTicket.id,
+            message: "Your support request has been received.",
+          });
+        }
+        recordTicketReconciliation(
+          {
+            kind: "create",
+            channel: "website_widget",
+            ...hubFailureFields(created),
+            handedTo: "desk",
+            reference: null,
+            portalClientId: portalUser?.clientId ?? null,
+            hubAccountId: hubAccountId ? String(hubAccountId) : null,
+            deskTicketId: null,
+            requesterEmail: String(email),
+            subject: String(subject).slice(0, 200),
+            hubTicketId: null,
+          },
+          options.reconciliation,
+        );
+      }
+
       if (!zohoClient.isDeskConfigured()) {
         console.error("[WIDGET TICKET] Zoho Desk is not configured");
         return viaFallback("not_configured");
@@ -352,7 +440,6 @@ export function registerWidgetTicketRoute(app: Express, options: WidgetTicketRou
           } catch {}
         }
 
-        const portalUser = portalAuthGetUser(String(email));
         if (portalUser?.clientId && portalUser?.id) {
           let descriptionWithChat = String(description);
           if (typeof advisorSessionId === "string" && advisorSessionId.trim()) {

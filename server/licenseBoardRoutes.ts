@@ -13,6 +13,15 @@ import {
 import { LICENSE_CATALOG, catalogLicense } from "@shared/licensing";
 import { SHELF_CATEGORIES, catalogShelf, hubShelf, pax8Shelf, starterShelf } from "@shared/licenseShelf";
 import * as store from "./licenseBoardStore";
+import {
+  hubOrPortalCompanies,
+  hubOrPortalCompanySeats,
+  licenseBoardSource,
+  shadowCompareCompanies,
+  shadowCompareCompany,
+  type FetchHubLicenses,
+  type LicenseBoardSource,
+} from "./licenseBoardHubSource";
 import { JC_ID, planJumpCloudInstalls } from "@shared/jumpcloudPlan";
 import { STARTER_KITS, shelfEntry, starterKit } from "@shared/starterKits";
 import { requirementStatus } from "@shared/clientVault";
@@ -54,7 +63,8 @@ import {
 
 type AdminRequest = Request & { user?: { id?: string | null; role?: string | null } };
 
-type Client = { id: string; companyName: string };
+/** hubAccountId: portal_clients.hub_account_id, the canonical Hub accounts.id; required for the Hub licence read. */
+type Client = { id: string; companyName: string; hubAccountId?: string | null };
 type Person = { id: string; clientId: string | null; fullName: string; email: string; isActive?: boolean; departmentId?: string | null };
 
 export type LicenseBoardRouteDeps = {
@@ -71,6 +81,10 @@ export type LicenseBoardRouteDeps = {
   vendors?: VendorClients;
   /** Kinds and titles of the client's vault items, to tick off kit documents. Absent or null: on-file status unknown. */
   vaultTitles?: (clientId: string) => Promise<Array<{ kind: string; title: string }> | null>;
+  /** Hub licence read (techSalesClient.fetchHubLicenses). Without it the board reads the portal only. */
+  fetchHubLicenses?: FetchHubLicenses;
+  /** LICENSE_BOARD_SOURCE (server/licenseBoardHubSource.ts); defaults to the env flag. */
+  licenseBoardSource?: () => LicenseBoardSource;
 };
 
 export type JumpCloudClient = {
@@ -121,6 +135,9 @@ export function registerLicenseBoardRoutes(app: Express, deps: LicenseBoardRoute
   const guard = deps.adminGuards;
   const fail = (res: Response, error: unknown, what: string) =>
     res.status(500).json({ error: (error as Error)?.message || `Failed to ${what}` });
+  /** portal unless a Hub reader is wired; shadow and hub need one. */
+  const seatSource = (): LicenseBoardSource =>
+    deps.fetchHubLicenses ? (deps.licenseBoardSource ?? (() => licenseBoardSource()))() : "portal";
 
   app.get(BASE, ...guard, async (_req: AdminRequest, res: Response) => {
     try {
@@ -131,13 +148,21 @@ export function registerLicenseBoardRoutes(app: Express, deps: LicenseBoardRoute
         store.listCompanyKits(),
       ]);
       const kitOf = new Map(kits.map((k) => [k.clientId, starterKit(k.kitKey)?.name ?? null]));
-      const clients = deps
-        .listClients()
-        .map((c) => ({
+      const listed = deps.listClients();
+      const appIds = appIdsOf(items);
+      const source = seatSource();
+      const inputs = listed.map((client) => ({ client, items, allocations, assignments, appIds }));
+      const seatsOf =
+        source === "hub"
+          ? await hubOrPortalCompanies(inputs, deps.fetchHubLicenses!)
+          : listed.map((c) => summarizeCompany(c.id, allocations, assignments, appIds));
+      if (source === "shadow") void shadowCompareCompanies(inputs, deps.fetchHubLicenses!);
+      const clients = listed
+        .map((c, i) => ({
           id: c.id,
           name: c.companyName,
           kit: kitOf.get(c.id) ?? null,
-          seats: summarizeCompany(c.id, allocations, assignments, appIdsOf(items)),
+          seats: seatsOf[i],
         }))
         .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" }));
       res.json({ success: true, items: summarizePool(items, allocations), clients, catalog: LICENSE_CATALOG });
@@ -291,8 +316,13 @@ export function registerLicenseBoardRoutes(app: Express, deps: LicenseBoardRoute
     }
   });
 
-  /** One company's free pool, departments, people and devices (the page's level 2). */
-  const companyView = async (client: Client) => {
+  /**
+   * One company's free pool, departments, people and devices (the page's level 2).
+   * `boardRead`: only the page's own GET follows LICENSE_BOARD_SOURCE. Pushes and
+   * the post-write views keep the portal's seats: writes stay on the portal
+   * until the Hub write path exists (portal-reads-hub-plan step 7).
+   */
+  const companyView = async (client: Client, opts: { boardRead?: boolean } = {}) => {
     const [items, allocations, assignments, departments, kitRow, requirements, vaultItems] = await Promise.all([
       store.listPoolItems(),
       store.listAllocations(client.id),
@@ -304,7 +334,13 @@ export function registerLicenseBoardRoutes(app: Express, deps: LicenseBoardRoute
     ]);
     const kit = kitRow ? starterKit(kitRow.kitKey) : undefined;
     const vaultStatus = vaultItems ? requirementStatus(requirements, vaultItems as any) : null;
-    const seats = summarizeCompany(client.id, allocations, assignments, appIdsOf(items));
+    const source = opts.boardRead ? seatSource() : "portal";
+    const seatInput = { client, items, allocations, assignments, appIds: appIdsOf(items) };
+    const seats =
+      source === "hub"
+        ? await hubOrPortalCompanySeats(seatInput, deps.fetchHubLicenses!)
+        : summarizeCompany(client.id, allocations, assignments, seatInput.appIds);
+    if (source === "shadow") void shadowCompareCompany(seatInput, deps.fetchHubLicenses!);
     const byId = new Map(items.map((i) => [i.id, i]));
     const people = deps
       .listClientUsers(client.id)
@@ -345,7 +381,7 @@ export function registerLicenseBoardRoutes(app: Express, deps: LicenseBoardRoute
     try {
       const client = deps.getClient(req.params.clientId);
       if (!client) return res.status(404).json({ error: "Company not found" });
-      res.json({ success: true, ...(await companyView(client)) });
+      res.json({ success: true, ...(await companyView(client, { boardRead: true })) });
     } catch (error) {
       fail(res, error, "load the company");
     }

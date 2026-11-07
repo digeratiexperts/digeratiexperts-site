@@ -406,3 +406,13 @@ Two failures worth naming, because both are re-runnable by any agent:
 State an architectural fact as **resolved** only when its authority is (1) or
 (2) above. Otherwise state it as **observed, pending confirmation**, and say
 where the observation came from.
+
+## Storage provisioning: manual vs automatic (DE standard, 2026-11-04)
+
+Manual and automatic provisioning to OneDrive, Google Drive, Zoho WorkDrive and any other store are different policies and are kept separate. Adopted from the regulatory standards DE follows for higher tiers, and as a DE company decision.
+
+- A manual move is the person's action. An automatic provision or backup is DE's action; if ITAR or other controlled data is backed up where it is not allowed or safe, that is on DE.
+- Separate policy records, code paths and audit logs. A shared low-level client is fine; the decision to write is not shared.
+- Automatic is deny-by-default, classifies before copy (unclassified counts as restricted), fails closed, and records which policy line allowed each write.
+- A new destination for an automatic job is a policy change that needs DE's approval.
+- No automatic storage writer was found in `server/` on 2026-11-04; the rule applies before one is added. Canonical text: Intelligence Hub `docs/STORAGE-PROVISIONING-POLICY.md`.

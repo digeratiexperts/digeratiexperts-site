@@ -55,8 +55,6 @@ const paidOrder = {
   billingName: "Test Buyer",
   billingCompany: "Example Co",
   billingAddress: null,
-  stripePaymentIntentId: null,
-  stripeSessionId: null,
   zohoPaymentId: "pay-1",
   zohoPaymentSessionId: "session-1",
   notes: null,

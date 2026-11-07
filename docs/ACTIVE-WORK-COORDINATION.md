@@ -8,6 +8,8 @@ A claim committed only on an unmerged feature branch is invisible to agents that
 
 ## Authoritative lock order
 
+**Agent Relay (Joe, 2026-11-05).** Claude, OpenCode and ChatGPT share ownership of **relay tasks**: issues labelled `relay` in this repo or Intelligence-Hub. The issue is the live lock and handoff: claim with a `RELAY CLAIM` comment, post `RELAY PULSE` while working, end with `RELAY HANDOFF` so the next agent continues from your last pushed SHA. A lease idle for 3 hours expires and anyone may take over. Protocol: Intelligence-Hub `docs/AGENT-RELAY.md` ([issue #886](https://github.com/digeratiexperts/Intelligence-Hub/issues/886)). Board: [open relay tasks](https://github.com/search?q=org%3Adigeratiexperts+label%3Arelay+is%3Aopen&type=issues). The YAML mirror and ledger row are still written, with the issue link; the relay issue counts as the GitHub-visible lock in the order below.
+
 Before editing code, every agent must inspect, in this order:
 
 1. **Open GitHub issues** marked or titled `ACTIVE`, `P0`, `IN PROGRESS`, recovery, or otherwise clearly describing current implementation ownership.
@@ -73,26 +75,16 @@ A task is released only when its actual status is recorded as one of:
 
 Close the active GitHub issue/claim only when the state above is explicit and no recovery work remains.
 
-## Current open PRs and owners (snapshot)
+## Open PRs and owners
 
-**Refreshed:** 2026-10-31 from GitHub, `origin/main` at `5dab4a3f`. This table is a
-snapshot for orientation; the live PR list is still the lock. Each PR is owned by the session or
-person that opened it (a Claude Code PR has its session link at the bottom of its body). Do not
-push to, rebase, close or merge it; the lead integrator's exception, on Joe's instruction, is in
-`AGENTS.md` ("Who owns what right now").
+This file no longer keeps a PR table. The 2026-11-01 snapshot (#884-#931) had gone stale within
+days, and a stale table reads like a lock that does not exist. Read the live list instead:
+`list_pull_requests` (GitHub MCP, `state: open`) or `gh pr list --state open`, then each PR's
+changed files and the session link at the bottom of its body.
 
-| PR | Draft | Branch | What it changes | Owner |
-| --- | --- | --- | --- | --- |
-| #876 | no | `techtool/section-h-move-91` | DE Tech Tool move 91: classify device evidence fields (device / personal / path / operational). Section H sensitive data lane; moves 92, 95, 96, 94 follow. | DE Tech Tool section H lane (OpenCode) |
-| #593 | yes | `claude/org-representation-portal` | Portal: Hub-defined representatives, My Groups and group requests (needs DE approval and Hub PR 425 live) | Website design overhaul thread (Joe, 2026-10-15) |
-| #575 | yes | `concept/ai-background-check` | Concept: AI Background Check page (3 Exploration concepts; concept B shipped in #609) | Website design overhaul thread (Joe, 2026-10-15) |
-| #873 | no | `fix/mailclient-inventory-matches-clobber` | DE Migration PC scan: `$Matches` clobber fix + regression pin (issue #869; Hub schedule W1-10 lane) | OpenCode · MiMo-V2.6-Pro (W1-10 session) |
-| #864 | yes | `claude/loving-hopper-b5p8eg` | Zoho help center CSS: remove constructs Zoho's preview rejects (`zoho/help-center/`) | Claude Code session (left alone per Joe, 2026-10-31) |
-
+Each PR is owned by the session or person that opened it. Do not push to, rebase, close or merge
+it; the lead integrator's exception, on Joe's instruction, is in `AGENTS.md` ("Who owns what right
+now"). Open `[ACTIVE]` issues name the owner of local-only work that has no PR yet.
 
 Cross-repo pending decisions and secrets: Intelligence Hub
 [`docs/OPEN-ITEMS-FOR-DE.md`](https://github.com/digeratiexperts/Intelligence-Hub/blob/master/docs/OPEN-ITEMS-FOR-DE.md).
-
-How to refresh this table: list open PRs (`gh pr list --state open` or the GitHub MCP
-`list_pull_requests`), read each one's changed files and session link, and replace the rows.
-Keep the "Refreshed" line honest: date plus the `origin/main` SHA you checked against.

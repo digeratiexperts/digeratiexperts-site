@@ -159,8 +159,100 @@ Historical documents remain in place. Do not delete them, do not rewrite them to
 
 ---
 
-## 5. Change log
+## 5. Index of every rules source
 
+Added 2026-11-06 at Joe's approval of the cross-repo review (Intelligence-Hub `docs/architecture/2026-11-04-cross-repo-review.md`, "Duplicates found": design rules; issue #974). It lists every place a design rule lives, so an agent can see in one table what each source is worth. **Nothing was moved or rewritten:** this file stays the authority, §4 still gives the tier of each section, and this index adds the *status*.
+
+Status means:
+- **current**: in force today at the tier shown (Tier 2 = mandatory in Maintenance Mode, a starting point in Exploration Mode).
+- **reference**: kept to explain why things are the way they are, or as a build kept for comparison. Never a boundary (Tier 3 reading).
+- **retired**: no longer describes what ships. Kept for history; never cite it as a rule. Retired sources that may be edited carry a banner saying so.
+
+### 5.1 Root and Cursor rules
+
+| Source | Tier | Status |
+|---|---|---|
+| `.cursorrules` §0–13, §15–42 | per §4 | current |
+| `.cursorrules` §14 Homepage rules | 0 (principle) · 2 (structure) | current principle; the "eight-block" structure line predates Homepage v2, which has served `/` since 2026-10-23 (PR building `design/reference/homepage-v2/`). Treat the structure line as **reference** until Joe says whether it applies to v2 |
+| `.cursor/rules/00-follow-cursorrules.mdc` | pointer | current |
+| `.cursor/rules/agent-governance.mdc`, `de-ecosystem.mdc`, `digerati-naming.mdc`, `account-lifecycle.mdc`, `frontend.mdc` | 0 | current |
+| `.cursor/rules/brand.mdc` | 1 · 2 | current |
+| `.cursor/rules/ui-ux.mdc` | 0 · Maintenance | current |
+| `.cursor/rules/dark-field-accent-pop.mdc` | 2 | current outside Homepage v2 (v2 uses its own section token sets, §5.3) |
+| `.cursor/rules/blog-store-color-lock.mdc` | 2, Joe-decided | current |
+| `.cursor/rules/visual-system-v2.mdc` | 0 · 2 | current |
+| `.cursor/rules/de-desk-design.mdc` | 0 · 2, Joe-decided | current |
+| `.cursor/rules/content-tooling.mdc`, `token-discipline.mdc` | process (not design) | current |
+| `.cursor/skills/de-desk-ui/*`, `image-art-direction`, `premium-saas-ui`, `responsive-review`, `visual-audit` | method · 2 where they quote tokens | current |
+| `.claude/skills/frontend-design`, `web-design-rules`, `scrollcraft`, `premium-web-design` | creative method; the mode decides (§2) | current |
+
+### 5.2 `design/` files
+
+| Source | Tier | Status |
+|---|---|---|
+| `design/DESIGN-AUTHORITY.md` (this file) | authority | current |
+| `design/UI-STYLE-RULES.md` | 2 (§7 items: 0) | current; start here in Maintenance Mode |
+| `design/DESIGN_SYSTEM.md` | 2 | current; its gold value `#e7b20d` is **retired**, `brand/README.md` holds the current one (§1 table) |
+| `design/BRAND.md` | 1 · 2 | current |
+| `design/UX_PRINCIPLES.md` | 0 · Maintenance | current |
+| `design/VISUAL_SYSTEM_V2.md` | 0 · 2 | current |
+| `design/VISUAL_EVIDENCE.md`, `design/PROOF_SYSTEM.md` | 0 | current |
+| `design/IMAGERY.md` | 1 · 2 | current; sculpture / Meshy stills in public marketing are **retired** (Joe-decided) |
+| `design/HUD_CHROME.md`, `DIAGRAM_SYSTEM.md`, `MOTION_LANGUAGE.md`, `PRODUCT_MEDIA.md`, `EDITORIAL_ASSETS.md`, `PHOTOGRAPHY.md` | 0 (truth lines) · 2 | current |
+| `design/STORE_DOOR2_GRAMMAR.md` | 2 (Store) | current |
+| `design/DESIGN-RATIONALE.md` | folder guide | reference |
+| `design/reference/homepage-v2/` (`reference.html`, `DECISIONS-2026-10-22.md`, `SWAP-PROMPT.md`) | 2, Joe-approved 2026-10-22 | current: the source `client/src/pages/homepage-v2/homepage-v2.css` is generated from |
+| `design/approved/*`, `design/rejected/*`, `design/references/*`, `design/source/*` | 3 | reference |
+| `brand/README.md` | 1 · 2 | current |
+
+### 5.3 Token sets
+
+The repository carries three design token sets. Each owns a different surface; none overrides another.
+
+| Token set | Where | Tier | Status |
+|---|---|---|---|
+| Site foundation (`--de-*`, Tailwind theme, button variants) | `client/src/index.css`, `tailwind.config.ts`; documented in `design/DESIGN_SYSTEM.md` | 2 | current for every page except the homepage body and documents |
+| Homepage v2 section sets (`.hv2`: Ink & Gold, Sonoran Dusk, Signal Blue, Store) | `client/src/pages/homepage-v2/homepage-v2.css`, generated from `design/reference/homepage-v2/reference.html` | 2, Joe-approved 2026-10-22 | current at `/` only; regenerate, never hand-edit |
+| DE document system | `shared/deDocumentTokens.ts`; record `design/approved/de-document-system-2026-10-03.md` | 2 | current for PDFs and Store client documents |
+
+Related, not a separate set: the Store's Door 2 values are pinned from Version 4 (`design/STORE_DOOR2_GRAMMAR.md`, `client/src/components/store/door2/door2Tokens.test.ts`), and Version 4's own token test (`client/src/pages/versions/v4/v4Tokens.test.ts`) guards that frozen build only.
+
+### 5.4 Homepage versions v1–v10
+
+Registry: `client/src/pages/versions/registry.ts`, guide `client/src/pages/versions/README.md`. Every version is served noindex at `/version-<n>` for comparison. **None of them is a rules source:** a version shows what was built, never what must be built. The homepage at `/` is Homepage v2 (`client/src/pages/homepage-v2/`) since 2026-10-23; Version 8, the homepage before it, is kept at `/concepts/home-classic` (`DECISIONS-2026-10-22.md` item 7).
+
+| Version | What | Status |
+|---|---|---|
+| v1 | Production homepage to 2026-09-02, restored 2026-09-03 | retired from `/` |
+| v2 | Scrollcraft story page (static, `/v2`) | reference |
+| v3 | Diagram-system sections (at `/` 2026-09-02 to 09-03) | retired from `/` |
+| v4 | Clean-sheet redesign, ten chapters (`docs/VERSION-4-HOMEPAGE-SOURCE-OF-TRUTH.md`) | reference; its type scale and step labels live on in the Store (§5.3) |
+| v5 | The practical homepage (PR #292) | reference |
+| v6 | Live homepage cleaned in the DE theme | reference |
+| v7 | Sections from Joe's reviewed mockups (PR #315) | reference |
+| v8 | Version 7 with Joe's 2026-10-03 preferences; `/` from 2026-10-03 to 2026-10-23 | retired from `/` |
+| v9 | Signal Thread concept | reference (concept, never shipped) |
+| v10 | Scene story concept (PR #565) | reference (concept, never shipped) |
+
+The version folders are frozen by their own rule ("never edit a `v<n>/` folder"), so the retired banner sits on `client/src/pages/versions/README.md`, not inside the snapshots. The status strings in `registry.ts` that `/versions` shows still say Version 8 is the homepage; correcting them changes a page, so it is left for a separate PR on Joe's say-so.
+
+### 5.5 Docs that carry design rules
+
+| Source | Tier | Status |
+|---|---|---|
+| `AGENTS.md` (design-authority and Design OS paragraphs) | pointers | current |
+| `docs/AI-ENGINEERING-GOVERNANCE.md` §8–11, §18 | 0 · Maintenance | current |
+| `docs/VERSION-4-HOMEPAGE-SOURCE-OF-TRUTH.md` | 2 for Version 4 only | reference |
+| `docs/STORE-EXPERIENCE-SOURCE-OF-TRUTH.md` | 2 (Store) | current |
+| `docs/SITE-VISUAL-TASKS.md`, `docs/VISUAL-ASSET-*.md`, `docs/MESHY-*.md`, `docs/HOMEPAGE-REFERENCE-REDESIGN-HANDOFF.md`, `docs/BRAND-SWEEP-NEXT.md`, `docs/PR146-PRESERVATION-AUDIT.md` | 3 | reference |
+
+When a source changes status, update its row here in the same PR.
+
+---
+
+## 6. Change log
+
+- 2026-11-06 — §5 added: an index of every rules source with its tier and status (current, reference, retired), from the cross-repo review Joe approved on 2026-11-06 (issue #974). No rule changed and no file moved; the change log moves from §5 to §6. Retired banner added to `client/src/pages/versions/README.md`.
 - 2026-10-03 — DE Desk row and gold row: the Ask DE launcher joins the gold support chrome. From a mockup of three directions on the live homepage, Joe chose "B on desktop, C on mobile, with the same speech mark and gold tone throughout": a gold ring on charcoal with a white mark beside the "Ask DE" label, a solid gold disc where the button stands alone, the mark white on hover, one round white focus ring, and the same badge in the chooser header. He also asked for the phone launcher to sit farther in from the corner (bottom chrome now 20px in on phones) and for "Get Help" to read less like "Get Support" (now "Ask a Question"). `UI-STYLE-RULES.md`, `brand/README.md`, the Desk rule and skill were brought to the same state in the same PR. Record: `design/approved/ask-de-launcher-gold-2026-10-03.md`.
 - 2026-10-01 — DE Desk row: Joe picked option 1 ("Black + Grey + Yellow") of eight Desk mockups and overruled the gold-is-logo-only rule for this surface. Built with the mark's Signal Gold `#E3B23C` and without the mockup's glowing halo (a 1px gold cap and a white/10 hairline instead); the Ask DE chooser follows. Replaces the white precision panel of 2026-09-28 (PR #277). The gold row gains the Desk exception; the Desk rule, the Desk skill, the UI-STYLE-RULES support-chrome lines, `visual-system-v2.mdc` and `brand/README.md` were brought to the same state in the same PR. Record: `design/approved/de-desk-gold-2026-10-01.md`.
 - 2026-09-30 — DE Desk row: the white precision panel (PR #277, Joe's approval of 2026-09-30) replaces the graphite release target of 2026-09-14; the Desk rule, the Desk skill and the UI-STYLE-RULES support-chrome line were brought to the same state during Claude's review of this file's PR. No other row changed.

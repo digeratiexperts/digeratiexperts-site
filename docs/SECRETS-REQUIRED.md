@@ -26,7 +26,7 @@ Startup logs a warning without these; the named feature degrades.
 | Name | Kind | Where used | Notes |
 |---|---|---|---|
 | `SESSION_SECRET` | secret | `server/production.config.ts`, `server/portalZohoAuth.ts` | OAuth state-signing fallback. |
-| `TURNSTILE_SECRET_KEY` | secret | `server/production.config.ts`, `server/middleware/security.ts` | Server-side Turnstile verification; fails open without it. Pair with `VITE_TURNSTILE_SITE_KEY` at build time. |
+| `TURNSTILE_SECRET_KEY` | secret | `server/production.config.ts`, `server/middleware/security.ts` | Server-side Turnstile verification. **Required in production:** without it, production fails closed and refuses portal sign-in, registration, password reset, verification resend and the public solution request (503 `TURNSTILE_UNCONFIGURED`), logged once at boot, and `deploy/vps/deploy.sh` refuses to deploy staging or production without it (or with it but no `VITE_TURNSTILE_SITE_KEY`). Development stays permissive; CI's memory-only smoke (`DE_SMOKE_ALLOW_MEMORY_ONLY=1` with no `DATABASE_URL`) is the only production-mode exception. Pair with `VITE_TURNSTILE_SITE_KEY` at build time. |
 | `ZOHO_PAYMENTS_ACCOUNT_ID` | config | `server/production.config.ts`, `server/index.ts` | Online card checkout. Without it and the signing key, checkout and webhook verification are off. |
 | `ZOHO_PAYMENTS_SIGNING_KEY` | secret | `server/production.config.ts`, `server/index.ts` | Zoho Payments webhook signature. |
 
@@ -38,14 +38,9 @@ Optional per feature. Since PR #562 one token manager (`server/zoho/oauth/`) ser
 |---|---|---|---|
 | `ZOHO_CLIENT_ID` | config | `server/production.config.ts`, `server/zohoPayments.ts` | Zoho OAuth client (portal sign-in with Zoho, legacy shared client). |
 | `ZOHO_CLIENT_SECRET` | secret | `server/production.config.ts`, `server/zohoPayments.ts` | Secret for the above. |
-| `ZOHO_CLIENT_ID_API` | config | `server/services/zohoBooksTax.ts`, `server/zohoPayments.ts` | Zoho API client used for CRM, and for the Desk when no dedicated Desk client is set. |
-| `ZOHO_CLIENT_SECRET_API` | secret | `server/services/zohoBooksTax.ts`, `server/zohoPayments.ts` | Secret for the above. |
-| `ZOHO_REFRESH_TOKEN` | secret | `server/integrations/zohoAgentsReadiness.ts`, `server/zoho/zohoClient.ts` | CRM refresh token. |
-| `ZOHO_DESK_REFRESH_TOKEN` | secret | `server/deskTicketFallback.ts`, `server/zoho/zohoClient.ts` | Desk refresh token. Without a working one, Get Support tickets go to the failover spool. With a dedicated Desk client it must come from that client. |
-| `ZOHO_DESK_CLIENT_ID` | config | `server/zoho/zohoClient.ts` | Optional dedicated Desk OAuth client. When this or the secret is set, all three Desk values are required and nothing is borrowed from CRM (`resolveDeskOAuthConfig`). |
-| `ZOHO_DESK_CLIENT_SECRET` | secret | `server/zoho/zohoClient.ts` | Secret for the above. |
+| `ZOHO_CLIENT_ID_API` | config | `server/portalZohoAuth.ts` | Fallback client for portal sign-in only, when `ZOHO_CLIENT_ID` is unset. Never used for API tokens since 2026-11-06 (PR #978). |
+| `ZOHO_CLIENT_SECRET_API` | secret | `server/portalZohoAuth.ts` | Secret for the above. |
 | `ZOHO_DESK_SOURCE_FIELD` | config | `server/zoho/zohoDesk.ts`, `shared/deskTicketSource.ts` | Optional Desk custom-field name for the ticket source. |
-| `ZOHO_FORM_OAUTH` | secret | `server/zoho/zohoClient.ts` | Fallback Desk refresh token when `ZOHO_DESK_REFRESH_TOKEN` is unset and no dedicated Desk client is set (`server/zoho/zohoClient.ts`). |
 | `ZOHO_OAUTH_STATE_SECRET` | secret | `server/portalZohoAuth.ts` | Signs the portal Zoho OAuth state; falls back to `SESSION_SECRET`. |
 | `ZOHO_OAUTH_PORTAL_REDIRECT_URI` | config | `server/portalZohoAuth.ts` | Override for the portal OAuth callback URL. |
 | `ZOHO_PORTAL_OIDC_REDIRECT_URI` | config | `server/routes.ts`, `server/portalZohoAuth.ts` | Override for the portal OIDC callback URL. |
@@ -55,12 +50,6 @@ Optional per feature. Since PR #562 one token manager (`server/zoho/oauth/`) ser
 | `ZOHO_LEAD_ASSIGNMENT_RULE_ID` | config | `server/quoteLeadCrm.ts`, `server/routes.ts` | CRM lead assignment rule for website leads. |
 | `ZOHO_CHECKOUT_KEY` | secret | `server/zohoService.ts` | Legacy Zoho checkout (`server/zohoService.ts`). |
 | `ZOHO_VERIFICATION_KEY` | secret | `server/zohoService.ts` | Legacy Zoho checkout verification (`server/zohoService.ts`). |
-| `ZOHO_PAYMENTS_CLIENT_ID` | config | `server/zohoPayments.ts` | Zoho Payments OAuth client. |
-| `ZOHO_PAYMENTS_CLIENT_SECRET` | secret | `server/zohoPayments.ts` | Secret for the above. |
-| `ZOHO_PAYMENTS_REFRESH_TOKEN` | secret | `server/zohoPayments.ts` | Zoho Payments refresh token. |
-| `ZOHO_BOOKS_CLIENT_ID` | config | `server/services/zohoBooksTax.ts` | Zoho Books OAuth client (falls back to the API client). |
-| `ZOHO_BOOKS_CLIENT_SECRET` | secret | `server/services/zohoBooksTax.ts` | Secret for the above. |
-| `ZOHO_BOOKS_REFRESH_TOKEN` | secret | `server/services/zohoBooksTax.ts`, `server/services/salesTaxReadiness.ts` | Books refresh token (sales tax, invoices). |
 | `ZOHO_BOOKS_ORGANIZATION_ID` | config | `server/services/zohoBooksTax.ts` | Books organization. |
 | `ZOHO_BOOKS_TAX_CONTACT_ID` | config | `server/services/zohoBooksTax.ts`, `server/services/salesTaxReadiness.ts` | Contact used for tax estimates. |
 | `ZOHO_BOOKS_SERVICE_ITEM_ID` | config | `server/services/zohoBooksTax.ts`, `server/services/salesTaxReadiness.ts` | Item used for tax estimates. |
@@ -68,8 +57,8 @@ Optional per feature. Since PR #562 one token manager (`server/zoho/oauth/`) ser
 | `ZOHO_BOOKS_RECORD_PAID_ORDERS` | config | `server/services/zohoBooksInvoice.ts` | Flag: record paid Store orders in Books. |
 | `ZOHO_BOOKS_DEPOSIT_ACCOUNT_ID` | config | `server/services/zohoBooksInvoice.ts` | Deposit account for recorded payments. |
 | `ZOHO_HUB_WEBHOOK_SECRET` | secret | `server/integrations/zohoAgentsReadiness.ts` | Read through `secretEnv` for Zoho agent readiness. |
-| `ZOHO_CONNECT_ENABLED` | config | `server/routes.ts`, `server/zoho/oauth/manager.ts` | Turns on owner-only Zoho Connect (one consent for CRM, Desk, Books and Payments). |
-| `ZOHO_CONNECT_CLIENT_ID` | config | `server/zoho/oauth/connect.ts`, `server/zoho/oauth/manager.ts` | Zoho Connect's own "Server-based Application" client; never the portal sign-in client. Required when Connect is enabled. |
+| `ZOHO_CONNECT_ENABLED` | config | `server/routes.ts`, `server/zoho/oauth/manager.ts` | Must be `true`. Zoho Connect is the only credential for CRM, Desk, Books and Payments since 2026-11-06 (PR #978); off means those integrations are `not_configured`. |
+| `ZOHO_CONNECT_CLIENT_ID` | config | `server/zoho/oauth/connect.ts`, `server/zoho/oauth/manager.ts` | Zoho Connect's own "Server-based Application" client; never the portal sign-in client. Required. |
 | `ZOHO_CONNECT_CLIENT_SECRET` | secret | `server/zoho/oauth/connect.ts`, `server/zoho/oauth/manager.ts` | Secret for the above. |
 | `ZOHO_CONNECT_REDIRECT_URI` | config | `server/zoho/oauth/connect.ts` | Override for the Connect callback URL; derived from the site origin otherwise. |
 | `ZOHO_TOKEN_ENCRYPTION_KEY` | secret | `server/zoho/oauth/db-store.ts` | Encrypts stored Zoho refresh and access tokens; falls back to `MFA_ENCRYPTION_KEY`. |
@@ -87,10 +76,14 @@ Optional; DE Sync is off without them.
 | `TECHSALES_SYNC_TOKEN` | secret | `server/integrations/deSyncAuth.ts` | Bearer token for the sync. |
 | `WEBSITE_LEAD_WEBHOOK_SECRET` | secret | `server/integrations/deSyncAuth.ts` | Signs website lead webhooks to the Hub. |
 | `WEBSITE_TO_HUB_SECRET` | secret | `server/integrations/deSyncAuth.ts` | Website → Hub signing secret. |
-| `PORTAL_TO_HUB_SECRET` | secret | `server/serviceRequestHubSync.ts`, `server/integrations/deSyncAuth.ts` | Portal → Hub signing secret. |
+| `PORTAL_TO_HUB_SECRET` | secret | `server/serviceRequestHubSync.ts`, `server/integrations/deSyncAuth.ts`, `server/integrations/techSalesClient.ts` | Portal → Hub signing secret. The Hub licence read (`fetchHubLicenses`) uses only this; the legacy secret is refused there. |
 | `HUB_TO_WEBSITE_SECRET` | secret | `server/integrations/deSyncAuth.ts` | Verifies Hub → website calls. |
 | `HUB_TO_PORTAL_SECRET` | secret | `server/integrations/deSyncAuth.ts` | Verifies Hub → portal calls. |
 | `DE_SYNC_REQUIRE_SIGNED` | config | `server/integrations/deSyncAuth.ts`, `server/integrations/techSalesClient.ts` | Flag: reject unsigned inbound sync. |
+| `TICKETS_SOURCE` | config | `server/ticketsSource.ts` | Where portal and widget tickets go: `desk` (default, unset) or `hub` (Hub ticket API, signed with `PORTAL_TO_HUB_SECRET` only; Desk via the Hub sync; Desk path + reconciliation note when the Hub misses). Order: `docs/TICKETS-SOURCE-SWITCH.md`. |
+| `HUB_TICKETS_TIMEOUT_MS` | config | `server/integrations/hubTicketClient.ts` | Per-call timeout for the Hub ticket API (default 8000). |
+| `TICKET_RECONCILIATION_SPOOL_DIR` | config | `server/publicSolutionSpool.ts` | Where tickets that missed the Hub are noted (default `<site>/shared/spool/ticket-reconciliation`). |
+| `LICENSE_BOARD_SOURCE` | config | `server/licenseBoardHubSource.ts` | Where the licence board reads company seats: `portal` (default, unset), `shadow` (portal page, Hub differences logged), `hub` (Hub seats, portal fallback per company). Needs `portal_clients.hub_account_id`. |
 
 ## Portal integrations
 
@@ -99,8 +92,11 @@ Optional; each portal page shows "not connected" without its provider.
 | Name | Kind | Where used | Notes |
 |---|---|---|---|
 | `JUMPCLOUD_API_KEY` | secret | `server/lifecycleOrchestrator.ts`, `server/integrations/jumpcloud.ts` | Identity lifecycle (`/portal/admin/lifecycle`). |
-| `MS_GRAPH_CLIENT_ID` / `MS_GRAPH_CLIENT_SECRET` | secret | `server/integrations/msGraph.ts` | License Patch Bay → Microsoft 365 licence push (Commercial and GCC). Multi-tenant app consented in each client tenant. |
-| `MS_GRAPH_GOV_CLIENT_ID` / `MS_GRAPH_GOV_CLIENT_SECRET` | secret | `server/integrations/msGraph.ts` | Same, for GCC High tenants (app in Azure Government). |
+| `MS_GRAPH_CLIENT_ID` | config | `server/integrations/msGraph.ts` | License Patch Bay → Microsoft 365 licence push (Commercial and GCC). Multi-tenant app consented in each client tenant. |
+| `MS_GRAPH_CERT_PATH` or `MS_GRAPH_CERT` | config | `server/integrations/msGraph.ts` | Certificate (public part) for Graph sign-in, as a file path or the PEM. Preferred over the secret; steps in `docs/runbooks/msgraph-certificate-auth.md`. |
+| `MS_GRAPH_CERT_PRIVATE_KEY_PATH` or `MS_GRAPH_CERT_PRIVATE_KEY` | secret | `server/integrations/msGraph.ts` | The certificate's RSA private key, as a file path (mode 600) or the PEM. |
+| `MS_GRAPH_CLIENT_SECRET` | secret | `server/integrations/msGraph.ts` | Fallback only, while no certificate is set; `/api/health` warns. Delete once the certificate works. |
+| `MS_GRAPH_GOV_CLIENT_ID`, `MS_GRAPH_GOV_CERT_PATH` / `MS_GRAPH_GOV_CERT`, `MS_GRAPH_GOV_CERT_PRIVATE_KEY_PATH` / `MS_GRAPH_GOV_CERT_PRIVATE_KEY`, `MS_GRAPH_GOV_CLIENT_SECRET` | secret | `server/integrations/msGraph.ts` | Same four settings for GCC High tenants (app in Azure Government). |
 | `GOOGLE_LICENSING_SERVICE_ACCOUNT` | secret | `server/integrations/googleLicensing.ts` | License Patch Bay → Google Workspace licence push. Service account JSON with domain-wide delegation per client. |
 | `JUMPCLOUD_ORG_ID` | config | `server/integrations/jumpcloud.ts`, `client/src/pages/portal/AdminLifecycle.tsx` | JumpCloud organization. |
 | `JUMPCLOUD_API_BASE` | config | `server/integrations/jumpcloud.ts` | API base override. |
@@ -209,7 +205,7 @@ Safe defaults; set only to override.
 | `DB_CONNECTION_TIMEOUT` | config | `server/production.config.ts` | Default 5000 ms. |
 | `DE_PRODUCTION_DB_MARKERS` | config | `server/index.ts` | Hostnames that mark a production database. |
 | `DE_STAGING_REVIEW` | config | `server/stagingReviewGuard.ts` | Staging review mode: locks outbound mutations. |
-| `TURNSTILE_ENFORCE` | config | `server/middleware/security.ts` | `1` makes Turnstile fail closed when `TURNSTILE_SECRET_KEY` is missing. |
+| `TURNSTILE_ENFORCE` | config | `server/middleware/security.ts` | `1` makes Turnstile fail closed when `TURNSTILE_SECRET_KEY` is missing in any environment, including development and the CI smoke. Production already fails closed without it. |
 | `PDF_CHROMIUM_PATH` | config | `server/pdf/renderHtmlToPdf.ts` | Chromium for PDF rendering. |
 | `PDF_MAX_CONCURRENT_RENDERS` | config | `server/pdf/renderHtmlToPdf.ts` | PDF render concurrency. |
 | `PYTHON` | config | `server/pdf/renderHtmlToPdf.ts` | Python for the PDF pipeline (also `PYTHON_BIN`). |
@@ -221,7 +217,7 @@ Safe defaults; set only to override.
 | `THREAT_FEED_STARTUP_DELAY_MS` | config | `server/services/threat-intel/ingest.ts` | Delay before the first feed refresh. |
 | `ENABLE_DEV_PORTAL_BOOTSTRAP` | config | `server/portalAuthStore.ts` | Development only: seed a portal admin. Never set in production. |
 | `DEV_PORTAL_ADMIN_PASSWORD_HASH` | secret | `server/portalAuthStore.ts` | Development only: the seeded admin's hash. |
-| `DE_SMOKE_ALLOW_MEMORY_ONLY` | config | `server/healthProbe.ts`, `server/production.config.ts` | CI smoke only: allow no `DATABASE_URL`. |
+| `DE_SMOKE_ALLOW_MEMORY_ONLY` | config | `server/healthProbe.ts`, `server/production.config.ts`, `server/middleware/security.ts` | CI smoke only: allow no `DATABASE_URL`. With no `DATABASE_URL` it also skips Turnstile when no secret is set; with a database it does not. |
 | `REPLIT_SERVER_PORT` | config | `server/index.ts` | Replit-era; unused on the VPS. |
 | `REPL_ID` | config | `vite.config.ts` | Replit-era; unused on the VPS. |
 | `REPL_OWNER` | config | `server/index.ts`, `server/vite.ts` | Replit-era; unused on the VPS. |
@@ -264,3 +260,11 @@ Read by QA, smoke and capture scripts or the test runner, never by the productio
 ## Listed in the env template but not read by any code
 
 `CORO_CLIENT_ID`, `CORO_CLIENT_SECRET`, `WEBSITE_BASE_URL` and `PORTAL_BASE_URL` appear in `deploy/vps/env.production.example` but nothing in the repository reads them. They are harmless; DE can keep them for a planned integration or drop them from the template.
+
+## Retired: no longer read
+
+Removed from the code on 2026-11-06 (PR #978, Zoho Connect is the only Zoho API credential). Delete them from `/home/digeratiexperts.com/shared/.env` once `GET /api/zoho/connection` shows crm, desk, books and payments `connected` with source `unified`, then restore the file's owner and mode (`diger7051:diger7051`, `600`).
+
+`ZOHO_REFRESH_TOKEN`, `ZOHO_DESK_REFRESH_TOKEN`, `ZOHO_DESK_CLIENT_ID`, `ZOHO_DESK_CLIENT_SECRET`, `ZOHO_FORM_OAUTH`, `ZOHO_PAYMENTS_REFRESH_TOKEN`, `ZOHO_PAYMENTS_CLIENT_ID`, `ZOHO_PAYMENTS_CLIENT_SECRET`, `ZOHO_BOOKS_REFRESH_TOKEN`, `ZOHO_BOOKS_CLIENT_ID`, `ZOHO_BOOKS_CLIENT_SECRET`.
+
+Revoke the matching Self Client refresh tokens in the Zoho API Console at the same time, so the old clients hold no live tokens.

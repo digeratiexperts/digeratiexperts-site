@@ -1,13 +1,19 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { booksDate, recordPaidOrderInBooks, type PaidOrderForBooks } from "./zohoBooksInvoice";
-import { resetZohoBooksToken, ZOHO_ACCOUNTS_TOKEN_URL, ZOHO_BOOKS_API } from "./zohoBooksTax";
+import { clearZohoConnectTestEnv, seedZohoConnectGrant, zohoTokenUrl } from "../zoho/oauth/testing/connectGrant";
+import { resetZohoBooksToken, ZOHO_BOOKS_API } from "./zohoBooksTax";
+
+const ZOHO_ACCOUNTS_TOKEN_URL = zohoTokenUrl();
+
+/** Forget token state and store the Connect grant (covering Books) again. */
+async function resetBooks() {
+  resetZohoBooksToken();
+  await seedZohoConnectGrant({ products: ["books"] });
+}
 
 const SERVICE_ITEM = "1957016000006629001";
 const env = {
   ZOHO_BOOKS_ORGANIZATION_ID: "693714437",
-  ZOHO_BOOKS_REFRESH_TOKEN: "1000.fake.refresh",
-  ZOHO_BOOKS_CLIENT_ID: "1000.FAKECLIENT",
-  ZOHO_BOOKS_CLIENT_SECRET: "fake-secret",
   ZOHO_BOOKS_TAX_CONTACT_ID: "1957016000006631001",
   ZOHO_BOOKS_SERVICE_ITEM_ID: SERVICE_ITEM,
 };
@@ -67,7 +73,8 @@ const run = (fetchImpl: ReturnType<typeof books>, o = order(), e: Record<string,
   recordPaidOrderInBooks(o, { env: e, fetchImpl: fetchImpl as unknown as typeof fetch });
 
 describe("Paid Pay Now orders become Zoho Books invoices", () => {
-  beforeEach(() => resetZohoBooksToken());
+  beforeEach(() => resetBooks());
+  afterEach(() => clearZohoConnectTestEnv());
 
   it("does nothing without a Books connection, for non-Zoho payments, or when switched off", async () => {
     const fetchImpl = happy();

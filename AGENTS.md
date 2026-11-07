@@ -4,6 +4,8 @@
 
 Authoritative multi-agent policy: **`docs/AI-ENGINEERING-GOVERNANCE.md`**. GitHub-visible active issues + open PRs are the authoritative concurrency locks; **`.ai/ACTIVE_WORK.yaml`** is a mirror only. Required procedure: **`docs/ACTIVE-WORK-COORDINATION.md`**. This policy is mandatory for Claude Code, Cursor, Antigravity/Gemini, ChatGPT-assisted repository work, and other agents.
 
+**Agent Relay (Joe, 2026-11-05).** Claude, OpenCode and ChatGPT share ownership of **relay tasks**: issues labelled `relay` in this repo or Intelligence-Hub. The issue is the live lock and handoff: claim with a `RELAY CLAIM` comment, post `RELAY PULSE` while working, end with `RELAY HANDOFF` so the next agent continues from your last pushed SHA. A lease idle for 3 hours expires and anyone may take over. Protocol: Intelligence-Hub `docs/AGENT-RELAY.md` ([issue #886](https://github.com/digeratiexperts/Intelligence-Hub/issues/886)). Board: [open relay tasks](https://github.com/search?q=org%3Adigeratiexperts+label%3Arelay+is%3Aopen&type=issues). The YAML mirror and ledger row are still written, with the issue link; the relay issue counts as the GitHub-visible lock in the order below.
+
 Default authority: Joe is final product/release authority; Claude Code is the default lead website implementation/integration agent; Cursor and Antigravity/Gemini are specialist/review agents unless Joe explicitly reassigns the role for a specific task. There is only one website integration authority at a time.
 
 Every agent must use an isolated branch/worktree, check open active GitHub issues + all current open PRs + relevant remote branches before editing, then inspect the YAML mirror. Reconcile against current `origin/main` before merge, and treat `MERGED` and `LIVE` as separate states. Specialist agents do not independently merge/deploy website work by default.
@@ -34,7 +36,7 @@ Task ledger: `docs/SITE-VISUAL-TASKS.md` (Tier 3 for design decisions; its owner
 - Full authority matrix: `docs/REPOSITORY-AUTHORITY.md`.
 - Website source-of-truth details: `docs/SOURCE-OF-TRUTH.md`.
 - Ecosystem rule (always apply): `.cursor/rules/de-ecosystem.mdc`. This website is a GitHub-owned **content/application projection**. Intelligence Hub is the **operational control plane**.
-- Canonical identity/location/network rule: Intelligence Hub `docs/de-canonical/08_DE_IDENTITY_LOCATION_NETWORK_STANDARD.md` is authoritative. This repo projects it through `shared/canonicalIdentityLocationNetwork.ts`; DE Tech Tool projects it through `windows/CANONICAL-IDENTITY-LOCATION-NETWORK.md` + `DE.Naming`. Do not invent a different username suffix, privilege-account class, hostname/location code, VLAN convention, or client CIDR rule in website/Store/Portal/Tech Tool code.
+- Canonical identity/location/network rule: Intelligence Hub `docs/de-canonical/08_DE_IDENTITY_LOCATION_NETWORK_STANDARD.md` is authoritative. This repo projects it through `shared/canonicalIdentityLocationNetwork.ts`; DE Tech Tool projects it through `windows/CANONICAL-IDENTITY-LOCATION-NETWORK.md` + `DE.Naming` in the private repo `digeratiexperts/de-tech-tool`. Do not invent a different username suffix, privilege-account class, hostname/location code, VLAN convention, or client CIDR rule in website/Store/Portal/Tech Tool code.
 - Ecosystem **scoreboard** is Hub Issue [#122](https://github.com/digeratiexperts/Intelligence-Hub/issues/122) (charter `docs/DE-ECOSYSTEM-CHARTER.md`, ratified PR #123 / `5354a8b`). Do **not** copy ECO-001–030 into this repo. Do **not** call the ecosystem finished until #122’s completion gate passes.
 
 If an old Cursor task, chat, PR description, screenshot, or migration note conflicts with current GitHub state and the authority files above, treat the old instruction as stale and re-check before acting.
@@ -45,7 +47,7 @@ Other agent sessions work this repo at the same time. Before editing, check:
 
 1. **All open PRs** (drafts included) and their changed files — the authoritative lock (`docs/ACTIVE-WORK-COORDINATION.md`). An open PR owns its files until it merges or closes.
 2. **Intelligence Hub [`docs/OPEN-ITEMS-FOR-DE.md`](https://github.com/digeratiexperts/Intelligence-Hub/blob/master/docs/OPEN-ITEMS-FOR-DE.md)** — every pending DE decision, secret and manual step, the thread/PR each blocks, and the "Not for agents to touch" PR list. Read it before asking Joe anything. (Added by Hub PR #397; until that merges, read it on that PR.)
-3. The **current open PRs and owners** table in `docs/ACTIVE-WORK-COORDINATION.md`, then `.ai/ACTIVE_WORK.yaml` as a mirror.
+3. Open `[ACTIVE]` GitHub issues (owners of local-only work; see "Open PRs and owners" in `docs/ACTIVE-WORK-COORDINATION.md`), then `.ai/ACTIVE_WORK.yaml` as a mirror.
 
 Never push to, rebase, close, merge or approve another session's branch or PR. **Exception (Joe, 2026-10-15):** the lead integrator (`docs/AI-ENGINEERING-GOVERNANCE.md`) may update, fix and merge another session's PR when acting on Joe's instruction. It updates branches with merge commits only (never a rebase or force-push), reviews the change itself before merging, and quotes Joe's instruction in the merge commit. It merges only after CI, the security checks and the concurrency audit (`docs/PR-CONCURRENCY-AUDIT.md`) pass, and only within approvals Joe has already given. Every other agent keeps the no-merge rule. This exception covers the website only: Intelligence Hub merges to `master` still need Joe's explicit approval for each merge (Hub `docs/RELEASE-GOVERNANCE.md`), and a merge never counts as a production deploy or as LIVE.
 
@@ -139,7 +141,7 @@ Reusable skill packs live in `.claude/skills/<name>/SKILL.md` (Claude Code disco
 | `skill-builder` | Create or audit a skill | No |
 | `wat-framework` | Workflows / Agents / Tools pattern for automation projects | Depends on tools built |
 | `trigger-dev`, `trigger-ref` | Trigger.dev automations (in a dedicated Trigger.dev project, never deployed via this repo's CI) | Trigger.dev usage |
-| `msp-ai-kit` | MSP/MSSP operating prompts and instruction packs from `kit.config.json` (ChatGPT, Custom GPT, Claude, Cursor, Copilot); optional clone of external MSP kits into `artifacts/msp-ai-kit/vendor/` | No |
+| `msp-ai-kit` | MSP/MSSP operating prompts and instruction packs from `kit.config.json` (ChatGPT, Custom GPT, Claude, Cursor, Copilot); optional clone of external MSP kits into `artifacts/msp-ai-kit/vendor/`. The DE Tech Tool that used to sit under its `windows/` is now the private repo `digeratiexperts/de-tech-tool` | No |
 
 Key handling: `KIE_AI_API_KEY` (`KIE_API_KEY` is accepted as an alias) and `RECRAFT_API_KEY` (paid plan only) come from the environment or the gitignored `.env`; `.env.example` is the template. Never commit, print or paste a key. Generated images are ILLUSTRATIVE candidates under `artifacts/kie-ai/` until they pass `design/IMAGERY.md` review.
 
@@ -148,6 +150,10 @@ Key handling: `KIE_AI_API_KEY` (`KIE_API_KEY` is accepted as an alias) and `RECR
 **`docs/CONTENT-TOOLING-PLAN.md`** is Joe's adopted decision (2026-10-04) on which outside tools DE uses for work general assistants can't do well on their own (vector icons, video, voice, live SEO data) and for webmaster-grade finishing (Lighthouse, axe, image optimization, JSON-LD), across the Website, Store, Client Portal and Intelligence Hub. Read it before reaching for an outside generator, builder or SEO tool; do not adopt a tool from its "Not using" list without Joe. Wired in this repo: Chrome DevTools MCP (`.mcp.json`, `.cursor/mcp.json`; Codex and Gemini setup in the plan), `npm run smoke:a11y` in CI, and `vite-imagetools` in `vite.config.ts`.
 
 <!-- >>> DE token-discipline (managed; edit in DE\Governance\repo-kit) >>> -->
+## Storage provisioning: manual and automatic are separate policies (DE standard, 2026-11-04)
+
+Moving files to OneDrive, SharePoint, Google Drive, Zoho WorkDrive or any other store has two policies, and they stay separate, always. A person's manual move is that person's action. An automatic provision or backup is DE's action, so DE owns it if controlled data (ITAR / export-controlled, CUI, PHI, credentials) lands where it is not allowed or not safe. Automatic paths are deny-by-default, classify before copy, fail closed, and are audited apart from manual moves. Never share one flag, list or helper between the two. The full policy lives in the Intelligence Hub repo: `docs/STORAGE-PROVISIONING-POLICY.md`. Say in your PR whether a path is manual or automatic.
+
 ## Token discipline (DE operating standard)
 
 Execution rules for every agent in this repo (Claude / Claude Code, Cursor, ChatGPT / Codex). Company-wide AI spend and routing policy is NOT here — it lives in `C:\Users\Joe\DE\Governance\AI-STACK.md`. These rules never override this repo's own instructions above, Completion Program lane ownership, or stop gates.

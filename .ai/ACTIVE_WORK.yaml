@@ -30,6 +30,27 @@
 
 version: 2
 claims:
+  - id: desk-chooser-height-20261101
+    issue: 918
+    owner: codex
+    subsystem: de-desk-chooser
+    branch: chatgpt/desk-chooser-height-20261101
+    base_sha: 8aad97b98cdd427d9b324ed68dfd6b04e59893c7
+    started: 2026-11-01
+    files:
+      - client/src/components/SiteBottomBar.tsx
+      - scripts/desk-browser-smoke.mjs (additional chooser cases; retain original 88)
+    status: implemented
+    note: >-
+      GitHub issue 918 is the authoritative lock. Joe approved the clipped
+      chooser fix and this separate issue. Local-only slice; no PR/source
+      publication, merge or deployment authorized. Depends on reviewed PR 877
+      head 45dd0db0 without changing that PR or claim 875's test-only scope.
+      Bound and scroll the existing chooser; preserve options, branding,
+      consent/privacy, keyboard focus and dismissal. Historical 882 CI geometry
+      was not recorded; preserve that uncertainty and all diagnostic artifacts.
+      Implementation remains local and unreleased. Test evidence and remaining
+      review/publication gates are recorded in the local acceptance manifest.
   - id: de-techtool-move73-agent-threat-model
     issue: 791
     owner: opencode
@@ -41,7 +62,9 @@ claims:
       - .claude/skills/msp-ai-kit/windows/DE-TECH-TOOL-TRACKER.md (Plan documents row)
       - .claude/skills/msp-ai-kit/scripts/build-techtool-tracker.ps1 (same row, so regeneration keeps it)
       - .ai/ACTIVE_WORK.yaml (this claim)
-    status: active
+    status: merged
+    pr: 874
+    merge_sha: 3cf40a3d26ee4d9813daf2fecdac1c1aaac4243c
     started: 2026-10-31
     note: >-
       DE Tech Tool move 73 (issue 791), Tech Center schedule row W2-7: the STRIDE
@@ -66,7 +89,9 @@ claims:
       - server/zoho/zohoBilling.ts, server/zoho/zohoDesk.ts (additive strict read methods + injectable client; legacy methods unchanged)
       - server/portalDeskTickets.ts, server/portalDeskTickets.test.ts (summarizeTicketStatuses, normalizeLocalTicketStatus)
       - scripts/qa/w1-dashboard-truth.mjs, artifacts/visual-qa/w1-dashboard-truth/**
-    status: active
+    status: merged
+    pr: 850
+    merge_sha: fe73e60111ca163aeeece76f79d7d7eb31da8a94
     started: 2026-10-26
     note: >-
       Delivery sizing W1 / journey 10: unknown is not zero, waiting-on-you is only
@@ -82,7 +107,9 @@ claims:
       - tailwind.config.ts, client/index.html, client/src/index.css (one family)
       - client/src/components/PageTemplate.tsx (no statement colon)
       - client/src/components/home/HomeChapter.tsx, client/src/components/site/chapters.tsx, client/src/components/site/SolutionsRelationshipTable.tsx (sentence-case labels)
-    status: active
+    status: merged
+    pr: 827
+    merge_sha: cbd98752dded06a8a459a67950b0a22ee70dcf58
     started: 2026-10-24
   - id: home-v2-scene-story
     owner: claude
@@ -142,7 +169,8 @@ claims:
     files:
       - client/src/pages/versions/v8/** (homepage V8 only: one CTA system, canonical names, visitor copy, section consolidation)
       - docs/lanes/lane-h-homepage.md, docs/lanes/lane-h-phase0.md (log and Phase 0 report)
-    status: active
+    status: merged
+    merge_sha: 6bf320822aa82cb61480293ace89b39cd27b56e5
     started: 2026-10-22
     note: >-
       Lane H, Wave 1 (docs/plans/opencode/lane-h-homepage.md + lane-h-update-1.md).
@@ -247,7 +275,8 @@ claims:
       - scripts/export-dex-kit.ts (new)
       - docs/DEX-INTEGRATION.md (new)
       - .ai/ACTIVE_WORK.yaml (this claim; home-mesh-concept closeout)
-    status: active
+    status: merged
+    merge_sha: 39e2add08ee07afa3f77c31942c58a29c2653b34
     started: 2026-10-21
     note: >-
       Dex mascot presence on /concepts/mascots only: tweened emotions, nine
@@ -343,7 +372,8 @@ claims:
       - client/src/pages/concepts/home-chapters.css (dark-ink token re-point + text-fill repairs on white card surfaces; light-theme poster/doc fixes)
       - client/src/pages/concepts/HomeChapters.tsx (founder img fetchPriority → lowercase attr; no route/SEO changes)
       - scripts/qa/home-chapters-legibility.mjs, artifacts/visual-qa/home-chapters-legibility/** (new computed-style audit)
-    status: active
+    status: merged
+    merge_sha: bb3a9f4878dd73614a1d1908111187ae7d67e98f
     started: 2026-10-21
     note: >-
       Computed-style legibility audit on /concepts/home-chapters: axe 0,
@@ -365,7 +395,9 @@ claims:
       - client/src/pages/DigeratiHomepage.tsx (homepage useSEO title matches routeMeta "/")
       - client/src/pages/DigeratiHomepage.title.test.ts
       - package.json, package-lock.json (express-async-errors only)
-    status: active
+    status: merged
+    pr: 679
+    merge_sha: 059b6d80e87b401336facccbc4bcade3d716046b
     started: 2026-10-21
     note: >-
       Bug hunt on current main. Fixed: async route throws never reached error
@@ -456,7 +488,9 @@ claims:
       - server/db.ts (markDatabaseDown only)
       - server/healthProbe.ts
       - server/healthProbe.test.ts
-    status: active
+    status: merged
+    pr: 665
+    merge_sha: 72c176ff057c1dcb7561cc4c9c541688cf66085f
     started: 2026-10-20
     note: >-
       2026-10-20 04:44-13:43 UTC: the live process lost Neon after boot and
@@ -5027,3 +5061,141 @@ claims:
       help." label sliding out on hover or keyboard focus. This changes the
       2026-10-03 launcher decision (label always beside the badge from sm), so
       Joe confirms the screenshots before merge.
+  - id: website-hygiene-stripe-turnstile-20261104
+    owner: claude
+    subsystem: server-platform, deploy-docs, governance-docs
+    branch: claude/hygiene-stripe-turnstile-20261104
+    base_sha: 296721de3a49ecb3515a41cd2e028a9c2abba736
+    files:
+      - server/stripeService.ts, server/stripeClient.ts, server/webhookHandlers.ts (removed; unimported stubs)
+      - server/routes.ts (410 /api/portal/payment/checkout removed; stripeSessionId dropped from two order lookups)
+      - package.json, package-lock.json (stripe dependency removed)
+      - server/services/vendor-integration-scaffold.ts (removed), VENDOR_SETUP_STATUS.md (two pointer lines)
+      - scripts/deploy.sh, ecosystem.config.js, ecosystem.config.cjs (removed), deploy/vps/README.md, DEPLOYMENT.md
+      - 16 root report .md files moved to docs/archive/ (git mv) + docs/archive/README.md (new)
+      - docs/ACTIVE-WORK-COORDINATION.md (snapshot table replaced by pointer), AGENTS.md (one line)
+      - server/middleware/security.ts (Turnstile fails closed in production), server/middleware/turnstile.test.ts (new)
+      - server/production.config.ts (boot warning text), docs/SECRETS-REQUIRED.md, deploy/vps/env.production.example, deploy/vps/deploy.sh (preflight refuses without both Turnstile keys; Joe 2026-11-05), scripts/deployScripts.test.ts
+      - server/publicSolutionRoutes.test.ts (production-mode block sets a Turnstile secret)
+      - shared/schema.ts, server/storage.ts, server/services/orderFulfillment.behavior.test.ts (Stripe columns unused; step 1, stacked PR, Joe 2026-11-05)
+      - migrations/0025_drop_retired_stripe_columns.sql, scripts/stripeColumnsMigration.test.ts (step 2, held until step 1 is LIVE)
+      - .ai/ACTIVE_WORK.yaml (this claim)
+    status: verified-live
+    pr: 955
+    merge_sha: 627eea1731d86b240fac20e9998025833d500235
+    follow_up_prs:
+      - 956 (8fcd3fab, stale claims retired)
+      - 968 (ac394898, Stripe columns unused; live before 969)
+      - 969 (6f7fa65f, migration 0025 drops the four Stripe columns after archiving their values)
+    started: 2026-11-04
+    note: >-
+      Slice from the 2026-11-04 cross-repo review (website/portal hygiene).
+      Maintenance Mode, one draft PR, not merged by the agent. Turnstile
+      fail-closed has a merge precondition: Joe confirms TURNSTILE_SECRET_KEY is
+      set on production and on the staging review instance, otherwise portal
+      sign-in is refused after deploy. Checked open PRs 877/882/947/948/950: no
+      file overlap.
+  - id: de-sync-legacy-secret-retirement
+    issue: 957
+    owner: claude
+    subsystem: hub-integration-auth
+    branch: "claude/legacy-secret-observe (PR 1, #958 merged caea68d, LIVE in 627eea1) -> claude/legacy-secret-remove (PR 2, #959 held) ; claude/lead-webhook-secret (PR 3, lead-webhook fallback)"
+    base_sha: 296721de3a49ecb3515a41cd2e028a9c2abba736
+    started: 2026-11-05
+    files:
+      - server/integrations/deSyncAuth.ts
+      - server/integrations/deSyncLegacyCredential.ts (new) + deSyncLegacyCredential.test.ts, deSyncLegacyObserve.test.ts (new)
+      - server/integrations/ensureDeSyncSchema.ts (additive CREATE TABLE de_sync_legacy_credential_uses)
+      - server/integrations/techSalesClient.ts (outbound secret resolution; PR 3: the lead-webhook fallback sends WEBSITE_LEAD_WEBHOOK_SECRET and is counted)
+      - server/integrations/legacyLeadWebhook.test.ts (PR 3)
+      - server/integrations/deSyncRoutes.ts (health summary + admin-only per-direction endpoint)
+    status: active
+    note: >-
+      Website half of retiring TECHSALES_SYNC_TOKEN / WEBSITE_LEAD_WEBHOOK_SECRET
+      as the DE-Sync fallback (Hub #841 merged 6a56dd72, Hub #842 held). PR 1
+      observes: one warning per direction per hour, every use counted, health
+      reports null/"unknown" (never 0) when the count is unreadable. PR 2
+      deletes the fallback and merges only after BOTH sides show 7 days at
+      zero (Hub docs/runbooks/de-sync-legacy-secret-retirement.md). Joe
+      approved the work 2026-11-05; the coordinator merges PR 1 on his say-so.
+  - id: kb-docs-layout
+    issue: 960
+    owner: claude
+    subsystem: knowledge-base
+    branch: claude/kb-docs-layout
+    base_sha: 296721de
+    started: 2026-11-05
+    files:
+      - client/src/components/kb/docs/** (new shared docs-layout components + lazy CSS)
+      - client/src/pages/portal/kb/PortalKbArticle.tsx, client/src/pages/portal/PortalKB.tsx, client/src/pages/support/KnowledgeBase.tsx
+      - client/src/components/portal/kb/KbRenderer.tsx, client/src/pages/portal/kb/AdminKb.tsx (syntax help line only)
+      - shared/kb.ts, shared/kb.test.ts (callout markers, h2/h3 outline)
+      - zoho/help-center/stylesheet.css, zoho/help-center/README.md (separate commit)
+      - artifacts/visual-qa/kb-jumpcloud-layout/**
+    status: merged
+    pr: "962"
+    merged: 2026-11-05 (ca244410)
+    note: >-
+      Joe, 2026-11-05: copy the docs layout pattern of jumpcloud.com/support
+      (left category tree, centre reading column, right "On this page") for the
+      knowledge base. Layout only; no third-party branding, copy or assets.
+      Draft PR; the coordinator merges on Joe's approval.
+      Released 2026-11-05 after merge. Joe: "keep stars, merge 962"; public
+      articles stay behind portal login ("I want clients to login first"), so
+      no public article API. MERGED, not yet verified LIVE; the Zoho help
+      center CSS is a manual paste, not published.
+  - id: cross-repo-review-website-20261106
+    issue: 974
+    owner: claude
+    subsystem: zoho-oauth, msgraph-auth, design-authority-index, repo-hygiene
+    branch: claude/zoho-connect-only-20261106, claude/graph-cert-auth-20261106, claude/design-rules-index-20261106, claude/stale-branches-report-20261106
+    base_sha: 8fcd3fabf6c181039c1340e0be0ee87b108f4836
+    started: 2026-11-06
+    files:
+      - server/zoho/** , server/zohoPayments.ts, server/portalZohoAuth.ts, server/services/zohoBooksTax.ts (+ tests), docs/ZOHO-OAUTH-INVENTORY.md
+      - server/integrations/msGraph.ts (+ tests), docs/runbooks/msgraph-certificate-auth.md
+      - design/DESIGN-AUTHORITY.md (new index section), retired-banners on retired design rule files
+      - docs/reports/stale-branches-2026-11-06.md
+    status: merged
+    pr: "975, 976, 977, 978"
+    merged: 2026-11-06 (976 6bffa6be, 977 886480e3, 975 2ee6ad68, 978 7eff0c0b)
+    note: >-
+      Website items of the 2026-11-04 cross-repo review (Intelligence-Hub
+      docs/architecture/2026-11-04-cross-repo-review.md). Joe, 2026-11-06:
+      "finish all those projects", "all approved", "you're approved to handle
+      this all". One draft PR per slice. #955 (Stripe dead code, Turnstile
+      fail-closed) was open and left alone; the coordinator merged it
+      (627eea17) during the session. No branch deleted. Released 2026-11-06:
+      all four PRs MERGED, not yet verified LIVE. Env template and
+      SECRETS-REQUIRED follow-up in the review-followup PR.
+  - id: tickets-source-switch
+    owner: claude
+    subsystem: portal-tickets
+    branch: claude/tickets-source-switch
+    base_sha: 8fcd3fabf6c181039c1340e0be0ee87b108f4836
+    started: 2026-11-06
+    files:
+      - server/ticketsSource.ts, server/ticketsSource.test.ts (new)
+      - server/integrations/hubTicketClient.ts, server/integrations/hubTicketsContract.ts (new)
+      - server/integrations/deSyncContract.fixture.json (reads.portalTickets), server/integrations/deSyncContract.parity.test.ts
+      - server/widgetTicketRoute.ts (hub branch before the Desk path; options), server/widgetTicketRoute.hub.test.ts (new)
+      - "server/routes.ts (/api/portal/tickets list, create, detail, comments: hub branches only)"
+      - server/portalDeskTickets.ts (ListedPortalTicket.source adds "hub")
+      - server/publicSolutionSpool.ts (ticketReconciliationSpoolDir)
+      - docs/TICKETS-SOURCE-SWITCH.md (new), docs/SECRETS-REQUIRED.md, deploy/vps/env.production.example
+    status: merged
+    pr: "980"
+    merge_sha: c58ca527
+    note: >-
+      Cross-repo review step 3, Tickets. Joe 2026-11-05: "Hub first then sync
+      with desk but if desk is first then sync with hub"; approvals relayed by
+      coordinator session_01DFj2KKYXK9VsNEKAohFuHu ("all approved", "you're
+      approved to handle this all", 2026-11-06). TICKETS_SOURCE=desk|hub,
+      default desk, so merging changes nothing. Hub half: Intelligence-Hub
+      PR 909 (signed portal ticket API). Overlap check 2026-11-06: open PRs
+      877, 882, 955, 959, 968, 969 do not touch these files. Draft PR; the
+      coordinator merges on Joe's approval. Not LIVE until TICKETS_SOURCE=hub
+      is set after OPEN-ITEMS C10 and verified.
+      Released 2026-11-06: PR 980 merged as c58ca527 (Hub PR 909 merged
+      before it). Files released. Runtime unchanged (TICKETS_SOURCE=desk);
+      switch-on order in docs/TICKETS-SOURCE-SWITCH.md.
