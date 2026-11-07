@@ -73,6 +73,9 @@ export function turnstileUnconfiguredMode(env: NodeJS.ProcessEnv = process.env):
   return 'dev-bypass';
 }
 
+/** Cloudflare siteverify budget. Same order as the other outbound checks (googleReviews 8 s). */
+export const TURNSTILE_VERIFY_TIMEOUT_MS = 8000;
+
 export const TURNSTILE_UNCONFIGURED_ERROR =
   'This form is temporarily unavailable because bot protection is not configured on our side. Please try again later or call us.';
 
@@ -125,6 +128,9 @@ export async function verifyTurnstile(req: Request, res: Response, next: NextFun
   }
   
   try {
+    // A hung Cloudflare call must not hold the request open. On timeout the
+    // fetch rejects and the catch below answers: 500 in production (fail
+    // closed), next() in development, the same as any other verify error.
     const response = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -132,7 +138,8 @@ export async function verifyTurnstile(req: Request, res: Response, next: NextFun
         secret: process.env.TURNSTILE_SECRET_KEY,
         response: turnstileToken,
         remoteip: req.ip || ''
-      }).toString()
+      }).toString(),
+      signal: AbortSignal.timeout(TURNSTILE_VERIFY_TIMEOUT_MS),
     });
     
     const data = await response.json();
