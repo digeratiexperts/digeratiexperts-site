@@ -138,3 +138,19 @@ describe("legacy credential health", () => {
     for (const value of ["legacy-value-x", '"a"', '"b"', '"c"', '"d"']) expect(json).not.toContain(value);
   });
 });
+
+describe("lead webhook fallback health", () => {
+  it("reports the count and names, unknown (never 0) when unreadable, and does not change the gate", async () => {
+    const { leadWebhookFallbackHealth } = await import("./deSyncLegacyCredential");
+    const env = { TECHSALES_SYNC_URL: "https://h/api/webhooks/website-lead", WEBSITE_LEAD_WEBHOOK_SECRET: "v-secret" } as NodeJS.ProcessEnv;
+    const usage = new Map([["website_lead_webhook", { uses: 3, lastUsedAt: new Date("2026-11-06T01:00:00Z"), lastRoute: "/api/webhooks/website-lead", lastSource: "website" }]]);
+    expect(leadWebhookFallbackHealth(env, usage, null)).toMatchObject({ urlConfigured: true, secretConfigured: true, uses7d: 3, lastUsedAt: "2026-11-06T01:00:00.000Z" });
+    expect(leadWebhookFallbackHealth(env, new Map(), null)).toMatchObject({ uses7d: 0 });
+    const unknown = leadWebhookFallbackHealth(env, null, "no database");
+    expect(unknown.uses7d).toBeNull();
+    expect(unknown.lastUsedAt).toBe("unknown");
+    expect(JSON.stringify(unknown)).not.toContain("v-secret");
+    const rows = directionCredentialHealth(ALL_SCOPED, usage, null);
+    expect(legacyRetirementState(rows)).toBe("ready");
+  });
+});

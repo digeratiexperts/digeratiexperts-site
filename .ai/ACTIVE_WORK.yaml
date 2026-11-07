@@ -5099,14 +5099,15 @@ claims:
     issue: 957
     owner: claude
     subsystem: hub-integration-auth
-    branch: claude/legacy-secret-observe (PR 1) -> claude/legacy-secret-remove (PR 2, held, stacked)
+    branch: "claude/legacy-secret-observe (PR 1, #958 merged caea68d, LIVE in 627eea1) -> claude/legacy-secret-remove (PR 2, #959 held) ; claude/lead-webhook-secret (PR 3, lead-webhook fallback)"
     base_sha: 296721de3a49ecb3515a41cd2e028a9c2abba736
     started: 2026-11-05
     files:
       - server/integrations/deSyncAuth.ts
       - server/integrations/deSyncLegacyCredential.ts (new) + deSyncLegacyCredential.test.ts, deSyncLegacyObserve.test.ts (new)
       - server/integrations/ensureDeSyncSchema.ts (additive CREATE TABLE de_sync_legacy_credential_uses)
-      - server/integrations/techSalesClient.ts (outbound secret resolution only; the legacy lead-webhook sender is untouched)
+      - server/integrations/techSalesClient.ts (outbound secret resolution; PR 3: the lead-webhook fallback sends WEBSITE_LEAD_WEBHOOK_SECRET and is counted)
+      - server/integrations/legacyLeadWebhook.test.ts (PR 3)
       - server/integrations/deSyncRoutes.ts (health summary + admin-only per-direction endpoint)
     status: active
     note: >-
