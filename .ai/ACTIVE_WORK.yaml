@@ -30,6 +30,19 @@
 
 version: 2
 claims:
+  - id: c15-location-list-semantics-20261109
+    issue: 544
+    owner: cursor
+    subsystem: location-pages
+    branch: cursor/c15-location-list-semantics-bf42
+    base_sha: 855098371b33f5d6ae9e66e3cfab94be5587b4ac
+    started: 2026-11-09
+    status: active
+    files:
+      - client/src/pages/locations/LocationServicePage.tsx
+    notes: >-
+      C15 follow-up for site issue 544 location form and list semantics.
+      Does not edit routes.ts, deploy scripts, de-sync, or the flipbook engine.
   - id: desk-chooser-height-20261101
     issue: 918
     owner: codex

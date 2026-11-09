@@ -278,20 +278,18 @@ export function LocationServicePage(props: LocationPageProps) {
                         <SituationContinuityStrip situation={situation} door="assessment" tone="paper" className="mb-4" />
                       ) : null}
     
-                      <div className="mb-6 grid grid-cols-1 gap-2 rounded-xl border border-[var(--de-paper-hairline)] bg-white px-4 py-3 sm:grid-cols-3">
-                        <div className="flex items-baseline gap-2 text-xs font-semibold text-[#1A1228]">
-                          <span className="mt-[0.55em] h-px w-2.5 shrink-0 bg-[#D3126A]" aria-hidden="true" />
-                          <span>On-site {props.city} support</span>
-                        </div>
-                        <div className="flex items-baseline gap-2 text-xs font-semibold text-[#1A1228]">
-                          <span className="mt-[0.55em] h-px w-2.5 shrink-0 bg-[#D3126A]" aria-hidden="true" />
-                          <span>No switch required</span>
-                        </div>
-                        <div className="flex items-baseline gap-2 text-xs font-semibold text-[#1A1228]">
-                          <span className="mt-[0.55em] h-px w-2.5 shrink-0 bg-[#D3126A]" aria-hidden="true" />
-                          <span>Arizona-based team</span>
-                        </div>
-                      </div>
+                      <ul
+                        aria-label="What this request includes"
+                        data-testid="location-request-points"
+                        className="mb-6 grid grid-cols-1 gap-2 rounded-xl border border-[var(--de-paper-hairline)] bg-white px-4 py-3 sm:grid-cols-3"
+                      >
+                        {[`On-site ${props.city} support`, "No switch required", "Arizona-based team"].map((point) => (
+                          <li key={point} className="flex min-w-0 items-baseline gap-2 text-xs font-semibold text-[#1A1228]">
+                            <span className="mt-[0.55em] h-px w-2.5 shrink-0 bg-[#D3126A]" aria-hidden="true" />
+                            <span>{point}</span>
+                          </li>
+                        ))}
+                      </ul>
     
                       <Form {...form}>
                         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
@@ -383,7 +381,7 @@ export function LocationServicePage(props: LocationPageProps) {
                               variant="brand"
                               data-testid={`button-${props.city.toLowerCase()}-submit`}
                               disabled={isSubmitting}
-                              className="h-12 text-base font-semibold sm:flex-1"
+                              className="h-auto min-h-12 w-full whitespace-normal py-3 text-center text-base font-semibold leading-snug sm:flex-1"
                             >
                               {isSubmitting ? (
                                 <>
@@ -402,7 +400,7 @@ export function LocationServicePage(props: LocationPageProps) {
                               type="button"
                               variant="outline"
                               size="lg"
-                              className="h-12 w-full border-[var(--de-paper-hairline)] bg-white px-6 text-base font-semibold text-[#1A1228] hover:border-[#D3126A] hover:bg-[#D3126A]/5 sm:w-auto"
+                              className="h-auto min-h-12 w-full whitespace-normal border-[var(--de-paper-hairline)] bg-white px-6 py-3 text-center text-base font-semibold leading-snug text-[#1A1228] hover:border-[#D3126A] hover:bg-[#D3126A]/5 sm:w-auto"
                             >
                               <a href={PRIMARY_PHONE.telHref} className="sm:flex-shrink-0">
                                 <Phone className="mr-2 h-5 w-5" aria-hidden="true" />
@@ -466,9 +464,9 @@ export function LocationServicePage(props: LocationPageProps) {
                   {stats.map((stat) => (
                     <div key={stat.label} className="flex items-center gap-4 py-4">
                       <IconWell icon={stat.icon} size="sm" surface="light" />
-                      <div>
-                        <dd className="font-mono text-lg font-semibold text-[#1A1228]">{stat.value}</dd>
-                        <dt className="text-sm text-[#3A3448]">{stat.label}</dt>
+                      <div className="flex min-w-0 flex-col">
+                        <dt className="order-2 text-sm text-[#3A3448]">{stat.label}</dt>
+                        <dd className="order-1 font-mono text-lg font-semibold text-[#1A1228]">{stat.value}</dd>
                       </div>
                     </div>
                   ))}
@@ -551,27 +549,30 @@ export function LocationServicePage(props: LocationPageProps) {
                     :
                   </span>
                 </h2>
-                <div className="mt-8 grid grid-cols-2 content-stretch gap-3 sm:grid-cols-3">
-                  {GREATER_PHOENIX_CITIES.map((location) => {
-                    const isCurrent = location.slug === currentSlug;
-                    return (
-                      <Link
-                        key={location.slug}
-                        href={location.href}
-                        aria-current={isCurrent ? "page" : undefined}
-                        className={`${cityChipClass} ${
-                          isCurrent
-                            ? "border-[#D3126A] text-[#A30E52] shadow-[inset_0_0_0_1px_#D3126A]"
-                            : "border-[var(--de-paper-hairline)]"
-                        }`}
-                        data-city={location.name.toLowerCase()}
-                        data-testid={`location-switcher-${location.name.toLowerCase()}`}
-                      >
-                        {location.name}
-                      </Link>
-                    );
-                  })}
-                </div>
+                <nav aria-label="Greater Phoenix cities" data-testid="location-city-list">
+                  <ul className="mt-8 grid grid-cols-2 content-stretch gap-3 sm:grid-cols-3">
+                    {GREATER_PHOENIX_CITIES.map((location) => {
+                      const isCurrent = location.slug === currentSlug;
+                      return (
+                        <li key={location.slug} className="min-w-0">
+                          <Link
+                            href={location.href}
+                            aria-current={isCurrent ? "page" : undefined}
+                            className={`${cityChipClass} ${
+                              isCurrent
+                                ? "border-[#D3126A] text-[#A30E52] shadow-[inset_0_0_0_1px_#D3126A]"
+                                : "border-[var(--de-paper-hairline)]"
+                            }`}
+                            data-city={location.name.toLowerCase()}
+                            data-testid={`location-switcher-${location.name.toLowerCase()}`}
+                          >
+                            {location.name}
+                          </Link>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </nav>
               </div>
               <div className="lg:col-span-5">
                 <div className="de-paper-lift rounded-xl p-6" data-testid="location-office">
