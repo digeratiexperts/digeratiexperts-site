@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   canonicalCheckoutTotal,
@@ -92,5 +94,14 @@ describe("secure store checkout canonicalization", () => {
         quantity: 0,
       },
     ], "comanaged")).toThrow(/invalid quantity/i);
+  });
+});
+
+describe("secure store checkout cancel target", () => {
+  it("cancels to the staff checkout, never the public Door 2 alias (§1, §5.3)", () => {
+    // The Zoho hosted checkout is started only by the staff checkout page (role-gated). A cancel must return there.
+    const src = readFileSync(path.resolve(import.meta.dirname, "secureStoreCheckout.ts"), "utf8");
+    expect(src).toContain("cancelUrl: `${baseUrl}/internal/warehouse/checkout`");
+    expect(src).not.toMatch(/cancelUrl:\s*`\$\{baseUrl\}\/store\/checkout`/);
   });
 });

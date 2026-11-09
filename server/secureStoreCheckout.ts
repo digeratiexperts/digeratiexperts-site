@@ -498,7 +498,8 @@ export function registerSecureZohoStoreCheckout(
             successUrl: `${baseUrl}/internal/warehouse/order-confirmation?orderId=${order.id}${
               confirmationToken ? `&ct=${confirmationToken}` : ""
             }`,
-            cancelUrl: `${baseUrl}/store/checkout`,
+            // Staff checkout, not the public Door 2 alias (/store/checkout is the Store's Assemble page, §1, §5.3).
+            cancelUrl: `${baseUrl}/internal/warehouse/checkout`,
             metadata: {
               orderId: order.id,
             },
