@@ -238,6 +238,9 @@ export default function PortalChat() {
   const selectedDeskRef = useRef<string | null>(null);
   const openDeskIdsRef = useRef<string[]>([]);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // /chat/status is the access gate. A later successful message poll must not
+  // paint the composer again after that gate has already said no.
+  const chatDeniedRef = useRef(false);
 
   useEffect(() => {
     liveMessagesRef.current = messages;
@@ -304,6 +307,7 @@ export default function PortalChat() {
       credentials: "include",
     });
     if (res.status === 403) {
+      chatDeniedRef.current = true;
       setChatAllowed(false);
       const data = await res.json().catch(() => ({}));
       setStatusMessage(data.error || "Live Chat is limited to your company IT contact.");
@@ -334,6 +338,7 @@ export default function PortalChat() {
       } else {
         setMessages(data.messages);
       }
+      if (chatDeniedRef.current) return;
       setConnected(true);
       setChatAllowed(true);
     }
@@ -400,6 +405,7 @@ export default function PortalChat() {
       .then((r) => r.json())
       .then((data) => {
         if (data.allowed === false) {
+          chatDeniedRef.current = true;
           setChatAllowed(false);
           setConnected(false);
           setStatusMessage(data.message || "Live Chat is limited to IT contacts.");
@@ -1091,37 +1097,40 @@ export default function PortalChat() {
           </div>
 
           <div
-            className="mt-4 grid grid-cols-2 gap-2 rounded-xl border border-white/10 bg-black/20 p-1"
+            className="mt-4 flex max-w-full gap-2 overflow-x-auto rounded-xl border border-white/10 bg-black/20 p-1"
             role="tablist"
             aria-label="Chat channel"
+            data-testid="chat-channel-tabs"
           >
             <button
               type="button"
               role="tab"
               aria-selected={channel === "website"}
+              data-testid="chat-channel-website"
               onClick={() => setChannel("website")}
-              className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-3 text-sm font-semibold transition ${
+              className={`inline-flex min-h-11 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg px-3 text-sm font-semibold transition ${
                 channel === "website"
-                  ? "bg-gradient-to-r from-[#D3126A] to-[#D3126A] text-white shadow-lg shadow-[#D3126A]/25"
-                  : "text-white/55 hover:bg-white/5 hover:text-white"
+                  ? "bg-[#D3126A] text-white"
+                  : "text-white/80 hover:bg-white/5 hover:text-white"
               }`}
             >
-              <Globe2 className="h-4 w-4" aria-hidden />
-              Website DE Desk
+              <Globe2 className="h-4 w-4 shrink-0" aria-hidden />
+              <span data-channel-label>Website DE Desk</span>
             </button>
             <button
               type="button"
               role="tab"
               aria-selected={channel === "portal"}
+              data-testid="chat-channel-portal"
               onClick={() => setChannel("portal")}
-              className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-3 text-sm font-semibold transition ${
+              className={`inline-flex min-h-11 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg px-3 text-sm font-semibold transition ${
                 channel === "portal"
-                  ? "bg-gradient-to-r from-[#D3126A] to-[#D3126A] text-white shadow-lg shadow-[#D3126A]/25"
-                  : "text-white/55 hover:bg-white/5 hover:text-white"
+                  ? "bg-[#D3126A] text-white"
+                  : "text-white/80 hover:bg-white/5 hover:text-white"
               }`}
             >
-              <Building2 className="h-4 w-4" aria-hidden />
-              Portal live chat
+              <Building2 className="h-4 w-4 shrink-0" aria-hidden />
+              <span data-channel-label>Portal live chat</span>
             </button>
           </div>
         </div>
@@ -1194,10 +1203,10 @@ export default function PortalChat() {
               </div>
             )}
 
-            <div className="grid min-h-[520px] grid-cols-1 lg:grid-cols-[300px_1fr]">
+            <div className="grid grid-cols-1 lg:min-h-[32rem] lg:grid-cols-[300px_1fr]" data-testid="desk-workspace">
               <aside className="max-h-[640px] overflow-y-auto border-b border-white/10 lg:border-b-0 lg:border-r lg:border-white/10">
                 {deskSessions.length === 0 && archivedSessions.length === 0 ? (
-                  <div className="flex h-full flex-col items-center justify-center gap-2 p-6 text-center">
+                  <div data-testid="desk-empty-list" className="flex flex-col items-center justify-center gap-2 px-6 py-8 text-center lg:h-full">
                     <MessageSquare className="h-8 w-8 text-white/25" aria-hidden />
                     <p className="text-sm text-white/55">
                       No website conversations yet. When visitors use DE Desk, they appear here.
@@ -1314,9 +1323,9 @@ export default function PortalChat() {
                 )}
               </aside>
 
-              <div className="flex min-h-[520px] flex-col bg-[#050312]">
+              <div className="flex min-h-0 flex-col bg-[#050312] lg:min-h-[32rem]" data-testid="desk-thread">
                 {!selectedDesk ? (
-                  <div className="flex flex-1 flex-col items-center justify-center gap-2 p-8 text-center">
+                  <div data-testid="desk-empty-thread" className="flex flex-col items-center justify-center gap-2 px-6 py-8 text-center lg:flex-1 lg:py-16">
                     <div className="mb-2 flex h-14 w-14 items-center justify-center rounded-2xl border border-[#D3126A]/35 bg-[#D3126A]/15">
                       <MessageSquare className="h-6 w-6 text-[#C4B5FD]" aria-hidden />
                     </div>
@@ -1476,16 +1485,24 @@ export default function PortalChat() {
         {channel === "portal" && (
           <>
             {!chatAllowed && statusMessage && (
-              <div className="rounded-2xl border border-amber-400/30 bg-amber-500/10 p-4">
+              <div
+                data-testid="chat-access-notice"
+                className="rounded-2xl border border-amber-800/40 bg-amber-50 p-4 text-amber-950 dark:border-amber-300/40 dark:bg-amber-950/40 dark:text-amber-50"
+              >
                 <div className="flex gap-3">
-                  <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-amber-300" />
-                  <p className="text-sm text-amber-100">{statusMessage}</p>
+                  <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-amber-800 dark:text-amber-200" />
+                  <p className="text-sm">{statusMessage}</p>
                 </div>
               </div>
             )}
 
             {chatAllowed && (
-              <div className="flex h-[min(640px,70vh)] flex-col overflow-hidden rounded-2xl border border-[#D3126A]/30 bg-[#151217] text-white shadow-[0_0_0_1px_rgba(211,18,106,0.18),0_24px_60px_rgba(30,8,55,0.45)]">
+              <div
+                data-testid="portal-live-chat"
+                className={`flex flex-col overflow-hidden rounded-2xl border border-[#D3126A]/30 bg-[#151217] text-white shadow-[0_0_0_1px_rgba(211,18,106,0.18)] ${
+                  messages.length === 0 ? "" : "h-[min(40rem,70vh)]"
+                }`}
+              >
                 <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
                   <div>
                     <p className="text-sm font-semibold">Portal live chat</p>
@@ -1577,9 +1594,11 @@ export default function PortalChat() {
                   </div>
                 )}
 
-                <div className="flex-1 space-y-3 overflow-y-auto p-4">
+                <div className={`space-y-3 overflow-y-auto p-4 ${messages.length === 0 ? "" : "flex-1"}`}>
                   {messages.length === 0 ? (
-                    <p className="text-sm text-white/50">No portal messages yet.</p>
+                    <p data-testid="portal-chat-empty" className="py-6 text-sm text-white/80">
+                      No portal messages yet.
+                    </p>
                   ) : (
                     messages.map((message) => (
                       <div
