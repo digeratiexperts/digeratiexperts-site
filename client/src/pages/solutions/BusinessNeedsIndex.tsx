@@ -505,21 +505,6 @@ export default function BusinessNeedsIndex() {
     return () => window.clearTimeout(timer);
   }, [announce, countText, query, searching, total]);
 
-  const helpCard = (
-    <li className="d2-fcard d2-fcard--help" data-d2-reveal={lineupSwitched ? "in" : ""}>
-      <span className="d2-glyph d2-glyph--magenta d2-fcard__glyph" aria-hidden="true">
-        <PhoneCall strokeWidth={1.5} />
-      </span>
-      <h3 className="d2-fcard__title">Not sure which one?</h3>
-      <p className="d2-fcard__detail">Tell us what is going on and DE points you at the right families.</p>
-      <div className="d2-fcard__acts">
-        <a href={PRIMARY_PHONE.telHref} className="d2-fcard__add" aria-label={`Call ${PRIMARY_PHONE.display} (${PRIMARY_PHONE.label})`}>
-          Call {PRIMARY_PHONE.display}
-        </a>
-      </div>
-    </li>
-  );
-
   const showAll = () => {
     setQuery("");
     setGoalFilter("all");
@@ -794,7 +779,6 @@ export default function BusinessNeedsIndex() {
                       revealed={lineupSwitched}
                     />
                   ))}
-                  {helpCard}
                 </ul>
               ) : (
                 <div className="d2-goalstack" data-testid="families-by-goal">
@@ -825,9 +809,6 @@ export default function BusinessNeedsIndex() {
                       </section>
                     );
                   })}
-                  <ul className="d2-lineup">
-                    {helpCard}
-                  </ul>
                 </div>
               )}
               <SolutionRail {...chrome} />
