@@ -18,7 +18,8 @@ import { registerRoutes, authMiddleware, requireRole } from "./routes";
 import { registerSecureZohoStoreCheckout } from "./secureStoreCheckout";
 import { isStagingReview, stagingReviewStatus } from "./stagingReviewGuard";
 import { registerStoreSolutionRoutes } from "./storeSolutionRoutes";
-import { registerPublicSolutionRoutes } from "./publicSolutionRoutes";
+import { referenceLookupRateLimiter, registerPublicSolutionRoutes } from "./publicSolutionRoutes";
+import { getPublicSolutionRequestByReferenceDurable } from "./publicSolutionRequestStore";
 import { registerWidgetTicketRoute } from "./widgetTicketRoute";
 import { registerWarehouseGates } from "./warehouseRoutes";
 import { registerPortalMarketplaceRoutes } from "./portalMarketplaceRoutes";
@@ -645,6 +646,30 @@ function listEndpoints(): Array<{ method: string; path: string }> {
       }
     }));
     
+    // The SPA shell, with the HTTP status decided by the route: 200 for a page that exists, 404 otherwise.
+    const sendShell = (req: express.Request, res: express.Response, found: boolean) => {
+      const shell = readIndexShell(indexPath);
+      res.status(found ? 200 : 404);
+      // The shell is HTML: never stored (staticCacheControl), revalidated against the build's mtime.
+      res.setHeader("Cache-Control", cacheControlFor("index.html"));
+      res.setHeader("Last-Modified", shell.lastModified);
+      res.type("html").send(found ? applyRouteMeta(shell.html, routeMetaFor(req.path)) : shell.html);
+    };
+
+    // A submitted solution's confirmation page (§5.5): an unknown or expired reference is a real 404.
+    // If the lookup itself fails, answer 200 and let the page's own lookup show its not-found state.
+    app.get("/store/solution/submitted/:reference", referenceLookupRateLimiter, async (req, res, next) => {
+      if (!fs.existsSync(indexPath)) return next();
+      let found = true;
+      try {
+        const record = await getPublicSolutionRequestByReferenceDurable(req.params.reference);
+        found = Boolean(record && record.status === "submitted");
+      } catch (error) {
+        log(`⚠️ Submitted-reference lookup failed; serving the shell with 200: ${error instanceof Error ? error.message : String(error)}`);
+      }
+      sendShell(req, res, found);
+    });
+
     app.get("*", (req, res, next) => {
       if (req.path.startsWith("/api")) {
         return next();
@@ -652,13 +677,7 @@ function listEndpoints(): Array<{ method: string; path: string }> {
       
       if (fs.existsSync(indexPath)) {
         // Known SPA routes → 200; unknown paths still get the shell but HTTP 404.
-        const known = isKnownSpaPath(req.path);
-        const shell = readIndexShell(indexPath);
-        res.status(known ? 200 : 404);
-        // The shell is HTML: never stored (staticCacheControl), revalidated against the build's mtime.
-        res.setHeader("Cache-Control", cacheControlFor("index.html"));
-        res.setHeader("Last-Modified", shell.lastModified);
-        res.type("html").send(known ? applyRouteMeta(shell.html, routeMetaFor(req.path)) : shell.html);
+        sendShell(req, res, isKnownSpaPath(req.path));
       } else {
         log(`⚠️ Production build not found at ${distPath}`);
         res.status(404).send(`
