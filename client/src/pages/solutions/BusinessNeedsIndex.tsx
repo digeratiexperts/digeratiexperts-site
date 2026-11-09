@@ -660,7 +660,7 @@ export default function BusinessNeedsIndex() {
                   footer={
                     scenario.group === "now" ? (
                       <>
-                        Happening now?{" "}
+                        Happening right now?{" "}
                         <a href={PRIMARY_PHONE.telHref} aria-label={`Call ${PRIMARY_PHONE.display} (${PRIMARY_PHONE.label})`}>
                           Call {PRIMARY_PHONE.display}
                         </a>
