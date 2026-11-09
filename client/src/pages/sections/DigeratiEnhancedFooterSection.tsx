@@ -67,6 +67,12 @@ const footerColumns = [
  */
 const STORE_WORKSPACE_PATH = "/store/solution";
 
+/**
+ * Door 2 pages never print the word "SLA" in visible text (§12(a), grep-gated
+ * by §14.21). Only the store variant hides it; the default footer keeps it.
+ */
+const STORE_HIDDEN_LEGAL = new Set(["SLA"]);
+
 export const DigeratiEnhancedFooterSection = ({
   variant = "default",
   storeBack = { label: "Back to Your Solution", href: STORE_WORKSPACE_PATH },
@@ -249,7 +255,7 @@ export const DigeratiEnhancedFooterSection = ({
                   {column.title}
                 </h4>
                 <ul className="space-y-2">
-                  {column.links.map((item, index) => (
+                  {(variant === "store" ? column.links.filter((item) => !STORE_HIDDEN_LEGAL.has(item.name)) : column.links).map((item, index) => (
                     <li key={item.name}>
                       <FooterLink href={item.href} testId={`${column.testIdPrefix}-${index}`}>
                         {item.name}
