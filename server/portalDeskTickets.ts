@@ -409,7 +409,7 @@ export interface ListedPortalTicket {
   clientId: string | null;
   companyName: string | null;
   isInternal: boolean;
-  source?: "portal" | "desk";
+  source?: "portal" | "desk" | "hub";
 }
 
 export function deskTicketToListed(

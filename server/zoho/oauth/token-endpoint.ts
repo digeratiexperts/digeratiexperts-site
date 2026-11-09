@@ -38,6 +38,8 @@ export interface ZohoTokenResponse {
   refreshToken?: string;
   apiDomain?: string;
   scope?: string;
+  /** OIDC id token (portal sign-in's authorization_code exchange only). */
+  idToken?: string;
 }
 
 export type FetchLike = (input: string, init?: RequestInit) => Promise<Response>;
@@ -73,6 +75,12 @@ export function classifyTokenError(
 }
 
 const TOKEN_TIMEOUT_MS = 15_000;
+
+/**
+ * Zoho's token path. This file is the only place in the website that calls it
+ * (guarded by noDirectTokenCalls.test.ts).
+ */
+export const ZOHO_TOKEN_PATH = "/oauth/v2/token";
 
 /**
  * POST to `${accountsServer}/oauth/v2/token`. Resolves with the token on
@@ -117,6 +125,7 @@ export async function callZohoTokenEndpoint(
           : undefined,
       apiDomain: typeof json.api_domain === "string" ? json.api_domain : undefined,
       scope: typeof json.scope === "string" ? json.scope : undefined,
+      idToken: typeof json.id_token === "string" ? json.id_token : undefined,
     };
   }
   const c = classifyTokenError(resp.status, json);

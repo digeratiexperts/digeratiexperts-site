@@ -11,11 +11,8 @@ import {
   createDeskAuth,
   crmCredentialsPresent,
   deskCredentialsPresent,
-  resolveDeskOAuthConfig,
 } from './zohoAuth';
 import { isZohoOAuthError } from './zohoOAuthErrors';
-
-export { resolveDeskOAuthConfig, type DeskOAuthConfig } from './zohoAuth';
 
 /**
  * Last known Desk OAuth state, synchronous, for /api/health's legacy
@@ -33,7 +30,7 @@ export type DeskAuthStatus =
  * CRM and Desk access for the website. Tokens come from the token manager
  * (server/zoho/oauth): cached and persisted access tokens, one refresh in
  * flight per token, at most 5 refreshes per 10 minutes, classified errors and
- * the issuing client pinned per credential. API hosts come from the account's
+ * the issuing client pinned. The only credential is the Zoho Connect grant. API hosts come from the account's
  * data center, never a hardcoded zoho.com.
  */
 export class ZohoClient {
@@ -45,20 +42,9 @@ export class ZohoClient {
   constructor() {
     this.crmAuth = createCrmAuth();
     this.deskAuth = createDeskAuth();
-    if (!crmCredentialsPresent()) {
-      console.warn('⚠️ Zoho API credentials not fully configured');
-    }
-    const desk = resolveDeskOAuthConfig();
-    if (desk.state === 'ready') {
-      this.deskAuthStatus = 'credentials_present';
-      console.log(
-        `✅ Zoho Desk OAuth credentials present (${desk.dedicatedClient ? 'own Desk client' : 'shared CRM client'}; refresh validity not probed at boot)`,
-      );
-    } else if (desk.state === 'incomplete') {
-      console.warn(
-        `⚠️ Zoho Desk has its own OAuth client configured but is missing ${desk.missing.join(', ')}; the Desk API stays off until all three are set`,
-      );
-    }
+    // Credentials are the Zoho Connect grant only; whether it covers CRM and
+    // the Desk is known after the boot snapshot (refreshZohoConnectSnapshot),
+    // so presence is not logged here.
   }
 
   /** Last known Desk OAuth state — presence only until a refresh is attempted. */

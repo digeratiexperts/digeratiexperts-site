@@ -7,7 +7,9 @@ Env vars are listed **by name only**. Values live in `/home/digeratiexperts.com/
 
 ## Rules for every agent and person (read before touching Zoho)
 
-**Production state, 2026-10-10:** Zoho Connect is **on**. One Zoho API Console **Server-based Application** (`ZOHO_CONNECT_CLIENT_ID`) holds one grant that serves the website's CRM, Billing, Desk, Books and Payments. Joe approved it once at `/api/zoho/connect`. The old Self Client tokens in `.env` are kept only as fallbacks.
+**Production state, 2026-10-10:** Zoho Connect is **on**. One Zoho API Console **Server-based Application** (`ZOHO_CONNECT_CLIENT_ID`) holds one grant that serves the website's CRM, Billing, Desk, Books and Payments. Joe approved it once at `/api/zoho/connect`.
+
+**Connect only, 2026-11-06 (issue #974):** the Connect grant is now the **only** credential. The code no longer reads the legacy Self Client refresh tokens or their per-product clients, so there is no fallback and no kill switch back to them. See "Retired: Self Client tokens" below for the env vars Joe can delete once this is LIVE.
 
 Two Zoho limits drive these rules:
 - Each client holds at most **20 refresh tokens per user**. The 21st silently revokes the oldest, which may be another product's live token.
@@ -16,8 +18,8 @@ Two Zoho limits drive these rules:
 Before 2026-10-10, ignoring them took the Desk down again and again (issue #418).
 
 1. **Never generate a grant code on the Connect client.** Don't use the Connect client from the Intelligence Hub, scripts, MCP servers or any other repo. It belongs to the website alone. Another system needs its own client.
-2. **Never generate grant codes on the legacy Self Clients for other purposes** (the ones behind `ZOHO_REFRESH_TOKEN`, `ZOHO_DESK_*`, `ZOHO_BOOKS_*`, `ZOHO_PAYMENTS_*`). Every code spends one of that client's 20 slots and can revoke a live fallback token.
-3. **Website code never calls `/oauth/v2/token` itself.** Every Zoho call goes through `server/zoho/oauth`: `createZohoProductAuth` → `getAccess()` / `fetchWithAuth()`, and `check()` / `status()` for health. No hand-rolled refresh, no per-request token, and no env fallback chains outside a product's `legacySources`.
+2. **Never generate grant codes on the retired Self Clients** (the ones that issued the old refresh tokens listed under "Retired: Self Client tokens"). The website no longer uses them; a new code on one only spends a slot and is never read.
+3. **Website code never calls `/oauth/v2/token` itself.** Every Zoho call goes through `server/zoho/oauth`: `createZohoProductAuth` → `getAccess()` / `fetchWithAuth()`, and `check()` / `status()` for health. No hand-rolled refresh, no per-request token, and no env refresh-token fallback of any kind. `server/zoho/oauth/token-endpoint.ts` is the only file that names the token path; the portal sign-in's code exchange goes through its `callZohoTokenEndpoint` too. `server/zoho/oauth/noDirectTokenCalls.test.ts` fails the build if the token path or a retired Self Client setting appears anywhere else.
 4. **Health checks and status pages never request a token.** They read `status()`, or `check()`, which makes at most one cheap probe every 10 minutes. Never poll Zoho in a loop.
 5. **Never hardcode a Zoho host** (`accounts.zoho.com`, `www.zohoapis.com`, `desk.zoho.com`, `payments.zoho.com`). Take it from `server/zoho/oauth/dc.ts` or the access's `dc`.
 6. **Read the state before acting:**
@@ -32,7 +34,7 @@ Before 2026-10-10, ignoring them took the Desk down again and again (issue #418)
    - Add its scopes to `server/zoho/oauth/scopes.ts` and a `createZohoProductAuth` for it.
    - Tell Joe that **one reconnect** at `/api/zoho/connect` is needed after deploy, so the grant covers the new scopes.
    - Don't create a new Self Client for it.
-9. **Kill switch:** `ZOHO_CONNECT_ENABLED=false` in `.env`, then `sudo systemctl restart digeratiexperts-site`, sends every product back to the legacy Self Client tokens. Use it only on Joe's call.
+9. **No kill switch to Self Client tokens any more.** `ZOHO_CONNECT_ENABLED=false` now turns every Zoho product **off** (`not_configured`): the CRM, Desk, Books and Payments calls stop. Never set it to "fix" a `degraded` or `needs_reconnect` state; the fix for `needs_reconnect` is the reconnect click.
 10. **The Intelligence Hub has its own Zoho Connect client and grant** (Hub `docs/ZOHO-OAUTH-STANDARD.md`). Never share a client between the Hub and the website.
 
 ## Why
@@ -45,15 +47,7 @@ Before this change the website had four separate Zoho token paths, each with its
 
 Uses the token manager: products `crm` and `desk`, wiring in `server/zoho/zohoAuth.ts`.
 
-**Credential order, CRM:**
-1. The Zoho Connect grant, when `ZOHO_CONNECT_ENABLED` is on and its scopes cover CRM.
-2. `ZOHO_REFRESH_TOKEN` with `ZOHO_CLIENT_ID_API` / `ZOHO_CLIENT_SECRET_API`.
-
-**Credential order, Desk:**
-1. The Connect grant (same conditions).
-2. `resolveDeskOAuthConfig` (PR #555), unchanged:
-   - **Own client:** `ZOHO_DESK_CLIENT_ID`, `ZOHO_DESK_CLIENT_SECRET` and `ZOHO_DESK_REFRESH_TOKEN`. All three are required once either client value is set. With one missing, the Desk is `not_configured`.
-   - **Shared client:** `ZOHO_CLIENT_ID_API` / `_SECRET_API` with `ZOHO_DESK_REFRESH_TOKEN`, falling back to `ZOHO_FORM_OAUTH`, then `ZOHO_REFRESH_TOKEN`.
+**Credential, CRM and Desk:** the Zoho Connect grant only, while `ZOHO_CONNECT_ENABLED` is on and the grant's scopes cover the product, refreshed with `ZOHO_CONNECT_CLIENT_ID` / `_SECRET`. The retired `ZOHO_REFRESH_TOKEN`, `ZOHO_DESK_REFRESH_TOKEN`, `ZOHO_FORM_OAUTH` and the Desk's own client (`ZOHO_DESK_CLIENT_ID` / `_SECRET`) are not read. Without a covering grant the product is `not_configured` and the reason says what to do.
 
 **Scopes** (`server/zoho/oauth/scopes.ts`):
 - CRM: `ZohoCRM.modules.READ`, `ZohoCRM.modules.CREATE`, `ZohoCRM.modules.UPDATE`, `ZohoCRM.users.READ`.
@@ -80,7 +74,8 @@ Uses the token manager: products `crm` and `desk`, wiring in `server/zoho/zohoAu
 
 **Not** part of the token manager. It is an OIDC sign-in for people, and it stores no long-lived token.
 
-- **Env:** `ZOHO_CLIENT_ID` / `ZOHO_CLIENT_SECRET` (falling back to `ZOHO_CLIENT_ID_API` / `_SECRET_API`), `ZOHO_PORTAL_OIDC_REDIRECT_URI` or `ZOHO_OAUTH_PORTAL_REDIRECT_URI`, `ZOHO_OAUTH_STATE_SECRET`, `ZOHO_OIDC_ISSUER`, `PORTAL_OAUTH_EMAIL_ALLOWLIST`.
+- **Env:** `ZOHO_CLIENT_ID` / `ZOHO_CLIENT_SECRET` (falling back to `ZOHO_CLIENT_ID_API` / `_SECRET_API`), `ZOHO_PORTAL_OIDC_REDIRECT_URI` or `ZOHO_OAUTH_PORTAL_REDIRECT_URI`, `ZOHO_OAUTH_STATE_SECRET`, `ZOHO_OIDC_ISSUER`, `PORTAL_OAUTH_EMAIL_ALLOWLIST`. These are a sign-in client, not an API credential: no refresh token is kept.
+- **Code exchange:** `exchangeZohoAuthCode` sends its `authorization_code` request through `callZohoTokenEndpoint` (`server/zoho/oauth/token-endpoint.ts`), so it never builds the token URL itself (since #974). The guard test names this file as the one exception allowed to build a grant body outside `server/zoho/oauth`.
 - **Scopes:** `openid email profile`.
 - **Host:** `ZOHO_OIDC_ISSUER` when set (still honoured). Otherwise the accounts host of `ZOHO_ACCOUNTS_SERVER`, which defaults to `https://accounts.zoho.com`.
 - **Call sites:** `server/routes.ts`: `/api/portal/auth/zoho/{status,start,callback}` and the legacy alias `/api/zoho/oauth/callback`. The owner check for Zoho Connect reuses its `isMasterPortalEmail`.
@@ -89,9 +84,7 @@ Uses the token manager: products `crm` and `desk`, wiring in `server/zoho/zohoAu
 
 Uses the token manager: product `payments`.
 
-- **Credential order:**
-  1. The Connect grant.
-  2. `ZOHO_PAYMENTS_REFRESH_TOKEN` with a client resolved, as before, from `ZOHO_PAYMENTS_CLIENT_ID`, then `ZOHO_CLIENT_ID_API`, then `ZOHO_CLIENT_ID` (the secret is resolved the same way).
+- **Credential:** the Connect grant only. `ZOHO_PAYMENTS_REFRESH_TOKEN` and `ZOHO_PAYMENTS_CLIENT_ID` / `_SECRET` are retired and not read.
 - **Always required:** `ZOHO_PAYMENTS_ACCOUNT_ID` and `ZOHO_PAYMENTS_SIGNING_KEY`. The signing key and webhook verification are unchanged.
 - **Scopes:** `ZohoPay.payments.CREATE`, `ZohoPay.payments.READ`. Check them against the Zoho Payments API console before the first Connect.
 - **Hosts:** `payments.zoho.<dc>/api/v1` and `payments.zoho.<dc>/hostedcheckout`.
@@ -105,9 +98,7 @@ Uses the token manager: product `payments`.
 
 Uses the token manager: product `books`. The public signatures are unchanged; thread T7 builds on them.
 
-- **Credential order:**
-  1. The Connect grant.
-  2. `ZOHO_BOOKS_REFRESH_TOKEN` with `ZOHO_BOOKS_CLIENT_ID` / `_SECRET`, falling back to `ZOHO_CLIENT_ID_API` / `_SECRET_API`.
+- **Credential:** the Connect grant only. `ZOHO_BOOKS_REFRESH_TOKEN` and `ZOHO_BOOKS_CLIENT_ID` / `_SECRET` are retired and not read. Without a grant that covers Books, the Warehouse Books card lists "Zoho Connect grant with the Books scopes (/api/zoho/connect)" as the missing setting.
 - **Also required:** `ZOHO_BOOKS_ORGANIZATION_ID`, `ZOHO_BOOKS_TAX_CONTACT_ID`, `ZOHO_BOOKS_SERVICE_ITEM_ID`. Optional: `ZOHO_BOOKS_TAX_ITEMS`, `ZOHO_BOOKS_RECORD_PAID_ORDERS`.
 - **Scopes:** `ZohoBooks.estimates.CREATE`, `ZohoBooks.estimates.DELETE`, `ZohoBooks.settings.READ`, `ZohoBooks.contacts.READ`, `ZohoBooks.contacts.CREATE`, `ZohoBooks.invoices.CREATE`, `ZohoBooks.invoices.READ`, `ZohoBooks.customerpayments.CREATE`.
 - **Host:** `api_domain`, otherwise `www.zohoapis.<dc>/books/v3`.
@@ -139,12 +130,10 @@ Rules R1–R7 of the standard, in `server/zoho/oauth/manager.ts`:
 
 - **401 from a product API.** The token is dropped and the request is retried once with a new one. If the rejected token is less than 2 minutes old, the manager does not refresh again, because that is a missing-scope problem.
 - **Client pinning.**
-  - A Connect grant always refreshes with the client id stored with it. If that client is no longer in the env, Zoho is not called, and the product reads `needs_reconnect`.
-  - A legacy token always uses the client its product's rule names.
+  - A Connect grant always refreshes with the client id stored with it, and only when that id is `ZOHO_CONNECT_CLIENT_ID`. Any other client (a retired Self Client, the sign-in client) is refused: Zoho is not called, and the product reads `needs_reconnect`.
 - **Data centers.** Every host comes from `server/zoho/oauth/dc.ts`. Codes and tokens go only to a recognised `https://accounts.zoho.<dc>`; an unknown value falls back to the US DC.
 - **Secrets.**
   - The refresh and access tokens are stored encrypted with AES-256-GCM (`enc:v1`), using `ZOHO_TOKEN_ENCRYPTION_KEY`, or `MFA_ENCRYPTION_KEY` when that is unset.
-  - Legacy env refresh tokens are never copied into the database: their state row is keyed by a fingerprint.
   - Logs carry the error kind and Zoho's error code, never a token, a secret or Zoho's own text.
 - **No database.** Without a database or the table, tokens are cached in memory only, as before.
 
@@ -174,7 +163,7 @@ Where the states show:
 
 - **Feature flag.** `ZOHO_CONNECT_ENABLED=true` turns it on. While it is off:
   - The connect, callback and disconnect routes answer 404.
-  - Products ignore any stored grant and use the legacy env tokens.
+  - Products ignore any stored grant and read `not_configured` (there is no other credential since #974).
 - **Who can use it.** Only the owner: a live admin signed in as `admin@digeratiexperts.com` or `admin@digerati-experts.com`, and not impersonating a company. Any other admin can read `/api/zoho/connection` but cannot connect or disconnect.
 - **Client.** A dedicated Zoho API Console **Server-based Application**, set as `ZOHO_CONNECT_CLIENT_ID` / `ZOHO_CONNECT_CLIENT_SECRET`. It is never the portal sign-in client.
 - **The flow:**
@@ -183,7 +172,7 @@ Where the states show:
   3. `GET /api/zoho/connect/callback` checks the state and the user, then exchanges the code at the `accounts-server` Zoho returned. That server must be a recognised Zoho host.
   4. The callback stores the grant encrypted, finds the Desk org, and **revokes the grant it replaces**.
   5. It redirects back to `returnTo` (default `/portal/admin`) with `zoho_connect=ok` or `zoho_connect=error`.
-- **Disconnect.** `POST /api/zoho/disconnect` revokes and removes the grant. Products fall back to the legacy env tokens.
+- **Disconnect.** `POST /api/zoho/disconnect` revokes and removes the grant. Every product then reads `not_configured` until Joe connects again.
 
 ### Callback URL DE must register
 
@@ -197,7 +186,7 @@ Set `ZOHO_CONNECT_REDIRECT_URI` only if a different URI is registered. The code 
 
 ## Reconnect runbook (one click)
 
-Use this when a product reads `needs_reconnect`, or when moving off Self Client tokens.
+Use this when a product reads `needs_reconnect` or `not_configured` because no grant is stored.
 
 **First time only:**
 1. In the Zoho API Console (api-console.zoho.com), signed in as the Zoho account that owns CRM, Desk, Books and Payments, click **Add Client → Server-based Applications**.
@@ -223,27 +212,34 @@ The old grant is revoked automatically, so slots never pile up. No env token nee
 
 **If a product reads `degraded`:** do nothing. Zoho is throttling or down, and the server retries with a backoff. Generating a new token in this state spends a slot and changes nothing.
 
-**Rollback:** set `ZOHO_CONNECT_ENABLED=false` and restart. Every product goes back to the legacy env tokens. The stored grant stays, unused, until a disconnect.
+**Rollback:** there is no credential to roll back to since #974. If the grant is broken, reconnect. To roll back the code change itself, revert the PR for #974 and redeploy; the retired env vars only help that revert if they are still in `.env`, so delete them only after the check in "Retired: Self Client tokens".
 
-## Legacy: Self Client grant codes
+## Retired: Self Client tokens (2026-11-06, issue #974)
 
-**LEGACY.** Still honoured as fallbacks. Use only when Zoho Connect is not set up.
+The website no longer reads these. They were per-product Self Client refresh tokens and clients, kept as fallbacks until the Connect grant had served every product since 2026-10-10:
 
-These are the per-product Self Client tokens listed above: `ZOHO_REFRESH_TOKEN`, `ZOHO_DESK_REFRESH_TOKEN` (with `ZOHO_DESK_CLIENT_ID` / `_SECRET`), `ZOHO_FORM_OAUTH`, `ZOHO_PAYMENTS_REFRESH_TOKEN` and `ZOHO_BOOKS_REFRESH_TOKEN`. To replace one:
-1. Generate a code in that Self Client with the product's scopes.
-2. Exchange it for a refresh token.
-3. Replace the env value and restart.
+- `ZOHO_REFRESH_TOKEN` (CRM; also the Desk's last fallback)
+- `ZOHO_FORM_OAUTH` (Desk fallback)
+- `ZOHO_DESK_REFRESH_TOKEN`, `ZOHO_DESK_CLIENT_ID`, `ZOHO_DESK_CLIENT_SECRET`
+- `ZOHO_PAYMENTS_REFRESH_TOKEN`, `ZOHO_PAYMENTS_CLIENT_ID`, `ZOHO_PAYMENTS_CLIENT_SECRET`
+- `ZOHO_BOOKS_REFRESH_TOKEN`, `ZOHO_BOOKS_CLIENT_ID`, `ZOHO_BOOKS_CLIENT_SECRET`
 
-Every exchange spends one of the client's 20 refresh-token slots. Revoke the old token by hand (`POST https://accounts.zoho.<dc>/oauth/v2/token/revoke?token=…`).
+`ZOHO_CLIENT_ID_API` / `ZOHO_CLIENT_SECRET_API` stay: the portal sign-in falls back to them when `ZOHO_CLIENT_ID` / `_SECRET` are unset.
+
+**Before merging the #974 PR:** Joe signs in as `admin@digeratiexperts.com` and opens `GET /api/zoho/connection`. Every product (`crm`, `desk`, `books`, `payments`) must read `connected` with source `unified`. A product on source `env` is still on a Self Client token and would go `not_configured` after the deploy; reconnect at `/api/zoho/connect` first (Payments in particular: its scopes were never confirmed against the Zoho Payments console).
+
+**After it is LIVE** and `/api/health` → `services.zoho` reads `connected` for each product that has been used:
+1. Delete the env vars above from `/home/digeratiexperts.com/shared/.env`, then restore `diger7051:diger7051` and mode `600`, and restart.
+2. Optional: in the Zoho API Console, revoke the old Self Client tokens (or delete the Self Clients) so they hold no live slots. Never generate a new code on them.
+
+`deploy/vps/env.production.example` and `docs/SECRETS-REQUIRED.md` still list the retired names; they are owned by open PRs #955 / #968 / #969 and are cleaned in a follow-up once those land.
 
 ## Local deviations from the Hub port
 
 - **Products.** `crm`, `desk`, `books` and `payments`. Billing scopes ride with CRM, and `Service.fullaccess.all` counts as covering that service.
-- **Legacy credentials.**
-  - The Hub has per-product DB rows; here they are env tokens, each with its own client (`legacySources`).
-  - Their state is persisted by fingerprint (`readState` / `writeState`), never as a copy of the token.
+- **Credentials.** The Hub has per-product DB rows; the website has only the Connect grant (since #974). The store's fingerprint-keyed state rows (`readState` / `writeState`) are no longer written by the manager; old rows are harmless.
 - **Connect client.** Only `ZOHO_CONNECT_CLIENT_ID` / `_SECRET`: no fallback to the sign-in client.
-- **Feature flag.** It gates both the routes and products' use of the grant.
+- **Feature flag.** It gates both the routes and products' use of the grant; off means every product is `not_configured`.
 - **`notConfigured(message, problem)`.** It receives the problem kind, so the CRM and Desk callers keep `ZohoOAuthError`, and `not_configured` stays separate from `needs_reconnect`.
 - **Logs.** Failure logs carry the error code only, never Zoho's text.
 - **Blank tokens.** A blank `access_token` counts as no token.

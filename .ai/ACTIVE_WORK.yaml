@@ -30,6 +30,36 @@
 
 version: 2
 claims:
+  - id: c15-portal-audit-repairs-20261109
+    issue: 544
+    owner: cursor
+    subsystem: portal-visual-audit
+    branch: cursor/c15-portal-audit-repairs-bf42
+    base_sha: 26bec672d6d0dce8ff2217fd8a845d4e7c507b55
+    started: 2026-11-09
+    status: active
+    files:
+      - client/src/pages/portal/PortalChat.tsx
+      - client/src/pages/portal/AdminLoginKnocks.tsx
+      - client/src/pages/portal/PortalLearning.tsx
+      - server/portalLearningCatalog.ts
+      - shared/learningResourceTitle.ts
+    notes: >-
+      C15 phase 1 for site issue 544 findings 04, 10, 13 and 14.
+      Rebased onto the location-list merge. Does not edit routes.ts,
+      deploy scripts, de-sync, or the flipbook engine.
+  - id: c15-location-list-semantics-20261109
+    issue: 544
+    owner: cursor
+    subsystem: location-pages
+    branch: cursor/c15-location-list-semantics-bf42
+    base_sha: 855098371b33f5d6ae9e66e3cfab94be5587b4ac
+    started: 2026-11-09
+    status: merged
+    files:
+      - client/src/pages/locations/LocationServicePage.tsx
+    notes: >-
+      C15 location form and list semantics. Squash-merged as 26bec672.
   - id: desk-chooser-height-20261101
     issue: 918
     owner: codex
@@ -5077,8 +5107,16 @@ claims:
       - server/middleware/security.ts (Turnstile fails closed in production), server/middleware/turnstile.test.ts (new)
       - server/production.config.ts (boot warning text), docs/SECRETS-REQUIRED.md, deploy/vps/env.production.example, deploy/vps/deploy.sh (preflight refuses without both Turnstile keys; Joe 2026-11-05), scripts/deployScripts.test.ts
       - server/publicSolutionRoutes.test.ts (production-mode block sets a Turnstile secret)
+      - shared/schema.ts, server/storage.ts, server/services/orderFulfillment.behavior.test.ts (Stripe columns unused; step 1, stacked PR, Joe 2026-11-05)
+      - migrations/0025_drop_retired_stripe_columns.sql, scripts/stripeColumnsMigration.test.ts (step 2, held until step 1 is LIVE)
       - .ai/ACTIVE_WORK.yaml (this claim)
-    status: active
+    status: verified-live
+    pr: 955
+    merge_sha: 627eea1731d86b240fac20e9998025833d500235
+    follow_up_prs:
+      - 956 (8fcd3fab, stale claims retired)
+      - 968 (ac394898, Stripe columns unused; live before 969)
+      - 969 (6f7fa65f, migration 0025 drops the four Stripe columns after archiving their values)
     started: 2026-11-04
     note: >-
       Slice from the 2026-11-04 cross-repo review (website/portal hygiene).
@@ -5091,14 +5129,15 @@ claims:
     issue: 957
     owner: claude
     subsystem: hub-integration-auth
-    branch: claude/legacy-secret-observe (PR 1) -> claude/legacy-secret-remove (PR 2, held, stacked)
+    branch: "claude/legacy-secret-observe (PR 1, #958 merged caea68d, LIVE in 627eea1) -> claude/legacy-secret-remove (PR 2, #959 held) ; claude/lead-webhook-secret (PR 3, lead-webhook fallback)"
     base_sha: 296721de3a49ecb3515a41cd2e028a9c2abba736
     started: 2026-11-05
     files:
       - server/integrations/deSyncAuth.ts
       - server/integrations/deSyncLegacyCredential.ts (new) + deSyncLegacyCredential.test.ts, deSyncLegacyObserve.test.ts (new)
       - server/integrations/ensureDeSyncSchema.ts (additive CREATE TABLE de_sync_legacy_credential_uses)
-      - server/integrations/techSalesClient.ts (outbound secret resolution only; the legacy lead-webhook sender is untouched)
+      - server/integrations/techSalesClient.ts (outbound secret resolution; PR 3: the lead-webhook fallback sends WEBSITE_LEAD_WEBHOOK_SECRET and is counted)
+      - server/integrations/legacyLeadWebhook.test.ts (PR 3)
       - server/integrations/deSyncRoutes.ts (health summary + admin-only per-direction endpoint)
     status: active
     note: >-
@@ -5135,3 +5174,58 @@ claims:
       articles stay behind portal login ("I want clients to login first"), so
       no public article API. MERGED, not yet verified LIVE; the Zoho help
       center CSS is a manual paste, not published.
+  - id: cross-repo-review-website-20261106
+    issue: 974
+    owner: claude
+    subsystem: zoho-oauth, msgraph-auth, design-authority-index, repo-hygiene
+    branch: claude/zoho-connect-only-20261106, claude/graph-cert-auth-20261106, claude/design-rules-index-20261106, claude/stale-branches-report-20261106
+    base_sha: 8fcd3fabf6c181039c1340e0be0ee87b108f4836
+    started: 2026-11-06
+    files:
+      - server/zoho/** , server/zohoPayments.ts, server/portalZohoAuth.ts, server/services/zohoBooksTax.ts (+ tests), docs/ZOHO-OAUTH-INVENTORY.md
+      - server/integrations/msGraph.ts (+ tests), docs/runbooks/msgraph-certificate-auth.md
+      - design/DESIGN-AUTHORITY.md (new index section), retired-banners on retired design rule files
+      - docs/reports/stale-branches-2026-11-06.md
+    status: merged
+    pr: "975, 976, 977, 978"
+    merged: 2026-11-06 (976 6bffa6be, 977 886480e3, 975 2ee6ad68, 978 7eff0c0b)
+    note: >-
+      Website items of the 2026-11-04 cross-repo review (Intelligence-Hub
+      docs/architecture/2026-11-04-cross-repo-review.md). Joe, 2026-11-06:
+      "finish all those projects", "all approved", "you're approved to handle
+      this all". One draft PR per slice. #955 (Stripe dead code, Turnstile
+      fail-closed) was open and left alone; the coordinator merged it
+      (627eea17) during the session. No branch deleted. Released 2026-11-06:
+      all four PRs MERGED, not yet verified LIVE. Env template and
+      SECRETS-REQUIRED follow-up in the review-followup PR.
+  - id: tickets-source-switch
+    owner: claude
+    subsystem: portal-tickets
+    branch: claude/tickets-source-switch
+    base_sha: 8fcd3fabf6c181039c1340e0be0ee87b108f4836
+    started: 2026-11-06
+    files:
+      - server/ticketsSource.ts, server/ticketsSource.test.ts (new)
+      - server/integrations/hubTicketClient.ts, server/integrations/hubTicketsContract.ts (new)
+      - server/integrations/deSyncContract.fixture.json (reads.portalTickets), server/integrations/deSyncContract.parity.test.ts
+      - server/widgetTicketRoute.ts (hub branch before the Desk path; options), server/widgetTicketRoute.hub.test.ts (new)
+      - "server/routes.ts (/api/portal/tickets list, create, detail, comments: hub branches only)"
+      - server/portalDeskTickets.ts (ListedPortalTicket.source adds "hub")
+      - server/publicSolutionSpool.ts (ticketReconciliationSpoolDir)
+      - docs/TICKETS-SOURCE-SWITCH.md (new), docs/SECRETS-REQUIRED.md, deploy/vps/env.production.example
+    status: merged
+    pr: "980"
+    merge_sha: c58ca527
+    note: >-
+      Cross-repo review step 3, Tickets. Joe 2026-11-05: "Hub first then sync
+      with desk but if desk is first then sync with hub"; approvals relayed by
+      coordinator session_01DFj2KKYXK9VsNEKAohFuHu ("all approved", "you're
+      approved to handle this all", 2026-11-06). TICKETS_SOURCE=desk|hub,
+      default desk, so merging changes nothing. Hub half: Intelligence-Hub
+      PR 909 (signed portal ticket API). Overlap check 2026-11-06: open PRs
+      877, 882, 955, 959, 968, 969 do not touch these files. Draft PR; the
+      coordinator merges on Joe's approval. Not LIVE until TICKETS_SOURCE=hub
+      is set after OPEN-ITEMS C10 and verified.
+      Released 2026-11-06: PR 980 merged as c58ca527 (Hub PR 909 merged
+      before it). Files released. Runtime unchanged (TICKETS_SOURCE=desk);
+      switch-on order in docs/TICKETS-SOURCE-SWITCH.md.

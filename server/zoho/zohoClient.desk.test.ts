@@ -1,14 +1,21 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import axios from "axios";
-import { ZohoClient, resolveDeskOAuthConfig } from "./zohoClient";
+import { ZohoClient } from "./zohoClient";
 import { classifyZohoTokenFailure } from "./zohoOAuthErrors";
 import { resetZohoOAuthForTests, ZohoAuthUnavailableError } from "./oauth";
+import {
+  clearZohoConnectTestEnv,
+  seedZohoConnectGrant,
+  TEST_CONNECT_CLIENT,
+  TEST_CONNECT_REFRESH,
+  zohoTokenUrl,
+} from "./oauth/testing/connectGrant";
 
 // The Desk and CRM API clients are axios instances; the token endpoint goes
 // through the token manager (server/zoho/oauth), which uses fetch.
 vi.mock("axios", () => ({ default: { post: vi.fn(), create: vi.fn() } }));
 
-const TOKEN_URL = "https://accounts.zoho.com/oauth/v2/token";
+const TOKEN_URL = zohoTokenUrl("https://accounts.zoho.com");
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status });
 
 function tokenEndpoint(...replies: Array<Response | (() => Response)>) {
@@ -24,15 +31,16 @@ const tokenRequest = (fetchMock: ReturnType<typeof tokenEndpoint>, call: number)
   Object.fromEntries(new URLSearchParams(String(fetchMock.mock.calls[call][1]?.body)));
 
 beforeEach(() => resetZohoOAuthForTests());
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.unstubAllGlobals();
+  clearZohoConnectTestEnv();
+});
 
 describe("Desk OAuth readiness and request bounds", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
     vi.stubEnv("DE_STAGING_REVIEW", "0");
-    vi.stubEnv("ZOHO_CLIENT_ID_API", "test-client");
-    vi.stubEnv("ZOHO_CLIENT_SECRET_API", "test-secret");
-    vi.stubEnv("ZOHO_DESK_REFRESH_TOKEN", "test-refresh");
+    await seedZohoConnectGrant();
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-09-30T12:00:00Z"));
     vi.spyOn(console, "log").mockImplementation(() => {});
@@ -109,6 +117,8 @@ describe("Desk OAuth readiness and request bounds", () => {
 
   it("derives every host from ZOHO_ACCOUNTS_SERVER for another data center", async () => {
     vi.stubEnv("ZOHO_ACCOUNTS_SERVER", "https://accounts.zoho.eu");
+    resetZohoOAuthForTests();
+    await seedZohoConnectGrant();
     const fetchMock = tokenEndpoint(json({ access_token: "access", expires_in: 3600, api_domain: "https://www.zohoapis.eu" }));
     const client = new ZohoClient();
     await client.getDeskClient();
@@ -123,6 +133,7 @@ describe("Desk OAuth readiness and request bounds", () => {
     await expect(new ZohoClient().getDeskAccessToken()).rejects.toThrow();
     vi.stubGlobal("fetch", vi.fn(async () => { throw new Error("sensitive-marker"); }));
     resetZohoOAuthForTests();
+    await seedZohoConnectGrant();
     await expect(new ZohoClient().getDeskAccessToken()).rejects.toThrow();
     expect(JSON.stringify([...error.mock.calls, ...warn.mock.calls])).not.toContain("sensitive-marker");
   });
@@ -133,128 +144,78 @@ describe("Desk OAuth readiness and request bounds", () => {
     });
 });
 
-describe("Desk OAuth client separate from CRM", () => {
-  const DESK_VARS = [
-    "ZOHO_CLIENT_ID_API",
-    "ZOHO_CLIENT_SECRET_API",
-    "ZOHO_REFRESH_TOKEN",
-    "ZOHO_FORM_OAUTH",
-    "ZOHO_DESK_CLIENT_ID",
-    "ZOHO_DESK_CLIENT_SECRET",
-    "ZOHO_DESK_REFRESH_TOKEN",
-  ];
+describe("CRM and the Desk on the one Zoho Connect grant", () => {
+  const LEGACY_VARS = {
+    ZOHO_CLIENT_ID_API: "crm-client",
+    ZOHO_CLIENT_SECRET_API: "crm-secret",
+    ZOHO_REFRESH_TOKEN: "crm-refresh",
+    ZOHO_FORM_OAUTH: "form-refresh",
+    ZOHO_DESK_CLIENT_ID: "desk-client",
+    ZOHO_DESK_CLIENT_SECRET: "desk-secret",
+    ZOHO_DESK_REFRESH_TOKEN: "desk-refresh",
+  };
 
   beforeEach(() => {
     vi.clearAllMocks();
     vi.stubEnv("DE_STAGING_REVIEW", "0");
-    for (const name of DESK_VARS) vi.stubEnv(name, "");
-    vi.stubEnv("ZOHO_CLIENT_ID_API", "crm-client");
-    vi.stubEnv("ZOHO_CLIENT_SECRET_API", "crm-secret");
-    vi.stubEnv("ZOHO_REFRESH_TOKEN", "crm-refresh");
     vi.spyOn(console, "log").mockImplementation(() => {});
   });
   afterEach(() => { vi.unstubAllEnvs(); vi.restoreAllMocks(); });
 
-  it("refreshes the Desk with its own client and CRM with the original client", async () => {
-    vi.stubEnv("ZOHO_DESK_CLIENT_ID", "desk-client");
-    vi.stubEnv("ZOHO_DESK_CLIENT_SECRET", "desk-secret");
-    vi.stubEnv("ZOHO_DESK_REFRESH_TOKEN", "desk-refresh");
-    const fetchMock = tokenEndpoint(json({ access_token: "access", expires_in: 3600 }));
+  it("refreshes CRM and the Desk with the Connect client and shares one access token", async () => {
+    await seedZohoConnectGrant();
+    const fetchMock = tokenEndpoint(json({ access_token: "shared", expires_in: 3600 }));
     const client = new ZohoClient();
+    expect(client.isConfigured()).toBe(true);
     expect(client.isDeskConfigured()).toBe(true);
     expect(client.getDeskAuthStatus()).toBe("credentials_present");
 
-    await client.getDeskAccessToken();
-    await client.getAccessToken();
-
+    expect(await client.getAccessToken()).toBe("shared");
+    expect(await client.getDeskAccessToken()).toBe("shared");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(tokenRequest(fetchMock, 0)).toEqual({
       grant_type: "refresh_token",
-      client_id: "desk-client",
-      client_secret: "desk-secret",
-      refresh_token: "desk-refresh",
-    });
-    expect(tokenRequest(fetchMock, 1)).toEqual({
-      grant_type: "refresh_token",
-      client_id: "crm-client",
-      client_secret: "crm-secret",
-      refresh_token: "crm-refresh",
+      client_id: TEST_CONNECT_CLIENT.id,
+      client_secret: TEST_CONNECT_CLIENT.secret,
+      refresh_token: TEST_CONNECT_REFRESH,
     });
     expect(client.getDeskAuthStatus()).toBe("ok");
   });
 
-  it("keeps the shared CRM client for the Desk when no Desk client is set", async () => {
-    vi.stubEnv("ZOHO_DESK_REFRESH_TOKEN", "desk-refresh");
-    const fetchMock = tokenEndpoint(json({ access_token: "access", expires_in: 3600 }));
-    const client = new ZohoClient();
-    await client.getDeskAccessToken();
-    expect(tokenRequest(fetchMock, 0)).toMatchObject({ client_id: "crm-client", client_secret: "crm-secret", refresh_token: "desk-refresh" });
-  });
-
-  it("still falls back to ZOHO_FORM_OAUTH, then ZOHO_REFRESH_TOKEN, on the shared client", async () => {
-    const fetchMock = tokenEndpoint(json({ access_token: "access", expires_in: 3600 }));
-    vi.stubEnv("ZOHO_FORM_OAUTH", "form-refresh");
-    await new ZohoClient().getDeskAccessToken();
-    expect(tokenRequest(fetchMock, 0)).toMatchObject({ client_id: "crm-client", refresh_token: "form-refresh" });
-
-    vi.stubEnv("ZOHO_FORM_OAUTH", "");
-    await new ZohoClient().getDeskAccessToken();
-    expect(tokenRequest(fetchMock, 1)).toMatchObject({ client_id: "crm-client", refresh_token: "crm-refresh" });
-  });
-
-  it("shares one access token between CRM and Desk when they share a refresh token", async () => {
-    const fetchMock = tokenEndpoint(json({ access_token: "shared", expires_in: 3600 }));
-    const client = new ZohoClient();
-    expect(await client.getAccessToken()).toBe("shared");
-    expect(await client.getDeskAccessToken()).toBe("shared");
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-  });
-
-  it.each([
-    [{ ZOHO_DESK_CLIENT_ID: "desk-client", ZOHO_DESK_REFRESH_TOKEN: "desk-refresh" }, ["ZOHO_DESK_CLIENT_SECRET"]],
-    [{ ZOHO_DESK_CLIENT_SECRET: "desk-secret", ZOHO_DESK_REFRESH_TOKEN: "desk-refresh" }, ["ZOHO_DESK_CLIENT_ID"]],
-    // The CRM refresh token is never paired with the Desk's own client.
-    [{ ZOHO_DESK_CLIENT_ID: "desk-client", ZOHO_DESK_CLIENT_SECRET: "desk-secret", ZOHO_FORM_OAUTH: "form-refresh" }, ["ZOHO_DESK_REFRESH_TOKEN"]],
-  ])("refuses a half-set Desk client %j without calling Zoho", async (env, missing) => {
-    for (const [name, value] of Object.entries(env)) vi.stubEnv(name, value);
-    const fetchMock = tokenEndpoint(json({ access_token: "access", expires_in: 3600 }));
+  it("ignores every legacy Self Client setting: no grant means not configured, and Zoho is never called", async () => {
+    for (const [name, value] of Object.entries(LEGACY_VARS)) vi.stubEnv(name, value);
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     vi.spyOn(console, "error").mockImplementation(() => {});
+    const fetchMock = tokenEndpoint(json({ access_token: "access", expires_in: 3600 }));
     const client = new ZohoClient();
 
-    expect(resolveDeskOAuthConfig()).toEqual({ state: "incomplete", missing });
+    expect(client.isConfigured()).toBe(false);
     expect(client.isDeskConfigured()).toBe(false);
     expect(client.getDeskAuthStatus()).toBe("not_configured");
     expect((await client.deskHealth()).state).toBe("not_configured");
     await expect(client.getDeskAccessToken()).rejects.toThrow("not connected");
+    await expect(client.getAccessToken()).rejects.toThrow("not connected");
     expect(fetchMock).not.toHaveBeenCalled();
 
     const logged = JSON.stringify(warn.mock.calls);
-    for (const name of missing) expect(logged).toContain(name);
-    for (const value of ["desk-client", "desk-secret", "desk-refresh", "form-refresh", "crm-secret"]) {
-      expect(logged).not.toContain(value);
-    }
+    for (const value of Object.values(LEGACY_VARS)) expect(logged).not.toContain(value);
   });
 
-  it("treats blank Desk client values as unset", () => {
-    vi.stubEnv("ZOHO_DESK_CLIENT_ID", "  ");
-    vi.stubEnv("ZOHO_DESK_CLIENT_SECRET", "");
-    vi.stubEnv("ZOHO_DESK_REFRESH_TOKEN", "desk-refresh");
-    expect(resolveDeskOAuthConfig()).toMatchObject({ state: "ready", clientId: "crm-client", dedicatedClient: false });
-  });
-
-  it("reports not_configured when no Desk credential is set at all", () => {
-    vi.stubEnv("ZOHO_CLIENT_SECRET_API", "");
-    vi.spyOn(console, "warn").mockImplementation(() => {});
+  it("keeps the Desk not configured when the grant lacks the Desk scopes", async () => {
+    await seedZohoConnectGrant({ products: ["crm"] });
+    const fetchMock = tokenEndpoint(json({ access_token: "access", expires_in: 3600 }));
     const client = new ZohoClient();
-    expect(resolveDeskOAuthConfig()).toEqual({ state: "missing" });
+    expect(client.isConfigured()).toBe(true);
     expect(client.isDeskConfigured()).toBe(false);
-    expect(client.getDeskAuthStatus()).toBe("not_configured");
+    const health = await client.deskHealth();
+    expect(health.state).toBe("not_configured");
+    expect(health.reason).toContain("/api/zoho/connect");
+    await expect(client.getDeskAccessToken()).rejects.toThrow("not connected");
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("marks the Desk auth_failed when Zoho refuses its own client, without logging secrets", async () => {
-    vi.stubEnv("ZOHO_DESK_CLIENT_ID", "desk-client");
-    vi.stubEnv("ZOHO_DESK_CLIENT_SECRET", "desk-secret");
-    vi.stubEnv("ZOHO_DESK_REFRESH_TOKEN", "desk-refresh");
+  it("marks the Desk auth_failed when Zoho refuses the Connect client, without logging secrets", async () => {
+    await seedZohoConnectGrant();
     const error = vi.spyOn(console, "error").mockImplementation(() => {});
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     tokenEndpoint(json({ error: "invalid_client" }, 400));
@@ -264,6 +225,6 @@ describe("Desk OAuth client separate from CRM", () => {
     expect(client.getDeskAuthStatus()).toBe("auth_failed");
     expect((await client.deskHealth()).state).toBe("needs_reconnect");
     const logged = JSON.stringify([...error.mock.calls, ...warn.mock.calls]);
-    for (const value of ["desk-secret", "desk-refresh", "crm-secret"]) expect(logged).not.toContain(value);
+    for (const value of [TEST_CONNECT_CLIENT.secret, TEST_CONNECT_REFRESH]) expect(logged).not.toContain(value);
   });
 });

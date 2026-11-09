@@ -145,18 +145,13 @@ describe("warehouse HTTP gates", () => {
 
     getUser.mockReturnValue({ id: "a1", email: "admin@digeratiexperts.com", role: "admin", isActive: true });
     const token = sign({ userId: "a1", email: "admin@digeratiexperts.com" });
-    const saved = process.env.ZOHO_BOOKS_REFRESH_TOKEN;
-    delete process.env.ZOHO_BOOKS_REFRESH_TOKEN;
-    try {
-      const staff = await fetch(`${baseUrl}/api/internal/warehouse/tax-status`, { headers: { cookie: `portalAuth=${token}` } });
-      expect(staff.status).toBe(200);
-      expect(staff.headers.get("cache-control")).toMatch(/private|no-store/);
-      const body = await staff.json();
-      expect(body).toMatchObject({ status: "NOT_CONFIGURED", provider: "zoho_books", checks: { connection: "missing" } });
-      expect(body.missingSettings).toContain("ZOHO_BOOKS_REFRESH_TOKEN");
-    } finally {
-      if (saved !== undefined) process.env.ZOHO_BOOKS_REFRESH_TOKEN = saved;
-    }
+    // No Zoho Connect grant in this process: Books is not connected.
+    const staff = await fetch(`${baseUrl}/api/internal/warehouse/tax-status`, { headers: { cookie: `portalAuth=${token}` } });
+    expect(staff.status).toBe(200);
+    expect(staff.headers.get("cache-control")).toMatch(/private|no-store/);
+    const body = await staff.json();
+    expect(body).toMatchObject({ status: "NOT_CONFIGURED", provider: "zoho_books", checks: { connection: "missing" } });
+    expect(body.missingSettings.join(" ")).toContain("/api/zoho/connect");
   });
 
   it("serves staff catalog fallback and connector list for a live admin", async () => {

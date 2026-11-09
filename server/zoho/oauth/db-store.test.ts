@@ -194,7 +194,7 @@ describe("ResilientZohoTokenStore deadlines", () => {
     const store = new ResilientZohoTokenStore();
     const http = vi.fn();
     const auth = new ZohoProductAuth({
-      product: "crm", legacySources: () => [], notConfigured: (message) => new Error(message),
+      product: "crm", notConfigured: (message) => new Error(message),
     }, { store, connectEnabled: () => true, fetchImpl: http });
     expect(await auth.status()).toMatchObject({ state: "degraded", reason: expect.stringMatching(/database unavailable/i) });
     dbMock.dbReady = false;
@@ -214,7 +214,7 @@ describe("ResilientZohoTokenStore deadlines", () => {
     const store = new ResilientZohoTokenStore();
     const read = vi.spyOn(store, "read");
     const auth = new ZohoProductAuth({
-      product: "crm", legacySources: () => [], notConfigured: (message) => new Error(message),
+      product: "crm", notConfigured: (message) => new Error(message),
     }, { store, connectEnabled: () => true });
     expect(await auth.status()).toMatchObject({ state: "not_configured" });
     expect(await auth.status()).toMatchObject({ state: "not_configured" });
@@ -230,7 +230,7 @@ describe("ResilientZohoTokenStore deadlines", () => {
     const store = new ResilientZohoTokenStore();
     const read = vi.spyOn(store, "read");
     const auth = new ZohoProductAuth({
-      product: "crm", legacySources: () => [], notConfigured: (message) => new Error(message),
+      product: "crm", notConfigured: (message) => new Error(message),
     }, { store, connectEnabled: () => true });
     expect(await auth.status()).toMatchObject({ state: "degraded", reason: expect.stringMatching(/database unavailable/i) });
     expect(await auth.status()).toMatchObject({ state: "degraded" });
@@ -238,24 +238,26 @@ describe("ResilientZohoTokenStore deadlines", () => {
     expect(dbMock.execute).not.toHaveBeenCalled();
   });
 
-  it.each([false, true])("preserves a cached legacy access token in memory (database configured: %s)", async (configured) => {
+  it.each([false, true])("preserves a cached Connect access token in memory (database configured: %s)", async (configured) => {
     const { ResilientZohoTokenStore } = await import("./db-store");
-    const { ZohoProductAuth, fingerprint, resetZohoRuntimeForTests } = await import("./manager");
+    const { ZohoProductAuth, UNIFIED_PROVIDER, resetZohoRuntimeForTests } = await import("./manager");
     resetZohoRuntimeForTests();
     vi.stubEnv("DATABASE_URL", configured ? "postgresql://fixture.invalid/offline" : "");
+    vi.stubEnv("ZOHO_CONNECT_CLIENT_ID", "fixture");
+    vi.stubEnv("ZOHO_CONNECT_CLIENT_SECRET", "fixture");
     dbMock.dbReady = false;
     const store = new ResilientZohoTokenStore();
     const now = 1_700_000_000_000;
-    await store.memory.writeState(fingerprint("outage-legacy-fixture"), {
-      accessToken: "cached-fixture-access", accessExpiresAt: new Date(now + 3_600_000), authStatus: "ok",
+    await store.memory.saveGrant({
+      provider: UNIFIED_PROVIDER, refreshToken: "outage-grant-fixture", clientId: "fixture",
+      accessToken: "cached-fixture-access", accessExpiresAt: new Date(now + 3_600_000),
     });
     const http = vi.fn();
     const auth = new ZohoProductAuth({
       product: "crm",
-      legacySources: () => [{ label: "fixture", refreshToken: "outage-legacy-fixture", client: { id: "fixture", secret: "fixture" } }],
       notConfigured: (message) => new Error(message),
-    }, { store, connectEnabled: () => false, fetchImpl: http, now: () => now });
-    expect(await auth.status()).toMatchObject({ state: configured ? "degraded" : "connected", source: "env" });
+    }, { store, connectEnabled: () => true, fetchImpl: http, now: () => now });
+    expect(await auth.status()).toMatchObject({ state: configured ? "degraded" : "connected", source: "unified" });
     expect(await auth.getAccess()).toMatchObject({ token: "cached-fixture-access" });
     expect(http).not.toHaveBeenCalled();
     expect(dbMock.execute).not.toHaveBeenCalled();
@@ -269,7 +271,7 @@ describe("ResilientZohoTokenStore deadlines", () => {
     const store = new ResilientZohoTokenStore();
     await store.read("warm");
     const createAuth = () => new ZohoProductAuth({
-      product: "crm", legacySources: () => [], notConfigured: (message) => new Error(message),
+      product: "crm", notConfigured: (message) => new Error(message),
     }, { store, connectEnabled: () => true });
     const failed = createAuth();
     const healthy = createAuth();

@@ -3,7 +3,16 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { quotePayNowSalesTax, quoteSalesTax, TAX_RATE_UNAVAILABLE } from "./salesTax";
-import { resetZohoBooksToken, ZOHO_ACCOUNTS_TOKEN_URL, ZOHO_BOOKS_API } from "./zohoBooksTax";
+import { clearZohoConnectTestEnv, seedZohoConnectGrant, zohoTokenUrl } from "../zoho/oauth/testing/connectGrant";
+import { resetZohoBooksToken, ZOHO_BOOKS_API } from "./zohoBooksTax";
+
+const ZOHO_ACCOUNTS_TOKEN_URL = zohoTokenUrl();
+
+/** Forget token state and store the Connect grant (covering Books) again. */
+async function resetBooks() {
+  resetZohoBooksToken();
+  await seedZohoConnectGrant({ products: ["books"] });
+}
 
 const ENV = "AZ_TPT_RATE_TABLE_JSON";
 
@@ -38,9 +47,6 @@ const ITEM = "1957016000000500001";
 const CONTACT = "1957016000000600001";
 const BOOKS_ENV = {
   ZOHO_BOOKS_ORGANIZATION_ID: ORG,
-  ZOHO_BOOKS_REFRESH_TOKEN: "1000.fake.refresh",
-  ZOHO_BOOKS_CLIENT_ID: "1000.FAKECLIENT",
-  ZOHO_BOOKS_CLIENT_SECRET: "fake-secret",
   ZOHO_BOOKS_TAX_CONTACT_ID: CONTACT,
   ZOHO_BOOKS_SERVICE_ITEM_ID: ITEM,
 };
@@ -77,7 +83,8 @@ const calls = (fetchImpl: ReturnType<typeof books>, method: string) =>
   fetchImpl.mock.calls.filter(([url, init]) => url.startsWith(ZOHO_BOOKS_API) && init?.method === method);
 
 describe("quotePayNowSalesTax (Zoho Books)", () => {
-  beforeEach(() => resetZohoBooksToken());
+  beforeEach(() => resetBooks());
+  afterEach(() => clearZohoConnectTestEnv());
 
   const services = [
     { sku: "DE-PRO-ASSESS", category: "professional_services" as const, quantity: 1, total: 750 },
@@ -177,7 +184,7 @@ describe("quotePayNowSalesTax (Zoho Books)", () => {
 
   it("fails closed when Books refuses the estimate or does not answer", async () => {
     expect(await ask(books(400))).toMatchObject({ ok: false, code: TAX_RATE_UNAVAILABLE });
-    resetZohoBooksToken();
+    await resetBooks();
     expect(await ask(books(new TypeError("fetch failed")))).toMatchObject({ ok: false, code: TAX_RATE_UNAVAILABLE });
   });
 

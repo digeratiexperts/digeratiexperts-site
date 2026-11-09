@@ -103,9 +103,6 @@ describe("createPaymentReadiness (#263)", () => {
 describe("ZohoPaymentsService readiness (#263)", () => {
   const ENV = {
     ZOHO_PAYMENTS_ACCOUNT_ID: "acct-1",
-    ZOHO_PAYMENTS_CLIENT_ID: "client-1",
-    ZOHO_PAYMENTS_CLIENT_SECRET: "secret-1",
-    ZOHO_PAYMENTS_REFRESH_TOKEN: "refresh-1",
     ZOHO_PAYMENTS_SIGNING_KEY: "sign-1",
   };
 
@@ -115,10 +112,12 @@ describe("ZohoPaymentsService readiness (#263)", () => {
     // Token state is shared per refresh token (server/zoho/oauth): a token
     // revoked in one case stays revoked for the next case that reuses it.
     (await import("./zoho/oauth")).resetZohoOAuthForTests();
+    (await import("./zoho/oauth/testing/connectGrant")).clearZohoConnectTestEnv();
   });
 
-  async function service() {
+  async function service(opts: { grant?: boolean } = {}) {
     for (const [k, v] of Object.entries(ENV)) vi.stubEnv(k, v);
+    if (opts.grant !== false) await (await import("./zoho/oauth/testing/connectGrant")).seedZohoConnectGrant();
     const { ZohoPaymentsService } = await import("./zohoPayments");
     return new ZohoPaymentsService();
   }
@@ -141,6 +140,18 @@ describe("ZohoPaymentsService readiness (#263)", () => {
     expect(await svc.readiness.isReady()).toBe(true);
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(String(fetchMock.mock.calls[0][0])).toContain("/oauth/v2/token");
+  });
+
+  it("is not configured without a Connect grant, even with the old Payments Self Client settings", async () => {
+    vi.stubEnv("ZOHO_PAYMENTS_REFRESH_TOKEN", "refresh-1");
+    vi.stubEnv("ZOHO_PAYMENTS_CLIENT_ID", "client-1");
+    vi.stubEnv("ZOHO_PAYMENTS_CLIENT_SECRET", "secret-1");
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    const svc = await service({ grant: false });
+    expect(svc.isConfigured()).toBe(false);
+    expect(await svc.readiness.isReady()).toBe(false);
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });
 

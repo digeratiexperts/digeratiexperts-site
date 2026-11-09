@@ -9,6 +9,7 @@ import { portalGet } from "@/lib/portalApi";
 import { readPortalUser } from "@/lib/portalRoles";
 import { cn } from "@/lib/utils";
 import { Callout, EmptyState, Panel, StatTile, Token } from "@/components/portal/ui";
+import { presentLearningResourceTitle } from "@shared/learningResourceTitle";
 
 type Lesson = {
   id: string;
@@ -329,7 +330,9 @@ export default function PortalLearning() {
               <ul className="divide-y divide-border">
                 {(data?.hub.resources || []).slice(0, 8).map((doc) => (
                   <li key={doc.slug} className="px-4 py-2.5">
-                    <p className="text-sm font-medium leading-snug">{doc.title}</p>
+                    <p className="text-sm font-medium leading-snug">
+                      {presentLearningResourceTitle(doc.slug, doc.title, data?.hub.source || "none")}
+                    </p>
                     {doc.category && (
                       <p className="mt-0.5 text-xs capitalize text-muted-foreground">
                         {String(doc.category).replace(/_/g, " ")}

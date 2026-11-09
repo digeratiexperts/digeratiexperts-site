@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { portalGet } from "@/lib/portalApi";
 import { formatDeskTimestamp } from "@/lib/deskTimestamp";
 import { DoorOpen, Globe, RefreshCw } from "lucide-react";
-import { useState } from "react";
+import { useId, useState } from "react";
 import { Link } from "wouter";
 import { cn } from "@/lib/utils";
 import { Callout, DataTable, EmptyState, Panel, StatTile, Token, type DataColumn, type TokenTone } from "@/components/portal/ui";
@@ -56,6 +56,36 @@ function kindTone(kind: string): TokenTone {
 }
 
 const WINDOWS = [24, 72, 168];
+
+/** Long browser strings stay on one clipped line until the reader asks for the rest. */
+function BrowserDetail({ value }: { value: string }) {
+  const [open, setOpen] = useState(false);
+  const detailId = useId();
+  const needsToggle = value.length > 42;
+
+  return (
+    <div className="min-w-0">
+      <p
+        id={detailId}
+        data-testid="knock-user-agent"
+        className={cn("text-xs text-muted-foreground", open ? "break-words" : "truncate")}
+      >
+        {value}
+      </p>
+      {needsToggle && (
+        <button
+          type="button"
+          className="inline-flex min-h-11 items-center text-xs font-medium text-foreground underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+          aria-expanded={open}
+          aria-controls={detailId}
+          onClick={() => setOpen((current) => !current)}
+        >
+          {open ? "Hide browser details" : "Show browser details"}
+        </button>
+      )}
+    </div>
+  );
+}
 
 export function AdminLoginKnocks() {
   const [hours, setHours] = useState(24);
@@ -123,11 +153,7 @@ export function AdminLoginKnocks() {
               Bot-likely{k.botReason ? `: ${k.botReason}` : ""}
             </p>
           )}
-          {k.userAgent && (
-            <p className="truncate text-xs text-muted-foreground" title={k.userAgent}>
-              {k.userAgent}
-            </p>
-          )}
+          {k.userAgent && <BrowserDetail value={k.userAgent} />}
         </div>
       ),
     },

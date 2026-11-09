@@ -190,7 +190,12 @@ export function legacyRetirementState(rows: DirectionCredentialHealth[]): Legacy
 export async function loadDirectionCredentialHealth(
   env: NodeJS.ProcessEnv = process.env,
   now: Date = new Date(),
-): Promise<{ windowDays: number; state: LegacyRetirementState; directions: DirectionCredentialHealth[] }> {
+): Promise<{
+  windowDays: number;
+  state: LegacyRetirementState;
+  directions: DirectionCredentialHealth[];
+  leadWebhookFallback: LeadWebhookFallbackHealth;
+}> {
   let usage: Map<string, LegacyCredentialUsage> | null = null;
   let usageError: string | null = null;
   try {
@@ -199,5 +204,43 @@ export async function loadDirectionCredentialHealth(
     usageError = err instanceof Error ? err.message : String(err);
   }
   const directions = directionCredentialHealth(env, usage, usageError);
-  return { windowDays: LEGACY_CREDENTIAL_WINDOW_DAYS, state: legacyRetirementState(directions), directions };
+  return {
+    windowDays: LEGACY_CREDENTIAL_WINDOW_DAYS,
+    state: legacyRetirementState(directions),
+    directions,
+    leadWebhookFallback: leadWebhookFallbackHealth(env, usage, usageError),
+  };
+}
+
+/**
+ * The site's fallback to the Hub's /webhooks/website-lead (not a DE-Sync
+ * direction; it does not affect `state`). Counted so that route can be
+ * retired once it shows 0 uses. Names only, never a value.
+ */
+export interface LeadWebhookFallbackHealth {
+  urlEnv: "TECHSALES_SYNC_URL";
+  urlConfigured: boolean;
+  secretEnv: "WEBSITE_LEAD_WEBHOOK_SECRET";
+  secretConfigured: boolean;
+  /** Uses in the last 7 days; null = unknown (count unreadable), never 0 by default. */
+  uses7d: number | null;
+  lastUsedAt: string | null;
+  countError: string | null;
+}
+
+export function leadWebhookFallbackHealth(
+  env: NodeJS.ProcessEnv,
+  usage: Map<string, LegacyCredentialUsage> | null,
+  usageError: string | null,
+): LeadWebhookFallbackHealth {
+  const u = usage?.get("website_lead_webhook") ?? null;
+  return {
+    urlEnv: "TECHSALES_SYNC_URL",
+    urlConfigured: envSet(env, "TECHSALES_SYNC_URL"),
+    secretEnv: "WEBSITE_LEAD_WEBHOOK_SECRET",
+    secretConfigured: envSet(env, "WEBSITE_LEAD_WEBHOOK_SECRET"),
+    uses7d: usage ? (u?.uses ?? 0) : null,
+    lastUsedAt: usage ? (u?.lastUsedAt?.toISOString() ?? null) : "unknown",
+    countError: usage ? null : usageError || "legacy use count is unavailable",
+  };
 }

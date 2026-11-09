@@ -430,6 +430,51 @@ export function readHubDeliveryResult(body: unknown): {
   return { canonicalAccountId, duplicate: record.duplicate === true };
 }
 
+/** The secret the Hub's /webhooks/website-lead checks; "" when not set. */
+export function leadWebhookSecret(): string {
+  return (process.env.WEBSITE_LEAD_WEBHOOK_SECRET || "").trim();
+}
+
+const LEAD_WEBHOOK_WARN_INTERVAL_MS = 60 * 60 * 1000;
+let lastLeadWebhookWarnAt: number | null = null;
+
+/** Test seam. */
+export function _resetLeadWebhookWarning(): void {
+  lastLeadWebhookWarnAt = null;
+}
+
+/**
+ * The signed Hub route answered 404/405 and the lead went to the legacy
+ * webhook instead. One warning per hour (no secret, path only); every use is
+ * counted in de_sync_legacy_credential_uses under "website_lead_webhook".
+ * Never throws and never waits on the database.
+ */
+function noteLeadWebhookFallbackUse(webhookUrl: string, signedPath: string): void {
+  try {
+    let route = "";
+    try {
+      route = new URL(webhookUrl).pathname;
+    } catch {
+      route = "";
+    }
+    const now = Date.now();
+    if (lastLeadWebhookWarnAt == null || now - lastLeadWebhookWarnAt >= LEAD_WEBHOOK_WARN_INTERVAL_MS) {
+      lastLeadWebhookWarnAt = now;
+      logger.warn("Lead sent to the legacy Hub webhook because the signed route answered 404/405 (logged once per hour; every use is counted)", {
+        event: "de_sync.lead_webhook_fallback_used",
+        route,
+        signedRoute: signedPath.split("?")[0],
+        secretEnv: "WEBSITE_LEAD_WEBHOOK_SECRET",
+      });
+    }
+    void import("./deSyncLegacyCredential")
+      .then((m) => m.recordLegacyCredentialUse({ direction: "website_lead_webhook", route, source: "website", at: new Date(now) }))
+      .catch(() => undefined);
+  } catch {
+    /* observation must never break delivery */
+  }
+}
+
 export function legacyLeadWebhookAllowed(url: string): boolean {
   if (!url || process.env.DE_SYNC_REQUIRE_SIGNED === "1") return false;
   try {
@@ -477,13 +522,18 @@ export async function deliverEnvelopeToHub(
     return readHubDeliveryResult(data);
   }
 
-  // Compatibility: lead-like website commands can still hit the live webhook.
-  // That webhook takes the raw secret as a bearer token, so it is refused once
-  // DE_SYNC_REQUIRE_SIGNED=1 (signed-only on both directions) and never sent
-  // over plain HTTP.
+  // Compatibility: lead-like website commands can still hit the Hub's
+  // /webhooks/website-lead. That route checks WEBSITE_LEAD_WEBHOOK_SECRET on
+  // its own (not a DE-Sync scoped secret), so it gets exactly that secret, in
+  // one header. Without it the fallback is skipped (it could only 401). It is
+  // refused once DE_SYNC_REQUIRE_SIGNED=1 and never sent over plain HTTP.
+  // Every use is counted (direction "website_lead_webhook") so the route can
+  // be retired on evidence.
   const legacyUrl = (process.env.TECHSALES_SYNC_URL || "").trim();
+  const webhookSecret = leadWebhookSecret();
   const isLeadLike = envelope.eventType === "lead.created" || envelope.eventType === "assessment.submitted" || envelope.eventType === "consultation.booked" || envelope.eventType === "referral.submitted";
-  if (legacyLeadWebhookAllowed(legacyUrl) && isLeadLike && (response.status === 404 || response.status === 405)) {
+  if (webhookSecret && legacyLeadWebhookAllowed(legacyUrl) && isLeadLike && (response.status === 404 || response.status === 405)) {
+    noteLeadWebhookFallbackUse(legacyUrl, path);
     const payload = envelope.payload || {};
     const legacyBody = JSON.stringify({
       id: envelope.entityId,
@@ -498,8 +548,7 @@ export async function deliverEnvelopeToHub(
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${secret}`,
-        "x-de-sync-token": secret,
+        "x-de-sync-token": webhookSecret,
       },
       body: legacyBody,
     });

@@ -66,10 +66,21 @@ export function deskTicketSpoolDir(): string {
   return path.join(os.tmpdir(), "de-desk-ticket-spool");
 }
 
+/**
+ * Reconciliation notes for tickets that missed the Hub with TICKETS_SOURCE=hub
+ * and went down the Desk path instead (server/ticketsSource.ts).
+ */
+export function ticketReconciliationSpoolDir(): string {
+  if (process.env.TICKET_RECONCILIATION_SPOOL_DIR) return path.resolve(process.env.TICKET_RECONCILIATION_SPOOL_DIR);
+  if (process.env.NODE_ENV === "production") return path.join(productionSpoolRoot(), "ticket-reconciliation");
+  return path.join(os.tmpdir(), "de-ticket-reconciliation-spool");
+}
+
 const SPOOL_FOLDERS = {
   "solution-requests": spoolDir,
   "quote-requests": quoteSpoolDir,
   "desk-tickets": deskTicketSpoolDir,
+  "ticket-reconciliation": ticketReconciliationSpoolDir,
 } as const;
 
 /**

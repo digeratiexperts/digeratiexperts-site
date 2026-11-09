@@ -152,7 +152,7 @@ export const defaultDeskFallbackDeps: DeskFallbackDeps = {
       htmlBody: baseEmailTemplate(
         `<h2>The website's Zoho Desk connection is failing (${escapeHtml(ticket.reason)})</h2>
          <p>Client tickets are still arriving: each one goes into the Desk inbox by email and is kept on the server until the API works again.</p>
-         <p>To restore the API: reconnect Zoho (docs/ZOHO-OAUTH-INVENTORY.md, "Reconnect runbook"), or, the legacy way, generate a new Zoho Desk refresh token (scopes in deploy/vps/env.production.example), set ZOHO_DESK_REFRESH_TOKEN on the server (with ZOHO_DESK_CLIENT_ID and ZOHO_DESK_CLIENT_SECRET when it came from the Desk's own client), restart, and check /api/zoho/desk/status reads connected.</p>`,
+         <p>If /api/zoho/desk/status reads "degraded", do nothing: Zoho is throttling or down and the server retries by itself. If it reads "needs_reconnect", sign in to the portal as admin@digeratiexperts.com and open https://digeratiexperts.com/api/zoho/connect (docs/ZOHO-OAUTH-INVENTORY.md, "Reconnect runbook"), then check /api/zoho/desk/status reads connected.</p>`,
         "DE Desk API failing",
       ),
     });
