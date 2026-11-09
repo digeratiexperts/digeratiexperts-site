@@ -26,7 +26,12 @@ export const SCOPED_SECRET_ENV: Readonly<Record<SyncDirection, string>> = {
   hub_to_portal: "HUB_TO_PORTAL_SECRET",
 };
 
-/** The migration-era shared secrets being retired (names only). */
+/**
+ * The migration-era shared secrets (names only). No DE-Sync direction accepts
+ * or signs with them any more; the health endpoint still reports whether they
+ * are set. Do not delete the env vars yet: the Hub's /api/webhooks/website-lead
+ * route checks WEBSITE_LEAD_WEBHOOK_SECRET on its own and is retired separately.
+ */
 export const LEGACY_SECRET_ENV = ["TECHSALES_SYNC_TOKEN", "WEBSITE_LEAD_WEBHOOK_SECRET"] as const;
 
 export const DE_SYNC_DIRECTIONS: readonly SyncDirection[] = [
@@ -36,96 +41,46 @@ export const DE_SYNC_DIRECTIONS: readonly SyncDirection[] = [
   "hub_to_portal",
 ];
 
-const LEGACY_WARN_INTERVAL_MS = 60 * 60 * 1000;
-const lastLegacyWarnAt = new Map<SyncDirection, number>();
-let recorderModule: Promise<typeof import("./deSyncLegacyCredential")> | null = null;
+const MISSING_SECRET_LOG_INTERVAL_MS = 60 * 60 * 1000;
+const lastMissingSecretLogAt = new Map<SyncDirection, number>();
 
-/** Test seam: forget when each direction last warned. */
-export function resetLegacyCredentialWarnings(): void {
-  lastLegacyWarnAt.clear();
+/** Test seam: forget when each direction last logged a missing secret. */
+export function resetMissingSecretLogs(): void {
+  lastMissingSecretLogAt.clear();
 }
 
 /**
- * A request was verified with (inbound), or signed with (outbound), the
- * legacy shared secret instead of the direction's scoped one. Logs ONE
- * structured warning per direction per hour (never a secret value) and counts
- * EVERY use in `de_sync_legacy_credential_uses` for the health endpoint.
- * Never throws and never waits on the database.
+ * Fail closed with a clear operator message: the direction's scoped secret is
+ * not set, so every request on it is refused (inbound 503) or not sent
+ * (outbound). Logged once per direction per hour; names the env variable,
+ * never a value. The HTTP answer stays a bare "Integration not configured".
  */
-export function noteLegacyCredentialUse(input: {
-  direction: SyncDirection;
-  route: string;
-  source: string;
-  now?: number;
-}): void {
-  try {
-    const now = input.now ?? Date.now();
-    const route = String(input.route || "").split("?")[0].slice(0, 200);
-    const scopedEnv = SCOPED_SECRET_ENV[input.direction];
-    const last = lastLegacyWarnAt.get(input.direction);
-    if (last == null || now - last >= LEGACY_WARN_INTERVAL_MS) {
-      lastLegacyWarnAt.set(input.direction, now);
-      logger.warn(
-        "DE-Sync used the legacy shared secret instead of the scoped secret (logged once per direction per hour; every use is counted)",
-        {
-          event: "de_sync.legacy_credential_used",
-          direction: input.direction,
-          route,
-          source: String(input.source || "").slice(0, 40) || null,
-          scopedSecretEnv: scopedEnv,
-          scopedSecretConfigured: Boolean((process.env[scopedEnv] || "").trim()),
-        },
-      );
-    }
-    // Lazy import: this module stays free of the database client so callers
-    // and tests that only verify signatures do not load it.
-    recorderModule ??= import("./deSyncLegacyCredential");
-    void recorderModule
-      .then((m) => m.recordLegacyCredentialUse({ direction: input.direction, route, source: input.source, at: new Date(now) }))
-      .catch(() => undefined);
-  } catch {
-    /* observation must never break a request */
-  }
+export function logMissingScopedSecret(direction: SyncDirection, now: number = Date.now()): void {
+  const last = lastMissingSecretLogAt.get(direction);
+  if (last != null && now - last < MISSING_SECRET_LOG_INTERVAL_MS) return;
+  lastMissingSecretLogAt.set(direction, now);
+  const scopedEnv = SCOPED_SECRET_ENV[direction];
+  logger.error(
+    `DE-Sync ${direction} is refused: ${scopedEnv} is not set (the legacy shared-secret fallback was removed). Set it on both sides.`,
+    undefined,
+    { event: "de_sync.scoped_secret_missing", direction, scopedSecretEnv: scopedEnv },
+  );
+}
+
+/** The direction's scoped secret, or "" when it is not set. There is no fallback. */
+export function resolveScopedSecret(direction: SyncDirection): { secret: string } {
+  return { secret: (process.env[SCOPED_SECRET_ENV[direction]] || "").trim() };
 }
 
 /**
- * The secret to SIGN an outbound request with: exactly one, the scoped secret
- * when it is set. While it is missing the legacy fallback is still used (PR 1
- * observes only) and the use is noted for `route` (path only).
+ * The secret to SIGN an outbound request with: the scoped secret, or "" when
+ * it is not set. On "" the caller does not send, and the missing variable is
+ * logged (once per direction per hour).
  */
-export function outboundSecret(direction: SyncDirection, route: string): string {
-  const { secret, legacy } = resolveScopedSecret(direction);
-  if (secret && legacy) {
-    noteLegacyCredentialUse({ direction, route, source: expectedSource(direction) });
-  }
+export function outboundSecret(direction: SyncDirection, _route: string): string {
+  const { secret } = resolveScopedSecret(direction);
+  if (!secret) logMissingScopedSecret(direction);
   return secret;
-}
-
-function legacySecret(): string {
-  return (
-    process.env.TECHSALES_SYNC_TOKEN ||
-    process.env.WEBSITE_LEAD_WEBHOOK_SECRET ||
-    ""
-  ).trim();
-}
-
-export function resolveScopedSecret(direction: SyncDirection): { secret: string; legacy: boolean } {
-  const next = (process.env[SCOPED_SECRET_ENV[direction]] || "").trim();
-  if (next) return { secret: next, legacy: false };
-
-  const legacy = legacySecret();
-  return { secret: legacy, legacy: !!legacy };
-}
-
-function acceptedSecrets(direction: SyncDirection): Array<{ secret: string; legacy: boolean }> {
-  const primary = resolveScopedSecret(direction);
-  const legacy = legacySecret();
-  const candidates: Array<{ secret: string; legacy: boolean }> = [];
-
-  if (primary.secret) candidates.push(primary);
-  if (legacy && legacy !== primary.secret) candidates.push({ secret: legacy, legacy: true });
-
-  return candidates;
 }
 
 function expectedSource(direction: SyncDirection): DeSyncSource {
@@ -201,9 +156,10 @@ export function buildSignedHeaders(input: {
 export function verifySignedRequest(
   req: Request,
   direction: SyncDirection,
-): { ok: true; eventId: string; source: string; legacy: boolean; eventIdBound: boolean } | { ok: false; status: number; error: string } {
-  const candidates = acceptedSecrets(direction);
-  if (candidates.length === 0) {
+): { ok: true; eventId: string; source: string; eventIdBound: boolean } | { ok: false; status: number; error: string } {
+  const { secret } = resolveScopedSecret(direction);
+  if (!secret) {
+    logMissingScopedSecret(direction);
     return { ok: false, status: 503, error: "Integration not configured" };
   }
 
@@ -228,19 +184,16 @@ export function verifySignedRequest(
     const body = typeof req.body === "string" ? req.body : JSON.stringify(req.body ?? {});
     const path = requestPath(req);
 
-    for (const candidate of candidates) {
-      const expected = signDeSyncRequest({
-        method: req.method,
-        path,
-        timestamp,
-        eventId: rawEventId,
-        body,
-        secret: candidate.secret,
-      });
-      if (!timingSafeStringEqual(expected, signature)) continue;
-
-      if (candidate.legacy) noteLegacyCredentialUse({ direction, route: path, source });
-      return { ok: true, eventId: rawEventId, source, legacy: candidate.legacy, eventIdBound: true };
+    const expected = signDeSyncRequest({
+      method: req.method,
+      path,
+      timestamp,
+      eventId: rawEventId,
+      body,
+      secret,
+    });
+    if (timingSafeStringEqual(expected, signature)) {
+      return { ok: true, eventId: rawEventId, source, eventIdBound: true };
     }
 
     return { ok: false, status: 401, error: "Invalid integration signature" };
@@ -264,10 +217,8 @@ export function verifySignedRequest(
     return { ok: false, status: 401, error: "Unauthorized" };
   }
 
-  for (const candidate of candidates) {
-    if (!timingSafeStringEqual(provided, candidate.secret)) continue;
-    if (candidate.legacy) noteLegacyCredentialUse({ direction, route: requestPath(req), source });
-    return { ok: true, eventId, source, legacy: candidate.legacy, eventIdBound: false };
+  if (timingSafeStringEqual(provided, secret)) {
+    return { ok: true, eventId, source, eventIdBound: false };
   }
 
   return { ok: false, status: 401, error: "Unauthorized" };

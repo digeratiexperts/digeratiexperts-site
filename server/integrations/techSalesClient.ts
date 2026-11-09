@@ -6,7 +6,7 @@ import { retainHubAccountMapping } from "./backfillHubIdentity";
 import { logger } from "../logger";
 import { getClient, setClient } from "../portalAuthStore";
 import { assertMutationAllowed } from "../stagingReviewGuard";
-import { buildSignedHeaders, newEventId, outboundSecret } from "./deSyncAuth";
+import { buildSignedHeaders, newEventId, outboundSecret, SCOPED_SECRET_ENV } from "./deSyncAuth";
 import type { DeSyncEnvelope, DeSyncEventType } from "./deSyncContract";
 import { SERVICE_REQUEST_HUB_EVENT, SERVICE_REQUEST_HUB_PATH } from "@shared/serviceRequests";
 import { representationProjectionSchema, type RepresentationProjection } from "@shared/representation";
@@ -499,9 +499,11 @@ export async function deliverEnvelopeToHub(
     throw new Error("Hub destination not configured");
   }
   const path = hubPathForEnvelope(envelope.source, envelope.eventType);
-  const secret = outboundSecret(envelope.source === "portal" ? "portal_to_hub" : "website_to_hub", path);
+  const direction = envelope.source === "portal" ? "portal_to_hub" : "website_to_hub";
+  const secret = outboundSecret(direction, path);
   if (!secret) {
-    throw new Error("Hub destination not configured");
+    // Not sent: there is no legacy fallback. The envelope stays in the outbox.
+    throw new Error(`Hub destination not configured: ${SCOPED_SECRET_ENV[direction]} is not set`);
   }
 
   const body = JSON.stringify(envelope);
