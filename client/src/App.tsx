@@ -404,13 +404,7 @@ function Router() {
           <EfficiencyBeforeAI />
         </Suspense>
       )} />
-      {/* The Store's old public home: one address now (the server 301s these too). */}
-      <Route path="/solutions/business-needs/:family">
-        {(params) => <Redirect to={`/store/solutions/${params.family}`} replace />}
-      </Route>
-      <Route path="/solutions/business-needs">
-        <Redirect to="/store" replace />
-      </Route>
+      {/* /solutions/business-needs and its families 301 to /store on the server (server/warehouseRoutes.ts); no client twin. */}
       <Route path="/store/solution/submitted/:reference" component={() => (
         <Suspense fallback={<PageLoadingSkeleton />}>
           <SolutionSubmitted />
