@@ -64,6 +64,30 @@ describe("DE Desk ticket failover", () => {
     expect(d.alertStaff).toHaveBeenCalledTimes(1);
   });
 
+  it("alerts DE once per saved ticket with its outcome, and not throttled like the API alert", async () => {
+    const alertTicket = vi.fn(async () => true);
+    const { d } = deps({ alertTicket });
+    await saveTicketOutsideDesk(ticket(), {}, d);
+    await saveTicketOutsideDesk(ticket(), {}, d);
+    expect(alertTicket).toHaveBeenCalledTimes(2);
+    expect(alertTicket).toHaveBeenLastCalledWith(expect.objectContaining({ reference: expect.any(String) }), {
+      accepted: true,
+      spooled: true,
+      deskEmailed: true,
+      clientAcknowledged: true,
+    });
+  });
+
+  it("still alerts DE when the ticket is not accepted, and the failing alert does not stop the save", async () => {
+    const alertTicket = vi.fn(async () => {
+      throw new Error("smtp");
+    });
+    const { d } = deps({ spool: vi.fn(() => false), emailDesk: vi.fn(async () => false), alertTicket });
+    const outcome = await saveTicketOutsideDesk(ticket(), {}, d);
+    expect(alertTicket).toHaveBeenCalledTimes(1);
+    expect(outcome.accepted).toBe(false);
+  });
+
   it("is accepted on the spool alone when the email fails, and stays queued for the API replay", async () => {
     const { d, updated } = deps({ emailDesk: vi.fn(async () => false) });
     const outcome = await saveTicketOutsideDesk(ticket(), {}, d);
