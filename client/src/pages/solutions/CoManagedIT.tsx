@@ -150,7 +150,7 @@ export default function CoManagedIT() {
                 eyebrow="Same engine"
                 title="No separate “kits” store or parallel package system"
                 titleId="same-engine"
-                lede="Hardware, identity, backup, network, security, communications, and other needs all flow through the same Business Solution Builder. Your business profile sizes the package once; Co-Managed changes the responsibility and pricing relationship rather than creating a competing catalog."
+                lede="Hardware, identity, backup, network, security, communications, and other needs all flow through the same Solve a Business Need path. Your business profile sizes the package once; Co-Managed changes the responsibility and pricing relationship rather than creating a competing catalog."
               />
               <CheckList
                 tone="surface"
