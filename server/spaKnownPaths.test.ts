@@ -30,6 +30,19 @@ describe("spaKnownPaths", () => {
     expect(isKnownSpaPath("/versions")).toBe(true);
   });
 
+  it("answers 200 only for a published store family, and 404 for an unknown slug (§5.2)", () => {
+    expect(isKnownSpaPath("/store/solutions/identity-access")).toBe(true);
+    expect(isKnownSpaPath("/store/solutions/Identity-Access/")).toBe(true);
+    expect(isKnownSpaPath("/store/solutions/no-such-family")).toBe(false);
+    expect(isKnownSpaPath("/store/solutions/")).toBe(false);
+    expect(isKnownSpaPath("/store/solutions")).toBe(false);
+  });
+
+  it("leaves the submitted-reference decision to its own route (§5.5)", () => {
+    // The static shell route answers 200 for a submitted reference and 404 otherwise.
+    expect(isKnownSpaPath("/store/solution/submitted/DE-4K7Q2M")).toBe(false);
+  });
+
   it("knows every data-driven solution page, so none of them answers 404", () => {
     // App.tsx routes every servicePageData key at /solutions/<key>. Production
     // answered 404 for /solutions/threat-detection and friends on 2026-09-30

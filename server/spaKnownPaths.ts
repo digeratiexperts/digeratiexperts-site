@@ -1,3 +1,5 @@
+import { curatedSolutionFamilies } from "../client/src/data/curatedSolutions";
+
 /**
  * Prefix/exact allowlist for production SPA catch-all status codes.
  * Known client routes get 200 + index.html; everything else gets 404 + index.html
@@ -174,8 +176,6 @@ const EXACT = new Set([
 ]);
 
 const PREFIXES = [
-  "/store/solutions/",
-  "/store/solution/submitted/",
   "/resources/case-studies/",
   "/resources/blog/",
   "/portal/",
@@ -192,9 +192,21 @@ export function normalizeSpaPath(pathname: string): string {
   return raw.replace(/\/+$/, "") || "/";
 }
 
+/**
+ * Store family pages answer 200 only for a published family slug (§5.2: an unknown
+ * family is a generic 404). The slug is the family id with hyphens, as `familyToSlug`.
+ */
+const STORE_FAMILY_PREFIX = "/store/solutions/";
+const STORE_FAMILY_SLUGS = new Set(curatedSolutionFamilies.map((family) => family.id.replaceAll("_", "-")));
+
+/**
+ * `/store/solution/submitted/:reference` is decided by its own route (server/index.ts):
+ * a submitted reference answers 200, an unknown or expired one answers 404.
+ */
 export function isKnownSpaPath(pathname: string): boolean {
   const path = normalizeSpaPath(pathname);
   if (EXACT.has(path)) return true;
+  if (path.startsWith(STORE_FAMILY_PREFIX)) return STORE_FAMILY_SLUGS.has(path.slice(STORE_FAMILY_PREFIX.length));
   return PREFIXES.some((prefix) => path === prefix.replace(/\/+$/, "") || path.startsWith(prefix));
 }
 
