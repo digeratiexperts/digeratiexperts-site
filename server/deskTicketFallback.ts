@@ -58,6 +58,11 @@ export type DeskFallbackDeps = {
   emailDesk: (ticket: FallbackTicket) => Promise<boolean>;
   acknowledgeClient: (ticket: FallbackTicket) => Promise<boolean>;
   alertStaff: (ticket: FallbackTicket) => Promise<boolean>;
+  /**
+   * One alert per ticket the Desk API did not take (Joe, 2026-11-09). Not
+   * throttled, unlike alertStaff, which is about the API itself.
+   */
+  alertTicket?: (ticket: FallbackTicket, outcome: DeskFallbackOutcome) => Promise<boolean>;
   now: () => Date;
 };
 
@@ -157,6 +162,22 @@ export const defaultDeskFallbackDeps: DeskFallbackDeps = {
       ),
     });
   },
+  alertTicket: (ticket, outcome) =>
+    sendEmail({
+      to: process.env.ADMIN_EMAIL || COMPANY.email,
+      subject: `DE Desk fallback: ${ticket.reference} saved outside the Zoho Desk API`,
+      htmlBody: baseEmailTemplate(
+        `<h2>A website ticket was saved outside Zoho Desk</h2>
+         <p><strong>Reference:</strong> ${escapeHtml(ticket.reference)}<br>
+         <strong>Subject:</strong> ${escapeHtml(ticket.subject)}<br>
+         <strong>Reason:</strong> ${escapeHtml(ticket.reason)}<br>
+         <strong>Spooled on server:</strong> ${outcome.spooled ? "yes" : "no"}<br>
+         <strong>Emailed to Desk inbox:</strong> ${outcome.deskEmailed ? "yes" : "no"}<br>
+         <strong>Client acknowledged:</strong> ${outcome.clientAcknowledged ? "yes" : "no"}</p>
+         <p>Check the Desk inbox for this reference. The spooled copy is replayed into Desk by API once the API works again, unless it already reached the inbox by email.</p>`,
+        "DE Desk fallback",
+      ),
+    }),
   now: () => new Date(),
 };
 
@@ -226,10 +247,16 @@ export async function saveTicketOutsideDesk(
       console.warn("[desk-fallback] client acknowledgement failed:", error?.message || error);
     }
   }
+  const outcome: DeskFallbackOutcome = { accepted, spooled, deskEmailed, clientAcknowledged };
   try {
     await deps.alertStaff(ticket);
   } catch {
     // The alert is a courtesy; the ticket is what matters.
+  }
+  try {
+    await deps.alertTicket?.(ticket, outcome);
+  } catch {
+    // Same: the ticket is saved whether or not DE's inbox gets the alert.
   }
 
   console.warn("[desk-fallback] ticket saved outside the Desk API", {
@@ -240,5 +267,5 @@ export async function saveTicketOutsideDesk(
     deskEmailed,
     clientAcknowledged,
   });
-  return { accepted, spooled, deskEmailed, clientAcknowledged };
+  return outcome;
 }
