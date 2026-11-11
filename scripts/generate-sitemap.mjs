@@ -47,6 +47,8 @@ const STATIC = [
   ["/locations/gilbert-az", "monthly", "0.8"],
   ["/locations/tempe-az", "monthly", "0.8"],
   ["/locations/scottsdale-az", "monthly", "0.8"],
+  ["/help-desk", "monthly", "0.7"],
+  ["/solutions/switching-it-providers", "monthly", "0.7"],
   ["/resources/case-studies", "monthly", "0.7"],
   ["/resources/blog", "weekly", "0.8"],
   ["/resources/cyber-facts", "weekly", "0.7"],
