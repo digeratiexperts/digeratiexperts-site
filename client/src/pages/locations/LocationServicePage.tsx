@@ -31,7 +31,8 @@ import { SituationContinuityStrip } from "@/components/SituationContinuityStrip"
 import { situationSubmitPayload, useAnonymousSituation } from "@/lib/anonymousSituation";
 import { getCyberFact, formatFactSource } from "@/data/cyberAwarenessFacts";
 import { CTA } from "@/lib/ctaCopy";
-import { COMPANY, PRIMARY_PHONE, PUBLIC_SOCIAL_LINKS, formatAddressOneLine } from "@/data/companyContact";
+import { cityFaqs } from "@/data/localFaqs";
+import { COMPANY, PRIMARY_PHONE, formatAddressOneLine } from "@/data/companyContact";
 import { GREATER_PHOENIX_CITIES, cityPageSlug } from "@/data/greaterPhoenixCities";
 import { credentialsOfKind } from "@/data/credentials";
 import { IconWell } from "@/components/visual/IconWell";
@@ -45,6 +46,7 @@ import {
   FeatureGrid,
   IndexedList,
   PageHero,
+  FaqChapter,
   buttonSecondary,
 } from "@/components/site/chapters";
 
@@ -109,25 +111,17 @@ export function LocationServicePage(props: LocationPageProps) {
     const existingSchema = document.querySelector('script[data-schema="local-business"]');
     if (existingSchema) existingSchema.remove();
 
+    // One business entity sitewide (`/#organization`, injected by the server); a city page
+    // describes the service in that city and points at it, instead of repeating the business
+    // as a second LocalBusiness with its own address, hours and sameAs.
     const schema = {
       "@context": "https://schema.org",
-      "@type": "LocalBusiness",
-      name: COMPANY.legalName,
+      "@type": "Service",
+      name: props.title,
+      serviceType: "Managed IT services and cybersecurity",
       description: props.description,
       url: `${COMPANY.website}/locations/${currentSlug}`,
-      telephone: PRIMARY_PHONE.schemaTelephone ?? PRIMARY_PHONE.display,
-      email: COMPANY.email,
-      address: {
-        "@type": "PostalAddress",
-        addressLocality: COMPANY.addressLocality,
-        addressRegion: COMPANY.addressRegion,
-        addressCountry: COMPANY.addressCountry,
-      },
-      geo: {
-        "@type": "GeoCoordinates",
-        latitude: COMPANY.geo.latitude,
-        longitude: COMPANY.geo.longitude,
-      },
+      provider: { "@id": `${COMPANY.website}/#organization` },
       areaServed: {
         "@type": "City",
         name: props.city,
@@ -136,17 +130,6 @@ export function LocationServicePage(props: LocationPageProps) {
           name: "Arizona",
         },
       },
-      openingHoursSpecification: [
-        {
-          "@type": "OpeningHoursSpecification",
-          dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
-          opens: "07:00",
-          closes: "18:00",
-        },
-      ],
-      priceRange: "$$",
-      image: "https://digeratiexperts.com/og-image.png",
-      sameAs: PUBLIC_SOCIAL_LINKS.map((s) => s.href),
       hasOfferCatalog: {
         "@type": "OfferCatalog",
         name: "IT Services",
@@ -596,6 +579,10 @@ export function LocationServicePage(props: LocationPageProps) {
             </div>
           </Container>
         </Chapter>
+
+        <div data-testid="section-location-faq">
+          <FaqChapter faqs={cityFaqs(props.city, props.localNote)} title={`Questions ${props.city} businesses ask`} />
+        </div>
 
         <ClosingCta
           eyebrow="Cyber risk assessment & support"
