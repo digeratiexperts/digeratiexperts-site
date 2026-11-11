@@ -126,7 +126,7 @@ export const DigeratiHomepage = ({ structuredData = true }: { structuredData?: b
           <DigeratiPricingSection />
         </ScrollSectionAuto>
 
-        {/* Pricing tools relocated to /proactive-ecosystem-pricing#pricing-tools */}
+        {/* Pricing tools relocated to /pricing#pricing-tools */}
 
         {/* Insights + AI teasers — full versions live on Resources */}
         <ScrollSectionAuto id="insights">

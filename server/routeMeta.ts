@@ -1,6 +1,7 @@
 import fs from "fs";
 import routeMetaSnapshot from "../shared/routeMeta.json";
 import { normalizeSpaPath } from "./spaKnownPaths";
+import { organizationSchemaScriptTag } from "../shared/organizationSchema";
 
 /**
  * Per-route head tags in the HTML the server sends.
@@ -71,6 +72,15 @@ export function applyRouteMeta(html: string, meta: RouteMeta | undefined): strin
     }
   }
   return out;
+}
+
+/**
+ * Adds the one Organization JSON-LD entity (shared/organizationSchema.ts) to the shell.
+ * The client's OrganizationJsonLd replaces it in place (same data-jsonld key), never duplicates it.
+ */
+export function applyOrganizationSchema(html: string): string {
+  if (html.includes('data-jsonld="organization"')) return html;
+  return html.replace("</head>", () => `    ${organizationSchemaScriptTag()}\n  </head>`);
 }
 
 let shellCache: { path: string; mtimeMs: number; html: string; lastModified: string } | undefined;

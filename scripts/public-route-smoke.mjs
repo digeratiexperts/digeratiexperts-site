@@ -136,8 +136,9 @@ for (const path of routes) {
         for (const testId of [
           "button-hero-schedule",
           "button-hero-pricing",
-          "digerati-pronunciation-card",
-          "button-play-digerati-pronunciation",
+          // The pronunciation widget moved to /about/mission-values (2026-11-11); the hero
+          // card now links to the sample assessment report.
+          "link-hero-sample-report",
           "button-open-asap-widget",
         ]) {
           await page.locator(`[data-testid="${testId}"]`).waitFor({ state: "visible", timeout: 10_000 });

@@ -261,7 +261,7 @@
   "/pricing": {
     "title": "ProActive Ecosystem Pricing — Managed IT & Cybersecurity Packages | Digerati Experts",
     "description": "Estimate your ProActive Ecosystem starting point across IT, Office, Business, and Enterprise packages. Final pricing is confirmed after assessment.",
-    "canonical": "/proactive-ecosystem-pricing",
+    "canonical": "/pricing",
     "robots": "index, follow",
     "ogImage": "https://digeratiexperts.com/og-image.png"
   },

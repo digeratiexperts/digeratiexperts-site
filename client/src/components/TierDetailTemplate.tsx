@@ -67,7 +67,7 @@ export function TierDetailTemplate({ config }: { config: TierPageConfig }) {
         <div className="flex flex-col gap-3 sm:flex-row">
           <HeroActions
             primary={{ label: CTA.primary, href: "/book" }}
-            secondary={{ label: CTA.secondary, href: "/proactive-ecosystem-pricing" }}
+            secondary={{ label: CTA.secondary, href: "/pricing" }}
           />
         </div>
       }
@@ -186,7 +186,7 @@ export function TierDetailTemplate({ config }: { config: TierPageConfig }) {
         title="Pricing"
         lede={config.pricingNote}
         primary={{ label: CTA.primary, href: "/book" }}
-        secondary={{ label: CTA.secondary, href: "/proactive-ecosystem-pricing" }}
+        secondary={{ label: CTA.secondary, href: "/pricing" }}
       />
     </PageTemplate>
   );

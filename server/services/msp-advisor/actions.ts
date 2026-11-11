@@ -27,7 +27,6 @@ const ALLOWED_PATHS = new Set([
   "/solutions/proactive-business-ecosystem",
   "/solutions/proactive-enterprise-ecosystem",
   "/pricing",
-  "/proactive-ecosystem-pricing",
   "/store",
   "/about/compliance",
   "/about/compliance-certifications",

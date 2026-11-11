@@ -25,7 +25,8 @@ import { registerWarehouseGates } from "./warehouseRoutes";
 import { registerPortalMarketplaceRoutes } from "./portalMarketplaceRoutes";
 import { registerPublicSupportChat } from "./publicSupportChat";
 import { isKnownSpaPath } from "./spaKnownPaths";
-import { applyRouteMeta, readIndexShell, routeMetaFor } from "./routeMeta";
+import { applyOrganizationSchema, applyRouteMeta, readIndexShell, routeMetaFor } from "./routeMeta";
+import { marketingRedirectFor } from "./marketingRedirects";
 import { cacheControlFor } from "./staticCacheControl";
 import { deskTicketSpoolDir, quoteSpoolDir, spoolDir, spoolPendingCount, spoolWritable } from "./publicSolutionSpool";
 import { registerCampaignAliasRedirects } from "./campaignAliasRedirects";
@@ -449,6 +450,11 @@ app.use((req, res, next) => {
   if (req.path === "/about/mission") {
     return res.redirect(301, "/about/mission-values");
   }
+  const marketingTarget = marketingRedirectFor(req.path);
+  if (marketingTarget) {
+    const q = req.originalUrl.indexOf("?");
+    return res.redirect(301, q === -1 ? marketingTarget : marketingTarget + req.originalUrl.slice(q));
+  }
   // Version 8 became the homepage (Joe, 2026-10-03); its preview URL folds into /.
   if (req.path === "/version-8" || req.path === "/version-8/") {
     const q = req.originalUrl.indexOf("?");
@@ -653,7 +659,7 @@ function listEndpoints(): Array<{ method: string; path: string }> {
       // The shell is HTML: never stored (staticCacheControl), revalidated against the build's mtime.
       res.setHeader("Cache-Control", cacheControlFor("index.html"));
       res.setHeader("Last-Modified", shell.lastModified);
-      res.type("html").send(found ? applyRouteMeta(shell.html, routeMetaFor(req.path)) : shell.html);
+      res.type("html").send(found ? applyOrganizationSchema(applyRouteMeta(shell.html, routeMetaFor(req.path))) : shell.html);
     };
 
     // A submitted solution's confirmation page (§5.5): an unknown or expired reference is a real 404.

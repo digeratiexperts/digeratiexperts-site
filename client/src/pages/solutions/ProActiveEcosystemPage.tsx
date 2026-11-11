@@ -95,7 +95,7 @@ export default function ProActiveEcosystemPage() {
         <div className="flex flex-col gap-3 sm:flex-row">
           <HeroActions
             primary={{ label: CTA.primary, href: "/book" }}
-            secondary={{ label: CTA.secondary, href: "/proactive-ecosystem-pricing" }}
+            secondary={{ label: CTA.secondary, href: "/pricing" }}
           />
         </div>
       }
@@ -260,7 +260,7 @@ export default function ProActiveEcosystemPage() {
             eyebrow="Compare"
             title="Compare capabilities and operating depth"
             lede="The comparison matrix shows what is included at each tier — not which package is “highest” or “best.” Final scope is confirmed after a Cyber Risk Assessment."
-            primary={{ label: "Compare all packages", href: "/proactive-ecosystem-pricing" }}
+            primary={{ label: "Compare all packages", href: "/pricing" }}
             secondary={{ label: CTA.primary, href: "/book" }}
           />
         </div>

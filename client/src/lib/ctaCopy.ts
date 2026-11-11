@@ -10,6 +10,6 @@ export const CTA = {
   primaryShort: "Cyber Risk Assessment",
   primaryNavCompact: "Risk Assessment",
   secondary: "See Plans & Pricing",
-  secondaryHref: "/proactive-ecosystem-pricing",
+  secondaryHref: "/pricing",
   utilitySupport: "Client Support",
 } as const;
