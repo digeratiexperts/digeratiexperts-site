@@ -27,6 +27,7 @@ import { registerPublicSupportChat } from "./publicSupportChat";
 import { isKnownSpaPath } from "./spaKnownPaths";
 import { applyOrganizationSchema, applyRouteMeta, readIndexShell, routeMetaFor } from "./routeMeta";
 import { marketingRedirectFor } from "./marketingRedirects";
+import { applyPrerender, prerenderFor } from "./prerender";
 import { cacheControlFor } from "./staticCacheControl";
 import { deskTicketSpoolDir, quoteSpoolDir, spoolDir, spoolPendingCount, spoolWritable } from "./publicSolutionSpool";
 import { registerCampaignAliasRedirects } from "./campaignAliasRedirects";
@@ -639,6 +640,8 @@ function listEndpoints(): Array<{ method: string; path: string }> {
   } else {
     const distPath = path.resolve(process.cwd(), "dist/public");
     const indexPath = path.join(distPath, "index.html");
+    // Written by scripts/prerender/prerender.mjs after the build; outside dist/public so it is never served raw.
+    const prerenderDir = path.resolve(process.cwd(), "dist/prerender");
     
     app.use(express.static(distPath, {
       // "/" must reach the catch-all below like every other route, so it gets its own head tags (server/routeMeta.ts).
@@ -659,7 +662,17 @@ function listEndpoints(): Array<{ method: string; path: string }> {
       // The shell is HTML: never stored (staticCacheControl), revalidated against the build's mtime.
       res.setHeader("Cache-Control", cacheControlFor("index.html"));
       res.setHeader("Last-Modified", shell.lastModified);
-      res.type("html").send(found ? applyOrganizationSchema(applyRouteMeta(shell.html, routeMetaFor(req.path))) : shell.html);
+      // Found public pages also carry their build-time prerendered body (server/prerender.ts).
+      res
+        .type("html")
+        .send(
+          found
+            ? applyPrerender(
+                applyOrganizationSchema(applyRouteMeta(shell.html, routeMetaFor(req.path))),
+                prerenderFor(prerenderDir, req.path),
+              )
+            : shell.html,
+        );
     };
 
     // A submitted solution's confirmation page (§5.5): an unknown or expired reference is a real 404.

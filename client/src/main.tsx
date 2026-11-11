@@ -5,6 +5,7 @@ import "./styles/brand-fonts.css";
 import "./index.css";
 import { initAnalytics } from "./lib/analytics";
 import { installAnalyticsNavigationBoundary } from "./lib/analyticsNavigation";
+import { installPrerenderSwap } from "./prerenderSwap";
 
 installAnalyticsNavigationBoundary();
 
@@ -16,7 +17,11 @@ if (!isHomepageChallenger) {
   initAnalytics();
 }
 
-createRoot(document.getElementById("root")!).render(
+const rootElement = document.getElementById("root")!;
+// Prerendered pages arrive with a visible snapshot and a hidden #root (server/prerender.ts).
+installPrerenderSwap(rootElement);
+
+createRoot(rootElement).render(
   isHomepageChallenger ? (
     <Suspense fallback={<div className="min-h-screen bg-[#050312]" aria-hidden="true" />}>
       <HomepageChallengerApp />
