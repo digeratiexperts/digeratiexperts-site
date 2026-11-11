@@ -160,6 +160,13 @@
     "robots": "index, follow",
     "ogImage": "https://digeratiexperts.com/og-image.png"
   },
+  "/help-desk": {
+    "title": "IT Help Desk for Arizona Businesses | Digerati Experts",
+    "description": "Paid, on-request IT support from Digerati Experts for businesses without a managed plan and for work a plan doesn't cover. Open a ticket, join a secure remote session, get it fixed.",
+    "canonical": "/help-desk",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
   "/industries/accounting-finance": {
     "title": "IT & Cybersecurity for Accounting Firms | Digerati Experts",
     "description": "Managed IT and security for Arizona accounting and finance firms — stop BEC, protect tax season systems, and meet cyber-insurance expectations.",
@@ -689,6 +696,13 @@
     "title": "Standalone IT & Cybersecurity Solutions | Digerati Experts",
     "description": "Buy a preconfigured Digerati Experts technology or cybersecurity solution without enrolling in a traditional managed IT program. Choose self-install, remote implementation help, or on-site support where available.",
     "canonical": "/solutions/standalone-services",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/solutions/switching-it-providers": {
+    "title": "Switching IT Providers in Arizona | Digerati Experts",
+    "description": "Thinking about leaving your current IT provider? What to get back first, how a switch to Digerati Experts works, and the guarantees we put in writing.",
+    "canonical": "/solutions/switching-it-providers",
     "robots": "index, follow",
     "ogImage": "https://digeratiexperts.com/og-image.png"
   },
