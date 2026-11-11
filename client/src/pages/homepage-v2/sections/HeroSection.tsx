@@ -4,6 +4,7 @@ import { DexMark } from "@/components/mascots/Mascots";
 import { CheckIcon, PhoneIcon } from "../icons";
 import { PHONE_DISPLAY, PHONE_HREF, objectIcon } from "../content";
 import { HOME_CTA } from "../cta";
+import { ReviewChip } from "./Reviews";
 
 const READINESS_BARS = [
   { label: "Identity", value: 68 },
@@ -44,6 +45,7 @@ export function HeroSection(): JSX.Element {
             <a href="/pricing" className="btn btn-line" data-testid="button-hero-pricing">See Plans &amp; Pricing</a>
           </div>
           <div className="facts">
+            <ReviewChip />
             <span><CheckIcon />No obligation</span>
             <span><CheckIcon />Response within one business day</span>
             <span><PhoneIcon /><a href={PHONE_HREF}>{PHONE_DISPLAY}</a></span>
