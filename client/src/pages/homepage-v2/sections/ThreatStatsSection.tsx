@@ -10,7 +10,8 @@ const STATS = [
   { figure: "$392M", text: "in internet crime losses reported from Arizona in 2024", source: "FBI IC3 Annual Report 2024 (PDF)", href: "https://www.ic3.gov/AnnualReport/Reports/2024_IC3Report.pdf" },
 ];
 
-export function ThreatStatsSection(): JSX.Element {
+/** On /resources/cyber-facts itself, `showFactsLink={false}` drops the self-link. */
+export function ThreatStatsSection({ showFactsLink = true }: { showFactsLink?: boolean } = {}): JSX.Element {
   return (
     <section className="sec band t-ink" id="stats">
       <div className="wrap">
@@ -21,7 +22,7 @@ export function ThreatStatsSection(): JSX.Element {
           </div>
           <div className="links">
             <p className="lede">Endpoint, identity, and recovery discipline have to be owned, not assumed.</p>
-            <a className="link" href="/resources/cyber-facts">See the full sourced facts</a>
+            {showFactsLink && <a className="link" href="/resources/cyber-facts">See the full sourced facts</a>}
           </div>
         </div>
         <div className="stats-grid">

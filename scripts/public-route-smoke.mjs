@@ -128,8 +128,8 @@ for (const path of routes) {
         const h1 = page.locator("h1").first();
         await h1.waitFor({ state: "visible", timeout: 10_000 });
         const headline = ((await h1.textContent()) || "").replace(/\s+/g, " ").trim();
-        // Homepage v2 headline (approved 2026-10-22, design/reference/homepage-v2).
-        if (!headline.includes("Cybersecurity-first IT that powers your business")) {
+        // Homepage headline draft (2026-11-11 restructure, pending Joe's approval).
+        if (!headline.includes("Arizona IT that's locked down, looked after, and priced in the open")) {
           fails.push(`homepage ${width}px → unexpected H1: ${headline}`);
         }
 

@@ -37,16 +37,18 @@ export function HeroSection(): JSX.Element {
     >
       <div className="wrap">
         <div>
-          <p className="mark">Arizona MSP for cybersecurity and managed IT</p>
-          <h1>Cybersecurity-first IT that powers your business.</h1>
-          <p className="lede">Managed IT, security, and compliance — built for Arizona businesses that can't afford downtime.</p>
+          <p className="mark">Managed IT and cybersecurity · Chandler, Arizona</p>
+          {/* Headline draft (2026-11-11), pending Joe's approval in the PR. Previous:
+              "Cybersecurity-first IT that powers your business." */}
+          <h1>Arizona IT that's locked down, looked after, and priced in the open.</h1>
+          <p className="lede">One accountable team for your support, security, and compliance. Prices published, contracts public, and your credentials stay yours.</p>
           <div className="row">
-            <a href="#contact" className="btn btn-cta" data-testid="button-hero-schedule">{HOME_CTA.primary}</a>
-            <a href="/pricing" className="btn btn-line" data-testid="button-hero-pricing">See Plans &amp; Pricing</a>
+            <a href={HOME_CTA.fitCallHref} className="btn btn-cta" data-testid="button-hero-schedule" data-cta="hero_fit_call">{HOME_CTA.fitCall}</a>
+            <a href="/pricing" className="btn btn-line" data-testid="button-hero-pricing" data-cta="hero_pricing">See Plans &amp; Pricing</a>
           </div>
           <div className="facts">
             <ReviewChip />
-            <span><CheckIcon />No obligation</span>
+            <span><CheckIcon />Chandler-based team</span>
             <span><CheckIcon />Response within one business day</span>
             <span><PhoneIcon /><a href={PHONE_HREF}>{PHONE_DISPLAY}</a></span>
           </div>

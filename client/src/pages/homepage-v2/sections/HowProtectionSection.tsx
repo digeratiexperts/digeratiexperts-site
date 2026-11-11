@@ -14,7 +14,7 @@ export function HowProtectionSection(): JSX.Element {
             <p className="mark">How protection works</p>
             <h2>Assess, plan, build, then run it.</h2>
           </div>
-          <a className="link" href="/solutions">Full methodology</a>
+          <a className="link" href="/solutions/proactive-ecosystem">The ProActive Ecosystem</a>
         </div>
         <div className="steps">
           {STEPS.map((step, index) => (

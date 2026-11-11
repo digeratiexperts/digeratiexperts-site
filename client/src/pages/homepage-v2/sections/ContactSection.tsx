@@ -69,7 +69,7 @@ function AssessmentForm(): JSX.Element {
           <textarea id="hv2-message" name="message" placeholder="Users, locations, what's worrying you" />
         </div>
       </div>
-      <button className="btn btn-cta" type="submit" disabled={state === "sending"}>
+      <button className="btn btn-cta" type="submit" disabled={state === "sending"} data-cta="contact_form_submit">
         {HOME_CTA.formSubmit}
       </button>
       {state === "sent" && (
@@ -91,11 +91,14 @@ export function ContactSection(): JSX.Element {
     <section className="sec band t-ink contact" id="contact">
       <div className="wrap">
         <div>
-          <p className="mark">Cyber Risk Assessment</p>
-          <h2>{HOME_CTA.primary}.</h2>
-          <p className="lede">Every fully managed and co-managed plan starts here. We find identity, endpoint, email, backup, and operating gaps, then confirm scope after we see the environment.</p>
+          <p className="mark">Next step</p>
+          <h2>Start with a short call.</h2>
+          <p className="lede">Book a fit call, or send the form and we'll set up your Cyber Risk Assessment. Every fully managed and co-managed plan starts with it; scope is confirmed after we see the environment.</p>
           <p className="small" style={{ color: "var(--on-band-2)", margin: "-14px 0 28px" }}>Only need devices and licenses for a team under 30? Choose {THIRD_LANE_NAME} in the form.</p>
-          <a href={PHONE_HREF} className="btn btn-line"><PhoneIcon width={18} height={18} />{HOME_CTA.secondary} · {PHONE_DISPLAY}</a>
+          <div className="contact-actions">
+            <a href={HOME_CTA.fitCallHref} className="btn btn-cta" data-cta="contact_fit_call">{HOME_CTA.fitCall}</a>
+            <a href={PHONE_HREF} className="btn btn-line" data-cta="contact_phone"><PhoneIcon width={18} height={18} />{HOME_CTA.secondary} · {PHONE_DISPLAY}</a>
+          </div>
           <div className="info">
             <div><span>Email</span><a href={`mailto:${EMAIL_ADDRESS}`}>{EMAIL_ADDRESS}</a></div>
             <div><span>Office</span>Chandler, AZ</div>

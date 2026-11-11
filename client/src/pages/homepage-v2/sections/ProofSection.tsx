@@ -14,7 +14,7 @@ export function ProofSection(): JSX.Element {
       <div className="wrap">
         <div className="head">
           <div>
-            <p className="mark">Client proof</p>
+            <p className="mark">Proof, and promises in writing</p>
             <h2>Outcomes Arizona businesses hire us for.</h2>
           </div>
           <div className="links">
@@ -47,6 +47,22 @@ export function ProofSection(): JSX.Element {
               <h3>Trust Center</h3>
               <p className="muted" style={{ marginBottom: 12 }}>Security documentation and operating expectations for diligence and cyber-insurance conversations.</p>
               <span className="link">Open the Trust Center</span>
+            </div>
+          </a>
+          <a href="/about/guarantee" className="card" data-cta="proof_guarantee">
+            <img className="obj" src={objectIcon("clipboard")} alt="" />
+            <div>
+              <h3>30-day money-back guarantee</h3>
+              <p className="muted" style={{ marginBottom: 12 }}>Not the right fit in the first 30 days? Service fees refunded, released from the contract.</p>
+              <span className="link">Read the guarantee</span>
+            </div>
+          </a>
+          <a href="/legal/msa" className="card" data-cta="proof_contract">
+            <img className="obj" src={objectIcon("eye")} alt="" />
+            <div>
+              <h3>Our contract is public</h3>
+              <p className="muted" style={{ marginBottom: 12 }}>Read the master services agreement and service levels before you ever sign anything.</p>
+              <span className="link">Read the MSA and SLA</span>
             </div>
           </a>
         </div>

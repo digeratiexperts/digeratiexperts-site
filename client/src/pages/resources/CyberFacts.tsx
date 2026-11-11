@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo, forwardRef } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { PageTemplate } from "@/components/PageTemplate";
+import "@/pages/homepage-v2/homepage-v2.css";
+import { ThreatStatsSection } from "@/pages/homepage-v2/sections/ThreatStatsSection";
 import { Button } from "@/components/ui/button";
 import {
   Chapter,
@@ -296,6 +298,11 @@ const CyberFacts = () => {
             { icon: MapPin, title: "ARIZONA", text: "State losses and the 45-day notice law" },
           ]}
         />
+
+        {/* Headline threat stats, moved from the homepage (2026-11-11 restructure). */}
+        <div className="hv2" data-testid="cyber-facts-headline-stats">
+          <ThreatStatsSection showFactsLink={false} />
+        </div>
 
         <Chapter tone="well" seam={false}>
           <Container>

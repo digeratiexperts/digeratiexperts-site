@@ -378,6 +378,11 @@ export const analytics = {
     trackMarketing("contact", "Contact", { subject, event_category: "conversion" });
   },
 
+  /** A tagged call-to-action was clicked (`data-cta`, see pages/homepage-v2/useCtaTracking.ts). */
+  ctaClicked(cta: string, label: string, href: string, page: string) {
+    track("cta_click", { cta_id: cta, cta_label: label, link_url: href, page_path: page, event_category: "engagement" });
+  },
+
   pricingViewed(tier: string) {
     track("view_item", { item_name: tier, item_category: "pricing", event_category: "engagement" });
   },
