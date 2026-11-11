@@ -23,7 +23,7 @@ export function DetectSection(): JSX.Element {
             <li><CheckIcon />Prioritized remediation tied to your environment</li>
             <li><CheckIcon />Documented response paths when something needs escalation</li>
           </ul>
-          <a href="#contact" className="btn btn-cta">{HOME_CTA.primary}</a>
+          <a href={HOME_CTA.primaryHref} className="btn btn-cta">{HOME_CTA.primary}</a>
         </div>
         <div className="card deep flow">
           <div className="assess-top"><span>Arizona operations</span><span className="chip">Illustrative</span></div>

@@ -1,4 +1,8 @@
 import { PageTemplate } from "@/components/PageTemplate";
+import "@/pages/homepage-v2/homepage-v2.css";
+import { ProtectionSection } from "@/pages/homepage-v2/sections/ProtectionSection";
+import { HowProtectionSection } from "@/pages/homepage-v2/sections/HowProtectionSection";
+import { DetectSection } from "@/pages/homepage-v2/sections/DetectSection";
 import {
   Chapter,
   Container,
@@ -251,6 +255,14 @@ const SolutionsIndex = () => {
           </p>
         </Container>
       </Chapter>
+
+      {/* Moved from the homepage (2026-11-11 restructure): the eight protection blocks, the
+          four-step methodology and detection. They keep their homepage-v2 styling via `.hv2`. */}
+      <div className="hv2" data-testid="solutions-protection-blocks">
+        <ProtectionSection />
+        <HowProtectionSection />
+        <DetectSection />
+      </div>
 
       <Chapter plate="ring" tone="well" data-testid="solutions-security">
         <Container>
