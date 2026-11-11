@@ -18,12 +18,12 @@ Zoho or vendor configuration.
 
 | # | PR | Files and areas it owns | Status |
 |---|----|-------------------------|--------|
-| 1 | Quick wins | `client/src/data/caseStudies.ts`, `pages/resources/CaseStudies*.tsx`, `server/marketingRedirects.ts`, pricing canonical, `shared/organizationSchema.ts`, `client/index.html` JSON-LD, `components/JsonLd.tsx`, `shared/companyContact.ts` social links, homepage-v2 `HeroSection` card + pronunciation, `FaqSection` schema, `pages/about/MissionValues.tsx` | open |
-| 2 | Raw HTML prerender | `scripts/prerender/*`, `server/prerender.ts`, `server/index.ts` shell send, `client/src/main.tsx` swap | planned |
-| 3 | Help Desk + Switching IT providers pages | new pages under `client/src/pages/`, `App.tsx` routes, `MegaMenu.tsx` entries, sitemap, `spaKnownPaths.ts` | planned |
-| 4 | Reviews readiness | homepage proof/reviews section, rating chip by the hero CTAs (hidden when there are no real reviews) | planned |
-| 5 | Homepage chapters + buyer language + 15-minute fit call + risk reversal + CTA tracking | `client/src/pages/homepage-v2/**`, `client/src/lib/ctaCopy.ts` homepage labels | planned (draft PR) |
-| 6 | City and industry templates | `pages/locations/*`, `pages/industries/*` data (towns served, stacks, FAQ: real facts only) | planned |
+| 1 | [#1006](https://github.com/digeratiexperts/digeratiexperts-site/pull/1006) Quick wins | `client/src/data/caseStudies.ts`, `pages/resources/CaseStudies*.tsx`, `server/marketingRedirects.ts`, pricing canonical, `shared/organizationSchema.ts`, `client/index.html` JSON-LD, `components/JsonLd.tsx`, `shared/companyContact.ts` social links, homepage-v2 `HeroSection` card + pronunciation, `FaqSection` schema, `pages/about/MissionValues.tsx` | open |
+| 2 | [#1007](https://github.com/digeratiexperts/digeratiexperts-site/pull/1007) Raw HTML prerender (on #1006) | `scripts/prerender/*`, `server/prerender.ts`, `server/index.ts` shell send, `client/src/main.tsx` swap | open |
+| 3 | [#1010](https://github.com/digeratiexperts/digeratiexperts-site/pull/1010) Help Desk + Switching IT providers pages | new pages under `client/src/pages/`, `App.tsx` routes, `MegaMenu.tsx` entries, sitemap, `spaKnownPaths.ts` | open |
+| 4 | [#1008](https://github.com/digeratiexperts/digeratiexperts-site/pull/1008) Reviews readiness (on #1006) | homepage proof/reviews section, rating chip by the hero CTAs (hidden when there are no real reviews) | open |
+| 5 | [#1009](https://github.com/digeratiexperts/digeratiexperts-site/pull/1009) Homepage chapters + buyer language + fit call + risk reversal + CTA tracking (draft, on #1008) | `client/src/pages/homepage-v2/**` (labels in `homepage-v2/cta.ts`; `ctaCopy.ts` unchanged), `SolutionsIndex.tsx`, `CyberFacts.tsx`, `lib/analytics.ts` `ctaClicked` | open (draft) |
+| 6 | [#1011](https://github.com/digeratiexperts/digeratiexperts-site/pull/1011) City and industry FAQs + city schema | `pages/locations/LocationServicePage.tsx`, four `pages/industries/*`, `data/localFaqs.ts` (FAQ, real facts only; app stacks wait on Joe) | open |
 
 Other agents: please avoid editing the files listed for an open PR here until it merges or closes
 (`docs/ACTIVE-WORK-COORDINATION.md`). If you must, comment on the PR first.
@@ -42,9 +42,9 @@ Other agents: please avoid editing the files listed for an open PR here until it
 10. Help Desk page for non-managed clients: PR 3.
 11. Buyer-language copy on top-level pages: PR 5 (homepage) and PR 3 (new pages). Technical depth stays on solution pages.
 12. Risk reversal and a Switching IT providers page: PR 5 (near CTAs) and PR 3 (page).
-13. Real team photos and founder note: founder note text only in PR 5; **photos wait on a real shoot** (no stock or AI faces).
+13. Real team photos and founder note: the existing Team chapter (Joe's real photo) stays in the new homepage order; **more photos wait on a real shoot** (no stock or AI faces).
 14. Stronger city and industry templates: PR 6.
-15. Close the follow-up loop (chat books a call, forms reach Zoho, CTA clicks tracked): PR 5, code only.
+15. Close the follow-up loop: CTA clicks tracked (consent-gated `cta_click`) and fit call to the existing Zoho Bookings page in PR 5; forms already reach Zoho via `/api/assessment`. Chat-to-booking and Zoho follow-up sequences are live Zoho config, left for Joe.
 
 ## Inputs only Joe can give
 
