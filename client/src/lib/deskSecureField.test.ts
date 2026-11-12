@@ -45,9 +45,9 @@ describe("DE Desk secure field helpers (#1179)", () => {
     "the password is Tr0ub4dor&3",
     "Wi-Fi key: fake-placeholder-wifi",
     "pin = 482913",
-    "API key: sk_live_abcdefghijklmnop1234",
+    "publishable key pk_test_EXAMPLEdummyplaceholder0000",
     "here you go ABCDE-12345-FGHIJ-67890-KLMNO",
-    "AKIAABCDEFGHIJKLMNOP",
+    "AKIAEXAMPLEDUMMY0000",
     "password: \"hunter22\"",
   ])("catches a credential in a chat line: %s", (line) => {
     expect(looksLikeSecret(line)).toBe(true);
