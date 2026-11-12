@@ -59,6 +59,8 @@ import { analytics } from "@/lib/analytics";
 import { clearDeskChat, readDeskChat, ticketDraftFromChat, writeDeskChat } from "@/lib/deskChatSession";
 import { deskActionLabel, planDeskAction, sanitizeDeskActions, type DeskAction, type DeskActionType } from "@/lib/deskActions";
 import { DeskRichText } from "@/lib/deskRichText";
+import { SecureFieldCard, postSecureField } from "@/components/desk/SecureFieldCard";
+import { SECRET_IN_CHAT_WARNING_WEBSITE, looksLikeSecret } from "@/lib/deskSecureField";
 import { useDraggableWindow } from "@/hooks/useDraggableWindow";
 import { useEscapeKey } from "@/hooks/useFocusTrap";
 import {
@@ -149,6 +151,8 @@ type DeskActionForm = { messageId: string; action: DeskAction; form: keyof typeo
 type TicketResult = {
   ticketNumber?: string;
   message: string;
+  /** Hub path only: lets the visitor hand DE a password for this ticket (#1179). Not a secret; a short-lived signed reference. */
+  secureFieldToken?: string;
 };
 
 type ChatHeadsUp = {
@@ -901,6 +905,17 @@ export const ZohoASAPWidget = ({
       return;
     }
 
+    // A password typed into Ask DE would land in the transcript (and the
+    // assistant). Keep it in the box and point at the secure field (#1179).
+    if (looksLikeSecret(content)) {
+      toast({
+        title: "Not sent: that looks like a password",
+        description: SECRET_IN_CHAT_WARNING_WEBSITE,
+        variant: "destructive",
+      });
+      return;
+    }
+
     setShowStarterChips(false);
     setActionForm(null);
     revealCancelRef.current.cancelled = true;
@@ -1433,6 +1448,7 @@ export const ZohoASAPWidget = ({
       setTicketResult({
         ticketNumber: data.ticketNumber,
         message: data.message || "Your support request has been received.",
+        ...(data.secureFieldToken ? { secureFieldToken: data.secureFieldToken } : {}),
       });
       setFullName("");
       setEmail("");
@@ -2081,6 +2097,23 @@ export const ZohoASAPWidget = ({
                           </p>
                         )}
                         <p>{ticketResult.message}</p>
+                        {ticketResult.secureFieldToken ? (
+                          <div className="de-desk-secure-field" data-testid="desk-secure-field">
+                            <SecureFieldCard
+                              tone="desk"
+                              testId="desk-secure-field-card"
+                              title="Need to give DE a password?"
+                              intro="Share a password, Wi-Fi key or licence key for this ticket here, never in Ask DE."
+                              submit={(payload) =>
+                                postSecureField(
+                                  "/api/portal/zoho/ticket/secure-field",
+                                  { ...payload, token: ticketResult.secureFieldToken },
+                                  { credentials: "same-origin" },
+                                )
+                              }
+                            />
+                          </div>
+                        ) : null}
                         <div className="de-desk-success-actions">
                           {portalSession ? (
                             <a href={PORTAL_TICKETS} className="de-desk-row de-desk-row-action" data-testid="link-success-view-tickets">
@@ -2593,8 +2626,8 @@ export const ZohoASAPWidget = ({
                 <p className="de-desk-composer-caption">
                   <Lock aria-hidden="true" />
                   {agentLive
-                    ? "A Digerati agent is in this thread. Never share passwords or MFA codes."
-                    : "Never share passwords, MFA codes, or private keys."}
+                    ? "A DE agent is in this thread. Never paste passwords or MFA codes in chat."
+                    : "Never paste passwords, MFA codes, or private keys in chat."}
                 </p>
               </>
             ) : null}

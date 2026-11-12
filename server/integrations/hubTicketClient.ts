@@ -28,6 +28,12 @@ import {
   type HubTicketCreateBody,
   type HubTicketReplyBody,
 } from "./hubTicketsContract";
+import {
+  hubSecureFieldCreateResponseSchema,
+  hubSecureFieldListResponseSchema,
+  hubSecureFieldsPath,
+  type HubSecureFieldCreateBody,
+} from "./hubSecureFieldsContract";
 import type { z } from "zod";
 
 export type HubTicketFailure = {
@@ -132,6 +138,19 @@ export function createHubTicketClient(deps: HubTicketClientDeps = defaultHubTick
     },
     reply(tenant: HubTenant & { accountId: string }, ticketId: number, body: HubTicketReplyBody) {
       return call(deps, "POST", `${HUB_TICKETS_PATH}/${ticketId}/replies${query(tenant)}`, body, hubTicketReplyResponseSchema);
+    },
+    /** DE Desk secure fields (#1179): metadata only; the Hub never returns a value here. */
+    listSecureFields(tenant: HubTenant & { accountId: string }, ticketId: number) {
+      return call(deps, "GET", `${hubSecureFieldsPath(ticketId)}${query(tenant)}`, null, hubSecureFieldListResponseSchema);
+    },
+    /**
+     * Hand a value to the Hub (encrypted there). Only the website widget may
+     * send a null tenant, for the unlinked ticket it just created. The body is
+     * signed and sent once; it is never logged (call() logs method, path and
+     * status only).
+     */
+    createSecureField(tenant: HubTenant | null, ticketId: number, body: HubSecureFieldCreateBody) {
+      return call(deps, "POST", `${hubSecureFieldsPath(ticketId)}${query(tenant)}`, body, hubSecureFieldCreateResponseSchema);
     },
   };
 }

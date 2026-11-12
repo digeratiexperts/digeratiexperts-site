@@ -170,6 +170,7 @@ import {
   ticketInScope,
 } from "./portalDeskTickets";
 import { createHubTicketClient } from "./integrations/hubTicketClient";
+import { SECURE_FIELDS_UNAVAILABLE, registerPortalSecureFieldRoutes } from "./portalSecureFields";
 import { hubPriorityFromPortal, type HubTicket } from "./integrations/hubTicketsContract";
 import {
   canSeeHubTicket,
@@ -2064,6 +2065,53 @@ export async function registerRoutes(app: Express) {
     }
     return { tenant, ticket: found.data.ticket as HubTicket, conversation: found.data.conversation, client };
   }
+
+  // DE Desk secure fields (#1179 slice 2): the portal ticket page and portal
+  // chat (client side and DE side) hand a password or key to the Hub ticket
+  // instead of the thread. Same tenant checks as the ticket detail route.
+  // No validateInput/sanitiser here on purpose: it would rewrite the value.
+  registerPortalSecureFieldRoutes(app, {
+    guards: [authMiddleware as any],
+    hubTickets,
+    onStored: (req, meta) => logSecurityEvent("SECURE_FIELD_STORED", req as AuthenticatedRequest, meta),
+    resolveTarget: async (rawReq, res, id) => {
+      const req = rawReq as AuthenticatedRequest;
+      const isDeStaff = req.user?.role === "admin";
+      const authorName = String(req.user?.fullName || req.user?.email || (isDeStaff ? "DE staff" : "Client")).trim().slice(0, 120);
+      const hubOnlyId = parseHubPortalTicketId(id);
+      if (hubOnlyId != null) {
+        const loaded = await loadScopedHubTicket(req, res, hubOnlyId);
+        if (!loaded) return null;
+        return { tenant: loaded.tenant, hubTicketId: hubOnlyId, isDeStaff, authorName };
+      }
+      if (parseDeskPortalTicketId(id)) {
+        res.status(409).json({ error: SECURE_FIELDS_UNAVAILABLE, code: "secure_fields_unavailable" });
+        return null;
+      }
+      let ticket: Awaited<ReturnType<typeof storage.getPortalTicket>>;
+      try {
+        ticket = await storage.getPortalTicket(id);
+      } catch (error: any) {
+        if (sendStorageUnavailable(res, error)) return null;
+        throw error;
+      }
+      if (!ticket) {
+        res.status(404).json({ error: "Ticket not found" });
+        return null;
+      }
+      if (!canAccessPortalTicket(req.user, ticket)) {
+        res.status(403).json({ error: "Access denied" });
+        return null;
+      }
+      const linkedHubId = parseHubAssignedTo(ticket.assignedTo);
+      const owner = ticket.clientId ? portalClients.get(ticket.clientId) : undefined;
+      if (linkedHubId == null || !owner?.hubAccountId) {
+        res.status(409).json({ error: SECURE_FIELDS_UNAVAILABLE, code: "secure_fields_unavailable" });
+        return null;
+      }
+      return { tenant: { accountId: String(owner.hubAccountId), portalClientId: owner.id }, hubTicketId: linkedHubId, isDeStaff, authorName };
+    },
+  });
 
   // Create new ticket
   app.post("/api/portal/tickets", [authMiddleware, validateInput], async (req: AuthenticatedRequest, res: Response) => {
