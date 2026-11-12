@@ -17,6 +17,8 @@ import {
 } from "@/lib/portalTicketAttach";
 import { Callout, EmptyState, Panel, Priority, TicketStatus, Token } from "@/components/portal/ui";
 import { cn } from "@/lib/utils";
+import { usePortalSession } from "@/components/portal/shell/portalSession";
+import { PortalTicketSecureFields } from "@/components/portal/desk/PortalSecureFields";
 
 interface Comment {
   id: string;
@@ -51,6 +53,9 @@ function initials(name: string): string {
 export default function PortalTicketDetail() {
   const params = useParams<{ id: string }>();
   const ticketId = params.id;
+  // DE side of the ticket (portal admin): may add a secure field; reveal stays in the Hub (#1179).
+  const { user: portalSessionUser } = usePortalSession();
+  const isDeStaff = portalSessionUser?.role === "admin";
   const [commentText, setCommentText] = useState("");
   const [attachError, setAttachError] = useState("");
   const [attaching, setAttaching] = useState(false);
@@ -304,6 +309,11 @@ export default function PortalTicketDetail() {
               ))}
             </dl>
           </Panel>
+          {ticketId && (
+            <Panel id="ticket-secure-fields" title="Secure fields">
+              <PortalTicketSecureFields ticketId={ticketId} isDeStaff={isDeStaff} />
+            </Panel>
+          )}
           <Callout tone="info">
             <span className="inline-flex items-start gap-2">
               <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />

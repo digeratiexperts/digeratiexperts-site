@@ -310,6 +310,118 @@
         "secret": "test-secret",
         "signature": "880c145f03110ec45b40647e8e417e8c74133d3cb73326e12e9e9805a3145190"
       }
+    },
+    "portalSecureFields": {
+      "contract": "de.hub.portal-secure-fields/v1",
+      "direction": "portal_to_hub",
+      "auth": {
+        "source": "portal",
+        "scopedSecretEnv": "PORTAL_TO_HUB_SECRET",
+        "signsQuery": true,
+        "legacySecret": "refused"
+      },
+      "operations": {
+        "list": {
+          "method": "GET",
+          "path": "/api/webhooks/portal/tickets/:ticketId/secure-fields",
+          "query": {
+            "required": [
+              "accountId"
+            ],
+            "optional": [
+              "portalClientId"
+            ]
+          },
+          "responseFields": [
+            "contract",
+            "ticketId",
+            "secureFields"
+          ]
+        },
+        "create": {
+          "method": "POST",
+          "path": "/api/webhooks/portal/tickets/:ticketId/secure-fields",
+          "query": {
+            "required": [],
+            "optional": [
+              "accountId",
+              "portalClientId"
+            ]
+          },
+          "bodyFields": [
+            "label",
+            "kind",
+            "secretValue",
+            "ttlHours",
+            "submittedBy",
+            "authorName"
+          ],
+          "responseFields": [
+            "contract",
+            "ticketId",
+            "secureField"
+          ],
+          "noAccountSubmitters": [
+            "client"
+          ]
+        }
+      },
+      "metadataFields": [
+        "id",
+        "ticketId",
+        "label",
+        "kind",
+        "status",
+        "submittedBy",
+        "expiresAt",
+        "expiredAt",
+        "revealCount",
+        "lastRevealedAt",
+        "createdAt"
+      ],
+      "submittedByFields": [
+        "kind",
+        "name"
+      ],
+      "submitters": [
+        "client",
+        "de_staff"
+      ],
+      "kinds": [
+        "password",
+        "wifi",
+        "license_key",
+        "api_key",
+        "pin",
+        "other"
+      ],
+      "statuses": [
+        "active",
+        "expired"
+      ],
+      "ttlHours": {
+        "default": 168,
+        "max": 720
+      },
+      "valueField": "secretValue",
+      "valueReturned": "never",
+      "reveal": "hub_staff_only",
+      "errors": {
+        "400": "body does not match the contract (details never echo the value)",
+        "401": "unsigned, bad signature, or legacy secret",
+        "404": "ticket missing, not this account's, or (no account) not an unlinked website-widget ticket",
+        "409": "accountId missing or unknown, or a no-account submission that is not the client's",
+        "503": "encryption key not configured (nothing stored), integration not configured, or tables not pushed"
+      },
+      "signingSample": {
+        "method": "POST",
+        "path": "/api/webhooks/portal/tickets/1201/secure-fields?accountId=41&portalClientId=client-1",
+        "timestamp": "2026-11-12T16:00:00.000Z",
+        "eventId": "77777777-7777-4777-8777-777777777777",
+        "body": "{\"label\":\"Office Wi-Fi\",\"kind\":\"wifi\",\"secretValue\":\"fake-placeholder-not-a-secret\",\"submittedBy\":\"client\",\"authorName\":\"Sample Contact\"}",
+        "secret": "test-secret",
+        "signature": "1e252b9342e325aa13ab004001e4d46945c7017874ad89c61c75219443763864"
+      }
     }
   }
 }

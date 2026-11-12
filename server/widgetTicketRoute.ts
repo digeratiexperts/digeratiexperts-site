@@ -12,6 +12,8 @@ import { deskTicketSchema } from "@shared/deskTicket";
 import { fallbackTicket, saveTicketOutsideDesk, type DeskFallbackOutcome, type FallbackTicket } from "./deskTicketFallback";
 import { getClient as portalAuthGetClient } from "./portalAuthStore";
 import { createHubTicketClient, type HubTicketClient } from "./integrations/hubTicketClient";
+import { resolveJwtSecret } from "./config/authSecrets";
+import { issueWidgetSecureFieldToken, registerWidgetSecureFieldRoute } from "./portalSecureFields";
 import { hubPriorityFromPortal } from "./integrations/hubTicketsContract";
 import {
   hubAssignedTo,
@@ -232,6 +234,10 @@ export interface WidgetTicketRouteOptions {
   hubTickets?: HubTicketClient;
   /** Where reconciliation notes go; tests capture them. */
   reconciliation?: ReconciliationDeps;
+  /** Signs the DE Desk secure-field token (#1179); production derives it from the portal JWT secret. */
+  secureFieldTokenSecret?: () => string;
+  /** Rate limiter for the widget secure-field route; tests pass a stand-in. */
+  secureFieldRateLimiter?: RequestHandler;
 }
 
 export function registerWidgetTicketRoute(app: Express, options: WidgetTicketRouteOptions = {}): void {
@@ -241,6 +247,10 @@ export function registerWidgetTicketRoute(app: Express, options: WidgetTicketRou
   const probeDeadlineMs = options.probeDeadlineMs ?? DESK_PROBE_DEADLINE_MS;
   const sourceOf = options.ticketsSource ?? (() => ticketsSource());
   const hubTickets = options.hubTickets ?? createHubTicketClient();
+  const secureFieldTokenSecret = options.secureFieldTokenSecret ?? (() => resolveJwtSecret());
+  // DE Desk secure field (#1179): the visitor can hand DE a password for the
+  // Hub ticket they just made, without it entering the chat or the ticket text.
+  registerWidgetSecureFieldRoute(app, { hubTickets, tokenSecret: secureFieldTokenSecret, rateLimiter: options.secureFieldRateLimiter });
 
   app.get(DESK_STATUS_PATH, statusLimiter, async (_req: Request, res: Response) => {
     res.set("Cache-Control", "no-store");
@@ -364,10 +374,25 @@ export function registerWidgetTicketRoute(app: Express, options: WidgetTicketRou
             }
           }
           logSecurityEvent("WIDGET_TICKET_CREATED", req, { email, ticketNumber: hubTicket.number, hubTicketId: hubTicket.id });
+          let secureFieldToken: string | undefined;
+          try {
+            secureFieldToken = issueWidgetSecureFieldToken(
+              {
+                hubTicketId: hubTicket.id,
+                accountId: hubAccountId ? String(hubAccountId) : null,
+                portalClientId: hubAccountId ? portalUser?.clientId ?? null : null,
+                name: visitorName,
+              },
+              secureFieldTokenSecret(),
+            );
+          } catch {
+            // No signing key: the ticket stands; the visitor just gets no secure field.
+          }
           return res.json({
             success: true,
             ticketNumber: hubTicket.number,
             hubTicketId: hubTicket.id,
+            ...(secureFieldToken ? { secureFieldToken } : {}),
             message: "Your support request has been received.",
           });
         }
