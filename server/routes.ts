@@ -5252,10 +5252,9 @@ export async function registerRoutes(app: Express) {
 
   app.get("/api/public/advisor/session/:id", [advisorPollRateLimiter], async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { getSession, publicSessionView } = await import("./services/msp-advisor");
-      const session = getSession(req.params.id);
-      if (!session) return res.status(404).json({ error: "Session not found" });
-      res.json(publicSessionView(session));
+      const { getPublicSessionResponse } = await import("./services/msp-advisor");
+      const result = getPublicSessionResponse(req.params.id);
+      return res.status(result.status).json(result.body);
     } catch (error: any) {
       res.status(500).json({ error: "Failed to load session" });
     }
