@@ -788,6 +788,13 @@ function listEndpoints(): Array<{ method: string; path: string }> {
       .catch((error) => {
         log(`⚠️ quote replay worker not started: ${error?.message || error}`);
       });
+    // Non-sale store and solution submissions past the two-year retention period.
+    // Automatic deletion (DE's action): dry-run unless STORE_PII_RETENTION_DELETE_ENABLED=true.
+    void import("./storeRetention")
+      .then(({ startStoreRetentionWorker }) => startStoreRetentionWorker())
+      .catch((error) => {
+        log(`⚠️ store retention worker not started: ${error?.message || error}`);
+      });
     // Zoho Connect grant presence for the synchronous isConfigured() checks
     // (server/zoho/oauth). After the database is up; never throws.
     void Promise.all([import("./db"), import("./zoho/oauth")])
