@@ -30,6 +30,27 @@
 
 version: 2
 claims:
+  - id: site-gaps-20261111
+    issue: 886
+    owner: grok
+    subsystem: marketing-site-seo-homepage
+    branch: grok/site-quick-wins-20261111
+    base_sha: db78962a
+    started: 2026-11-11
+    status: active
+    files:
+      - docs/plans/SITE-GAPS-ROADMAP-20261111.md (plan, PR and file ownership table)
+      - "PR1 quick wins: client/src/data/caseStudies.ts, client/src/pages/resources/CaseStudies.tsx, CaseStudyDetail.tsx, server/marketingRedirects.ts, shared/organizationSchema.ts, server/routeMeta.ts (applyOrganizationSchema), client/index.html (JSON-LD block), shared/companyContact.ts (PUBLIC_SOCIAL_LINKS), homepage-v2 HeroSection/FaqSection/SiteFooter, MissionValues.tsx"
+      - "PR2 prerender: scripts/prerender/**, server/prerender.ts, client/src/prerenderSwap.ts, client/src/main.tsx, package.json (postbuild)"
+      - "PR3 new pages: client/src/pages/support/HelpDesk.tsx, client/src/pages/solutions/SwitchingProviders.tsx"
+      - "PR4 reviews: client/src/lib/publicReviews.ts, homepage-v2/sections/Reviews.tsx, docs/marketing/REVIEWS-AND-REFERRALS-PLAYBOOK.md"
+      - "PR5 homepage restructure (draft): client/src/pages/homepage-v2/** (HomepageV2.tsx, cta.ts, sections), SolutionsIndex.tsx, CyberFacts.tsx"
+    note: >-
+      Grok Bot on Joe's laptop. Joe approved 2026-11-11 ("do it, approved ...
+      fix all the GAPS"). Stacked PRs off origin/main; Joe merges. Other agents:
+      please avoid homepage-v2/**, server/routeMeta.ts sendShell, and the files
+      above until these PRs land or are closed. No deploy, VPS, migrations,
+      secrets or vendor config.
   - id: c15-portal-audit-repairs-20261109
     issue: 544
     owner: cursor

@@ -1,6 +1,8 @@
 import { CheckIcon } from "../icons";
+import { FAQJsonLd } from "@/components/JsonLd";
 
-const QUESTIONS = [
+/** Rendered as the visible FAQ and as FAQPage structured data, so the two never drift. */
+export const QUESTIONS = [
   {
     question: "What is your best service?",
     answer: "There isn't a universally \"best\" package. ProActive is four operating models — IT, Office, Business, and Enterprise — matched to users, devices, locations, infrastructure, security, compliance, and whether you need fully or co-managed coverage.",
@@ -35,6 +37,7 @@ const CITIES = [
 export function FaqSection(): JSX.Element {
   return (
     <section className="sec t-sonoran" id="faq">
+      <FAQJsonLd faqs={QUESTIONS} />
       <div className="wrap">
         <div className="head">
           <div>

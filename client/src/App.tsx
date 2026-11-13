@@ -1164,11 +1164,8 @@ function Router() {
       )} />
       
       {/* ProActive Ecosystem Pricing */}
-      <Route path="/proactive-ecosystem-pricing" component={() => (
-        <Suspense fallback={<PageLoadingSkeleton />}>
-          <ProActiveEcosystemPricing />
-        </Suspense>
-      )} />
+      {/* /pricing is canonical; the server 301s /proactive-ecosystem-pricing (server/marketingRedirects.ts). */}
+      <Route path="/proactive-ecosystem-pricing">{() => <Redirect to="/pricing" />}</Route>
       <Route path="/pricing" component={() => (
         <Suspense fallback={<PageLoadingSkeleton />}>
           <ProActiveEcosystemPricing />
@@ -1207,6 +1204,9 @@ function Router() {
         </Suspense>
       )} />
       <Route path="/case-studies">{() => <Redirect to="/resources/case-studies" />}</Route>
+      {/* Guessed URLs: the server 301s these (server/marketingRedirects.ts); the SPA mirrors it for in-app links. */}
+      <Route path="/about">{() => <Redirect to="/about/mission-values" />}</Route>
+      <Route path="/services">{() => <Redirect to="/solutions" />}</Route>
       <Route path="/solutions/endpoint-management">{() => <Redirect to="/solutions/threat-detection" />}</Route>
       <Route path="/solutions/identity-management">{() => <Redirect to="/solutions/unified-security" />}</Route>
       <Route path="/solutions/email-security">{() => <Redirect to="/solutions/security-operations" />}</Route>

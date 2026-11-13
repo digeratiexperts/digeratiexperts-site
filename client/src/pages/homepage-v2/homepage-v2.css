@@ -487,6 +487,24 @@
   padding:30px;
   margin-top:56px;
 }
+/* The card links to the full sample report (it previews example values, not a client score). */
+.hv2 a.assess {
+  display:block;
+  color:inherit;
+  text-decoration:none;
+}
+.hv2 a.assess:hover .assess-link,
+.hv2 a.assess:focus-visible .assess-link {
+  text-decoration:underline;
+}
+.hv2 a.assess:focus-visible {
+  outline:2px solid var(--accent-on-band);
+  outline-offset:3px;
+}
+.hv2 .assess-link {
+  display:inline-block;
+  margin-top:18px;
+}
 .hv2 .dex-perch {
   position:absolute;
   top:-70px;

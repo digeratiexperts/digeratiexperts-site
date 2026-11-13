@@ -15,6 +15,7 @@ export default function CaseStudyDetail() {
     title: study ? study.title : "Case Study",
     description: study?.summary || "Digerati Experts case study structure.",
     canonical: study ? `/resources/case-studies/${study.slug}` : "/resources/case-studies",
+    noIndex: !study,
   });
 
   if (!study) {

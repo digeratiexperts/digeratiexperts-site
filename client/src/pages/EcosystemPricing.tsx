@@ -225,7 +225,7 @@ const EcosystemPricing = () => {
           <div className="flex flex-col gap-3 sm:flex-row">
             <HeroActions
               primary={{ label: "Get My Cyber Risk Assessment", href: "/book" }}
-              secondary={{ label: "Compare Packages", href: "/proactive-ecosystem-pricing" }}
+              secondary={{ label: "Compare Packages", href: "/pricing" }}
             />
           </div>
           <ul className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm text-white/70" aria-label="Legend">
@@ -362,7 +362,7 @@ const EcosystemPricing = () => {
         title="Find the fit, then confirm the price"
         lede="* Pricing shown is per-user/month. Minimum user counts and site fees may apply. Contact us for a custom quote based on your specific requirements."
         primary={{ label: "Get My Cyber Risk Assessment", href: "/book", testId: "btn-book-call" }}
-        secondary={{ label: "Compare Packages", href: "/proactive-ecosystem-pricing", testId: "btn-compare-packages" }}
+        secondary={{ label: "Compare Packages", href: "/pricing", testId: "btn-compare-packages" }}
       />
     </PageTemplate>
   );

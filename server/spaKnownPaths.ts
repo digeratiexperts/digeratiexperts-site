@@ -124,7 +124,6 @@ const EXACT = new Set([
   "/quote-wizard",
   "/quote-confirmation",
   "/thank-you-success-page",
-  "/proactive-ecosystem-pricing",
   "/pricing",
   "/ecosystem-pricing",
   "/de-ecosystem-matrix-offical",

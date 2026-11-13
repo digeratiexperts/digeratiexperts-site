@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { COMPANY, PRIMARY_PHONE, PUBLIC_SOCIAL_LINKS } from "@/data/companyContact";
+import { ORGANIZATION_ID, ORGANIZATION_REF, buildOrganizationSchema } from "@shared/organizationSchema";
 
 const SITE_URL = COMPANY.website;
 
@@ -30,6 +31,7 @@ export function JsonLd({ data, id = "jsonld" }: JsonLdProps) {
 
 const ORGANIZATION = {
   "@type": "Organization",
+  "@id": ORGANIZATION_ID,
   "name": COMPANY.legalName,
   "url": SITE_URL,
   "logo": `${SITE_URL}/favicon-512x512.png`,
@@ -44,65 +46,8 @@ const ORGANIZATION = {
   }
 };
 
-const LOCAL_BUSINESS = {
-  "@context": "https://schema.org",
-  "@type": "ITService",
-  "name": "Digerati Experts",
-  "alternateName": "Digerati Experts MSP",
-  "description": "Cybersecurity-first managed IT for Arizona businesses. Partner-backed monitoring, identity/endpoint protection, and accountable day-to-day IT in one operating model.",
-  "url": SITE_URL,
-  "telephone": PRIMARY_PHONE.schemaTelephone || PRIMARY_PHONE.e164,
-  "email": COMPANY.email,
-  "logo": `${SITE_URL}/favicon-512x512.png`,
-  "image": `${SITE_URL}/og-image.png`,
-  "priceRange": "$$",
-  "address": {
-    "@type": "PostalAddress",
-    "addressLocality": COMPANY.addressLocality,
-    "addressRegion": COMPANY.addressRegion,
-    "addressCountry": COMPANY.addressCountry
-  },
-  "geo": {
-    "@type": "GeoCoordinates",
-    "latitude": COMPANY.geo.latitude,
-    "longitude": COMPANY.geo.longitude
-  },
-  "areaServed": [
-    { "@type": "State", "name": "Arizona" },
-    { "@type": "City", "name": "Phoenix" },
-    { "@type": "City", "name": "Scottsdale" },
-    { "@type": "City", "name": "Chandler" },
-    { "@type": "City", "name": "Mesa" },
-    { "@type": "City", "name": "Tempe" },
-    { "@type": "City", "name": "Gilbert" }
-  ],
-  "openingHoursSpecification": [
-    {
-      "@type": "OpeningHoursSpecification",
-      "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
-      "opens": "07:00",
-      "closes": "18:00"
-    }
-  ],
-  "hasOfferCatalog": {
-    "@type": "OfferCatalog",
-    "name": "IT & Cybersecurity Services",
-    "itemListElement": [
-      { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Managed IT Services" } },
-      { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Managed Cybersecurity (SOC/MDR)" } },
-      { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Business Continuity & Disaster Recovery" } },
-      { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Co-Managed IT" } },
-      { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "HIPAA & PCI compliance support" } },
-      { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Unified Communications (UCaaS)" } }
-    ]
-  },
-  "founder": {
-    "@type": "Person",
-    "name": "Joseph R. Petro"
-  },
-  "sameAs": ORGANIZATION.sameAs,
-  "contactPoint": ORGANIZATION.contactPoint,
-};
+/** The single business entity, shared with the server-rendered HTML (shared/organizationSchema.ts). */
+const LOCAL_BUSINESS = buildOrganizationSchema();
 
 export function OrganizationJsonLd() {
   return <JsonLd data={LOCAL_BUSINESS} id="organization" />;
@@ -115,7 +60,7 @@ export function WebSiteJsonLd() {
     "name": "Digerati Experts",
     "url": SITE_URL,
     "description": "Enterprise-grade managed IT and cybersecurity for Arizona businesses.",
-    "publisher": ORGANIZATION,
+    "publisher": ORGANIZATION_REF,
     "potentialAction": {
       "@type": "SearchAction",
       "target": `${SITE_URL}/resources/blog?q={search_term_string}`,
