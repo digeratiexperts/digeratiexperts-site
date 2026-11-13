@@ -359,12 +359,11 @@ health_check() {
   return 0
 }
 
-restart_app || fail "service restart failed — deployment aborted (no silent continue)"
-log "Waiting for health check and exact release verification on 127.0.0.1:$APP_PORT (and public HTTPS if configured)"
-if health_check "$COMMIT"; then
+log "Restarting app and verifying health and exact release on 127.0.0.1:$APP_PORT (and public HTTPS if configured)"
+if restart_app && health_check "$COMMIT"; then
   log "Health check passed; verified live release SHA $COMMIT"
 else
-  log "Health/release verification FAILED — rolling back"
+  log "Restart/health/release verification FAILED — rolling back"
   if [ -n "$PREVIOUS_RELEASE" ] && [ -d "$PREVIOUS_RELEASE" ]; then
     ln -sfn "$PREVIOUS_RELEASE" "$CURRENT_LINK"
     if [ -z "$PREVIOUS_COMMIT" ]; then
