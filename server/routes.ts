@@ -1,4 +1,5 @@
 import { portalCompanyProfile } from "./portalCompanyProfile";
+import { registerPortalOpenAIRoutes } from "./portalOpenAIRoutes";
 import express, { type Express, type Request, type Response, NextFunction } from "express";
 import { storage } from "./storage";
 import {
@@ -1851,30 +1852,9 @@ export async function registerRoutes(app: Express) {
   });
 
   // ===== ADMIN OPENAI CONTROL =====
-  app.get("/api/portal/admin/openai/status", [authMiddleware, requireAdmin], async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      res.json({
-        success: true,
-        enabled: process.env.ENABLE_OPENAI_INTEGRATION === "true",
-        status: "configured",
-      });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  app.post("/api/portal/admin/openai/toggle", [authMiddleware, requireAdmin, validateInput], async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const currentState = process.env.ENABLE_OPENAI_INTEGRATION === "true";
-      res.json({
-        success: true,
-        enabled: !currentState,
-        message: "OpenAI integration toggled",
-      });
-      logSecurityEvent("OPENAI_TOGGLED", req, { state: !currentState });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
+  registerPortalOpenAIRoutes(app, {
+    guards: [authMiddleware, requireAdmin],
+    audit: (req, enabled) => logSecurityEvent("OPENAI_STATE_SET", req, { enabled }),
   });
 
   // ===== TTS (blog listen / read-aloud) — public with rate limit =====

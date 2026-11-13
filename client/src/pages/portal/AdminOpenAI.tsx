@@ -3,95 +3,65 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Power, RefreshCw, Zap } from "lucide-react";
 import { PortalLayout } from "./PortalLayout";
-import { apiRequest, queryClient } from "@/lib/queryClient";
-import { portalGet } from "@/lib/portalApi";
+import { queryClient } from "@/lib/queryClient";
+import { portalFetch } from "@/lib/portalApi";
+import { openAIControlResponseSchema, type OpenAIControlResponse } from "@shared/openaiControl";
 import { cn } from "@/lib/utils";
 import { Callout, Panel, Token } from "@/components/portal/ui";
 
-interface OpenAIStatus {
-  status: {
-    enabled: boolean;
-    apiKey: string;
-    baseUrl: string;
-  };
-  message: string;
+const STATUS_KEY = ["/api/portal/admin/openai/status"] as const;
+
+async function readResponse(response: Response): Promise<OpenAIControlResponse> {
+  const parsed = openAIControlResponseSchema.safeParse(await response.json().catch(() => null));
+  if (!response.ok || !parsed.success) throw new Error("Couldn't confirm the OpenAI state. Refresh status before changing it.");
+  return parsed.data;
 }
 
 const AFFECTED_FEATURES = [
-  { name: "Hybrid AI/Human Chat", detail: "AI-powered chat responses when enabled" },
-  { name: "Ticket Classification", detail: "Automatic support ticket categorization" },
-  { name: "Smart Recommendations", detail: "AI-suggested products and services" },
+  { name: "Assistant chat", detail: "Public and Portal assistant model requests" },
+  { name: "Ticket classification and summaries", detail: "Provider-backed categorization and ticket summaries" },
+  { name: "Speech generation", detail: "New read-aloud audio requests" },
 ];
 
 export function AdminOpenAI() {
   const { toast } = useToast();
-
-  // Fetch OpenAI status
-  const { data: statusData, isLoading: statusLoading, isError: statusError, refetch } = useQuery<OpenAIStatus>({
-    queryKey: ["/api/portal/admin/openai/status"],
-    queryFn: () => portalGet<OpenAIStatus>("/api/portal/admin/openai/status"),
+  const { data: statusData, isLoading: statusLoading, isFetching, isError: statusError, refetch } = useQuery<OpenAIControlResponse>({
+    queryKey: STATUS_KEY,
+    queryFn: async () => readResponse(await portalFetch(STATUS_KEY[0])),
   });
-
   const status = statusData?.status;
   const isEnabled = status?.enabled ?? false;
-
-  // Enable OpenAI
-  const enableMutation = useMutation({
-    mutationFn: async () => {
-      return await apiRequest("/api/portal/admin/openai/enable", "POST", {});
+  const stateMutation = useMutation({
+    mutationFn: async (enabled: boolean) => {
+      const confirmed = await readResponse(await portalFetch(`/api/portal/admin/openai/${enabled ? "enable" : "disable"}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-DE-OpenAI-Control": "1" },
+        body: "{}",
+      }));
+      if (confirmed.status.enabled !== enabled) throw new Error("Couldn't confirm the OpenAI state. Refresh status before changing it.");
+      return confirmed;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/portal/admin/openai/status"] });
-      toast({
-        title: "Success",
-        description: "OpenAI integration enabled",
-        duration: 3000,
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to enable OpenAI",
-        variant: "destructive",
-        duration: 3000,
-      });
+    onSuccess: (confirmed) => {
+      queryClient.setQueryData(STATUS_KEY, confirmed);
+      toast({ title: "State confirmed", description: `OpenAI ${confirmed.status.enabled ? "enabled" : "disabled"} for this server process.`, duration: 3000 });
     },
   });
-
-  // Disable OpenAI
-  const disableMutation = useMutation({
-    mutationFn: async () => {
-      return await apiRequest("/api/portal/admin/openai/disable", "POST", {});
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/portal/admin/openai/status"] });
-      toast({
-        title: "Success",
-        description: "OpenAI integration disabled",
-        duration: 3000,
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to disable OpenAI",
-        variant: "destructive",
-        duration: 3000,
-      });
-    },
-  });
-
-  const anyLoading = statusLoading || statusError || !status || enableMutation.isPending || disableMutation.isPending;
+  const unknownState = statusError || !status || stateMutation.isError;
+  const anyLoading = statusLoading || isFetching || unknownState || stateMutation.isPending;
+  const refreshStatus = async () => {
+    const result = await refetch();
+    if (result.isSuccess) stateMutation.reset();
+  };
 
   return (
     <PortalLayout
       title="OpenAI Billing Control"
-      description="Manage OpenAI API usage and the billing kill switch."
+      description="Control new OpenAI requests from this server process."
       width="wide"
       actions={
         statusLoading ? (
           <Token label="Checking" tone="neutral" />
-        ) : statusError || !status ? (
+        ) : unknownState ? (
           <Token label="Unavailable" tone="warn" />
         ) : (
           <Token label={isEnabled ? "Enabled" : "Disabled"} tone={isEnabled ? "ok" : "bad"} dot />
@@ -100,50 +70,52 @@ export function AdminOpenAI() {
     >
       <div className="space-y-4">
         <Callout
-          tone={statusError || !status ? "info" : isEnabled ? "ok" : "bad"}
-          title={statusLoading ? "Checking integration status…" : statusError || !status ? "Integration status is unavailable" : isEnabled ? "OpenAI integration is enabled" : "OpenAI integration is disabled"}
+          tone={unknownState ? "info" : isEnabled ? "ok" : "bad"}
+          title={statusLoading ? "Checking integration status…" : unknownState ? "Integration status is unavailable" : isEnabled ? "OpenAI integration is enabled" : "OpenAI integration is disabled"}
         >
-          {statusError ? "Refresh to confirm the current state before changing it." : "Current state of OpenAI integration."}
+          {unknownState ? "Refresh to confirm the current state before changing it." : "A runtime change affects this server process only."}
         </Callout>
 
         <Panel id="openai-config" title="Configuration" description="Current API settings">
           <dl className="space-y-4">
             <div>
               <dt className="text-sm font-medium">API Status</dt>
-              <dd className="mt-1 rounded-md border border-border bg-background p-3 font-mono text-sm">{status?.apiKey || "Not configured"}</dd>
+              <dd className="mt-1 rounded-md border border-border bg-background p-3 font-mono text-sm">{status ? status.configured ? "Configured" : "Not configured" : "Unknown"}</dd>
             </div>
             <div>
-              <dt className="text-sm font-medium">Base URL</dt>
-              <dd className="mt-1 break-all rounded-md border border-border bg-background p-3 font-mono text-sm">{status?.baseUrl || "Not configured"}</dd>
+              <dt className="text-sm font-medium">State after restart</dt>
+              <dd className="mt-1 break-all rounded-md border border-border bg-background p-3 font-mono text-sm">{status ? status.restartEnabled ? "Enabled on restart" : "Disabled on restart" : "Unknown"}</dd>
             </div>
           </dl>
           <Callout tone="info" className="mt-4">
-            Disabling OpenAI prevents new API calls from being made, saving on billing. Existing integrations will gracefully handle disabled state.
+            Disabling blocks new provider requests from this process. Requests already sent may finish and incur charges. A restart restores the startup environment setting; other server processes are unaffected. An authorized operator must set ENABLE_OPENAI_INTEGRATION=false for disablement to survive restarts.
           </Callout>
         </Panel>
 
         <Panel id="openai-control" title="Control" description="Change the confirmed integration state">
           <div className="space-y-3">
+            {stateMutation.isError && <Callout tone="bad" title="State not confirmed">Couldn't confirm the OpenAI state. Refresh status before changing it.</Callout>}
+            {status && !status.configured && <Callout tone="info">No API credential is configured. Enabling is unavailable here.</Callout>}
             <Button
-              onClick={() => isEnabled ? disableMutation.mutate() : enableMutation.mutate()}
-              disabled={anyLoading}
+              onClick={() => stateMutation.mutate(!isEnabled)}
+              disabled={anyLoading || (!isEnabled && !status?.configured)}
               variant={isEnabled ? "destructive" : "brand"}
               className="h-11 gap-2"
               data-testid="button-set-openai"
             >
-              {enableMutation.isPending || disableMutation.isPending ? <RefreshCw className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Power className="h-4 w-4" aria-hidden="true" />}
-              {enableMutation.isPending ? "Enabling…" : disableMutation.isPending ? "Disabling…" : statusError || !status ? "Confirm status to change" : isEnabled ? "Disable OpenAI" : "Enable OpenAI"}
+              {stateMutation.isPending ? <RefreshCw className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Power className="h-4 w-4" aria-hidden="true" />}
+              {stateMutation.isPending ? "Saving…" : unknownState ? "Confirm status to change" : isEnabled ? "Disable OpenAI" : "Enable OpenAI"}
             </Button>
 
             <Button
-              onClick={() => refetch()}
-              disabled={statusLoading || enableMutation.isPending || disableMutation.isPending}
+              onClick={() => void refreshStatus()}
+              disabled={isFetching || stateMutation.isPending}
               variant="ghost"
-              className="w-full"
+              className="h-11 w-full"
               data-testid="button-refresh-openai-status"
             >
-              <RefreshCw className={cn("h-4 w-4", statusLoading && "animate-spin")} aria-hidden="true" />
-              {statusLoading ? "Refreshing..." : "Refresh Status"}
+              <RefreshCw className={cn("h-4 w-4", isFetching && "animate-spin")} aria-hidden="true" />
+              {isFetching ? "Refreshing..." : "Refresh Status"}
             </Button>
           </div>
         </Panel>
