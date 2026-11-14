@@ -1,5 +1,5 @@
 export { handleAdvisorChat } from "./advisor";
-export { getSession, publicSessionView, getOrCreateSession } from "./session";
+export { getSession, publicSessionView, getPublicSessionResponse, getOrCreateSession } from "./session";
 export { buildLeadSummary } from "./profile";
 export { materializeAction, isAllowedActionType, sanitizePath } from "./actions";
 export { classifyMode, isPromptInjectionAttempt, isMetaDialogue } from "./classify";
