@@ -29,7 +29,7 @@ function enrolledMethod(user: MfaSubject): PortalMfaMethod | null {
  * sign-in. Enrolled users always get their own method, whether or not the
  * requirement is on.
  */
-export function loginMfaMethod(
+export function secondFactorFor(
   user: MfaSubject,
   env: NodeJS.ProcessEnv = process.env,
 ): PortalMfaMethod | null {
@@ -44,5 +44,5 @@ export function usesEnrollmentFallback(
   user: MfaSubject,
   env: NodeJS.ProcessEnv = process.env,
 ): boolean {
-  return enrolledMethod(user) === null && loginMfaMethod(user, env) === "email";
+  return enrolledMethod(user) === null && secondFactorFor(user, env) === "email";
 }

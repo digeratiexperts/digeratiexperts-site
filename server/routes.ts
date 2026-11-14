@@ -1,5 +1,5 @@
 import { portalCompanyProfile } from "./portalCompanyProfile";
-import { loginMfaMethod, usesEnrollmentFallback } from "./portalClientMfaPolicy";
+import { secondFactorFor, usesEnrollmentFallback } from "./portalClientMfaPolicy";
 import express, { type Express, type Request, type Response, NextFunction } from "express";
 import { storage } from "./storage";
 import {
@@ -3298,7 +3298,7 @@ export async function registerRoutes(app: Express) {
 
       // Enrolled users get their own method. With PORTAL_CLIENT_MFA_REQUIRED
       // on, a client who has not enrolled gets an email code instead.
-      const mfaMethod = loginMfaMethod(user);
+      const mfaMethod = secondFactorFor(user);
       if (mfaMethod) {
         const challengeToken = randomId();
         const TEN_MINUTES = 10 * 60 * 1000;
