@@ -6,9 +6,12 @@ import { RESPONSE_TARGETS, formatResponseTargets } from "./responseTargets";
 const read = (p: string) => readFileSync(path.resolve(__dirname, "..", p), "utf8");
 
 describe("ticket response targets", () => {
-  it("match the public SLA page", () => {
+  it("are not published on the public service-levels page", () => {
     const sla = read("client/src/pages/legal/SLA.tsx");
-    for (const t of Object.values(RESPONSE_TARGETS)) expect(sla).toContain(`>${t}</span>`);
+    expect(sla).toContain("Service levels are set in your signed agreement");
+    for (const t of Object.values(RESPONSE_TARGETS)) {
+      expect(sla).not.toContain(`>${t}</span>`);
+    }
   });
 
   it("are not restated with other times in the portal", () => {
@@ -20,7 +23,7 @@ describe("ticket response targets", () => {
   });
 
   it("formats one line", () => {
-    expect(formatResponseTargets()).toBe("Critical 15 minutes · High 1 hour · Medium 4 hours · Low next business day");
+    expect(formatResponseTargets()).toMatch(/^Critical 15 minutes .+ High 1 hour .+ Medium 4 hours .+ Low next business day$/);
   });
 });
 

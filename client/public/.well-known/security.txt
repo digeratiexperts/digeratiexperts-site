@@ -1,13 +1,9 @@
-# Digerati Experts Security Policy
-# https://securitytxt.org/
-
+# Digerati Experts — security.txt (RFC 9116). DRAFT: not published.
+# Serve at https://digeratiexperts.com/.well-known/security.txt (and the same file on digerati-experts.com).
+# Sign with the PGP key once created; renew "Expires" at least yearly (must be less than 1 year ahead).
 Contact: mailto:security@digeratiexperts.com
-Contact: https://digeratiexperts.com/trust/vulnerability-disclosure
-Expires: 2026-12-31T23:59:59.000Z
-Encryption: https://digeratiexperts.com/.well-known/pgp-key.txt
+Expires: 2027-11-13T23:59:00.000Z
+Policy: https://digeratiexperts.com/trust/vulnerability-disclosure
 Preferred-Languages: en
 Canonical: https://digeratiexperts.com/.well-known/security.txt
-Policy: https://digeratiexperts.com/trust/vulnerability-disclosure
-
-# We appreciate responsible disclosure of security vulnerabilities.
-# Please report any security issues to security@digeratiexperts.com
+# Encryption: https://digeratiexperts.com/.well-known/pgp-key.txt   (add when the key exists)

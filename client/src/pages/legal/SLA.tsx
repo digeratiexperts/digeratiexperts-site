@@ -1,83 +1,44 @@
 import { LegalDocumentLayout } from "@/components/LegalDocumentLayout";
-import { Clock, Mail } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { Link } from "wouter";
 
+/**
+ * The former public SLA page stated response times, 99.9% SOC uptime, and
+ * service credits that belong only in a signed agreement. This page no longer
+ * makes those promises.
+ */
 export default function SLA() {
   return (
     <LegalDocumentLayout
-      title="Service Level Agreement"
-      subtitle="Version 2025.1 | Effective January 1, 2025"
-      description="Digerati Experts Service Level Agreement (SLA): response-time targets, monitoring availability, and how to request the full SLA document."
+      title="Service levels"
+      description="Service levels for Digerati Experts managed services are set in your signed agreement."
       canonical="/legal/sla"
-      icon={<Clock className="h-5 w-5" />}
     >
-      <p className="mb-6 text-lg text-[#3A3448]">
-        Our Service Level Agreement (SLA) defines the specific performance standards and response
-        times you can expect from Digerati Experts' managed services.
+      <p className="mb-4 text-lg leading-relaxed text-[#3A3448]">
+        Service levels are set in your signed agreement.
       </p>
-
-      <div className="mb-8 rounded-lg border border-[var(--de-paper-hairline)] border-l-4 border-l-[#D3126A] bg-white p-6">
-        <h3 className="mb-3 text-xl font-semibold text-[#1A1228]">Standard Response Times:</h3>
-        <div className="space-y-3">
-          <div className="flex items-center justify-between border-b border-[var(--de-paper-hairline)] pb-2">
-            <span className="font-semibold text-[#1A1228]">Critical (Active Breach/System Down)</span>
-            <span className="font-bold text-de-magenta-paper-ink">15 minutes</span>
-          </div>
-          <div className="flex items-center justify-between border-b border-[var(--de-paper-hairline)] pb-2">
-            <span className="font-semibold text-[#1A1228]">High (Major Functionality Impaired)</span>
-            <span className="font-bold text-de-magenta-paper-ink">1 hour</span>
-          </div>
-          <div className="flex items-center justify-between border-b border-[var(--de-paper-hairline)] pb-2">
-            <span className="font-semibold text-[#1A1228]">Medium (Partial Loss)</span>
-            <span className="font-bold text-de-magenta-paper-ink">4 hours</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="font-semibold text-[#1A1228]">Low (Questions/Minor Issues)</span>
-            <span className="font-bold text-de-magenta-paper-ink">Next business day</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="mb-8 rounded-lg border border-[var(--de-paper-hairline)] border-l-4 border-l-[#D3126A] bg-white p-6">
-        <h3 className="mb-3 text-xl font-semibold text-[#1A1228]">SLA Commitments Include:</h3>
-        <ul className="list-disc space-y-2 pl-6 text-[#3A3448]">
-          <li>99.9% uptime for SOC monitoring and security services</li>
-          <li>24/7/365 emergency incident response availability</li>
-          <li>Monthly SLA performance reports</li>
-          <li>Service credits for SLA violations</li>
-          <li>Escalation procedures for unresolved issues</li>
-          <li>Scheduled maintenance windows with advance notice</li>
-        </ul>
-      </div>
-
-      <h2 className="mb-4 mt-8 text-xl font-bold text-[#1A1228]">Request Full SLA Document</h2>
-      <p className="mb-6 text-[#3A3448]">
-        For the complete SLA including service credits, maintenance windows, and detailed
-        performance metrics, please contact our team.
+      <p className="mb-4 leading-relaxed text-[#3A3448]">
+        This website does not promise a service level, response time, monitoring
+        availability, or uptime. If your organization has a signed Master Services
+        Agreement, Order Form, or Statement of Work with Digerati Experts, that
+        agreement is the source of any service levels that apply to you.
       </p>
-
-      <div className="mt-8 flex flex-col gap-4 sm:flex-row">
-        <Button
-          variant="brand"
-          onClick={() => {
-            window.location.href = "mailto:legal@digeratiexperts.com?subject=SLA Request";
-          }}
-          data-testid="button-request-sla"
+      <p className="mb-4 leading-relaxed text-[#3A3448]">
+        For questions about an existing agreement, email{" "}
+        <a
+          href="mailto:admin@digeratiexperts.com"
+          className="underline decoration-[#A30E52]/50 underline-offset-2 hover:decoration-[#A30E52]"
         >
-          <Mail className="mr-2 h-5 w-5" />
-          Request SLA via Email
-        </Button>
-        <Button
-          variant="outline"
-          className="border-black/25 text-[#1A1228] hover:bg-black/5"
-          onClick={() => {
-            window.location.href = PRIMARY_PHONE.telHref;
-          }}
+          admin@digeratiexperts.com
+        </a>
+        . Website use is governed by the{" "}
+        <Link
+          href="/legal/terms-of-use"
+          className="underline decoration-[#A30E52]/50 underline-offset-2 hover:decoration-[#A30E52]"
         >
-          Call {PRIMARY_PHONE.display}
-        </Button>
-      </div>
+          Terms of Use
+        </Link>
+        .
+      </p>
     </LegalDocumentLayout>
   );
 }

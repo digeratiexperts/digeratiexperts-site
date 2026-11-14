@@ -32,9 +32,13 @@ const LEGAL_LINKS = [
   ["Status", "/trust"],
   ["Vulnerability Disclosure", "/trust/vulnerability-disclosure"],
   ["Privacy", "/legal/privacy-policy"],
-  ["Terms", "/legal/terms-of-use"],
+  ["Terms of Use", "/legal/terms-of-use"],
+  ["Cookie Notice", "/legal/cookie-notice"],
+  ["AI Use", "/legal/ai-use"],
+  ["Acceptable Use", "/legal/aup"],
+  ["Subprocessors", "/legal/subprocessors"],
   ["MSA", "/legal/msa"],
-  ["SLA", "/legal/sla"],
+  ["Service levels", "/legal/sla"],
 ];
 
 /** Newsletter: the same POST /api/newsletter the homepage footer used. */

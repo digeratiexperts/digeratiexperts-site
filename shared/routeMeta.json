@@ -204,14 +204,14 @@
   },
   "/legal/privacy-policy": {
     "title": "Privacy Policy | Digerati Experts",
-    "description": "Digerati Experts privacy policy. How we collect, use, and protect personal information in accordance with Arizona and federal laws.",
+    "description": "How Digerati Experts collects, uses, shares, and protects personal information.",
     "canonical": "/legal/privacy-policy",
     "robots": "index, follow",
     "ogImage": "https://digeratiexperts.com/og-image.png"
   },
   "/legal/terms-of-use": {
-    "title": "Terms of Service | Digerati Experts",
-    "description": "Digerati Experts terms of service governing use of managed security and IT services.",
+    "title": "Website and Portal Terms of Use | Digerati Experts",
+    "description": "Terms of Use for the Digerati Experts website, client portal, DE Desk chat, and DE Store pages.",
     "canonical": "/legal/terms-of-use",
     "robots": "index, follow",
     "ogImage": "https://digeratiexperts.com/og-image.png"
@@ -820,8 +820,43 @@
   },
   "/trust/vulnerability-disclosure": {
     "title": "Vulnerability Disclosure Policy | Digerati Experts",
-    "description": "Report security vulnerabilities to Digerati Experts. Our responsible disclosure policy, safe harbor, and response timeline.",
+    "description": "How to report a security vulnerability in Digerati Experts systems, and the safe-harbor commitment.",
     "canonical": "/trust/vulnerability-disclosure",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/legal/cookie-notice": {
+    "title": "Cookie and Tracking Notice | Digerati Experts",
+    "description": "Cookies, analytics, session replay, and advertising pixels on the Digerati Experts website.",
+    "canonical": "/legal/cookie-notice",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/legal/ai-use": {
+    "title": "How Digerati Experts Uses AI | Digerati Experts",
+    "description": "AI use disclosure for DE Desk, calls, the client portal, and Digerati Experts services.",
+    "canonical": "/legal/ai-use",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/legal/subprocessors": {
+    "title": "Subprocessor List | Digerati Experts",
+    "description": "Service providers that may process client personal data for Digerati Experts.",
+    "canonical": "/legal/subprocessors",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/legal/aup": {
+    "title": "Acceptable Use Policy | Digerati Experts",
+    "description": "Rules for clients and users of Digerati Experts services, networks, voice, and messaging.",
+    "canonical": "/legal/aup",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/trust/accessibility": {
+    "title": "Accessibility Statement | Digerati Experts",
+    "description": "Accessibility statement for the Digerati Experts website, client portal, and DE Store.",
+    "canonical": "/trust/accessibility",
     "robots": "index, follow",
     "ogImage": "https://digeratiexperts.com/og-image.png"
   }

@@ -7,7 +7,7 @@ export default function MSA() {
   return (
     <LegalDocumentLayout
       title="Master Service Agreement"
-      subtitle="Version 2025.1 | Effective January 1, 2025"
+      subtitle="Version v2026.10"
       description="Digerati Experts Master Service Agreement (MSA) covers managed IT and security services, responsibilities, billing, and termination. Request a copy from legal."
       canonical="/legal/msa"
       icon={<FileText className="h-5 w-5" />}
