@@ -39,7 +39,7 @@
 ## Export root (gitignored binaries)
 
 ```
-C:\Users\Joe\Projects\Replit-Site\assets\licensed\meshy-batch-01\ORIGINAL\
+C:\Users\Joe\Projects\digeratiexperts-site\assets\licensed\meshy-batch-01\ORIGINAL\
   identity\          ← v4 clay + *-refined.glb + refined preview PNGs
   identity\_rejected\v3-checkmark-shield-019fe3f2\
   endpoint\

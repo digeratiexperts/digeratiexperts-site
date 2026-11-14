@@ -10,6 +10,7 @@ export interface ZohoSubscription {
     name: string;
     price: number;
     billing_cycles: number;
+    description?: string;
   };
   customer_id: string;
   customer_name: string;

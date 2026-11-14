@@ -1,7 +1,7 @@
 # Website Audit Remediation Tracker
 
 **Site:** https://digeratiexperts.com  
-**Repo:** `/root/Replit-Site`  
+**Repo:** `digeratiexperts/digeratiexperts-site`
 **Started:** 2026-08-12  
 **Directive:** Preserve existing functionality. When homepage density is reduced, move content — do not delete — and record a **Content Movement Map**.
 
@@ -37,12 +37,12 @@
 | P0.1 | Legacy domain must not compete in SERPs | P0 | `digerati-experts.com/*` | Keep topical 301s to primary; classify A/B/C routes; protect internal tools | **Partial — A verified live; C hardened in Sprint 1** | `curl -sI` redirect chain; Search Console monitoring |
 | P0.2 | Network Planner publicly reachable with commercial pricing in client JS | P0 | `/official-network-planner`, legacy mirror | `X-Robots-Tag`, robots Disallow, portal auth gate (prod), client gate UI | **Implemented (Sprint 1)** | Smoke + header check; anon browser → login redirect in prod |
 | P0.3 | Enterprise route historically failed | P0 | `/solutions/proactive-enterprise-ecosystem` | Verify root cause; ErrorBoundary; smoke coverage | **Verified working on prod 2026-08-12**; hardened with ErrorBoundary | Browser hydrate shows H1 + pricing; smoke includes route |
-| P0.4 | Multiple phone identities (480-519-5892 vs 325-480-9870 vs fake 555) | P0 | sitewide / advisor / portal | Centralize in `shared/companyContact.ts`; only `PRIMARY_PHONE` (325-480-9870) is public | **Fixed — literals routed through PRIMARY_PHONE; 480 retired** | `shared/publicPhone.test.ts` |
+| P0.4 | Multiple phone identities [DE_PUBLIC_PHONE] vs [DE_PUBLIC_PHONE] vs fake 555) | P0 | sitewide / advisor / portal | Centralize in `shared/companyContact.ts`; only `PRIMARY_PHONE` ([DE_PUBLIC_PHONE]) is public | **Fixed — literals routed through PRIMARY_PHONE; 480 retired** | `shared/publicPhone.test.ts` |
 | P0.5 | Unsupported “60% close within 6 months” claim on homepage | P0 | Homepage stats | Use `cyberAwarenessFacts` / `getHomepageCyberFacts()` | **Fixed** | Unit tests ban substrings; UI uses sourced facts |
 | P0.6 | “Recent Threats” presented stale items as current | P0 | Homepage threats | Shared feed + 45-day freshness + empty state | **Fixed** | `securityUpdates.test.ts`; empty state on homepage as of Aug 2026 |
 | P0.7 | Wrong founder in Organization JSON-LD (`Michael Torres`) | P0 | Schema / homepage | Set founder to Joseph R. Petro | **Fixed** (audit follow-up) | Grep JsonLd; Rich Results test after deploy |
 | P0.8 | Dev/file-path notes leaked in Google reviews UI | P0 | Homepage testimonials | Public-safe empty/unavailable copy only | **Fixed** (audit follow-up) | Visual check; no `googleReviewsManual` / docs paths in DOM |
-| P0.9 | Placeholder `(480) 555-1000` in receipt HTML + portal seed | P0 | Orders / portal seed | Use primary `325-480-9870` via `PRIMARY_PHONE` | **Fixed** (audit follow-up) | Grep `555-1000` |
+| P0.9 | Placeholder `(480) 555-1000` in receipt HTML + portal seed | P0 | Orders / portal seed | Use primary `[DE_PUBLIC_PHONE]` via `PRIMARY_PHONE` | **Fixed** (audit follow-up) | Grep `555-1000` |
 | P1.x | CTA hierarchy, reviews, case studies, Bill of Rights, homepage restructure, store framing | P1 | marketing | Deferred to Sprint 2–4 | **Pending** | — |
 | P2.x | Find My Best Fit, assessment preview, resources, industries | P2 | conversion | Deferred to Sprint 5 | **Pending** | — |
 | SEO/A11y/Perf/Sec | Full technical excellence pass | P2 | global | Deferred to Sprint 6 | **Pending** | — |
@@ -56,7 +56,7 @@
 1. **Audit doc created** (this file).
 2. **P0.5** — Removed indefensible 60% statistic from `DigeratiStatsSection`; wired to canonical sourced facts.
 3. **P0.6** — Centralized security updates; homepage shows max 3 items ≤45 days; empty state when stale; archive page unchanged.
-4. **P0.4** — Added canonical NAP in `shared/companyContact.ts` (`PRIMARY_PHONE` = **325-480-9870**). `480-519-5892` is retired and must not appear unlabeled in app source.
+4. **P0.4** — Added canonical NAP in `shared/companyContact.ts` (`PRIMARY_PHONE` = **[DE_PUBLIC_PHONE]**). `[DE_PUBLIC_PHONE]` is retired and must not appear unlabeled in app source.
 5. **P0.2** — Network Planner / official ecosystem matrix: robots Disallow, `X-Robots-Tag`, production portal-auth redirect, client auth gate UI.
 6. **P0.3** — Production Enterprise page verified loading; route-level `ErrorBoundary`; `useSEO` no longer doubles brand title.
 7. **Smoke** — Extended `scripts/public-route-smoke.mjs` for security-updates + internal-tool noindex checks.

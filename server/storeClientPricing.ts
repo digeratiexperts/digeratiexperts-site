@@ -9,9 +9,34 @@ export type ClientPriceEntry = {
   discountPercent: number;
 };
 
+type ClientPricingEnvironment = {
+  NODE_ENV?: string;
+  PORTAL_ENABLE_DEMO_DATA?: string;
+};
+
+type ClientPricingSources = {
+  environment: ClientPricingEnvironment;
+  databaseAvailable: boolean;
+  loadDatabaseRows: (clientId: string) => Promise<ClientPriceEntry[]>;
+  loadDemoRows?: (clientId: string) => ClientPriceEntry[];
+};
+
+export type StoreClientIdentity = {
+  id: string;
+  companyName: string;
+  serviceType?: string | null;
+};
+
+export class StoreClientPricingUnavailableError extends Error {
+  constructor() {
+    super("Authoritative store client pricing is unavailable");
+    this.name = "StoreClientPricingUnavailableError";
+  }
+}
+
 /**
- * Demo / admin overlay. Used when Postgres has no active rows for the client.
- * Not a public pricing API — checkout still ignores browser unit prices.
+ * Demo / admin overlay. Runtime resolution may use it only when the explicit
+ * nonproduction demo-data flag is enabled. Checkout ignores browser prices.
  */
 const demoClientPricing = new Map<string, ClientPriceEntry[]>([
   [
@@ -79,32 +104,92 @@ export function removeDemoClientPricing(clientId: string, productId: string): Cl
 }
 
 async function loadDbClientPricing(clientId: string): Promise<ClientPriceEntry[]> {
-  await initPromise;
-  if (!dbReady || !db) return [];
+  if (!dbReady || !db) throw new StoreClientPricingUnavailableError();
+  const rows = await db
+    .select()
+    .from(storeClientPricing)
+    .where(and(eq(storeClientPricing.clientId, clientId), eq(storeClientPricing.isActive, true)));
+  return rows
+    .map((row: { productId: string; customPrice: string | number; discountPercent?: string | number | null }) => ({
+      productId: row.productId,
+      customPrice: Number(row.customPrice),
+      discountPercent: Number(row.discountPercent || 0),
+    }))
+    .filter((row: ClientPriceEntry) => Number.isFinite(row.customPrice) && row.customPrice > 0);
+}
+
+export function isDemoClientPricingEnabled(
+  environment: ClientPricingEnvironment = {
+    NODE_ENV: process.env.NODE_ENV,
+    PORTAL_ENABLE_DEMO_DATA: process.env.PORTAL_ENABLE_DEMO_DATA,
+  },
+): boolean {
+  return (
+    environment.NODE_ENV !== "production" &&
+    environment.PORTAL_ENABLE_DEMO_DATA?.trim().toLowerCase() === "true"
+  );
+}
+
+/**
+ * Resolve pricing under an explicit environment policy. Production never
+ * substitutes demo discounts when its authoritative store is unavailable.
+ */
+export async function resolveClientPricingRowsFromSources(
+  clientId: string | null | undefined,
+  sources: ClientPricingSources,
+): Promise<ClientPriceEntry[]> {
+  if (!clientId) return [];
+
+  const production = sources.environment.NODE_ENV === "production";
+  const loadDemoRows = sources.loadDemoRows || listDemoClientPricing;
+  const demoRows = () => isDemoClientPricingEnabled(sources.environment) ? loadDemoRows(clientId) : [];
+
+  if (!sources.databaseAvailable) {
+    if (production) throw new StoreClientPricingUnavailableError();
+    return demoRows();
+  }
+
   try {
-    const rows = await db
-      .select()
-      .from(storeClientPricing)
-      .where(and(eq(storeClientPricing.clientId, clientId), eq(storeClientPricing.isActive, true)));
-    return rows
-      .map((row: { productId: string; customPrice: string | number; discountPercent?: string | number | null }) => ({
-        productId: row.productId,
-        customPrice: Number(row.customPrice),
-        discountPercent: Number(row.discountPercent || 0),
-      }))
-      .filter((row: ClientPriceEntry) => Number.isFinite(row.customPrice) && row.customPrice > 0);
+    const rows = await sources.loadDatabaseRows(clientId);
+    return rows.length ? rows : demoRows();
   } catch (error: any) {
+    if (production) {
+      console.error("[store-pricing] authoritative database lookup failed", {
+        clientId,
+        message: error?.message || String(error),
+      });
+      throw new StoreClientPricingUnavailableError();
+    }
     console.warn("[store-pricing] database lookup skipped:", error?.message || error);
-    return [];
+    return demoRows();
   }
 }
 
-/** DB rows win when present; otherwise the in-memory overlay. */
+/**
+ * Resolve the store tenant from the live authenticated request identity, then
+ * require the durable client record to match that exact tenant id.
+ */
+export async function resolveAuthenticatedStoreClient(
+  user: { clientId?: string | null } | null | undefined,
+  loadClient: (clientId: string) => Promise<StoreClientIdentity | undefined>,
+): Promise<StoreClientIdentity | undefined> {
+  const clientId = user?.clientId?.trim();
+  if (!clientId) return undefined;
+  const client = await loadClient(clientId);
+  return client?.id === clientId ? client : undefined;
+}
+
 export async function resolveClientPricingRows(clientId: string | null | undefined): Promise<ClientPriceEntry[]> {
   if (!clientId) return [];
-  const fromDb = await loadDbClientPricing(clientId);
-  if (fromDb.length) return fromDb;
-  return listDemoClientPricing(clientId);
+  await initPromise;
+  return resolveClientPricingRowsFromSources(clientId, {
+    environment: {
+      NODE_ENV: process.env.NODE_ENV,
+      PORTAL_ENABLE_DEMO_DATA: process.env.PORTAL_ENABLE_DEMO_DATA,
+    },
+    databaseAvailable: Boolean(dbReady && db),
+    loadDatabaseRows: loadDbClientPricing,
+  });
 }
 
 export function toPriceOverrides(rows: ClientPriceEntry[]): Record<string, number> {

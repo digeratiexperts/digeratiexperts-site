@@ -13,12 +13,10 @@ import {
   ArrowLeft,
   AlertCircle,
   CreditCard,
-  QrCode,
   Loader2,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { portalGet, portalPost } from "@/lib/portalApi";
-import zelleQr from "@assets/qrCode_1763920410167.png";
 
 interface PaymentProps {
   invoiceId: string;
@@ -39,7 +37,7 @@ export default function PortalPayment({ invoiceId }: PaymentProps) {
   const [loadingInvoice, setLoadingInvoice] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [selectedMethod, setSelectedMethod] = useState<"card" | "zelle" | null>(null);
+  const [selectedMethod, setSelectedMethod] = useState<"card" | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -179,63 +177,6 @@ export default function PortalPayment({ invoiceId }: PaymentProps) {
                 </CardContent>
               </Card>
 
-              <Card
-                className={`cursor-pointer transition-all ${
-                  selectedMethod === "zelle"
-                    ? "ring-2 ring-[#D3126A] border-[#D3126A]"
-                    : "hover:border-[#D3126A]/50"
-                }`}
-                onClick={() => setSelectedMethod("zelle")}
-                data-testid="card-zelle-method"
-              >
-                <CardContent className="pt-6">
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-4">
-                      <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-                        <QrCode className="h-6 w-6 text-purple-600 dark:text-purple-400" />
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="font-semibold">Zelle</h4>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          Bank transfer via Zelle
-                        </p>
-                      </div>
-                    </div>
-
-                    {selectedMethod === "zelle" && (
-                      <div className="mt-4 p-4 bg-gray-50 dark:bg-slate-800 rounded-lg space-y-3">
-                        <p className="text-sm font-medium">
-                          Scan the QR code below with your banking app:
-                        </p>
-                        <div className="flex justify-center py-2">
-                          <img
-                            src={zelleQr}
-                            alt="Zelle QR Code"
-                            className="h-48 w-48"
-                            data-testid="image-zelle-qr"
-                          />
-                        </div>
-                        <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-900/30 rounded text-sm">
-                          <p className="text-yellow-800 dark:text-yellow-300">
-                            <strong>Amount:</strong> ${amountDue.toFixed(2)}
-                          </p>
-                          <p className="text-yellow-800 dark:text-yellow-300 mt-1">
-                            Reference: {invoiceNumber}
-                          </p>
-                        </div>
-                        <Button
-                          className="w-full"
-                          variant="outline"
-                          onClick={() => navigate("/portal/invoices")}
-                          data-testid="button-zelle-done"
-                        >
-                          Payment Sent
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
             </div>
           </>
         )}

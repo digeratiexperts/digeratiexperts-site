@@ -69,9 +69,10 @@ class ZohoDeskService {
     try {
       const departments = await this.getDepartments();
       if (departments.length > 0) {
-        this.defaultDepartmentId = departments[0].id;
+        const departmentId = departments[0].id;
+        this.defaultDepartmentId = departmentId;
         console.log(`✅ Zoho Desk default department: ${departments[0].name || departments[0].id}`);
-        return this.defaultDepartmentId;
+        return departmentId;
       }
     } catch (err: any) {
       console.warn('Could not fetch departments:', err.message);
@@ -232,6 +233,20 @@ class ZohoDeskService {
       return response.data?.data?.[0] || null;
     } catch (error: any) {
       console.error('Error searching contact:', error.response?.data || error.message);
+      return null;
+    }
+  }
+
+  async getContactById(contactId: string): Promise<ZohoDeskContact | null> {
+    try {
+      const client = await zohoClient.getDeskClient();
+      const orgId = await this.getOrgId();
+      const response = await client.get(`/contacts/${encodeURIComponent(contactId)}`, {
+        headers: { orgId },
+      });
+      return response.data || null;
+    } catch (error: any) {
+      console.error('Error fetching contact:', error.response?.data || error.message);
       return null;
     }
   }

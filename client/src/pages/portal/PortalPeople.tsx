@@ -39,13 +39,11 @@ export function PortalPeople() {
   const [deptName, setDeptName] = useState("");
   const [savingId, setSavingId] = useState<string | null>(null);
 
-  const token = () => localStorage.getItem("portalToken") || "";
-
   const load = async () => {
     setError(null);
     try {
       const res = await fetch("/api/portal/org/people", {
-        headers: { Authorization: `Bearer ${token()}` },
+        credentials: "include",
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to load people");
@@ -65,8 +63,8 @@ export function PortalPeople() {
     try {
       const res = await fetch(`/api/portal/org/people/${person.id}`, {
         method: "PATCH",
+        credentials: "include",
         headers: {
-          Authorization: `Bearer ${token()}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify(patch),
@@ -86,8 +84,8 @@ export function PortalPeople() {
     try {
       const res = await fetch("/api/portal/org/departments", {
         method: "POST",
+        credentials: "include",
         headers: {
-          Authorization: `Bearer ${token()}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ name: deptName.trim() }),

@@ -5,6 +5,7 @@ interface ZohoTokenResponse {
   token_type: string;
   expires_in: number;
   api_domain: string;
+  scope?: string;
 }
 
 class ZohoClient {
@@ -18,8 +19,8 @@ class ZohoClient {
   private readonly clientSecret: string;
   private readonly refreshToken: string;
   constructor() {
-    this.clientId = process.env.ZOHO_CLIENT_ID_API || '';
-    this.clientSecret = process.env.ZOHO_CLIENT_SECRET_API || '';
+    this.clientId = process.env.ZOHO_CLIENT_ID_API || process.env.ZOHO_CLIENT_ID || '';
+    this.clientSecret = process.env.ZOHO_CLIENT_SECRET_API || process.env.ZOHO_CLIENT_SECRET || '';
     this.refreshToken = process.env.ZOHO_REFRESH_TOKEN || '';
     
     if (!this.clientId || !this.clientSecret || !this.refreshToken) {
@@ -47,6 +48,7 @@ class ZohoClient {
             client_secret: this.clientSecret,
             refresh_token: this.refreshToken,
           },
+          timeout: 5000,
         }
       );
 
@@ -90,6 +92,7 @@ class ZohoClient {
             client_secret: this.clientSecret,
             refresh_token: token,
           },
+          timeout: 5000,
         }
       );
 
@@ -127,6 +130,7 @@ class ZohoClient {
     
     return axios.create({
       baseURL: this.apiDomain,
+      timeout: 8000,
       headers: {
         'Authorization': `Zoho-oauthtoken ${token}`,
         'Content-Type': 'application/json',
@@ -139,6 +143,7 @@ class ZohoClient {
     
     return axios.create({
       baseURL: 'https://desk.zoho.com/api/v1',
+      timeout: 8000,
       headers: {
         'Authorization': `Zoho-oauthtoken ${token}`,
         'Content-Type': 'application/json',
@@ -152,6 +157,7 @@ class ZohoClient {
 
     return axios.create({
       baseURL: "https://desk.zoho.com/api/v1",
+      timeout: 15000,
       headers: {
         Authorization: `Zoho-oauthtoken ${token}`,
       },

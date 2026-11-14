@@ -3,22 +3,24 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { PortalLayout } from "./PortalLayout";
-import { Search, BookOpen, Eye } from "lucide-react";
+import { Search, BookOpen, ChevronDown, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { portalGet } from "@/lib/portalApi";
 
 interface KBArticle {
   id: string;
   title: string;
-  slug: string;
   category: string;
-  tags: string[];
-  views: number;
+  content: string;
+  excerpt?: string;
+  readTime?: string;
+  updatedAt?: string;
 }
 
 export default function PortalKB() {
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [expandedArticleId, setExpandedArticleId] = useState<string | null>(null);
 
   const { data: articles = [], isLoading, isError, error } = useQuery<KBArticle[]>({
     queryKey: ["/api/portal/kb"],
@@ -127,12 +129,18 @@ export default function PortalKB() {
                 {filteredArticles.map((article) => (
                   <Card
                     key={article.id}
-                    className="hover:border-[#D3126A]/50 transition-colors cursor-pointer"
+                    className="overflow-hidden transition-colors hover:border-[#D3126A]/50"
                     data-testid={`article-${article.id}`}
                   >
-                    <CardContent className="p-6">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1 min-w-0">
+                    <CardContent className="p-0">
+                      <button
+                        type="button"
+                        className="flex w-full items-start justify-between gap-4 p-6 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#D3126A]"
+                        onClick={() => setExpandedArticleId((current) => current === article.id ? null : article.id)}
+                        aria-expanded={expandedArticleId === article.id}
+                        data-testid={`button-article-${article.id}`}
+                      >
+                        <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2 mb-2">
                             <BookOpen className="h-4 w-4 text-[#D3126A] flex-shrink-0" />
                             <span className="text-xs text-gray-500 dark:text-gray-400">
@@ -142,24 +150,31 @@ export default function PortalKB() {
                           <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
                             {article.title}
                           </h3>
-                          {article.tags && article.tags.length > 0 && (
-                            <div className="flex flex-wrap gap-1">
-                              {article.tags.map((tag) => (
-                                <span
-                                  key={tag}
-                                  className="text-xs bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-400 px-2 py-1 rounded"
-                                >
-                                  {tag}
-                                </span>
-                              ))}
-                            </div>
+                          {article.excerpt && (
+                            <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-300">
+                              {article.excerpt}
+                            </p>
+                          )}
+                          {article.readTime && (
+                            <span className="mt-3 inline-flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+                              <Clock className="h-3 w-3" aria-hidden="true" />
+                              {article.readTime}
+                            </span>
                           )}
                         </div>
-                        <div className="flex items-center gap-1 text-xs text-gray-400 ml-4 flex-shrink-0">
-                          <Eye className="h-3 w-3" />
-                          <span>{article.views}</span>
+                        <ChevronDown
+                          className={`mt-1 h-5 w-5 flex-shrink-0 text-gray-400 transition-transform ${expandedArticleId === article.id ? "rotate-180" : ""}`}
+                          aria-hidden="true"
+                        />
+                      </button>
+                      {expandedArticleId === article.id && (
+                        <div className="border-t border-gray-100 bg-gray-50 px-6 py-5 text-sm leading-relaxed text-gray-700 dark:border-slate-700 dark:bg-slate-800/50 dark:text-gray-200">
+                          <p>{article.content}</p>
+                          <p className="mt-4 text-xs text-gray-500 dark:text-gray-400">
+                            Need help applying this guidance? Open a support ticket so the service team can verify it for your environment.
+                          </p>
                         </div>
-                      </div>
+                      )}
                     </CardContent>
                   </Card>
                 ))}

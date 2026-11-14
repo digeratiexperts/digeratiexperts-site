@@ -32,19 +32,17 @@ Visit these URLs in browser (should all load):
 - Sidebar should show: "Ship Center" and "Procurement Store" (NEW)
 - Click through to verify pages work
 
-### 4. View Smart Recommendations (With Auth Token)
-```bash
-# After logging in, check browser dev tools for portalToken in localStorage
-# Then use it here:
+### 4. View Smart Recommendations (Signed-In Portal Session)
 
-curl "http://localhost:5000/api/portal/clients/CLIENT-ID/smart-recommendations" \
-  -H "Authorization: Bearer YOUR_AUTH_TOKEN"
+- Sign in through the portal UI; authentication remains in HttpOnly cookies and must not appear in localStorage.
+- Open the smart recommendations screen from the portal navigation.
+- Confirm the browser request includes cookies and does not include an `Authorization` header.
 
-# Expected response includes AI suggestions like:
-# - "Check knowledge base article 'Self-Service Password Reset'"
-# - "Security concern detected. Recommend immediate escalation"
-# - "Customer has 3 unresolved critical tickets"
-```
+Expected suggestions include:
+
+- "Check knowledge base article 'Self-Service Password Reset'"
+- "Security concern detected. Recommend immediate escalation"
+- "Customer has 3 unresolved critical tickets"
 
 ### 5. Monitor Event History
 ```bash

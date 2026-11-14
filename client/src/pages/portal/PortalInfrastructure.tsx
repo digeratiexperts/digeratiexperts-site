@@ -53,7 +53,6 @@ export function PortalInfrastructure() {
     }
     setSubmitting(true);
     try {
-      const token = localStorage.getItem("portalToken");
       const body = [
         description.trim(),
         "",
@@ -65,8 +64,8 @@ export function PortalInfrastructure() {
 
       const res = await fetch("/api/portal/tickets", {
         method: "POST",
+        credentials: "include",
         headers: {
-          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({

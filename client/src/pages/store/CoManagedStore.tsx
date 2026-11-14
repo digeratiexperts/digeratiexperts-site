@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback, useDeferredValue } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { MegaMenu } from "@/components/MegaMenu";
 import { DigeratiEnhancedFooterSection } from "../sections/DigeratiEnhancedFooterSection";
@@ -79,6 +79,7 @@ import { StorePageAtmosphere } from "@/components/store/StorePageAtmosphere";
 import { StoreClientBar } from "@/components/store/StoreClientBar";
 
 const SORT_OPTIONS: StoreSortOption[] = ["recommended", "popular", "price_asc", "price_desc"];
+const CATALOG_PAGE_SIZE = 9;
 const PRICE_BAND_IDS = new Set(storePriceBandFilters.map((b) => b.id));
 const PURCHASE_PATH_IDS = new Set(storePurchasePathFilters.map((p) => p.id));
 const COVERAGE_IDS = new Set(coverageDimensions.map((d) => d.id));
@@ -171,10 +172,13 @@ const CoManagedStore = () => {
   const [selectedCoverage, setSelectedCoverage] = useState<CoverageDimension | "all">(
     initial.coverage
   );
+  const [visibleProductCount, setVisibleProductCount] = useState(CATALOG_PAGE_SIZE);
   const [compareList, setCompareList] = useState<StoreProduct[]>([]);
   const [compareOpen, setCompareOpen] = useState(false);
   const [configureProduct, setConfigureProduct] = useState<StoreProduct | null>(null);
   const [guidedOpen, setGuidedOpen] = useState(false);
+  const deferredSearchQuery = useDeferredValue(searchQuery);
+  const resultsAreStale = deferredSearchQuery !== searchQuery;
 
   useEffect(() => {
     if (clientPricing.length > 0) {
@@ -297,7 +301,7 @@ const CoManagedStore = () => {
     if (selectedCoverage !== "all") {
       products = products.filter((p) => productMatchesCoverage(p, selectedCoverage));
     }
-    products = searchProducts(products, searchQuery);
+    products = searchProducts(products, deferredSearchQuery);
     return sortProducts(products, sort);
   }, [
     visibleBase,
@@ -310,9 +314,31 @@ const CoManagedStore = () => {
     selectedPriceBand,
     selectedPurchasePath,
     selectedCoverage,
-    searchQuery,
+    deferredSearchQuery,
     sort,
   ]);
+
+  useEffect(() => {
+    setVisibleProductCount(CATALOG_PAGE_SIZE);
+  }, [
+    selectedCategory,
+    selectedOutcome,
+    selectedVendor,
+    selectedCompliance,
+    selectedSize,
+    selectedPriceBand,
+    selectedPurchasePath,
+    selectedCoverage,
+    searchQuery,
+    billingType,
+    sort,
+  ]);
+
+  const displayedProducts = useMemo(
+    () => filteredProducts.slice(0, visibleProductCount),
+    [filteredProducts, visibleProductCount],
+  );
+  const remainingProductCount = Math.max(filteredProducts.length - displayedProducts.length, 0);
 
   const activeChips = useMemo(() => {
     const chips: { key: string; label: string; onClear: () => void }[] = [];
@@ -749,15 +775,20 @@ const CoManagedStore = () => {
 
                 <motion.div
                   className="mb-10 grid gap-6 md:grid-cols-2 xl:grid-cols-3"
+                  aria-busy={resultsAreStale}
                   variants={containerVariants}
                   initial="hidden"
                   animate="visible"
                   key={`${selectedCategory}-${selectedOutcome}-${selectedVendor}-${selectedCompliance}-${selectedSize}-${selectedPriceBand}-${selectedPurchasePath}-${selectedCoverage}-${searchQuery}-${billingType}-${sort}`}
                 >
-                  {filteredProducts.map((product) => {
+                  {displayedProducts.map((product) => {
                     const pricing = getProductPrice(product.id, product.basePrice);
                     return (
-                      <motion.div key={product.id} variants={itemVariants}>
+                      <motion.div
+                        key={product.id}
+                        variants={itemVariants}
+                        className="[content-visibility:auto] [contain-intrinsic-size:0_640px]"
+                      >
                         <StoreProductCard
                           product={product}
                           price={pricing.price}
@@ -778,6 +809,27 @@ const CoManagedStore = () => {
                     );
                   })}
                 </motion.div>
+
+                {filteredProducts.length > 0 ? (
+                  <div className="mb-10 flex flex-col items-center gap-3 rounded-xl border border-white/10 bg-[#121212] px-4 py-5 text-center sm:flex-row sm:justify-between sm:text-left">
+                    <p className="text-sm text-white/60" aria-live="polite">
+                      Showing {displayedProducts.length} of {filteredProducts.length} matching products
+                    </p>
+                    {remainingProductCount > 0 ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full border-white/20 bg-transparent text-white hover:bg-white/5 sm:w-auto"
+                        onClick={() =>
+                          setVisibleProductCount((current) => current + CATALOG_PAGE_SIZE)
+                        }
+                        data-testid="button-load-more-products"
+                      >
+                        Load {Math.min(CATALOG_PAGE_SIZE, remainingProductCount)} more
+                      </Button>
+                    ) : null}
+                  </div>
+                ) : null}
 
                 {filteredProducts.length === 0 && (
                   <div

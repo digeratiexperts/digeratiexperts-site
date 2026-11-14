@@ -1,4 +1,5 @@
 import crypto from "crypto";
+import { normalizePaymentAmount } from "./paymentIntegrity";
 
 const ZOHO_PAYMENTS_BASE_URL = "https://payments.zoho.com/api/v1";
 const ZOHO_ACCOUNTS_TOKEN_URL = "https://accounts.zoho.com/oauth/v2/token";
@@ -6,6 +7,8 @@ const ZOHO_HOSTED_CHECKOUT_URL = "https://payments.zoho.com/hostedcheckout";
 const ZOHO_METADATA_MAX_ITEMS = 5;
 const ZOHO_METADATA_KEY_MAX_LENGTH = 20;
 const ZOHO_METADATA_VALUE_MAX_LENGTH = 500;
+const ZOHO_PAYMENT_REFERENCE_MAX_LENGTH = 50;
+const ZOHO_REQUEST_TIMEOUT_MS = 4_000;
 
 interface ZohoPaymentSession {
   payment_session_id: string;
@@ -28,17 +31,51 @@ interface ZohoTokenResponse {
 }
 
 export interface ZohoPaymentWebhookEvent {
+  eventId: string | null;
+  eventTimeMs: number | null;
+  liveMode: boolean | null;
   eventType: string;
   paymentId: string | null;
+  paymentSessionId: string | null;
   referenceNumber: string | null;
   invoiceNumber: string | null;
   amount: string | null;
+  currency: string | null;
   status: string | null;
   metadata: Array<{ key: string; value: string }>;
 }
 
+export interface ZohoPaymentSessionSnapshot {
+  paymentSessionId: string | null;
+  referenceNumber: string | null;
+  invoiceNumber: string | null;
+  amount: string | null;
+  currency: string | null;
+  status: string | null;
+  payments: Array<{ paymentId: string; status: string }>;
+}
+
+export interface WebhookSignatureVerificationOptions {
+  nowMs?: number;
+  maxAgeMs?: number;
+  futureToleranceMs?: number;
+}
+
 function safeText(value: unknown, maxLength: number): string {
   return String(value ?? "").trim().slice(0, maxLength);
+}
+
+function requiredPaymentReference(value: unknown): string {
+  const reference = String(value ?? "").trim();
+  if (!reference) throw new Error("Zoho Payments requires a payment reference.");
+  if (reference.length > ZOHO_PAYMENT_REFERENCE_MAX_LENGTH) {
+    throw new Error("Zoho Payments references must be 50 characters or fewer.");
+  }
+  return reference;
+}
+
+function isSensitiveMetadataKey(key: string): boolean {
+  return /(email|name|phone|address|company)/i.test(key);
 }
 
 export class ZohoPaymentsService {
@@ -50,6 +87,23 @@ export class ZohoPaymentsService {
   private accessToken: string | null = null;
   private accessTokenExpiresAt = 0;
   private refreshPromise: Promise<string> | null = null;
+
+  private async fetchWithTimeout(input: string | URL, init: RequestInit): Promise<Response> {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), ZOHO_REQUEST_TIMEOUT_MS);
+    const upstreamSignal = init.signal;
+    const abortFromUpstream = () => controller.abort(upstreamSignal?.reason);
+
+    if (upstreamSignal?.aborted) abortFromUpstream();
+    else upstreamSignal?.addEventListener("abort", abortFromUpstream, { once: true });
+
+    try {
+      return await fetch(input, { ...init, signal: controller.signal });
+    } finally {
+      clearTimeout(timeout);
+      upstreamSignal?.removeEventListener("abort", abortFromUpstream);
+    }
+  }
 
   constructor() {
     this.accountId = process.env.ZOHO_PAYMENTS_ACCOUNT_ID || "";
@@ -100,7 +154,7 @@ export class ZohoPaymentsService {
       refresh_token: this.refreshToken,
     });
 
-    const response = await fetch(ZOHO_ACCOUNTS_TOKEN_URL, {
+    const response = await this.fetchWithTimeout(ZOHO_ACCOUNTS_TOKEN_URL, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body,
@@ -137,7 +191,7 @@ export class ZohoPaymentsService {
     const token = await this.getAccessToken();
     const separator = path.includes("?") ? "&" : "?";
     const url = `${ZOHO_PAYMENTS_BASE_URL}${path}${separator}account_id=${encodeURIComponent(this.accountId)}`;
-    const response = await fetch(url, {
+    const response = await this.fetchWithTimeout(url, {
       ...init,
       headers: {
         "Content-Type": "application/json",
@@ -171,7 +225,16 @@ export class ZohoPaymentsService {
       throw new Error("Zoho Payments requires a positive payment amount.");
     }
 
-    const orderNumber = safeText(params.orderNumber, 50);
+    const orderNumber = requiredPaymentReference(params.orderNumber);
+    const normalizedPayment = normalizePaymentAmount(
+      params.totalAmount,
+      params.currency || "USD",
+    );
+    const providerAmount = Number(normalizedPayment.amountDecimal);
+    const providerRoundTrip = normalizePaymentAmount(providerAmount, normalizedPayment.currency);
+    if (providerRoundTrip.amountMinor !== normalizedPayment.amountMinor) {
+      throw new Error("Zoho Payments amount cannot be represented exactly.");
+    }
     const lineSummary = params.lineItems
       .slice(0, 5)
       .map((item) => `${safeText(item.name, 80)} x${Math.max(1, Number(item.quantity) || 1)}`)
@@ -184,6 +247,7 @@ export class ZohoPaymentsService {
 
     const metaData = Object.entries({ orderNumber, ...(params.metadata || {}) })
       .filter(([key, value]) => key && value !== undefined && value !== null)
+      .filter(([key]) => !isSensitiveMetadataKey(key))
       .slice(0, ZOHO_METADATA_MAX_ITEMS)
       .map(([key, value]) => ({
         key: safeText(key, ZOHO_METADATA_KEY_MAX_LENGTH),
@@ -191,8 +255,8 @@ export class ZohoPaymentsService {
       }));
 
     const payload = {
-      amount: Number(params.totalAmount.toFixed(2)),
-      currency: params.currency || "USD",
+      amount: providerAmount,
+      currency: normalizedPayment.currency,
       expires_in: 900,
       description,
       invoice_number: orderNumber,
@@ -264,7 +328,35 @@ export class ZohoPaymentsService {
     return data?.payments_session || data?.payment_session || data;
   }
 
-  verifyWebhookSignature(payload: string | Buffer, signatureHeader: string): boolean {
+  async getPaymentSessionSnapshot(sessionId: string): Promise<ZohoPaymentSessionSnapshot> {
+    const session = await this.getPaymentSession(sessionId);
+    const payments = Array.isArray(session?.payments)
+      ? session.payments
+          .filter((payment: any) => payment?.payment_id || payment?.id)
+          .map((payment: any) => ({
+            paymentId: String(payment.payment_id || payment.id),
+            status: String(payment.status || ""),
+          }))
+      : [];
+
+    return {
+      paymentSessionId: session?.payments_session_id || session?.payment_session_id || session?.id
+        ? String(session.payments_session_id || session.payment_session_id || session.id)
+        : null,
+      referenceNumber: session?.reference_number ? String(session.reference_number) : null,
+      invoiceNumber: session?.invoice_number ? String(session.invoice_number) : null,
+      amount: session?.amount !== undefined ? String(session.amount) : null,
+      currency: session?.currency ? String(session.currency) : null,
+      status: session?.status ? String(session.status) : null,
+      payments,
+    };
+  }
+
+  verifyWebhookSignature(
+    payload: string | Buffer,
+    signatureHeader: string,
+    options: WebhookSignatureVerificationOptions = {},
+  ): boolean {
     if (!this.looksConfigured(this.signingKey) || !signatureHeader) {
       return false;
     }
@@ -277,6 +369,20 @@ export class ZohoPaymentsService {
     const timestamp = fields.get("t") || "";
     const suppliedSignature = fields.get("v") || "";
     if (!timestamp || !suppliedSignature) {
+      return false;
+    }
+
+    const timestampNumber = Number(timestamp);
+    if (!Number.isFinite(timestampNumber) || timestampNumber <= 0) {
+      return false;
+    }
+    const timestampMs = timestampNumber < 1_000_000_000_000
+      ? timestampNumber * 1000
+      : timestampNumber;
+    const nowMs = options.nowMs ?? Date.now();
+    const maxAgeMs = options.maxAgeMs ?? 5 * 60_000;
+    const futureToleranceMs = options.futureToleranceMs ?? 60_000;
+    if (timestampMs < nowMs - maxAgeMs || timestampMs > nowMs + futureToleranceMs) {
       return false;
     }
 
@@ -295,6 +401,21 @@ export class ZohoPaymentsService {
     return crypto.timingSafeEqual(suppliedBuffer, expectedBuffer);
   }
 
+  parseWebhookPayload(payload: string | Buffer): Record<string, unknown> {
+    const raw = typeof payload === "string" ? payload : payload.toString("utf-8");
+    const numericEventId = raw.match(/"event_id"\s*:\s*(-?\d+)/);
+    if (numericEventId && (!/^\d{1,40}$/.test(numericEventId[1]) || numericEventId[1] === "0")) {
+      throw new Error("Zoho Payments webhook event_id is invalid.");
+    }
+
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      throw new Error("Zoho Payments webhook payload must be a JSON object.");
+    }
+    if (numericEventId) parsed.event_id = numericEventId[1];
+    return parsed;
+  }
+
   parseWebhookEvent(event: any): ZohoPaymentWebhookEvent {
     const payment = event?.event_object?.payment || event?.data?.payment || event?.data || {};
     const metadata = Array.isArray(payment?.meta_data)
@@ -304,11 +425,26 @@ export class ZohoPaymentsService {
       : [];
 
     return {
+      eventId: event?.event_id !== undefined && event?.event_id !== null
+        ? String(event.event_id)
+        : event?.id !== undefined && event?.id !== null
+          ? String(event.id)
+          : null,
+      eventTimeMs: (() => {
+        const raw = Number(event?.event_time ?? event?.created_time);
+        if (!Number.isFinite(raw) || raw <= 0) return null;
+        return raw < 1_000_000_000_000 ? raw * 1000 : raw;
+      })(),
+      liveMode: typeof event?.live_mode === "boolean" ? event.live_mode : null,
       eventType: String(event?.event_type || event?.type || ""),
       paymentId: payment?.payment_id ? String(payment.payment_id) : null,
+      paymentSessionId: payment?.payments_session_id || payment?.payment_session_id
+        ? String(payment.payments_session_id || payment.payment_session_id)
+        : null,
       referenceNumber: payment?.reference_number ? String(payment.reference_number) : null,
       invoiceNumber: payment?.invoice_number ? String(payment.invoice_number) : null,
       amount: payment?.amount !== undefined ? String(payment.amount) : null,
+      currency: payment?.currency ? String(payment.currency) : null,
       status: payment?.status ? String(payment.status) : null,
       metadata,
     };

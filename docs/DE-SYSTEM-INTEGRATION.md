@@ -1,6 +1,6 @@
 # DE system integration
 
-**Systems:** Replit-Site (website + Client Portal, `:3300`) and Intelligence-Hub / TechSales (`techsales.digerati-experts.com`, `:3100`).  
+**Systems:** `digeratiexperts-site` (website + Client Portal, `:3300`) and Intelligence-Hub / TechSales (`techsales.digerati-experts.com`, `:3100`).
 **Not used:** legacy `digeratiexperts/TechSales`.  
 **Do not rotate** live `TECHSALES_SYNC_TOKEN` / `WEBSITE_LEAD_WEBHOOK_SECRET` in this change.
 

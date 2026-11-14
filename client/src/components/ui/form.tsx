@@ -106,10 +106,14 @@ const FormLabel = React.forwardRef<
 })
 FormLabel.displayName = "FormLabel"
 
+type FormControlProps = React.ComponentPropsWithoutRef<typeof Slot> & {
+  required?: boolean
+}
+
 const FormControl = React.forwardRef<
   React.ElementRef<typeof Slot>,
-  React.ComponentPropsWithoutRef<typeof Slot>
->(({ ...props }, ref) => {
+  FormControlProps
+>(({ required: requiredProp, ...props }, ref) => {
   const { error, formItemId, formDescriptionId, formMessageId, required } =
     useFormField()
 
@@ -118,8 +122,13 @@ const FormControl = React.forwardRef<
   const isRequired =
     props["aria-required"] === true ||
     props["aria-required"] === "true" ||
-    props.required === true ||
+    requiredProp === true ||
     !!required
+
+  const requiredProps = {
+    "aria-required": isRequired || undefined,
+    required: isRequired || undefined,
+  }
 
   return (
     <Slot
@@ -132,8 +141,7 @@ const FormControl = React.forwardRef<
       }
       aria-invalid={!!error}
       {...props}
-      aria-required={isRequired || undefined}
-      required={isRequired || undefined}
+      {...requiredProps}
     />
   )
 })

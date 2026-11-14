@@ -1,6 +1,6 @@
 # DE headshots / founder photography
 
-**Status:** Empty — no Joseph Petro headshots found in the Replit-Site repo or common local folders during the 2026-08-08 inventory.
+**Status:** Empty — no Joseph Petro headshots found in the site repo or common local folders during the 2026-08-08 inventory.
 
 ## Drop originals here (private)
 

@@ -7,6 +7,11 @@ import { useLocation } from "wouter";
 import logoImage from "@assets/DE-Logo-new_1762461524794.webp";
 import TurnstileWidget from "@/components/TurnstileWidget";
 import { useSEO } from "@/hooks/useSEO";
+import {
+  portalLoginUrlAfterMfaHydration,
+  readPortalSsoMfaHandoff,
+  safePortalReturnTo,
+} from "@/lib/portalSsoMfa";
 
 type LoginStep = "credentials" | "mfa";
 
@@ -15,19 +20,30 @@ function readQueryParam(name: string): string {
   return new URLSearchParams(window.location.search).get(name) || "";
 }
 
+function safeReturnTo(): string {
+  return safePortalReturnTo(readQueryParam("returnTo"));
+}
+
 export default function PortalLogin() {
   useSEO({
     title: "Client Portal Login",
     description: "Sign in to the Digerati Experts Client Portal. For existing clients only.",
     noIndex: true,
   });
-  const [step, setStep] = useState<LoginStep>("credentials");
+  const [ssoMfaHandoff] = useState(() => (
+    typeof window === "undefined"
+      ? null
+      : readPortalSsoMfaHandoff(window.location.search, window.location.hash)
+  ));
+  const [step, setStep] = useState<LoginStep>(ssoMfaHandoff ? "mfa" : "credentials");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [mfaCode, setMfaCode] = useState("");
-  const [mfaToken, setMfaToken] = useState("");
-  const [mfaMethod, setMfaMethod] = useState<"totp" | "email">("totp");
-  const [mfaMessage, setMfaMessage] = useState("");
+  const [mfaToken, setMfaToken] = useState(ssoMfaHandoff?.mfaToken || "");
+  const [mfaMethod, setMfaMethod] = useState<"totp" | "email">(
+    ssoMfaHandoff?.mfaMethod || "totp",
+  );
+  const [mfaMessage, setMfaMessage] = useState(ssoMfaHandoff?.message || "");
   const [turnstileToken, setTurnstileToken] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -46,68 +62,21 @@ export default function PortalLogin() {
   }, []);
 
   useEffect(() => {
-    const token = readQueryParam("token");
-    const zohoSso = readQueryParam("zoho_sso");
     const err = readQueryParam("error");
     const message = readQueryParam("message");
-    const returnTo = readQueryParam("returnTo") || "/portal/dashboard";
 
     if (err) {
       setError(message || "Sign-in failed. Please try again.");
+    } else if (readQueryParam("mfa") === "required" && !ssoMfaHandoff) {
+      setError("MFA session expired. Please sign in with Zoho again.");
     }
 
-    if (zohoSso === "1" && token) {
-      (async () => {
-        // Persist token first — JWT decode must never block session handoff
-        localStorage.setItem("portalToken", token);
-        try {
-          let payload: any = null;
-          try {
-            const payloadPart = token.split(".")[1];
-            payload = payloadPart
-              ? JSON.parse(atob(payloadPart.replace(/-/g, "+").replace(/_/g, "/")))
-              : null;
-          } catch {
-            /* non-fatal */
-          }
-          try {
-            const meRes = await fetch("/api/portal/me", {
-              headers: { Authorization: `Bearer ${token}` },
-              credentials: "include",
-            });
-            const meData = await meRes.json();
-            if (meRes.ok && meData.user) {
-              localStorage.setItem("portalUser", JSON.stringify(meData.user));
-              localStorage.setItem("portalUserId", meData.user.id);
-              if (meData.user.email) localStorage.setItem("userEmail", meData.user.email);
-            } else {
-              const user = {
-                id: payload?.userId || "portal-user",
-                email: payload?.email || "",
-                role: payload?.role || "user",
-                storeRole: payload?.storeRole || "prospect",
-                clientId: payload?.clientId ?? null,
-                orgRole: payload?.orgRole || "staff",
-                fullName: payload?.email?.split("@")[0] || "Portal User",
-              };
-              localStorage.setItem("portalUser", JSON.stringify(user));
-              localStorage.setItem("portalUserId", user.id);
-              if (user.email) localStorage.setItem("userEmail", user.email);
-            }
-          } catch {
-            /* navigate with token; capabilities refresh on next /me */
-          }
-          const dest =
-            returnTo.startsWith("/portal") && !returnTo.startsWith("//")
-              ? returnTo
-              : "/portal/dashboard";
-          window.history.replaceState({}, "", "/portal/login");
-          navigate(dest);
-        } catch {
-          setError("Zoho sign-in completed but session handoff failed. Please try again.");
-        }
-      })();
-      return;
+    if (ssoMfaHandoff) {
+      window.history.replaceState(
+        window.history.state,
+        "",
+        portalLoginUrlAfterMfaHydration(window.location.pathname, window.location.search),
+      );
     }
 
     let cancelled = false;
@@ -123,7 +92,7 @@ export default function PortalLogin() {
     return () => {
       cancelled = true;
     };
-  }, [navigate]);
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -154,15 +123,9 @@ export default function PortalLogin() {
       }
 
       localStorage.setItem("portalUser", JSON.stringify(data.user));
-      localStorage.setItem("portalToken", data.token);
       localStorage.setItem("portalUserId", data.user?.id || "portal-user");
-      localStorage.setItem("userEmail", email);
-      const returnTo = readQueryParam("returnTo");
-      const dest =
-        returnTo.startsWith("/portal") && !returnTo.startsWith("//")
-          ? returnTo
-          : "/portal/dashboard";
-      navigate(dest);
+      localStorage.setItem("userEmail", data.user?.email || email);
+      navigate(safePortalReturnTo(data.returnTo || safeReturnTo()));
     } catch (err) {
       setError("Connection error. Please try again.");
     } finally {
@@ -191,15 +154,9 @@ export default function PortalLogin() {
       }
 
       localStorage.setItem("portalUser", JSON.stringify(data.user));
-      localStorage.setItem("portalToken", data.token);
       localStorage.setItem("portalUserId", data.user?.id || "portal-user");
-      localStorage.setItem("userEmail", email);
-      const returnTo = readQueryParam("returnTo");
-      const dest =
-        returnTo.startsWith("/portal") && !returnTo.startsWith("//")
-          ? returnTo
-          : "/portal/dashboard";
-      navigate(dest);
+      localStorage.setItem("userEmail", data.user?.email || email);
+      navigate(safePortalReturnTo(data.returnTo || safeReturnTo()));
     } catch (err) {
       setError("Connection error. Please try again.");
     } finally {
@@ -208,8 +165,7 @@ export default function PortalLogin() {
   };
 
   const returnToForZoho = (() => {
-    const r = readQueryParam("returnTo");
-    return r.startsWith("/portal") && !r.startsWith("//") ? r : "/portal/dashboard";
+    return safeReturnTo();
   })();
   const zohoStartHref = `/api/portal/auth/zoho/start?returnTo=${encodeURIComponent(returnToForZoho)}`;
   const showZoho = zohoConfigured !== false;

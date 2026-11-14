@@ -630,23 +630,33 @@ export default function SalesProcess() {
   const [showQA, setShowQA] = useState(false);
   const [expandedQACategories, setExpandedQACategories] = useState<string[]>([]);
   const [expandedQAItems, setExpandedQAItems] = useState<string[]>([]);
+  const [portalRole, setPortalRole] = useState<string | null>(null);
+  const [roleReady, setRoleReady] = useState(false);
 
-  const portalUser = (() => {
-    try {
-      return localStorage.getItem("portalUser")
-        ? JSON.parse(localStorage.getItem("portalUser")!)
-        : null;
-    } catch {
-      return null;
-    }
-  })();
-  const isAdmin = portalUser?.role === "admin";
+  const isAdmin = portalRole === "admin";
 
   useEffect(() => {
-    if (!localStorage.getItem("portalToken")) {
-      window.location.href = "/portal/login";
-    }
+    let cancelled = false;
+    fetch("/api/portal/me", { credentials: "include" })
+      .then(async (response) => {
+        const data = response.ok ? await response.json() : null;
+        if (!cancelled) setPortalRole(data?.user?.role || null);
+      })
+      .finally(() => {
+        if (!cancelled) setRoleReady(true);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
+
+  if (!roleReady) {
+    return (
+      <PortalLayout title="Sales Process">
+        <p className="text-sm text-gray-500">Checking authorization…</p>
+      </PortalLayout>
+    );
+  }
 
   // Internal sales playbook — clients must use TechSales, not the Client Portal
   if (!isAdmin) {

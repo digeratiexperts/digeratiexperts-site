@@ -1,0 +1,31 @@
+appId: com.digeratiexperts.desktop
+productName: Digerati Experts
+artifactName: ${productName}-${version}-${os}-${arch}.${ext}
+asar: true
+directories:
+  buildResources: assets
+  output: release
+files:
+  - dist/main.js
+  - dist/preload.js
+  - dist/security.js
+  - assets/de-tray.png
+  - assets/icon.png
+protocols:
+  - name: Digerati Experts Portal
+    schemes:
+      - digeratiexperts
+win:
+  target:
+    - nsis
+mac:
+  category: public.app-category.business
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  target:
+    - dmg
+linux:
+  category: Office
+  target:
+    - AppImage
+publish: null

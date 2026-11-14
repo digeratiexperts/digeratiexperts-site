@@ -48,6 +48,49 @@ export type HubCompanyOrdersResponse = {
   error?: string;
 };
 
+export const TECHSALES_CONTRACT_DOWNLOAD_TIMEOUT_MS = 30_000;
+export const TECHSALES_CONTRACT_DOWNLOAD_MAX_BYTES = 50 * 1024 * 1024;
+
+class HubContractDownloadLimitError extends Error {
+  constructor() {
+    super("TechSales contract download exceeded the response limit");
+    this.name = "HubContractDownloadLimitError";
+  }
+}
+
+async function readHubContractDownloadBody(response: Response): Promise<Buffer> {
+  const declaredLength = response.headers.get("content-length")?.trim();
+  if (declaredLength && /^\d+$/.test(declaredLength)) {
+    const declaredBytes = Number(declaredLength);
+    if (!Number.isSafeInteger(declaredBytes) || declaredBytes > TECHSALES_CONTRACT_DOWNLOAD_MAX_BYTES) {
+      await response.body?.cancel().catch(() => undefined);
+      throw new HubContractDownloadLimitError();
+    }
+  }
+
+  if (!response.body) return Buffer.alloc(0);
+
+  const reader = response.body.getReader();
+  const chunks: Buffer[] = [];
+  let totalBytes = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      totalBytes += value.byteLength;
+      if (totalBytes > TECHSALES_CONTRACT_DOWNLOAD_MAX_BYTES) {
+        await reader.cancel().catch(() => undefined);
+        throw new HubContractDownloadLimitError();
+      }
+      chunks.push(Buffer.from(value));
+    }
+  } finally {
+    reader.releaseLock();
+  }
+
+  return Buffer.concat(chunks, totalBytes);
+}
+
 const WEBSITE_PATHS: Partial<Record<DeSyncEventType, string>> = {
   "lead.created": "/api/integrations/v1/website/leads",
   "quote.requested": "/api/integrations/v1/website/quote-requests",
@@ -270,30 +313,49 @@ export async function fetchHubContractDownload(
   else qs.set("companyName", companyName);
   qs.set("kind", kind);
   const url = `${base}/webhooks/portal/company-documents/${signatureId}/download?${qs.toString()}`;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), TECHSALES_CONTRACT_DOWNLOAD_TIMEOUT_MS);
+  timeout.unref?.();
   try {
     const res = await fetch(url, {
       method: "GET",
+      signal: controller.signal,
       headers: {
         Authorization: `Bearer ${token}`,
         "x-de-sync-token": token,
       },
     });
     if (!res.ok) {
+      await res.body?.cancel().catch(() => undefined);
       logger.error("TechSales document download failed", { status: res.status, signatureId });
       return null;
     }
-    const ab = await res.arrayBuffer();
+    const buffer = await readHubContractDownloadBody(res);
     const contentType = res.headers.get("content-type") || "application/pdf";
     const disposition = res.headers.get("content-disposition") || "";
     const match = disposition.match(/filename="?([^"]+)"?/i);
     return {
-      buffer: Buffer.from(ab),
+      buffer,
       contentType,
       fileName: match?.[1] || `contract-${signatureId}.pdf`,
     };
   } catch (err: any) {
-    logger.error("TechSales document download error", { message: err?.message, signatureId });
+    if (err instanceof HubContractDownloadLimitError) {
+      logger.warn("TechSales document download rejected", {
+        reason: "response_too_large",
+        signatureId,
+      });
+    } else if (controller.signal.aborted || err?.name === "AbortError") {
+      logger.warn("TechSales document download timed out", { signatureId });
+    } else {
+      logger.error("TechSales document download error", {
+        errorName: err instanceof Error ? err.name : "UnknownError",
+        signatureId,
+      });
+    }
     return null;
+  } finally {
+    clearTimeout(timeout);
   }
 }
 

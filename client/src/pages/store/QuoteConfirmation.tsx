@@ -36,9 +36,7 @@ const QuoteConfirmation = () => {
   const { data: quoteRequest, isLoading, error } = useQuery({
     queryKey: ['/api/store/quote-requests', quoteId],
     queryFn: async () => {
-      const token = localStorage.getItem("portalToken");
       const response = await fetch(`/api/store/quote-requests/${quoteId}`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
         credentials: "include",
       });
       if (response.status === 401) {
@@ -146,9 +144,7 @@ const QuoteConfirmation = () => {
                     setPdfError(null);
                     setIsDownloadingPdf(true);
                     try {
-                      const token = localStorage.getItem("portalToken");
                       const response = await fetch(quoteRequest.pdfUrl || `/api/store/quote-requests/${quoteId}/pdf`, {
-                        headers: token ? { Authorization: `Bearer ${token}` } : {},
                         credentials: "include",
                       });
                       if (!response.ok) {

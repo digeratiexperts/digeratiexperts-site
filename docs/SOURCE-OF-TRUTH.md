@@ -1,12 +1,15 @@
-# Source of truth (stop Replit from overwriting Cursor work)
+# Source of truth and agent coordination
 
-**Canonical repo:** GitHub `digeratiexperts/Replit-Site`  
-**Canonical authoring:** Cursor / local clone → git push → VPS deploy  
-**Not canonical:** Replit Agent auto-commits or Replit GitHub sync pushing over our branches
+**Canonical repo:** GitHub `digeratiexperts/digeratiexperts-site`
 
-## Prevent Replit from syncing over us
+**Canonical authoring:** clean local branch → reviewed pull request → tested artifact → VPS deploy
 
-Do these in the Replit UI for **digerati Experts Offical Website**:
+**Agent roles:** Cursor/Thinking for security, architecture, commerce, and review; Antigravity Gemini Flash High for screenshots, responsive visual critique, imagery, and art direction
+**Not canonical:** legacy Replit Agent commits or sync pushing over reviewed branches
+
+## Legacy Replit safeguards
+
+If the old Replit project still exists, keep it read-only:
 
 1. **Pause or disconnect GitHub sync** (Settings → Git / Version control) so Replit cannot push to `main` or `fix/*` from the Repl.
 2. **Do not click “Publish / Deploy from Replit”** for production — production is CyberPanel + systemd `digeratiexperts-site` as `diger7051` on de-vps (`/home/digeratiexperts.com/current` → :3300). See `deploy/vps/README.md`.

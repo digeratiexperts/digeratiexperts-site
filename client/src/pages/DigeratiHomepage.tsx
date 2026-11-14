@@ -9,10 +9,7 @@ import { ModernHeroSection } from "./sections/ModernHeroSection";
 import { DigeratiAlertBanner } from "./sections/DigeratiAlertBanner";
 import { DigeratiServicesSection } from "./sections/DigeratiServicesSection";
 import { DigeratiHowWeProtectSection } from "./sections/DigeratiHowWeProtectSection";
-import { DigeratiLeadFormSection } from "./sections/DigeratiLeadFormSection";
 import { DigeratiWhatWeTackleSection } from "./sections/DigeratiWhatWeTackleSection";
-import { DigeratiThreatsInsightsSection } from "./sections/DigeratiThreatsInsightsSection";
-import { DigeratiAIAssistanceSection } from "./sections/DigeratiAIAssistanceSection";
 import { DigeratiIndustriesSection } from "./sections/DigeratiIndustriesSection";
 import { DigeratiPricingSection } from "./sections/DigeratiPricingSection";
 import { DigeratiTestimonialsSection } from "./sections/DigeratiTestimonialsSection";
@@ -20,30 +17,19 @@ import { HomepageProofSection } from "./sections/HomepageProofSection";
 import { DigeratiMeetExpertsSection } from "./sections/DigeratiMeetExpertsSection";
 import { DigeratiFAQSection } from "./sections/DigeratiFAQSection";
 import { DigeratiCTASection } from "./sections/DigeratiCTASection";
-import { DigeratiNewsletterSection } from "./sections/DigeratiNewsletterSection";
-// PremiumCTASection removed - keeping only one CTA section
 import { DigeratiContactSection } from "./sections/DigeratiContactSection";
 import { DigeratiEnhancedFooterSection } from "./sections/DigeratiEnhancedFooterSection";
 import { DigeratiStatsSection } from "./sections/DigeratiStatsSection";
 import { DigeratiTrustPhotoSection } from "./sections/DigeratiTrustPhotoSection";
 
-// Live digeratexperts.com story order.
-// Extra working-branch sections stay on-page with showInNav:false.
 const homepageSections: { id: string; label: string; theme: 'dark' | 'light'; showInNav?: boolean }[] = [
   { id: 'hero', label: 'Home', theme: 'dark' },
-  { id: 'stats', label: 'Why DE', theme: 'dark' },
-  { id: 'challenges', label: 'Problems', theme: 'dark', showInNav: false },
-  { id: 'services', label: 'How It Works', theme: 'dark' },
-  { id: 'protection', label: 'Protect', theme: 'light', showInNav: false },
-  { id: 'testimonials', label: 'Proof', theme: 'dark', showInNav: false },
-  { id: 'trust', label: 'Trust', theme: 'light', showInNav: false },
-  { id: 'team', label: 'Team', theme: 'dark', showInNav: false },
-  { id: 'industries', label: 'Industries', theme: 'dark' },
-  { id: 'pricing', label: 'Packages', theme: 'dark' },
-  { id: 'insights', label: 'Insights', theme: 'dark', showInNav: false },
-  { id: 'faq', label: 'FAQ', theme: 'light', showInNav: false },
-  { id: 'cta', label: 'Next step', theme: 'dark', showInNav: false },
-  { id: 'contact', label: 'Contact', theme: 'dark' },
+  { id: 'risk', label: 'Why DE', theme: 'dark' },
+  { id: 'engagement', label: 'How It Works', theme: 'dark' },
+  { id: 'ecosystem', label: 'Packages', theme: 'light' },
+  { id: 'proof', label: 'Proof', theme: 'dark' },
+  { id: 'leadership', label: 'Industries', theme: 'dark' },
+  { id: 'next-step', label: 'Next Step', theme: 'light' },
 ];
 
 export const DigeratiHomepage = (): JSX.Element => {
@@ -55,11 +41,6 @@ export const DigeratiHomepage = (): JSX.Element => {
 
   return (
     <FullPageScrollProvider sections={homepageSections} enableOnMobile={false}>
-      {/* Live shade well + A+C canvas base. Ask DE sits bottom-right.
-          Chapter fields are neighbor-aware: well → style-box → well → surface →
-          paper → process band → well → paper → well → style-box → surface →
-          well (insights) → surface (office photo) → paper (lead+FAQ) →
-          surface (newsletter) → cinematic well (CTA) → quiet well (contact). */}
       <div className="de-dark-well min-h-screen bg-[#050312] pb-8">
         <OrganizationJsonLd />
         <WebSiteJsonLd />
@@ -67,79 +48,46 @@ export const DigeratiHomepage = (): JSX.Element => {
         <MegaMenu />
         <SiteBottomBar />
 
-        {/* Home — Cybersecurity-First hero + Assessment / Talk to Expert CTAs */}
+        {/* 1. Hero */}
         <ScrollSectionAuto id="hero" chapter>
           <ModernHeroSection />
           <DigeratiAlertBanner />
         </ScrollSectionAuto>
 
-        {/* Why DE */}
-        <ScrollSectionAuto id="stats" chapter>
+        {/* 2. Trust and risk */}
+        <ScrollSectionAuto id="risk" chapter>
           <DigeratiStatsSection />
-        </ScrollSectionAuto>
-
-        {/* Problems */}
-        <ScrollSectionAuto id="challenges">
           <DigeratiWhatWeTackleSection />
         </ScrollSectionAuto>
 
-        {/* How it works */}
-        <ScrollSectionAuto id="services" chapter>
+        {/* 3. Engagement options */}
+        <ScrollSectionAuto id="engagement" chapter>
           <DigeratiServicesSection />
         </ScrollSectionAuto>
 
-        {/* What we protect + how */}
-        <ScrollSectionAuto id="protection">
+        {/* 4. Service ecosystem */}
+        <ScrollSectionAuto id="ecosystem" chapter>
           <DigeratiHowWeProtectSection />
-        </ScrollSectionAuto>
-
-        {/* Proof — honest shells (no fabricated quotes) */}
-        <ScrollSectionAuto id="testimonials">
-          <DigeratiTestimonialsSection />
-          <HomepageProofSection />
-        </ScrollSectionAuto>
-
-        <ScrollSectionAuto id="trust">
-          <DigeratiTrustPhotoSection />
-        </ScrollSectionAuto>
-
-        <ScrollSectionAuto id="team">
-          <DigeratiMeetExpertsSection />
-        </ScrollSectionAuto>
-
-        {/* Industries */}
-        <ScrollSectionAuto id="industries" chapter>
-          <DigeratiIndustriesSection />
-        </ScrollSectionAuto>
-
-        {/* Packages — fit-based operating models */}
-        <ScrollSectionAuto id="pricing" chapter>
           <DigeratiPricingSection />
         </ScrollSectionAuto>
 
-        {/* Pricing tools relocated to /proactive-ecosystem-pricing#pricing-tools */}
-
-        {/* Insights + AI teasers — full versions live on Resources */}
-        <ScrollSectionAuto id="insights">
-          <DigeratiThreatsInsightsSection />
-          <DigeratiAIAssistanceSection />
+        {/* 5. Proof */}
+        <ScrollSectionAuto id="proof" chapter>
+          <DigeratiTestimonialsSection />
+          <HomepageProofSection />
+          <DigeratiTrustPhotoSection />
         </ScrollSectionAuto>
 
-        <DigeratiLeadFormSection />
+        {/* 6. Industries and founder */}
+        <ScrollSectionAuto id="leadership" chapter>
+          <DigeratiIndustriesSection />
+          <DigeratiMeetExpertsSection />
+        </ScrollSectionAuto>
 
-        {/* FAQ before Next step — live cleanness */}
-        <ScrollSectionAuto id="faq" chapter>
+        {/* 7. Final conversion */}
+        <ScrollSectionAuto id="next-step" chapter className="scroll-mt-20">
           <DigeratiFAQSection />
-          <DigeratiNewsletterSection />
-        </ScrollSectionAuto>
-
-        {/* Next step */}
-        <ScrollSectionAuto id="cta">
           <DigeratiCTASection />
-        </ScrollSectionAuto>
-
-        {/* Contact */}
-        <ScrollSectionAuto id="contact" chapter className="scroll-mt-20">
           <DigeratiContactSection />
           <DigeratiEnhancedFooterSection />
         </ScrollSectionAuto>

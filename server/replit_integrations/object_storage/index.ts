@@ -17,5 +17,12 @@ export {
   setObjectAclPolicy,
 } from "./objectAcl";
 
-export { registerObjectStorageRoutes } from "./routes";
+export {
+  isLegacyObjectStorageEnabled,
+  LEGACY_OBJECT_UPLOAD_MAX_BYTES,
+  registerObjectStorageRoutes,
+  validateLegacyObjectUploadMetadata,
+} from "./routes";
+
+export type { ObjectStorageRouteOptions } from "./routes";
 

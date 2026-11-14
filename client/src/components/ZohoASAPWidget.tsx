@@ -120,10 +120,7 @@ type DeskPortalSession = {
 
 async function peekDeskPortalSession(): Promise<DeskPortalSession | null> {
   try {
-    const headers: Record<string, string> = {};
-    const token = typeof window !== "undefined" ? window.localStorage.getItem("portalToken") : null;
-    if (token) headers.Authorization = `Bearer ${token}`;
-    const response = await fetch("/api/portal/me", { credentials: "include", headers });
+    const response = await fetch("/api/portal/me", { credentials: "include" });
     if (!response.ok) return null;
     const data = (await response.json()) as { user?: DeskPortalSession };
     const user = data.user;

@@ -94,9 +94,8 @@ export function PortalContracts() {
     if (!c.hubSignatureId && !c.pdfUrl) return;
     setDownloadingId(c.id);
     try {
-      const token = localStorage.getItem("portalToken");
       const url = c.pdfUrl || `/api/portal/contracts/${c.hubSignatureId}/download`;
-      const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch(url, { credentials: "include" });
       if (!res.ok) throw new Error("Download failed");
       const blob = await res.blob();
       const a = document.createElement("a");

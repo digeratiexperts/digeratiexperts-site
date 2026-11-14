@@ -8,8 +8,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
-import { Building2, Users, Plus, Eye, Loader, Search, ArrowRight, Building, FileText, Upload, Trash2, BarChart3, Ticket, DollarSign, Activity, Clock } from "lucide-react";
-import { portalGet } from "@/lib/portalApi";
+import { Building2, Users, Plus, Eye, Loader, Search, ArrowRight, Building, FileText, Upload, Trash2 } from "lucide-react";
+import { portalGet, portalPost } from "@/lib/portalApi";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useUpload } from "@/hooks/use-upload";
@@ -51,16 +51,6 @@ interface TenantFile {
   description: string;
   fileUrl: string;
   createdAt: string;
-}
-
-interface CompanyMetrics {
-  company: { id: string; name: string; status: string; createdAt: string };
-  tickets: { total: number; open: number; inProgress: number; resolved: number; avgResolutionTime: string };
-  users: { total: number; activeUsers: number; admins: number };
-  files: { total: number; agents: number; documents: number };
-  services: { activeServices: number; monthlyValue: string; tier: string };
-  billing: { pendingInvoices: number; totalOwed: string; lastPayment: string };
-  activity: { lastLogin: string; ticketsThisMonth: number; filesUploadedThisMonth: number };
 }
 
 export function AdminCompanies() {
@@ -111,12 +101,6 @@ export function AdminCompanies() {
     enabled: !!selectedCompanyId && detailTab === "files",
   });
 
-  const { data: companyMetrics, isLoading: metricsLoading } = useQuery<CompanyMetrics>({
-    queryKey: ["/api/portal/admin/companies", selectedCompanyId, "metrics"],
-    queryFn: () => portalGet<CompanyMetrics>(`/api/portal/admin/companies/${selectedCompanyId}/metrics`),
-    enabled: !!selectedCompanyId && detailTab === "metrics",
-  });
-
   const uploadFileMutation = useMutation({
     mutationFn: async (data: { companyId: string; fileName: string; category: string; description: string; objectPath: string }) => {
       return await apiRequest(`/api/portal/admin/companies/${data.companyId}/files`, "POST", data);
@@ -161,10 +145,12 @@ export function AdminCompanies() {
 
   const impersonateMutation = useMutation({
     mutationFn: async (companyId: string) => {
-      return await apiRequest("/api/portal/admin/impersonate", "POST", { companyId });
+      return portalPost<{ success: boolean; company: Company }>(
+        "/api/portal/admin/impersonate",
+        { companyId },
+      );
     },
-    onSuccess: (data: any) => {
-      localStorage.setItem("portalToken", data.token);
+    onSuccess: (data) => {
       localStorage.setItem("impersonatingCompany", JSON.stringify(data.company));
       toast({ title: "Impersonation Active", description: `Now viewing as ${data.company.companyName}` });
       window.location.href = "/portal/dashboard";
@@ -371,7 +357,7 @@ export function AdminCompanies() {
           </DialogHeader>
           
           <Tabs value={detailTab} onValueChange={setDetailTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="overview" data-testid="tab-overview">
                 <Users className="w-4 h-4 mr-2" />
                 Overview
@@ -379,10 +365,6 @@ export function AdminCompanies() {
               <TabsTrigger value="files" data-testid="tab-files">
                 <FileText className="w-4 h-4 mr-2" />
                 Files
-              </TabsTrigger>
-              <TabsTrigger value="metrics" data-testid="tab-metrics">
-                <BarChart3 className="w-4 h-4 mr-2" />
-                Metrics
               </TabsTrigger>
             </TabsList>
 
@@ -577,112 +559,6 @@ export function AdminCompanies() {
               </div>
             </TabsContent>
 
-            <TabsContent value="metrics" className="mt-4">
-              {metricsLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader className="w-6 h-6 animate-spin text-primary" />
-                </div>
-              ) : companyMetrics ? (
-                <div className="space-y-4">
-                  <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
-                    <Card>
-                      <CardContent className="pt-4">
-                        <div className="flex items-center gap-2">
-                          <Ticket className="w-4 h-4 text-orange-500" />
-                          <span className="text-sm text-slate-500">Open Tickets</span>
-                        </div>
-                        <p className="text-2xl font-bold mt-1">{companyMetrics.tickets.open}</p>
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardContent className="pt-4">
-                        <div className="flex items-center gap-2">
-                          <Users className="w-4 h-4 text-blue-500" />
-                          <span className="text-sm text-slate-500">Active Users</span>
-                        </div>
-                        <p className="text-2xl font-bold mt-1">{companyMetrics.users.activeUsers}</p>
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardContent className="pt-4">
-                        <div className="flex items-center gap-2">
-                          <DollarSign className="w-4 h-4 text-green-500" />
-                          <span className="text-sm text-slate-500">Monthly Value</span>
-                        </div>
-                        <p className="text-2xl font-bold mt-1">{companyMetrics.services.monthlyValue}</p>
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardContent className="pt-4">
-                        <div className="flex items-center gap-2">
-                          <FileText className="w-4 h-4 text-purple-500" />
-                          <span className="text-sm text-slate-500">Files</span>
-                        </div>
-                        <p className="text-2xl font-bold mt-1">{companyMetrics.files.total}</p>
-                      </CardContent>
-                    </Card>
-                  </div>
-
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <Card>
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-sm flex items-center gap-2">
-                          <Ticket className="w-4 h-4" />
-                          Ticket Summary
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-2">
-                        <div className="flex justify-between text-sm">
-                          <span className="text-slate-500">Total Tickets</span>
-                          <span className="font-medium">{companyMetrics.tickets.total}</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-slate-500">In Progress</span>
-                          <span className="font-medium">{companyMetrics.tickets.inProgress}</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-slate-500">Resolved</span>
-                          <span className="font-medium text-green-600">{companyMetrics.tickets.resolved}</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-slate-500">Avg. Resolution</span>
-                          <span className="font-medium">{companyMetrics.tickets.avgResolutionTime}</span>
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    <Card>
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-sm flex items-center gap-2">
-                          <Activity className="w-4 h-4" />
-                          Recent Activity
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-2">
-                        <div className="flex justify-between text-sm">
-                          <span className="text-slate-500">Service Tier</span>
-                          <Badge>{companyMetrics.services.tier}</Badge>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-slate-500">Active Services</span>
-                          <span className="font-medium">{companyMetrics.services.activeServices}</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-slate-500">Tickets This Month</span>
-                          <span className="font-medium">{companyMetrics.activity.ticketsThisMonth}</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-slate-500">Pending Invoices</span>
-                          <span className="font-medium text-red-600">{companyMetrics.billing.pendingInvoices}</span>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-                </div>
-              ) : (
-                <p className="text-center py-8 text-slate-500">No metrics available</p>
-              )}
-            </TabsContent>
           </Tabs>
 
           <div className="flex gap-2 mt-4 pt-4 border-t">

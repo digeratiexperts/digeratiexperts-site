@@ -22,8 +22,10 @@ import {
   MessageSquare,
   Loader2,
   AlertCircle,
+  Lock,
 } from "lucide-react";
 import { PRIMARY_PHONE } from "@/data/companyContact";
+import { portalLoginWithReturn } from "@/lib/portalUrls";
 
 interface OrderLineItem {
   productId: string;
@@ -74,9 +76,7 @@ const OrderConfirmation = () => {
     queryKey: ["/api/store/orders", params.orderId],
     enabled: !!params.orderId,
     queryFn: async () => {
-      const token = localStorage.getItem("portalToken");
       const response = await fetch(`/api/store/orders/${params.orderId}`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
         credentials: "include",
       });
       if (!response.ok) {
@@ -94,6 +94,7 @@ const OrderConfirmation = () => {
   }, [order, clearCart]);
 
   const isQuoteRequest = params.method === "quote" || order?.paymentMethod === "quote_request";
+  const needsSignIn = error instanceof Error && /^401:/.test(error.message);
 
   const statusConfig = {
     pending: { label: "Pending", color: "text-amber-400", bg: "bg-amber-400/10" },
@@ -127,16 +128,33 @@ const OrderConfirmation = () => {
         <main className="de-nav-clear pb-20">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <AlertCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
-            <h1 className="text-3xl font-bold text-white mb-4">Order Not Found</h1>
+            <h1 className="text-3xl font-bold text-white mb-4">
+              {needsSignIn ? "Sign in to view your order" : "Order Not Found"}
+            </h1>
             <p className="text-white/60 mb-8">
-              We couldn't find your order. Please check your email for confirmation or contact support.
+              {needsSignIn
+                ? "For your privacy, order details are available only through your secure client session."
+                : "We couldn't find your order. Please check your email for confirmation or contact support."}
             </p>
-            <Link href="/store">
-              <Button className="bg-de-accent hover:bg-de-accent text-white" data-testid="button-back-to-store">
-                <ShoppingBag className="w-4 h-4 mr-2" />
-                Continue Shopping
+            {needsSignIn ? (
+              <Button
+                asChild
+                className="bg-de-accent hover:bg-de-accent text-white"
+                data-testid="button-sign-in-for-order"
+              >
+                <a href={portalLoginWithReturn(location)}>
+                  <Lock className="w-4 h-4 mr-2" />
+                  Sign in securely
+                </a>
               </Button>
-            </Link>
+            ) : (
+              <Link href="/store">
+                <Button className="bg-de-accent hover:bg-de-accent text-white" data-testid="button-back-to-store">
+                  <ShoppingBag className="w-4 h-4 mr-2" />
+                  Continue Shopping
+                </Button>
+              </Link>
+            )}
           </div>
         </main>
         <DigeratiEnhancedFooterSection />

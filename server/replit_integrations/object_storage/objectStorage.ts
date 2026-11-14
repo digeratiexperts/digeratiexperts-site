@@ -102,11 +102,13 @@ export class ObjectStorageService {
       // Get the ACL policy for the object.
       const aclPolicy = await getObjectAclPolicy(file);
       const isPublic = aclPolicy?.visibility === "public";
-      // Set appropriate headers
+      // A route may enforce a stricter response policy (for example, forced
+      // attachment downloads for tenant files). Never replace those headers
+      // with untrusted object metadata.
       res.set({
-        "Content-Type": metadata.contentType || "application/octet-stream",
+        "Content-Type": res.get("Content-Type") || metadata.contentType || "application/octet-stream",
         "Content-Length": metadata.size,
-        "Cache-Control": `${
+        "Cache-Control": res.get("Cache-Control") || `${
           isPublic ? "public" : "private"
         }, max-age=${cacheTtlSec}`,
       });

@@ -1,5 +1,4 @@
-import dotenv from "dotenv";
-dotenv.config();
+import "dotenv/config";
 
 import express, { type Request, Response, NextFunction } from "express";
 import { createServer } from "http";
@@ -14,8 +13,14 @@ import cookieParser from "cookie-parser";
 import compression from "compression";
 import jwt from "jsonwebtoken";
 import { zohoPayments } from "./zohoPayments";
+import { enqueueZohoPaymentWebhook } from "./zohoPaymentWebhookInbox";
 import { setupCrossServiceHandlers } from "./crossServiceHandler";
 import { eventBus, EventTypes } from "./eventBus";
+import { storageReady } from "./storage";
+import { loadRuntimeConfig } from "./production.config";
+import { assertPaymentSchemaReady } from "./paymentSchemaReadiness";
+
+const runtimeConfig = loadRuntimeConfig(process.env);
 
 process.on('unhandledRejection', (reason, promise) => {
   const errorStr = String(reason);
@@ -41,6 +46,7 @@ process.on('uncaughtException', (error) => {
 
 const app = express();
 const server = createServer(app);
+app.set("trust proxy", runtimeConfig.server.trustProxy ? 1 : false);
 
 app.use(compression({
   level: 6,
@@ -84,24 +90,39 @@ app.all("/api/health", async (_req, res) => {
   );
   
   const health = {
-    status: "ok",
+    status: dbAvailable ? "ok" : "degraded",
     timestamp: new Date().toISOString(),
     version: "1.0.0",
     env: app.get("env"),
     port,
     services: {
-      database: dbAvailable ? "connected" : "fallback_memory",
+      database: dbAvailable ? "connected" : "unavailable",
       zohoPayments: zohoPayments.isConfigured() ? "configured" : "not_configured",
       openai: openaiConfigured ? "configured" : "not_configured",
     },
     uptime: process.uptime(),
   };
   
-  res.status(200).json(health);
+  const status = runtimeConfig.environment === "production" && !dbAvailable ? 503 : 200;
+  res.status(status).json(health);
 });
 
 app.all("/healthz", (_req, res) => res.status(200).send("ok"));
-app.all("/ready", (_req, res) => res.status(200).json({ ready: true }));
+app.all("/ready", async (_req, res) => {
+  if (runtimeConfig.environment !== "production") {
+    return res.status(200).json({ ready: true });
+  }
+
+  try {
+    const { pool } = await import("./db");
+    if (!pool) throw new Error("Database pool is unavailable");
+    const client = await pool.connect();
+    client.release();
+    return res.status(200).json({ ready: true });
+  } catch {
+    return res.status(503).json({ ready: false });
+  }
+});
 
 /**
  * Portal routing heal — Cloudflare on digeratexperts.com strips `/portal` when
@@ -156,6 +177,7 @@ app.post(
   "/api/webhooks/zoho-payments",
   express.raw({ type: "application/json" }),
   async (req, res) => {
+    const startedAt = Date.now();
     try {
       const signature = req.headers["x-zoho-webhook-signature"] as string;
       if (!signature) {
@@ -169,98 +191,23 @@ app.post(
         return res.status(401).json({ error: "Invalid webhook signature" });
       }
 
-      const event = JSON.parse(req.body.toString("utf-8"));
+      const event = zohoPayments.parseWebhookPayload(req.body);
       const parsed = zohoPayments.parseWebhookEvent(event);
-      const metadata = Object.fromEntries(parsed.metadata.map((item) => [item.key, item.value]));
-      let fulfillOrderId: string | null = null;
-
-      if (parsed.eventType === "payment.succeeded") {
-        const { db } = await import("./db");
-        const { storeOrders } = await import("@shared/schema");
-        const { eq } = await import("drizzle-orm");
-
-        const metadataOrderId = metadata.orderId || null;
-        const orderNumber = metadata.orderNumber || parsed.referenceNumber || parsed.invoiceNumber || null;
-        let existingOrder: any = null;
-
-        if (metadataOrderId) {
-          [existingOrder] = await db.select().from(storeOrders)
-            .where(eq(storeOrders.id, metadataOrderId)).limit(1);
-        }
-        if (!existingOrder && orderNumber) {
-          [existingOrder] = await db.select().from(storeOrders)
-            .where(eq(storeOrders.orderNumber, orderNumber)).limit(1);
-        }
-
-        if (existingOrder) {
-          const oldStatus = existingOrder.status || "unknown";
-          const alreadyPastPaid = ["paid", "processing", "provisioning", "completed"].includes(oldStatus);
-
-          if (!alreadyPastPaid) {
-            await db.update(storeOrders)
-              .set({
-                status: "paid",
-                zohoPaymentId: parsed.paymentId || existingOrder.zohoPaymentId || null,
-                paidAt: new Date(),
-                updatedAt: new Date(),
-              })
-              .where(eq(storeOrders.id, existingOrder.id));
-
-            console.log("[SECURITY] ORDER_STATUS_CHANGED", {
-              orderId: existingOrder.id,
-              orderNumber: existingOrder.orderNumber,
-              oldStatus,
-              newStatus: "paid",
-              triggeredBy: "zoho_payments_webhook",
-            });
-          } else if (!existingOrder.zohoPaymentId && parsed.paymentId) {
-            await db.update(storeOrders)
-              .set({
-                zohoPaymentId: parsed.paymentId,
-                paidAt: existingOrder.paidAt || new Date(),
-                updatedAt: new Date(),
-              })
-              .where(eq(storeOrders.id, existingOrder.id));
-          }
-
-          console.log("[SECURITY] CHECKOUT_COMPLETED", {
-            orderId: existingOrder.id,
-            orderNumber: existingOrder.orderNumber,
-            paymentMethod: "zoho",
-            total: existingOrder.total,
-            zohoPaymentId: parsed.paymentId,
-          });
-          fulfillOrderId = existingOrder.id;
-        } else {
-          console.info("[ZOHO PAYMENTS WEBHOOK] Verified payment succeeded with no local store order", {
-            paymentId: parsed.paymentId,
-            referenceNumber: parsed.referenceNumber,
-            invoiceNumber: parsed.invoiceNumber,
-          });
-        }
-      } else if (parsed.eventType === "payment.failed" || parsed.eventType === "payment.pending") {
-        console.info("[ZOHO PAYMENTS WEBHOOK] Payment attempt update", {
-          eventType: parsed.eventType,
-          paymentId: parsed.paymentId,
-          referenceNumber: parsed.referenceNumber,
-          status: parsed.status,
-        });
-      }
-
-      res.json({ received: true });
-
-      if (fulfillOrderId) {
-        const orderId = fulfillOrderId;
-        void import("./services/orderFulfillment")
-          .then(({ fulfillPaidOrder }) => fulfillPaidOrder(orderId))
-          .catch((error) => {
-            console.error("[ZOHO PAYMENTS WEBHOOK FULFILLMENT ERROR]", error);
-          });
-      }
-      return;
+      const queued = await enqueueZohoPaymentWebhook(parsed);
+      console.info("[ZOHO PAYMENTS WEBHOOK] durably accepted", {
+        eventId: queued.eventId,
+        eventType: parsed.eventType,
+        duplicate: !queued.inserted,
+      });
+      return res.status(202).json({ received: true });
     } catch (error: any) {
       console.error("[ZOHO PAYMENTS WEBHOOK ERROR]", error);
       return res.status(500).json({ error: "Webhook processing failed" });
+    } finally {
+      const durationMs = Date.now() - startedAt;
+      const details = { durationMs, statusCode: res.statusCode };
+      if (durationMs >= 12_000) console.warn("[ZOHO PAYMENTS WEBHOOK] SLA risk", details);
+      else console.info("[ZOHO PAYMENTS WEBHOOK] handled", details);
     }
   }
 );
@@ -398,6 +345,14 @@ function listEndpoints(): Array<{ method: string; path: string }> {
 }
 
 (async () => {
+  await storageReady;
+  if (runtimeConfig.environment === "production") {
+    const { pool, dbReady } = await import("./db");
+    if (!dbReady || !pool) {
+      throw new Error("Production database is unavailable; refusing to start.");
+    }
+    await assertPaymentSchemaReady(pool);
+  }
   await registerRoutes(app);
   registerPublicSupportChat(app);
 
@@ -479,11 +434,8 @@ function listEndpoints(): Array<{ method: string; path: string }> {
     res.status(status).json({ message: err.message || "Internal Server Error" });
   });
 
-  const port = parseInt(
-    process.env.PORT || "8080",
-    10,
-  );
-  const host = "0.0.0.0";
+  const port = runtimeConfig.server.port;
+  const host = runtimeConfig.server.host;
 
   log(
     `🌐 Using port: ${port} (PORT=${process.env.PORT || "unset"})`,
@@ -495,6 +447,18 @@ function listEndpoints(): Array<{ method: string; path: string }> {
       .then(({ startDeSyncWorker }) => startDeSyncWorker())
       .catch((error) => {
         log(`⚠️ de-sync worker not started: ${error?.message || error}`);
+      });
+    void import("./services/orderFulfillment")
+      .then(({ startOrderFulfillmentReconciliation }) =>
+        startOrderFulfillmentReconciliation(),
+      )
+      .catch((error) => {
+        log(`⚠️ order-fulfillment reconciliation not started: ${error?.message || error}`);
+      });
+    void import("./zohoPaymentWebhookInbox")
+      .then(({ startZohoPaymentWebhookInbox }) => startZohoPaymentWebhookInbox())
+      .catch((error) => {
+        log(`⚠️ Zoho payment inbox worker not started: ${error?.message || error}`);
       });
     void import("./services/threat-intel/ingest")
       .then(({ startThreatIntelScheduler }) => startThreatIntelScheduler())
@@ -510,4 +474,8 @@ function listEndpoints(): Array<{ method: string; path: string }> {
       }
     }
   });
-})();
+})().catch((error: unknown) => {
+  const message = error instanceof Error ? error.message : String(error);
+  console.error(`Fatal startup error: ${message}`);
+  process.exit(1);
+});

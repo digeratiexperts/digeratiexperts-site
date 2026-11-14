@@ -12,7 +12,10 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "smoke:public": "node scripts/public-route-smoke.mjs",
+    "start:e2e": "node --import tsx scripts/start-playwright-app.mjs",
+    "test:e2e:smoke": "playwright test --config=playwright.config.ts",
     "db:push": "drizzle-kit push",
+    "db:migrate:production": "node scripts/run-migrations.mjs",
     "test:advisor": "tsx --test server/services/msp-advisor/*.test.ts",
     "eval:advisor": "tsx server/services/msp-advisor/eval/score.ts"
   },
@@ -69,6 +72,7 @@
     "connect-pg-simple": "^10.0.0",
     "cookie-parser": "^1.4.7",
     "date-fns": "^3.6.0",
+    "dotenv": "^17.4.2",
     "drizzle-orm": "^0.45.2",
     "drizzle-zod": "^0.7.0",
     "embla-carousel-react": "^8.6.0",
@@ -111,6 +115,7 @@
     "zustand": "^5.0.8"
   },
   "devDependencies": {
+    "@playwright/mcp": "0.0.79",
     "@tailwindcss/typography": "^0.5.15",
     "@tailwindcss/vite": "^4.1.3",
     "@types/connect-pg-simple": "^7.0.3",

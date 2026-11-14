@@ -18,6 +18,8 @@ import {
 import { randomBytes } from "crypto";
 
 export type ApprovalPriority = "low" | "medium" | "high" | "critical";
+type ApprovalRequestRow = typeof portalApprovalRequests.$inferSelect;
+type ApprovalStepRow = typeof portalApprovalSteps.$inferSelect;
 
 export type CreateApprovalInput = {
   clientId: string;
@@ -51,11 +53,16 @@ async function buildSteps(requester: OrgUserFields, clientId: string, priority?:
   const managerId = requester.managerUserId || null;
   const manager = managerId ? findUserById(managerId) : null;
 
-  if (manager && manager.id !== requester.id) {
+  if (manager && manager.clientId === clientId && manager.id !== requester.id) {
     steps.push({ stepOrder: order++, stepType: "manager", approverUserId: manager.id });
     if (needsSkipLevel(priority, amountCents)) {
       const skip = manager.managerUserId ? findUserById(manager.managerUserId) : null;
-      if (skip && skip.id !== requester.id && skip.id !== manager.id) {
+      if (
+        skip &&
+        skip.clientId === clientId &&
+        skip.id !== requester.id &&
+        skip.id !== manager.id
+      ) {
         steps.push({ stepOrder: order++, stepType: "skip_level", approverUserId: skip.id });
       }
     }
@@ -133,7 +140,9 @@ export async function createApprovalRequest(input: CreateApprovalInput) {
   return { request, steps: insertedSteps };
 }
 
-export async function getApprovalWithSteps(id: string) {
+export async function getApprovalWithSteps(
+  id: string,
+): Promise<{ request: ApprovalRequestRow; steps: ApprovalStepRow[] } | null> {
   if (!dbReady || !db) return null;
   await ensureOrgSchema();
   const [request] = await db
@@ -142,7 +151,7 @@ export async function getApprovalWithSteps(id: string) {
     .where(eq(portalApprovalRequests.id, id))
     .limit(1);
   if (!request) return null;
-  const steps = await db
+  const steps: ApprovalStepRow[] = await db
     .select()
     .from(portalApprovalSteps)
     .where(eq(portalApprovalSteps.requestId, id))
@@ -155,9 +164,9 @@ export async function listApprovalsForUser(user: OrgUserFields, scope: "mine" | 
   await ensureOrgSchema();
   const { listClientUsers } = await import("./portalOrg");
 
-  const map = new Map<string, typeof portalApprovalRequests.$inferSelect>();
+  const map = new Map<string, ApprovalRequestRow>();
 
-  const addRows = (rows: (typeof portalApprovalRequests.$inferSelect)[]) => {
+  const addRows = (rows: ApprovalRequestRow[]) => {
     for (const r of rows) map.set(r.id, r);
   };
 
@@ -176,14 +185,22 @@ export async function listApprovalsForUser(user: OrgUserFields, scope: "mine" | 
   );
 
   // Pending (or historical) steps assigned to me
-  const mySteps = await db
+  const mySteps: ApprovalStepRow[] = await db
     .select()
     .from(portalApprovalSteps)
     .where(eq(portalApprovalSteps.approverUserId, user.id));
-  const myReqIds = Array.from(new Set(mySteps.map((s) => s.requestId)));
+  const myReqIds: string[] = Array.from(new Set(mySteps.map((s: ApprovalStepRow) => s.requestId)));
   if (myReqIds.length) {
     addRows(
-      await db.select().from(portalApprovalRequests).where(inArray(portalApprovalRequests.id, myReqIds)),
+      await db
+        .select()
+        .from(portalApprovalRequests)
+        .where(
+          and(
+            eq(portalApprovalRequests.clientId, user.clientId),
+            inArray(portalApprovalRequests.id, myReqIds),
+          ),
+        ),
     );
   }
 
@@ -238,8 +255,9 @@ export async function listApprovalsForUser(user: OrgUserFields, scope: "mine" | 
     enriched.push({
       ...request,
       requesterName: requester?.fullName || request.requesterUserId,
-      steps: steps.map((s) => {
-        const approver = s.approverUserId ? findUserById(s.approverUserId) : null;
+      steps: (steps as ApprovalStepRow[]).map((s: ApprovalStepRow) => {
+        const candidate = s.approverUserId ? findUserById(s.approverUserId) : null;
+        const approver = candidate?.clientId === user.clientId ? candidate : null;
         return {
           ...s,
           approverName: approver?.fullName || s.approverUserId,
@@ -251,8 +269,8 @@ export async function listApprovalsForUser(user: OrgUserFields, scope: "mine" | 
 }
 
 export type ActResult = {
-  request: typeof portalApprovalRequests.$inferSelect;
-  steps: (typeof portalApprovalSteps.$inferSelect)[];
+  request: ApprovalRequestRow;
+  steps: ApprovalStepRow[];
   finalized: boolean;
   rejected: boolean;
 };
@@ -277,7 +295,7 @@ export async function actOnApproval(opts: {
     throw new Error("Request is no longer actionable");
   }
 
-  const current = steps.find((s) => s.status === "pending");
+  const current = (steps as ApprovalStepRow[]).find((s: ApprovalStepRow) => s.status === "pending");
   if (!current) throw new Error("No pending approval step");
 
   const isAssignee = current.approverUserId === opts.actor.id;
@@ -320,7 +338,9 @@ export async function actOnApproval(opts: {
   }
 
   // approve — advance or finalize
-  const remaining = steps.filter((s) => s.id !== current.id && s.status === "pending");
+  const remaining = (steps as ApprovalStepRow[]).filter(
+    (s: ApprovalStepRow) => s.id !== current.id && s.status === "pending",
+  );
   if (remaining.length === 0) {
     const [updated] = await db
       .update(portalApprovalRequests)

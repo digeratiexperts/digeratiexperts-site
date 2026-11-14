@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { useAuth } from "@/hooks/use-auth";
-import type { Board, Task } from "@shared/schema";
+import type { Board, Task, UpdateTask } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Plus, MoreHorizontal, Circle, AlertCircle, ArrowUp } from "lucide-react";
@@ -93,7 +93,7 @@ export function KanbanView({ projectId, boards, tasks, searchQuery }: KanbanView
   });
 
   const updateTaskMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<Task> }) =>
+    mutationFn: ({ id, data }: { id: string; data: UpdateTask }) =>
       api.tasks.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });

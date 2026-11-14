@@ -57,6 +57,14 @@ export interface ZohoCRMLead {
   Modified_Time?: string;
 }
 
+export interface ZohoCRMCreateResponse {
+  code?: string;
+  details?: { id?: string };
+  message?: string;
+  status?: string;
+  id?: string;
+}
+
 class ZohoCRMService {
   async getAccounts(params?: {
     page?: number;
@@ -223,7 +231,7 @@ class ZohoCRMService {
     }
   }
 
-  async createLead(data: Partial<ZohoCRMLead>): Promise<ZohoCRMLead> {
+  async createLead(data: Partial<ZohoCRMLead>): Promise<ZohoCRMCreateResponse> {
     try {
       const client = await zohoClient.getClient();
       

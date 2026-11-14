@@ -5,11 +5,30 @@ import { Input } from "@/components/ui/input";
 import { PortalLayout } from "./PortalLayout";
 import { User, Lock, Bell, Users } from "lucide-react";
 import MfaSetup from "@/components/portal/MfaSetup";
-import { portalFetch, portalGet } from "@/lib/portalApi";
+import { portalFetch, portalGet, redirectToPortalLogin } from "@/lib/portalApi";
+import { requiresPortalReauthentication } from "@/lib/portalSensitiveAction";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "wouter";
 
 type ProfileManager = { id: string; email: string; fullName: string };
+
+const managedNotifications = [
+  {
+    title: "Ticket Updates",
+    description: "Updates and replies for your support requests",
+    testId: "notification-ticket-updates",
+  },
+  {
+    title: "Invoice Alerts",
+    description: "New invoices, payment reminders, and billing notices",
+    testId: "notification-invoice-alerts",
+  },
+  {
+    title: "Service Updates",
+    description: "Maintenance, incidents, and important service announcements",
+    testId: "notification-service-updates",
+  },
+] as const;
 
 export default function PortalSettings() {
   const { toast } = useToast();
@@ -64,7 +83,6 @@ export default function PortalSettings() {
         method: "PATCH",
         body: JSON.stringify({
           fullName: formData.fullName,
-          email: formData.email,
         }),
       });
       const data = await res.json();
@@ -107,6 +125,10 @@ export default function PortalSettings() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Failed to change password");
       setPasswordData({ current: "", new: "", confirm: "" });
+      if (requiresPortalReauthentication(data)) {
+        redirectToPortalLogin("/portal/settings");
+        return;
+      }
       toast({ title: "Password updated", description: "Your password has been changed." });
     } catch (err: any) {
       toast({
@@ -151,12 +173,14 @@ export default function PortalSettings() {
                 <Input
                   type="email"
                   value={formData.email}
-                  onChange={(e) =>
-                    setFormData({ ...formData, email: e.target.value })
-                  }
-                  placeholder="your@email.com"
+                  readOnly
+                  aria-describedby="login-email-help"
                   data-testid="input-email"
                 />
+                <p id="login-email-help" className="text-xs text-muted-foreground">
+                  This is your verified login address. To change it securely, submit a support ticket so we
+                  can verify the request before updating access.
+                </p>
               </div>
               <Button
                 type="submit"
@@ -280,39 +304,44 @@ export default function PortalSettings() {
               <Bell className="h-5 w-5 text-[#D3126A]" />
               <div>
                 <CardTitle>Notifications</CardTitle>
-                <CardDescription>Manage your notification preferences</CardDescription>
+                <CardDescription>
+                  Required account and service notifications remain enabled. Support can help with delivery
+                  changes.
+                </CardDescription>
               </div>
             </div>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-800 rounded-lg">
-                <div>
-                  <p className="font-medium text-sm">Ticket Updates</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Notifications when tickets are updated
-                  </p>
-                </div>
-                <input type="checkbox" defaultChecked data-testid="checkbox-ticket-updates" />
-              </div>
-              <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-800 rounded-lg">
-                <div>
-                  <p className="font-medium text-sm">Invoice Alerts</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Notifications for new invoices
-                  </p>
-                </div>
-                <input type="checkbox" defaultChecked data-testid="checkbox-invoice-alerts" />
-              </div>
-              <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-800 rounded-lg">
-                <div>
-                  <p className="font-medium text-sm">Service Updates</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Notifications for service announcements
-                  </p>
-                </div>
-                <input type="checkbox" defaultChecked data-testid="checkbox-service-updates" />
-              </div>
+              <ul className="space-y-3" aria-label="Enabled notification categories">
+                {managedNotifications.map((notification) => (
+                  <li
+                    key={notification.title}
+                    className="flex items-center justify-between gap-4 rounded-lg bg-gray-50 p-3 dark:bg-slate-800"
+                    data-testid={notification.testId}
+                  >
+                    <div>
+                      <p className="text-sm font-medium">{notification.title}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{notification.description}</p>
+                    </div>
+                    <span
+                      className="shrink-0 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300"
+                      aria-label={`${notification.title} notifications are enabled`}
+                    >
+                      On
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              <Button asChild variant="outline" className="w-full sm:w-auto">
+                <Link href="/portal/tickets/create" data-testid="link-request-notification-change">
+                  Request notification changes
+                </Link>
+              </Button>
+              <p className="text-xs text-muted-foreground">
+                This portal does not yet offer self-service notification controls. A support request keeps
+                changes verified and tied to your account.
+              </p>
             </div>
           </CardContent>
         </Card>

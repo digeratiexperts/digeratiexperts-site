@@ -19,6 +19,7 @@ import {
   type InsertUser,
   type Workspace,
   type InsertWorkspace,
+  type WorkspaceMember,
   type Project,
   type InsertProject,
   type Board,
@@ -36,6 +37,7 @@ import {
   type PortalTicketComment,
 } from "@shared/schema";
 import { eq, and, desc, asc, sql } from "drizzle-orm";
+import { resolveUniqueWorkspaceMembershipRole } from "./workspaceAuthorization";
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
@@ -45,6 +47,7 @@ export interface IStorage {
 
   getWorkspace(id: string): Promise<Workspace | undefined>;
   getWorkspacesByUserId(userId: string): Promise<Workspace[]>;
+  getWorkspaceMembershipRole(workspaceId: string, userId: string): Promise<WorkspaceMember["role"] | undefined>;
   createWorkspace(workspace: InsertWorkspace): Promise<Workspace>;
   updateWorkspace(id: string, data: Partial<InsertWorkspace>): Promise<Workspace | undefined>;
   deleteWorkspace(id: string): Promise<void>;
@@ -74,6 +77,7 @@ export interface IStorage {
   deleteLabel(id: string): Promise<void>;
 
   getCommentsByTaskId(taskId: string): Promise<Comment[]>;
+  getComment(id: string): Promise<Comment | undefined>;
   createComment(comment: InsertComment): Promise<Comment>;
   deleteComment(id: string): Promise<void>;
 
@@ -99,6 +103,51 @@ export interface IStorage {
 
 function generateId(): string {
   return crypto.randomUUID();
+}
+
+const BCRYPT_HASH_PATTERN = /^\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}$/;
+
+export type PortalDemoDataConfiguration =
+  | { enabled: false }
+  | { enabled: true; passwordHash: string };
+
+type StorageEnvironment = Record<string, string | undefined>;
+
+export function resolvePortalDemoDataConfiguration(
+  environment: StorageEnvironment,
+): PortalDemoDataConfiguration {
+  const rawFlag = environment.PORTAL_ENABLE_DEMO_DATA?.trim().toLowerCase();
+  if (!rawFlag || rawFlag === "false") return { enabled: false };
+  if (rawFlag !== "true") {
+    throw new Error("PORTAL_ENABLE_DEMO_DATA must be either true or false");
+  }
+  if (environment.NODE_ENV === "production") {
+    throw new Error("Portal demo data cannot be enabled in production");
+  }
+
+  const passwordHash = environment.PORTAL_DEMO_PASSWORD_HASH?.trim();
+  if (!passwordHash || !BCRYPT_HASH_PATTERN.test(passwordHash)) {
+    throw new Error(
+      "PORTAL_DEMO_PASSWORD_HASH must be a valid bcrypt hash when portal demo data is enabled",
+    );
+  }
+
+  return { enabled: true, passwordHash };
+}
+
+export type StorageBackend = "database" | "memory";
+
+export function resolveStorageBackend(
+  nodeEnvironment: string | undefined,
+  databaseConnected: boolean,
+): StorageBackend {
+  if (databaseConnected) return "database";
+  if (nodeEnvironment === "production") {
+    throw new Error(
+      "Production startup requires a durable database, but the database is unavailable",
+    );
+  }
+  return "memory";
 }
 
 interface PortalClient {
@@ -197,23 +246,11 @@ export class MemStorage implements IStorage {
   private tenantFiles: Map<string, TenantFile> = new Map();
   private storeOrdersMap: Map<string, MemStoreOrder> = new Map();
 
-  constructor() {
-    this.seedDemoData();
+  constructor(demoData: PortalDemoDataConfiguration = { enabled: false }) {
+    if (demoData.enabled) this.seedDemoData();
   }
 
   private seedDemoData() {
-    const adminUser: User = {
-      id: "admin-1",
-      username: "admin@digerati-experts.com",
-      email: "admin@digerati-experts.com",
-      password: "$2b$10$GI4G0Wfv.JGucTnjjcLH6ebHF2FRZVCXF6DeWlaEK7OWZRranaeTm",
-      fullName: "Admin User",
-      avatar: null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    this.users.set(adminUser.id, adminUser);
-
     const demoClient: PortalClient = {
       id: "client-1",
       companyName: "Acme Corp",
@@ -255,7 +292,7 @@ export class MemStorage implements IStorage {
       clientId: "client-1",
       email: "admin@digerati-experts.com",
       fullName: "Admin User",
-      role: "admin",
+      role: "user",
       isActive: true,
     };
     this.portalUsersMap.set(portalUser.id, portalUser);
@@ -393,6 +430,14 @@ export class MemStorage implements IStorage {
     return Array.from(this.workspaces.values()).filter(w => w.ownerId === userId);
   }
 
+  async getWorkspaceMembershipRole(
+    workspaceId: string,
+    userId: string,
+  ): Promise<WorkspaceMember["role"] | undefined> {
+    const workspace = this.workspaces.get(workspaceId);
+    return workspace?.ownerId === userId ? "owner" : undefined;
+  }
+
   async createWorkspace(workspace: InsertWorkspace): Promise<Workspace> {
     const newWorkspace: Workspace = {
       id: generateId(),
@@ -434,7 +479,9 @@ export class MemStorage implements IStorage {
       description: project.description || null,
       icon: project.icon || null,
       color: project.color || null,
-      isFavorite: project.isFavorite || false,
+      defaultView: project.defaultView ?? "board",
+      isFavorite: project.isFavorite ?? false,
+      isArchived: project.isArchived ?? false,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -467,6 +514,8 @@ export class MemStorage implements IStorage {
       id: generateId(),
       ...board,
       color: board.color || null,
+      position: board.position ?? 0,
+      isCollapsed: board.isCollapsed ?? false,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -502,14 +551,20 @@ export class MemStorage implements IStorage {
     const newTask: Task = {
       id: generateId(),
       ...task,
-      description: task.description || null,
-      priority: task.priority || "medium",
-      status: task.status || "todo",
-      dueDate: task.dueDate || null,
-      position: task.position || 0,
-      isArchived: task.isArchived || false,
+      boardId: task.boardId ?? null,
+      description: task.description ?? null,
+      priority: task.priority ?? "medium",
+      status: task.status ?? "todo",
+      dueDate: task.dueDate ?? null,
+      startDate: task.startDate ?? null,
+      estimatedHours: task.estimatedHours ?? null,
+      actualHours: task.actualHours ?? null,
+      position: task.position ?? 0,
+      isArchived: task.isArchived ?? false,
       completedAt: null,
-      assigneeId: task.assigneeId || null,
+      assigneeId: task.assigneeId ?? null,
+      parentTaskId: task.parentTaskId ?? null,
+      customFields: task.customFields ?? null,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -558,6 +613,10 @@ export class MemStorage implements IStorage {
     return Array.from(this.comments.values()).filter(c => c.taskId === taskId);
   }
 
+  async getComment(id: string): Promise<Comment | undefined> {
+    return this.comments.get(id);
+  }
+
   async createComment(comment: InsertComment): Promise<Comment> {
     const newComment: Comment = {
       id: generateId(),
@@ -578,11 +637,15 @@ export class MemStorage implements IStorage {
   }
 
   async createChatMessage(message: InsertPortalChatMessage): Promise<PortalChatMessage> {
+    const now = new Date();
     const newMessage: PortalChatMessage = {
       id: generateId(),
       ...message,
-      isRead: message.isRead || false,
-      createdAt: new Date(),
+      ticketId: message.ticketId ?? null,
+      encryptedContent: null,
+      isRead: message.isRead ?? false,
+      createdAt: now,
+      updatedAt: now,
     };
     this.chatMessages.set(newMessage.id, newMessage);
     return newMessage;
@@ -728,19 +791,24 @@ export class DatabaseStorage implements IStorage {
   private dbModule: any = null;
   private seeded = false;
 
+  constructor(
+    private readonly demoData: PortalDemoDataConfiguration = { enabled: false },
+  ) {}
+
   private async getDb() {
     if (!this.dbModule) {
       this.dbModule = await import("./db");
     }
     if (!this.seeded) {
       this.seeded = true;
-      await this.seedDemoClients();
+      if (this.demoData.enabled) {
+        await this.seedDemoClients(this.demoData.passwordHash);
+      }
     }
     return this.dbModule.db;
   }
 
-  private async seedDemoClients() {
-    if (process.env.NODE_ENV === "production") return;
+  private async seedDemoClients(passwordHash: string) {
     try {
       const db = this.dbModule.db;
       const demoClients = [
@@ -758,12 +826,11 @@ export class DatabaseStorage implements IStorage {
         }
       }
 
-      const bcryptHash = "$2b$12$Bf.sDD1gQ6391SrTebkd4.9BeiteKKOswHl63vyCN0/51CmDldT7K";
       const demoPortalUsers = [
-        { id: "user-001", clientId: "client-1", email: "john.smith@acme.com", username: "johnsmith", password: bcryptHash, fullName: "John Smith", role: "admin" as const, storeRole: "managed" as const, emailVerified: true },
-        { id: "user-002", clientId: "client-2", email: "sarah.jones@phoenixmedical.com", username: "sarahjones", password: bcryptHash, fullName: "Sarah Jones", role: "user" as const, storeRole: "managed" as const, emailVerified: true },
-        { id: "user-003", clientId: "client-5", email: "admin@alamoindustries.com", username: "alamoadmin", password: "$2b$12$N9Ys4.kLCKht2rMjK4x0TOJHlQlxY7dRzAT6vmC7.mGrjck7TUI7O", fullName: "Maria Garcia", role: "user" as const, storeRole: "comanaged" as const, emailVerified: true },
-        { id: "user-004", clientId: "client-6", email: "admin@selmachining.com", username: "seladmin", password: "$2b$12$m6eyC5YfWBIG4/beE40TxOeG5BG4v/MxsowQ4Ays9RrjhOzcVxx.a", fullName: "Sel Operations", role: "user" as const, storeRole: "comanaged" as const, emailVerified: true },
+        { id: "user-001", clientId: "client-1", email: "john.smith@acme.com", username: "johnsmith", password: passwordHash, fullName: "John Smith", role: "user" as const, storeRole: "managed" as const, emailVerified: true },
+        { id: "user-002", clientId: "client-2", email: "sarah.jones@phoenixmedical.com", username: "sarahjones", password: passwordHash, fullName: "Sarah Jones", role: "user" as const, storeRole: "managed" as const, emailVerified: true },
+        { id: "user-003", clientId: "client-5", email: "admin@alamoindustries.com", username: "alamoadmin", password: passwordHash, fullName: "Maria Garcia", role: "user" as const, storeRole: "comanaged" as const, emailVerified: true },
+        { id: "user-004", clientId: "client-6", email: "admin@selmachining.com", username: "seladmin", password: passwordHash, fullName: "Sel Operations", role: "user" as const, storeRole: "comanaged" as const, emailVerified: true },
       ];
       for (const user of demoPortalUsers) {
         const [existing] = await db.select().from(portalUsersTable).where(eq(portalUsersTable.id, user.id));
@@ -830,6 +897,25 @@ export class DatabaseStorage implements IStorage {
     return uniqueWorkspaces.sort((a, b) => 
       new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
+  }
+
+  async getWorkspaceMembershipRole(
+    workspaceId: string,
+    userId: string,
+  ): Promise<WorkspaceMember["role"] | undefined> {
+    const workspace = await this.getWorkspace(workspaceId);
+    if (!workspace) return undefined;
+    if (workspace.ownerId === userId) return "owner";
+
+    const db = await this.getDb();
+    const memberships = await db
+      .select({ role: workspaceMembers.role })
+      .from(workspaceMembers)
+      .where(and(
+        eq(workspaceMembers.workspaceId, workspaceId),
+        eq(workspaceMembers.userId, userId),
+      ));
+    return resolveUniqueWorkspaceMembershipRole(memberships);
   }
 
   async createWorkspace(workspace: InsertWorkspace): Promise<Workspace> {
@@ -960,7 +1046,7 @@ export class DatabaseStorage implements IStorage {
     const updateData: any = { ...data, updatedAt: new Date() };
     if (data.status === "done") {
       updateData.completedAt = new Date();
-    } else if (data.status && data.status !== "done") {
+    } else if (data.status) {
       updateData.completedAt = null;
     }
     const [updated] = await db.update(tasks).set(updateData).where(eq(tasks.id, id)).returning();
@@ -1005,6 +1091,12 @@ export class DatabaseStorage implements IStorage {
       .from(comments)
       .where(eq(comments.taskId, taskId))
       .orderBy(desc(comments.createdAt));
+  }
+
+  async getComment(id: string): Promise<Comment | undefined> {
+    const db = await this.getDb();
+    const [comment] = await db.select().from(comments).where(eq(comments.id, id));
+    return comment || undefined;
   }
 
   async createComment(comment: InsertComment): Promise<Comment> {
@@ -1161,35 +1253,46 @@ export class DatabaseStorage implements IStorage {
 let storageInstance: IStorage;
 let dbAvailable = false;
 
-async function initializeStorage(): Promise<IStorage> {
+async function initializeStorage(
+  environment: StorageEnvironment = process.env,
+): Promise<IStorage> {
+  const demoData = resolvePortalDemoDataConfiguration(environment);
+  let databaseConnected = false;
+  let databaseType = "unknown";
+
   try {
     const dbModule = await import("./db");
     await dbModule.initPromise;
-    
+
     // Check dbReady AFTER initPromise resolves (it's updated in the module)
     const status = dbModule.getDatabaseStatus();
-    
-    if (status.connected) {
-      dbAvailable = true;
-      console.log(`✅ Database connected (${status.type}), using DatabaseStorage`);
-      return new DatabaseStorage();
-    }
+    databaseConnected = status.connected;
+    databaseType = status.type;
   } catch (error) {
-    console.log("⚠️ Database module error:", (error as Error).message);
+    console.warn("⚠️ Database module error:", (error as Error).message);
   }
-  
+
+  const backend = resolveStorageBackend(
+    environment.NODE_ENV,
+    databaseConnected,
+  );
+
+  if (backend === "database") {
+    dbAvailable = true;
+    console.log(`✅ Database connected (${databaseType}), using DatabaseStorage`);
+    return new DatabaseStorage(demoData);
+  }
+
   console.log("⚠️ Using MemStorage fallback (database endpoint disabled)");
-  return new MemStorage();
+  return new MemStorage(demoData);
 }
 
 const memStorageFallback = new MemStorage();
 storageInstance = memStorageFallback;
 
-initializeStorage().then(s => {
+export const storageReady: Promise<IStorage> = initializeStorage().then((s) => {
   storageInstance = s;
-}).catch(() => {
-  console.log("⚠️ Storage initialization failed, using MemStorage");
-  storageInstance = memStorageFallback;
+  return s;
 });
 
 export const storage: IStorage = new Proxy({} as IStorage, {

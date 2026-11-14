@@ -62,11 +62,11 @@ export default function PortalResetPassword() {
                 <AlertCircle className="h-4 w-4 flex-shrink-0" />
                 Invalid or missing reset token. Please request a new password reset link.
               </div>
-              <Link href="/portal/forgot-password">
-                <Button className="w-full bg-[#D3126A] hover:bg-[#e01874]" data-testid="button-request-new-link">
+              <Button asChild className="w-full bg-[#D3126A] hover:bg-[#e01874]">
+                <Link href="/portal/forgot-password" data-testid="button-request-new-link">
                   Request New Link
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             </CardContent>
           </Card>
         </div>
@@ -96,11 +96,11 @@ export default function PortalResetPassword() {
                   <CheckCircle2 className="h-5 w-5 flex-shrink-0 mt-0.5" />
                   <p className="text-sm">Password updated successfully. You can now sign in with your new password.</p>
                 </div>
-                <Link href="/portal/login">
-                  <Button className="w-full bg-[#D3126A] hover:bg-[#e01874]" data-testid="button-go-login">
+                <Button asChild className="w-full bg-[#D3126A] hover:bg-[#e01874]">
+                  <Link href="/portal/login" data-testid="button-go-login">
                     Go to Login
-                  </Button>
-                </Link>
+                  </Link>
+                </Button>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">

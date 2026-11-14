@@ -26,13 +26,13 @@ import {
 } from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
 import {
-  storeProducts,
+  storeCatalogProducts,
   categoryLabels,
-  getContractOnlyProducts,
-  getCheckoutEnabledProducts,
+  getContractOnlyStoreProducts,
   type ProductCategory,
   type StoreProduct,
-} from "@/data/storeProducts";
+} from "@/data/storeCatalog";
+import { getCheckoutEnabledProducts } from "@/data/storeProducts";
 import {
   isConfigurableProduct,
   type StoreOutcomeId,
@@ -88,10 +88,10 @@ const StoreLanding = () => {
     canonical: "/store",
   });
 
-  const contractOnlyProducts = getContractOnlyProducts();
+  const contractOnlyProducts = getContractOnlyStoreProducts();
   const checkoutProducts = getCheckoutEnabledProducts();
 
-  const featuredProducts = storeProducts
+  const featuredProducts = storeCatalogProducts
     .filter((p) => p.isCheckoutEnabled && !p.isClientOnly)
     .slice(0, 6);
 
@@ -342,7 +342,7 @@ const StoreLanding = () => {
             >
               {categories.map((category) => {
                 const Icon = categoryIcons[category];
-                const productCount = storeProducts.filter((p) => p.category === category).length;
+                const productCount = storeCatalogProducts.filter((p) => p.category === category).length;
                 return (
                   <motion.div key={category} variants={itemVariants}>
                     <Link href={`/store/co-managed?category=${category}`}>

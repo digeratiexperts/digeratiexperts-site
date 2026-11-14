@@ -2,7 +2,7 @@
 
 **Status:** BLOCKED — Envato package not found  
 **Date:** 2026-08-08  
-**Repo:** `digeratiexperts/Replit-Site`  
+**Repo:** `digeratiexperts/digeratiexperts-site`
 **Primary pack (DE decision):** Envato item `4THD2PH` — YES #1 (download entire package)  
 **Secondary (deferred):** Envato `QUCF9E5` — maybe later if concepts missing  
 **IconScout `234707`:** decide after inspecting Envato #1 style fit  
@@ -15,7 +15,7 @@
 
 | Location | Result |
 |---|---|
-| `C:\Users\Joe\Projects\Replit-Site` | No `4THD2PH`, no `.blend` / `.obj` / `.fbx` / `.gltf` / `.glb` packs |
+| Historical `Replit-Site` clone | No `4THD2PH`, no `.blend` / `.obj` / `.fbx` / `.gltf` / `.glb` packs; do not use this clone for new work |
 | `C:\Users\Joe\Projects\de-platform` | No match |
 | `C:\Users\Joe\Projects` (name match) | No match |
 | `C:\Users\Joe\Downloads` | No Envato / cyber-3D-icon ZIP matching `4THD2PH` |
@@ -32,13 +32,13 @@
 2. Place the **complete ZIP** (do not unpack for the agent) at:
 
 ```
-C:\Users\Joe\Projects\Replit-Site\assets\licensed\envato-4THD2PH\ORIGINAL\
+assets\licensed\envato-4THD2PH\ORIGINAL\
 ```
 
 Example filename (exact name may vary; keep Envato’s original name):
 
 ```
-C:\Users\Joe\Projects\Replit-Site\assets\licensed\envato-4THD2PH\ORIGINAL\4THD2PH.zip
+assets\licensed\envato-4THD2PH\ORIGINAL\4THD2PH.zip
 ```
 
 3. Reply in chat that the ZIP is in place so Phase 1 inventory can resume (unpack → per-file audit → draft integration plan).

@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PortalLayout } from "./PortalLayout";
 import { Building2, Users, Phone, Globe, MapPin, Mail, Calendar, RefreshCcw, ExternalLink } from "lucide-react";
+import { Link } from "wouter";
 import { portalGet } from "@/lib/portalApi";
 
 interface CRMContact {
@@ -16,7 +17,6 @@ interface CRMContact {
   Mobile: string;
   Title: string;
   Department: string;
-  zohoLink?: string;
 }
 
 interface CRMAccount {
@@ -31,7 +31,6 @@ interface CRMAccount {
   Billing_Code: string;
   Description: string;
   Created_Time: string;
-  zohoLink?: string;
 }
 
 interface CompanyData {
@@ -100,13 +99,12 @@ export default function PortalCompany() {
                 </CardTitle>
                 <CardDescription>Your organization details from our CRM</CardDescription>
               </div>
-              {data?.account?.zohoLink && (
-                <a href={data.account.zohoLink} target="_blank" rel="noopener noreferrer">
-                  <Button variant="outline" size="sm" className="border-[#D3126A]/30 text-[#1A1228] dark:text-de-magenta-ink" data-testid="button-edit-in-zoho">
-                    <ExternalLink className="h-4 w-4 mr-2" />
-                    Edit in Zoho
-                  </Button>
-                </a>
+              {data?.account && (
+                <Button asChild variant="outline" size="sm">
+                  <Link href="/portal/tickets/create" data-testid="button-request-company-update">
+                    Request an update
+                  </Link>
+                </Button>
               )}
             </div>
           </CardHeader>
@@ -257,18 +255,6 @@ export default function PortalCompany() {
                         >
                           <Phone className="h-4 w-4" />
                           <span className="hidden md:inline">{contact.Phone || contact.Mobile}</span>
-                        </a>
-                      )}
-                      {contact.zohoLink && (
-                        <a
-                          href={contact.zohoLink}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-1 hover:text-[#D3126A] dark:hover:text-de-magenta-ink"
-                          title="View in Zoho"
-                          data-testid={`link-zoho-${contact.id}`}
-                        >
-                          <ExternalLink className="h-4 w-4" />
                         </a>
                       )}
                     </div>

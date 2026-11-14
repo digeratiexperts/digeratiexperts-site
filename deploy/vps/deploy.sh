@@ -7,6 +7,7 @@
 #   GitHub <branch>
 #        ↓  git fetch (bare mirror in $SITE_HOME/app)
 #   releases/<timestamp>/   (checkout + npm ci + npm run build)
+#        ↓  checksummed SQL migrations under an advisory lock
 #        ↓  build validation + release.txt commit marker
 #   current -> releases/<timestamp>   (atomic symlink flip)
 #        ↓  sudo -n /usr/bin/systemctl restart $SERVICE_NAME
@@ -18,7 +19,7 @@
 #   User:        diger7051
 #   Code:        /home/digeratiexperts.com/current
 #   Service:     digeratiexperts-site (systemd — NOT PM2)
-#   Do NOT deploy from /root/Replit-Site
+#   Do NOT deploy from a mutable /root clone
 #
 # Usage:
 #   deploy.sh staging          # deploys to /home/staging.digeratiexperts.com
@@ -59,7 +60,7 @@ case "$TARGET" in
     ;;
 esac
 
-REPO_URL="${REPO_URL:-https://github.com/digeratiexperts/Replit-Site.git}"
+REPO_URL="${REPO_URL:-https://github.com/digeratiexperts/digeratiexperts-site.git}"
 DEPLOY_BRANCH="${DEPLOY_BRANCH:-main}"
 KEEP_RELEASES="${KEEP_RELEASES:-3}"
 NO_SYSTEMD="${NO_SYSTEMD:-0}"
@@ -93,7 +94,7 @@ if [ "$NO_SYSTEMD" != "1" ]; then
   SUDO_PROBE_RC=$?
   set -e
   if printf '%s' "$SUDO_PROBE_ERR" | grep -Eqi 'password is required|a password is required|not allowed|not permitted|a terminal is required'; then
-    fail "passwordless sudo required for: $SYSTEMCTL restart|is-active|status $SERVICE_NAME (deploy as diger7051 — not root/PM2//root/Replit-Site)"
+    fail "passwordless sudo required for: $SYSTEMCTL restart|is-active|status $SERVICE_NAME (deploy as diger7051 — not root/PM2)"
   fi
   # rc 0 = active; rc 3 = inactive (both mean sudo worked). Other unexpected codes: warn only.
   if [ "$SUDO_PROBE_RC" -ne 0 ] && [ "$SUDO_PROBE_RC" -ne 3 ]; then
@@ -144,6 +145,23 @@ fi
 
 # link the shared env into the release for tooling that expects a local .env
 ln -sfn "$SHARED_ENV" "$NEW_RELEASE/.env"
+
+log "Applying and verifying production database migrations"
+MIGRATION_REPORT="$NEW_RELEASE/migration-report.json"
+MIGRATION_REPORT_PATH="$MIGRATION_REPORT" node --env-file="$SHARED_ENV" scripts/run-migrations.mjs --plan
+FORWARD_ONLY_PENDING="$(node -e 'const fs=require("fs"); const report=JSON.parse(fs.readFileSync(process.argv[1], "utf8")); process.stdout.write(report.requiresMaintenance ? "1" : "0")' "$MIGRATION_REPORT")"
+FORWARD_ONLY_APPLIED=0
+
+if [ "$FORWARD_ONLY_PENDING" = "1" ]; then
+  [ "${ALLOW_FORWARD_ONLY_MIGRATION:-0}" = "1" ] || fail "forward-only database migration pending; schedule a maintenance window, stop $SERVICE_NAME, then rerun with ALLOW_FORWARD_ONLY_MIGRATION=1"
+  [ "$NO_SYSTEMD" != "1" ] || fail "forward-only migration cannot run in NO_SYSTEMD mode"
+  ACTIVE_STATE="$(sudo -n "$SYSTEMCTL" is-active "$SERVICE_NAME" 2>/dev/null || true)"
+  [ "$ACTIVE_STATE" != "active" ] || fail "forward-only database migration requires $SERVICE_NAME to be stopped before rerunning the deploy"
+  FORWARD_ONLY_APPLIED=1
+  log "Maintenance gate passed: applying forward-only migration with the old service offline"
+fi
+
+MIGRATION_REPORT_PATH="$MIGRATION_REPORT" node --env-file="$SHARED_ENV" scripts/run-migrations.mjs
 
 # ---------------------------------------------------------------- switch
 PREVIOUS_RELEASE=""
@@ -244,6 +262,11 @@ log "Waiting for health check and exact release verification on 127.0.0.1:$APP_P
 if health_check "$COMMIT"; then
   log "Health check passed; verified live release SHA $COMMIT"
 else
+  if [ "$FORWARD_ONLY_APPLIED" = "1" ]; then
+    log "Health/release verification FAILED after a forward-only migration"
+    log "Automatic rollback is disabled because the previous application is incompatible with the new payment-ledger trigger; manual forward recovery is required"
+    exit 1
+  fi
   log "Health/release verification FAILED — rolling back"
   if [ -n "$PREVIOUS_RELEASE" ] && [ -d "$PREVIOUS_RELEASE" ]; then
     ln -sfn "$PREVIOUS_RELEASE" "$CURRENT_LINK"

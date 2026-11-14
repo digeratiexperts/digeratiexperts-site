@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PortalLayout } from "./PortalLayout";
-import { CreditCard, FileText, Calendar, DollarSign, ArrowRight, Download, CheckCircle, Clock, AlertCircle, RefreshCcw, ExternalLink } from "lucide-react";
+import { CreditCard, FileText, Calendar, DollarSign, ArrowRight, CheckCircle, Clock, AlertCircle, RefreshCcw } from "lucide-react";
 import { Link } from "wouter";
 import { portalGet } from "@/lib/portalApi";
 
@@ -20,7 +20,6 @@ interface Subscription {
   next_billing_at: string;
   current_term_ends_at: string;
   amount: number;
-  zohoLink?: string;
 }
 
 interface Invoice {
@@ -32,7 +31,6 @@ interface Invoice {
   total: number;
   balance: number;
   currency_code: string;
-  zohoLink?: string;
 }
 
 interface BillingData {
@@ -101,10 +99,20 @@ export default function PortalBilling() {
         )}
 
         {!data?.zohoConnected && !isLoading && (
-          <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-900/30 rounded-lg">
-            <p className="text-sm text-amber-800 dark:text-amber-300">
-              Billing integration is being configured. Some features may be limited.
-            </p>
+          <div className="flex flex-col gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-900/30 dark:bg-amber-900/20 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="font-medium text-amber-900 dark:text-amber-200">
+                Live billing details are temporarily unavailable
+              </p>
+              <p className="mt-1 text-sm text-amber-800 dark:text-amber-300">
+                The information below may be incomplete. Request billing help before making a payment or account change.
+              </p>
+            </div>
+            <Button asChild variant="outline" size="sm" className="shrink-0 border-amber-300 bg-white/70 dark:border-amber-800 dark:bg-transparent">
+              <Link href="/portal/tickets/create" data-testid="button-billing-connection-help">
+                Request billing help
+              </Link>
+            </Button>
           </div>
         )}
 
@@ -175,17 +183,11 @@ export default function PortalBilling() {
                   </div>
                 </div>
 
-                <div className="flex gap-3">
-                  {data.subscription.zohoLink && (
-                    <a href={data.subscription.zohoLink} target="_blank" rel="noopener noreferrer">
-                      <Button variant="outline" className="border-[#D3126A]/30 text-[#1A1228] dark:text-de-magenta-ink hover:bg-de-paper dark:hover:bg-[#D3126A]/10" data-testid="button-manage-subscription">
-                        <ExternalLink className="h-4 w-4 mr-2" />
-                        Manage in Zoho
-                      </Button>
-                    </a>
-                  )}
-                  <Button variant="outline" data-testid="button-update-payment">
-                    Update Payment Method
+                <div className="flex flex-wrap gap-3">
+                  <Button asChild variant="outline">
+                    <Link href="/portal/tickets/create" data-testid="button-request-subscription-help">
+                      Request subscription help
+                    </Link>
                   </Button>
                 </div>
               </div>
@@ -193,8 +195,13 @@ export default function PortalBilling() {
               <div className="text-center py-8">
                 <CreditCard className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                 <p className="text-gray-500 dark:text-gray-400">No active subscription found</p>
-                <Button className="mt-4 bg-[#D3126A] hover:bg-[#e01874]" data-testid="button-view-plans">
-                  View Plans
+                <p className="mx-auto mt-2 max-w-md text-sm text-gray-500 dark:text-gray-400">
+                  Explore the ProActive service levels, then contact us for a scope confirmed for your organization.
+                </p>
+                <Button asChild className="mt-4 bg-[#D3126A] hover:bg-[#e01874]">
+                  <Link href="/proactive-ecosystem-pricing" data-testid="button-view-plans">
+                    View Plans
+                  </Link>
                 </Button>
               </div>
             )}
@@ -212,12 +219,12 @@ export default function PortalBilling() {
                 </CardTitle>
                 <CardDescription>Your billing history</CardDescription>
               </div>
-              <Link href="/portal/invoices">
-                <Button variant="outline" size="sm" data-testid="button-view-all-invoices">
+              <Button asChild variant="outline" size="sm">
+                <Link href="/portal/invoices" data-testid="button-view-all-invoices">
                   View All
                   <ArrowRight className="h-4 w-4 ml-2" />
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             </div>
           </CardHeader>
           <CardContent>
@@ -234,7 +241,7 @@ export default function PortalBilling() {
                   return (
                     <div
                       key={invoice.invoice_id}
-                      className="flex items-center justify-between py-4 first:pt-0 last:pb-0"
+                      className="flex flex-col gap-3 py-4 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between"
                       data-testid={`invoice-row-${invoice.invoice_id}`}
                     >
                       <div className="flex items-center gap-4">
@@ -251,7 +258,7 @@ export default function PortalBilling() {
                         </div>
                       </div>
                       
-                      <div className="flex items-center gap-4">
+                      <div className="flex w-full flex-wrap items-center justify-between gap-3 sm:w-auto sm:justify-end sm:gap-4">
                         <div className="text-right">
                           <p className="font-semibold text-gray-900 dark:text-white">
                             {formatCurrency(invoice.total, invoice.currency_code)}
@@ -266,16 +273,6 @@ export default function PortalBilling() {
                           <StatusIcon className="h-3 w-3 mr-1" />
                           {invoice.status}
                         </Badge>
-                        <Button variant="ghost" size="sm" data-testid={`button-download-${invoice.invoice_id}`}>
-                          <Download className="h-4 w-4" />
-                        </Button>
-                        {invoice.zohoLink && (
-                          <a href={invoice.zohoLink} target="_blank" rel="noopener noreferrer">
-                            <Button variant="ghost" size="sm" title="Open in Zoho" data-testid={`button-zoho-${invoice.invoice_id}`}>
-                              <ExternalLink className="h-4 w-4" />
-                            </Button>
-                          </a>
-                        )}
                       </div>
                     </div>
                   );
@@ -300,7 +297,7 @@ export default function PortalBilling() {
             <CardDescription>Manage your payment options</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-between p-4 border dark:border-slate-700 rounded-lg">
+            <div className="flex flex-col gap-4 rounded-lg border p-4 dark:border-slate-700 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-4">
                 <div className="p-2 bg-gray-100 dark:bg-slate-800 rounded-lg">
                   <CreditCard className="h-6 w-6 text-gray-600 dark:text-gray-400" />
@@ -308,14 +305,21 @@ export default function PortalBilling() {
                 <div>
                   <p className="font-medium text-gray-900 dark:text-white">Card on file</p>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Managed through Zoho Billing
+                    {data?.zohoConnected
+                      ? "Payment methods are securely managed through Zoho Billing."
+                      : "Contact the billing team to make a secure payment-method change."}
                   </p>
                 </div>
               </div>
-              <Button variant="outline" size="sm" data-testid="button-update-card">
-                Update
+              <Button asChild variant="outline" size="sm">
+                <Link href="/portal/tickets/create" data-testid="button-request-payment-help">
+                  Request billing help
+                </Link>
               </Button>
             </div>
+            <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
+              For your security, never include full card or bank account details in a support ticket.
+            </p>
           </CardContent>
         </Card>
       </div>

@@ -92,7 +92,7 @@ export async function fetchKev(maxAgeDays = 90): Promise<RawThreat[]> {
   const catalog = await fetchJson<KevCatalog>(KEV_URL);
   const cutoff = Date.now() - maxAgeDays * 24 * 60 * 60 * 1000;
   return (catalog.vulnerabilities || [])
-    .map((row) => {
+    .map((row): RawThreat | null => {
       const publishedAt = parseLooseDate(row.dateAdded);
       const cve = row.cveID?.toUpperCase();
       if (!publishedAt || !cve) return null;
@@ -115,7 +115,7 @@ export async function fetchKev(maxAgeDays = 90): Promise<RawThreat[]> {
         product,
         kev: true,
         ransomware,
-      } satisfies RawThreat;
+      };
     })
     .filter((row): row is RawThreat => Boolean(row));
 }
@@ -169,7 +169,7 @@ export async function fetchMsrc(maxAgeDays = 45): Promise<RawThreat[]> {
   });
   const cutoff = Date.now() - maxAgeDays * 24 * 60 * 60 * 1000;
   return (payload.value || [])
-    .map((row) => {
+    .map((row): RawThreat | null => {
       const cve = row.cveNumber?.toUpperCase();
       const title = row.cveTitle?.trim();
       if (!cve || !title || row.isMariner || MSRC_SKIP_RE.test(title)) return null;
@@ -189,7 +189,7 @@ export async function fetchMsrc(maxAgeDays = 45): Promise<RawThreat[]> {
         product: row.tag || undefined,
         kev: false,
         ransomware: false,
-      } satisfies RawThreat;
+      };
     })
     .filter((row): row is RawThreat => Boolean(row));
 }

@@ -55,14 +55,12 @@ export function PortalApprovals() {
   const [error, setError] = useState<string | null>(null);
   const [acting, setActing] = useState(false);
 
-  const token = () => localStorage.getItem("portalToken") || "";
-
   const load = async () => {
     setLoading(true);
     setError(null);
     try {
       const res = await fetch(`/api/portal/approvals?scope=${scope}`, {
-        headers: { Authorization: `Bearer ${token()}` },
+        credentials: "include",
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to load approvals");
@@ -84,8 +82,8 @@ export function PortalApprovals() {
     try {
       const res = await fetch(`/api/portal/approvals/${selected.id}/${action}`, {
         method: "POST",
+        credentials: "include",
         headers: {
-          Authorization: `Bearer ${token()}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ note }),

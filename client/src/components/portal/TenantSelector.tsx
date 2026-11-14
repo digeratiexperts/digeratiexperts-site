@@ -10,8 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { portalGet } from "@/lib/portalApi";
-import { apiRequest } from "@/lib/queryClient";
+import { portalGet, portalPost } from "@/lib/portalApi";
 import { useToast } from "@/hooks/use-toast";
 
 interface Tenant {
@@ -42,11 +41,12 @@ export function TenantSelector({ currentTenant, onTenantChange }: TenantSelector
 
   const impersonateMutation = useMutation({
     mutationFn: async (companyId: string) => {
-      return await apiRequest("/api/portal/admin/impersonate", "POST", { companyId });
+      return portalPost<{ success: boolean; company: Tenant }>(
+        "/api/portal/admin/impersonate",
+        { companyId },
+      );
     },
-    onSuccess: (data: any) => {
-      localStorage.setItem("portalToken", data.token);
-      localStorage.setItem("impersonatingCompany", JSON.stringify(data.company));
+    onSuccess: (data) => {
       toast({ 
         title: "Switched Tenant", 
         description: `Now viewing as ${data.company.companyName}` 
@@ -68,21 +68,11 @@ export function TenantSelector({ currentTenant, onTenantChange }: TenantSelector
   });
 
   const stopImpersonationMutation = useMutation({
-    mutationFn: async () => {
-      const token = localStorage.getItem("portalToken");
-      const response = await fetch("/api/portal/admin/stop-impersonation", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-      if (!response.ok) throw new Error("Failed to stop impersonation");
-      return response.json();
-    },
-    onSuccess: (data: any) => {
-      localStorage.setItem("portalToken", data.token);
-      localStorage.removeItem("impersonatingCompany");
+    mutationFn: () => portalPost<{ success: boolean }>(
+      "/api/portal/admin/stop-impersonation",
+      {},
+    ),
+    onSuccess: () => {
       toast({ 
         title: "Switched to Admin View", 
         description: "Back to Digerati Experts admin view" 

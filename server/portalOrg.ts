@@ -33,6 +33,7 @@ export type OrgUserFields = {
   departmentId?: string | null;
   managerUserId?: string | null;
   isCompanyItContact?: boolean | null;
+  storeRole?: string | null;
 };
 
 let schemaReady = false;
@@ -237,7 +238,8 @@ export async function findDeptItContact(
       .limit(1);
     const contactId = depts[0]?.itContactUserId;
     if (!contactId) return null;
-    return findUserById(contactId);
+    const contact = findUserById(contactId);
+    return contact?.clientId === clientId ? contact : null;
   } catch {
     return null;
   }

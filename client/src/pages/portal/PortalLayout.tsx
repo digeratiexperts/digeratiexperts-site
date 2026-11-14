@@ -11,34 +11,28 @@ import {
   FileText,
   BookOpen,
   Settings,
-  Activity,
   GraduationCap,
   MessageCircle,
-  Download,
-  Truck,
   ShoppingCart,
   ClipboardList,
   CheckSquare,
   FileStack,
   Upload,
   Users,
-  Calendar,
   Shield,
-  Phone,
   Building2,
   FileSignature,
   FilePlus,
-  Map,
-  BarChart3,
   AlertTriangle,
   Briefcase,
+  Monitor,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import logoImage from "@assets/DE-Logo-new_1762461524794.webp";
 import { TenantSelector } from "@/components/portal/TenantSelector";
 import { useSEO } from "@/hooks/useSEO";
 import { navAllowed, readPortalUser, type NavKey } from "@/lib/portalRoles";
-import { portalGet, redirectToPortalLogin } from "@/lib/portalApi";
+import { portalGet, portalPost, redirectToPortalLogin } from "@/lib/portalApi";
 import { usePortalHubEvents } from "@/hooks/usePortalHubEvents";
 
 interface PortalLayoutProps {
@@ -51,47 +45,45 @@ type NavItem = {
   label: string;
   icon: typeof LayoutDashboard;
   key: NavKey;
+  group: "overview" | "support" | "account" | "commerce" | "tools";
 };
 
 const navItems: NavItem[] = [
-  { href: "/portal/dashboard", label: "Dashboard", icon: LayoutDashboard, key: "dashboard" },
-  { href: "/portal/tickets", label: "Support Tickets", icon: Ticket, key: "tickets" },
-  { href: "/portal/forms", label: "Request Forms", icon: ClipboardList, key: "forms" },
-  { href: "/portal/infrastructure", label: "Infrastructure Issues", icon: AlertTriangle, key: "infrastructure" },
-  { href: "/portal/chat", label: "Chats / DE Desk", icon: MessageCircle, key: "chat" },
-  { href: "/portal/approvals", label: "Approvals", icon: FileStack, key: "approvals" },
-  { href: "/portal/people", label: "People & Org", icon: Users, key: "people" },
-  { href: "/portal/questionnaires", label: "DE Questionnaires", icon: Calendar, key: "other" },
-  { href: "/portal/surveys", label: "Surveys", icon: CheckSquare, key: "surveys" },
-  { href: "/portal/contracts", label: "Contracts", icon: FileSignature, key: "contracts" },
-  { href: "/portal/order-form", label: "New Order", icon: FilePlus, key: "other" },
-  { href: "/portal/services", label: "My Services", icon: Package, key: "services" },
-  { href: "/portal/billing", label: "Billing", icon: FileText, key: "billing" },
-  { href: "/portal/company", label: "Company", icon: Building2, key: "company" },
-  { href: "/portal/files", label: "Files & Downloads", icon: FileText, key: "files" },
-  { href: "/portal/invoices", label: "Invoices", icon: FileText, key: "billing" },
-  { href: "/portal/orders", label: "Orders", icon: ShoppingCart, key: "other" },
-  { href: "/portal/vpn", label: "VPN Access", icon: Shield, key: "other" },
-  { href: "/portal/cytracom", label: "ControlOne Phone", icon: Phone, key: "other" },
-  { href: "/portal/ship-center", label: "Ship Center", icon: Truck, key: "other" },
-  { href: "/portal/procurement", label: "Procurement Store", icon: ShoppingCart, key: "other" },
-  { href: "/portal/roadmap", label: "IT Roadmap", icon: Map, key: "other" },
-  { href: "/portal/qbr", label: "Business Reviews", icon: BarChart3, key: "other" },
-  { href: "/portal/kb", label: "Knowledge Base", icon: BookOpen, key: "kb" },
-  { href: "/portal/status", label: "System Status", icon: Activity, key: "other" },
-  { href: "/portal/learning", label: "Learning", icon: GraduationCap, key: "learning" },
-  { href: "/portal/agent", label: "Desktop Agent", icon: Download, key: "other" },
-  { href: "/portal/settings", label: "Settings", icon: Settings, key: "settings" },
+  { href: "/portal/dashboard", label: "Dashboard", icon: LayoutDashboard, key: "dashboard", group: "overview" },
+  { href: "/portal/tickets", label: "Support Tickets", icon: Ticket, key: "tickets", group: "support" },
+  { href: "/portal/forms", label: "Request Forms", icon: ClipboardList, key: "forms", group: "support" },
+  { href: "/portal/infrastructure", label: "Infrastructure Issues", icon: AlertTriangle, key: "infrastructure", group: "support" },
+  { href: "/portal/chat", label: "Chats / DE Desk", icon: MessageCircle, key: "chat", group: "support" },
+  { href: "/portal/approvals", label: "Approvals", icon: FileStack, key: "approvals", group: "support" },
+  { href: "/portal/surveys", label: "Surveys", icon: CheckSquare, key: "surveys", group: "support" },
+  { href: "/portal/people", label: "People & Org", icon: Users, key: "people", group: "account" },
+  { href: "/portal/contracts", label: "Contracts", icon: FileSignature, key: "contracts", group: "account" },
+  { href: "/portal/services", label: "My Services", icon: Package, key: "services", group: "account" },
+  { href: "/portal/billing", label: "Billing", icon: FileText, key: "billing", group: "account" },
+  { href: "/portal/invoices", label: "Invoices", icon: FileText, key: "billing", group: "account" },
+  { href: "/portal/company", label: "Company", icon: Building2, key: "company", group: "account" },
+  { href: "/portal/files", label: "Files & Downloads", icon: FileText, key: "files", group: "account" },
+  { href: "/portal/order-form", label: "New Order", icon: FilePlus, key: "other", group: "commerce" },
+  { href: "/portal/orders", label: "Orders", icon: ShoppingCart, key: "other", group: "commerce" },
+  { href: "/portal/kb", label: "Knowledge Base", icon: BookOpen, key: "kb", group: "tools" },
+  { href: "/portal/learning", label: "Learning", icon: GraduationCap, key: "learning", group: "tools" },
+  { href: "/portal/agent", label: "Desktop Companion", icon: Monitor, key: "other", group: "tools" },
+  { href: "/portal/settings", label: "Settings", icon: Settings, key: "settings", group: "tools" },
 ];
+
+const navGroups = [
+  { key: "overview", label: "Overview" },
+  { key: "support", label: "Support & requests" },
+  { key: "account", label: "Account & services" },
+  { key: "commerce", label: "Orders" },
+  { key: "tools", label: "Tools & resources" },
+] as const;
 
 const adminItems = [
   { href: "/portal/admin/companies", label: "Companies", icon: Building2 },
   { href: "/portal/admin/login-knocks", label: "Login Alerts", icon: Shield },
   { href: "/portal/admin/lifecycle", label: "Onboard / Offboard", icon: Users },
-  { href: "/portal/admin/contracts", label: "Contracts", icon: FileSignature },
   { href: "/portal/admin/import", label: "Data Import", icon: Upload },
-  { href: "/portal/admin/agents", label: "Manage Agents", icon: Download },
-  { href: "/portal/admin/openai", label: "OpenAI Billing", icon: Settings },
   { href: "/portal/sales-process", label: "Sales Process", icon: Briefcase },
 ];
 
@@ -115,11 +107,12 @@ export function PortalLayout({ children, title }: PortalLayoutProps) {
     noIndex: true,
   });
   const [user, setUser] = useState(() => readPortalUser());
-  const impersonatingCompany = localStorage.getItem("impersonatingCompany")
-    ? JSON.parse(localStorage.getItem("impersonatingCompany")!)
-    : null;
+  const [impersonatingCompany, setImpersonatingCompany] = useState<{
+    id: string;
+    companyName: string;
+  } | null>(null);
 
-  // Ensure session is real: Bearer localStorage and/or httpOnly portalAuth cookie
+  // The server-authoritative HttpOnly cookie session is the only auth source.
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -131,6 +124,7 @@ export function PortalLayout({ children, title }: PortalLayoutProps) {
           localStorage.setItem("portalUserId", me.user.id || "portal-user");
           if (me.user.email) localStorage.setItem("userEmail", me.user.email);
           setUser(me.user);
+          setImpersonatingCompany(me.user.impersonatingCompany || null);
         }
         setSessionReady(true);
       } catch {
@@ -153,21 +147,9 @@ export function PortalLayout({ children, title }: PortalLayoutProps) {
 
   const handleStopImpersonation = async () => {
     try {
-      const token = localStorage.getItem("portalToken");
-      const response = await fetch("/api/portal/admin/stop-impersonation", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-      });
-      if (response.ok) {
-        const data = await response.json();
-        localStorage.setItem("portalToken", data.token);
-        localStorage.removeItem("impersonatingCompany");
-        window.location.href = "/portal/admin/companies";
-      }
+      await portalPost("/api/portal/admin/stop-impersonation", {});
+      setImpersonatingCompany(null);
+      window.location.href = "/portal/admin/companies";
     } catch (error) {
       console.error("Failed to stop impersonation:", error);
     }
@@ -180,9 +162,7 @@ export function PortalLayout({ children, title }: PortalLayoutProps) {
       /* still clear local */
     }
     localStorage.removeItem("portalUser");
-    localStorage.removeItem("portalToken");
     localStorage.removeItem("portalUserId");
-    localStorage.removeItem("impersonatingCompany");
     window.location.href = "/portal/login";
   };
 
@@ -206,23 +186,34 @@ export function PortalLayout({ children, title }: PortalLayoutProps) {
             <img src={logoImage} alt="Digerati Experts" className="h-8 w-auto" />
           </div>
 
-          <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-            {visibleNav.map((item) => {
-              const Icon = item.icon;
-              // Avoid /portal/orders stealing active from /portal/order-form (and similar prefixes).
-              const isActive =
-                location === item.href ||
-                (item.href !== "/portal/orders" && location.startsWith(item.href + "/"));
+          <nav className="flex-1 space-y-4 overflow-y-auto p-4" aria-label="Client portal">
+            {navGroups.map((group) => {
+              const groupItems = visibleNav.filter((item) => item.group === group.key);
+              if (!groupItems.length) return null;
               return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`${navLinkBase} ${isActive ? navLinkActive : navLinkIdle}`}
-                  onClick={() => setSidebarOpen(false)}
-                >
-                  <Icon className="w-4 h-4 shrink-0" />
-                  {item.label}
-                </Link>
+                <div key={group.key} className="space-y-1">
+                  <p className="px-3 pb-1 text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-white/40">
+                    {group.label}
+                  </p>
+                  {groupItems.map((item) => {
+                    const Icon = item.icon;
+                    // Avoid /portal/orders stealing active from /portal/order-form (and similar prefixes).
+                    const isActive =
+                      location === item.href ||
+                      (item.href !== "/portal/orders" && location.startsWith(item.href + "/"));
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className={`${navLinkBase} ${isActive ? navLinkActive : navLinkIdle}`}
+                        onClick={() => setSidebarOpen(false)}
+                      >
+                        <Icon className="w-4 h-4 shrink-0" />
+                        {item.label}
+                      </Link>
+                    );
+                  })}
+                </div>
               );
             })}
 

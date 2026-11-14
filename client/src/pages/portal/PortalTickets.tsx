@@ -1,13 +1,12 @@
 import { useState } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { useLocation, Link } from "wouter";
+import { useQuery } from "@tanstack/react-query";
+import { Link } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PortalLayout } from "./PortalLayout";
 import { Plus, Search, MessageSquare, Clock } from "lucide-react";
-import { queryClient } from "@/lib/queryClient";
 import { portalGet } from "@/lib/portalApi";
 
 interface Ticket {
@@ -77,15 +76,12 @@ export default function PortalTickets() {
               Manage your support requests and track resolutions
             </p>
           </div>
-          <Link href="/portal/tickets/create">
-            <Button
-              className="bg-[#D3126A] hover:bg-[#D3126A]/90 text-white"
-              data-testid="button-create-ticket"
-            >
+          <Button asChild className="bg-[#D3126A] hover:bg-[#D3126A]/90 text-white">
+            <Link href="/portal/tickets/create" data-testid="button-create-ticket">
               <Plus className="h-4 w-4 mr-2" />
               New Ticket
-            </Button>
-          </Link>
+            </Link>
+          </Button>
         </div>
 
         {/* Filters */}
@@ -100,7 +96,7 @@ export default function PortalTickets() {
               data-testid="input-search"
             />
           </div>
-          <div className="flex gap-2">
+          <div className="flex w-full gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:w-auto md:flex-wrap">
             {["all", "open", "in_progress", "pending_client", "resolved", "closed"].map(
               (status) => (
                 <Button
@@ -108,7 +104,7 @@ export default function PortalTickets() {
                   variant={filter === status ? "default" : "outline"}
                   size="sm"
                   onClick={() => setFilter(status)}
-                  className={filter === status ? "bg-[#D3126A] hover:bg-[#D3126A]/90" : ""}
+                  className={`shrink-0 ${filter === status ? "bg-[#D3126A] hover:bg-[#D3126A]/90" : ""}`}
                   data-testid={`button-filter-${status}`}
                 >
                   {status === "all" ? "All" : status.replace(/_/g, " ")}
@@ -139,11 +135,12 @@ export default function PortalTickets() {
             ) : filteredTickets.length > 0 ? (
               <div className="space-y-3">
                 {filteredTickets.map((ticket) => (
-                  <Link key={ticket.id} href={`/portal/tickets/${ticket.id}`}>
-                    <a
-                      className="flex items-center justify-between p-4 border rounded-lg dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer block"
-                      data-testid={`ticket-row-${ticket.id}`}
-                    >
+                  <Link
+                    key={ticket.id}
+                    href={`/portal/tickets/${ticket.id}`}
+                    className="flex flex-col items-start gap-3 rounded-lg border p-4 transition-colors hover:bg-gray-50 dark:border-slate-700 dark:hover:bg-slate-800/50 sm:flex-row sm:items-center sm:justify-between"
+                    data-testid={`ticket-row-${ticket.id}`}
+                  >
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="font-medium text-gray-900 dark:text-white truncate">
@@ -160,7 +157,7 @@ export default function PortalTickets() {
                         </span>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 ml-4">
+                    <div className="flex w-full flex-wrap items-center gap-2 sm:ml-4 sm:w-auto">
                       <Badge className={getPriorityColor(ticket.priority)}>
                         {ticket.priority}
                       </Badge>
@@ -176,7 +173,6 @@ export default function PortalTickets() {
                         {ticket.status}
                       </Badge>
                     </div>
-                    </a>
                   </Link>
                 ))}
               </div>

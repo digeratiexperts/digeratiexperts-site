@@ -95,7 +95,7 @@ export async function generateAIChatResponse(
  */
 export function shouldEscalateToHuman(
   userMessage: string,
-  context: ChatContext
+  context?: ChatContext
 ): boolean {
   const text = userMessage.toLowerCase();
 
@@ -241,7 +241,7 @@ export function getPriorityForHumanReview(
   userMessage: string,
   sentiment: "positive" | "neutral" | "negative"
 ): "low" | "medium" | "high" {
-  if (sentiment === "negative" || shouldEscalateToHuman(userMessage, {})) {
+  if (sentiment === "negative" || shouldEscalateToHuman(userMessage)) {
     return "high";
   }
 

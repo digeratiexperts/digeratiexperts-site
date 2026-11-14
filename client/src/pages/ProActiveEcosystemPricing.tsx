@@ -273,6 +273,7 @@ export default function ProActiveEcosystemPricing() {
       }),
     [effectiveUsers, effectiveSites],
   );
+  const selectedEstimate = estimates.find((plan) => plan.id === selectedTier);
 
   const fadeIn = prefersReducedMotion
     ? undefined
@@ -287,39 +288,38 @@ export default function ProActiveEcosystemPricing() {
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 de-nav-clear pb-20">
           {/* Hero */}
           <motion.header
-            className="text-center max-w-3xl mx-auto mb-14"
+            className="mx-auto mb-7 max-w-3xl text-center md:mb-8"
             initial={prefersReducedMotion ? undefined : "hidden"}
             animate={prefersReducedMotion ? undefined : "visible"}
             variants={fadeIn}
           >
-            <h1 className="mb-4 text-4xl font-bold text-white md:text-5xl">
+            <h1 className="mb-3 text-3xl font-bold text-white md:text-5xl">
               ProActive Ecosystem Pricing<span className="text-de-accent-ink" aria-hidden="true">:</span>
             </h1>
-            <p className="text-lg text-white/70 mb-3">
-              Estimate your ProActive Ecosystem starting point. Final pricing is confirmed after assessment.
+            <p className="mb-2 text-base text-white/70 md:text-lg">
+              Choose a package, set your team size, and see a transparent starting point.
             </p>
-            <p className="text-sm text-white/50">
-              Pricing depends on users, endpoints, sites, network requirements, backup scope, infrastructure needs,
-              compliance requirements, and selected add-ons.
+            <p className="text-xs leading-relaxed text-white/50 sm:text-sm">
+              Your final scope is confirmed after assessment and can change with endpoints, sites, backup, network,
+              compliance, and add-ons.
             </p>
           </motion.header>
 
-          <section className="mb-14">
+          <section className="mb-10 grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]" aria-label="Package selector and estimator">
             <ProActiveCoverageMap selected={selectedTier} onSelect={setSelectedTier} />
-          </section>
 
-          {/* Estimator */}
-          <section className="mb-14" aria-labelledby="estimator-heading">
-            <div className="de-style-box p-6 md:p-8">
-              <h2 id="estimator-heading" className="flex items-center gap-3 text-xl font-semibold text-white mb-2">
-                <Calculator className="w-5 h-5 text-de-magenta-ink" />
-                Estimate Your Starting Point
+            <div className="de-style-box p-5 md:p-6" aria-labelledby="estimator-heading">
+              <h2 id="estimator-heading" className="mb-1.5 flex items-center gap-2.5 text-xl font-semibold text-white">
+                <Calculator className="h-5 w-5 text-de-magenta-ink" />
+                Estimate your starting point
               </h2>
-              <p className="text-sm text-white/50 mb-6">Estimates only — exact pricing confirmed after assessment.</p>
-              <div className="grid sm:grid-cols-2 gap-6 max-w-xl">
+              <p className="mb-4 text-sm text-white/50">
+                Planning estimate only. We verify the environment before any agreement.
+              </p>
+              <div className="grid grid-cols-2 gap-3">
                 <label className="block">
-                  <span className="flex items-center gap-2 text-sm text-white/70 mb-2">
-                    <Users className="w-4 h-4" /> Number of users
+                  <span className="mb-2 flex items-center gap-2 text-sm text-white/70">
+                    <Users className="h-4 w-4" /> Users
                   </span>
                   <Input
                     type="number"
@@ -331,8 +331,8 @@ export default function ProActiveEcosystemPricing() {
                   />
                 </label>
                 <label className="block">
-                  <span className="flex items-center gap-2 text-sm text-white/70 mb-2">
-                    <Building2 className="w-4 h-4" /> Number of sites
+                  <span className="mb-2 flex items-center gap-2 text-sm text-white/70">
+                    <Building2 className="h-4 w-4" /> Sites
                   </span>
                   <Input
                     type="number"
@@ -344,6 +344,28 @@ export default function ProActiveEcosystemPricing() {
                   />
                 </label>
               </div>
+              <div
+                className="mt-4 rounded-xl border border-[#D3126A]/35 bg-[#D3126A]/10 px-4 py-3"
+                aria-live="polite"
+                data-testid="selected-package-estimate"
+              >
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#F04C97]">
+                  {selectedEstimate?.shortName} starting estimate
+                </p>
+                <p className="mt-1 text-2xl font-bold text-white">
+                  {selectedEstimate?.monthlyEstimate != null
+                    ? `~$${selectedEstimate.monthlyEstimate.toLocaleString()}/mo`
+                    : "Assessment required"}
+                </p>
+                {selectedEstimate?.siteMin ? (
+                  <p className="mt-1 text-xs text-white/55">
+                    Includes the published ${selectedEstimate.siteMin.toLocaleString()}/site monthly floor.
+                  </p>
+                ) : null}
+              </div>
+              <p className="mt-4 rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-xs leading-relaxed text-white/55">
+                Published prices are starting floors, not a checkout quote. Final pricing is server-verified against the approved client scope.
+              </p>
             </div>
           </section>
 
@@ -416,15 +438,16 @@ export default function ProActiveEcosystemPricing() {
                     <ChevronDown className={cn("h-4 w-4", expanded && "rotate-180")} />
                   </button>
                 )}
-                <Link href={plan.learnMoreUrl}>
-                  <Button
+                <Button
+                  asChild
                     variant="outline"
                     className="w-full border-de-hairline bg-de-bg text-white hover:border-[#D3126A] hover:bg-de-raised hover:text-white"
                   >
+                  <Link href={plan.learnMoreUrl}>
                     Explore {plan.shortName}
                     <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </Link>
+                  </Link>
+                </Button>
               </motion.article>
               );
             })}

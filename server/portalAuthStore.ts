@@ -10,6 +10,10 @@ import {
   portalOrderForms,
 } from "@shared/schema";
 import { PRIMARY_PHONE } from "@shared/companyContact";
+import {
+  migratePortalMfaSecretsAtRest,
+  protectPortalMfaRecordForStorage,
+} from "./portalMfaSecurity";
 
 type StoreRole = "public" | "prospect" | "managed" | "comanaged" | "admin";
 
@@ -55,6 +59,9 @@ const clientsById = new Map<string, PortalAuthClient>();
 let initialized = false;
 
 function indexUser(user: PortalAuthUser) {
+  for (const [key, indexed] of usersByKey.entries()) {
+    if (indexed.id === user.id) usersByKey.delete(key);
+  }
   usersByKey.set(user.email.toLowerCase(), user);
   usersByKey.set(user.email, user);
   if (user.username) {
@@ -141,9 +148,19 @@ async function ensureSchema() {
   }
 }
 
-async function upsertUserDb(user: PortalAuthUser) {
-  if (!dbReady || !db) return;
+async function upsertUserDb(user: PortalAuthUser, required = false) {
+  if (!dbReady || !db) {
+    if (required) throw new PortalAuthoritativeStoreUnavailableError();
+    return;
+  }
   try {
+    const protectedMfa = protectPortalMfaRecordForStorage(
+      user.id,
+      user.mfaTotpSecret,
+      user.mfaBackupCodes,
+    );
+    user.mfaTotpSecret = protectedMfa.mfaTotpSecret;
+    user.mfaBackupCodes = protectedMfa.mfaBackupCodes;
     const values = {
       id: user.id,
       email: user.email,
@@ -194,6 +211,7 @@ async function upsertUserDb(user: PortalAuthUser) {
       });
   } catch (err: any) {
     console.warn("[portalAuthStore] upsert user failed:", err?.message);
+    if (required) throw new PortalAuthoritativeStoreUnavailableError();
   }
 }
 
@@ -232,45 +250,16 @@ async function upsertClientDb(client: PortalAuthClient) {
   }
 }
 
-const ADMIN_HASH = "$2b$12$Bf.sDD1gQ6391SrTebkd4.9BeiteKKOswHl63vyCN0/51CmDldT7K"; // Admin123!
+function seedDemoIfConfigured() {
+  if (process.env.NODE_ENV === "production" || process.env.PORTAL_ENABLE_DEMO_DATA !== "true") return;
 
-function seedAdmins() {
-  const admins: PortalAuthUser[] = [
-    {
-      id: "admin-001",
-      email: "admin@digeratiexperts.com",
-      username: "admin",
-      password: ADMIN_HASH,
-      role: "admin",
-      storeRole: "admin",
-      fullName: "Administrator",
-      clientId: null,
-      emailVerified: true,
-      isActive: true,
-    },
-    {
-      id: "admin-002",
-      email: "admin@digerati-experts.com",
-      username: "admin-hyphen",
-      password: ADMIN_HASH,
-      role: "admin",
-      storeRole: "admin",
-      fullName: "Administrator",
-      clientId: null,
-      emailVerified: true,
-      isActive: true,
-    },
-  ];
-  for (const a of admins) {
-    if (!getUser(a.email)) {
-      indexUser(a);
-      void upsertUserDb(a);
-    }
+  const demoPasswordHash = process.env.PORTAL_DEMO_PASSWORD_HASH?.trim();
+  if (!demoPasswordHash || !/^\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}$/.test(demoPasswordHash)) {
+    console.warn(
+      "[portalAuthStore] PORTAL_ENABLE_DEMO_DATA is true, but PORTAL_DEMO_PASSWORD_HASH is not a valid bcrypt hash; demo users were not seeded",
+    );
+    return;
   }
-}
-
-function seedDemoIfNotProduction() {
-  if (process.env.NODE_ENV === "production") return;
 
   const msp: PortalAuthClient = {
     id: "msp-digerati",
@@ -297,10 +286,10 @@ function seedDemoIfNotProduction() {
   for (const c of demoCompanies) setClient(c);
 
   const demos: PortalAuthUser[] = [
-    { id: "user-001", email: "john.smith@acme.com", username: "johnsmith", password: ADMIN_HASH, role: "user", storeRole: "managed", fullName: "John Smith", clientId: "client-1", orgRole: "company_it_contact", isCompanyItContact: true, emailVerified: true, isActive: true },
-    { id: "user-002", email: "sarah.jones@phoenixmedical.com", username: "sarahjones", password: ADMIN_HASH, role: "user", storeRole: "managed", fullName: "Sarah Jones", clientId: "client-2", orgRole: "company_it_contact", isCompanyItContact: true, emailVerified: true, isActive: true },
-    { id: "user-003", email: "admin@alamoindustries.com", username: "alamoadmin", password: "$2b$12$N9Ys4.kLCKht2rMjK4x0TOJHlQlxY7dRzAT6vmC7.mGrjck7TUI7O", role: "user", storeRole: "comanaged", fullName: "Maria Garcia", clientId: "client-5", orgRole: "company_it_contact", isCompanyItContact: true, emailVerified: true, isActive: true },
-    { id: "user-004", email: "admin@selmachining.com", username: "seladmin", password: "$2b$12$m6eyC5YfWBIG4/beE40TxOeG5BG4v/MxsowQ4Ays9RrjhOzcVxx.a", role: "user", storeRole: "comanaged", fullName: "Sel Operations", clientId: "client-6", orgRole: "company_it_contact", isCompanyItContact: true, emailVerified: true, isActive: true },
+    { id: "user-001", email: "john.smith@acme.com", username: "johnsmith", password: demoPasswordHash, role: "user", storeRole: "managed", fullName: "John Smith", clientId: "client-1", orgRole: "company_it_contact", isCompanyItContact: true, emailVerified: true, isActive: true },
+    { id: "user-002", email: "sarah.jones@phoenixmedical.com", username: "sarahjones", password: demoPasswordHash, role: "user", storeRole: "managed", fullName: "Sarah Jones", clientId: "client-2", orgRole: "company_it_contact", isCompanyItContact: true, emailVerified: true, isActive: true },
+    { id: "user-003", email: "admin@alamoindustries.com", username: "alamoadmin", password: demoPasswordHash, role: "user", storeRole: "comanaged", fullName: "Maria Garcia", clientId: "client-5", orgRole: "company_it_contact", isCompanyItContact: true, emailVerified: true, isActive: true },
+    { id: "user-004", email: "admin@selmachining.com", username: "seladmin", password: demoPasswordHash, role: "user", storeRole: "comanaged", fullName: "Sel Operations", clientId: "client-6", orgRole: "company_it_contact", isCompanyItContact: true, emailVerified: true, isActive: true },
   ];
   for (const u of demos) {
     if (!getUser(u.email)) setUser(u);
@@ -347,6 +336,10 @@ export async function initPortalAuthStore(): Promise<void> {
   if (initialized) return;
   await initPromise;
   await ensureSchema();
+  const migratedMfaUsers = await migratePortalMfaSecretsAtRest();
+  if (migratedMfaUsers > 0) {
+    console.log(`✅ Protected MFA secrets for ${migratedMfaUsers} portal user(s)`);
+  }
 
   if (dbReady && db) {
     try {
@@ -362,8 +355,7 @@ export async function initPortalAuthStore(): Promise<void> {
     console.warn("⚠️ Portal auth store: DB unavailable — using memory (non-durable)");
   }
 
-  seedAdmins();
-  seedDemoIfNotProduction();
+  seedDemoIfConfigured();
   initialized = true;
 }
 
@@ -379,6 +371,11 @@ export function hasUser(key: string): boolean {
 export function setUser(user: PortalAuthUser): void {
   indexUser(user);
   void upsertUserDb(user);
+}
+
+export async function saveAuthoritativePortalUser(user: PortalAuthUser): Promise<void> {
+  indexUser(user);
+  await upsertUserDb(user, process.env.NODE_ENV === "production");
 }
 
 export function listUniqueUsers(): PortalAuthUser[] {
@@ -404,6 +401,144 @@ export function setClient(client: PortalAuthClient): void {
 
 export function listClients(): PortalAuthClient[] {
   return Array.from(clientsById.values());
+}
+
+export class PortalAuthoritativeStoreUnavailableError extends Error {
+  constructor() {
+    super("Authoritative portal identity store is unavailable");
+    this.name = "PortalAuthoritativeStoreUnavailableError";
+  }
+}
+
+function requireAuthoritativeStoreInProduction(): void {
+  if (process.env.NODE_ENV === "production" && (!dbReady || !db)) {
+    throw new PortalAuthoritativeStoreUnavailableError();
+  }
+}
+
+/**
+ * Authentication must call this on every request. Cached JWT claims and the
+ * Map-compatible route shim are never authoritative for access decisions.
+ */
+export async function loadAuthoritativePortalUserById(
+  userId: string,
+): Promise<PortalAuthUser | undefined> {
+  requireAuthoritativeStoreInProduction();
+  if (!dbReady || !db) {
+    return listUniqueUsers().find((user) => user.id === userId);
+  }
+
+  try {
+    const [row] = await db
+      .select()
+      .from(portalUsersTable)
+      .where(eq(portalUsersTable.id, userId))
+      .limit(1);
+    if (!row) return undefined;
+    const user = rowToUser(row);
+    indexUser(user);
+    return user;
+  } catch (error: any) {
+    console.error("[portalAuthStore] authoritative user read failed", {
+      userId,
+      message: error?.message || String(error),
+    });
+    if (process.env.NODE_ENV === "production") {
+      throw new PortalAuthoritativeStoreUnavailableError();
+    }
+    return listUniqueUsers().find((user) => user.id === userId);
+  }
+}
+
+export async function loadAuthoritativePortalUsersByClientId(
+  clientId: string,
+): Promise<PortalAuthUser[]> {
+  requireAuthoritativeStoreInProduction();
+  if (!dbReady || !db) {
+    return listUniqueUsers().filter((user) => user.clientId === clientId);
+  }
+
+  try {
+    const rows = await db
+      .select()
+      .from(portalUsersTable)
+      .where(eq(portalUsersTable.clientId, clientId));
+    return rows.map((row: any) => {
+      const user = rowToUser(row);
+      indexUser(user);
+      return user;
+    });
+  } catch (error: any) {
+    console.error("[portalAuthStore] authoritative client users read failed", {
+      clientId,
+      message: error?.message || String(error),
+    });
+    if (process.env.NODE_ENV === "production") {
+      throw new PortalAuthoritativeStoreUnavailableError();
+    }
+    return listUniqueUsers().filter((user) => user.clientId === clientId);
+  }
+}
+
+export async function loadAuthoritativePortalUserByIdentifier(
+  identifier: string,
+): Promise<PortalAuthUser | undefined> {
+  const normalized = identifier.trim().toLowerCase();
+  requireAuthoritativeStoreInProduction();
+  if (!dbReady || !db) return getUser(normalized);
+
+  try {
+    const [row] = await db
+      .select()
+      .from(portalUsersTable)
+      .where(
+        or(
+          eq(portalUsersTable.email, normalized),
+          eq(portalUsersTable.username, normalized),
+        ),
+      )
+      .limit(1);
+    if (!row) return undefined;
+    const user = rowToUser(row);
+    indexUser(user);
+    return user;
+  } catch (error: any) {
+    console.error("[portalAuthStore] authoritative identifier read failed", {
+      message: error?.message || String(error),
+    });
+    if (process.env.NODE_ENV === "production") {
+      throw new PortalAuthoritativeStoreUnavailableError();
+    }
+    return getUser(normalized);
+  }
+}
+
+export async function loadAuthoritativePortalClientById(
+  clientId: string,
+): Promise<PortalAuthClient | undefined> {
+  requireAuthoritativeStoreInProduction();
+  if (!dbReady || !db) return getClient(clientId);
+
+  try {
+    const [row] = await db
+      .select()
+      .from(portalClientsTable)
+      .where(eq(portalClientsTable.id, clientId))
+      .limit(1);
+    if (!row) return undefined;
+    const client = rowToClient(row);
+    clientsById.set(client.id, client);
+    return client;
+  } catch (error: any) {
+    console.error("[portalAuthStore] authoritative client read failed", {
+      clientId,
+      message: error?.message || String(error),
+    });
+    if (process.env.NODE_ENV === "production") {
+      throw new PortalAuthoritativeStoreUnavailableError();
+    }
+    return getClient(clientId);
+  }
 }
 
 /** Create a prospect client + link user (signup). */

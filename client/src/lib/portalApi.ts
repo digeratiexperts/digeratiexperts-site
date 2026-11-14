@@ -3,7 +3,7 @@ import { PORTAL_LOGIN } from "./portalUrls";
 /** Path-only login route for same-host pathname checks (never compare against absolute URL). */
 const PORTAL_LOGIN_PATH = "/portal/login";
 
-function portalAuthHeaders(extra?: HeadersInit): Record<string, string> {
+function portalHeaders(extra?: HeadersInit): Record<string, string> {
   const headers: Record<string, string> = {};
   if (extra) {
     if (extra instanceof Headers) {
@@ -16,15 +16,10 @@ function portalAuthHeaders(extra?: HeadersInit): Record<string, string> {
       Object.assign(headers, extra);
     }
   }
-  const token = localStorage.getItem("portalToken");
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
   return headers;
 }
 
 function clearPortalLocalSession() {
-  localStorage.removeItem("portalToken");
   localStorage.removeItem("portalUser");
   localStorage.removeItem("portalUserId");
   localStorage.removeItem("impersonatingCompany");
@@ -57,7 +52,7 @@ function handlePortalAuthFailure(status: number) {
 }
 
 export async function portalFetch(url: string, options: RequestInit = {}) {
-  const headers = portalAuthHeaders(options.headers);
+  const headers = portalHeaders(options.headers);
 
   if (options.body && typeof options.body === "string" && !headers["Content-Type"]) {
     headers["Content-Type"] = "application/json";

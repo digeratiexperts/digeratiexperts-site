@@ -55,7 +55,7 @@ function resolveDownloadUrl(title: string): string | undefined {
   return undefined;
 }
 
-const documents: Document[] = [
+const documents: Document[] = ([
   {
     id: 1,
     title: "Managed IT Support Services",
@@ -163,7 +163,7 @@ const documents: Document[] = [
     pages: 6,
     icon: Shield,
   },
-].map((doc): Document => ({
+] satisfies Document[]).map((doc): Document => ({
   ...doc,
   downloadUrl: resolveDownloadUrl(doc.title),
 }));

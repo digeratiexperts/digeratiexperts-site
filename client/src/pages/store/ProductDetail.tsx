@@ -9,10 +9,11 @@ import { ProductJsonLd, BreadcrumbJsonLd } from "@/components/JsonLd";
 import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/hooks/use-toast";
 import {
-  storeProducts,
+  getStoreProductBySku,
+  storeCatalogProducts,
   categoryLabels,
   formatPrice,
-} from "@/data/storeProducts";
+} from "@/data/storeCatalog";
 import {
   getOutcomeLead,
   getProductTags,
@@ -70,7 +71,7 @@ const ProductDetail = () => {
     }
   }, [clientPricing, setClientPricing]);
 
-  const product = useMemo(() => storeProducts.find((p) => p.sku === sku), [sku]);
+  const product = useMemo(() => getStoreProductBySku(sku), [sku]);
 
   const relatedProducts = useMemo(() => {
     if (!product) return [];
@@ -134,7 +135,7 @@ const ProductDetail = () => {
   );
   const previewLine = computeSolutionSnapshot(
     [{ productId: product.id, sku: product.sku, quantity }],
-    storeProducts,
+    storeCatalogProducts,
   ).lines[0];
 
   const handleQuantityChange = (delta: number) => {

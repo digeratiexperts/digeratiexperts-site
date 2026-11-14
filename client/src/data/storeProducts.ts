@@ -1,4 +1,4 @@
-import { pricing } from "./pricing";
+import { pricingTiers, type ProActiveTierKey } from "./pricing";
 
 export type ProductCategory = 
   | "contract_services"
@@ -46,6 +46,8 @@ export interface StoreProduct {
   minimumQuantity: number;
   features: string[];
   sortOrder: number;
+  /** Canonical public package recommendation, when this product represents a tier. */
+  isRecommended?: boolean;
   /** Optional custom product art; prefer getProductVisual() over reading directly. */
   imageUrl?: string;
 }
@@ -84,62 +86,36 @@ export const categoryDescriptions: Record<ProductCategory, string> = {
   professional_services: "Expert consulting and support services.",
 };
 
-export const storeProducts: StoreProduct[] = [
+const PROACTIVE_SKUS: Record<ProActiveTierKey, { id: string; sku: string }> = {
+  it: { id: "prod-000", sku: "DE-SVC-MGD-IT-MO" },
+  office: { id: "prod-001", sku: "DE-SVC-MGD-OFFICE-MO" },
+  business: { id: "prod-002", sku: "DE-SVC-MGD-BUSINESS-MO" },
+  enterprise: { id: "prod-003", sku: "DE-SVC-MGD-ENTERPRISE-MO" },
+};
+
+const proactiveProducts: StoreProduct[] = pricingTiers.map((tier, index) => ({
+  id: PROACTIVE_SKUS[tier.id].id,
+  sku: PROACTIVE_SKUS[tier.id].sku,
+  name: `ProActive Ecosystem - ${tier.name}`,
+  shortDescription: tier.idealBuyer,
+  description: tier.note,
+  category: "contract_services",
+  pricingType: "per_user",
+  basePrice: tier.user,
+  pricingUnit: "user",
+  isContractOnly: true,
+  isCheckoutEnabled: false,
+  isClientOnly: false,
+  requiredClientType: "public",
+  minimumQuantity: 1,
+  features: [...tier.inclusions],
+  sortOrder: index,
+  isRecommended: tier.recommended,
+}));
+
+/** Literal non-ProActive Store records. Canonical tiers are derived above. */
+export const rawStoreProducts: StoreProduct[] = [
   // A) Contract-only (non-purchasable) - "Schedule Consult" SKUs
-  {
-    id: "prod-001",
-    sku: "DE-SVC-MGD-OFFICE-MO",
-    name: "ProActive Ecosystem - Office",
-    shortDescription: "Basic IT package for organized businesses",
-    description: "A clean, managed IT baseline for businesses ready to get organized. Includes email, calendar, team chat, MFA, SSO, and password management.",
-    category: "contract_services",
-    pricingType: "per_user",
-    basePrice: pricing.office.user,
-    pricingUnit: "user",
-    isContractOnly: true,
-    isCheckoutEnabled: false,
-    isClientOnly: false,
-    requiredClientType: "public",
-    minimumQuantity: 1,
-    features: ["Email + Calendar + Team Chat", "MFA + SSO + Password Manager", "Device Enrollment", "Basic Endpoint Protection"],
-    sortOrder: 1,
-  },
-  {
-    id: "prod-002",
-    sku: "DE-SVC-MGD-BUSINESS-MO",
-    name: "ProActive Ecosystem - Business",
-    shortDescription: "Security-focused package for growing businesses",
-    description: "Enhanced security package with advanced threat protection, EDR, and compliance foundations for security-conscious organizations.",
-    category: "contract_services",
-    pricingType: "per_user",
-    basePrice: pricing.business.user,
-    pricingUnit: "user",
-    isContractOnly: true,
-    isCheckoutEnabled: false,
-    isClientOnly: false,
-    requiredClientType: "public",
-    minimumQuantity: 1,
-    features: ["Everything in Office", "Advanced Threat Protection", "EDR + SIEM Lite", "Compliance Foundations", "Security Awareness Training"],
-    sortOrder: 2,
-  },
-  {
-    id: "prod-003",
-    sku: "DE-SVC-MGD-ENTERPRISE-MO",
-    name: "ProActive Ecosystem - Enterprise",
-    shortDescription: "Full compliance and security suite",
-    description: "Complete compliance and enterprise security package with 24/7 SOC, compliance reporting, and dedicated vCISO support.",
-    category: "contract_services",
-    pricingType: "per_user",
-    basePrice: pricing.enterprise.user,
-    pricingUnit: "user",
-    isContractOnly: true,
-    isCheckoutEnabled: false,
-    isClientOnly: false,
-    requiredClientType: "public",
-    minimumQuantity: 1,
-    features: ["Everything in Business", "24/7 SOC Monitoring", "Full Compliance Suite", "vCISO Support", "Quarterly Security Reviews"],
-    sortOrder: 3,
-  },
   {
     id: "prod-004",
     sku: "DE-SVC-MGD-WORKPLACE-MO",
@@ -179,7 +155,7 @@ export const storeProducts: StoreProduct[] = [
     sku: "DE-SVC-MGD-BCDR-MO",
     name: "Managed BCDR",
     shortDescription: "Business continuity and disaster recovery",
-    description: "Complete business continuity and disaster recovery services ensuring your business can recover from any disruption.",
+    description: "Managed business continuity and disaster recovery services designed to improve recovery readiness and reduce disruption risk.",
     category: "contract_services",
     pricingType: "monthly",
     basePrice: 0,
@@ -188,7 +164,7 @@ export const storeProducts: StoreProduct[] = [
     isClientOnly: false,
     requiredClientType: "public",
     minimumQuantity: 1,
-    features: ["Automated Backups", "Disaster Recovery Planning", "RTO/RPO Guarantees", "Regular DR Testing"],
+    features: ["Automated Backups", "Disaster Recovery Planning", "Contract-Defined RTO/RPO Objectives", "Regular DR Testing"],
     sortOrder: 6,
   },
   {
@@ -1228,6 +1204,12 @@ export const storeProducts: StoreProduct[] = [
     sortOrder: 95,
   },
 ];
+
+/** Complete catalog used by client pages and server-side commerce validation. */
+export const storeProducts: StoreProduct[] = [
+  ...proactiveProducts,
+  ...rawStoreProducts,
+].sort((a, b) => a.sortOrder - b.sortOrder);
 
 export const getProductsByCategory = (category: ProductCategory): StoreProduct[] => {
   return storeProducts.filter(p => p.category === category).sort((a, b) => a.sortOrder - b.sortOrder);

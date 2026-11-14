@@ -1,5 +1,5 @@
 import React from "react";
-import type { Board, Task } from "@shared/schema";
+import type { Board, Task, UpdateTask } from "@shared/schema";
 import {
   Table,
   TableBody,
@@ -41,7 +41,7 @@ export function TableView({ projectId, boards, tasks, searchQuery }: TableViewPr
   const queryClient = useQueryClient();
 
   const updateTaskMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<Task> }) =>
+    mutationFn: ({ id, data }: { id: string; data: UpdateTask }) =>
       api.tasks.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });

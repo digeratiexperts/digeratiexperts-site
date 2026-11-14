@@ -1,5 +1,19 @@
 import { sql, relations } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, boolean, integer, jsonb, pgEnum, decimal } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  text,
+  varchar,
+  timestamp,
+  boolean,
+  integer,
+  jsonb,
+  pgEnum,
+  decimal,
+  check,
+  index,
+  uuid,
+  type AnyPgColumn,
+} from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -141,7 +155,9 @@ export const tasks = pgTable("tasks", {
   actualHours: integer("actual_hours"),
   assigneeId: varchar("assignee_id").references(() => users.id, { onDelete: "set null" }),
   createdBy: varchar("created_by").notNull().references(() => users.id),
-  parentTaskId: varchar("parent_task_id").references(() => tasks.id, { onDelete: "set null" }),
+  parentTaskId: varchar("parent_task_id").references((): AnyPgColumn => tasks.id, {
+    onDelete: "set null",
+  }),
   isArchived: boolean("is_archived").default(false),
   customFields: jsonb("custom_fields"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -320,6 +336,38 @@ export const portalUsers = pgTable("portal_users", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
+
+// Portal browser sessions are stored only as SHA-256 hashes. The opaque value
+// issued in the HttpOnly cookie is never persisted, so a database read alone
+// cannot be used to replay a session.
+export const portalSessions = pgTable(
+  "portal_sessions",
+  {
+    sessionHash: varchar("session_hash", { length: 64 }).primaryKey(),
+    userId: varchar("user_id")
+      .notNull()
+      .references(() => portalUsers.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    lastRotatedAt: timestamp("last_rotated_at", { withTimezone: true }).defaultNow().notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
+  },
+  (table) => [
+    index("portal_sessions_user_idx").on(table.userId),
+    index("portal_sessions_expires_idx").on(table.expiresAt),
+    index("portal_sessions_revoked_idx").on(table.revokedAt),
+    check(
+      "portal_sessions_hash_length_check",
+      sql`length(${table.sessionHash}) = 64`,
+    ),
+    check(
+      "portal_sessions_expiry_check",
+      sql`${table.expiresAt} > ${table.createdAt}`,
+    ),
+  ],
+);
+
+export type PortalSession = typeof portalSessions.$inferSelect;
 
 export const portalApprovalRequests = pgTable("portal_approval_requests", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -1320,30 +1368,152 @@ export const storePaymentMethodEnum = pgEnum("store_payment_method", [
 ]);
 
 // Store Orders table
-export const storeOrders = pgTable("store_orders", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  orderNumber: text("order_number").unique().notNull(),
-  userId: varchar("user_id").references(() => portalUsers.id, { onDelete: "set null" }),
-  clientId: varchar("client_id").references(() => portalClients.id, { onDelete: "set null" }),
-  status: storeOrderStatusEnum("status").default("pending"),
-  paymentMethod: storePaymentMethodEnum("payment_method"),
-  lineItems: jsonb("line_items").notNull(), // Array of order items with product details
-  subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull(),
-  tax: decimal("tax", { precision: 10, scale: 2 }).default("0"),
-  total: decimal("total", { precision: 10, scale: 2 }).notNull(),
-  stripeSessionId: text("stripe_session_id"),
-  stripePaymentIntentId: text("stripe_payment_intent_id"),
-  zohoPaymentId: text("zoho_payment_id"),
-  zohoPaymentSessionId: text("zoho_payment_session_id"),
-  billingEmail: text("billing_email"),
-  billingName: text("billing_name"),
-  billingCompany: text("billing_company"),
-  billingAddress: jsonb("billing_address"),
-  notes: text("notes"),
-  paidAt: timestamp("paid_at"),
+export const storeOrders = pgTable(
+  "store_orders",
+  {
+    id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+    orderNumber: text("order_number").unique().notNull(),
+    userId: varchar("user_id").references(() => portalUsers.id, { onDelete: "set null" }),
+    clientId: varchar("client_id").references(() => portalClients.id, { onDelete: "set null" }),
+    status: storeOrderStatusEnum("status").default("pending"),
+    paymentMethod: storePaymentMethodEnum("payment_method"),
+    lineItems: jsonb("line_items").notNull(), // Array of order items with product details
+    subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull(),
+    tax: decimal("tax", { precision: 10, scale: 2 }).default("0"),
+    total: decimal("total", { precision: 10, scale: 2 }).notNull(),
+    stripeSessionId: text("stripe_session_id"),
+    stripePaymentIntentId: text("stripe_payment_intent_id"),
+    zohoPaymentId: text("zoho_payment_id"),
+    zohoPaymentSessionId: text("zoho_payment_session_id"),
+    billingEmail: text("billing_email"),
+    billingName: text("billing_name"),
+    billingCompany: text("billing_company"),
+    billingAddress: jsonb("billing_address"),
+    notes: text("notes"),
+    paidAt: timestamp("paid_at"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("store_orders_fulfillment_queue_idx")
+      .on(table.status, table.updatedAt)
+      .where(sql`${table.status} IN ('paid', 'provisioning')`),
+  ],
+);
+
+// Expected hosted-checkout values for targets that do not carry the provider
+// session binding themselves (currently external Zoho Billing invoices).
+export const zohoPaymentBindings = pgTable("zoho_payment_bindings", {
+  paymentSessionId: text("payment_session_id").primaryKey(),
+  targetKind: text("target_kind").notNull(),
+  targetId: varchar("target_id").notNull(),
+  referenceNumber: text("reference_number").notNull(),
+  invoiceNumber: text("invoice_number").notNull(),
+  amountDecimal: text("amount_decimal").notNull(),
+  amountMinor: text("amount_minor").notNull(),
+  currency: varchar("currency", { length: 3 }).notNull(),
+  status: text("status").default("pending").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  consumedAt: timestamp("consumed_at"),
 });
+
+// Durable replay ledger for verified Zoho Payments webhooks. Both identifiers
+// are unique so the same provider event or payment cannot pay two local targets.
+export const zohoPaymentConsumptions = pgTable("zoho_payment_consumptions", {
+  eventId: text("event_id").primaryKey(),
+  paymentId: text("payment_id").notNull().unique(),
+  targetKind: text("target_kind").notNull(),
+  targetId: varchar("target_id").notNull(),
+  paymentSessionId: text("payment_session_id").notNull(),
+  referenceNumber: text("reference_number").notNull(),
+  invoiceNumber: text("invoice_number").notNull(),
+  amountDecimal: text("amount_decimal").notNull(),
+  amountMinor: text("amount_minor").notNull(),
+  currency: varchar("currency", { length: 3 }).notNull(),
+  consumedAt: timestamp("consumed_at").defaultNow().notNull(),
+});
+
+export const zohoPaymentWebhookInbox = pgTable(
+  "zoho_payment_webhook_inbox",
+  {
+    eventId: text("event_id").primaryKey(),
+    eventType: text("event_type").notNull(),
+    payload: jsonb("payload").notNull(),
+    status: text("status").default("pending").notNull(),
+    attemptCount: integer("attempt_count").default(0).notNull(),
+    nextAttemptAt: timestamp("next_attempt_at", { withTimezone: true }).defaultNow().notNull(),
+    processingStartedAt: timestamp("processing_started_at", { withTimezone: true }),
+    processedAt: timestamp("processed_at", { withTimezone: true }),
+    lastError: text("last_error"),
+    receivedAt: timestamp("received_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    index("zoho_payment_webhook_inbox_pending_idx").on(
+      table.nextAttemptAt,
+      table.receivedAt,
+    ),
+    check(
+      "zoho_payment_webhook_inbox_status_check",
+      sql`${table.status} IN ('pending', 'processing', 'processed', 'requires_action', 'rejected')`,
+    ),
+    check(
+      "zoho_payment_webhook_inbox_attempt_count_check",
+      sql`${table.attemptCount} >= 0`,
+    ),
+  ],
+);
+
+export const zohoPaymentExceptions = pgTable(
+  "zoho_payment_exceptions",
+  {
+    eventId: text("event_id")
+      .primaryKey()
+      .references(() => zohoPaymentWebhookInbox.eventId, { onDelete: "cascade" }),
+    eventType: text("event_type").notNull(),
+    paymentId: text("payment_id"),
+    paymentSessionId: text("payment_session_id"),
+    referenceNumber: text("reference_number"),
+    reason: text("reason").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    acknowledgedAt: timestamp("acknowledged_at", { withTimezone: true }),
+    acknowledgedBy: varchar("acknowledged_by"),
+  },
+  (table) => [index("zoho_payment_exceptions_open_idx").on(table.createdAt)],
+);
+
+// Crash-recovery and external-effect ledger for paid store-order fulfillment.
+// The service also bootstraps this table additively during mixed-version deploys.
+export const storeOrderFulfillmentState = pgTable(
+  "store_order_fulfillment_state",
+  {
+    orderId: varchar("order_id")
+      .primaryKey()
+      .references(() => storeOrders.id, { onDelete: "cascade" }),
+    claimToken: uuid("claim_token"),
+    claimStartedAt: timestamp("claim_started_at"),
+    confirmationState: text("confirmation_state").default("pending").notNull(),
+    deskTicketState: text("desk_ticket_state").default("pending").notNull(),
+    deskTicketId: varchar("desk_ticket_id"),
+    lastError: text("last_error"),
+    completedAt: timestamp("completed_at"),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("store_order_fulfillment_recovery_idx").on(
+      table.deskTicketState,
+      table.updatedAt,
+    ),
+    check(
+      "store_order_fulfillment_confirmation_state_check",
+      sql`${table.confirmationState} IN ('pending', 'reserved', 'sent', 'failed', 'skipped')`,
+    ),
+    check(
+      "store_order_fulfillment_desk_state_check",
+      sql`${table.deskTicketState} IN ('pending', 'creating', 'completed', 'failed', 'skipped')`,
+    ),
+  ],
+);
 
 // Quote requests for contract-only items
 export const storeQuoteRequests = pgTable("store_quote_requests", {
@@ -1399,6 +1569,9 @@ export type StoreCart = typeof storeCarts.$inferSelect;
 export type InsertStoreCart = z.infer<typeof insertStoreCartSchema>;
 export type StoreOrder = typeof storeOrders.$inferSelect;
 export type InsertStoreOrder = z.infer<typeof insertStoreOrderSchema>;
+export type ZohoPaymentBinding = typeof zohoPaymentBindings.$inferSelect;
+export type ZohoPaymentConsumption = typeof zohoPaymentConsumptions.$inferSelect;
+export type StoreOrderFulfillmentState = typeof storeOrderFulfillmentState.$inferSelect;
 export type StoreQuoteRequest = typeof storeQuoteRequests.$inferSelect;
 export type InsertStoreQuoteRequest = z.infer<typeof insertStoreQuoteRequestSchema>;
 

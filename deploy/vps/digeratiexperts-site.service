@@ -16,7 +16,7 @@
 #   PORT              -> 3200
 #
 # Port 3100 is NOT available on this VPS — it is used by the Intelligence Hub
-# (techsales). Do NOT run this app under PM2 or from /root/Replit-Site.
+# (techsales). Do NOT run this app under PM2 or from a mutable /root clone.
 
 [Unit]
 Description=Digerati Experts public website (Node/Express)

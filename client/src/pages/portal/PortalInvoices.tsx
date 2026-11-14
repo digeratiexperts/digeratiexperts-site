@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PortalLayout } from "./PortalLayout";
-import { FileText, Download, Eye, CreditCard } from "lucide-react";
+import { FileText, CreditCard } from "lucide-react";
 import { Link } from "wouter";
 import { portalGet } from "@/lib/portalApi";
 
@@ -69,7 +69,7 @@ export default function PortalInvoices() {
         <div className="space-y-1">
           <h2 className="text-2xl font-bold">Invoices</h2>
           <p className="text-gray-600 dark:text-gray-400">
-            View and download your invoices
+            Review current invoice status, pay eligible balances, or request a copy from billing
           </p>
         </div>
 
@@ -168,34 +168,30 @@ export default function PortalInvoices() {
                         </td>
                         <td className="py-3 px-3">
                           <div className="flex items-center gap-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0"
-                              data-testid={`button-view-${invoice.id}`}
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0"
-                              data-testid={`button-download-${invoice.id}`}
-                            >
-                              <Download className="h-4 w-4" />
-                            </Button>
                             {(invoice.status === "sent" || invoice.status === "overdue") && (
-                              <Link href={`/portal/invoices/${invoice.id}/pay`}>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-8 w-8 p-0 text-[#D3126A] hover:bg-[#D3126A]/10"
+                              <Button
+                                asChild
+                                variant="outline"
+                                size="sm"
+                                className="text-[#D3126A] hover:bg-[#D3126A]/10"
+                              >
+                                <Link
+                                  href={`/portal/invoices/${invoice.id}/pay`}
                                   data-testid={`button-pay-${invoice.id}`}
                                 >
-                                  <CreditCard className="h-4 w-4" />
-                                </Button>
-                              </Link>
+                                  <CreditCard className="mr-2 h-4 w-4" />
+                                  Pay online
+                                </Link>
+                              </Button>
                             )}
+                            <Button asChild variant="ghost" size="sm">
+                              <Link
+                                href="/portal/tickets/create"
+                                data-testid={`button-request-copy-${invoice.id}`}
+                              >
+                                Request copy
+                              </Link>
+                            </Button>
                           </div>
                         </td>
                       </tr>

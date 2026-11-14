@@ -76,7 +76,8 @@
   <url><loc>https://digeratiexperts.com/store</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
   <url><loc>https://digeratiexperts.com/store/managed</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
   <url><loc>https://digeratiexperts.com/store/co-managed</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
-  <!-- Store products (64) -->
+  <!-- Store products (65) -->
+  <url><loc>https://digeratiexperts.com/store/product/DE-SVC-MGD-IT-MO</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
   <url><loc>https://digeratiexperts.com/store/product/DE-SVC-MGD-OFFICE-MO</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
   <url><loc>https://digeratiexperts.com/store/product/DE-SVC-MGD-BUSINESS-MO</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
   <url><loc>https://digeratiexperts.com/store/product/DE-SVC-MGD-ENTERPRISE-MO</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>

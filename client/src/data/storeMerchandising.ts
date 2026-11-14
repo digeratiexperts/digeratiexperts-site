@@ -3,13 +3,15 @@
  * outcomes, rails, and soft "included in" hints. Does not invent products.
  */
 import {
-  storeProducts,
   categoryLabels,
   type ProductCategory,
   type PricingType,
   type StoreProduct,
 } from "./storeProducts";
+import { storeCatalogProducts } from "./storeCatalog";
 import { getVendorForSku } from "./vendorLogos";
+
+const storeProducts = storeCatalogProducts;
 
 /**
  * Locked storefront taxonomy (nouns, not verbs that imply a result):

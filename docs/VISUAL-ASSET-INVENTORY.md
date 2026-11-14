@@ -1,7 +1,7 @@
 # Visual Asset Inventory — Digerati Experts site
 
 **Date:** 2026-08-08  
-**Repo:** `C:\Users\Joe\Projects\Replit-Site`  
+**Repo:** `C:\Users\Joe\Projects\digeratiexperts-site`
 **Related:** `docs/VISUAL-ASSET-AUDIT.md` (Envato Phase 1), `docs/MESHY-BATCH-01.md`, `docs/MESHY-ASSET-BACKLOG.md`
 
 ---
@@ -52,7 +52,7 @@ Searched (no Joseph Petro / founder headshot found):
 **Where DE should drop originals:**
 
 ```
-C:\Users\Joe\Projects\Replit-Site\assets\photography\de-headshots\ORIGINAL\
+assets\photography\de-headshots\ORIGINAL\
   joseph-petro-headshot.jpg   (preferred name)
 ```
 
@@ -72,7 +72,7 @@ Do **not** invent AI portraits or substitute stock faces.
 Drop complete ZIP at:
 
 ```
-C:\Users\Joe\Projects\Replit-Site\assets\licensed\envato-4THD2PH\ORIGINAL\4THD2PH.zip
+assets\licensed\envato-4THD2PH\ORIGINAL\4THD2PH.zip
 ```
 
 (Details unchanged from `docs/VISUAL-ASSET-AUDIT.md`.)

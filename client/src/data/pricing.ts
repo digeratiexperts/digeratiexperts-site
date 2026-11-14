@@ -28,6 +28,8 @@ export type ProActiveTier = {
   monthlyMin: number;
   /** @deprecated alias of monthlyMinimum */
   siteMin: number;
+  /** Store merchandising default; exactly one public tier is recommended. */
+  recommended: boolean;
   idealBuyer: string;
   note: string;
   learnMoreUrl: string;
@@ -45,6 +47,7 @@ const tiers = {
     monthlyMinimum: 1600,
     monthlyMin: 1600,
     siteMin: 1600,
+    recommended: false,
     idealBuyer: "Smaller, less complex environments that need essential protection and a documented baseline",
     note: "Essential managed IT and baseline security — a fit when the environment is smaller and less complex.",
     learnMoreUrl: "/solutions/proactive-it-ecosystem",
@@ -66,6 +69,7 @@ const tiers = {
     monthlyMinimum: 2400,
     monthlyMin: 2400,
     siteMin: 2400,
+    recommended: true,
     idealBuyer: "Broader managed workplace — more users, devices, and a professionally operated network",
     note: "Managed workplace and stronger protection when Office is the right operating depth — not a ranking.",
     learnMoreUrl: "/solutions/proactive-office-ecosystem",
@@ -88,6 +92,7 @@ const tiers = {
     monthlyMinimum: 5400,
     monthlyMin: 5400,
     siteMin: 5400,
+    recommended: false,
     idealBuyer: "Deeper infrastructure, cyber operations, recovery, governance, and strategy",
     note: "The fit when Office would need heavy modification — deeper ops, not universally better.",
     learnMoreUrl: "/solutions/proactive-business-ecosystem",
@@ -110,6 +115,7 @@ const tiers = {
     monthlyMinimum: 9000,
     monthlyMin: 9000,
     siteMin: 9000,
+    recommended: false,
     idealBuyer: "Multi-site, regulated, or security-sensitive environments that need the greatest operating depth",
     note: "Greatest operating depth for complex, regulated, or security-sensitive environments.",
     learnMoreUrl: "/solutions/proactive-enterprise-ecosystem",

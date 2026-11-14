@@ -91,9 +91,9 @@ See **`docs/MESHY-ASSET-BACKLOG.md`** for Batches 01–10 and **`docs/MESHY-MCP.
 Drop pattern (stock packs):
 
 ```
-C:\Users\Joe\Projects\Replit-Site\assets\licensed\envato-4THD2PH\ORIGINAL\<envato-zip>.zip
-C:\Users\Joe\Projects\Replit-Site\assets\licensed\envato-QUCF9E5\ORIGINAL\<envato-zip>.zip   (if bought)
-C:\Users\Joe\Projects\Replit-Site\assets\licensed\meshy-<batch>/ORIGINAL/   (MCP or web exports)
+C:\Users\Joe\Projects\digeratiexperts-site\assets\licensed\envato-4THD2PH\ORIGINAL\<envato-zip>.zip
+C:\Users\Joe\Projects\digeratiexperts-site\assets\licensed\envato-QUCF9E5\ORIGINAL\<envato-zip>.zip   (if bought)
+C:\Users\Joe\Projects\digeratiexperts-site\assets\licensed\meshy-<batch>/ORIGINAL/   (MCP or web exports)
 ```
 
 Then ping the agent to unpack (private folders only) and continue `docs/VISUAL-ASSET-AUDIT.md`.

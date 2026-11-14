@@ -79,7 +79,7 @@ function readOrCreateSessionId(): string {
 function migrateItems(parsed: unknown): CartItem[] {
   if (!Array.isArray(parsed)) return [];
   return parsed
-    .map((item: any) => {
+    .map((item: any): CartItem | null => {
       const product = storeProducts.find((candidate) => candidate.id === item?.product?.id);
       if (!product) return null;
       return {
@@ -88,9 +88,9 @@ function migrateItems(parsed: unknown): CartItem[] {
         originalPrice: item.originalPrice ?? product.basePrice,
         hasClientDiscount: item.hasClientDiscount ?? false,
         clientPrice: item.clientPrice,
-      } satisfies CartItem;
+      };
     })
-    .filter((item): item is CartItem => !!item);
+    .filter((item): item is CartItem => item !== null);
 }
 
 function snapshotFromItems(items: CartItem[]): SolutionSnapshot {
@@ -114,7 +114,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const solutionIdRef = useRef<string | null>(null);
   const hydratedRef = useRef(false);
   const persistTimer = useRef<number | null>(null);
-  const lastTokenRef = useRef<string | null>(null);
 
   const announce = useCallback((message: string) => {
     setAnnouncement(message);
@@ -132,12 +131,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
     const sessionId = sessionIdRef.current;
     void fetch(`/api/store/solutions/current?sessionId=${encodeURIComponent(sessionId)}`, {
       credentials: "include",
-      headers: (() => {
-        const headers: Record<string, string> = {};
-        const token = localStorage.getItem("portalToken");
-        if (token) headers.Authorization = `Bearer ${token}`;
-        return headers;
-      })(),
     })
       .then((response) => (response.ok ? response.json() : null))
       .then((payload) => {
@@ -181,13 +174,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
     if (!hydratedRef.current || !sessionIdRef.current) return;
     if (persistTimer.current) window.clearTimeout(persistTimer.current);
     persistTimer.current = window.setTimeout(() => {
-      const token = localStorage.getItem("portalToken");
       void fetch("/api/store/solutions/current", {
         method: "PUT",
         credentials: "include",
         headers: {
           "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({
           id: solutionIdRef.current,
@@ -224,25 +215,25 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [items, savedForLater, persistRemote, syncReady]);
 
   useEffect(() => {
-    const claimIfLoggedIn = () => {
-      const token = localStorage.getItem("portalToken");
-      if (!token || token === lastTokenRef.current || !sessionIdRef.current) return;
-      lastTokenRef.current = token;
-      void fetch("/api/store/solutions/claim", {
+    const claimIfLoggedIn = async () => {
+      if (!sessionIdRef.current) return;
+      const me = await fetch("/api/portal/me", { credentials: "include" }).catch(() => null);
+      if (!me?.ok) return;
+      await fetch("/api/store/solutions/claim", {
         method: "POST",
         credentials: "include",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ sessionId: sessionIdRef.current }),
       }).catch(() => {
         /* guest solution stays local until auth is valid */
       });
     };
-    claimIfLoggedIn();
-    window.addEventListener("storage", claimIfLoggedIn);
-    return () => window.removeEventListener("storage", claimIfLoggedIn);
+    void claimIfLoggedIn();
+    const handleFocus = () => void claimIfLoggedIn();
+    window.addEventListener("focus", handleFocus);
+    return () => window.removeEventListener("focus", handleFocus);
   }, []);
 
   const setClientPricing = useCallback((pricing: ClientPricing[]) => {

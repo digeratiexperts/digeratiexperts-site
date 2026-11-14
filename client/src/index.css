@@ -11,6 +11,8 @@
 html {
   /* Native document scroll — CSS smooth + proximity snap fought the wheel. */
   scroll-behavior: auto;
+  /* Framer Motion measures target-based parallax against this scroll container. */
+  position: relative;
   /*
    * Browser-default rem. The previous 14px root made every rem-based
    * size (type, padding, gaps) read as ~87.5% zoom. Marketing pages

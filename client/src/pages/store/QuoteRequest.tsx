@@ -15,6 +15,7 @@ import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/hooks/use-toast";
 import { SolutionOrderSummary } from "@/components/store/SolutionOrderSummary";
 import { snapshotSubmitLines } from "@/lib/solutionSnapshotView";
+import { portalLoginWithReturn } from "@/lib/portalUrls";
 import {
   ArrowLeft,
   FileText,
@@ -76,21 +77,10 @@ const QuoteRequest = () => {
     try {
       const requestedItems = snapshotSubmitLines(snapshot);
 
-      const portalToken = localStorage.getItem("portalToken");
-      if (!portalToken) {
-        toast({
-          title: "Sign in required",
-          description: "Please sign in to the Client Portal to submit a quote request.",
-          variant: "destructive",
-        });
-        navigate("/portal/login?redirect=/store/quote-request");
-        return;
-      }
       const response = await fetch("/api/store/quote-requests", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${portalToken}`,
         },
         credentials: "include",
         body: JSON.stringify({
@@ -103,6 +93,15 @@ const QuoteRequest = () => {
         }),
       });
 
+      if (response.status === 401) {
+        toast({
+          title: "Sign in required",
+          description: "Please sign in to the Client Portal to submit a quote request.",
+          variant: "destructive",
+        });
+        window.location.href = portalLoginWithReturn("/store/quote-request");
+        return;
+      }
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || "Failed to create quote request");

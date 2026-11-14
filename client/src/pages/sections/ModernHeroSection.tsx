@@ -5,10 +5,13 @@ import { analytics } from "@/lib/analytics";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, CheckCircle, Building, FileCheck, Shield, Check } from "lucide-react";
 import { DashboardMockup } from "@/components/graphics";
-import heroBgImage from "@assets/de-hero-arizona-dusk.png";
+import heroBgImage from "@assets/de-hero-arizona-dusk.jpg";
 import { useBooking } from "@/contexts/BookingContext";
 import { CTA } from "@/lib/ctaCopy";
 import { PRIMARY_PHONE } from "@/data/companyContact";
+
+// React 18 forwards the standard lowercase attribute without an unknown-prop warning.
+const highPriorityImage = { fetchpriority: "high" } as const;
 
 export const ModernHeroSection = (): JSX.Element => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -36,10 +39,13 @@ export const ModernHeroSection = (): JSX.Element => {
     >
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <img
+          {...highPriorityImage}
           src={heroBgImage}
           alt=""
           loading="eager"
           decoding="async"
+          width={1536}
+          height={1024}
           aria-hidden="true"
           className="absolute inset-0 h-full w-full object-cover"
           style={{

@@ -57,7 +57,11 @@ export async function verifyTurnstile(req: Request, res: Response, next: NextFun
   const turnstileToken = req.body.turnstileToken || req.body['cf-turnstile-response'];
   
   if (!process.env.TURNSTILE_SECRET_KEY) {
-    console.warn('[SECURITY] Turnstile not configured - skipping verification');
+    if (process.env.NODE_ENV === "production") {
+      console.error("[SECURITY] Turnstile verification secret is missing in production");
+      return res.status(503).json({ message: "Security verification is not configured" });
+    }
+    console.warn('[SECURITY] Turnstile not configured - non-production verification bypass');
     return next();
   }
 

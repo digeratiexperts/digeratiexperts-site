@@ -1,5 +1,4 @@
 import type { Express, NextFunction, Request, Response } from "express";
-import jwt from "jsonwebtoken";
 import {
   claimSolutionDurable,
   createSolution,
@@ -21,22 +20,15 @@ function readSessionId(req: Request): string {
 }
 
 function optionalUserId(req: SolutionRequest): string | null {
-  const authHeader = req.headers.authorization;
-  const token =
-    authHeader && authHeader.startsWith("Bearer ") ? authHeader.slice("Bearer ".length).trim() : "";
-  if (!token || !process.env.JWT_SECRET) return req.userId ?? null;
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET) as { userId?: string };
-    return decoded.userId || req.userId || null;
-  } catch {
-    return req.userId ?? null;
-  }
+  // Public solution reads/writes remain guest-scoped. A portal user claims the
+  // solution through the authenticated cookie-only claim endpoint below.
+  return req.userId ?? null;
 }
 
 function parseLines(value: unknown): SolutionLineInput[] {
   if (!Array.isArray(value)) return [];
   return value
-    .map((raw) => {
+    .map<SolutionLineInput | null>((raw) => {
       if (!raw || typeof raw !== "object") return null;
       const item = raw as Record<string, unknown>;
       const productId = typeof item.productId === "string" ? item.productId.trim() : "";
@@ -45,7 +37,7 @@ function parseLines(value: unknown): SolutionLineInput[] {
       if (!productId || !Number.isFinite(quantity)) return null;
       return { productId, sku, quantity };
     })
-    .filter((line): line is SolutionLineInput => !!line)
+    .filter((line): line is SolutionLineInput => line !== null)
     .slice(0, 50);
 }
 

@@ -13,7 +13,7 @@ assets/licensed/envato-4THD2PH/ORIGINAL/<original-envato-filename>.zip
 Full Windows path:
 
 ```
-C:\Users\Joe\Projects\Replit-Site\assets\licensed\envato-4THD2PH\ORIGINAL\
+C:\Users\Joe\Projects\digeratiexperts-site\assets\licensed\envato-4THD2PH\ORIGINAL\
 ```
 
 ## After drop

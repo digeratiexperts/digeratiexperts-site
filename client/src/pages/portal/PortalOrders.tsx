@@ -318,21 +318,21 @@ export default function PortalOrders() {
                             </Badge>
                           </td>
                           <td className="py-4 px-3">
-                            <Link href={href}>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="flex items-center gap-2"
-                                data-testid={`button-view-order-${order.id}`}
-                              >
+                            <Button
+                              asChild
+                              variant="outline"
+                              size="sm"
+                              className="flex items-center gap-2"
+                            >
+                              <Link href={href} data-testid={`button-view-order-${order.id}`}>
                                 {hub ? (
                                   <ExternalLink className="h-4 w-4" />
                                 ) : (
                                   <Eye className="h-4 w-4" />
                                 )}
                                 {hub ? "Open" : "View Details"}
-                              </Button>
-                            </Link>
+                              </Link>
+                            </Button>
                           </td>
                         </tr>
                       );

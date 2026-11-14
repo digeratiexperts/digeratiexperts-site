@@ -29,8 +29,10 @@ describe("canonical ProActive pricing (TechSales-aligned)", () => {
     ]);
   });
 
-  it("does not rank packages with a recommended flag", () => {
-    expect(pricingTiers.every((t) => !("recommended" in t))).toBe(true);
+  it("keeps Office as the sole recommended Store tier", () => {
+    expect(pricingTiers.filter((tier) => tier.recommended).map((tier) => tier.id)).toEqual([
+      "office",
+    ]);
   });
 
   it("enforces monthly floors", () => {

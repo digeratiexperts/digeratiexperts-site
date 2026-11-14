@@ -43,7 +43,7 @@
 ### Export layout
 
 ```
-C:\Users\Joe\Projects\Replit-Site\assets\licensed\meshy-batch-01\ORIGINAL\
+C:\Users\Joe\Projects\digeratiexperts-site\assets\licensed\meshy-batch-01\ORIGINAL\
   <concept-slug>\
     *.glb / *.fbx / previews…
 ```

@@ -131,7 +131,9 @@ export function sanitizeReturnTo(raw: unknown): string {
   if (typeof raw !== "string" || !raw.startsWith("/") || raw.startsWith("//")) {
     return "/portal/dashboard";
   }
-  if (!raw.startsWith("/portal")) return "/portal/dashboard";
+  if (!raw.startsWith("/portal") && !raw.startsWith("/store")) {
+    return "/portal/dashboard";
+  }
   return raw;
 }
 

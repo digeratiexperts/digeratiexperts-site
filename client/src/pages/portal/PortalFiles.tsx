@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { PortalLayout } from "./PortalLayout";
 import { FileText, Download, FolderOpen, Package, File, Settings } from "lucide-react";
 import { portalGet } from "@/lib/portalApi";
+import { Link } from "wouter";
 
 interface TenantFile {
   id: string;
@@ -89,10 +90,22 @@ export default function PortalFiles() {
           <Card className="text-center py-12">
             <CardContent>
               <FolderOpen className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-slate-600 dark:text-slate-400">No files available</h3>
-              <p className="text-slate-500 dark:text-slate-500 mt-2">
-                Your IT administrator hasn't uploaded any files for your organization yet.
+              <h3 className="text-lg font-medium text-slate-700 dark:text-slate-300">No organization files yet</h3>
+              <p className="mx-auto mt-2 max-w-lg text-slate-500 dark:text-slate-400">
+                Software, agent installers, and configuration documents published for {companyName} will appear here.
               </p>
+              <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
+                <Button asChild>
+                  <Link href="/portal/tickets/create" data-testid="button-request-file-empty">
+                    Request a file or agent
+                  </Link>
+                </Button>
+                <Button asChild variant="outline">
+                  <Link href="/portal/agent" data-testid="button-open-desktop-agent-empty">
+                    Desktop Agent
+                  </Link>
+                </Button>
+              </div>
             </CardContent>
           </Card>
         ) : (
@@ -155,16 +168,27 @@ export default function PortalFiles() {
 
         <Card className="bg-slate-50 dark:bg-slate-800/50 border-dashed">
           <CardContent className="py-6">
-            <div className="flex items-start gap-4">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
               <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                 <FileText className="w-5 h-5 text-primary" />
               </div>
-              <div>
+              <div className="flex-1">
                 <h4 className="font-medium text-slate-900 dark:text-white">Need something else?</h4>
                 <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-                  If you need additional software, documentation, or configuration files, please contact your IT administrator 
-                  or submit a support ticket.
+                  Request organization-specific software, documentation, or configuration files from the support team.
                 </p>
+                <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+                  <Button asChild size="sm">
+                    <Link href="/portal/tickets/create" data-testid="button-request-file">
+                      Request a file or agent
+                    </Link>
+                  </Button>
+                  <Button asChild size="sm" variant="outline">
+                    <Link href="/portal/agent" data-testid="button-open-desktop-agent">
+                      Open Desktop Agent
+                    </Link>
+                  </Button>
+                </div>
               </div>
             </div>
           </CardContent>

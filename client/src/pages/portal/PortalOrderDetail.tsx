@@ -107,9 +107,7 @@ export default function PortalOrderDetail() {
   const handleDownloadReceipt = async () => {
     try {
       const response = await fetch(`/api/portal/orders/${orderId}/receipt`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("portalToken")}`,
-        },
+        credentials: "include",
       });
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
@@ -140,12 +138,12 @@ export default function PortalOrderDetail() {
     return (
       <PortalLayout title="Order Details">
         <div className="space-y-6">
-          <Link href="/portal/orders">
-            <Button variant="ghost" className="flex items-center gap-2" data-testid="button-back">
+          <Button asChild variant="ghost" className="flex items-center gap-2">
+            <Link href="/portal/orders" data-testid="button-back">
               <ArrowLeft className="h-4 w-4" />
               Back to Orders
-            </Button>
-          </Link>
+            </Link>
+          </Button>
           <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/30 rounded-lg">
             <p className="text-sm text-red-800 dark:text-red-300">
               {error instanceof Error ? error.message : "Order not found"}
@@ -160,12 +158,12 @@ export default function PortalOrderDetail() {
     <PortalLayout title="Order Details">
       <div className="space-y-6 print:p-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 print:hidden">
-          <Link href="/portal/orders">
-            <Button variant="ghost" className="flex items-center gap-2" data-testid="button-back">
+          <Button asChild variant="ghost" className="flex items-center gap-2">
+            <Link href="/portal/orders" data-testid="button-back">
               <ArrowLeft className="h-4 w-4" />
               Back to Orders
-            </Button>
-          </Link>
+            </Link>
+          </Button>
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
@@ -392,11 +390,11 @@ export default function PortalOrderDetail() {
                     {PRIMARY_PHONE.display}
                   </a>
                 </div>
-                <Link href="/portal/tickets/create">
-                  <Button variant="outline" className="w-full mt-2" data-testid="button-create-ticket">
+                <Button asChild variant="outline" className="w-full mt-2">
+                  <Link href="/portal/tickets/create" data-testid="button-create-ticket">
                     Create Support Ticket
-                  </Button>
-                </Link>
+                  </Link>
+                </Button>
               </CardContent>
             </Card>
           </div>

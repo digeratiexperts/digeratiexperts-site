@@ -10,8 +10,6 @@ async function throwIfResNotOk(res: Response) {
 function authHeaders(hasJsonBody: boolean): Record<string, string> {
   const headers: Record<string, string> = {};
   if (hasJsonBody) headers["Content-Type"] = "application/json";
-  const token = localStorage.getItem("portalToken");
-  if (token) headers["Authorization"] = `Bearer ${token}`;
   return headers;
 }
 

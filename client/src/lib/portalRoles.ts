@@ -64,6 +64,13 @@ export function canManageOrg(user: PortalUserSession | null): boolean {
   return resolveOrgRole(user) === "company_it_contact" || !!user?.isCompanyItContact;
 }
 
+export function canViewClientWide(user: PortalUserSession | null): boolean {
+  if (user?.capabilities?.clientWide !== undefined) return !!user.capabilities.clientWide;
+  if (isDeAdmin(user)) return true;
+  const role = resolveOrgRole(user);
+  return role === "company_it_contact" || role === "dept_it_contact";
+}
+
 /** Nav visibility for staff-minimal vs expanded IT Contact surfaces */
 export type NavKey =
   | "dashboard"

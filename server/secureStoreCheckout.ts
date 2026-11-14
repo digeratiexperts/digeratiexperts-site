@@ -1,6 +1,13 @@
 import type { Express, NextFunction, Request, Response } from "express";
 import { storeProducts, type StoreProduct } from "../client/src/data/storeProducts";
-import { resolveClientPricingRows, resolveUnitPrice, toPriceOverrides } from "./storeClientPricing";
+import {
+  resolveClientPricingRows,
+  resolveUnitPrice,
+  StoreClientPricingUnavailableError,
+  toPriceOverrides,
+} from "./storeClientPricing";
+import { paymentRateLimiter } from "./middleware/rateLimiter";
+import { sendStorePricingUnavailable } from "./storeClientPricingHttp";
 
 type StoreRole = "public" | "prospect" | "managed" | "comanaged" | "admin";
 
@@ -14,10 +21,21 @@ type CheckoutRequest = Request & {
     storeRole?: StoreRole;
     clientId?: string | null;
   };
+  portalClientContext?: {
+    clientId: string | null;
+    companyName: string | null;
+    contactEmail: string | null;
+    primaryContact: string | null;
+    serviceType: string | null;
+    impersonating: boolean;
+  };
 };
 
 type AuthMiddleware = (req: CheckoutRequest, res: Response, next: NextFunction) => unknown;
 type RoleMiddlewareFactory = (...roles: StoreRole[]) => AuthMiddleware;
+type SecureStoreCheckoutDependencies = {
+  resolveClientPricingRows?: typeof resolveClientPricingRows;
+};
 
 export interface CanonicalCheckoutLineItem {
   productId: string;
@@ -109,22 +127,55 @@ export function registerSecureZohoStoreCheckout(
   app: Express,
   authMiddleware: AuthMiddleware,
   requireRole: RoleMiddlewareFactory,
+  dependencies: SecureStoreCheckoutDependencies = {},
 ) {
+  const resolvePricing = dependencies.resolveClientPricingRows || resolveClientPricingRows;
   app.post(
     "/api/store/checkout/zoho",
-    [authMiddleware as any, requireRole("comanaged", "admin") as any],
+    [paymentRateLimiter, authMiddleware as any, requireRole("comanaged", "admin") as any],
     async (req: CheckoutRequest, res: Response) => {
       try {
         const { billing } = req.body || {};
-        const billingName = stringValue(billing?.name, 150);
-        const billingEmail = stringValue(billing?.email, 254).toLowerCase();
-        const billingCompany = stringValue(billing?.company, 200);
+        const impersonating = !!req.portalClientContext?.impersonating;
+        const clientId = impersonating
+          ? req.portalClientContext?.clientId || null
+          : req.portalClientContext?.clientId || req.user?.clientId || null;
+        if (impersonating && (
+          !clientId ||
+          !req.portalClientContext?.companyName ||
+          !req.portalClientContext.contactEmail ||
+          !req.portalClientContext.serviceType
+        )) {
+          return res.status(409).json({
+            error: "The active client must have authoritative company, contact, and service details before checkout",
+          });
+        }
+        const billingName = stringValue(
+          impersonating
+            ? req.portalClientContext?.primaryContact || req.portalClientContext?.companyName
+            : billing?.name,
+          150,
+        );
+        const billingEmail = stringValue(
+          impersonating ? req.portalClientContext?.contactEmail : billing?.email,
+          254,
+        ).toLowerCase();
+        const billingCompany = stringValue(
+          impersonating ? req.portalClientContext?.companyName : billing?.company,
+          200,
+        );
         if (!billingName || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(billingEmail)) {
           return res.status(400).json({ error: "Valid billing name and email are required" });
         }
 
-        const role = (req.user?.storeRole || "public") as StoreRole;
-        const pricingRows = await resolveClientPricingRows(req.user?.clientId);
+        const role = (impersonating
+          ? req.portalClientContext?.serviceType === "comanaged"
+            ? "comanaged"
+            : req.portalClientContext?.serviceType === "managed"
+              ? "managed"
+              : "public"
+          : req.user?.storeRole || "public") as StoreRole;
+        const pricingRows = await resolvePricing(clientId);
         const priceOverrides = toPriceOverrides(pricingRows);
         let lineItems: CanonicalCheckoutLineItem[];
         try {
@@ -132,7 +183,7 @@ export function registerSecureZohoStoreCheckout(
         } catch (error: any) {
           console.warn("[SECURITY] CHECKOUT_CART_REJECTED", {
             userId: req.userId,
-            clientId: req.user?.clientId,
+            clientId,
             reason: error?.message || "invalid_cart",
           });
           return res.status(400).json({ error: error?.message || "Invalid checkout cart" });
@@ -147,7 +198,7 @@ export function registerSecureZohoStoreCheckout(
         ) {
           console.warn("[SECURITY] CHECKOUT_PRICE_MISMATCH", {
             userId: req.userId,
-            clientId: req.user?.clientId,
+            clientId,
             trustedTotal,
             suppliedTotal: Number.isFinite(suppliedTotal) ? money(suppliedTotal) : null,
             suppliedSubtotal: Number.isFinite(suppliedSubtotal) ? money(suppliedSubtotal) : null,
@@ -179,7 +230,7 @@ export function registerSecureZohoStoreCheckout(
           .values({
             orderNumber,
             userId: req.userId || null,
-            clientId: req.user?.clientId || null,
+            clientId,
             status: "awaiting_payment",
             paymentMethod: "zoho",
             lineItems,
@@ -222,7 +273,7 @@ export function registerSecureZohoStoreCheckout(
             cartTotal: trustedTotal,
             itemCount: lineItems.length,
             userId: req.userId,
-            clientId: req.user?.clientId,
+            clientId,
             paymentMethod: "zoho",
           });
 
@@ -237,6 +288,12 @@ export function registerSecureZohoStoreCheckout(
         }
       } catch (error: any) {
         console.error("[ZOHO SECURE CHECKOUT ERROR]", error);
+        if (error instanceof StoreClientPricingUnavailableError) {
+          return sendStorePricingUnavailable(
+            res,
+            "Checkout pricing is temporarily unavailable. Please retry shortly.",
+          );
+        }
         return res.status(500).json({ error: error?.message || "Failed to create checkout session" });
       }
     },

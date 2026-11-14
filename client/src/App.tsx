@@ -111,41 +111,31 @@ const PortalServices = lazy(() => import("@/pages/portal/PortalServices"));
 const PortalInvoices = lazy(() => import("@/pages/portal/PortalInvoices"));
 const PortalPayment = lazy(() => import("@/pages/portal/PortalPayment"));
 const PortalKB = lazy(() => import("@/pages/portal/PortalKB"));
-const PortalStatus = lazy(() => import("@/pages/portal/PortalStatus"));
 const PortalLearning = lazy(() => import("@/pages/portal/PortalLearning"));
 const PortalChat = lazy(() => import("@/pages/portal/PortalChat"));
 const PortalAgent = lazy(() => import("@/pages/portal/PortalAgent"));
 const PortalSettings = lazy(() => import("@/pages/portal/PortalSettings"));
-const PortalShipCenter = lazy(() => import("@/pages/portal/PortalShipCenter"));
-const PortalProcurementStore = lazy(() => import("@/pages/portal/PortalProcurementStore"));
+const PortalUnavailable = lazy(() => import("@/pages/portal/PortalUnavailable"));
 const PortalAdvancedForms = lazy(() => import("@/pages/portal/PortalAdvancedForms").then(m => ({ default: m.PortalAdvancedForms })));
 const PortalSatisfactionSurvey = lazy(() => import("@/pages/portal/PortalSatisfactionSurvey").then(m => ({ default: m.PortalSatisfactionSurvey })));
 const PortalApprovals = lazy(() => import("@/pages/portal/PortalApprovals").then(m => ({ default: m.PortalApprovals })));
 const PortalPeople = lazy(() => import("@/pages/portal/PortalPeople").then(m => ({ default: m.PortalPeople })));
 const PortalInfrastructure = lazy(() => import("@/pages/portal/PortalInfrastructure").then(m => ({ default: m.PortalInfrastructure })));
-const PortalQuestionnaireCalendar = lazy(() => import("@/pages/portal/PortalQuestionnaireCalendar").then(m => ({ default: m.PortalQuestionnaireCalendar })));
-const PortalVPN = lazy(() => import("@/pages/portal/PortalVPN"));
-const PortalCytracom = lazy(() => import("@/pages/portal/PortalCytracom"));
 const PortalFiles = lazy(() => import("@/pages/portal/PortalFiles"));
 const PortalOrders = lazy(() => import("@/pages/portal/PortalOrders"));
 const PortalOrderDetail = lazy(() => import("@/pages/portal/PortalOrderDetail"));
 const PortalBilling = lazy(() => import("@/pages/portal/PortalBilling"));
 const PortalCompany = lazy(() => import("@/pages/portal/PortalCompany"));
 const AdminImportPage = lazy(() => import("@/pages/portal/AdminImport").then(m => ({ default: m.AdminImport })));
-const AdminAgentsPage = lazy(() => import("@/pages/portal/AdminAgents").then(m => ({ default: m.AdminAgents })));
-const AdminOpenAIPage = lazy(() => import("@/pages/portal/AdminOpenAI").then(m => ({ default: m.AdminOpenAI })));
 const AdminCompaniesPage = lazy(() => import("@/pages/portal/AdminCompanies").then(m => ({ default: m.AdminCompanies })));
 const AdminLoginKnocksPage = lazy(() => import("@/pages/portal/AdminLoginKnocks").then(m => ({ default: m.AdminLoginKnocks })));
 const AdminLifecyclePage = lazy(() => import("@/pages/portal/AdminLifecycle").then(m => ({ default: m.AdminLifecycle })));
-const AdminContractsPage = lazy(() => import("@/pages/portal/AdminContracts").then(m => ({ default: m.AdminContracts })));
 const PortalContracts = lazy(() => import("@/pages/portal/PortalContracts").then(m => ({ default: m.PortalContracts })));
 const OrderForm = lazy(() => import("@/pages/portal/OrderForm").then(m => ({ default: m.OrderForm })));
 const LeadQuoteWizard = lazy(() => import("@/pages/LeadQuoteWizard"));
 const QuoteConfirmation = lazy(() => import("@/pages/QuoteConfirmation"));
 const ThankYouSuccess = lazy(() => import("@/pages/ThankYouSuccess"));
 const SalesProcess = lazy(() => import("@/pages/portal/SalesProcess"));
-const PortalRoadmap = lazy(() => import("@/pages/portal/PortalRoadmap"));
-const PortalQBR = lazy(() => import("@/pages/portal/PortalQBR"));
 const ProActiveEcosystemPricing = lazy(() => import("@/pages/ProActiveEcosystemPricing"));
 const EcosystemPricing = lazy(() => import("@/pages/EcosystemPricing"));
 const EcosystemMatrixOfficial = lazy(() => import("@/pages/EcosystemMatrixOfficial"));
@@ -676,7 +666,10 @@ function Router() {
       )} />
       <Route path="/portal/status" component={() => (
         <Suspense fallback={<PageLoadingSkeleton />}>
-          <PortalStatus />
+          <PortalUnavailable
+            title="System Status"
+            description="Live tenant monitoring is not connected to this portal yet. Open a support ticket for a current service or incident update."
+          />
         </Suspense>
       )} />
       <Route path="/portal/learning" component={() => (
@@ -711,12 +704,20 @@ function Router() {
       )} />
       <Route path="/portal/ship-center" component={() => (
         <Suspense fallback={<PageLoadingSkeleton />}>
-          <PortalShipCenter />
+          <PortalUnavailable
+            title="Ship Center"
+            description="Shipment tracking and fulfillment controls are not connected yet. Open a request and the service team will provide a verified update."
+          />
         </Suspense>
       )} />
       <Route path="/portal/procurement" component={() => (
         <Suspense fallback={<PageLoadingSkeleton />}>
-          <PortalProcurementStore />
+          <PortalUnavailable
+            title="Portal Procurement"
+            description="Portal procurement is not accepting orders yet. Use the public store for available products or open a request for an account-specific quote."
+            secondaryHref="/store"
+            secondaryLabel="Open Store"
+          />
         </Suspense>
       )} />
       <Route path="/portal/forms" component={() => (
@@ -746,17 +747,26 @@ function Router() {
       )} />
       <Route path="/portal/vpn" component={() => (
         <Suspense fallback={<PageLoadingSkeleton />}>
-          <PortalVPN />
+          <PortalUnavailable
+            title="VPN Access"
+            description="VPN self-service is not connected. Access changes require an authorized support request so identity and device checks can be completed."
+          />
         </Suspense>
       )} />
       <Route path="/portal/cytracom" component={() => (
         <Suspense fallback={<PageLoadingSkeleton />}>
-          <PortalCytracom />
+          <PortalUnavailable
+            title="ControlOne Phone"
+            description="Phone-system controls are not connected to live account data. Open a ticket for PIN, voicemail, routing, or device changes."
+          />
         </Suspense>
       )} />
       <Route path="/portal/questionnaires" component={() => (
         <Suspense fallback={<PageLoadingSkeleton />}>
-          <PortalQuestionnaireCalendar />
+          <PortalUnavailable
+            title="Questionnaires & Calendar"
+            description="The live assessment calendar is not connected yet. Open a request for an active questionnaire, review, or assessment date."
+          />
         </Suspense>
       )} />
       <Route path="/portal/admin/import" component={() => (
@@ -766,12 +776,18 @@ function Router() {
       )} />
       <Route path="/portal/admin/agents" component={() => (
         <Suspense fallback={<PageLoadingSkeleton />}>
-          <AdminAgentsPage />
+          <PortalUnavailable
+            title="Agent Administration"
+            description="Agent deployment administration is not enabled in production. Packages must remain signed, approved, and distributed through the service team."
+          />
         </Suspense>
       )} />
       <Route path="/portal/admin/openai" component={() => (
         <Suspense fallback={<PageLoadingSkeleton />}>
-          <AdminOpenAIPage />
+          <PortalUnavailable
+            title="AI Administration"
+            description="AI provider controls are not connected to an authoritative configuration service yet. No setting has been changed."
+          />
         </Suspense>
       )} />
       <Route path="/portal/admin/companies" component={() => (
@@ -791,7 +807,12 @@ function Router() {
       )} />
       <Route path="/portal/admin/contracts" component={() => (
         <Suspense fallback={<PageLoadingSkeleton />}>
-          <AdminContractsPage />
+          <PortalUnavailable
+            title="Contract Administration"
+            description="Contract administration is not enabled in this portal yet. Existing client-visible contracts remain available in the Contracts workspace."
+            secondaryHref="/portal/contracts"
+            secondaryLabel="View Contracts"
+          />
         </Suspense>
       )} />
       <Route path="/portal/contracts" component={() => (
@@ -811,12 +832,18 @@ function Router() {
       )} />
       <Route path="/portal/roadmap" component={() => (
         <Suspense fallback={<PageLoadingSkeleton />}>
-          <PortalRoadmap />
+          <PortalUnavailable
+            title="IT Roadmap"
+            description="The live account roadmap is not connected yet. Open a request to schedule a verified planning review with your service team."
+          />
         </Suspense>
       )} />
       <Route path="/portal/qbr" component={() => (
         <Suspense fallback={<PageLoadingSkeleton />}>
-          <PortalQBR />
+          <PortalUnavailable
+            title="Business Reviews"
+            description="Live business-review reports are not connected yet. Open a request to schedule a review or receive your current report securely."
+          />
         </Suspense>
       )} />
       

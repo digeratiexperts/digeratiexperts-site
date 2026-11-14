@@ -16,7 +16,7 @@ portal.digeratiexperts.com) on the CyberPanel/OpenLiteSpeed VPS
 | Private port | `127.0.0.1:3300` |
 | Public health | https://digeratiexperts.com/healthz |
 
-**Do not** deploy from `/root/Replit-Site`. **Do not** use PM2 for this site.
+**Do not** deploy from a mutable `/root` clone. **Do not** use PM2 for this site.
 **Do not** rsync build output into `public_html` — OLS proxies to Node.
 
 **Ownership split**
@@ -31,7 +31,7 @@ portal.digeratiexperts.com) on the CyberPanel/OpenLiteSpeed VPS
 ```
 /home/digeratiexperts.com/             (staging: /home/staging.digeratiexperts.com/)
 ├── public_html/          # CyberPanel-managed; placeholder only (app is proxied)
-├── app/                  # bare git mirror of digeratiexperts/Replit-Site
+├── app/                  # bare git mirror of digeratiexperts/digeratiexperts-site
 ├── releases/<timestamp>/ # built releases (last 3 kept)
 ├── current -> releases/<timestamp>    # active release (atomic symlink)
 ├── shared/
@@ -77,13 +77,49 @@ The script:
 1. Fetches `DEPLOY_BRANCH` (default `main`) into the bare mirror
 2. Builds a fresh release under `releases/<timestamp>/`
 3. Validates the build and scans the bundle for internal/credential leaks
-4. Flips `current` → new release
-5. Runs `sudo -n /usr/bin/systemctl restart digeratiexperts-site`
-6. Verifies `sudo -n /usr/bin/systemctl is-active digeratiexperts-site`
-7. Health-checks `http://127.0.0.1:3300/healthz` + `/`, then
+4. Applies numbered SQL migrations under a database advisory lock and verifies
+   their checksums; any failure stops before activation/restart
+5. Flips `current` → new release
+6. Runs `sudo -n /usr/bin/systemctl restart digeratiexperts-site`
+7. Verifies `sudo -n /usr/bin/systemctl is-active digeratiexperts-site`
+8. Health-checks `http://127.0.0.1:3300/healthz` + `/`, then
    `https://digeratiexperts.com/healthz`
-8. On any restart/inactive/health failure: rolls back the symlink, restarts,
+9. On any restart/inactive/health failure: rolls back the symlink, restarts,
    and **exits non-zero** (failed deployment — never treated as optional)
+
+Database migrations are forward-only and normally remain additive and
+mixed-version safe. `0003_zoho_payment_integrity.sql` is deliberately stricter:
+its database trigger rejects the legacy paid-order path. The deploy script will
+therefore stop before applying it while the old service is active. Schedule a
+maintenance window, stop the site service, and rerun with
+`ALLOW_FORWARD_ONLY_MIGRATION=1`. After that migration applies, automatic
+rollback to a pre-ledger release is disabled; recovery must move forward with a
+ledger-aware release.
+
+### MFA encryption rollout and rollback boundary
+
+`PORTAL_MFA_ENCRYPTION_KEY` is required before the first release containing
+encrypted portal MFA storage starts. It must be the same 32-byte base64url key
+on every application instance that shares the portal database. On startup, the
+new release converts existing plaintext TOTP seeds and backup codes in place.
+Older releases cannot read those converted records.
+
+Treat the first MFA-encryption rollout as a coordinated maintenance change:
+
+1. Back up the database and verify the restore procedure.
+2. Generate and install the same `PORTAL_MFA_ENCRYPTION_KEY` on staging and on
+   every production platform that shares the database. Never log or commit it.
+3. Stop or drain every old application instance before starting the first new
+   instance. Do not run old and new versions concurrently.
+4. Verify TOTP, email MFA, and one-time recovery-code login on staging, then
+   repeat the coordinated cutover in production.
+5. After conversion, recover forward with an MFA-aware release. Do not roll the
+   application back to a version that expects plaintext MFA data.
+
+For key rotation, place the new key in `PORTAL_MFA_ENCRYPTION_KEY` and retain
+the old key in `PORTAL_MFA_PREVIOUS_ENCRYPTION_KEYS` on every instance. Keep old
+keys available until all TOTP records have been rewrapped and all recovery
+codes created under those keys have been replaced or expired.
 
 Automatic deploys: either a cron entry polling `main`, or CyberPanel's Git
 Manager webhook calling the script. Choose ONE mechanism — if this script
@@ -144,7 +180,7 @@ For a fresh host: install `digeratiexperts-site.service` with
 
 | Obsolete | Why |
 |---|---|
-| `/root/Replit-Site` + PM2 | Former layout; not production |
+| Any mutable `/root` clone + PM2 | Former layout; not production |
 | `scripts/deploy.sh` (rsync to `public_html`) | Conflicts with OLS→Node proxy |
 | `ecosystem.config.js` | PM2 config; superseded by systemd |
 | Manual root `systemctl restart` after every deploy | `deploy.sh` performs restart + verify |

@@ -339,19 +339,19 @@ export default function PortalLearning() {
                   <div className="flex flex-wrap gap-2">
                     {active.actions.map((a) =>
                       a.external ? (
-                        <a key={a.label} href={a.href} target="_blank" rel="noopener noreferrer">
-                          <Button variant="outline" size="sm">
+                        <Button key={a.label} asChild variant="outline" size="sm">
+                          <a href={a.href} target="_blank" rel="noopener noreferrer">
                             <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
                             {a.label}
-                          </Button>
-                        </a>
+                          </a>
+                        </Button>
                       ) : (
-                        <Link key={a.label} href={a.href}>
-                          <Button variant="outline" size="sm">
+                        <Button key={a.label} asChild variant="outline" size="sm">
+                          <Link href={a.href}>
                             {a.label}
                             <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
-                          </Button>
-                        </Link>
+                          </Link>
+                        </Button>
                       ),
                     )}
                     <Button
@@ -410,12 +410,12 @@ export default function PortalLearning() {
                     )}
                   </div>
                 ))}
-                <Link href="/portal/contracts">
-                  <Button variant="outline" size="sm" className="w-full mt-1">
+                <Button asChild variant="outline" size="sm" className="w-full mt-1">
+                  <Link href="/portal/contracts">
                     <BookOpen className="h-3.5 w-3.5 mr-1.5" />
                     Open contracts & docs
-                  </Button>
-                </Link>
+                  </Link>
+                </Button>
               </CardContent>
             </Card>
 

@@ -170,7 +170,7 @@ export function SiteBottomBar() {
 
         <div
           className={`relative z-[1] grid min-w-0 ${
-            prefersReducedMotion ? "" : "transition-[grid-template-columns,opacity] duration-[400ms] ease-out"
+            prefersReducedMotion ? "" : "transition-[grid-template-columns,opacity] duration-500 ease-out"
           } ${
             expanded
               ? "w-full min-w-0 flex-1 grid-cols-[minmax(0,1fr)] opacity-100"

@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { ShieldCheck, ShieldOff, Smartphone, Mail, Copy, Key, AlertTriangle, CheckCircle2, Loader } from "lucide-react";
-import { portalGet, portalPost } from "@/lib/portalApi";
+import { portalGet, portalPost, redirectToPortalLogin } from "@/lib/portalApi";
+import { requiresPortalReauthentication } from "@/lib/portalSensitiveAction";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
@@ -22,6 +23,7 @@ export default function MfaSetup() {
   const [setupData, setSetupData] = useState<any>(null);
   const [verifyCode, setVerifyCode] = useState("");
   const [backupCodes, setBackupCodes] = useState<string[] | null>(null);
+  const [reauthenticateAfterBackupCodes, setReauthenticateAfterBackupCodes] = useState(false);
   const [disableDialog, setDisableDialog] = useState(false);
   const [disablePassword, setDisablePassword] = useState("");
   const [regenDialog, setRegenDialog] = useState(false);
@@ -51,10 +53,13 @@ export default function MfaSetup() {
     }),
     onSuccess: (data: any) => {
       setBackupCodes(data.backupCodes);
+      setReauthenticateAfterBackupCodes(requiresPortalReauthentication(data));
       setSetupStep(null);
       setSetupData(null);
       setVerifyCode("");
-      queryClient.invalidateQueries({ queryKey: ["/api/portal/mfa/status"] });
+      if (!requiresPortalReauthentication(data)) {
+        queryClient.invalidateQueries({ queryKey: ["/api/portal/mfa/status"] });
+      }
       toast({ title: "MFA Enabled", description: "Two-factor authentication is now active on your account." });
     },
     onError: (err: any) => {
@@ -64,9 +69,13 @@ export default function MfaSetup() {
 
   const disableMutation = useMutation({
     mutationFn: () => portalPost("/api/portal/mfa/disable", { password: disablePassword }),
-    onSuccess: () => {
+    onSuccess: (data: unknown) => {
       setDisableDialog(false);
       setDisablePassword("");
+      if (requiresPortalReauthentication(data)) {
+        redirectToPortalLogin("/portal/settings");
+        return;
+      }
       queryClient.invalidateQueries({ queryKey: ["/api/portal/mfa/status"] });
       toast({ title: "MFA Disabled", description: "Two-factor authentication has been removed." });
     },
@@ -79,9 +88,12 @@ export default function MfaSetup() {
     mutationFn: () => portalPost("/api/portal/mfa/regenerate-backup-codes", { password: regenPassword }),
     onSuccess: (data: any) => {
       setBackupCodes(data.backupCodes);
+      setReauthenticateAfterBackupCodes(requiresPortalReauthentication(data));
       setRegenDialog(false);
       setRegenPassword("");
-      queryClient.invalidateQueries({ queryKey: ["/api/portal/mfa/status"] });
+      if (!requiresPortalReauthentication(data)) {
+        queryClient.invalidateQueries({ queryKey: ["/api/portal/mfa/status"] });
+      }
       toast({ title: "Backup Codes Regenerated", description: "Save your new backup codes now." });
     },
     onError: (err: any) => {
@@ -93,6 +105,14 @@ export default function MfaSetup() {
     if (backupCodes) {
       navigator.clipboard.writeText(backupCodes.join("\n"));
       toast({ title: "Copied", description: "Backup codes copied to clipboard." });
+    }
+  };
+
+  const closeBackupCodes = () => {
+    setBackupCodes(null);
+    if (reauthenticateAfterBackupCodes) {
+      setReauthenticateAfterBackupCodes(false);
+      redirectToPortalLogin("/portal/settings");
     }
   };
 
@@ -250,7 +270,7 @@ export default function MfaSetup() {
       </Card>
 
       {/* Backup Codes Modal */}
-      <Dialog open={!!backupCodes} onOpenChange={() => setBackupCodes(null)}>
+      <Dialog open={!!backupCodes} onOpenChange={(open) => { if (!open) closeBackupCodes(); }}>
         <DialogContent className="bg-[#0f0d2e] border-white/20 text-white max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -259,6 +279,7 @@ export default function MfaSetup() {
             </DialogTitle>
             <DialogDescription className="text-gray-400">
               Save these codes in a secure place. Each code can only be used once.
+              {reauthenticateAfterBackupCodes && " You will sign in again after closing this window."}
             </DialogDescription>
           </DialogHeader>
           <div className="grid grid-cols-2 gap-2 p-4 bg-white/5 rounded-lg font-mono">
@@ -277,7 +298,7 @@ export default function MfaSetup() {
               <Copy className="mr-2 h-4 w-4" />
               Copy All
             </Button>
-            <Button onClick={() => setBackupCodes(null)} className="bg-[#D3126A] hover:bg-[#e01874]" data-testid="button-close-codes">
+            <Button onClick={closeBackupCodes} className="bg-[#D3126A] hover:bg-[#e01874]" data-testid="button-close-codes">
               I've Saved Them
             </Button>
           </DialogFooter>

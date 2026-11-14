@@ -1,7 +1,8 @@
+// Legacy rollback reference only. Production uses the systemd unit in deploy/vps.
 module.exports = {
   apps: [{
     name: 'digeratiexperts-site',
-    cwd: '/root/Replit-Site',
+    cwd: '/home/digeratiexperts.com/current',
     script: 'dist/index.js',
     env: {
       NODE_ENV: 'production',

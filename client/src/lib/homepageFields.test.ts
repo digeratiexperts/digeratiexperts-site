@@ -31,9 +31,13 @@ describe("homepage chapter fields", () => {
     expect(litBlock).not.toMatch(/background-color:\s*#(5B45E0|8B5CF6|7c3aed)/i);
   });
 
-  it("recedes insights after the pricing surface so the pair is not two slabs", () => {
+  it("keeps the homepage to seven chapters and moves threat insights off the main conversion path", () => {
     expect(insights).toMatch(/className="de-dark-well/);
-    expect(homepage).toContain("DigeratiThreatsInsightsSection");
+    expect(homepage).not.toContain("DigeratiThreatsInsightsSection");
     expect(homepage).toContain("DigeratiPricingSection");
+    expect(homepage.match(/<ScrollSectionAuto id=/g)).toHaveLength(7);
+    for (const id of ["hero", "risk", "engagement", "ecosystem", "proof", "leadership", "next-step"]) {
+      expect(homepage).toContain(`id="${id}"`);
+    }
   });
 });

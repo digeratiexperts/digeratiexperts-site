@@ -120,7 +120,6 @@ export default function PortalChat() {
   const [connected, setConnected] = useState(true);
   const [chatAllowed, setChatAllowed] = useState(true);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
-  const [token, setToken] = useState<string>("");
   const [deskSessions, setDeskSessions] = useState<DeskSession[]>([]);
   const [openDeskIds, setOpenDeskIds] = useState<string[]>([]);
   const [selectedDesk, setSelectedDesk] = useState<string | null>(null);
@@ -156,12 +155,11 @@ export default function PortalChat() {
     openDeskIdsRef.current = openDeskIds;
   }, [openDeskIds]);
 
-  const loadLiveMessages = useCallback(async (authToken: string, since?: string) => {
+  const loadLiveMessages = useCallback(async (since?: string) => {
     const url = since
       ? `/api/portal/chat/messages?since=${encodeURIComponent(since)}`
       : "/api/portal/chat/messages";
     const res = await fetch(url, {
-      headers: { Authorization: `Bearer ${authToken}` },
       credentials: "include",
     });
     if (res.status === 403) {
@@ -224,12 +222,7 @@ export default function PortalChat() {
   }, []);
 
   useEffect(() => {
-    const authToken = localStorage.getItem("portalToken");
-    if (!authToken) return;
-    setToken(authToken);
-
     fetch("/api/portal/chat/status", {
-      headers: { Authorization: `Bearer ${authToken}` },
       credentials: "include",
     })
       .then((r) => r.json())
@@ -242,13 +235,13 @@ export default function PortalChat() {
       })
       .catch(() => {});
 
-    loadLiveMessages(authToken).catch((err) => console.error(err));
+    loadLiveMessages().catch((err) => console.error(err));
     loadDeskSessions();
 
     pollRef.current = setInterval(() => {
       const live = liveMessagesRef.current;
       const last = live[live.length - 1]?.timestamp;
-      loadLiveMessages(authToken, last).catch(() => {});
+      loadLiveMessages(last).catch(() => {});
       loadDeskSessions().catch(() => {});
       const openIds = openDeskIdsRef.current;
       for (const id of openIds) {
@@ -455,7 +448,7 @@ export default function PortalChat() {
 
   const handleDeskReply = async (e?: React.FormEvent) => {
     e?.preventDefault();
-    if (!selectedDesk || !deskReply.trim() || deskSending || !token) return;
+    if (!selectedDesk || !deskReply.trim() || deskSending) return;
     const content = deskReply.trim();
     setDeskSending(true);
     setDeskReply("");
@@ -480,7 +473,6 @@ export default function PortalChat() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         credentials: "include",
         body: JSON.stringify({ content }),
@@ -540,7 +532,6 @@ export default function PortalChat() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
           },
           credentials: "include",
           body: JSON.stringify({
@@ -567,7 +558,7 @@ export default function PortalChat() {
         setSending(false);
       }
     },
-    [messageText, sending, token, chatAllowed],
+    [messageText, sending, chatAllowed],
   );
 
   const activeSession = deskSessions.find((s) => s.sessionId === selectedDesk) || null;
@@ -613,7 +604,7 @@ export default function PortalChat() {
                 className="border-white/15 bg-white/[0.04] text-white hover:bg-white/10 hover:text-white"
                 onClick={() => {
                   void loadDeskSessions();
-                  if (token) void loadLiveMessages(token);
+                  void loadLiveMessages();
                   if (selectedDesk) void refreshDeskThread(selectedDesk);
                 }}
               >
@@ -671,15 +662,16 @@ export default function PortalChat() {
                   </p>
                 </div>
               </div>
-              <Link href="/portal/tickets">
-                <Button
-                  size="sm"
-                  className="gap-2 border border-white/10 bg-white/[0.06] text-white hover:bg-white/10"
-                >
+              <Button
+                asChild
+                size="sm"
+                className="gap-2 border border-white/10 bg-white/[0.06] text-white hover:bg-white/10"
+              >
+                <Link href="/portal/tickets">
                   <Ticket className="h-4 w-4" aria-hidden />
                   Tickets
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             </div>
 
             {openDeskIds.length > 0 && (

@@ -9,15 +9,14 @@ import {
 } from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
 import { 
-  getContractOnlyProducts,
+  getContractOnlyStoreProducts,
   categoryLabels,
-  formatPrice,
   type StoreProduct
-} from "@/data/storeProducts";
+} from "@/data/storeCatalog";
 import { StoreClientBar } from "@/components/store/StoreClientBar";
 import { StorePageAtmosphere } from "@/components/store/StorePageAtmosphere";
 import { CTA } from "@/lib/ctaCopy";
-import { pricing, getPricingFooterText } from "@/data/pricing";
+import { getPricingFooterText } from "@/data/pricing";
 import { ProductMedia } from "@/components/store/ProductMedia";
 import { getProductVisual } from "@/data/productImages";
 import { PRIMARY_PHONE } from "@/data/companyContact";
@@ -31,7 +30,7 @@ const ManagedStore = () => {
     canonical: '/store/managed',
   });
 
-  const contractOnlyProducts = getContractOnlyProducts();
+  const contractOnlyProducts = getContractOnlyStoreProducts();
 
   const proactiveEcosystemProducts = contractOnlyProducts.filter(p => 
     p.name.includes("ProActive Ecosystem")
@@ -201,12 +200,12 @@ const ManagedStore = () => {
               <p className="text-white/60">All-inclusive managed IT packages. Choose the tier that fits your security and compliance needs.</p>
             </div>
             
-            <div className="grid md:grid-cols-3 gap-6">
-              {proactiveEcosystemProducts.map((product, idx) => (
+            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+              {proactiveEcosystemProducts.map((product) => (
                 <ProductCard 
                   key={product.id} 
                   product={product} 
-                  featured={idx === 1} 
+                  featured={product.isRecommended === true}
                 />
               ))}
             </div>

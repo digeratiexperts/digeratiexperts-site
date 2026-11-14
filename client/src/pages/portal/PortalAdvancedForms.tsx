@@ -483,6 +483,7 @@ export function PortalAdvancedForms() {
         needsApproval ? "/api/portal/approvals" : "/api/portal/tickets",
         {
           method: "POST",
+          credentials: "include",
           body: JSON.stringify(
             needsApproval
               ? {
@@ -496,7 +497,6 @@ export function PortalAdvancedForms() {
           ),
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("portalToken")}`,
           },
         },
       );

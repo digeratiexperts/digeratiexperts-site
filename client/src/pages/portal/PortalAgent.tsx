@@ -1,390 +1,188 @@
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Link } from "wouter";
+import {
+  AlertCircle,
+  Bell,
+  BookOpen,
+  Check,
+  Clock,
+  FolderOpen,
+  MessageSquare,
+  Monitor,
+  Shield,
+  Ticket,
+} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PortalLayout } from "./PortalLayout";
-import { Download, Monitor, Clock, MessageSquare, Zap, Settings, AlertCircle } from "lucide-react";
 
-interface Agent {
-  name: string;
-  version: string;
-  downloadUrl: string;
-  description: string;
-  features: string[];
-  supportedOS: string[];
-}
-
-const agents: Agent[] = [
+const availableActions = [
   {
-    name: "Digerati Expert Desktop Agent",
-    version: "1.0.0",
-    downloadUrl: "/api/portal/agent/download",
-    description: "Our native desktop agent for quick support access",
-    features: [
-      "Quick Ticket Submission",
-      "Real-time Chat",
-      "System Monitoring",
-      "Auto-updates",
-    ],
-    supportedOS: ["Windows 10", "Windows 11"],
+    title: "DE Desk",
+    description: "Start a secure support conversation from your portal session.",
+    href: "/portal/chat",
+    label: "Open DE Desk",
+    icon: MessageSquare,
   },
   {
-    name: "DE Identity Agent",
-    version: "2.5.1",
-    downloadUrl: "#",
-    description: "Device management and user authentication",
-    features: ["User Management", "MDM", "MFA", "System Inventory"],
-    supportedOS: ["Windows 10", "Windows 11", "macOS", "Linux"],
+    title: "Support tickets",
+    description: "Open a request, attach evidence, and follow its status.",
+    href: "/portal/tickets/create",
+    label: "Create a ticket",
+    icon: Ticket,
   },
   {
-    name: "DE Endpoint Protection Agent",
-    version: "3.2.0",
-    downloadUrl: "#",
-    description: "Endpoint Detection and Response (EDR)",
-    features: [
-      "Endpoint Detection",
-      "Threat Response",
-      "Threat Hunting",
-      "Incident Response",
-    ],
-    supportedOS: ["Windows 10", "Windows 11"],
+    title: "Knowledge base",
+    description: "Find approved guides and self-service instructions.",
+    href: "/portal/kb",
+    label: "Browse knowledge",
+    icon: BookOpen,
   },
   {
-    name: "DE MDR Agent",
-    version: "1.8.5",
-    downloadUrl: "#",
-    description: "Behavioral analytics and anomaly detection",
-    features: [
-      "Behavioral Analysis",
-      "Anomaly Detection",
-      "Real-time Alerts",
-      "Threat Response",
-    ],
-    supportedOS: ["Windows 10", "Windows 11"],
+    title: "Files & software",
+    description: "Access installers and documents assigned to your company.",
+    href: "/portal/files",
+    label: "View assigned files",
+    icon: FolderOpen,
   },
 ];
 
-const digeratiFeatures = [
-  {
-    icon: MessageSquare,
-    title: "Quick Ticket Submission",
-    description: "Submit support tickets directly from the system tray without opening a browser",
-  },
-  {
-    icon: Clock,
-    title: "Real-time Chat",
-    description: "Connect with support team instantly while working on your computer",
-  },
-  {
-    icon: Zap,
-    title: "Quick Access",
-    description: "One-click access to ticket status and support chat from anywhere on your desktop",
-  },
-  {
-    icon: AlertCircle,
-    title: "Instant Notifications",
-    description: "Get notified immediately when support responds to your tickets",
-  },
+const platformStatus = [
+  { platform: "Windows 10 / 11", status: "Private pilot", detail: "Unsigned test builds are not distributed to clients." },
+  { platform: "macOS", status: "Planned", detail: "Signing, notarization, and permission design required." },
+  { platform: "Linux", status: "Planned", detail: "Packaging and least-privilege service design required." },
+];
+
+const securityGates = [
+  "Code-signed and independently verifiable installers",
+  "Device and tenant binding with short-lived enrollment",
+  "Least-privilege actions with explicit user consent",
+  "Allowlisted commands and signed software packages",
+  "Tamper-evident audit events, revocation, and rollback",
+  "OS-protected secrets with no portal password stored locally",
 ];
 
 export default function PortalAgent() {
-  const systemRequirements = [
-    { label: "OS", value: "Windows 10/11" },
-    { label: "RAM", value: "512 MB minimum" },
-    { label: "Disk Space", value: "50 MB" },
-    { label: "Internet", value: "Required for live chat" },
-  ];
-
-  const features = digeratiFeatures;
-
-  const handleDownload = async (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    alert(
-      "Desktop Agent installer is not available yet.\n\nPlease use Portal Chat or Support Tickets for assistance, or contact support@digeratiexperts.com.",
-    );
-  };
-
-  const handleAlternativeDownload = () => {
-    alert(
-      "This agent package is not available for self-service download. Contact your Digerati Experts account team.",
-    );
-  };
-
   return (
-    <PortalLayout title="Desktop Agent">
-      <div className="space-y-6">
-        {/* Hero Section */}
-        <div className="bg-gradient-to-r from-[#D3126A]/10 to-blue-500/10 border border-[#D3126A]/20 rounded-lg p-8">
-          <div className="flex items-center gap-4">
-            <Monitor className="h-12 w-12 text-[#D3126A]" />
-            <div>
-              <h2 className="text-2xl font-bold mb-1">Digerati Experts Desktop Agent</h2>
-              <p className="text-gray-600 dark:text-gray-400">
-                Submit tickets and chat with support directly from your desktop notification area
-              </p>
+    <PortalLayout title="Desktop Companion">
+      <div className="mx-auto max-w-6xl space-y-6">
+        <section className="rounded-2xl border border-[#D3126A]/25 bg-gradient-to-br from-[#D3126A]/10 via-white to-blue-500/5 p-5 dark:via-slate-950 md:p-8">
+          <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+            <div className="flex items-start gap-4">
+              <span className="rounded-2xl bg-[#D3126A] p-3 text-white shadow-sm">
+                <Monitor className="h-7 w-7" aria-hidden="true" />
+              </span>
+              <div>
+                <div className="mb-2 flex flex-wrap items-center gap-2">
+                  <h2 className="text-2xl font-bold text-slate-950 dark:text-white">DE Desktop Companion</h2>
+                  <Badge variant="secondary">In development</Badge>
+                </div>
+                <p className="max-w-2xl text-sm leading-relaxed text-slate-600 dark:text-slate-300 md:text-base">
+                  A planned system-tray companion for fast portal access, approved notifications, and secure support workflows.
+                  Client-ready installers are not available yet.
+                </p>
+              </div>
             </div>
+            <Button asChild className="shrink-0 bg-[#D3126A] text-white hover:bg-[#b80f5d]">
+              <Link href="/portal/tickets/create">
+                <Ticket className="mr-2 h-4 w-4" />
+                Request pilot access
+              </Link>
+            </Button>
           </div>
-        </div>
+        </section>
 
-        {/* Download Section */}
-        <Card className="border-2 border-[#D3126A]/30">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Download className="h-5 w-5 text-[#D3126A]" />
-              Download Desktop Agent
-            </CardTitle>
-            <CardDescription>Windows 10/11 Compatible</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-3">
-              <Button
-                onClick={handleDownload}
-                className="w-full bg-[#D3126A] hover:bg-[#D3126A]/90 text-white h-12 text-base"
-                data-testid="button-download-agent"
-              >
-                <Download className="h-5 w-5 mr-2" />
-                Download Installer (v1.0.0) - Windows
-              </Button>
-              <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
-                Safe & verified. No malware. HTTPS encrypted download.
-              </p>
-            </div>
-
-            {/* Installation Instructions */}
-            <div className="space-y-3 pt-4 border-t dark:border-slate-700">
-              <h4 className="font-semibold text-sm">Installation Instructions:</h4>
-              <ol className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
-                <li className="flex gap-2">
-                  <span className="font-bold text-[#D3126A]">1.</span>
-                  <span>Click the download button above - a secure token will be generated</span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="font-bold text-[#D3126A]">2.</span>
-                  <span>Run "DigeratiExpertsAgent-Setup.exe" with admin privileges</span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="font-bold text-[#D3126A]">3.</span>
-                  <span>The installer will automatically use your secure authentication token</span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="font-bold text-[#D3126A]">4.</span>
-                  <span>Complete the installation wizard (typical duration: 2-3 minutes)</span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="font-bold text-[#D3126A]">5.</span>
-                  <span>Look for the purple Digerati Experts icon in your notification area (system tray)</span>
-                </li>
-              </ol>
-            </div>
+        <Card className="border-amber-300/70 bg-amber-50/80 dark:border-amber-900/50 dark:bg-amber-950/20">
+          <CardContent className="flex gap-3 pt-6 text-sm text-amber-950 dark:text-amber-100">
+            <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
+            <p>
+              We will not publish an installer until signing, update verification, tenant isolation, consent, audit logging,
+              and rollback gates pass. Digerati Experts will never ask you to bypass an operating-system security warning.
+            </p>
           </CardContent>
         </Card>
 
-        {/* Digerati Agent Features */}
-        <div>
-          <h3 className="text-lg font-bold mb-4">Digerati Expert Agent Features</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {digeratiFeatures.map((feature) => {
-              const Icon = feature.icon;
+        <section aria-labelledby="available-now-heading">
+          <div className="mb-4">
+            <h3 id="available-now-heading" className="text-xl font-bold">Available in your portal now</h3>
+            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+              These workflows work today without installing software on your computer.
+            </p>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {availableActions.map((action) => {
+              const Icon = action.icon;
               return (
-                <Card key={feature.title}>
-                  <CardContent className="pt-6">
-                    <div className="flex gap-3">
-                      <Icon className="h-6 w-6 text-[#D3126A] flex-shrink-0 mt-1" />
-                      <div>
-                        <h4 className="font-semibold mb-1">{feature.title}</h4>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          {feature.description}
-                        </p>
-                      </div>
-                    </div>
+                <Card key={action.title} className="h-full">
+                  <CardContent className="flex h-full flex-col pt-6">
+                    <Icon className="mb-3 h-6 w-6 text-[#D3126A]" aria-hidden="true" />
+                    <h4 className="font-semibold">{action.title}</h4>
+                    <p className="mb-5 mt-1 flex-1 text-sm text-slate-600 dark:text-slate-400">{action.description}</p>
+                    <Button asChild variant="outline" className="w-full sm:w-fit">
+                      <Link href={action.href}>{action.label}</Link>
+                    </Button>
                   </CardContent>
                 </Card>
               );
             })}
           </div>
-        </div>
+        </section>
 
-        {/* System Requirements */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">System Requirements</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {systemRequirements.map((req) => (
-                <div key={req.label}>
-                  <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">{req.label}</p>
-                  <p className="font-semibold">{req.value}</p>
+        <section className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]" aria-label="Desktop companion readiness">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Clock className="h-5 w-5 text-[#D3126A]" /> Platform readiness
+              </CardTitle>
+              <CardDescription>Release status by operating system</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {platformStatus.map((entry) => (
+                <div key={entry.platform} className="rounded-xl border border-slate-200 p-3 dark:border-slate-800">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="font-medium">{entry.platform}</p>
+                    <Badge variant="outline">{entry.status}</Badge>
+                  </div>
+                  <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">{entry.detail}</p>
                 </div>
               ))}
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        {/* Security Notice */}
-        <Card className="bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-900/30">
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2 text-green-900 dark:text-green-100">
-              <Settings className="h-5 w-5" />
-              Secure Installation
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="text-sm text-green-900 dark:text-green-300">
-              <h4 className="font-semibold mb-2">🔐 Security Features:</h4>
-              <ul className="space-y-2">
-                <li className="flex gap-2">
-                  <span>✓</span>
-                  <span>JWT token authentication (24-hour expiration)</span>
-                </li>
-                <li className="flex gap-2">
-                  <span>✓</span>
-                  <span>HTTPS encrypted communication</span>
-                </li>
-                <li className="flex gap-2">
-                  <span>✓</span>
-                  <span>End-to-end encrypted WebSocket chat</span>
-                </li>
-                <li className="flex gap-2">
-                  <span>✓</span>
-                  <span>Rate limiting to prevent abuse</span>
-                </li>
-                <li className="flex gap-2">
-                  <span>✓</span>
-                  <span>Secure credential storage in Windows Credential Manager</span>
-                </li>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Shield className="h-5 w-5 text-[#D3126A]" /> Security release gates
+              </CardTitle>
+              <CardDescription>Required before native device actions reach production</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ul className="grid gap-3 sm:grid-cols-2">
+                {securityGates.map((gate) => (
+                  <li key={gate} className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-300">
+                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#D3126A]" aria-hidden="true" />
+                    <span>{gate}</span>
+                  </li>
+                ))}
               </ul>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </section>
 
-        {/* Settings & Configuration */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <Settings className="h-5 w-5" />
-              After Installation
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Bell className="h-5 w-5 text-[#D3126A]" /> Planned companion scope
             </CardTitle>
+            <CardDescription>A convenience and consent layer—not an unrestricted remote-control tool</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <div>
-              <h4 className="font-semibold text-sm mb-2">Configure Your Preferences:</h4>
-              <ul className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
-                <li className="flex gap-2">
-                  <span>•</span>
-                  <span>Enable desktop notifications for ticket updates</span>
-                </li>
-                <li className="flex gap-2">
-                  <span>•</span>
-                  <span>Set auto-start on Windows startup (stays in system tray)</span>
-                </li>
-                <li className="flex gap-2">
-                  <span>•</span>
-                  <span>Customize notification sounds and privacy settings</span>
-                </li>
-                <li className="flex gap-2">
-                  <span>•</span>
-                  <span>View system status and support queue without opening portal</span>
-                </li>
-              </ul>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Third-Party Agents */}
-        <div>
-          <h3 className="text-lg font-bold mb-4">Additional Agents Available</h3>
-          <p className="text-gray-600 dark:text-gray-400 mb-4">
-            Download and install these recommended agents for device management, endpoint detection, and security monitoring.
-          </p>
-          <div className="space-y-3">
-            {agents.slice(1).map((agent) => (
-              <Card key={agent.name}>
-                <CardContent className="pt-6">
-                  <div className="flex justify-between items-start mb-3">
-                    <div className="flex-1">
-                      <h4 className="font-semibold">{agent.name}</h4>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                        {agent.description}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        v{agent.version}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3 mb-4">
-                    <div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                        Features
-                      </p>
-                      <ul className="text-xs space-y-1">
-                        {agent.features.map((feature) => (
-                          <li key={feature} className="text-gray-700 dark:text-gray-300">
-                            • {feature}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                        Supported OS
-                      </p>
-                      <ul className="text-xs space-y-1">
-                        {agent.supportedOS.map((os) => (
-                          <li key={os} className="text-gray-700 dark:text-gray-300">
-                            • {os}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
-
-                  <Button
-                    asChild
-                    variant="outline"
-                    className="w-full"
-                    data-testid={`button-download-agent-${agent.name}`}
-                  >
-                    <a href={agent.downloadUrl} target="_blank" rel="noopener noreferrer">
-                      <Download className="h-4 w-4 mr-2" />
-                      Download v{agent.version}
-                    </a>
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-
-        {/* Help */}
-        <Card className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-900/30">
-          <CardContent className="pt-6">
-            <div className="space-y-3">
-              <h4 className="font-semibold text-sm">Need Help?</h4>
-              <p className="text-sm text-gray-700 dark:text-gray-300">
-                Having trouble installing or using the desktop agent?
-              </p>
-              <div className="flex gap-2 flex-wrap">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="border-[#D3126A]/30 hover:bg-[#D3126A]/10"
-                  data-testid="button-view-guide"
-                >
-                  View Installation Guide
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="border-[#D3126A]/30 hover:bg-[#D3126A]/10"
-                  data-testid="button-contact-support"
-                >
-                  Contact Support
-                </Button>
-              </div>
-            </div>
+          <CardContent className="grid gap-3 text-sm text-slate-700 dark:text-slate-300 sm:grid-cols-2 lg:grid-cols-3">
+            <p className="rounded-xl bg-slate-50 p-3 dark:bg-slate-900">System-tray shortcuts to DE Desk, tickets, knowledge, files, and account access.</p>
+            <p className="rounded-xl bg-slate-50 p-3 dark:bg-slate-900">Portal notifications with user-controlled privacy and delivery preferences.</p>
+            <p className="rounded-xl bg-slate-50 p-3 dark:bg-slate-900">Approved software and paperwork workflows assigned to the authenticated company.</p>
+            <p className="rounded-xl bg-slate-50 p-3 dark:bg-slate-900">Native dialogs only when a named workflow requires explicit local consent.</p>
+            <p className="rounded-xl bg-slate-50 p-3 dark:bg-slate-900">Local file access limited to a user-selected file or an administratively approved policy.</p>
+            <p className="rounded-xl bg-slate-50 p-3 dark:bg-slate-900">Privileged MSP actions isolated behind a separately reviewed, least-privilege broker.</p>
           </CardContent>
         </Card>
       </div>

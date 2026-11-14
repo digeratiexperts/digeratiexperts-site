@@ -1,5 +1,5 @@
 import React from "react";
-import type { Board, Task } from "@shared/schema";
+import type { Board, Task, UpdateTask } from "@shared/schema";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -26,7 +26,7 @@ export function ListView({ projectId, boards, tasks, searchQuery }: ListViewProp
   const queryClient = useQueryClient();
 
   const updateTaskMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<Task> }) =>
+    mutationFn: ({ id, data }: { id: string; data: UpdateTask }) =>
       api.tasks.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
