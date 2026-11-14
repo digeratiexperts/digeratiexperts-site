@@ -407,6 +407,14 @@ export function setSecurityHeaders(req: Request, res: Response, next: NextFuncti
     p === "/login" ||
     p === "/signup" ||
     p.startsWith("/store/checkout") ||
+    p.startsWith("/store/offerings") ||
+    p === "/store/order" ||
+    p.startsWith("/store/order/") ||
+    p.startsWith("/legal/store-terms-of-sale") ||
+    p.startsWith("/legal/limited-warranty") ||
+    p.startsWith("/legal/return-and-refund") ||
+    p.startsWith("/legal/preinstalled-software") ||
+    p.startsWith("/legal/shipping-delay") ||
     p.startsWith("/store/solution") ||
     p.startsWith("/store/cart") ||
     p.startsWith("/store/order-confirmation") ||

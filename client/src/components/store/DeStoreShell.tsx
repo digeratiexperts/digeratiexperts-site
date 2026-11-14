@@ -49,7 +49,7 @@ export function DeStoreShell({
   return (
     <div className="min-h-screen bg-black text-white">
       <MegaMenu />
-      <main className="mx-auto max-w-6xl px-6 pb-24 pt-16 sm:px-8">{children(status)}</main>
+      <main className="mx-auto max-w-6xl px-6 pb-24 pt-32 sm:px-8 sm:pt-36">{children(status)}</main>
       <DigeratiEnhancedFooterSection />
     </div>
   );
