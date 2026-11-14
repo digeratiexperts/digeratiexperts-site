@@ -422,7 +422,7 @@
         "401": "unsigned, bad signature, or legacy secret",
         "404": "ticket missing, not this account's, or (no account) not an unlinked website-widget ticket",
         "409": "accountId missing or unknown, or a no-account submission that is not the client's",
-        "422": "card_data_rejected: payment card number or CVV in value or label",
+        "422": "card_data_rejected: the value or label holds a payment card number or security code (PCI DSS 3.3.1); nothing stored, use the payment link",
         "503": "encryption key not configured (nothing stored), integration not configured, or tables not pushed"
       },
       "signingSample": {
