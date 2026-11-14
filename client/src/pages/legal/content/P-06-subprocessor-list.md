@@ -14,5 +14,5 @@
 | GitHub, Inc. (Microsoft) | Source code and CI | Code only; no client data by policy | United States | No |
 | Qualys, Inc. | Vulnerability scanning (where in the client's tier) | Asset and vulnerability data | United States **[VERIFY]** | Per client agreement |
 | JumpCloud Inc. | Identity and device management (where in the client's tier) | User directory and device data | United States **[VERIFY]** | Per client agreement |
-| Security stack vendors named in your Order Form (for example Guardz, Blackpoint Cyber, SentinelOne) | Endpoint protection, detection and response, SOC monitoring | Endpoint telemetry, alerts | United States **[VERIFY per vendor]** | Per client agreement and subcontractor BAA |
+| Security stack vendors for the services on your Order Form, including DE's security operations subcontractor for clients who elect the 24/7 Managed Detection and Response add-on (names available on written request under the MSA and DPA) | Endpoint protection, detection and response, 24/7 SOC monitoring (add-on only) | Endpoint telemetry, alerts | United States [VERIFY per vendor] | Per client agreement and subcontractor BAA |
 | {{PASSWORD_VAULT_VENDOR}} | Encrypted storage of client credentials | Credentials | **[VERIFY]** | With BAA if PHI systems |
