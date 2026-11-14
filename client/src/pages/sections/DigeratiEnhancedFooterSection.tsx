@@ -295,6 +295,15 @@ export const DigeratiEnhancedFooterSection = ({
             >
               Security
             </a>
+            <span aria-hidden="true"> · </span>
+            <button
+              type="button"
+              className="transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--de-bg)]"
+              data-testid="footer-cookie-preferences"
+              onClick={() => window.dispatchEvent(new CustomEvent("de-open-cookie-preferences"))}
+            >
+              Cookie preferences
+            </button>
           </p>
         </div>
       </div>

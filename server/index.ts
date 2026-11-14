@@ -46,6 +46,7 @@ import { setupCrossServiceHandlers } from "./crossServiceHandler";
 import { eventBus, EventTypes } from "./eventBus";
 import { revocationLoadState } from "./portalSessionRevocation";
 import { requestTelemetry } from "./requestTelemetry";
+import { GPC_COOKIE, GPC_HEADER, headerSignalsGpc } from "@shared/gpc";
 import { releaseIdentity } from "./releaseIdentity";
 
 process.on('unhandledRejection', (reason, promise) => {
@@ -443,6 +444,14 @@ app.use((_req, res, next) => {
 app.use(express.urlencoded({ extended: false }));
 registerCspReportRoute(app);
 app.use(cookieParser());
+app.use((req, res, next) => {
+  if (headerSignalsGpc(req.get(GPC_HEADER))) {
+    res.cookie(GPC_COOKIE, "1", { sameSite: "lax", path: "/", httpOnly: false });
+  } else if (req.cookies?.[GPC_COOKIE]) {
+    res.clearCookie(GPC_COOKIE, { path: "/" });
+  }
+  next();
+});
 
 registerWarehouseGates(app);
 registerSecureZohoStoreCheckout(app, authMiddleware as any, requireRole as any);

@@ -1,7 +1,8 @@
 import { isPaymentPagePath } from "@shared/paymentPage";
-import { marketingAllowedByConsent, navigatorSignalsGpc } from "@shared/gpc";
+import { clientSignalsGpc, marketingAllowedByConsent } from "@shared/gpc";
 import {
   isPortalContext as portalContextOf,
+  skipClarity as skipClarityFor,
   skipMarketingPixels as skipMarketingPixelsFor,
 } from "@shared/trackingExclusions";
 
@@ -72,9 +73,27 @@ function skipMarketingPixels(): boolean {
   return skipMarketingPixelsFor(window.location.hostname, window.location.pathname);
 }
 
+function deskIsOpen(): boolean {
+  if (typeof window === "undefined") return false;
+  return !!(window as any).__DE_DESK_OPEN__;
+}
+
+function skipClarity(): boolean {
+  if (typeof window === "undefined") return true;
+  return skipClarityFor(window.location.hostname, window.location.pathname, deskIsOpen());
+}
+
+function syncClarityRecording() {
+  try {
+    if (!(window as any).clarity) return;
+    if (skipClarity()) (window as any).clarity("stop");
+    else (window as any).clarity("start");
+  } catch {}
+}
+
 function readGpc(): boolean {
   try {
-    return navigatorSignalsGpc((navigator as any).globalPrivacyControl);
+    return clientSignalsGpc((navigator as any).globalPrivacyControl, document.cookie);
   } catch {
     return false;
   }
@@ -206,6 +225,9 @@ export function saveConsent(config: ConsentConfig) {
   (window as any)[`ga-disable-${GA_ID}`] = skipMarketingPixels() || !config.analytics;
   if (!config.analytics) { lastGaPagePath = undefined; pendingGaEvents = []; }
   if (!config.marketing) lastMarketingPagePath = undefined;
+  if (skipClarity()) {
+    try { if ((window as any).clarity) (window as any).clarity("stop"); } catch {}
+  }
   if (skipMarketingPixels()) return;
   updateGtagConsent(config);
   updateClarityConsent(config);
@@ -248,14 +270,11 @@ export function initAnalytics() {
   updateGtagConsent(consent);
   initGoogleAnalytics(consent);
 
-  // Microsoft Clarity (analytics-gated)
+  // Microsoft Clarity (analytics-gated). Strict masking is set in the Clarity dashboard.
   const clarityId = import.meta.env.VITE_CLARITY_ID;
-  if (clarityId && consent.analytics && !(window as any).__CLARITY_ID__ && !(window as any).__DE_DESK_OPEN__) {
+  if (clarityId && consent.analytics && !skipClarity() && !(window as any).__CLARITY_ID__) {
     const w = window as any;
     w.clarity = w.clarity || function () { (w.clarity.q = w.clarity.q || []).push(arguments); };
-    // Strict masking: all text and inputs are masked.
-    w.clarity("set", "maskAllText", true);
-    w.clarity("set", "maskAllInputs", true);
     (function (c: any, l: any, a: any, r: any, i: any) {
       c[a] = c[a] || function () { (c[a].q = c[a].q || []).push(arguments); };
       const t = l.createElement(r);
@@ -444,6 +463,7 @@ export const analytics = {
   },
 
   pageView(path: string, title: string) {
+    syncClarityRecording();
     if (skipMarketingPixels() || isPortalContext(window.location.hostname, path.split(/[?#]/)[0])) {
       (window as any)[`ga-disable-${GA_ID}`] = true;
       lastGaPagePath = undefined;
@@ -579,14 +599,12 @@ export const analytics = {
 
 
 // DE Desk is a widget on marketing pages. Pause Clarity while it is open so
-// session replay is not captured inside the chat. Marketing pixels are already
-// skipped on portal, checkout, and store paths.
+// session replay is not captured inside the chat. Path checks in skipClarity
+// also cover checkout, store orders, and form pages.
 if (typeof window !== "undefined" && typeof window.addEventListener === "function") {
   window.addEventListener("de-desk-open-change", ((event: Event) => {
     const open = !!(event as CustomEvent<{ open?: boolean }>).detail?.open;
     (window as any).__DE_DESK_OPEN__ = open;
-    try {
-      if (open && (window as any).clarity) (window as any).clarity("stop");
-    } catch {}
+    syncClarityRecording();
   }) as EventListener);
 }
