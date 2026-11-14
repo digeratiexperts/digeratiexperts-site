@@ -75,7 +75,7 @@ const capabilityPreview: {
 }[] = [
   {
     icon: Eye,
-    title: "SOC / MDR Monitoring",
+    title: "Alert Monitoring",
     link: "/solutions/security-operations",
     desc: ALERT_MONITORING_CLAIM,
   },

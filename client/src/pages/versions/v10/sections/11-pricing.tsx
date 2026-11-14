@@ -17,7 +17,7 @@ import { ChapterPattern } from "@/components/site/Atmosphere";
 const highlights: Record<PricingTierKey, string[]> = {
   it: ["Managed IT & help desk", "Baseline identity & endpoint", "Entry cybersecurity"],
   office: ["Everything in IT", "Managed network", "Endpoint backup"],
-  business: ["Identity · endpoint · email", "SOC / MDR", "BCDR · strategy reviews"],
+  business: ["Identity · endpoint · email", "Alert monitoring", "BCDR · strategy reviews"],
   enterprise: ["Advanced governance", "Audit-ready reporting", "Quarterly strategy"],
 };
 

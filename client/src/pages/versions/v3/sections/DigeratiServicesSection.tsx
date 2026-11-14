@@ -75,7 +75,7 @@ const capabilityPreview: {
 }[] = [
   {
     icon: Eye,
-    title: "SOC / MDR Monitoring",
+    title: "Alert Monitoring",
     link: "/solutions/security-operations",
     desc: ALERT_MONITORING_CLAIM,
   },
@@ -113,7 +113,7 @@ const capabilityPreview: {
 
 /** Which node of the environment diagram each capability lives on. */
 const capabilityNode: Record<string, string> = {
-  "SOC / MDR Monitoring": "operations",
+  "Alert Monitoring": "operations",
   "Endpoint Security (EDR)": "devices",
   "SMART Identity (MFA + SSO)": "identity",
   "Privileged Access Controls": "identity",

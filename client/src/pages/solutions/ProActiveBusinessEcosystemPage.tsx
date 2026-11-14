@@ -29,8 +29,6 @@ const config: TierPageConfig = {
   included: [
     "Everything in ProActive Office Ecosystem",
     "DE Security Foundation with " + ALERT_MONITORING_CLAIM_PHRASE,
-    ALERT_MONITORING_CLAIM_PHRASE,
-    "Managed Detection & Response (MDR)",
     "Threat Detection & response across endpoints, identity, and email",
     "Endpoint Backup",
     "Backup & Disaster Recovery (BCDR)",
@@ -50,6 +48,10 @@ const config: TierPageConfig = {
     "Quarterly executive reviews on a strict cadence with vCIO and vCISO involvement — Enterprise",
   ],
   addOnsOrUpgrades: [
+    {
+      label: "24/7 Managed Detection and Response",
+      desc: "24/7 Managed Detection and Response, available as an add-on.",
+    },
     {
       label: "Compliance accelerators",
       desc: "Add framework-specific evidence packages and gap remediation for HIPAA, PCI, SOC 2, or CMMC engagements.",

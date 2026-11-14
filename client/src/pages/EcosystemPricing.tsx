@@ -52,7 +52,7 @@ const serviceCategories: ServiceCategory[] = [
       { capability: "Baseline Threat Protection", essentials: true, office: true, business: true, enterprise: true },
       { capability: "Data Safeguards & Identity Controls", essentials: true, office: true, business: true, enterprise: true },
       { capability: "Email Security & MFA", essentials: "Managed baseline", office: "Advanced protection", business: "Enhanced", enterprise: "Advanced + SSO" },
-      { capability: "Endpoint Detection & Response", essentials: "Managed baseline", office: "EDR + alert monitoring", business: "Enhanced EDR + alert monitoring", enterprise: "Advanced EDR + MDR" },
+      { capability: "Endpoint Detection & Response", essentials: "Managed baseline", office: "EDR + alert monitoring", business: "Enhanced EDR + alert monitoring", enterprise: "Advanced EDR + alert monitoring" },
       { capability: "Security Awareness & Phishing", essentials: "Included baseline", office: "Training + simulations", business: "Enhanced + simulations", enterprise: "Role-based + simulations" },
       { capability: "SaaS App Security Monitoring", essentials: false, office: "Optional", business: true, enterprise: true },
       { capability: "Dark Web Monitoring", essentials: false, office: true, business: true, enterprise: true },

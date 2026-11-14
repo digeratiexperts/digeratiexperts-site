@@ -67,7 +67,7 @@ const PATHS = [
 
 /** The live services section's six capabilities, with their pages. */
 const CAPABILITIES = [
-  { title: "SOC / MDR monitoring", body: ALERT_MONITORING_CLAIM, href: "/solutions/security-operations" },
+  { title: "Alert monitoring", body: ALERT_MONITORING_CLAIM, href: "/solutions/security-operations" },
   { title: "Endpoint security (EDR)", body: "Protect devices across the environment.", href: "/solutions/threat-detection" },
   { title: "SMART Identity (MFA + SSO)", body: "Stronger access without user chaos.", href: "/solutions/unified-security" },
   { title: "Privileged access controls", body: "Admin controls and audit visibility.", href: "/solutions/unified-security" },

@@ -43,6 +43,11 @@ const config: TierPageConfig = {
   ],
   addOnsOrUpgrades: [
     {
+      label: "24/7 Managed Detection and Response",
+      desc: "24/7 Managed Detection and Response, available as an add-on.",
+    },
+
+    {
       label: "Framework certification support",
       desc: "Hands-on evidence collection, gap remediation, and audit support for CMMC, SOC 2, HITRUST, or PCI engagements.",
     },

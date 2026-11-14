@@ -13,7 +13,7 @@ import { ServiceJsonLd, BreadcrumbJsonLd } from "@/components/JsonLd";
 import { pricing } from "@/data/pricing";
 import { CTA } from "@/lib/ctaCopy";
 import { PRIMARY_PHONE } from "@/data/companyContact";
-import { ALERT_MONITORING_CLAIM_PHRASE } from "@shared/publicSecurityClaims";
+import { MDR_ADDON_CLAIM } from "@shared/publicSecurityClaims";
 
 type InclusionStatus = "included" | "limited" | "optional" | "not-included";
 
@@ -71,7 +71,7 @@ const matrixCategories: MatrixCategory[] = [
       { id: "awareness", capability: "Security awareness baseline (guidance + templates)", status: "limited", tooltip: "Baseline training materials; interactive simulations are add-on" },
       { id: "vuln-scan", capability: "Vulnerability scan (external / basic)", status: "limited", tooltip: "Quarterly snapshot; remediation planning included" },
       { id: "ir-readiness", capability: "Incident response readiness (basic plan + contacts)", status: "limited", tooltip: "Basic playbook; full IR retainer is add-on" },
-      { id: "soc", capability: "Advanced monitoring / SOC response", status: "optional", tooltip: ALERT_MONITORING_CLAIM_PHRASE + ", available as an add-on" },
+      { id: "soc", capability: "24/7 Managed Detection and Response", status: "optional", tooltip: MDR_ADDON_CLAIM },
       { id: "compliance", capability: "Compliance frameworks & reporting", status: "optional", tooltip: "HIPAA, SOC 2, CMMC modules available" }
     ]
   },

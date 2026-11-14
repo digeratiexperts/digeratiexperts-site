@@ -1,7 +1,7 @@
 import { Shield, Users, Server, Building2, HeadphonesIcon, FileCheck } from "lucide-react";
 import { motion } from "framer-motion";
 import { pricing } from "@/data/pricing";
-import { ALERT_MONITORING_CLAIM_PHRASE } from "@shared/publicSecurityClaims";
+import { ALERT_MONITORING_CLAIM_PHRASE, MDR_ADDON_CLAIM } from "@shared/publicSecurityClaims";
 
 export default function Ecosystem() {
   const servicePillars = [
@@ -14,7 +14,7 @@ export default function Ecosystem() {
     { 
       name: "DE SECURITY", 
       icon: Shield,
-      desc: "Email Protection · EDR · SOC/MDR · Security Awareness · DLP",
+      desc: "Email Protection · EDR · Alert monitoring · Security Awareness · DLP",
       details: [ALERT_MONITORING_CLAIM_PHRASE, "Endpoint Detection & Response", "Phishing Protection", "Security Logging & Reporting"]
     },
     { 
@@ -53,8 +53,8 @@ export default function Ecosystem() {
     { 
       name: pricing.business.name, 
       price: `$${pricing.business.user}`,
-      desc: "SOC/MDR + SMART HR + vCIO advisory",
-      highlights: ["Everything in Office", "SOC / MDR Monitoring", "SMART HR Workflows", "Security Awareness + vCIO"]
+      desc: "Alert monitoring + SMART HR + vCIO advisory",
+      highlights: ["Everything in Office", "Alert monitoring", "SMART HR Workflows", MDR_ADDON_CLAIM]
     },
     { 
       name: pricing.enterprise.name, 

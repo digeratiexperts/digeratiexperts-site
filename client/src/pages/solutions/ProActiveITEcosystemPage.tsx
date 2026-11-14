@@ -50,6 +50,11 @@ const config: TierPageConfig = {
   ],
   addOnsOrUpgrades: [
     {
+      label: "24/7 Managed Detection and Response",
+      desc: "24/7 Managed Detection and Response, available as an add-on.",
+    },
+
+    {
       label: "Microsoft 365 Backup",
       desc: "Independent backup of Exchange, SharePoint, OneDrive, and Teams data — recommended for any business that lives in M365.",
     },

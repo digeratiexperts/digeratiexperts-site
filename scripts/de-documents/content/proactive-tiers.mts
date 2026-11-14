@@ -19,7 +19,7 @@ export const proactiveOffice: Doc = {
   kicker: "ProActive Ecosystem · Level 2 of 4",
   h1: "ProActive Office",
   subtitle:
-    "Managed IT, workplace operations, secure productivity support, managed network connectivity, endpoint backup and automated security alert monitoring for growing offices.",
+    "Managed IT, workplace operations, secure productivity support, managed network connectivity, endpoint backup and managed endpoint detection (EDR) for growing offices.",
   lede:
     "ProActive Office is built for companies that need Digerati Experts to manage the everyday employee technology environment. It adds workplace operations, productivity platform support, endpoint backup and managed network connectivity over the ProActive IT baseline.",
   aside: {
@@ -61,7 +61,8 @@ export const proactiveOffice: Doc = {
           { cap: "Managed network and connectivity", st: "in", detail: "Office reliability and secure access planning." },
           { cap: "Stronger identity controls", st: "in", detail: "MFA, SSO and password hygiene." },
           { cap: "Advanced email anti-phishing", st: "in", detail: "Stronger protection against phishing and impersonation." },
-          { cap: "Alert monitoring", st: "in", detail: "Part of the DE Security Foundation at this level." },
+          { cap: "Managed endpoint detection (EDR)", st: "in", detail: "Managed EDR with alerting, as part of the DE Security Foundation at this level." },
+          { cap: "24/7 Managed Detection and Response", st: "add", detail: "24/7 Managed Detection and Response, available as an add-on." },
           { cap: "Endpoint backup", st: "in", detail: "For covered endpoints." },
           { cap: "Company spend-card lifecycle controls", st: "add", detail: "Optional, when you want stronger offboarding controls." },
         ],
@@ -133,7 +134,8 @@ export const proactiveBusiness: Doc = {
         t: "scope",
         rows: [
           { cap: "Everything in ProActive Office", st: "in", detail: "Workplace, managed network, endpoint backup and the IT baseline." },
-          { cap: "Alert monitoring", st: "in", detail: "DE Security Foundation with enhanced security operations and threat detection." },
+          { cap: "Alert monitoring", st: "in", detail: "Automated security alert monitoring, with alerts triaged by DE technicians during business hours, on plans that include it." },
+          { cap: "24/7 Managed Detection and Response", st: "add", detail: "24/7 Managed Detection and Response, available as an add-on." },
           { cap: "Backup and disaster recovery posture", st: "in", detail: "Endpoint backup, BCDR and user cloud storage protection." },
           { cap: "Security awareness training", st: "in", detail: "Included for users." },
           { cap: "Compliance and risk reporting support", st: "in", detail: "Practical reporting for leadership visibility." },
@@ -212,7 +214,8 @@ export const proactiveEnterprise: Doc = {
       body: [{
         t: "scope",
         rows: [
-          { cap: "Everything in ProActive Business", st: "in", detail: "Including alert monitoring and backup and DR posture." },
+          { cap: "Everything in ProActive Business", st: "in", detail: "Including automated security alert monitoring, with alerts triaged by DE technicians during business hours, and backup and DR posture." },
+          { cap: "24/7 Managed Detection and Response", st: "add", detail: "24/7 Managed Detection and Response, available as an add-on." },
           { cap: "Unified security posture", st: "in", detail: "Full unified security posture program and reporting." },
           { cap: "Advanced compliance and risk reporting", st: "in", detail: "Audit-grade compliance reporting and security business review cadence." },
           { cap: "Custom BCDR architecture", st: "in", detail: "Advanced or custom backup and BCDR program." },

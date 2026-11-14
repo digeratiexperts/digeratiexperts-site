@@ -68,7 +68,7 @@ const matrixData: Section[] = [
       { name: "Baseline Threat Protection", tiers: { essentials: true, office: true, business: true, enterprise: true } },
       { name: "Data Safeguards & Identity", tiers: { essentials: true, office: true, business: true, enterprise: true } },
       { name: "Email Security & MFA", tiers: { essentials: "Managed baseline", office: "Advanced protection", business: "Enhanced", enterprise: "Advanced + SSO" } },
-      { name: "Endpoint Detection & Response (EDR)", tiers: { essentials: "Managed baseline", office: "EDR + alert monitoring", business: "Enhanced EDR + alert monitoring", enterprise: "Advanced EDR + MDR" } },
+      { name: "Endpoint Detection & Response (EDR)", tiers: { essentials: "Managed baseline", office: "EDR + alert monitoring", business: "Enhanced EDR + alert monitoring", enterprise: "Advanced EDR + alert monitoring" } },
       { name: "Security Awareness & Phishing", tiers: { essentials: "Included baseline", office: "Training + simulations", business: "Enhanced + simulations", enterprise: "Role-based + simulations" } },
       { name: "SaaS App Security Monitoring", tiers: { essentials: false, office: "Optional", business: true, enterprise: true } },
       { name: "Dark Web Monitoring", tiers: { essentials: false, office: true, business: true, enterprise: true } },

@@ -308,7 +308,7 @@ export function MegaMenu() {
           items: [
             { title: 'Endpoint & Email Protection', description: 'Device and mailbox defenses', icon: <Shield className="h-5 w-5" />, url: '/solutions/threat-detection' },
             { title: 'Threat Detection & Response', description: 'Find and contain attacks before damage spreads', icon: <Zap className="h-5 w-5" />, url: '/solutions/threat-detection' },
-            { title: 'Security Operations / SOC', description: 'Human-led monitoring and response', icon: <Lock className="h-5 w-5" />, url: '/solutions/security-operations' },
+            { title: 'Security Operations / SOC', description: 'Business-hours alert triage; 24/7 MDR available as an add-on', icon: <Lock className="h-5 w-5" />, url: '/solutions/security-operations' },
             { title: 'Security Awareness', description: 'Training and phishing simulations for staff', icon: <Users className="h-5 w-5" />, url: '/solutions/security-awareness' },
             { title: 'Data Encryption', description: 'Protect data even if an endpoint is lost', icon: <Shield className="h-5 w-5" />, url: '/solutions/data-encryption' },
             { title: 'Backup & Disaster Recovery', description: 'Continuity, RPO/RTO, failover, and restore testing', icon: <Server className="h-5 w-5" />, url: '/solutions/backup-disaster-recovery' },

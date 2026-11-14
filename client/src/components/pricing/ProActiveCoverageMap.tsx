@@ -20,7 +20,7 @@ export type CoverageHours = "business" | "extended" | "always-on";
 const COVERAGE_HOURS: { id: CoverageHours; label: string; minTier: CoverageTier; desc: string }[] = [
   { id: "business", label: "Business Hours", minTier: "it", desc: "Standard support window" },
   { id: "extended", label: "Extended Hours", minTier: "office", desc: "Early/late coverage, add-on below Business" },
-  { id: "always-on", label: "Alert Monitoring", minTier: "office", desc: "Automated alert monitoring, escalated to DE technicians" },
+  { id: "always-on", label: "Alert Monitoring", minTier: "business", desc: "Automated alert monitoring, triaged by DE technicians during business hours" },
 ];
 
 const CX = 178;

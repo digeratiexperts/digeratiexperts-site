@@ -575,7 +575,7 @@
   },
   "/solutions": {
     "title": "Managed IT & Security Solutions | Digerati Experts",
-    "description": "Comprehensive managed IT and cybersecurity solutions. Network security, endpoint protection, cloud security, and compliance support for Arizona businesses. Automated security alert monitoring, with alerts escalated to DE technicians, on plans that include it.",
+    "description": "Comprehensive managed IT and cybersecurity solutions. Network security, endpoint protection, cloud security, and compliance support for Arizona businesses. Automated security alert monitoring, with alerts triaged by DE technicians during business hours, on plans that include it.",
     "canonical": "/solutions",
     "robots": "index, follow",
     "ogImage": "https://digeratiexperts.com/og-image.png"
@@ -638,7 +638,7 @@
   },
   "/solutions/proactive-business-ecosystem": {
     "title": "ProActive Business Ecosystem | Digerati Experts",
-    "description": "Security-first managed IT for Arizona SMBs. Starts at $245/user/mo with a $5,400/mo minimum. Automated security alert monitoring, with alerts escalated to DE technicians, on plans that include it. Includes Security Awareness Training, full backup and BCDR, compliance/risk reporting, and semi-annual technology + security reviews.",
+    "description": "Security-first managed IT for Arizona SMBs. Starts at $245/user/mo with a $5,400/mo minimum. Automated security alert monitoring, with alerts triaged by DE technicians during business hours, on plans that include it. Includes Security Awareness Training, full backup and BCDR, compliance/risk reporting, and semi-annual technology + security reviews.",
     "canonical": "/solutions/proactive-business-ecosystem",
     "robots": "index, follow",
     "ogImage": "https://digeratiexperts.com/og-image.png"
@@ -694,7 +694,7 @@
   },
   "/solutions/threat-detection": {
     "title": "Threat Detection & Response | Digerati Experts",
-    "description": "Threat Detection & Response is detection + triage + containment + guided recovery. Automated security alert monitoring, with alerts escalated to DE technicians, on plans that include it. When we see something, we investigate, contain (isolate endpoints, reset credentials), and walk you through recovery. Not just alerts—real response.",
+    "description": "Threat Detection & Response is detection + triage + containment + guided recovery. Automated security alert monitoring, with alerts triaged by DE technicians during business hours, on plans that include it. When we see something, we investigate, contain (isolate endpoints, reset credentials), and walk you through recovery. Not just alerts—real response.",
     "canonical": "/solutions/threat-detection",
     "robots": "index, follow",
     "ogImage": "https://digeratiexperts.com/og-image.png"

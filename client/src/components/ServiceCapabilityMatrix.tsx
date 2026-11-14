@@ -1,7 +1,7 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { Check, ChevronRight } from "lucide-react";
 import { Link } from "wouter";
-import { ALERT_MONITORING_CLAIM_PHRASE } from "@shared/publicSecurityClaims";
+import { ALERT_MONITORING_CLAIM_PHRASE, MDR_ADDON_CLAIM } from "@shared/publicSecurityClaims";
 
 type TierValue = string | boolean;
 
@@ -42,7 +42,7 @@ const allCategories: CategoryData[] = [
       { capability: "Baseline Threat Protection", essentials: true, office: true, business: true, enterprise: true },
       { capability: "Data Safeguards & Identity Controls", essentials: true, office: true, business: true, enterprise: true },
       { capability: "Email Security & MFA", essentials: "Managed baseline", office: "Advanced protection", business: "Enhanced", enterprise: "Advanced + SSO" },
-      { capability: "Endpoint Detection & Response", essentials: "Managed baseline", office: "Managed EDR", business: "Enhanced EDR + alert monitoring", enterprise: "Advanced EDR + MDR" },
+      { capability: "Endpoint Detection & Response", essentials: "Managed baseline", office: "Managed EDR", business: "Enhanced EDR + alert monitoring", enterprise: "Advanced EDR + alert monitoring" },
       { capability: "Security Awareness & Phishing", essentials: "Included baseline", office: "Training + simulations", business: "Enhanced + simulations", enterprise: "Role-based + simulations" },
       { capability: "SaaS App Security Monitoring", essentials: false, office: "Optional", business: true, enterprise: true },
       { capability: "Dark Web Monitoring", essentials: false, office: true, business: true, enterprise: true },
@@ -106,6 +106,7 @@ const allCategories: CategoryData[] = [
       { capability: "UCaaS / VoIP Telephony", essentials: "Add-on", office: "Add-on", business: "Add-on", enterprise: "Add-on" },
       { capability: "Extended Retention & Archiving", essentials: "Add-on", office: "Add-on", business: "Add-on", enterprise: "Add-on" },
       { capability: ALERT_MONITORING_CLAIM_PHRASE, essentials: "Add-on", office: "Add-on", business: true, enterprise: true },
+      { capability: MDR_ADDON_CLAIM, essentials: "Add-on", office: "Add-on", business: "Add-on", enterprise: "Add-on" },
     ]
   }
 ];

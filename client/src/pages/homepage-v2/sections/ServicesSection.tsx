@@ -69,7 +69,7 @@ export function ServicesSection(): JSX.Element {
             <a className="link" href="/solutions/proactive-ecosystem">How the ecosystem works</a>
           </div>
           <div className="eco-grid">
-            <a href="/solutions/proactive-business-ecosystem"><img src={objectIcon("eye")} alt="" /><div><h4>Detection &amp; Response <span className="nowrap">(SOC / MDR)</span></h4><p>{ALERT_MONITORING_CLAIM}</p></div></a>
+            <a href="/solutions/proactive-business-ecosystem"><img src={objectIcon("eye")} alt="" /><div><h4>Detection &amp; Response</h4><p>{ALERT_MONITORING_CLAIM}</p></div></a>
             <a href="/solutions/endpoint-management"><img src={objectIcon("laptop")} alt="" /><div><h4>Endpoint Security / EDR-MDR</h4><p>Protect devices across the environment.</p></div></a>
             <a href="/solutions/identity-management"><img src={objectIcon("people")} alt="" /><div><h4>Identity &amp; Access Management</h4><p>Stronger access without user chaos.</p></div></a>
             <a href="/solutions/identity-management"><img src={objectIcon("lock")} alt="" /><div><h4>Privileged access controls</h4><p>Admin controls and audit visibility.</p></div></a>

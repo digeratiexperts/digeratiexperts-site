@@ -11,6 +11,7 @@
 export {
   ALERT_MONITORING_CLAIM,
   ALERT_MONITORING_CLAIM_PHRASE,
+  MDR_ADDON_CLAIM,
 } from "@shared/publicSecurityClaims";
 
 /** Final name for the under-30-user lane. Keep every mention on this constant. */
