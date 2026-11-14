@@ -133,3 +133,30 @@ describe("ticket drafted from the conversation", () => {
     expect(ticketDraftFromChat([welcome])).toBeNull();
   });
 });
+
+describe("Ask DE conversation never keeps card data", () => {
+  let store: MemoryStorage;
+  beforeEach(() => {
+    store = new MemoryStorage();
+    (globalThis as unknown as { window: unknown }).window = { sessionStorage: store };
+  });
+  afterEach(() => {
+    delete (globalThis as unknown as { window?: unknown }).window;
+  });
+
+  it("refuses to write a PAN to sessionStorage and drops one on read", () => {
+    const pan = "4111111111111111";
+    writeDeskChat("s-card", [welcome, user("u-pan", `please charge ${pan}`)], 10);
+    expect(store.getItem(DESK_CHAT_STORAGE_KEY)).toBeNull();
+
+    writeDeskChat("s-ok", [welcome, user("u1", "Outlook is broken"), user("u-pan", `please charge ${pan}`)], 10);
+    const raw = store.getItem(DESK_CHAT_STORAGE_KEY);
+    expect(raw).toBeTruthy();
+    expect(raw).not.toContain(pan);
+    const back = readDeskChat(11);
+    expect(back?.messages.map((m) => m.id)).toEqual(["welcome", "u1"]);
+    const draft = ticketDraftFromChat(back?.messages || []);
+    expect(draft?.message).not.toContain(pan);
+  });
+});
+

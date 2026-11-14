@@ -21,6 +21,17 @@ import { ADDRESS_ERRORS, missingBillingAddress } from "@/lib/billingAddress";
 import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 import type { AddressSuggestion } from "@shared/addressLookup";
 import { SALES_TAX_STATUS_LABEL, checkoutTaxNote, useSalesTaxReadiness } from "@/hooks/useSalesTaxReadiness";
+import { AutoRenewTerms } from "@/components/store/AutoRenewTerms";
+import { loadAutoRenewContractEnabled } from "@/lib/autoRenewCapabilities";
+import {
+  autoRenewConsentRequiredSkus,
+  frequencyFromPricingType,
+  isAutoRenewGatedSku,
+  termMonthsForFrequency,
+  type AutoRenewClientConsent,
+  type AutoRenewCustomerType,
+  type AutoRenewFrequency,
+} from "@shared/autoRenewContract";
 
 import {
   ArrowLeft,
@@ -47,7 +58,7 @@ const billingSchema = z.object({
 
 type BillingFormData = z.infer<typeof billingSchema>;
 
-type PaymentMethod = "zoho" | "quote_request";
+type PaymentMethod = "zoho" | "quote_request" | "subscription";
 
 const Checkout = () => {
   const [, navigate] = useLocation();
@@ -55,7 +66,20 @@ const Checkout = () => {
   const { toast } = useToast();
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("zoho");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [autoRenewEnabled, setAutoRenewEnabled] = useState(false);
+  const [autoRenewConsentChecked, setAutoRenewConsentChecked] = useState(false);
+  const [autoRenewConsent, setAutoRenewConsent] = useState<AutoRenewClientConsent | null>(null);
+  const [customerType, setCustomerType] = useState<AutoRenewCustomerType | "">("");
   const taxReadiness = useSalesTaxReadiness();
+  const autoRenewSkusInCart = autoRenewConsentRequiredSkus(items.map((item) => ({ sku: item.product.sku })));
+  const autoRenewOnlyCart = items.length > 0 && items.every((item) => isAutoRenewGatedSku(item.product.sku));
+  const autoRenewFrequency = autoRenewOnlyCart
+    ? frequencyFromPricingType(items[0]?.product.pricingType || "")
+    : null;
+  const autoRenewPriceCents = items.reduce((sum, item) => {
+    const unit = Number(item.clientPrice ?? item.originalPrice);
+    return sum + Math.round(unit * 100) * item.quantity;
+  }, 0);
 
   useSEO({
     title: "Staff Pay Now | Digital Warehouse",
@@ -107,10 +131,113 @@ const Checkout = () => {
     }
   }, [items.length, navigate]);
 
+  useEffect(() => {
+    const controller = new AbortController();
+    loadAutoRenewContractEnabled(controller.signal).then((enabled) => {
+      if (!controller.signal.aborted) setAutoRenewEnabled(enabled);
+    });
+    return () => controller.abort();
+  }, []);
+
+  useEffect(() => {
+    if (autoRenewSkusInCart.length === 0) return;
+    if (!autoRenewEnabled || !autoRenewOnlyCart) {
+      setPaymentMethod((current) => (current === "zoho" || current === "subscription" ? "quote_request" : current));
+      return;
+    }
+    setPaymentMethod((current) => (current === "zoho" ? "subscription" : current));
+  }, [autoRenewEnabled, autoRenewOnlyCart, autoRenewSkusInCart.join(",")]);
+
   const onSubmit = async (data: BillingFormData) => {
     setIsSubmitting(true);
     try {
       const lineItems = snapshotSubmitLines(snapshot);
+
+      if (paymentMethod === "subscription") {
+        if (!autoRenewConsentChecked || !autoRenewConsent) {
+          toast({
+            title: "Confirm automatic renewal",
+            description: "Review the auto-renewal terms and check the box before starting this subscription. The box is never pre-checked.",
+          });
+          return;
+        }
+        if (customerType !== "business" && customerType !== "consumer") {
+          toast({
+            title: "Choose a customer type",
+            description: "Tell us whether this subscription is for a business or a consumer.",
+          });
+          return;
+        }
+        const customerState = (data.state || "").trim().toUpperCase();
+        if (customerState.length !== 2) {
+          flagMissingAddress(data);
+          toast({
+            title: "Add a billing state",
+            description: "We need the two-letter US state for this subscription.",
+          });
+          return;
+        }
+        const frequency = frequencyFromPricingType(items[0]?.product.pricingType || "") as AutoRenewFrequency | null;
+        if (!frequency) {
+          toast({
+            title: "These items need a quote",
+            description: "We could not determine a single renewal schedule for this cart.",
+          });
+          setPaymentMethod("quote_request");
+          return;
+        }
+        const priceCents = items.reduce((sum, item) => {
+          const unit = Number(item.clientPrice ?? item.originalPrice);
+          return sum + Math.round(unit * 100) * item.quantity;
+        }, 0);
+        const response = await fetch("/api/store/subscriptions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "X-CSRF-Token": "1" },
+          credentials: "include",
+          body: JSON.stringify({
+            portalClientId: undefined,
+            skuIds: items.map((item) => item.product.sku),
+            priceCents,
+            currency: "USD",
+            frequency,
+            termMonths: termMonthsForFrequency(frequency),
+            customerType,
+            customerState,
+            consent: autoRenewConsent,
+            lineItems,
+            billing: {
+              name: data.name,
+              email: data.email,
+              company: data.company,
+              phone: data.phone,
+            },
+          }),
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          if (result.code === "AUTORENEW_CONTRACT_DISABLED") {
+            setPaymentMethod("quote_request");
+            toast({
+              title: "Subscription checkout is not live yet",
+              description: "We switched this order to a quote so recurring billing can be set up correctly.",
+            });
+            return;
+          }
+          toast({
+            title: "Subscription could not be started",
+            description: result.error || "Request a quote and we will finish setup.",
+            variant: "destructive",
+          });
+          return;
+        }
+        clearCart();
+        toast({
+          title: "Subscription started",
+          description: "A confirmation email with the auto-renewal and cancellation terms is on its way.",
+        });
+        navigate("/internal/warehouse");
+        return;
+      }
 
       if (paymentMethod === "zoho") {
         if (flagMissingAddress(data)) return;
@@ -154,6 +281,15 @@ const Checkout = () => {
                 "We kept your email and solution. Request a quote, or sign in as an existing co-managed client. This is not a dead 403.",
             });
             setPaymentMethod("quote_request");
+            return;
+          }
+          if (errorData.code === "AUTORENEW_SUBSCRIPTION_REQUIRED" && errorData.subscriptionRequired) {
+            setPaymentMethod("subscription");
+            toast({
+              title: "These items renew automatically",
+              description:
+                "Confirm the auto-renewal terms to start a subscription instead of charging a one-time payment. Your solution is intact.",
+            });
             return;
           }
           if (errorData.code === "SUBSCRIPTION_BILLING_REQUIRED" && errorData.quoteRequired) {
@@ -476,15 +612,40 @@ const Checkout = () => {
                     onValueChange={(value) => setPaymentMethod(value as PaymentMethod)}
                     className="space-y-3"
                   >
+                    {autoRenewOnlyCart && autoRenewEnabled && (
+                      <label
+                        htmlFor="payment-subscription"
+                        className={`flex items-center gap-4 p-4 rounded-lg border cursor-pointer transition-all ${
+                          paymentMethod === "subscription"
+                            ? "border-de-hairline bg-de-raised"
+                            : "border-white/20 hover:border-white/40"
+                        }`}
+                      >
+                        <RadioGroupItem value="subscription" id="payment-subscription" data-testid="radio-subscription" />
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <CreditCard className="w-5 h-5 text-de-accent-ink" />
+                            <span className="font-medium text-white">Start subscription</span>
+                          </div>
+                          <p className="text-sm text-white/60 mt-1">
+                            These items renew automatically. Confirm the terms below; this is not a one-time Pay Now charge.
+                          </p>
+                        </div>
+                        {paymentMethod === "subscription" && (
+                          <Check className="w-5 h-5 text-de-accent-ink" />
+                        )}
+                      </label>
+                    )}
+
                     <label
                       htmlFor="payment-zoho"
                       className={`flex items-center gap-4 p-4 rounded-lg border cursor-pointer transition-all ${
                         paymentMethod === "zoho"
                           ? "border-de-hairline bg-de-raised"
                           : "border-white/20 hover:border-white/40"
-                      }`}
+                      } ${autoRenewSkusInCart.length > 0 ? "opacity-60" : ""}`}
                     >
-                      <RadioGroupItem value="zoho" id="payment-zoho" data-testid="radio-zoho" />
+                      <RadioGroupItem value="zoho" id="payment-zoho" data-testid="radio-zoho" disabled={autoRenewSkusInCart.length > 0} />
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <CreditCard className="w-5 h-5 text-de-accent-ink" />
@@ -533,6 +694,43 @@ const Checkout = () => {
                       )}
                     </label>
                   </RadioGroup>
+                  {paymentMethod === "subscription" && autoRenewFrequency && (
+                    <div className="mt-6 space-y-4">
+                      <div>
+                        <p className="mb-2 text-sm font-medium text-white">This subscription is for</p>
+                        <RadioGroup
+                          value={customerType}
+                          onValueChange={(value) => setCustomerType(value as AutoRenewCustomerType)}
+                          className="grid gap-3 sm:grid-cols-2"
+                        >
+                          <label htmlFor="customer-business" className="flex items-center gap-3 rounded-lg border border-white/20 p-3 text-sm text-white">
+                            <RadioGroupItem value="business" id="customer-business" data-testid="radio-customer-business" />
+                            A business
+                          </label>
+                          <label htmlFor="customer-consumer" className="flex items-center gap-3 rounded-lg border border-white/20 p-3 text-sm text-white">
+                            <RadioGroupItem value="consumer" id="customer-consumer" data-testid="radio-customer-consumer" />
+                            A consumer
+                          </label>
+                        </RadioGroup>
+                      </div>
+                      <AutoRenewTerms
+                        priceCents={autoRenewPriceCents}
+                        currency="USD"
+                        frequency={autoRenewFrequency}
+                        termMonths={termMonthsForFrequency(autoRenewFrequency)}
+                        checked={autoRenewConsentChecked}
+                        onCheckedChange={(next, consent) => {
+                          setAutoRenewConsentChecked(next);
+                          setAutoRenewConsent(consent);
+                        }}
+                      />
+                    </div>
+                  )}
+                  {autoRenewSkusInCart.length > 0 && !autoRenewEnabled && (
+                    <p className="mt-4 text-sm text-white/70" data-testid="text-autorenew-quote-only">
+                      Phishing simulation and security awareness training renew automatically, so they go through a quote until subscription checkout is turned on.
+                    </p>
+                  )}
                   <p className="mt-4 text-sm text-white/55">
                     Cost and vendor identity stay on this staff path. Door 2 never receives this checkout.
                   </p>
@@ -562,6 +760,11 @@ const Checkout = () => {
                           <>
                             <MessageSquare className="mr-2 h-5 w-5" />
                             Request Quote
+                          </>
+                        ) : paymentMethod === "subscription" ? (
+                          <>
+                            <CreditCard className="mr-2 h-5 w-5" />
+                            Start subscription
                           </>
                         ) : (
                           <>

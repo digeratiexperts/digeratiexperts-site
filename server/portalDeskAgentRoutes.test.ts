@@ -189,4 +189,13 @@ describe("DE Desk agent routes are admin-only", () => {
     expect((await del("/api/portal/desk-chats/s1", ADMIN)).status).toBe(404);
     expect((await post("/api/portal/desk-chats/nope/archive", ADMIN)).status).toBe(404);
   });
+
+  it("rejects a card number in an agent reply with 422 and does not append it", async () => {
+    const pan = "4111111111111111";
+    const res = await post("/api/portal/desk-chats/s1/reply", ADMIN, { content: `the card is ${pan}` });
+    expect(res.status).toBe(422);
+    const body = await res.json();
+    expect(body.code).toBe("card_data_rejected");
+    expect(JSON.stringify(body)).not.toContain(pan);
+  });
 });

@@ -65,7 +65,7 @@ export default function PayInvoice() {
 
   const features = [
     { icon: Download, title: "Download Invoices", desc: "View and download all invoices and receipts in the portal" },
-    { icon: Zap, title: "Auto-Pay Setup", desc: cardCheckout ? "Set up automatic monthly payments where available" : "Automatic card payments are not available until checkout is connected" },
+    { icon: Zap, title: "No Auto-Pay yet", desc: "Invoice payments in the Client Portal are one-time. Automatic Auto-Pay setup is not available yet." },
     { icon: Shield, title: "Secure Payments", desc: cardCheckout ? "Encrypted checkout through the Client Portal" : "Invoices stay in the Client Portal. Card checkout is not connected yet" },
     { icon: CreditCard, title: "Payment History", desc: "Complete transaction records in your account" },
   ];

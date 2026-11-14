@@ -11,6 +11,7 @@ import {
   luhnValid,
   rejectCardData,
 } from "./pciGuard";
+import { isPaymentPagePath } from "./paymentPage";
 
 /**
  * Well-known payment-processor test PANs (Stripe / Braintree / PayPal docs).
@@ -25,8 +26,6 @@ const TEST_AMEX_ALT = "371449635398431";
 const TEST_DISCOVER = "6011111111111117";
 const TEST_VISA_13 = "4222222222222";
 const INVALID_LUHN = "4111111111111112";
-
-const groupedVisa = `${TEST_VISA.slice(0, 4)} ${TEST_VISA.slice(4, 8)} ${TEST_VISA.slice(8, 12)} ${TEST_VISA.slice(12)}`;
 
 describe("luhnValid", () => {
   it("accepts well-known test PANs and rejects a nearby invalid checksum", () => {
@@ -48,21 +47,13 @@ describe("containsPan / looksLikeCardData", () => {
   it.each([
     TEST_VISA,
     `card ${TEST_VISA}`,
-    `here it is: ${groupedVisa}`,
+    `here it is: ${TEST_VISA.slice(0, 4)} ${TEST_VISA.slice(4, 8)} ${TEST_VISA.slice(8, 12)} ${TEST_VISA.slice(12)}`,
     `${TEST_VISA.slice(0, 4)}-${TEST_VISA.slice(4, 8)}-${TEST_VISA.slice(8, 12)}-${TEST_VISA.slice(12)}`,
     TEST_MC,
     `Amex ${TEST_AMEX}`,
     `3782 822463 10005`,
     TEST_DISCOVER,
     `please charge ${TEST_VISA_13}`,
-    `card#${TEST_VISA}exp`,
-    groupedVisa.replace(/ /g, "  "),
-    groupedVisa.replace(/ /g, "."),
-    groupedVisa.replace(/ /g, "/"),
-    groupedVisa.replace(/ /g, "\n"),
-    groupedVisa.replace(/ /g, "\u00A0"),
-    groupedVisa.replace(/ /g, "\u2009"),
-    `${TEST_VISA.slice(0, 4)}\t${TEST_VISA.slice(4, 8)}\t${TEST_VISA.slice(8, 12)}\t${TEST_VISA.slice(12)}`,
   ])("catches a PAN in %s", (line) => {
     expect(containsPan(line)).toBe(true);
     expect(looksLikeCardData(line)).toBe(true);
@@ -87,9 +78,38 @@ describe("containsPan / looksLikeCardData", () => {
     "I forgot my password",
     "",
     "   ",
+    "2026-11-13",
+    "11/13/2026",
+    "12.31.2026",
+    "2026 11 13",
   ])("lets a non-PAN line through: %s", (line) => {
     expect(containsPan(line)).toBe(false);
     expect(looksLikeCardData(line)).toBe(false);
+  });
+
+  it.each([
+    ["dots", `${TEST_VISA.slice(0, 4)}.${TEST_VISA.slice(4, 8)}.${TEST_VISA.slice(8, 12)}.${TEST_VISA.slice(12)}`],
+    ["double spaces", `${TEST_VISA.slice(0, 4)}  ${TEST_VISA.slice(4, 8)}  ${TEST_VISA.slice(8, 12)}  ${TEST_VISA.slice(12)}`],
+    ["non-breaking spaces", `${TEST_VISA.slice(0, 4)} ${TEST_VISA.slice(4, 8)} ${TEST_VISA.slice(8, 12)} ${TEST_VISA.slice(12)}`],
+    ["figure space", `${TEST_VISA.slice(0, 4)} ${TEST_VISA.slice(4)}`],
+    ["narrow no-break spaces", `${TEST_VISA.slice(0, 4)} ${TEST_VISA.slice(4)}`],
+    ["newlines", `${TEST_VISA.slice(0, 4)}
+${TEST_VISA.slice(4, 8)}
+${TEST_VISA.slice(8, 12)}
+${TEST_VISA.slice(12)}`],
+    ["slashes", `${TEST_VISA.slice(0, 4)}/${TEST_VISA.slice(4, 8)}/${TEST_VISA.slice(8, 12)}/${TEST_VISA.slice(12)}`],
+    ["dashes", `${TEST_VISA.slice(0, 4)}-${TEST_VISA.slice(4, 8)}-${TEST_VISA.slice(8, 12)}-${TEST_VISA.slice(12)}`],
+    ["tabs", `${TEST_VISA.slice(0, 4)}\t${TEST_VISA.slice(4, 8)}\t${TEST_VISA.slice(8, 12)}\t${TEST_VISA.slice(12)}`],
+    ["thin spaces", `${TEST_VISA.slice(0, 4)}\u2009${TEST_VISA.slice(4, 8)}\u2009${TEST_VISA.slice(8, 12)}\u2009${TEST_VISA.slice(12)}`],
+  ])("catches a PAN split by %s", (_kind, line) => {
+    expect(containsPan(line)).toBe(true);
+    expect(looksLikeCardData(line)).toBe(true);
+  });
+
+  it("catches a PAN with letters or punctuation touching the digits", () => {
+    expect(containsPan(`card#${TEST_VISA}exp`)).toBe(true);
+    expect(looksLikeCardData(`card#${TEST_VISA}exp`)).toBe(true);
+    expect(containsPan(`visa${TEST_VISA}please`)).toBe(true);
   });
 });
 
@@ -98,11 +118,12 @@ describe("CVV and card expiry", () => {
     "cvv: 123",
     "CVV 123",
     "my cvc is 1234",
-    "my cvv is 123",
-    "CVC: 4567",
     "security code: 456",
     "card verification value 789",
     "cid 1234",
+    "my cvv is 123",
+    "CVC: 4567",
+    "security code 123",
   ])("catches an explicit CVV: %s", (line) => {
     expect(containsCvvOrCardExpiry(line)).toBe(true);
     expect(looksLikeCardData(line)).toBe(true);
@@ -125,6 +146,7 @@ describe("CVV and card expiry", () => {
     "extension 1234",
     "PIN 1234",
     "suite 456",
+    "order 123",
   ])("does not treat ordinary numbers or dates as CVV/expiry: %s", (line) => {
     expect(containsCvvOrCardExpiry(line)).toBe(false);
     expect(looksLikeCardData(line)).toBe(false);
@@ -154,5 +176,35 @@ describe("rejectCardData / assertNoCardData", () => {
       expect(rejected.message).toBe(CARD_DATA_REJECTED_MESSAGE);
       expect(rejected.message).not.toContain(TEST_MC);
     }
+  });
+});
+
+describe("isPaymentPagePath", () => {
+  it.each([
+    "/store/checkout",
+    "/store/checkout/",
+    "/store/checkout?foo=1",
+    "/support/pay-invoice",
+    "/portal/billing",
+    "/portal/invoices/abc-123/pay",
+    "/portal/payment",
+    "/pay",
+  ])("treats %s as a payment page", (path) => {
+    expect(isPaymentPagePath(path)).toBe(true);
+  });
+
+  it.each([
+    "/",
+    "/store",
+    "/store/cart",
+    "/support",
+    "/portal",
+    "/portal/invoices",
+    "/portal/invoices/abc-123",
+    "/portal/billing-contracts",
+    "/portal/tickets",
+    "/login",
+  ])("leaves %s as a normal page", (path) => {
+    expect(isPaymentPagePath(path)).toBe(false);
   });
 });

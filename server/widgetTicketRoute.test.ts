@@ -401,4 +401,13 @@ describe("DE Desk widget ticket route", () => {
     createTicket.mockResolvedValueOnce({ id: "desk-123" });
     expect((await post(validTicket)).body.ticketNumber).toBe("desk-123");
   });
+
+  it("rejects a PAN with 422 and never creates a ticket", async () => {
+    const pan = "4111111111111111";
+    const res = await post({ ...validTicket, description: `please charge ${pan}` });
+    expect(res.status).toBe(422);
+    expect(res.body).toMatchObject({ code: "card_data_rejected" });
+    expect(JSON.stringify(res.body)).not.toContain(pan);
+    expect(createTicket).not.toHaveBeenCalled();
+  });
 });

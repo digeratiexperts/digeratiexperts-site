@@ -4,17 +4,19 @@ import { classifyMode, isPromptInjectionAttempt, namesJoe, wantsPerson } from ".
 import {
   getCanonicalPricingKnowledge,
   selectKnowledgeSlice,
+  buildAdvisorQueryHint,
+  selectPublicPortalKnowledgeSync,
   COMPLIANCE_DISCLAIMER,
   DE_COMPANY,
   listKnownServiceNames,
   inferPageType,
 } from "./knowledge";
 import { extractProfileFromText, mergeProfile, createEmptyProfile, knownFactsList, extractContactNameFromText, extractCompanyNameFromText, isInformalCompanyName, isDeInternalCompanyAnswer, isNotAName } from "./profile";
-import { BANNED_CANNED_OPENER } from "./prompt";
+import { ADVISOR_SYSTEM_PREFIX, BANNED_CANNED_OPENER, buildSystemPrompt, OFF_TOPIC_FALLBACK } from "./prompt";
+import { isTransientModelError, withTransientModelRetry, TRANSIENT_MODEL_BACKOFF_MS } from "./model-retry";
 import { sanitizeActions, sanitizePath, assertNoInternalLeak, isAllowedActionType, ensureLoginAction } from "./actions";
 import { handleAdvisorChat } from "./advisor";
 import { _resetSessionsForTests } from "./session";
-import { OFF_TOPIC_FALLBACK } from "./prompt";
 import { PRIMARY_PHONE } from "@shared/companyContact";
 
 beforeEach(() => {
@@ -543,3 +545,106 @@ describe("asking for a person (Joe transcript 2026-10-07)", () => {
   });
 });
 
+describe("user-turn knowledge retrieval", () => {
+  it("builds a query hint from the current message and the original ask", () => {
+    assert.equal(
+      buildAdvisorQueryHint("how many devices per seat?", "We need managed IT for 12 users"),
+      "how many devices per seat? We need managed IT for 12 users",
+    );
+    assert.equal(buildAdvisorQueryHint("same question", "same question"), "same question");
+  });
+
+  it("ranks public knowledge using the visitor query hint, not only the mode", () => {
+    const devices = selectKnowledgeSlice(
+      "it_support",
+      { pathname: "/", pageType: "other" },
+      "BYOD extra workstation coverage",
+    );
+    assert.match(devices, /de-policy-device-coverage-v1|one primary workstation/i);
+
+    const incident = selectKnowledgeSlice(
+      "it_support",
+      { pathname: "/", pageType: "other" },
+      "ransomware encrypting files on our computers",
+    );
+    assert.match(incident, /de-policy-security-incident-v1|isolate affected systems|containment/i);
+  });
+
+  it("keeps Client Portal knowledge on the public catalog and does not invent entitlements", () => {
+    const slice = selectPublicPortalKnowledgeSync("how do I get support for my Microsoft 365 sign-in?");
+    assert.match(slice, /PUBLIC DE KNOWLEDGE ONLY/i);
+    assert.match(slice, /Never invent this client's licenses/i);
+    assert.doesNotMatch(slice, /de-internal-curation-workflow-v1/);
+    assert.doesNotMatch(slice, /scope=internal/);
+    assert.doesNotMatch(slice, /scope=client/);
+  });
+});
+
+describe("stable-prefix prompt layout", () => {
+  it("keeps static DE rules ahead of session context and retrieved knowledge", () => {
+    const marker = "UNIQUE-KNOWLEDGE-TOKEN-7F3A";
+    const prompt = buildSystemPrompt({
+      mode: "pricing",
+      knowledge: marker,
+      profile: createEmptyProfile(),
+      page: { pathname: "/pricing", pageType: "pricing" },
+      originalIntent: "What does Office cost?",
+      lastUserMessage: "How much for 10 users?",
+    });
+    const prefixEnd = prompt.indexOf("INTERNAL MODE THIS TURN:");
+    const knowledgeAt = prompt.indexOf(marker);
+    const originalAt = prompt.indexOf("What does Office cost?");
+    assert.ok(prompt.startsWith(ADVISOR_SYSTEM_PREFIX));
+    assert.ok(prefixEnd > 0);
+    assert.ok(prompt.indexOf("HARD RULES:") < prefixEnd);
+    assert.ok(originalAt > prefixEnd);
+    assert.ok(knowledgeAt > originalAt);
+    assert.match(prompt, /Digerati Experts/);
+    assert.doesNotMatch(ADVISOR_SYSTEM_PREFIX, /UNIQUE-KNOWLEDGE-TOKEN/);
+  });
+});
+
+describe("transient model retry", () => {
+  it("treats rate limits and timeouts as transient, but not client errors", () => {
+    assert.equal(isTransientModelError({ status: 429, message: "rate limit" }), true);
+    assert.equal(isTransientModelError({ status: 503, message: "overloaded" }), true);
+    assert.equal(isTransientModelError({ code: "ETIMEDOUT", message: "timeout" }), true);
+    assert.equal(isTransientModelError({ status: 400, message: "bad request" }), false);
+    assert.equal(isTransientModelError({ status: 401, message: "unauthorized" }), false);
+  });
+
+  it("retries once after a brief backoff on a transient error, then succeeds", async () => {
+    const slept: number[] = [];
+    let calls = 0;
+    const result = await withTransientModelRetry(
+      async () => {
+        calls += 1;
+        if (calls === 1) {
+          const err = new Error("429 rate limit");
+          (err as any).status = 429;
+          throw err;
+        }
+        return "ok";
+      },
+      { sleep: async (ms) => { slept.push(ms); } },
+    );
+    assert.equal(result, "ok");
+    assert.equal(calls, 2);
+    assert.deepEqual(slept, [TRANSIENT_MODEL_BACKOFF_MS]);
+  });
+
+  it("does not retry a non-transient error", async () => {
+    let calls = 0;
+    await assert.rejects(
+      () =>
+        withTransientModelRetry(async () => {
+          calls += 1;
+          const err = new Error("bad request");
+          (err as any).status = 400;
+          throw err;
+        }, { sleep: async () => { throw new Error("should not sleep"); } }),
+      /bad request/,
+    );
+    assert.equal(calls, 1);
+  });
+});

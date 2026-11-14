@@ -1,0 +1,470 @@
+import express, { type NextFunction, type Request, type Response } from "express";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import {
+  AUTO_RENEW_CANCEL_POLICY_TEXT,
+  AUTO_RENEW_CHECKBOX_LABEL_TEXT,
+  AUTORENEW_TERMS_VERSION,
+  buildAutoRenewTermsText,
+} from "@shared/autoRenewContract";
+import { registerAutoRenewRoutes, subscriptionPlanFromLines, type AutoRenewRouteDeps } from "./autoRenewRoutes";
+import {
+  getAutoRenewEmailDelivery,
+  resetAutoRenewEmailDeliveries,
+  waitForAutoRenewEmailDeliveries,
+} from "./services/autoRenewEmailDelivery";
+import type { HubSubscriptionsClient } from "./integrations/hubSubscriptionsClient";
+import { AUTORENEW_CONTRACT_ENV } from "./config/autoRenewContract";
+
+const originalFlag = process.env[AUTORENEW_CONTRACT_ENV];
+
+afterEach(() => {
+  if (originalFlag === undefined) delete process.env[AUTORENEW_CONTRACT_ENV];
+  else process.env[AUTORENEW_CONTRACT_ENV] = originalFlag;
+  resetAutoRenewEmailDeliveries();
+});
+
+const consent = {
+  autoRenewConsentAt: new Date().toISOString(),
+  termsVersion: AUTORENEW_TERMS_VERSION,
+  termsTextSnapshot: buildAutoRenewTermsText({
+    priceCents: 19900,
+    currency: "USD",
+    frequency: "month",
+    termMonths: 1,
+  }),
+  cancelPolicyText: AUTO_RENEW_CANCEL_POLICY_TEXT,
+  checkboxLabelText: AUTO_RENEW_CHECKBOX_LABEL_TEXT,
+  pageUrl: "https://digeratiexperts.com/internal/warehouse/checkout",
+};
+
+const phishingLine = {
+  productId: "prod-073",
+  sku: "DE-DIG-ASMT-PHISH-MO",
+  quantity: 1,
+};
+
+function authAs(
+  user: { id: string; email: string; fullName?: string; role?: string; storeRole?: string; clientId?: string | null },
+) {
+  return (req: Request, _res: Response, next: NextFunction) => {
+    (req as any).userId = user.id;
+    (req as any).user = user;
+    next();
+  };
+}
+
+const allowRole = () => (req: Request, _res: Response, next: NextFunction) => next();
+
+function mockHub(overrides: Partial<HubSubscriptionsClient> = {}): HubSubscriptionsClient {
+  return {
+    create: vi.fn(async () => ({
+      ok: true as const,
+      status: 201,
+      data: {
+        subscriptionId: "sub_1",
+        status: "pending" as const,
+        renewsAt: "2026-12-13T00:00:00.000Z",
+        confirmation: { id: "cnf_1", url: "https://hub.example/c/1", termsVersion: AUTORENEW_TERMS_VERSION },
+      },
+    })),
+    list: vi.fn(async () => ({
+      ok: true as const,
+      status: 200,
+      data: {
+        subscriptions: [
+          {
+            subscriptionId: "sub_1",
+            status: "active" as const,
+            plan: "Phishing Simulation Starter",
+            termsVersion: AUTORENEW_TERMS_VERSION,
+            renewsAt: "2026-12-13T00:00:00.000Z",
+            terms: buildAutoRenewTermsText({
+              priceCents: 19900,
+              currency: "USD",
+              frequency: "month",
+              termMonths: 1,
+            }),
+          },
+        ],
+      },
+    })),
+    cancel: vi.fn(async () => ({
+      ok: true as const,
+      status: 200,
+      data: {
+        subscriptionId: "sub_1",
+        status: "cancelled" as const,
+        cancelledAt: "2026-11-13T17:00:00.000Z",
+        cancelEffectiveAt: "2026-12-13T00:00:00.000Z",
+        accessThrough: "2026-12-13T00:00:00.000Z",
+        confirmation: { id: "cnf_c", url: "https://hub.example/c/c" },
+      },
+    })),
+    ...overrides,
+  };
+}
+
+function appWith(options?: {
+  enabled?: boolean;
+  user?: Parameters<typeof authAs>[0];
+  hub?: HubSubscriptionsClient;
+  send?: AutoRenewRouteDeps["sendSubscriptionConfirmation"];
+}) {
+  const hub = options?.hub || mockHub();
+  const send = options?.send || vi.fn(async () => true);
+  const app = express();
+  app.use(express.json());
+  const user = options?.user || {
+    id: "user-1",
+    email: "alex@example.com",
+    fullName: "Alex Rivera",
+    role: "admin",
+    storeRole: "admin",
+    clientId: "client-1",
+  };
+  registerAutoRenewRoutes(app, authAs(user), allowRole as any, {
+    isEnabled: () => options?.enabled ?? true,
+    getClient: (id) =>
+      id === "client-1" ? { id: "client-1", companyName: "Example Co", contactEmail: "alex@example.com", hubAccountId: "41" } : undefined,
+    hub,
+    sendSubscriptionConfirmation: send,
+    resolvePricing: async () => ({}),
+  });
+  return { app, hub, send };
+}
+
+async function invoke(
+  app: express.Express,
+  method: string,
+  path: string,
+  body?: unknown,
+  headers: Record<string, string> = {},
+  options: { csrfHeader?: boolean } = {},
+) {
+  const server = app.listen(0);
+  const address = server.address();
+  if (!address || typeof address === "string") throw new Error("no port");
+  const requestHeaders: Record<string, string> = { "Content-Type": "application/json", ...headers };
+  const isUnsafe = !["GET", "HEAD", "OPTIONS"].includes(method.toUpperCase());
+  if (isUnsafe && options.csrfHeader !== false && !("X-CSRF-Token" in requestHeaders) && !("x-csrf-token" in requestHeaders)) {
+    requestHeaders["X-CSRF-Token"] = "1";
+  }
+  try {
+    const res = await fetch(`http://127.0.0.1:${address.port}${path}`, {
+      method,
+      headers: requestHeaders,
+      body: body === undefined ? undefined : JSON.stringify(body),
+    });
+    const json = await res.json().catch(() => null);
+    return { status: res.status, json };
+  } finally {
+    await new Promise<void>((resolve, reject) => server.close((err) => (err ? reject(err) : resolve())));
+  }
+}
+
+describe("auto-renew routes", () => {
+  it("exposes the flag as disabled by default on the public capabilities endpoint", async () => {
+    delete process.env[AUTORENEW_CONTRACT_ENV];
+    const { app } = appWith({ enabled: false });
+    const res = await invoke(app, "GET", "/api/public/capabilities");
+    expect(res.status).toBe(200);
+    expect(res.json).toEqual({ autoRenewContractEnabled: false });
+  });
+
+  it("returns 404 and does not call the Hub when the flag is disabled", async () => {
+    const { app, hub } = appWith({ enabled: false });
+    const create = await invoke(app, "POST", "/api/store/subscriptions", {
+      portalClientId: "client-1",
+      skuIds: ["DE-DIG-ASMT-PHISH-MO"],
+      priceCents: 19900,
+      currency: "USD",
+      frequency: "month",
+      termMonths: 1,
+      customerType: "business",
+      customerState: "AZ",
+      consent,
+      lineItems: [phishingLine],
+    });
+    expect(create.status).toBe(404);
+    expect(create.json.code).toBe("AUTORENEW_CONTRACT_DISABLED");
+    expect(hub.create).not.toHaveBeenCalled();
+
+    const listed = await invoke(app, "GET", "/api/portal/subscriptions");
+    expect(listed.status).toBe(200);
+    expect(listed.json).toEqual({ autoRenewContractEnabled: false, subscriptions: [] });
+    expect(hub.list).not.toHaveBeenCalled();
+
+    const cancelled = await invoke(app, "POST", "/api/portal/subscriptions/sub_1/cancel", { requestedAt: new Date().toISOString() });
+    expect(cancelled.status).toBe(404);
+    expect(hub.cancel).not.toHaveBeenCalled();
+  });
+
+  it("rejects a create with missing consent fields and does not call the Hub", async () => {
+    const { app, hub } = appWith({ enabled: true });
+    const res = await invoke(app, "POST", "/api/store/subscriptions", {
+      portalClientId: "client-1",
+      skuIds: ["DE-DIG-ASMT-PHISH-MO"],
+      priceCents: 19900,
+      currency: "USD",
+      frequency: "month",
+      termMonths: 1,
+      customerType: "business",
+      customerState: "AZ",
+      lineItems: [phishingLine],
+    });
+    expect(res.status).toBe(400);
+    expect(res.json.code).toBe("AUTORENEW_CONSENT_INVALID");
+    expect(hub.create).not.toHaveBeenCalled();
+
+    const incomplete = await invoke(app, "POST", "/api/store/subscriptions", {
+      portalClientId: "client-1",
+      skuIds: ["DE-DIG-ASMT-PHISH-MO"],
+      priceCents: 19900,
+      currency: "USD",
+      frequency: "month",
+      termMonths: 1,
+      customerType: "business",
+      customerState: "AZ",
+      consent: { ...consent, termsTextSnapshot: "no price or cancel method here" },
+      lineItems: [phishingLine],
+    });
+    expect(incomplete.status).toBe(400);
+    expect(incomplete.json.fields).toContain("termsTextSnapshot");
+    expect(hub.create).not.toHaveBeenCalled();
+  });
+
+  it("creates a Hub subscription with server-attached ip and userAgent, never a browser accountId", async () => {
+    const { app, hub, send } = appWith({ enabled: true });
+    const res = await invoke(
+      app,
+      "POST",
+      "/api/store/subscriptions",
+      {
+        portalClientId: "client-1",
+        skuIds: ["DE-DIG-ASMT-PHISH-MO"],
+        priceCents: 19900,
+        currency: "USD",
+        frequency: "month",
+        termMonths: 1,
+        customerType: "business",
+        customerState: "AZ",
+        consent,
+        lineItems: [phishingLine],
+        billing: { name: "Alex Rivera", email: "alex@example.com" },
+      },
+      { "Idempotency-Key": "idem-create-1", "User-Agent": "CheckoutTest/1.0" },
+    );
+    expect(res.status).toBe(201);
+    expect(res.json.subscriptionId).toBe("sub_1");
+    expect(hub.create).toHaveBeenCalledTimes(1);
+    const [body, key] = (hub.create as any).mock.calls[0];
+    expect(key).toBe("idem-create-1");
+    expect(body.accountId).toBeUndefined();
+    expect(body.portalClientId).toBe("client-1");
+    expect(body.consent.ip).toBeTruthy();
+    expect(body.consent.userAgent).toBe("CheckoutTest/1.0");
+    expect(body.consent.termsTextSnapshot).toContain("$199.00");
+    await waitForAutoRenewEmailDeliveries();
+    expect(send).toHaveBeenCalledTimes(1);
+    expect((send as any).mock.calls[0][0].termsText).toContain("Cancellation:");
+    expect(getAutoRenewEmailDelivery("sub_1")).toMatchObject({
+      status: "sent",
+      attempts: 1,
+      lastError: null,
+      to: "alex@example.com",
+    });
+  });
+
+  it("lists Hub subscriptions and cancels with one request when the flag is on", async () => {
+    const { app, hub } = appWith({ enabled: true });
+    const listed = await invoke(app, "GET", "/api/portal/subscriptions");
+    expect(listed.status).toBe(200);
+    expect(listed.json.autoRenewContractEnabled).toBe(true);
+    expect(listed.json.subscriptions[0].subscriptionId).toBe("sub_1");
+    expect(hub.list).toHaveBeenCalledWith("41");
+
+    const cancelled = await invoke(app, "POST", "/api/portal/subscriptions/sub_1/cancel", {
+      requestedAt: "2026-11-13T17:00:00.000Z",
+    });
+    expect(cancelled.status).toBe(200);
+    expect(cancelled.json.status).toBe("cancelled");
+    expect(hub.cancel).toHaveBeenCalledTimes(1);
+    const [id, body] = (hub.cancel as any).mock.calls[0];
+    expect(id).toBe("sub_1");
+    expect(body.portalClientId).toBe("client-1");
+    expect(body.portalUserId).toBe("user-1");
+    expect(body.requestedAt).not.toBe("2026-11-13T17:00:00.000Z");
+    expect(Math.abs(Date.now() - Date.parse(body.requestedAt))).toBeLessThan(10_000);
+  });
+});
+
+describe("subscriptionPlanFromLines", () => {
+  it("accepts a single gated SKU and rejects mixed carts", () => {
+    const ok = subscriptionPlanFromLines([
+      {
+        productId: "prod-073",
+        sku: "DE-DIG-ASMT-PHISH-MO",
+        name: "Phishing Simulation Starter",
+        quantity: 1,
+        unitPrice: 199,
+        pricingType: "monthly",
+        total: 199,
+      },
+    ]);
+    expect(ok).toEqual({
+      skuIds: ["DE-DIG-ASMT-PHISH-MO"],
+      priceCents: 19900,
+      frequency: "month",
+      termMonths: 1,
+    });
+
+    const mixed = subscriptionPlanFromLines([
+      {
+        productId: "prod-073",
+        sku: "DE-DIG-ASMT-PHISH-MO",
+        name: "Phishing Simulation Starter",
+        quantity: 1,
+        unitPrice: 199,
+        pricingType: "monthly",
+        total: 199,
+      },
+      {
+        productId: "prod-070",
+        sku: "DE-DIG-ASMT-QUICK-OT",
+        name: "Quick Assessment",
+        quantity: 1,
+        unitPrice: 249,
+        pricingType: "one_time",
+        total: 249,
+      },
+    ]);
+    expect("error" in mixed).toBe(true);
+  });
+
+  it("rejects cross-site or cross-origin POST requests with 403 CSRF_FORBIDDEN", async () => {
+    const { app, hub } = appWith({ enabled: true });
+    const crossSite = await invoke(
+      app,
+      "POST",
+      "/api/portal/subscriptions/sub_1/cancel",
+      { requestedAt: new Date().toISOString() },
+      { "Sec-Fetch-Site": "cross-site" },
+    );
+    expect(crossSite.status).toBe(403);
+    expect(crossSite.json.code).toBe("CSRF_FORBIDDEN");
+
+    const crossOrigin = await invoke(
+      app,
+      "POST",
+      "/api/store/subscriptions",
+      {
+        portalClientId: "client-1",
+        skuIds: ["DE-DIG-ASMT-PHISH-MO"],
+        priceCents: 19900,
+        currency: "USD",
+        frequency: "month",
+        termMonths: 1,
+        customerType: "business",
+        customerState: "AZ",
+        consent,
+        lineItems: [phishingLine],
+      },
+      { Origin: "https://evil.example" },
+    );
+    expect(crossOrigin.status).toBe(403);
+    expect(crossOrigin.json.code).toBe("CSRF_FORBIDDEN");
+    expect(hub.create).not.toHaveBeenCalled();
+    expect(hub.cancel).not.toHaveBeenCalled();
+  });
+
+  it("rejects state-changing requests that omit the CSRF header", async () => {
+    const { app, hub } = appWith({ enabled: true });
+    const missing = await invoke(
+      app,
+      "POST",
+      "/api/portal/subscriptions/sub_1/cancel",
+      { requestedAt: new Date().toISOString() },
+      {},
+      { csrfHeader: false },
+    );
+    expect(missing.status).toBe(403);
+    expect(missing.json.code).toBe("CSRF_FORBIDDEN");
+    expect(hub.cancel).not.toHaveBeenCalled();
+  });
+
+  it("allows a same-origin POST when the CSRF header is present", async () => {
+    const { app, hub } = appWith({ enabled: true });
+    const cancelled = await invoke(app, "POST", "/api/portal/subscriptions/sub_1/cancel", {
+      requestedAt: "2026-11-13T17:00:00.000Z",
+    });
+    expect(cancelled.status).toBe(200);
+    expect(cancelled.json.status).toBe("cancelled");
+    expect(hub.cancel).toHaveBeenCalledTimes(1);
+  });
+
+  it("treats the first X-Forwarded-Host value as a same-origin host", async () => {
+    const { app, hub } = appWith({ enabled: true });
+    const cancelled = await invoke(
+      app,
+      "POST",
+      "/api/portal/subscriptions/sub_1/cancel",
+      { requestedAt: "2026-11-13T17:00:00.000Z" },
+      {
+        Origin: "https://digeratiexperts.com",
+        "X-Forwarded-Host": "digeratiexperts.com, 127.0.0.1:1",
+      },
+    );
+    expect(cancelled.status).toBe(200);
+    expect(cancelled.json.status).toBe("cancelled");
+    expect(hub.cancel).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("server-assigned consent and cancel metadata", () => {
+  it("sets consent IP from req.ip and ignores client X-Forwarded-For and timestamps", async () => {
+    const { app, hub } = appWith({ enabled: true });
+    const clientStamp = "2020-01-02T03:04:05.000Z";
+    const res = await invoke(
+      app,
+      "POST",
+      "/api/store/subscriptions",
+      {
+        portalClientId: "client-1",
+        skuIds: ["DE-DIG-ASMT-PHISH-MO"],
+        priceCents: 19900,
+        currency: "USD",
+        frequency: "month",
+        termMonths: 1,
+        customerType: "business",
+        customerState: "AZ",
+        consent: { ...consent, autoRenewConsentAt: clientStamp },
+        lineItems: [phishingLine],
+        billing: { name: "Alex Rivera", email: "alex@example.com" },
+        ip: "203.0.113.9",
+      },
+      { "X-Forwarded-For": "203.0.113.9" },
+    );
+    expect(res.status).toBe(201);
+    const body = (hub.create as any).mock.calls[0][0];
+    expect(body.consent.autoRenewConsentAt).not.toBe(clientStamp);
+    const stamped = Date.parse(body.consent.autoRenewConsentAt);
+    expect(Number.isFinite(stamped)).toBe(true);
+    expect(Math.abs(Date.now() - stamped)).toBeLessThan(10_000);
+    expect(body.consent.ip).toMatch(/^(::ffff:)?127\.0\.0\.1$|^::1$/);
+    expect(body.consent.ip).not.toBe("203.0.113.9");
+  });
+
+  it("sets cancel requestedAt on the server and ignores the client value", async () => {
+    const { app, hub } = appWith({ enabled: true });
+    const clientStamp = "2020-01-02T03:04:05.000Z";
+    const cancelled = await invoke(app, "POST", "/api/portal/subscriptions/sub_1/cancel", {
+      requestedAt: clientStamp,
+    });
+    expect(cancelled.status).toBe(200);
+    const [, body] = (hub.cancel as any).mock.calls[0];
+    expect(body.requestedAt).not.toBe(clientStamp);
+    const stamped = Date.parse(body.requestedAt);
+    expect(Number.isFinite(stamped)).toBe(true);
+    expect(Math.abs(Date.now() - stamped)).toBeLessThan(10_000);
+  });
+});

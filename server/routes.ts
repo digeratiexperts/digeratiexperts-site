@@ -1,4 +1,5 @@
 import { portalCompanyProfile } from "./portalCompanyProfile";
+import { secondFactorFor, usesEnrollmentFallback } from "./portalClientMfaPolicy";
 import express, { type Express, type Request, type Response, NextFunction } from "express";
 import { storage } from "./storage";
 import {
@@ -66,6 +67,7 @@ import {
 import { verifyTurnstile } from "./middleware/security";
 import { registerSituationMatchRoutes } from "./situationMatchRoutes";
 import { claimProfileDraft, isPlausibleClaimToken } from "./integrations/hubProfileDraft";
+import { csrfOriginGuard, defaultAutoRenewRouteDeps, registerAutoRenewRoutes } from "./autoRenewRoutes";
 import { eventBus, EventTypes } from "./eventBus";
 import { notificationService, sendEmail } from "./services/notificationService";
 import { logger } from "./logger";
@@ -90,6 +92,7 @@ import {
   ensureInternalMspClient,
 } from "./portalAuthStore";
 import { annotateTicketOrg, resolveTicketCreateTarget } from "./portalTicketCreate";
+import { sendCardDataRejected, sendCardDataRejectedError } from "./pciGuard";
 import {
   initPortalChatStore,
   conversationIdForUser,
@@ -926,7 +929,8 @@ export async function registerRoutes(app: Express) {
       if (!title || !description) {
         return res.status(400).json({ error: "Title and description required" });
       }
-      
+      if (sendCardDataRejected(res, title, description)) return;
+
       const { classifyTicket } = await import("./openaiService");
       const classification = await classifyTicket(title, description);
       
@@ -950,7 +954,11 @@ export async function registerRoutes(app: Express) {
       if (!message) {
         return res.status(400).json({ error: "Message required" });
       }
-      
+      const historyText = Array.isArray(conversationHistory)
+        ? conversationHistory.map((m: { content?: unknown }) => String(m?.content ?? "")).join("\n")
+        : "";
+      if (sendCardDataRejected(res, message, historyText)) return;
+
       const { generateChatResponse } = await import("./openaiService");
       const aiResponse = await generateChatResponse(message, conversationHistory);
       
@@ -1007,6 +1015,7 @@ export async function registerRoutes(app: Express) {
       if (!content || typeof content !== "string" || !content.trim()) {
         return res.status(400).json({ error: "Message content required" });
       }
+      if (sendCardDataRejected(res, content)) return;
 
       const conversationId = conversationIdForUser(req.userId);
       await ensureWelcomeMessage(conversationId, req.userId);
@@ -2123,6 +2132,7 @@ export async function registerRoutes(app: Express) {
       if (!subject || !description) {
         return res.status(400).json({ error: "Subject and description are required" });
       }
+      if (sendCardDataRejected(res, subject, description)) return;
 
       const userId = req.userId || "";
       const userEmail = req.user?.email || "";
@@ -2465,6 +2475,7 @@ export async function registerRoutes(app: Express) {
       if (!content) {
         return res.status(400).json({ error: "Content is required" });
       }
+      if (sendCardDataRejected(res, content)) return;
 
       const hubOnlyId = parseHubPortalTicketId(id);
       if (hubOnlyId != null) {
@@ -3300,13 +3311,15 @@ export async function registerRoutes(app: Express) {
         });
       }
 
-      // Check if user has MFA enabled
-      if (user.mfaEnabled && user.mfaMethod) {
+      // Enrolled users get their own method. With PORTAL_CLIENT_MFA_REQUIRED
+      // on, a client who has not enrolled gets an email code instead.
+      const mfaMethod = secondFactorFor(user);
+      if (mfaMethod) {
         const challengeToken = randomId();
         const TEN_MINUTES = 10 * 60 * 1000;
         const now = Date.now();
 
-        if (user.mfaMethod === 'email') {
+        if (mfaMethod === 'email') {
           const code = String(randomInt(100000, 1000000));
           mfaChallenges.set(challengeToken, {
             userId: user.id,
@@ -3326,7 +3339,7 @@ export async function registerRoutes(app: Express) {
           mfaChallenges.set(challengeToken, {
             userId: user.id,
             email: user.email,
-            method: user.mfaMethod === 'passkey' ? 'passkey' : 'totp',
+            method: mfaMethod === 'passkey' ? 'passkey' : 'totp',
             createdAt: now,
             expiresAt: now + TEN_MINUTES,
             attempts: 0,
@@ -3334,17 +3347,17 @@ export async function registerRoutes(app: Express) {
         }
 
         const passkeyAvailable = (user.mfaPasskeys || []).some((p) => p.rpId === resolveRpId(req.hostname));
-        logSecurityEvent("MFA_CHALLENGE_ISSUED", req, { email, method: user.mfaMethod });
+        logSecurityEvent("MFA_CHALLENGE_ISSUED", req, { email, method: mfaMethod, enrollmentFallback: usesEnrollmentFallback(user) });
 
         return res.json({
           success: false,
           mfaRequired: true,
-          mfaMethod: user.mfaMethod,
+          mfaMethod: mfaMethod,
           mfaToken: challengeToken,
           passkeyAvailable,
-          message: user.mfaMethod === 'email'
+          message: mfaMethod === 'email'
             ? "A verification code has been sent to your email."
-            : user.mfaMethod === 'passkey'
+            : mfaMethod === 'passkey'
               ? "Confirm it's you with your passkey, or enter a backup code."
               : "Enter the code from your authenticator app.",
         });
@@ -3977,10 +3990,12 @@ export async function registerRoutes(app: Express) {
       const { zohoClient } = await import("./zoho/zohoClient");
       
       if (!zohoClient.isConfigured()) {
+        const { isAutoRenewContractEnabled } = await import("./config/autoRenewContract");
         return res.json({
           subscription: null,
           invoices: [],
           zohoConnected: false,
+          autoRenewContractEnabled: isAutoRenewContractEnabled(),
           message: "Billing integration not configured",
         });
       }
@@ -4025,10 +4040,12 @@ export async function registerRoutes(app: Express) {
         zohoLink: `https://billing.zoho.com/app#/invoices/${inv.invoice_id}`,
       }));
       
+      const { isAutoRenewContractEnabled } = await import("./config/autoRenewContract");
       res.json({
         subscription: subscriptionWithLink,
         invoices: invoicesWithLinks,
         zohoConnected,
+        autoRenewContractEnabled: isAutoRenewContractEnabled(),
         message: !zohoConnected ? "Your billing account is being set up" : undefined,
       });
     } catch (error: any) {
@@ -5239,6 +5256,7 @@ export async function registerRoutes(app: Express) {
       if (!message || typeof message !== "string") {
         return res.status(400).json({ error: "message is required" });
       }
+      if (sendCardDataRejected(res, message)) return;
       const result = await handleAdvisorChat({
         sessionId: typeof sessionId === "string" ? sessionId : undefined,
         message,
@@ -5259,6 +5277,7 @@ export async function registerRoutes(app: Express) {
       });
       res.json(result);
     } catch (error: any) {
+      if (sendCardDataRejectedError(res, error)) return;
       const status = error?.status || 500;
       console.error("[msp-advisor] chat failed:", error?.message || error);
       res.status(status).json({ error: error?.message || "Advisor unavailable" });
@@ -5270,10 +5289,9 @@ export async function registerRoutes(app: Express) {
 
   app.get("/api/public/advisor/session/:id", [advisorPollRateLimiter], async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { getSession, publicSessionView } = await import("./services/msp-advisor");
-      const session = getSession(req.params.id);
-      if (!session) return res.status(404).json({ error: "Session not found" });
-      res.json(publicSessionView(session));
+      const { getPublicSessionResponse } = await import("./services/msp-advisor");
+      const result = getPublicSessionResponse(req.params.id);
+      return res.status(result.status).json(result.body);
     } catch (error: any) {
       res.status(500).json({ error: "Failed to load session" });
     }
@@ -5351,6 +5369,7 @@ export async function registerRoutes(app: Express) {
       const phone = String(payload?.phone || session.profile.phone || "").trim();
       const company = String(payload?.company || session.profile.companyName || "").trim();
       const visitorMessage = String(payload?.message || "").trim();
+      if (sendCardDataRejected(res, visitorMessage, name, company)) return;
 
       if (email) {
         try {
@@ -6298,6 +6317,7 @@ export async function registerRoutes(app: Express) {
       if (!subject || !description) {
         return res.status(400).json({ error: "Subject and description required" });
       }
+      if (sendCardDataRejected(res, subject, description)) return;
 
       // Check for existing contact or create one if needed
       let contactId: string | undefined;
@@ -6677,5 +6697,11 @@ export async function registerRoutes(app: Express) {
     });
   });
 
+  registerAutoRenewRoutes(app, authMiddleware as any, requireRole as any, {
+    ...defaultAutoRenewRouteDeps,
+    storeGuards: [csrfOriginGuard, paymentRateLimiter as any, authMiddleware as any, requireRole("comanaged", "admin") as any],
+    portalGuards: [authMiddleware as any],
+    portalCancelGuards: [csrfOriginGuard, authMiddleware as any],
+  });
   return app;
 }

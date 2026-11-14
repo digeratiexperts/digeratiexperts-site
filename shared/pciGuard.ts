@@ -43,7 +43,7 @@ export function luhnValid(digits: string): boolean {
   return sum % 10 === 0;
 }
 
-/** ASCII and Unicode space, dash, slash and dot characters used to split a PAN. */
+/** ASCII and Unicode space, dash, slash, backslash and dot characters used to split a PAN. */
 function isPanSeparator(ch: string): boolean {
   if (ch === "." || ch === "/" || ch === "\\") return true;
   const c = ch.charCodeAt(0);
@@ -69,8 +69,8 @@ function digitRunHasPan(digits: string): boolean {
 
 /**
  * Walk the string, treating spaces (including Unicode), newlines, dashes,
- * dots and slashes as separators. Letters and other punctuation break a run,
- * so a PAN may sit directly against words or symbols (card#4111…exp).
+ * dots, slashes and backslashes as separators. Letters and other punctuation
+ * break a run, so a PAN may sit directly against words or symbols (card#4111…exp).
  */
 export function containsPan(text: string): boolean {
   const source = String(text || "");
@@ -94,10 +94,10 @@ export function containsPan(text: string): boolean {
 const CVV_LABEL =
   /\b(?:cvv2?|cvc2?|cid|cav2|csc|security\s+code|card\s+security\s+code|card\s+code|card\s+verification(?:\s+(?:value|code))?)\b/gi;
 
-const CVV_AFTER_LABEL = new RegExp("^\\s*(?::|=|#|\\.|/|-)*\\s*(?:(?:is|was)\\s+)?[\'\"`]?(\\d{3,4})\\b", "i");
+const CVV_AFTER_LABEL = new RegExp("^\\s*(?::|=|#|\\.|/|-|->)*\\s*(?:(?:is|was)\\s+)?['\"`]?(\\d{3,4})\\b", "i");
 
 const CARD_CONTEXT =
-  /\b(?:credit\s*(?:and\s+debit\s+)?cards?|debit\s+cards?|cards?|card\s+number|card\s*holder|credit\/debit|visa|mastercard|master\s*card|amex|american\s+express|discover(?:\s+card)?|cvv2?|cvc2?|cid|cav2)\b/i;
+  /\b(?:credit\s*(?:and\s+debit\s+)?cards?|debit\s+cards?|cards?|card\s+number|card\s*holder|credit\/debit|visa|mastercard|master\s*card|amex|american\s*express|discover(?:\s+card)?|cvv2?|cvc2?|cid|cav2)\b/i;
 
 const CARD_EXPIRY =
   /\b(?:exp(?:ires?|iry|iration)?(?:\s+date)?|valid\s+(?:thru|until))(?:\s*[=:]\s*|\s+(?:(?:is|was)\s+)?)(0?[1-9]|1[0-2])\s*[/\-]\s*((?:20)?\d{2})\b/i;
