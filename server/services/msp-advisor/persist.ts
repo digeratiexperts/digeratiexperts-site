@@ -18,6 +18,13 @@ export type DeskChatMessage = {
   createdAt: string;
 };
 
+export type DeskChatRecordingConsent = {
+  version: string;
+  noticeHash: string;
+  consentedAt: string;
+  ip: string | null;
+};
+
 export type DeskChatSessionSummary = {
   sessionId: string;
   email: string | null;
@@ -83,6 +90,9 @@ const memorySessions = new Map<
     archiveFolder: string | null;
     createdAt: string;
     updatedAt: string;
+    recordingConsent: DeskChatRecordingConsent | null;
+    legalHold: boolean;
+    ticketId: string | null;
     messages: DeskChatMessage[];
   }
 >();
@@ -164,6 +174,18 @@ async function ensureSchema(): Promise<void> {
       ADD COLUMN IF NOT EXISTS archive_folder text
     `);
     await db.execute(sql`
+      ALTER TABLE de_desk_chat_sessions
+      ADD COLUMN IF NOT EXISTS recording_consent jsonb
+    `);
+    await db.execute(sql`
+      ALTER TABLE de_desk_chat_sessions
+      ADD COLUMN IF NOT EXISTS legal_hold boolean DEFAULT false NOT NULL
+    `);
+    await db.execute(sql`
+      ALTER TABLE de_desk_chat_sessions
+      ADD COLUMN IF NOT EXISTS ticket_id text
+    `);
+    await db.execute(sql`
       CREATE INDEX IF NOT EXISTS idx_de_desk_sessions_email
       ON de_desk_chat_sessions (email, updated_at DESC)
     `);
@@ -198,6 +220,9 @@ function emptyMemSession(now: string) {
     agentJoinedAt: null as string | null,
     archivedAt: null as string | null,
     archiveFolder: null as string | null,
+    recordingConsent: null as DeskChatRecordingConsent | null,
+    legalHold: false,
+    ticketId: null as string | null,
     createdAt: now,
     updatedAt: now,
     messages: [] as DeskChatMessage[],
@@ -564,6 +589,7 @@ export async function getDeskSessionMessages(
       const sessionResult = await db.execute(sql`
         SELECT session_id, email, contact_name, company_name, page_path,
                agent_active, agent_name, agent_joined_at, archived_at, archive_folder,
+               legal_hold, ticket_id,
                created_at, updated_at
         FROM de_desk_chat_sessions
         WHERE session_id = ${sessionId}
@@ -592,6 +618,8 @@ export async function getDeskSessionMessages(
         mem.agentJoinedAt = row.agent_joined_at ? toIso(row.agent_joined_at) : null;
         mem.archivedAt = row.archived_at ? toIso(row.archived_at) : null;
         mem.archiveFolder = row.archive_folder ? String(row.archive_folder) : null;
+        mem.legalHold = !!row.legal_hold;
+        mem.ticketId = row.ticket_id ? String(row.ticket_id) : null;
         mem.createdAt = toIso(row.created_at);
         mem.updatedAt = toIso(row.updated_at);
         mem.messages = messages;
@@ -735,6 +763,78 @@ export async function unarchiveDeskSession(sessionId: string): Promise<DeskChatS
 }
 
 /** Permanently remove a chat and its messages. Returns false if it did not exist. */
+
+export async function recordDeskChatConsent(input: {
+  sessionId: string;
+  version: string;
+  noticeHash: string;
+  consentedAt: string;
+  ip: string | null;
+}): Promise<void> {
+  await ensureSchema();
+  const now = new Date().toISOString();
+  const record: DeskChatRecordingConsent = {
+    version: input.version,
+    noticeHash: input.noticeHash,
+    consentedAt: input.consentedAt,
+    ip: input.ip ? input.ip.slice(0, 64) : null,
+  };
+  const mem = memorySessions.get(input.sessionId) || emptyMemSession(now);
+  if (!mem.recordingConsent) mem.recordingConsent = record;
+  mem.updatedAt = now;
+  memorySessions.set(input.sessionId, mem);
+
+  if (!(dbReady && db && schemaReady)) return;
+  try {
+    const payload = JSON.stringify(mem.recordingConsent);
+    await db.execute(sql`
+      INSERT INTO de_desk_chat_sessions (session_id, recording_consent, created_at, updated_at)
+      VALUES (
+        ${input.sessionId},
+        CAST(${payload} AS jsonb),
+        ${new Date(mem.createdAt)},
+        ${new Date(now)}
+      )
+      ON CONFLICT (session_id) DO UPDATE SET
+        recording_consent = COALESCE(de_desk_chat_sessions.recording_consent, EXCLUDED.recording_consent),
+        updated_at = EXCLUDED.updated_at
+    `);
+  } catch (err: any) {
+    console.warn("[de-desk-persist] record consent failed:", err?.message);
+  }
+}
+
+export async function getDeskChatRecordingConsent(sessionId: string): Promise<DeskChatRecordingConsent | null> {
+  const mem = memorySessions.get(sessionId);
+  if (mem?.recordingConsent) return mem.recordingConsent;
+  await ensureSchema();
+  if (!(dbReady && db && schemaReady)) return null;
+  try {
+    const result = await db.execute(sql`
+      SELECT recording_consent
+      FROM de_desk_chat_sessions
+      WHERE session_id = ${sessionId}
+      LIMIT 1
+    `);
+    const row = normalizeRows(result)[0];
+    const raw = row?.recording_consent;
+    if (!raw || typeof raw !== "object") return null;
+    const record = raw as Record<string, unknown>;
+    if (typeof record.version !== "string" || typeof record.noticeHash !== "string" || typeof record.consentedAt !== "string") {
+      return null;
+    }
+    return {
+      version: record.version,
+      noticeHash: record.noticeHash,
+      consentedAt: record.consentedAt,
+      ip: typeof record.ip === "string" ? record.ip : null,
+    };
+  } catch (err: any) {
+    console.warn("[de-desk-persist] read consent failed:", err?.message);
+    return null;
+  }
+}
+
 export async function deleteDeskSession(sessionId: string): Promise<boolean> {
   await ensureSchema();
   const { session } = await getDeskSessionMessages(sessionId);
@@ -745,6 +845,230 @@ export async function deleteDeskSession(sessionId: string): Promise<boolean> {
     await db.execute(sql`DELETE FROM de_desk_chat_sessions WHERE session_id = ${sessionId}`);
   }
   return true;
+}
+
+
+export const DEFAULT_DESK_CHAT_RETENTION_DAYS = 365;
+
+/** On only when DESK_CHAT_PURGE_ENABLED is 1, true, yes, or on. Off by default. */
+export function isDeskChatPurgeEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
+  return /^(1|true|yes|on)$/i.test(env.DESK_CHAT_PURGE_ENABLED?.trim() ?? "");
+}
+
+export function deskChatRetentionDays(env: NodeJS.ProcessEnv = process.env): number | null {
+  const raw = env.DESK_CHAT_RETENTION_DAYS;
+  if (raw == null || !String(raw).trim()) return DEFAULT_DESK_CHAT_RETENTION_DAYS;
+  const days = Number(String(raw).trim());
+  if (!Number.isFinite(days) || days <= 0) return null;
+  return Math.floor(days);
+}
+
+export type DeskChatPurgeResult = {
+  enabled: boolean;
+  retentionDays: number | null;
+  deletedSessions: number;
+  deletedMessages: number;
+  skippedLegalHold: number;
+  skippedTicket: number;
+  skippedLookupError: number;
+};
+
+export type DeskChatPurgeGuards = {
+  ok: boolean;
+  legalHold: boolean;
+  ticketLinked: boolean;
+};
+
+/**
+ * Read hold and ticket flags immediately before a purge delete.
+ * If the lookup throws, the caller must skip the delete.
+ */
+export async function lookupDeskChatPurgeGuards(sessionId: string): Promise<DeskChatPurgeGuards> {
+  try {
+    const mem = memorySessions.get(sessionId);
+    let legalHold = !!mem?.legalHold;
+    let ticketLinked = !!(mem?.ticketId && mem.ticketId.trim());
+    if (dbReady && db && schemaReady) {
+      const result = await db.execute(sql`
+        SELECT legal_hold, ticket_id
+        FROM de_desk_chat_sessions
+        WHERE session_id = ${sessionId}
+      `);
+      const rows = normalizeRows(result);
+      if (rows.length > 0) {
+        legalHold = legalHold || !!rows[0].legal_hold;
+        const ticketId = rows[0].ticket_id ? String(rows[0].ticket_id) : "";
+        ticketLinked = ticketLinked || !!ticketId.trim();
+      }
+    }
+    return { ok: true, legalHold, ticketLinked };
+  } catch (err: any) {
+    console.warn("[de-desk-purge] hold or ticket lookup failed:", err?.message || err);
+    return { ok: false, legalHold: false, ticketLinked: false };
+  }
+}
+
+async function loadMemSession(sessionId: string): Promise<ReturnType<typeof emptyMemSession> | null> {
+  if (memorySessions.has(sessionId)) return memorySessions.get(sessionId) || null;
+  const { session } = await getDeskSessionMessages(sessionId);
+  return session ? memorySessions.get(sessionId) || null : null;
+}
+
+export async function setDeskChatLegalHold(sessionId: string, held: boolean): Promise<void> {
+  await ensureSchema();
+  const mem = await loadMemSession(sessionId);
+  if (!mem) return;
+  mem.legalHold = !!held;
+  memorySessions.set(sessionId, mem);
+  if (!(dbReady && db && schemaReady)) return;
+  try {
+    await db.execute(sql`
+      UPDATE de_desk_chat_sessions
+      SET legal_hold = ${mem.legalHold}
+      WHERE session_id = ${sessionId}
+    `);
+  } catch (err: any) {
+    console.warn("[de-desk-persist] set legal hold failed:", err?.message);
+  }
+}
+
+export async function setDeskChatLinkedTicket(sessionId: string, ticketId: string | null): Promise<void> {
+  await ensureSchema();
+  const mem = await loadMemSession(sessionId);
+  if (!mem) return;
+  const value = ticketId && ticketId.trim() ? ticketId.trim().slice(0, 128) : null;
+  mem.ticketId = value;
+  memorySessions.set(sessionId, mem);
+  if (!(dbReady && db && schemaReady)) return;
+  try {
+    await db.execute(sql`
+      UPDATE de_desk_chat_sessions
+      SET ticket_id = ${value}
+      WHERE session_id = ${sessionId}
+    `);
+  } catch (err: any) {
+    console.warn("[de-desk-persist] set linked ticket failed:", err?.message);
+  }
+}
+
+/** Used by retention tests to backdate a session without sending a new message. */
+export async function setDeskChatUpdatedAt(sessionId: string, updatedAt: string): Promise<void> {
+  await ensureSchema();
+  const mem = await loadMemSession(sessionId);
+  if (!mem) return;
+  mem.updatedAt = updatedAt;
+  memorySessions.set(sessionId, mem);
+  if (!(dbReady && db && schemaReady)) return;
+  try {
+    await db.execute(sql`
+      UPDATE de_desk_chat_sessions
+      SET updated_at = ${new Date(updatedAt)}
+      WHERE session_id = ${sessionId}
+    `);
+  } catch (err: any) {
+    console.warn("[de-desk-persist] set updated at failed:", err?.message);
+  }
+}
+
+export async function purgeExpiredDeskChats(opts?: {
+  now?: Date;
+  env?: NodeJS.ProcessEnv;
+  lookupGuards?: (sessionId: string) => Promise<DeskChatPurgeGuards> | DeskChatPurgeGuards;
+}): Promise<DeskChatPurgeResult> {
+  const env = opts?.env ?? process.env;
+  const retentionDays = deskChatRetentionDays(env);
+  const empty: DeskChatPurgeResult = {
+    enabled: false,
+    retentionDays,
+    deletedSessions: 0,
+    deletedMessages: 0,
+    skippedLegalHold: 0,
+    skippedTicket: 0,
+    skippedLookupError: 0,
+  };
+  if (!isDeskChatPurgeEnabled(env) || retentionDays == null) {
+    return empty;
+  }
+
+  await ensureSchema();
+  const now = opts?.now ?? new Date();
+  // Cutoff is last activity (updated_at), not creation time.
+  const cutoff = new Date(now.getTime() - retentionDays * 24 * 60 * 60 * 1000);
+  const seen = new Set<string>();
+  const candidates: Array<{ sessionId: string; messageCount: number }> = [];
+
+  const consider = (sessionId: string, updatedAt: string, messageCount: number) => {
+    if (seen.has(sessionId)) return;
+    if (new Date(updatedAt).getTime() >= cutoff.getTime()) return;
+    seen.add(sessionId);
+    candidates.push({ sessionId, messageCount });
+  };
+
+  for (const [sessionId, mem] of memorySessions) {
+    consider(sessionId, mem.updatedAt, mem.messages.length);
+  }
+
+  if (dbReady && db && schemaReady) {
+    try {
+      const result = await db.execute(sql`
+        SELECT s.session_id, s.updated_at,
+               (SELECT COUNT(*)::int FROM de_desk_chat_messages m WHERE m.session_id = s.session_id) AS message_count
+        FROM de_desk_chat_sessions s
+        WHERE s.updated_at < ${cutoff}
+      `);
+      for (const row of normalizeRows(result)) {
+        consider(String(row.session_id), toIso(row.updated_at), Number(row.message_count || 0));
+      }
+    } catch (err: any) {
+      console.warn("[de-desk-purge] list expired failed:", err?.message);
+    }
+  }
+
+  let deletedSessions = 0;
+  let deletedMessages = 0;
+  let skippedLegalHold = 0;
+  let skippedTicket = 0;
+  let skippedLookupError = 0;
+  const resolveGuards = opts?.lookupGuards ?? lookupDeskChatPurgeGuards;
+  for (const candidate of candidates) {
+    let guards: DeskChatPurgeGuards;
+    try {
+      guards = await resolveGuards(candidate.sessionId);
+    } catch (err: any) {
+      console.warn("[de-desk-purge] hold or ticket lookup failed:", err?.message || err);
+      skippedLookupError += 1;
+      continue;
+    }
+    if (!guards.ok) {
+      skippedLookupError += 1;
+      continue;
+    }
+    if (guards.legalHold) {
+      skippedLegalHold += 1;
+      continue;
+    }
+    if (guards.ticketLinked) {
+      skippedTicket += 1;
+      continue;
+    }
+    const existed = await deleteDeskSession(candidate.sessionId);
+    if (existed) {
+      deletedSessions += 1;
+      deletedMessages += candidate.messageCount;
+    }
+  }
+
+  const result: DeskChatPurgeResult = {
+    enabled: true,
+    retentionDays,
+    deletedSessions,
+    deletedMessages,
+    skippedLegalHold,
+    skippedTicket,
+    skippedLookupError,
+  };
+  console.info("[de-desk-purge] finished", result);
+  return result;
 }
 
 export function getDeskStoreStatus(): { durable: boolean } {

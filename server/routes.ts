@@ -204,6 +204,7 @@ import {
   clientIpFromReq,
   type KnockKind,
 } from "./portalLoginKnocksStore";
+import { recordAcceptedDeskChatConsent, rejectIfMissingDeskChatConsent } from "./deskChatConsent";
 import {
   initLifecycleOrchestrator,
   lifecycleIntegrationStatus,
@@ -5235,6 +5236,7 @@ export async function registerRoutes(app: Express) {
 
   // ===== PUBLIC VIRTUAL MSP ADVISOR (DE Desk) =====
   app.post("/api/public/advisor/chat", [advisorChatRateLimiter, validateInput], async (req: AuthenticatedRequest, res: Response) => {
+    if (rejectIfMissingDeskChatConsent(req, res)) return;
     try {
       const { handleAdvisorChat } = await import("./services/msp-advisor");
       const { sessionId, message, pageContext } = req.body || {};
@@ -5260,6 +5262,7 @@ export async function registerRoutes(app: Express) {
               }
             : undefined,
       });
+      await recordAcceptedDeskChatConsent(req, result.sessionId);
       res.json(result);
     } catch (error: any) {
       if (sendCardDataRejectedError(res, error)) return;

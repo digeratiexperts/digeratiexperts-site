@@ -58,12 +58,36 @@ describe("DE Desk shell positioning", () => {
     expect(src).toMatch(/role="tab"/);
     expect(src).toMatch(/aria-selected=\{isActive\}/);
     expect(src).not.toMatch(/aria-current=\{isActive \? "page"/);
-    expect(src).toMatch(/DE Desk is available/);
+    expect(src).toMatch(/data-testid="text-widget-title"/);
+    expect(src).toContain("DE Desk");
+    expect(src).toMatch(/data-testid="text-widget-ai-label"/);
+    expect(src).toContain("de-desk-ai-badge");
+    expect(src).toContain("AI assistant");
+    expect(src).not.toMatch(/>DE Desk . AI assistant</);
+    expect(src).toMatch(/Want a person\?/);
+    expect(src).toMatch(/Book a Fit Call/);
+    expect(src).toMatch(/data-testid="desk-human-path"/);
+    expect(src).toContain("DeskChatConsentGate");
+    expect(src).toContain("hasStoredDeskChatConsent");
+    expect(src).toContain("deskChatConsentRequestBody");
+    expect(src).toContain('data-testid="desk-chat-recorded"');
+    expect(src).toContain("data-clarity-mask");
+    expect(src).toContain("DESK_CHAT_CONSENT_PRIVACY_HREF");
+    expect(src).toContain('contactHref="/contact"');
+    expect(src).toMatch(/activeTab === "chat" && !recordingConsent/);
+    expect(src).toMatch(/activeTab === "chat" && recordingConsent \?/);
     expect(src).not.toMatch(/AZ SOC Live/);
     expect(src).toMatch(/\.de-desk-tab\.is-active::after/);
     expect(src).not.toMatch(/\.de-desk-tab\.is-active \{\s*background: #E3B23C;/);
     expect(src).toMatch(/previous\?\.focus/);
     expect(src).toMatch(/useEscapeKey/);
+    expect(src).toContain("AskDeGlyph");
+    expect(src).toContain("readPriorSituationAttachment");
+    expect(src).toContain('data-testid="desk-chat-consent-agree"');
+    expect(src).toMatch(/animation:\s*de-desk-in/);
+    expect(src).toMatch(/@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.de-desk-shell \{ animation: none/);
+    expect(src).toContain("declined={declinedRecording}");
+    expect(src).toContain('contactHref="/contact"');
     // With nobody in the chat, the composer claims no one is waiting, and the
     // line fits a 390px field (the old one cut to "we're ready no").
     expect(src).toMatch(/: "Type the issue…"/);
@@ -245,6 +269,8 @@ describe("DE Desk shell positioning", () => {
     expect(src).toMatch(/\.de-desk-bubble \{[\s\S]*?font-size: 15px;/);
     expect(src).toMatch(/\.de-desk-composer textarea \{[\s\S]*?font-size: 15\.5px;/);
     expect(src).toMatch(/\.de-desk-composer-caption \{[\s\S]*?font-size: 13px;/);
+    expect(src).toContain("de-desk-composer-caption-text");
+    expect(src).toMatch(/text-wrap:\s*pretty/);
     expect(src).toMatch(/\.de-desk-tool-title \{[\s\S]*?font-size: 15\.5px;/);
   });
 
