@@ -4,6 +4,7 @@ import { revealInitial, revealInView, revealTransition, revealViewport } from "@
 import { FAQJsonLd } from "@/components/JsonLd";
 import { GREATER_PHOENIX_CITIES } from "@/data/greaterPhoenixCities";
 import "./14-faq.css";
+import { ALERT_MONITORING_CLAIM } from "@shared/publicSecurityClaims";
 
 /**
  * Section 14 (mock: artifacts/design-concepts/homepage-sections-2026-10/sections/14-faq.html).
@@ -32,7 +33,7 @@ const faqs: FAQ[] = [
   },
   {
     question: "Is my data secure?",
-    answer: "Yes. We use enterprise-grade controls and documented security protocols, with monitoring matched to your plan — 24/7 alert monitoring through our contracted security operations partner, on plans that include it. We help Arizona businesses prepare for HIPAA, PCI DSS, SOC 2, and cyber-insurance reviews — with clear ownership of credentials, policies, and evidence."
+    answer: "Yes. We use enterprise-grade controls and documented security protocols, with monitoring matched to your plan. " + ALERT_MONITORING_CLAIM + " We help Arizona businesses prepare for HIPAA, PCI DSS, SOC 2, and cyber-insurance reviews — with clear ownership of credentials, policies, and evidence."
   }
 ];
 

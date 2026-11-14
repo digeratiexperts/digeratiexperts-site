@@ -1,4 +1,5 @@
 import { CANONICAL_CSRA_ONE_TIME } from "@shared/canonicalCsra";
+import { ALERT_MONITORING_CLAIM_PHRASE } from "@shared/publicSecurityClaims";
 
 export interface ServiceItem {
   id: string;
@@ -45,7 +46,7 @@ export const serviceCatalog: ServiceCategory[] = [
         documentKey: 'de-core-it-infrastructure-and-support-2026',
         tier: 'office',
         features: [
-          '24/7 alert monitoring, on plans that include it',
+          ALERT_MONITORING_CLAIM_PHRASE,
           'Help desk support',
           'Patch management',
           'Asset inventory',
@@ -126,7 +127,7 @@ export const serviceCatalog: ServiceCategory[] = [
         id: 'security-stack-business',
         name: 'Security Stack & Operations - Business',
         shortName: 'Security Business',
-        description: 'Advanced security with 24/7 alert monitoring through our contracted security operations partner, on plans that include it',
+        description: 'Advanced security with ' + ALERT_MONITORING_CLAIM_PHRASE,
         category: 'security',
         pricingType: 'custom',
         basePrice: 0,
@@ -136,7 +137,7 @@ export const serviceCatalog: ServiceCategory[] = [
         tier: 'business',
         features: [
           'Everything in Office tier',
-          '24/7 alert monitoring, on plans that include it',
+          ALERT_MONITORING_CLAIM_PHRASE,
           'SIEM integration',
           'Incident response',
           'Vulnerability scanning'

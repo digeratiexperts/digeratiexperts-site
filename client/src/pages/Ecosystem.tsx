@@ -1,6 +1,7 @@
 import { Shield, Users, Server, Building2, HeadphonesIcon, FileCheck } from "lucide-react";
 import { motion } from "framer-motion";
 import { pricing } from "@/data/pricing";
+import { ALERT_MONITORING_CLAIM_PHRASE } from "@shared/publicSecurityClaims";
 
 export default function Ecosystem() {
   const servicePillars = [
@@ -14,7 +15,7 @@ export default function Ecosystem() {
       name: "DE SECURITY", 
       icon: Shield,
       desc: "Email Protection · EDR · SOC/MDR · Security Awareness · DLP",
-      details: ["24/7 alert monitoring, on plans that include it", "Endpoint Detection & Response", "Phishing Protection", "Security Logging & Reporting"]
+      details: [ALERT_MONITORING_CLAIM_PHRASE, "Endpoint Detection & Response", "Phishing Protection", "Security Logging & Reporting"]
     },
     { 
       name: "DE INFRASTRUCTURE", 

@@ -1,5 +1,6 @@
 import { CANONICAL_CSRA_ONE_TIME, CANONICAL_CSRA_STORE_SKU } from "@shared/canonicalCsra";
 import { pricing } from "./pricing";
+import { ALERT_MONITORING_CLAIM_PHRASE } from "@shared/publicSecurityClaims";
 
 export type ProductCategory = 
   | "contract_services"
@@ -146,7 +147,7 @@ export const storeProducts: StoreProduct[] = [
     sku: "DE-SVC-MGD-ENTERPRISE-MO",
     name: "ProActive Ecosystem - Enterprise",
     shortDescription: "Full compliance and security suite",
-    description: "Complete compliance and enterprise security package with 24/7 alert monitoring through our contracted security operations partner, on plans that include it, compliance reporting, and dedicated vCISO support.",
+    description: "Complete compliance and enterprise security package with " + ALERT_MONITORING_CLAIM_PHRASE + ", compliance reporting, and dedicated vCISO support.",
     category: "contract_services",
     pricingType: "per_user",
     basePrice: pricing.enterprise.user,
@@ -156,7 +157,7 @@ export const storeProducts: StoreProduct[] = [
     isClientOnly: false,
     requiredClientType: "public",
     minimumQuantity: 1,
-    features: ["Everything in Business", "24/7 alert monitoring, on plans that include it", "Full Compliance Suite", "vCISO Support", "Quarterly Security Reviews"],
+    features: ["Everything in Business", ALERT_MONITORING_CLAIM_PHRASE, "Full Compliance Suite", "vCISO Support", "Quarterly Security Reviews"],
     sortOrder: 3,
   },
   {
@@ -190,7 +191,7 @@ export const storeProducts: StoreProduct[] = [
     isClientOnly: false,
     requiredClientType: "public",
     minimumQuantity: 1,
-    features: ["24/7 alert monitoring, on plans that include it", "Incident Response", "Vulnerability Management", "Security Operations"],
+    features: [ALERT_MONITORING_CLAIM_PHRASE, "Incident Response", "Vulnerability Management", "Security Operations"],
     sortOrder: 5,
   },
   {
@@ -341,7 +342,7 @@ export const storeProducts: StoreProduct[] = [
     id: "prod-016",
     sku: "DE-SVC-CM-SERVER-MON-MO",
     name: "Co-Managed Server Monitoring",
-    shortDescription: "Non-24/7 server monitoring",
+    shortDescription: "Scheduled server monitoring",
     description: "Server monitoring during business hours with alerting and basic health checks.",
     category: "comanaged_subscriptions",
     pricingType: "monthly",

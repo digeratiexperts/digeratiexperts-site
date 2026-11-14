@@ -1,5 +1,6 @@
 import { CheckIcon } from "../icons";
 import { objectIcon, THIRD_LANE_NAME } from "../content";
+import { ALERT_MONITORING_CLAIM_PHRASE } from "@shared/publicSecurityClaims";
 
 const TIERS = [
   {
@@ -28,7 +29,7 @@ const TIERS = [
     price: "$245",
     minimum: "$5,400 monthly minimum",
     summary: "Deeper infrastructure, cyber operations, recovery, governance, and strategy.",
-    features: ["Identity, endpoint, and email", "24/7 alert monitoring through our contracted security operations partner, on plans that include it", "BCDR and strategy reviews"],
+    features: ["Identity, endpoint, and email", ALERT_MONITORING_CLAIM_PHRASE, "BCDR and strategy reviews"],
     cta: "ProActive Business",
     ctaClass: "btn btn-cta",
     flagship: true,
@@ -45,7 +46,7 @@ const TIERS = [
   },
 ];
 
-/** 24/7 MDR / SOC is Business and Enterprise only (approved content rule). */
+/** Alert monitoring is included on Business and Enterprise (approved content rule). */
 export function PricingSection(): JSX.Element {
   return (
     <section className="sec t-ink" id="pricing">

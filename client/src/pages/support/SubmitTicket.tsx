@@ -251,7 +251,7 @@ export default function SubmitTicket() {
               <section className="border-t border-[var(--de-paper-hairline)] pt-8">
                 <h2 className="font-heading text-lg font-semibold text-[#1A1228]">Emergency Contact</h2>
                 <p className="mt-2 text-sm leading-relaxed text-[#3A3448]">
-                  For after-hours emergencies, use our emergency hotline available 24/7 to all managed service clients.
+                  For after-hours emergencies, use the emergency number in your signed agreement.
                 </p>
               </section>
             </aside>

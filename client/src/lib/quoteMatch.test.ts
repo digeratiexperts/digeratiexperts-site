@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { describeMatchBasis, getPlanMatch, type TriState } from "./quoteMatch";
+import { ALERT_MONITORING_CLAIM_PHRASE } from "@shared/publicSecurityClaims";
 
 /**
  * Pins Joe-approved plan match (2026-10-03): IT for ≤10 seats, Business for
@@ -16,12 +17,12 @@ const ENTERPRISE = [
   "AI & Cloud Automation + vCIO strategic guidance",
 ];
 const BUSINESS_BOTH = [
-  "Deeper security operations + 24/7 managed detection and response through our contracted security operations partner, on plans that include it",
+  "Deeper security operations + " + ALERT_MONITORING_CLAIM_PHRASE,
   "BCDR + compliance/risk reporting + Security Awareness Training",
   "Technology + security business reviews + Cyber Insurance Readiness",
 ];
 const BUSINESS_CONNECTIVITY = [
-  "Deeper security operations with 24/7 managed detection and response through our contracted security operations partner, on plans that include it",
+  "Deeper security operations with " + ALERT_MONITORING_CLAIM_PHRASE,
   "Advanced identity controls + BCDR / risk reporting depth",
   "Cyber insurance readiness and recurring security reviews",
 ];

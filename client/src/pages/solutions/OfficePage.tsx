@@ -13,6 +13,7 @@ import { ServiceJsonLd, BreadcrumbJsonLd } from "@/components/JsonLd";
 import { pricing } from "@/data/pricing";
 import { CTA } from "@/lib/ctaCopy";
 import { PRIMARY_PHONE } from "@/data/companyContact";
+import { ALERT_MONITORING_CLAIM_PHRASE } from "@shared/publicSecurityClaims";
 
 type InclusionStatus = "included" | "limited" | "optional" | "not-included";
 
@@ -70,7 +71,7 @@ const matrixCategories: MatrixCategory[] = [
       { id: "awareness", capability: "Security awareness baseline (guidance + templates)", status: "limited", tooltip: "Baseline training materials; interactive simulations are add-on" },
       { id: "vuln-scan", capability: "Vulnerability scan (external / basic)", status: "limited", tooltip: "Quarterly snapshot; remediation planning included" },
       { id: "ir-readiness", capability: "Incident response readiness (basic plan + contacts)", status: "limited", tooltip: "Basic playbook; full IR retainer is add-on" },
-      { id: "soc", capability: "Advanced monitoring / SOC response", status: "optional", tooltip: "24/7 alert monitoring, on plans that include it available as add-on" },
+      { id: "soc", capability: "Advanced monitoring / SOC response", status: "optional", tooltip: ALERT_MONITORING_CLAIM_PHRASE + ", available as an add-on" },
       { id: "compliance", capability: "Compliance frameworks & reporting", status: "optional", tooltip: "HIPAA, SOC 2, CMMC modules available" }
     ]
   },
@@ -119,7 +120,7 @@ const shortCompareRows = [
 ];
 
 const notIncludedItems = [
-  { item: "MDR / 24×7 SOC monitoring", reason: "Available as add-on for organizations needing continuous threat hunting" },
+  { item: "Alert monitoring, on plans that include it", reason: "Available as an add-on on plans that include it" },
   { item: "Continuous vulnerability management", reason: "Quarterly scans included; continuous scanning is add-on" },
   { item: "Disaster Recovery (DRaaS) / warm standby", reason: "Available as add-on for critical systems requiring rapid failover" },
   { item: "Privileged Access Management (PAM)", reason: "Available as add-on for environments with elevated access requirements" },

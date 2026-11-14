@@ -22,6 +22,7 @@ import {
 } from "@/components/site/chapters";
 import { Shield, Clock, Award, Users } from "lucide-react";
 import { plateForServiceKey } from "@/components/site/PlateBand";
+import { ALERT_MONITORING_CLAIM_PHRASE } from "@shared/publicSecurityClaims";
 
 interface ServiceFeature {
   title: string;
@@ -94,7 +95,7 @@ const eyebrowFromCanonical = (canonical?: string) =>
 
 /** Facts the site already states elsewhere (SOC, local team, managed protection, SLA). */
 const serviceFacts = [
-  { icon: Shield, title: "24/7 human-led SOC", text: "On ProActive Business and Enterprise" },
+  { icon: Shield, title: ALERT_MONITORING_CLAIM_PHRASE, text: "On ProActive Business and Enterprise" },
   { icon: Users, title: "Arizona engineering team", text: "Chandler / East Valley operator" },
   { icon: Award, title: "8 blocks of managed protection", text: "One program, not point tools" },
   { icon: Clock, title: "Defined response times", text: "Service levels are set in your signed agreement" },

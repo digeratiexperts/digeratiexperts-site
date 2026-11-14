@@ -5,6 +5,7 @@ import { DE_LOGO_PRIMARY, DE_MARK } from "@/lib/brandAssets";
 import { COMPANY, COMPANY_SOCIAL, PRIMARY_PHONE, formatAddressOneLine } from "@/data/companyContact";
 import { pricingTiers, pricing, formatPrice, NO_BLACK_BOX_TAGLINE, PRICING_SCOPE_NOTE } from "@/data/pricing";
 import "./v5.css";
+import { ALERT_MONITORING_CLAIM, ALERT_MONITORING_CLAIM_PHRASE } from "@shared/publicSecurityClaims";
 
 /**
  * Digerati Experts homepage, Version 5: the practical one.
@@ -42,9 +43,9 @@ const SERVICES = [
     body: "A help desk that owns your issue until it is fixed, keeps devices patched, and documents how your environment is built.",
   },
   {
-    title: "Cybersecurity, watched around the clock",
+    title: "Cybersecurity, monitored on plans that include it",
     href: "/solutions/threat-detection",
-    body: "24/7 managed detection and response through our contracted security operations partner, on plans that include it across your devices, accounts and email, plus phishing training so your staff become a defence rather than a risk.",
+    body: ALERT_MONITORING_CLAIM_PHRASE + " across your devices, accounts and email, plus phishing training so your staff become a defence rather than a risk.",
   },
   {
     title: "Backup and disaster recovery",
@@ -150,7 +151,7 @@ const FAQ = [
   },
   {
     q: "Is my data secure?",
-    a: "Yes. We use enterprise-grade controls and documented security protocols, with monitoring matched to your plan — 24/7 alert monitoring through our contracted security operations partner, on plans that include it. We help Arizona businesses prepare for HIPAA, PCI DSS, SOC 2, and cyber-insurance reviews — with clear ownership of credentials, policies, and evidence.",
+    a: "Yes. We use enterprise-grade controls and documented security protocols, with monitoring matched to your plan. " + ALERT_MONITORING_CLAIM + " We help Arizona businesses prepare for HIPAA, PCI DSS, SOC 2, and cyber-insurance reviews — with clear ownership of credentials, policies, and evidence.",
   },
 ];
 
@@ -282,7 +283,7 @@ export default function HomepageV5(): JSX.Element {
               </li>
               <li className="v5-fact">
                 <strong>Emergency incident response on plans that include it</strong>
-                <span>Emergency incident response availability, around the clock, all year.</span>
+                <span>Emergency incident response on plans that include it.</span>
               </li>
             </ul>
           </div>

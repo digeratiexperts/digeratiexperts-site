@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { EvidenceFrame } from "../evidence/EvidenceFrame";
 import { DiagramNode, SecurityBoundary } from "../evidence/DiagramPrimitives";
+import { ALERT_MONITORING_CLAIM_PHRASE } from "@shared/publicSecurityClaims";
 
 export const ProActiveEcosystemDiagram: React.FC = () => {
   const prefersReducedMotion = useReducedMotion() ?? false;
@@ -46,9 +47,9 @@ export const ProActiveEcosystemDiagram: React.FC = () => {
     {
       id: "manage",
       num: "04",
-      title: "Continuous 24/7 Management",
+      title: "Continuous management",
       detail:
-        "Alert monitoring through our contracted security operations partner, regular restore drills, patch automation, and quarterly strategic reviews (vCIO).",
+        ALERT_MONITORING_CLAIM_PHRASE + ", regular restore drills, patch automation, and quarterly strategic reviews (vCIO).",
       output: "Verified Posture & Active Defense",
     },
   ];

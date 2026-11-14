@@ -161,7 +161,7 @@ export default function UCaaS() {
       price: "$12/user/mo",
       description: "Ongoing management for your voice and meetings stack",
       features: [
-        "24/7 phone system support",
+        "Phone system support as set in your signed agreement",
         "User adds/changes/deletes",
         "E911 quarterly audits",
         "Call recording management",

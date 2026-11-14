@@ -22,6 +22,7 @@ import {
   PRIMARY_PHONE,
   formatAddressOneLine,
 } from "@/data/companyContact";
+import { ALERT_MONITORING_CLAIM_PHRASE } from "@shared/publicSecurityClaims";
 // Closing bookend (Joe 2026-08-31): the hero's Phoenix city-lights plate
 // returns behind the contact chapter, fainter still, so the page ends where
 // it began. 50KB WebP.
@@ -251,7 +252,7 @@ export const DigeratiContactSection = ({
               </dl>
               <p className="mt-4 flex items-start gap-2 text-base font-medium text-de-accent-ink">
                 <Shield className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-                <span>24/7 alert monitoring on plans that include it</span>
+                <span>{ALERT_MONITORING_CLAIM_PHRASE}</span>
               </p>
             </div>
 

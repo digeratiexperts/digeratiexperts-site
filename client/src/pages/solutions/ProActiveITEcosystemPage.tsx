@@ -1,5 +1,6 @@
 import { TierDetailTemplate, type TierPageConfig } from "@/components/TierDetailTemplate";
 import { pricing, formatPrice, formatUserPrice } from "@/data/pricing";
+import { ALERT_MONITORING_CLAIM_PHRASE } from "@shared/publicSecurityClaims";
 
 const config: TierPageConfig = {
   id: "it",
@@ -23,7 +24,7 @@ const config: TierPageConfig = {
     "A documented, professionally managed Microsoft 365 and endpoint environment",
     "A single accountable help desk with response-time commitments — no more guessing who to call",
     "Clear visibility into user lifecycle, licensing, and device health",
-    "A managed security foundation that can step up cleanly into 24/7 MDR, deeper recovery, compliance, and governance",
+    "A managed security foundation that can step up cleanly into " + ALERT_MONITORING_CLAIM_PHRASE + ", plus deeper recovery, compliance, and governance",
   ],
   included: [
     "Microsoft 365 / Entra ID tenant management",
@@ -43,7 +44,7 @@ const config: TierPageConfig = {
   ],
   notIncluded: [
     "Endpoint Backup, BCDR, and User Cloud Storage Backup (add-on or step up to Business)",
-    "24/7 alert monitoring through our contracted security operations partner, and Managed Detection & Response (MDR), on plans that include them",
+    ALERT_MONITORING_CLAIM_PHRASE,
     "Compliance and risk reporting (HIPAA, CMMC, PCI, SOC 2 mapping)",
     "Semi-annual technology + security reviews (vCIO / QBR cadence)",
   ],
@@ -58,7 +59,7 @@ const config: TierPageConfig = {
     },
     {
       label: "Step up to ProActive Office or Business",
-      desc: "Office adds managed endpoint detection (EDR) plus managed network and endpoint backup; Business adds 24/7 managed detection and response through our contracted security operations partner, on plans that include it, deeper security operations, BCDR, compliance/risk reporting, and semi-annual reviews.",
+      desc: "Office adds managed endpoint detection (EDR) plus managed network and endpoint backup; Business adds " + ALERT_MONITORING_CLAIM_PHRASE + ", deeper security operations, BCDR, compliance/risk reporting, and semi-annual reviews.",
     },
   ],
   reviewCadence:

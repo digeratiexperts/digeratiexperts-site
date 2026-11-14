@@ -49,7 +49,7 @@ const matrixData: Section[] = [
     id: "managed-it",
     title: "Managed IT",
     features: [
-      { name: "Help Desk", tiers: { essentials: false, office: "8×5", business: "8×5 + Priority", enterprise: "VIP + 24×7 opt" } },
+      { name: "Help Desk", tiers: { essentials: false, office: "8×5", business: "8×5 + Priority", enterprise: "VIP + after-hours option" } },
       { name: "Remote Monitoring & Alerting", tiers: { essentials: true, office: true, business: true, enterprise: true } },
       { name: "Patch & App Management", tiers: { essentials: true, office: true, business: true, enterprise: true } },
       { name: "Remote Support & Quick Assist", tiers: { essentials: false, office: true, business: true, enterprise: true } },
@@ -68,7 +68,7 @@ const matrixData: Section[] = [
       { name: "Baseline Threat Protection", tiers: { essentials: true, office: true, business: true, enterprise: true } },
       { name: "Data Safeguards & Identity", tiers: { essentials: true, office: true, business: true, enterprise: true } },
       { name: "Email Security & MFA", tiers: { essentials: "Managed baseline", office: "Advanced protection", business: "Enhanced", enterprise: "Advanced + SSO" } },
-      { name: "Endpoint Detection & Response (EDR)", tiers: { essentials: "Managed baseline", office: "EDR + 24/7 MDR", business: "Enhanced EDR + 24/7 MDR", enterprise: "Advanced EDR + MDR" } },
+      { name: "Endpoint Detection & Response (EDR)", tiers: { essentials: "Managed baseline", office: "EDR + alert monitoring", business: "Enhanced EDR + alert monitoring", enterprise: "Advanced EDR + MDR" } },
       { name: "Security Awareness & Phishing", tiers: { essentials: "Included baseline", office: "Training + simulations", business: "Enhanced + simulations", enterprise: "Role-based + simulations" } },
       { name: "SaaS App Security Monitoring", tiers: { essentials: false, office: "Optional", business: true, enterprise: true } },
       { name: "Dark Web Monitoring", tiers: { essentials: false, office: true, business: true, enterprise: true } },

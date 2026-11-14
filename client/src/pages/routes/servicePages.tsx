@@ -1,4 +1,5 @@
 import { getCyberFact, toDisplayStat } from "@/data/cyberAwarenessFacts";
+import { ALERT_MONITORING_CLAIM, ALERT_MONITORING_CLAIM_PHRASE } from "@shared/publicSecurityClaims";
 
 export const servicePageData = {
   'ProActive-Ecosystem-Packages': {
@@ -16,7 +17,7 @@ export const servicePageData = {
     benefits: [
       "Predictable monthly costs with no surprises",
       "Zero internal IT staff required",
-      "Security baseline built into every plan; 24/7 managed detection and response through our contracted security operations partner, on Business and Enterprise",
+      "Security baseline built into every plan; " + ALERT_MONITORING_CLAIM_PHRASE,
       "Vendor coordination handled—no more vendor juggling",
       "Compliance optional: add modules only when needed",
       "Monthly service summaries and quarterly business reviews available"
@@ -145,8 +146,8 @@ export const servicePageData = {
   },
   'threat-detection': {
     title: "Threat Detection & Response",
-    subtitle: "Alert monitoring and incident response through our contracted security operations partner, on ProActive Business and Enterprise",
-    description: "Threat Detection & Response is detection + triage + containment + guided recovery. On plans that include it, our contracted security operations partner monitors endpoints, cloud apps, email, and network events around the clock. When we see something, we investigate, contain (isolate endpoints, reset credentials), and walk you through recovery. Not just alerts—real response.",
+    subtitle: ALERT_MONITORING_CLAIM_PHRASE,
+    description: "Threat Detection & Response is detection + triage + containment + guided recovery. " + ALERT_MONITORING_CLAIM + " When we see something, we investigate, contain (isolate endpoints, reset credentials), and walk you through recovery. Not just alerts—real response.",
     features: [
       { title: "Telemetry monitoring, on plans that include it", description: "Real-time monitoring of endpoints, cloud apps, email, and gateway security events" },
       { title: "Advanced Endpoint Detection", description: "DE EDR detects suspicious behavior, lateral movement, and advanced techniques" },
@@ -156,12 +157,12 @@ export const servicePageData = {
       { title: "DE SIEM Integration", description: "Deeper log correlation and retention for complex organizations" }
     ],
     benefits: [
-      "Threat detection through our contracted security operations partner, on plans that include it",
+      ALERT_MONITORING_CLAIM_PHRASE,
       "Service levels are set in your signed agreement",
       "Automated containment stops spread in seconds",
       "Forensic investigation and root cause analysis",
       "Compliance-ready incident documentation",
-      "Detection and response through our contracted security operations partner, on plans that include it — not just alerts"
+      "Detection and response, not just alerts, on plans that include it",
     ],
     gradientColors: "from-[#050312] via-[#0a0a0a] to-[#050312]",
     stat: toDisplayStat(getCyberFact("dbir-smb-ransomware-victims-2026")),
@@ -169,8 +170,8 @@ export const servicePageData = {
   },
   'security-operations': {
     title: "Security Operations (SOC-as-a-Service)",
-    subtitle: "Security operations through our contracted partner, without hiring an in-house SOC team",
-    description: "Security Operations is Threat Detection & Response plus threat hunting, policy tuning, and continuous optimization. We run the security room. Includes detection, triage, response, plus proactive hunting, policy refinement, log correlation, and longer retention. Enterprise-grade security maturity.",
+    subtitle: ALERT_MONITORING_CLAIM_PHRASE,
+    description: "Security Operations is Threat Detection & Response plus threat hunting, policy tuning, and continuous optimization. Includes detection, triage, response, plus proactive hunting, policy refinement, log correlation, and longer retention. Enterprise-grade security maturity.",
     features: [
       { title: "Threat Hunting Cycles", description: "Proactive investigation for advanced threats, unusual patterns, and insider risk" },
       { title: "Policy Tuning & Optimization", description: "Continuous refinement of EDR, email, cloud, and access control policies based on threats and trends" },
@@ -185,7 +186,7 @@ export const servicePageData = {
       "Reduced vulnerability dwell time",
       "Stronger incident response and containment",
       "Compliance evidence and audit readiness",
-      "Security-operations coverage through our contracted partner, without hiring in-house SOC analysts"
+      ALERT_MONITORING_CLAIM_PHRASE
     ],
     gradientColors: "from-[#050312] via-[#0a0a0a] to-[#050312]",
     recommendedTier: "business" as const,

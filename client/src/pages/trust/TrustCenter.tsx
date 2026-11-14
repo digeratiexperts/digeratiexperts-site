@@ -14,6 +14,7 @@ import {
   HeroActions,
   Eyebrow,
 } from "@/components/site/chapters";
+import { ALERT_MONITORING_CLAIM_PHRASE } from "@shared/publicSecurityClaims";
 
 type DefRow = { label: string; value: string };
 
@@ -64,7 +65,7 @@ export default function TrustCenter() {
   const technicalControls = [
     "Encryption in transit and at rest on the systems that hold client data",
     "Multi-factor authentication (MFA)",
-    "24/7 alert monitoring through our contracted security operations partner, on plans that include it",
+    ALERT_MONITORING_CLAIM_PHRASE,
     "Intrusion detection/prevention",
     "Regular vulnerability scanning"
   ];

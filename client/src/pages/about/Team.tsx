@@ -23,6 +23,7 @@ import { photography } from "@/lib/visualAssets";
 import { CTA } from "@/lib/ctaCopy";
 import { PRIMARY_PHONE } from "@/data/companyContact";
 import { TEAM_OWNER } from "@/data/teamProfile";
+import { ALERT_MONITORING_CLAIM } from "@shared/publicSecurityClaims";
 
 // What each discipline does. Credentials are not typed here: they come from
 // client/src/data/credentials.ts with the issuer's verification link.
@@ -131,7 +132,7 @@ export default function Team() {
           {
             icon: Activity,
             title: "Alert monitoring",
-            text: "24/7 alert monitoring through our contracted security operations partner, on plans that include it.",
+            text: ALERT_MONITORING_CLAIM,
           },
           {
             icon: Clock,

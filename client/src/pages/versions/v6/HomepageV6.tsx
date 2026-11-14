@@ -14,6 +14,7 @@ import { ProtectionCommandDeck } from "@/components/visual/ProtectionCommandDeck
 import { useThreatFeed } from "@/hooks/useThreatFeed";
 import { THREAT_ATTRIBUTION } from "@shared/threatFeed";
 import "./v6.css";
+import { ALERT_MONITORING_CLAIM } from "@shared/publicSecurityClaims";
 
 /**
  * Digerati Experts homepage, Version 6: live homepage cleaned in the current
@@ -66,7 +67,7 @@ const PATHS = [
 
 /** The live services section's six capabilities, with their pages. */
 const CAPABILITIES = [
-  { title: "SOC / MDR monitoring", body: "24/7 alert monitoring through our contracted security operations partner, on plans that include it.", href: "/solutions/security-operations" },
+  { title: "SOC / MDR monitoring", body: ALERT_MONITORING_CLAIM, href: "/solutions/security-operations" },
   { title: "Endpoint security (EDR)", body: "Protect devices across the environment.", href: "/solutions/threat-detection" },
   { title: "SMART Identity (MFA + SSO)", body: "Stronger access without user chaos.", href: "/solutions/unified-security" },
   { title: "Privileged access controls", body: "Admin controls and audit visibility.", href: "/solutions/unified-security" },
@@ -154,7 +155,7 @@ const FAQ = [
   },
   {
     q: "Is my data secure?",
-    a: "Yes. We use enterprise-grade controls, 24/7 monitoring and documented security protocols. We help Arizona businesses prepare for HIPAA, PCI DSS, SOC 2 and cyber-insurance reviews, with clear ownership of credentials, policies and evidence.",
+    a: "Yes. We use enterprise-grade controls and documented security protocols, with monitoring matched to your plan. " + ALERT_MONITORING_CLAIM + " We help Arizona businesses prepare for HIPAA, PCI DSS, SOC 2 and cyber-insurance reviews, with clear ownership of credentials, policies and evidence.",
   },
 ];
 
