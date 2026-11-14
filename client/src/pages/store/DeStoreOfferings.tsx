@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "wouter";
+import { LayoutDashboard, Package, ShieldCheck, type LucideIcon } from "lucide-react";
+import { IconWell } from "@/components/visual/IconWell";
 import { termLabel } from "@shared/deStoreContract";
 import { refurbishedGradeTitle } from "@shared/deStoreLegalCopy";
 import { DeStoreShell } from "@/components/store/DeStoreShell";
@@ -10,6 +12,12 @@ const OFFERING_ACCENT = {
   refurbished_kits: "electric",
   standalone_services: "cyan",
 } as const;
+
+const OFFERING_ICON: Record<string, LucideIcon> = {
+  proactive_ecosystem: ShieldCheck,
+  refurbished_kits: Package,
+  standalone_services: LayoutDashboard,
+};
 
 function CatalogGrid({ items }: { items: DeStoreCatalogItem[] }) {
   if (!items.length) {
@@ -86,6 +94,7 @@ function OfferingsBody({ status }: { status: DeStoreStatus }) {
                     }}
                   />
                   <div className="relative">
+                    <IconWell icon={OFFERING_ICON[offering.id] ?? ShieldCheck} size="md" surface="dark" className="mb-5" />
                     <p className="font-mono text-sm uppercase tracking-[0.22em] text-[rgb(var(--de-accent-ink-rgb))]">
                       {String(index + 1).padStart(2, "0")}
                     </p>
