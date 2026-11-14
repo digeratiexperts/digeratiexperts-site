@@ -32,7 +32,7 @@ export default function HomepageB3(): JSX.Element {
     // Must match shared/routeMeta.json "/" (Joe-approved, 2026-10-20).
     title: "Managed IT Services & Cybersecurity in Arizona",
     description:
-      "Arizona MSP/MSSP. Cybersecurity-first managed IT, 24/7 emergency incident response, and a Cyber Risk Assessment that matches the operating model to your environment.",
+      "Arizona MSP/MSSP. Cybersecurity-first managed IT, incident response during business hours on plans that include it, and a Cyber Risk Assessment that matches the operating model to your environment.",
     canonical: "/",
   });
   const rootRef = useRef<HTMLDivElement>(null);
