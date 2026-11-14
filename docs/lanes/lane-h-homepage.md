@@ -101,8 +101,8 @@
 | 12 monitor CTA | "Get My Cyber Risk Assessment" | "Schedule Your Cyber Risk Assessment" |
 | 15 heading + button | "Start with a Cyber Risk Assessment" + "Get My Cyber Risk Assessment" | "Schedule Your Cyber Risk Assessment" (heading) + primary label (button) + new secondary **"Talk to an Expert"** |
 | 13 form | heading "Request a Cyber Risk Assessment", button "Get My Cyber Risk Assessment" | heading "Request your assessment here", button **"Request Assessment"** |
-| 09 team | "Talk to an Expert" in primary style | "Talk to an Expert" in secondary style + "or call 325-480-9870" |
-| 16 contact | text link "Get My Cyber Risk Assessment" + "Call 325-480-9870" | primary button "Schedule Your Cyber Risk Assessment" + secondary "Talk to an Expert · 325-480-9870" (tel) |
+| 09 team | "Talk to an Expert" in primary style | "Talk to an Expert" in secondary style + "or call [DE_PUBLIC_PHONE]" |
+| 16 contact | text link "Get My Cyber Risk Assessment" + "Call [DE_PUBLIC_PHONE]" | primary button "Schedule Your Cyber Risk Assessment" + secondary "Talk to an Expert · [DE_PUBLIC_PHONE]" (tel) |
 | 02 band | "Schedule Consultation" + "Call …" | removed (moved to the closing pair) |
 | hero secondary (button-hero-pricing) | "See Plans & Pricing" | unchanged label (navigation CTA in the secondary style; test id is CI-gated) |
 | Contact form submit | "Send Message" in the third style (`--dark`) | unchanged label, now the one primary style |
