@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from "react"
 import { Link } from "wouter";
 import { ArrowUp, CheckCircle2, Loader2, Sparkles, X } from "lucide-react";
 import { AskDeGlyph } from "@/components/icons/AskDeGlyph";
+import { COMPANY, PRIMARY_PHONE } from "@shared/companyContact";
 import { usePortalSession } from "@/components/portal/shell/portalSession";
 import { portalFetch, portalPost } from "@/lib/portalApi";
 import { CARD_DATA_REJECTED_MESSAGE, looksLikeCardData } from "@shared/pciGuard";
@@ -130,8 +131,8 @@ export function PortalHelpChat({ page, form }: { page: Page; form?: FormBridge }
   const first = (user?.fullName || "").split(" ")[0];
   const greeting =
     page.kind === "service_request_form"
-      ? `Hi${first ? ` ${first}` : ""}! I can help you fill out ${page.title}, check on a request, or get you to the team.`
-      : `Hi${first ? ` ${first}` : ""}! Ask me about your requests, or I can get you to the team.`;
+      ? `I'm DE Desk, an AI assistant for Digerati Experts. Hi${first ? ` ${first}` : ""}! I can help you fill out ${page.title}, check on a request, or get you to the team.`
+      : `I'm DE Desk, an AI assistant for Digerati Experts. Hi${first ? ` ${first}` : ""}! Ask me about your requests, or I can get you to the team.`;
   const typed = useTypewriter(greeting, open && !greeted);
 
   const prompts =
@@ -335,9 +336,9 @@ export function PortalHelpChat({ page, form }: { page: Page; form?: FormBridge }
             </span>
             <div className="min-w-0 flex-1">
               <h2 id="phc-title" className="text-sm font-semibold">
-                Ask DE
+                Ask DE · AI assistant
               </h2>
-              <p className="text-xs text-white/60">{agentLive ? "A DE team member is in this chat" : "DE Desk · help with this page"}</p>
+              <p className="text-xs text-white/60">{agentLive ? "A DE team member is in this chat" : "DE Desk · AI assistant"}</p>
             </div>
             <button
               type="button"
@@ -349,6 +350,18 @@ export function PortalHelpChat({ page, form }: { page: Page; form?: FormBridge }
             </button>
           </header>
 
+          <p className="phc-human-path" data-testid="portal-help-human-path">
+            Want a person?{" "}
+            <a href={PRIMARY_PHONE.telHref}>Call</a>,{" "}
+            <button type="button" onClick={() => void send("I'd like to leave a message for a person on the team.")}>
+              leave a message
+            </button>
+            , or{" "}
+            <a href={COMPANY.bookingUrl} target="_blank" rel="noopener noreferrer">
+              Book a Fit Call
+            </a>
+            .
+          </p>
           <div ref={logRef} role="log" aria-live="polite" aria-relevant="additions" className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
             <div className="phc-msg max-w-[88%] rounded-2xl rounded-tl-sm bg-white/[0.06] px-3.5 py-2.5 text-sm leading-relaxed">
               {greeted ? greeting : typed}

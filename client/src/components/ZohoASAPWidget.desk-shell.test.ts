@@ -58,7 +58,10 @@ describe("DE Desk shell positioning", () => {
     expect(src).toMatch(/role="tab"/);
     expect(src).toMatch(/aria-selected=\{isActive\}/);
     expect(src).not.toMatch(/aria-current=\{isActive \? "page"/);
-    expect(src).toMatch(/DE Desk is available/);
+    expect(src).toMatch(/DE Desk · AI assistant/);
+    expect(src).toMatch(/Want a person\?/);
+    expect(src).toMatch(/Book a Fit Call/);
+    expect(src).toMatch(/data-testid="desk-human-path"/);
     expect(src).not.toMatch(/AZ SOC Live/);
     expect(src).toMatch(/\.de-desk-tab\.is-active::after/);
     expect(src).not.toMatch(/\.de-desk-tab\.is-active \{\s*background: #E3B23C;/);

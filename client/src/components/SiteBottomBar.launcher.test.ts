@@ -71,7 +71,8 @@ describe("Ask DE launcher button", () => {
     expect(label).toContain("group-focus-visible:max-w-[12rem]");
     expect(label).toContain("motion-reduce:transition-none");
     // The button still names itself when the label is collapsed.
-    expect(src).toContain('aria-label={compact ? "Open Ask DE support options" : "Open Ask DE"}');
+    expect(src).toContain('aria-label={compact ? "Open Ask DE support options, AI assistant" : "Open Ask DE AI assistant"}');
+    expect(src).toContain("AI assistant");
   });
 });
 

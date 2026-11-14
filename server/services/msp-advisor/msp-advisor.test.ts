@@ -18,6 +18,7 @@ import { sanitizeActions, sanitizePath, assertNoInternalLeak, isAllowedActionTyp
 import { handleAdvisorChat } from "./advisor";
 import { _resetSessionsForTests } from "./session";
 import { PRIMARY_PHONE } from "@shared/companyContact";
+import { AI_IDENTITY_REPLY, isAskingAiIdentity } from "./identity";
 
 beforeEach(() => {
   _resetSessionsForTests();
@@ -647,4 +648,45 @@ describe("transient model retry", () => {
     );
     assert.equal(calls, 1);
   });
+
+describe("AI identity guard", () => {
+  it("recognizes questions about being a human, bot, robot, or AI, and ignores complaints", () => {
+    for (const ask of [
+      "are you human",
+      "Are you a human?",
+      "are you a bot",
+      "are you a robot",
+      "Are you a robot?",
+      "are you AI",
+      "are you an AI?",
+      "are you an AI assistant",
+      "who are you",
+      "am I talking to a bot",
+      "is this AI",
+    ]) {
+      assert.equal(isAskingAiIdentity(ask), true, ask);
+    }
+    for (const notAsk of [
+      "you sound like a robot",
+      "this reply is canned and scripted",
+      "I need a real person",
+      "human please",
+      "how do we use AI for email filtering",
+      "who are you working with",
+    ]) {
+      assert.equal(isAskingAiIdentity(notAsk), false, notAsk);
+    }
+  });
+
+  for (const ask of ["are you human?", "are you a bot", "Are you a robot?", "are you AI"]) {
+    it(`returns the fixed identity reply and never falls into the name gate or complaint path: ${ask}`, async () => {
+      const res = await handleAdvisorChat({ message: ask });
+      assert.equal(res.reply, AI_IDENTITY_REPLY);
+      assert.ok(res.reply.includes(PRIMARY_PHONE.display));
+      assert.doesNotMatch(res.reply, /what'?s your name|drop the script|You're right/i);
+      assert.ok(res.actions.some((a) => a.type === "leave_message"));
+      assert.ok(res.actions.some((a) => a.type === "request_callback"));
+    });
+  }
 });
+

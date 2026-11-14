@@ -35,7 +35,7 @@ import {
   X,
   DollarSign,
 } from "lucide-react";
-import { PRIMARY_PHONE } from "@shared/companyContact";
+import { COMPANY, PRIMARY_PHONE } from "@shared/companyContact";
 import { readDeskTicketResponse } from "@/lib/deskTicketResponse";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -1228,6 +1228,13 @@ export const ZohoASAPWidget = ({
     if (action.type === "open_portal" || action.type === "existing_client_support") analytics.chatSupportRouted();
   };
 
+  const openPersistentLeaveMessage = () => {
+    if (activeTab !== "chat") setActiveTab("chat");
+    const last = [...chatMessages].reverse().find((message) => message.role === "assistant");
+    const messageId = last?.id || CHAT_WELCOME_ID;
+    openDeskActionForm(messageId, { type: "leave_message", label: "Leave a message" }, "message");
+  };
+
   const openDeskActionForm = (messageId: string, action: DeskAction, form: DeskActionForm["form"]) => {
     trackDeskAction(action);
     setActionError(null);
@@ -1582,7 +1589,7 @@ export const ZohoASAPWidget = ({
             style={deskWindowStyle}
             role="dialog"
             aria-modal="true"
-            aria-label="DE Desk help"
+            aria-label="DE Desk AI assistant"
             data-testid="desk-modal"
             data-tab={activeTab}
             data-fullscreen={isDeskFullscreen ? "true" : undefined}
@@ -1609,11 +1616,11 @@ export const ZohoASAPWidget = ({
                   <span className="de-desk-avatar-dot" />
                 </div>
                 <div className="min-w-0">
-                  <h2 data-testid="text-widget-title">DE Desk</h2>
+                  <h2 data-testid="text-widget-title">DE Desk · AI assistant</h2>
                   <p data-testid="text-widget-status">
                     {agentLive
                       ? `${agentName || "Specialist"} joined · live handoff`
-                      : "DE Desk is available"}
+                      : "AI assistant"}
                   </p>
                 </div>
               </div>
@@ -1658,6 +1665,18 @@ export const ZohoASAPWidget = ({
                 <X size={13} aria-hidden="true" />
               </button>
             </header>
+            <p className="de-desk-human-path" data-testid="desk-human-path">
+              Want a person?{" "}
+              <a href={PRIMARY_PHONE.telHref}>Call</a>,{" "}
+              <button type="button" onClick={openPersistentLeaveMessage}>
+                leave a message
+              </button>
+              , or{" "}
+              <a href={COMPANY.bookingUrl} target="_blank" rel="noopener noreferrer">
+                Book a Fit Call
+              </a>
+              .
+            </p>
 
             <div
               className="de-desk-tabs"
@@ -2830,6 +2849,26 @@ export const ZohoASAPWidget = ({
               line-height: 1.2;
             }
             .de-desk-id p { font-size: 14px; color: var(--desk-ink-muted); margin-top: 1px; }
+            .de-desk-human-path {
+              flex-shrink: 0;
+              padding: 0 16px 10px;
+              font-size: 12.5px;
+              line-height: 1.45;
+              color: var(--desk-ink-muted);
+            }
+            .de-desk-human-path a,
+            .de-desk-human-path button {
+              color: var(--desk-ink);
+              background: none;
+              border: 0;
+              padding: 0;
+              font: inherit;
+              text-decoration: underline;
+              text-underline-offset: 2px;
+              cursor: pointer;
+            }
+            .de-desk-human-path a:hover,
+            .de-desk-human-path button:hover { color: #E3B23C; }
             .de-desk-close {
               width: 44px; height: 44px; border-radius: 9px;
               border: 1px solid var(--desk-border);

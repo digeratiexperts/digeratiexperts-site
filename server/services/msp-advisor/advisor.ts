@@ -25,6 +25,7 @@ import { ADVISOR_SYSTEM_PREFIX, buildSystemPrompt, INTERNAL_REFUSAL, BANNED_CANN
 import { withTransientModelRetry } from "./model-retry";
 import { verifyAdvisorReply } from "./ground";
 import { assertNoCardData } from "@shared/pciGuard";
+import { AI_IDENTITY_REPLY, isAskingAiIdentity } from "./identity";
 import { sanitizeActions, assertNoInternalLeak, defaultActionsForMode, materializeAction, ensureLoginAction } from "./actions";
 import { buildHeuristicReply, ensureFreshReply, isNearDuplicate } from "./fallback";
 import {
@@ -277,6 +278,37 @@ export async function handleAdvisorChat(req: AdvisorChatRequest): Promise<Adviso
       profile,
       actions: defaultActionsForMode(session.lastMode),
       analyticsEvents: ["qualified_question"],
+      knownFacts: knownFactsList(profile),
+      ...persisted,
+    };
+  }
+
+  // Identity questions must run before canned-complaint or name-gate routing.
+  // "Are you a robot?" would otherwise match the complaint path on "robot".
+  if (isAskingAiIdentity(message)) {
+    const reply = AI_IDENTITY_REPLY;
+    appendMessage(session, "user", message);
+    appendMessage(session, "assistant", reply);
+    session.lastAssistantReply = reply;
+    session.lastMode = mode === "off_topic" ? "msp_discovery" : mode;
+    const persisted = await persistTurn(session.id, message, reply, profile, page?.pathname);
+    const actions = [
+      materializeAction("contact_sales", `Call ${PRIMARY_PHONE.display}`),
+      materializeAction("request_callback", "Request a callback"),
+      materializeAction("leave_message", "Leave a message"),
+    ].filter((a): a is AdvisorAction => Boolean(a));
+    const analyticsEvents = ["qualified_question"];
+    if (!session.analyticsFlags.conversation_started) {
+      session.analyticsFlags.conversation_started = true;
+      analyticsEvents.unshift("conversation_started");
+    }
+    return {
+      sessionId: session.id,
+      reply,
+      mode: session.lastMode,
+      profile,
+      actions,
+      analyticsEvents,
       knownFacts: knownFactsList(profile),
       ...persisted,
     };

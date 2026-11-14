@@ -284,7 +284,7 @@ function AskDELauncherButton({ compact = false }: { compact?: boolean }) {
           >
             Stuck on something IT or security?
             <small className="de-ask-nudge-sub mt-0.5 block text-[12px] font-normal">
-              Ask DE — real engineers, clear next step.
+              Ask DE — an AI assistant, and a clear next step.
             </small>
           </button>
         </div>
@@ -343,7 +343,7 @@ function AskDELauncherButton({ compact = false }: { compact?: boolean }) {
             <div className="mb-5 flex items-start justify-between gap-4 pr-8">
               <div>
                 <p className="text-[24px] font-semibold leading-tight tracking-[-0.035em] text-[#f5f5f4]">Ask DE</p>
-                <p className="mt-1 text-[15px] leading-6 text-[#b4b4ba]">How can we help you today?</p>
+                <p className="mt-1 text-[15px] leading-6 text-[#b4b4ba]">AI assistant</p>
               </div>
               <div
                 className={`mt-3 flex h-14 w-14 shrink-0 items-center justify-center rounded-full ${askDeBadgeClasses(compact)}`}
@@ -415,7 +415,7 @@ function AskDELauncherButton({ compact = false }: { compact?: boolean }) {
         // text at 1440). The extra right padding only appears with the label.
         className={`group flex h-10 shrink-0 items-center rounded-full px-1${compact ? "" : " sm:hover:pr-1.5 sm:focus-visible:pr-1.5"} text-white transition-[background-color,padding] duration-200 motion-reduce:transition-none hover:bg-white/[0.06] focus-visible:rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#f5f5f4] focus-visible:ring-offset-2 focus-visible:ring-offset-black`}
         data-testid="button-open-asap-widget"
-        aria-label={compact ? "Open Ask DE support options" : "Open Ask DE"}
+        aria-label={compact ? "Open Ask DE support options, AI assistant" : "Open Ask DE AI assistant"}
         aria-expanded={showMenu}
         aria-haspopup="dialog"
       >
@@ -431,7 +431,7 @@ function AskDELauncherButton({ compact = false }: { compact?: boolean }) {
             data-testid="ask-de-launcher-label"
           >
             <span className="block text-base font-semibold leading-4 tracking-tight">Ask DE</span>
-            <span className="block text-base leading-4 text-white/70">We&apos;re here to help.</span>
+            <span className="block text-base leading-4 text-white/70">AI assistant</span>
           </span>
         )}
       </button>
