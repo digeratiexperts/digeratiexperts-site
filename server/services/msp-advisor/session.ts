@@ -7,6 +7,35 @@ const MAX_MESSAGES = 24;
 
 const sessions = new Map<string, AdvisorSession>();
 
+/** Personal contact fields that must never appear on the unauthenticated session GET. */
+export const PUBLIC_SESSION_PII_FIELDS = ["email", "phone", "contactName"] as const;
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/** Strip email addresses and phone numbers from free text. */
+export function redactContactPii(text: string, profile?: ConversationProfile): string {
+  let out = text
+    .replace(/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi, "[redacted]")
+    .replace(/\b(?:\+?1[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b/g, "[redacted]");
+  if (profile) {
+    for (const value of [profile.email, profile.phone, profile.contactName]) {
+      const trimmed = (value || "").trim();
+      if (trimmed.length < 2) continue;
+      out = out.replace(new RegExp(escapeRegExp(trimmed), "gi"), "[redacted]");
+    }
+  }
+  return out;
+}
+
+export function publicProfileView(
+  profile: ConversationProfile,
+): Omit<ConversationProfile, "email" | "phone" | "contactName"> {
+  const { email: _email, phone: _phone, contactName: _contactName, ...safe } = profile;
+  return safe;
+}
+
 function newId(): string {
   return randomBytes(16).toString("hex");
 }
@@ -69,13 +98,31 @@ export function updateProfile(session: AdvisorSession, profile: ConversationProf
   session.updatedAt = Date.now();
 }
 
+/**
+ * Unauthenticated view of a DE Desk session. Email, phone, and contact name are
+ * omitted from the profile, and the same values (plus email/phone patterns) are
+ * redacted from message text. No client currently calls GET
+ * /api/public/advisor/session/:id; this keeps that endpoint from leaking PII
+ * to anyone who only has the session id.
+ */
 export function publicSessionView(session: AdvisorSession) {
   return {
     sessionId: session.id,
-    profile: session.profile,
-    messages: session.messages.map((m) => ({ role: m.role, content: m.content })),
+    profile: publicProfileView(session.profile),
+    messages: session.messages.map((m) => ({
+      role: m.role,
+      content: redactContactPii(m.content, session.profile),
+    })),
     lastMode: session.lastMode,
   };
+}
+
+export function getPublicSessionResponse(id: string):
+  | { status: 200; body: ReturnType<typeof publicSessionView> }
+  | { status: 404; body: { error: string } } {
+  const session = getSession(id);
+  if (!session) return { status: 404, body: { error: "Session not found" } };
+  return { status: 200, body: publicSessionView(session) };
 }
 
 /** Test helper */

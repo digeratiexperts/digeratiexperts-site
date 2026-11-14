@@ -31,6 +31,7 @@ import {
   Trash2,
   Folder,
   FolderOpen,
+  KeyRound,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -48,6 +49,14 @@ import { Link, useLocation } from "wouter";
 import { portalFetch, portalGet, portalPost } from "@/lib/portalApi";
 import { usePortalSession } from "@/components/portal/shell/portalSession";
 import { useToast } from "@/hooks/use-toast";
+import { PortalChatSecureShare } from "@/components/portal/desk/PortalSecureFields";
+import {
+  DE_SECURE_REQUEST_TEMPLATE_WEBSITE,
+  SECRET_IN_AGENT_REPLY_WARNING,
+  SECRET_IN_CHAT_WARNING,
+  looksLikeSecret,
+} from "@/lib/deskSecureField";
+import { CARD_DATA_REJECTED_MESSAGE, CARD_DATA_REJECTED_TITLE, looksLikeCardData } from "@shared/pciGuard";
 
 interface ChatMessage {
   id: string;
@@ -199,6 +208,8 @@ export default function PortalChat() {
   const [, navigate] = useLocation();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [messageText, setMessageText] = useState("");
+  // DE Desk secure field (#1179): share a password on a ticket instead of the chat.
+  const [secureShareOpen, setSecureShareOpen] = useState(false);
   const [sending, setSending] = useState(false);
   const [connected, setConnected] = useState(true);
   const [chatAllowed, setChatAllowed] = useState(true);
@@ -647,6 +658,10 @@ export default function PortalChat() {
     ]
       .filter((line): line is string => line !== null)
       .join("\n");
+    if (looksLikeCardData(subject) || looksLikeCardData(description)) {
+      toast({ title: CARD_DATA_REJECTED_TITLE, description: CARD_DATA_REJECTED_MESSAGE, variant: "destructive" });
+      return;
+    }
     sessionStorage.setItem(
       DESK_TICKET_DRAFT_KEY,
       JSON.stringify({ subject, description, priority: "medium" }),
@@ -702,6 +717,15 @@ export default function PortalChat() {
     e?.preventDefault();
     if (!selectedDesk || !deskReply.trim() || deskSending || !token) return;
     const content = deskReply.trim();
+    if (looksLikeCardData(content)) {
+      toast({ title: CARD_DATA_REJECTED_TITLE, description: CARD_DATA_REJECTED_MESSAGE, variant: "destructive" });
+      return;
+    }
+    // The website visitor's transcript keeps every reply; a secret goes on the ticket instead (#1179).
+    if (looksLikeSecret(content)) {
+      toast({ title: "Not sent", description: SECRET_IN_AGENT_REPLY_WARNING, variant: "destructive" });
+      return;
+    }
     setDeskSending(true);
     setDeskReply("");
     const tempId = `temp-agent-${Date.now()}`;
@@ -768,6 +792,16 @@ export default function PortalChat() {
     async (e?: React.FormEvent) => {
       e?.preventDefault();
       if (!messageText.trim() || sending || !chatAllowed) return;
+      if (looksLikeCardData(messageText)) {
+        toast({ title: CARD_DATA_REJECTED_TITLE, description: CARD_DATA_REJECTED_MESSAGE, variant: "destructive" });
+        return;
+      }
+      // Keep a password out of the transcript; offer the secure field instead (#1179).
+      if (looksLikeSecret(messageText)) {
+        toast({ title: "Not sent: that looks like a password", description: SECRET_IN_CHAT_WARNING, variant: "destructive" });
+        setSecureShareOpen(true);
+        return;
+      }
 
       const currentMessage = messageText;
       setSending(true);
@@ -1469,10 +1503,24 @@ export default function PortalChat() {
                             <Send className="h-4 w-4" />
                           </Button>
                         </div>
-                        <p className="mt-2 text-sm text-white/40">
+                        <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+                          <p className="mt-2 text-sm text-white/40">
                           Enter to send · Shift+Enter for newline · This channel is website DE Desk
                           only
                         </p>
+                          <button
+                            type="button"
+                            className="inline-flex items-center gap-1.5 rounded-md border border-white/15 px-2.5 py-1 text-xs text-white/80 hover:bg-white/10"
+                            onClick={() => {
+                              setDeskReply(DE_SECURE_REQUEST_TEMPLATE_WEBSITE);
+                              deskComposerRef.current?.focus();
+                            }}
+                            data-testid="button-desk-secure-request"
+                          >
+                            <KeyRound className="h-3.5 w-3.5" aria-hidden />
+                            Ask for it securely
+                          </button>
+                        </div>
                       </form>
                     )}
                   </>
@@ -1625,6 +1673,11 @@ export default function PortalChat() {
                   <div ref={messagesEndRef} />
                 </div>
 
+                {secureShareOpen && (
+                  <div className="border-t border-white/10 bg-[#151217]/80 p-3 text-white">
+                    <PortalChatSecureShare onClose={() => setSecureShareOpen(false)} />
+                  </div>
+                )}
                 <form
                   onSubmit={handleSendMessage}
                   className="flex gap-2 border-t border-white/10 bg-[#151217]/80 p-3"
@@ -1644,6 +1697,18 @@ export default function PortalChat() {
                     className="min-h-[52px] flex-1 resize-none border-white/15 bg-[#050312] text-white placeholder:text-white/35 focus-visible:ring-[#D3126A]"
                     data-testid="input-message"
                   />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setSecureShareOpen((open) => !open)}
+                    className="h-auto min-h-[52px] shrink-0 border-white/15 bg-transparent text-white hover:bg-white/10"
+                    aria-label="Share a password securely"
+                    aria-expanded={secureShareOpen}
+                    title="Share a password securely"
+                    data-testid="button-secure-share"
+                  >
+                    <KeyRound className="h-4 w-4" />
+                  </Button>
                   <Button
                     type="submit"
                     disabled={!messageText.trim() || !connected || sending}

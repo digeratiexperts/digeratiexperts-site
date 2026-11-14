@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { PortalLayout } from "./PortalLayout";
 import { queryClient } from "@/lib/queryClient";
 import { portalGet, portalPost } from "@/lib/portalApi";
+import { CARD_DATA_REJECTED_MESSAGE, looksLikeCardData } from "@shared/pciGuard";
 import { formatDeskTimestamp } from "@/lib/deskTimestamp";
 import {
   PORTAL_TICKET_ACCEPT,
@@ -17,6 +18,8 @@ import {
 } from "@/lib/portalTicketAttach";
 import { Callout, EmptyState, Panel, Priority, TicketStatus, Token } from "@/components/portal/ui";
 import { cn } from "@/lib/utils";
+import { usePortalSession } from "@/components/portal/shell/portalSession";
+import { PortalTicketSecureFields } from "@/components/portal/desk/PortalSecureFields";
 
 interface Comment {
   id: string;
@@ -51,7 +54,11 @@ function initials(name: string): string {
 export default function PortalTicketDetail() {
   const params = useParams<{ id: string }>();
   const ticketId = params.id;
+  // DE side of the ticket (portal admin): may add a secure field; reveal stays in the Hub (#1179).
+  const { user: portalSessionUser } = usePortalSession();
+  const isDeStaff = portalSessionUser?.role === "admin";
   const [commentText, setCommentText] = useState("");
+  const [commentError, setCommentError] = useState("");
   const [attachError, setAttachError] = useState("");
   const [attaching, setAttaching] = useState(false);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
@@ -76,6 +83,11 @@ export default function PortalTicketDetail() {
   const handleAddComment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!commentText.trim()) return;
+    if (looksLikeCardData(commentText)) {
+      setCommentError(CARD_DATA_REJECTED_MESSAGE);
+      return;
+    }
+    setCommentError("");
     addCommentMutation.mutate(commentText);
   };
 
@@ -277,9 +289,9 @@ export default function PortalTicketDetail() {
                   {attaching ? "Uploading…" : "Upload attachments"}
                 </Button>
               </div>
-              {addCommentMutation.isError && (
+              {(commentError || addCommentMutation.isError) && (
                 <Callout tone="bad" title="Your reply wasn't sent">
-                  {addCommentMutation.error instanceof Error ? addCommentMutation.error.message : "Please try again."}
+                  {commentError || (addCommentMutation.error instanceof Error ? addCommentMutation.error.message : "Please try again.")}
                 </Callout>
               )}
             </form>
@@ -304,6 +316,11 @@ export default function PortalTicketDetail() {
               ))}
             </dl>
           </Panel>
+          {ticketId && (
+            <Panel id="ticket-secure-fields" title="Secure fields">
+              <PortalTicketSecureFields ticketId={ticketId} isDeStaff={isDeStaff} />
+            </Panel>
+          )}
           <Callout tone="info">
             <span className="inline-flex items-start gap-2">
               <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
