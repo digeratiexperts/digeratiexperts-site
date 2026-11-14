@@ -95,7 +95,7 @@ export default function HomepageV8(): JSX.Element {
         <WebSiteJsonLd />
         <MegaMenu />
         <SiteBottomBar autohide />
-        <main id="home-main" className="contents">
+        <main id="main-content" tabIndex={-1} className="contents">
           {/* Hero + the trust strip it carries. */}
           <ScrollSectionAuto id="hero" chapter>
             <div className="v8s-01">

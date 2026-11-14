@@ -83,7 +83,7 @@ export default function HomepageV9(): JSX.Element {
       <div className="v9 min-h-screen bg-[#050312]" ref={rootRef}>
         <MegaMenu />
         <SiteBottomBar autohide />
-        <main id="home-main" className="contents">
+        <main id="main-content" tabIndex={-1} className="contents">
           <ScrollSectionAuto id="hero" chapter>
             <div className="v9s-01"><V9Hero /></div>
             <div className="v9s-02"><V9WhyWeExist /></div>

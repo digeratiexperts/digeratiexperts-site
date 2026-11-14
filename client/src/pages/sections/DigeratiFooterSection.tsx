@@ -41,7 +41,7 @@ export const DigeratiFooterSection = (): JSX.Element => {
           <div>
             <h4 className="text-lg font-semibold mb-4">Resources</h4>
             <ul className="space-y-2">
-              <li><a href="/resources/blog" className="text-gray-400 hover:text-white transition-colors">Digerati Journal</a></li>
+              <li><a href="/resources/blog" className="text-gray-400 hover:text-white transition-colors">DE Journal</a></li>
               <li><a href="/resources/security-updates" className="text-gray-400 hover:text-white transition-colors">Threat Intelligence</a></li>
               <li><a href="/resources/case-studies" className="text-gray-400 hover:text-white transition-colors">Case Studies</a></li>
               <li><a href="/legal/privacy-policy" className="text-gray-400 hover:text-white transition-colors">Privacy Policy</a></li>

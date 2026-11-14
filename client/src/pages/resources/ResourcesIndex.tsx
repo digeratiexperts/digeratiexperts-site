@@ -17,7 +17,7 @@ import { DocumentFlipbook } from "@/pages/resources/DocumentFlipbook";
 
 const resources = [
   {
-    name: "Digerati Journal",
+    name: "DE Journal",
     href: "/resources/blog",
     description: "Field notes on managed IT, cybersecurity, and Arizona business risk.",
     icon: BookOpen,
@@ -77,9 +77,9 @@ const resources = [
     icon: BookOpen,
   },
   {
-    name: "Campaign offers",
+    name: "Current offers",
     href: "/go",
-    description: "Single-offer pages for search and social — one path, one primary CTA.",
+    description: "Offers and assessments available now",
     icon: Shield,
   },
 ];

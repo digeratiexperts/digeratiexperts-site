@@ -28,8 +28,8 @@ export const COMPANY = {
   legalName: "Digerati Experts",
   email: "info@digeratiexperts.com",
   supportEmail: "support@digeratiexperts.com",
-  /** Sales department inbox (confirmed by DE, 2026-10-03; note the hyphenated domain). */
-  salesEmail: "sales@digerati-experts.com",
+  /** Public sales inbox. Client-facing addresses use digeratiexperts.com; the hyphenated domain is internal only. */
+  salesEmail: "sales@digeratiexperts.com",
   /** Invoice questions when card checkout is not connected. Already used by the portal pay route. */
   billingEmail: "billing@digeratiexperts.com",
   privacyEmail: "privacy@digeratiexperts.com",

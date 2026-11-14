@@ -36,7 +36,7 @@ const serviceLinks = [
 ];
 
 const resourceLinks = [
-  { name: "Digerati Journal", href: "/resources/blog" },
+  { name: "DE Journal", href: "/resources/blog" },
   { name: "Cyber Facts", href: "/resources/cyber-facts" },
   { name: "Knowledge Base", href: "/support/knowledge-base" },
   { name: "Contact", href: "/contact" },

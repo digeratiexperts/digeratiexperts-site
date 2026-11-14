@@ -489,10 +489,15 @@ html[data-sticky-cta-scrolling="true"] .de-bottom-bar {
  * lib/overlayDock.ts). The overlay's own backdrop already dims the page, so
  * nothing is lost — the chrome fades straight back in on close.
  */
+html[data-dock-hidden="true"] {
+  --de-cookie-h: 0px !important;
+}
+
 html[data-dock-hidden="true"] .de-unified-bar,
 html[data-dock-hidden="true"] .de-fab-rail,
 html[data-dock-hidden="true"] .de-scroll-top,
-html[data-dock-hidden="true"] .de-bottom-bar {
+html[data-dock-hidden="true"] .de-bottom-bar,
+html[data-dock-hidden="true"] .de-cookie-banner {
   opacity: 0 !important;
   visibility: hidden;
   pointer-events: none;
@@ -1066,6 +1071,11 @@ html[data-dock-hidden="true"] .de-bottom-bar {
 /* Fit mega-menus to the viewport. Density lives on Solutions; scroll is a last resort. */
 .mega-menu-dropdown {
   max-height: calc(100dvh - var(--de-nav-current-bottom) - var(--de-cookie-h, 0px) - 4.5rem);
+}
+
+/* Solutions is denser: use the leftover viewport instead of leaving a large gap. */
+.mega-menu-dropdown--dense {
+  max-height: calc(100dvh - var(--de-nav-current-bottom) - var(--de-cookie-h, 0px) - 0.75rem);
 }
 
 .mega-menu-dropdown-scroll {
