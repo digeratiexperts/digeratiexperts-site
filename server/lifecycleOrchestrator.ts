@@ -77,7 +77,7 @@ export async function lifecycleIntegrationStatus() {
       : Promise.resolve({ success: false, message: "JUMPCLOUD_API_KEY not configured" }),
     blackpointConfigured()
       ? blackpointTestConnection()
-      : Promise.resolve({ success: false, message: "BLACKPOINT_API_KEY not configured" }),
+      : Promise.resolve({ success: false, message: "24/7 MDR add-on API key not configured" }),
   ]);
   return {
     jumpcloud: { configured: jumpcloudConfigured(), ...jc },

@@ -108,7 +108,7 @@ export function buildProvisioningSummary(input: {
     },
     {
       key: "blackpoint",
-      label: offboard ? "Blackpoint protection removed" : "Blackpoint protection",
+      label: offboard ? "24/7 MDR add-on removed" : "24/7 MDR add-on",
       state: bpState,
       detail: integrationDetail(run?.blackpoint, bpState),
       at,
