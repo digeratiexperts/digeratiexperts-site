@@ -1,0 +1,380 @@
+{
+  "sourceRef": "29ef5642edd5bd75faaad9b49092588ca92b9833",
+  "baseRef": "5d8baf37cd30471f8cca476ffcbed6d4bc8f93b8",
+  "ownerSourcePatchSHA256": "8bccf23df1b401d40451c1da06db055e9b792395d0eda258ef140bfc98551e2c",
+  "resourceValidator": "veraPDF 1.30.2 PDF/UA-1 automated checks: 16/16 passed; not a full accessibility conformance claim",
+  "pdfs": [
+    {
+      "path": "client/public/assets/legal/portal/client-portal-acceptable-use-policy.pdf",
+      "beforeSHA256": "3511f8e5c1a5a8f5c811c8711c40551e3fbdca482a65c6a38afb7c5830c8ce59",
+      "afterSHA256": "41a9d192e363850420727989ec4606aaf490fe744dd1fafc19b41e41fc5f3f71",
+      "retiredBefore": 1,
+      "retiredAfter": 0,
+      "markerAfter": 1,
+      "normalizedWordsRemoved": {},
+      "normalizedWordsAdded": {}
+    },
+    {
+      "path": "client/public/assets/legal/portal/client-portal-guide.pdf",
+      "beforeSHA256": "bedee1680847fea5eafb96b10edf9626022aeef3222e2e228ae6a54294ebb6f3",
+      "afterSHA256": "12bc5437ca190ed02e6305ef48e44c446de3bc0c65434cec20936b97bed4b0fd",
+      "retiredBefore": 1,
+      "retiredAfter": 0,
+      "markerAfter": 1,
+      "normalizedWordsRemoved": {},
+      "normalizedWordsAdded": {}
+    },
+    {
+      "path": "client/public/assets/legal/portal/client-portal-terms-and-rules-of-engagement.pdf",
+      "beforeSHA256": "12afcaf4d44b92bbf570963f1998225647287f894887458bb3bd692e7e6e6cc1",
+      "afterSHA256": "54008b1590c0df725a47049f82791bcaae42ed956e46453946cf9d0cd9fc3aa1",
+      "retiredBefore": 1,
+      "retiredAfter": 0,
+      "markerAfter": 1,
+      "normalizedWordsRemoved": {},
+      "normalizedWordsAdded": {}
+    },
+    {
+      "path": "client/public/assets/resources/checklists/backup-bcdr-checklist.pdf",
+      "beforeSHA256": "ecd41eb7f35cafe3012800bffb04b2eceecf1b4946251ed5a063d729a2d25a36",
+      "afterSHA256": "37eb488a446f0c23b475d1bd99858fcc067c23cd42011bf3a9a38132e05d5b1e",
+      "retiredBefore": 1,
+      "retiredAfter": 0,
+      "markerAfter": 1,
+      "normalizedWordsRemoved": {},
+      "normalizedWordsAdded": {}
+    },
+    {
+      "path": "client/public/assets/resources/checklists/security-readiness-checklist.pdf",
+      "beforeSHA256": "5a007f736df5ed852c2efaed01bd9145e702936c1623fb76f01111a6c8b4160f",
+      "afterSHA256": "5e94105c52c83645383e4dcf15de880ba4ea74b7c29b37c8b6e1e3ac9a035862",
+      "retiredBefore": 1,
+      "retiredAfter": 0,
+      "markerAfter": 1,
+      "normalizedWordsRemoved": {},
+      "normalizedWordsAdded": {}
+    },
+    {
+      "path": "client/public/assets/resources/datasheets/co-managed-it-datasheet.pdf",
+      "beforeSHA256": "216512ea7a4d5468a65c21d1f0544d6e68ae5ead9bcdb8f767319694e9505ef3",
+      "afterSHA256": "a09651d73718b23c4cb56f88780403aa96717163e6e7545831ece135feb34410",
+      "retiredBefore": 1,
+      "retiredAfter": 0,
+      "markerAfter": 1,
+      "normalizedWordsRemoved": {},
+      "normalizedWordsAdded": {}
+    },
+    {
+      "path": "client/public/assets/resources/datasheets/managed-workplace-overview.pdf",
+      "beforeSHA256": "97bbe07048a98294ceea49a42c39d6c81e961a605dab7a76f9a354fecfd26e3c",
+      "afterSHA256": "161c251bcc8916d9e5bfe5f647ffc1388be1df202e5678009af6564ad6a93387",
+      "retiredBefore": 1,
+      "retiredAfter": 0,
+      "markerAfter": 1,
+      "normalizedWordsRemoved": {},
+      "normalizedWordsAdded": {}
+    },
+    {
+      "path": "client/public/assets/resources/datasheets/proactive-business-ecosystem-datasheet.pdf",
+      "beforeSHA256": "c1deca10f84e4480bd58e32c1ec4b0c6da7cd034a1aa8d3a4b7ccf7eaf66b947",
+      "afterSHA256": "9731804208e6c7d8d72f8c7231bfee9d02fd1a0a820c3a251637ce5b0ab6d002",
+      "retiredBefore": 1,
+      "retiredAfter": 0,
+      "markerAfter": 1,
+      "normalizedWordsRemoved": {
+        "your": 1
+      },
+      "normalizedWordsAdded": {
+        "managed": 2,
+        "and": 1,
+        "with": 1,
+        "a": 1,
+        "required": 1,
+        "fully": 1,
+        "co": 1,
+        "plans": 1,
+        "start": 1,
+        "which": 1
+      }
+    },
+    {
+      "path": "client/public/assets/resources/datasheets/proactive-ecosystem-overview.pdf",
+      "beforeSHA256": "a43c396ccdf3829cf95cbd4b472ae5f2ddacdaba705d4ce86df3261e407c9139",
+      "afterSHA256": "0decf953aa7d39ebae06095b8224eec14d31b24ae2a4e9a9f96845f471c338ef",
+      "retiredBefore": 1,
+      "retiredAfter": 0,
+      "markerAfter": 1,
+      "normalizedWordsRemoved": {},
+      "normalizedWordsAdded": {}
+    },
+    {
+      "path": "client/public/assets/resources/datasheets/proactive-enterprise-ecosystem-datasheet.pdf",
+      "beforeSHA256": "a31aa798d2c54843d1b034553aa88736299a297d390d4cf1fc8954526b315f2b",
+      "afterSHA256": "ce1a9112e93b4fb7c2893ab8213f92e8a947ecd865345fdbc768ac62d1f61257",
+      "retiredBefore": 1,
+      "retiredAfter": 0,
+      "markerAfter": 1,
+      "normalizedWordsRemoved": {
+        "your": 1
+      },
+      "normalizedWordsAdded": {
+        "managed": 2,
+        "and": 1,
+        "a": 1,
+        "with": 1,
+        "required": 1,
+        "fully": 1,
+        "co": 1,
+        "plans": 1,
+        "start": 1,
+        "which": 1
+      }
+    },
+    {
+      "path": "client/public/assets/resources/datasheets/proactive-it-ecosystem-datasheet.pdf",
+      "beforeSHA256": "d6024e12ba281ee4ef5e5136f86d27a10b48efe3e97603891bcb194325172285",
+      "afterSHA256": "f8fa4b43295eeaa5ba4b56f1331ce8495511e630bf69e32a15edcf27fe0c31a9",
+      "retiredBefore": 1,
+      "retiredAfter": 0,
+      "markerAfter": 1,
+      "normalizedWordsRemoved": {
+        "your": 1
+      },
+      "normalizedWordsAdded": {
+        "managed": 2,
+        "with": 1,
+        "a": 1,
+        "and": 1,
+        "required": 1,
+        "fully": 1,
+        "co": 1,
+        "plans": 1,
+        "start": 1,
+        "which": 1
+      }
+    },
+    {
+      "path": "client/public/assets/resources/datasheets/proactive-office-ecosystem-datasheet.pdf",
+      "beforeSHA256": "26d0211521e1ae4cb0fd567644b0bc1d85013ce7a2557eded50e7c8f9ac65b94",
+      "afterSHA256": "2e2a570808864b3b43c54310e2d47f88c3d0220b953b00963f52dea5d582c836",
+      "retiredBefore": 1,
+      "retiredAfter": 0,
+      "markerAfter": 1,
+      "normalizedWordsRemoved": {
+        "your": 1
+      },
+      "normalizedWordsAdded": {
+        "managed": 2,
+        "and": 1,
+        "with": 1,
+        "required": 1,
+        "a": 1,
+        "fully": 1,
+        "co": 1,
+        "plans": 1,
+        "start": 1,
+        "which": 1
+      }
+    },
+    {
+      "path": "client/public/assets/resources/datasheets/ucaas-voice-meetings-datasheet.pdf",
+      "beforeSHA256": "5b6d3f59c96c9dc4cb59d98e91856e23281baec9e8c9e14a7229cb15062af980",
+      "afterSHA256": "9582b5a4ba17e9936b5a36563fc58d25f06636a6a7a45b2a31ab62da87ba444c",
+      "retiredBefore": 1,
+      "retiredAfter": 0,
+      "markerAfter": 1,
+      "normalizedWordsRemoved": {},
+      "normalizedWordsAdded": {}
+    },
+    {
+      "path": "client/public/assets/resources/reports/compliance-risk-reports-overview.pdf",
+      "beforeSHA256": "eef6083ec1e9ee6740151f0db3d060d42052055d7071750e35e8051d75404899",
+      "afterSHA256": "ffe088011c6372241227f843284d2d487675ddd0e0981c532a1ebe7bedfdbda2",
+      "retiredBefore": 1,
+      "retiredAfter": 0,
+      "markerAfter": 1,
+      "normalizedWordsRemoved": {},
+      "normalizedWordsAdded": {}
+    },
+    {
+      "path": "client/public/assets/resources/reports/cyber-risk-assessment-sample.pdf",
+      "beforeSHA256": "50d37a6f4c4101cc0a50d329a1eaf228e5a4941226ad3cc356cb0dd1e4e23647",
+      "afterSHA256": "9aa12a1e26e45a77c3f63e5dc7d99c69a81db3d5f717f9e8ba19e2bd338e506c",
+      "retiredBefore": 1,
+      "retiredAfter": 0,
+      "markerAfter": 1,
+      "normalizedWordsRemoved": {},
+      "normalizedWordsAdded": {}
+    },
+    {
+      "path": "client/public/assets/resources/reports/sample-quarterly-business-review.pdf",
+      "beforeSHA256": "a3f163e8a9f236570b4a52b59fede60e4e4aa95a5812350be50cd4769f5edd7e",
+      "afterSHA256": "cb4421e6c9ed2910dbde576a0bb6035e0c7904e7df6657905e204036e1abae97",
+      "retiredBefore": 1,
+      "retiredAfter": 0,
+      "markerAfter": 1,
+      "normalizedWordsRemoved": {},
+      "normalizedWordsAdded": {}
+    },
+    {
+      "path": "document_templates/original/MSA-Digerati-Experts-2026-v2026.6.pdf",
+      "beforeSHA256": "60f306af0cd63b0d9d05339bc5b84ae6e8afa220d4ba1135a52d0ee5bb72895b",
+      "afterSHA256": "7eb2d76ead90caff04a14db9e4d3d711df8d7adc041185bb47f3975027e384ec",
+      "retiredBefore": 1,
+      "retiredAfter": 0,
+      "markerAfter": 1,
+      "normalizedWordsRemoved": {},
+      "normalizedWordsAdded": {}
+    },
+    {
+      "path": "document_templates/original/Order Form - Service Selection and Pricing-v2026.6.pdf",
+      "beforeSHA256": "768f259780cd08d654494b2cbf2805f4661049d3cc2e4d4adc8a221f8659f03f",
+      "afterSHA256": "ed1090808a837b02d79512bc253c1651516c8e8c3b9a99f9412546a36ff5a93e",
+      "retiredBefore": 1,
+      "retiredAfter": 0,
+      "markerAfter": 1,
+      "normalizedWordsRemoved": {},
+      "normalizedWordsAdded": {}
+    },
+    {
+      "path": "document_templates/original/SOW-DE-Backup-Disaster-Recovery-and-Continuity-2026-v2026.6.pdf",
+      "beforeSHA256": "c149964d95b35fc68f3ba0dc809084471949ef7fee6be22cfe04ba26892c2ab6",
+      "afterSHA256": "ac4690557293b45f0c7e50f331cc3aa54abdbed099270433f148e92917093f7b",
+      "retiredBefore": 1,
+      "retiredAfter": 0,
+      "markerAfter": 1,
+      "normalizedWordsRemoved": {},
+      "normalizedWordsAdded": {}
+    },
+    {
+      "path": "document_templates/original/SOW-DE-Core-IT-Infrastructure-and-Support-2026-v2026.6.pdf",
+      "beforeSHA256": "71de7bc19d920d7e1b46563fa814f069ed8a5a57ed4e865e7ef5db4f4c6f1607",
+      "afterSHA256": "5b24620635dab1894e1c6f10c95c6924ca64585e2cd24b36777f1a63b83ae9bd",
+      "retiredBefore": 1,
+      "retiredAfter": 0,
+      "markerAfter": 1,
+      "normalizedWordsRemoved": {},
+      "normalizedWordsAdded": {}
+    },
+    {
+      "path": "document_templates/original/SOW-DE-Network-Integration-and-Advanced-Networking-2026-v2026.6.pdf",
+      "beforeSHA256": "b3e037c5888c9817fe6ba8648fa6553428ca069ddaaef9bb40f1740807df093e",
+      "afterSHA256": "cdf76eb41358b48b09b793a10982ff9c00aec6541e011e2cc09b6fbe093054d0",
+      "retiredBefore": 1,
+      "retiredAfter": 0,
+      "markerAfter": 1,
+      "normalizedWordsRemoved": {},
+      "normalizedWordsAdded": {}
+    },
+    {
+      "path": "document_templates/original/SOW-DE-Security-Stack-and-Operations-2026-v2026.6.pdf",
+      "beforeSHA256": "8f45c6e9090324659b13c258a0e4d2320cf88191c80b4437407039c016cc412e",
+      "afterSHA256": "a34a48a68b19701630219d8b9b0f455b33128bb83ad4622604d72e97419faecb",
+      "retiredBefore": 1,
+      "retiredAfter": 0,
+      "markerAfter": 1,
+      "normalizedWordsRemoved": {},
+      "normalizedWordsAdded": {}
+    },
+    {
+      "path": "document_templates/original/SOW-DE-UCaaS-VoIP-2026-v2026.6.pdf",
+      "beforeSHA256": "6a1655d30ffc99c48b52b537f54f0872489163c0928770d2f34bee32fa703641",
+      "afterSHA256": "ad391497a76a9ddce47b0ad31cec134e2ab775b3737eea8209e9881c4bbeda5f",
+      "retiredBefore": 1,
+      "retiredAfter": 0,
+      "markerAfter": 1,
+      "normalizedWordsRemoved": {},
+      "normalizedWordsAdded": {}
+    },
+    {
+      "path": "document_templates/original/SOW-DE-vCIO-Services-2026-v2026.6.pdf",
+      "beforeSHA256": "9233c0389bc9ad100d08df0d54e09930fdd75b26ec575e9823ca4ba1d0cc231f",
+      "afterSHA256": "2497a2743b01ddb4268b98ab19019444f12de7abce0f799f27b19a87047be6f3",
+      "retiredBefore": 1,
+      "retiredAfter": 0,
+      "markerAfter": 1,
+      "normalizedWordsRemoved": {},
+      "normalizedWordsAdded": {}
+    },
+    {
+      "path": "document_templates/templates/pdf/msa-digerati-experts-2026-v2026.6.pdf",
+      "beforeSHA256": "e5497c6323e6f45cbc9eb91d295d0a690812193752cc9d9d961e170d2eba8d6e",
+      "afterSHA256": "1917b33613471548b82d0f6ef5a611a107a3b99fcddb571134831bb377f9f3a4",
+      "retiredBefore": 1,
+      "retiredAfter": 0,
+      "markerAfter": 1,
+      "normalizedWordsRemoved": {},
+      "normalizedWordsAdded": {}
+    },
+    {
+      "path": "document_templates/templates/pdf/order-form-service-selection-and-pricing-v2026.6.pdf",
+      "beforeSHA256": "851dfcfb54d64e77d0648a332559a039e6bcd6e39b25b7237132d9b1cc1c9196",
+      "afterSHA256": "b6422354845a110d94557714c8788e3bb1fb0d3ae299763c3371022186e353eb",
+      "retiredBefore": 1,
+      "retiredAfter": 0,
+      "markerAfter": 1,
+      "normalizedWordsRemoved": {},
+      "normalizedWordsAdded": {}
+    },
+    {
+      "path": "document_templates/templates/pdf/sow-de-backup-disaster-recovery-and-continuity-2026-v2026.6.pdf",
+      "beforeSHA256": "175092eed26f32e9aa120add23d724e8b124162a5398c5eb060ed6eb42301508",
+      "afterSHA256": "8f884e6db88a677d26ecc7686394cfa056790e4f0bbecb55bd6046dc99b1fac7",
+      "retiredBefore": 1,
+      "retiredAfter": 0,
+      "markerAfter": 1,
+      "normalizedWordsRemoved": {},
+      "normalizedWordsAdded": {}
+    },
+    {
+      "path": "document_templates/templates/pdf/sow-de-core-it-infrastructure-and-support-2026-v2026.6.pdf",
+      "beforeSHA256": "0a246bbdf31e72fe2e94fcd7c0da9d8915ad0cc42cbf704e71507c007733d8e8",
+      "afterSHA256": "287cae7a0ad3628b64ab9ae0e77de78babf807191f8771cedca8994d0bdeb753",
+      "retiredBefore": 1,
+      "retiredAfter": 0,
+      "markerAfter": 1,
+      "normalizedWordsRemoved": {},
+      "normalizedWordsAdded": {}
+    },
+    {
+      "path": "document_templates/templates/pdf/sow-de-network-integration-and-advanced-networking-2026-v2026.6.pdf",
+      "beforeSHA256": "1e102cdaf0e3ac870102bdf9ddc722c73b1e7e81e37d2751de6fad6ca513c206",
+      "afterSHA256": "b287cd2edde976c677c5048d3502337c544ea42828b9457b910ddee141f135f3",
+      "retiredBefore": 1,
+      "retiredAfter": 0,
+      "markerAfter": 1,
+      "normalizedWordsRemoved": {},
+      "normalizedWordsAdded": {}
+    },
+    {
+      "path": "document_templates/templates/pdf/sow-de-security-stack-and-operations-2026-v2026.6.pdf",
+      "beforeSHA256": "23c34cc1f2cad1630679af9c3b5a48d7c3938e846a0a764cfa57ba7605d3580e",
+      "afterSHA256": "8aeea7f99a864cb41e387f208a0e4115e0a70156f1fa53b575778f8eee1c441b",
+      "retiredBefore": 1,
+      "retiredAfter": 0,
+      "markerAfter": 1,
+      "normalizedWordsRemoved": {},
+      "normalizedWordsAdded": {}
+    },
+    {
+      "path": "document_templates/templates/pdf/sow-de-ucaas-voip-2026-v2026.6.pdf",
+      "beforeSHA256": "c56870547cad62f74601b296302824f6a02b3dd847eff47e7bd31ca572983294",
+      "afterSHA256": "c13ae6bb721616d7bd2682ba8318f18ee218e7daa90cf7e43f46081cb37546cb",
+      "retiredBefore": 1,
+      "retiredAfter": 0,
+      "markerAfter": 1,
+      "normalizedWordsRemoved": {},
+      "normalizedWordsAdded": {}
+    },
+    {
+      "path": "document_templates/templates/pdf/sow-de-vcio-services-2026-v2026.6.pdf",
+      "beforeSHA256": "612193523b8ae68d9836ba490b93665b393f1c61e2c0cfd739b9d7c1a09ec1d1",
+      "afterSHA256": "6187bcd9be9bdd2cd011028e57322eca1a634bc1b9ff779e268401e0561f968f",
+      "retiredBefore": 1,
+      "retiredAfter": 0,
+      "markerAfter": 1,
+      "normalizedWordsRemoved": {},
+      "normalizedWordsAdded": {}
+    }
+  ]
+}
