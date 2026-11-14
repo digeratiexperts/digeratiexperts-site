@@ -1,5 +1,11 @@
 import { portalCompanyProfile } from "./portalCompanyProfile";
-import { secondFactorFor, usesEnrollmentFallback } from "./portalClientMfaPolicy";
+import {
+  clientSignInStep,
+  zohoCallbackSignInStep,
+  type PortalMfaMethod,
+  MFA_ENROLL_REQUIRED_CODE,
+  MFA_ENROLL_REQUIRED_MESSAGE,
+} from "./portalClientMfaPolicy";
 import express, { type Express, type Request, type Response, NextFunction } from "express";
 import { storage } from "./storage";
 import {
@@ -59,6 +65,7 @@ import {
   isEmailAllowedForPortalOAuth,
   isMasterPortalEmail,
   portalLoginErrorRedirect,
+  portalMfaChallengeRedirect,
   readZohoPkceCookie,
   marketplaceReturnTo,
   setZohoPkceCookie,
@@ -2967,6 +2974,40 @@ export async function registerRoutes(app: Express) {
     });
   }
 
+  function issueMfaChallenge(user: any, mfaMethod: PortalMfaMethod): string {
+    const challengeToken = randomId();
+    const TEN_MINUTES = 10 * 60 * 1000;
+    const now = Date.now();
+
+    if (mfaMethod === 'email') {
+      const code = String(randomInt(100000, 1000000));
+      mfaChallenges.set(challengeToken, {
+        userId: user.id,
+        email: user.email,
+        method: 'email',
+        emailCode: code,
+        createdAt: now,
+        expiresAt: now + TEN_MINUTES,
+        attempts: 0,
+      });
+      notificationService.sendMfaCode({
+        email: user.email,
+        name: user.fullName,
+        code,
+      }).catch(err => logger.warn("Failed to send MFA email code", err));
+    } else {
+      mfaChallenges.set(challengeToken, {
+        userId: user.id,
+        email: user.email,
+        method: mfaMethod === 'passkey' ? 'passkey' : 'totp',
+        createdAt: now,
+        expiresAt: now + TEN_MINUTES,
+        attempts: 0,
+      });
+    }
+    return challengeToken;
+  }
+
   function completeLoginRedirect(user: any, req: AuthenticatedRequest, res: Response, returnTo: string) {
     const sessionId = randomId();
     const now = Date.now();
@@ -3102,6 +3143,27 @@ export async function registerRoutes(app: Express) {
 
       if (user.isActive === false) {
         return res.redirect(portalLoginErrorRedirect("zoho_disabled", "This portal account is disabled."));
+      }
+
+      const signInStep = zohoCallbackSignInStep(user);
+      if (signInStep.kind === "must_enroll") {
+        logSecurityEvent("MFA_ENROLL_REQUIRED", req, { email: user.email, reason: signInStep.reason, method: "zoho_sso" });
+        return res.redirect(portalLoginErrorRedirect(MFA_ENROLL_REQUIRED_CODE, MFA_ENROLL_REQUIRED_MESSAGE));
+      }
+      if (signInStep.kind === "challenge") {
+        const challengeToken = issueMfaChallenge(user, signInStep.method);
+        logSecurityEvent("MFA_CHALLENGE_ISSUED", req, {
+          email: user.email,
+          method: signInStep.method,
+          enrollmentFallback: signInStep.enrollmentFallback,
+          via: "zoho_sso",
+        });
+        return res.redirect(portalMfaChallengeRedirect({
+          mfaToken: challengeToken,
+          mfaMethod: signInStep.method,
+          passkeyAvailable: (user.mfaPasskeys || []).some((p: any) => p.rpId === resolveRpId(req.hostname)),
+          returnTo: verified.returnTo,
+        }));
       }
 
       return completeLoginRedirect(user, req, res, verified.returnTo);
@@ -3296,43 +3358,16 @@ export async function registerRoutes(app: Express) {
         });
       }
 
-      // Enrolled users get their own method. With PORTAL_CLIENT_MFA_REQUIRED
-      // on, a client who has not enrolled gets an email code instead.
-      const mfaMethod = secondFactorFor(user);
-      if (mfaMethod) {
-        const challengeToken = randomId();
-        const TEN_MINUTES = 10 * 60 * 1000;
-        const now = Date.now();
-
-        if (mfaMethod === 'email') {
-          const code = String(randomInt(100000, 1000000));
-          mfaChallenges.set(challengeToken, {
-            userId: user.id,
-            email: user.email,
-            method: 'email',
-            emailCode: code,
-            createdAt: now,
-            expiresAt: now + TEN_MINUTES,
-            attempts: 0,
-          });
-          notificationService.sendMfaCode({
-            email: user.email,
-            name: user.fullName,
-            code,
-          }).catch(err => logger.warn("Failed to send MFA email code", err));
-        } else {
-          mfaChallenges.set(challengeToken, {
-            userId: user.id,
-            email: user.email,
-            method: mfaMethod === 'passkey' ? 'passkey' : 'totp',
-            createdAt: now,
-            expiresAt: now + TEN_MINUTES,
-            attempts: 0,
-          });
-        }
-
+      const signInStep = clientSignInStep(user);
+      if (signInStep.kind === "must_enroll") {
+        logSecurityEvent("MFA_ENROLL_REQUIRED", req, { email, reason: signInStep.reason });
+        return res.status(403).json({ message: MFA_ENROLL_REQUIRED_MESSAGE, code: MFA_ENROLL_REQUIRED_CODE });
+      }
+      if (signInStep.kind === "challenge") {
+        const mfaMethod = signInStep.method;
+        const challengeToken = issueMfaChallenge(user, mfaMethod);
         const passkeyAvailable = (user.mfaPasskeys || []).some((p) => p.rpId === resolveRpId(req.hostname));
-        logSecurityEvent("MFA_CHALLENGE_ISSUED", req, { email, method: mfaMethod, enrollmentFallback: usesEnrollmentFallback(user) });
+        logSecurityEvent("MFA_CHALLENGE_ISSUED", req, { email, method: mfaMethod, enrollmentFallback: signInStep.enrollmentFallback });
 
         return res.json({
           success: false,
