@@ -19,3 +19,7 @@ Save your seat: https://digeratiexperts.com/events/cyber-insurance-renewal-readi
 
 [Sender name]
 Digerati Experts · Chandler, Arizona
+
+--
+Digerati Experts · [BUSINESS_POSTAL_ADDRESS]
+Unsubscribe: [Unsubscribe link: added by the sending tool]

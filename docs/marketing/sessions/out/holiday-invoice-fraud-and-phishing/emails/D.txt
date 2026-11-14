@@ -13,3 +13,7 @@ Bring whoever approves payments. And whoever approves them when that person is o
 
 [Sender name]
 Digerati Experts · Chandler, Arizona
+
+--
+Digerati Experts · [BUSINESS_POSTAL_ADDRESS]
+Unsubscribe: [Unsubscribe link: added by the sending tool]

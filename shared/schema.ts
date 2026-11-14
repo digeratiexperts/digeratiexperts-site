@@ -585,6 +585,13 @@ export const kbArticleSubscriptions = pgTable("kb_article_subscriptions", {
   subscribedAt: timestamp("subscribed_at").defaultNow().notNull(),
 });
 
+// Addresses that unsubscribed from marketing email (migrations/0027).
+export const marketingEmailOptOuts = pgTable("marketing_email_opt_outs", {
+  email: text("email").primaryKey(),
+  source: text("source").notNull().default("unsubscribe"),
+  optedOutAt: timestamp("opted_out_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
 // Portal users table (durable auth — Neon)
 export const portalUsers = pgTable("portal_users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

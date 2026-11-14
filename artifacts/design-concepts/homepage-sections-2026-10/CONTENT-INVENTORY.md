@@ -9,7 +9,7 @@ Conventions used in this file:
 - Magenta colon = several headings end in a `<span class="text-[#D3126A]" aria-hidden>:</span>`; written here as `…:` with a note.
 - `CTA.primary` = **"Get My Cyber Risk Assessment"** (`client/src/lib/ctaCopy.ts`). Other CTA constants: `heroPrimary` "Get My Cyber Risk Assessment", `primaryShort` "Cyber Risk Assessment", `primaryNavCompact` "Risk Assessment", `secondary` "See Plans & Pricing", `secondaryHref` `/proactive-ecosystem-pricing`, `utilitySupport` "Client Support".
 - `PRIMARY_PHONE` = **325-480-9870**, `tel:+13254809870`, label "Sales & Business" (`shared/companyContact.ts`, re-exported from `client/src/data/companyContact.ts`).
-- `COMPANY` (same file): legalName "Digerati Experts"; email info@digeratiexperts.com; supportEmail support@digeratiexperts.com; billingEmail billing@digeratiexperts.com; privacyEmail privacy@digeratiexperts.com; website https://digeratiexperts.com; bookingUrl https://meet.digerati-experts.com/; address "3165 S Alma School Rd Suite 29, Chandler, AZ 85248"; areaServed "Arizona and Greater Phoenix (Chandler, Phoenix, Scottsdale, Tempe, Mesa, Gilbert)"; mapsUrl https://maps.google.com/?cid=1710856351091471339. Socials: LinkedIn https://www.linkedin.com/company/digerati-experts · Facebook https://www.facebook.com/digeratiexperts · Twitter https://twitter.com/digerati_experts · Instagram https://www.instagram.com/digerati.experts.
+- `COMPANY` (same file): legalName "Digerati Experts"; email info@digeratiexperts.com; supportEmail support@digeratiexperts.com; billingEmail billing@digeratiexperts.com; privacyEmail privacy@digeratiexperts.com; website https://digeratiexperts.com; bookingUrl https://meet.digerati-experts.com/; address "[BUSINESS_POSTAL_ADDRESS]"; areaServed "Arizona and Greater Phoenix (Chandler, Phoenix, Scottsdale, Tempe, Mesa, Gilbert)"; Socials: LinkedIn https://www.linkedin.com/company/digerati-experts · Facebook https://www.facebook.com/digeratiexperts · Twitter https://twitter.com/digerati_experts · Instagram https://www.instagram.com/digerati.experts.
 - "openBooking(source)" = opens the booking modal (`BookingContext`, Zoho booking URL https://meet.digerati-experts.com/). `/book` is the booking page route.
 
 ## Surface glossary (`client/src/index.css`)
@@ -574,7 +574,7 @@ File: `client/src/pages/sections/DigeratiContactSection.tsx` (`data-testid="home
 - Directory (hairline grid, 2 cols on md; `IconWell` + uppercase label + value):
   - Mail — "Email" — info@digeratiexperts.com → mailto
   - Phone — "Phone" — 325-480-9870 → tel
-  - MapPin — "Office" (spans 2 cols) — "3165 S Alma School Rd Suite 29, Chandler, AZ 85248" → https://maps.google.com/?cid=1710856351091471339 (new tab)
+  - MapPin — "Office" (spans 2 cols) — "[BUSINESS_POSTAL_ADDRESS]"
 - "Office Hours" (Clock `IconWell`): dl — "Monday - Friday" / "7:00 AM - 6:00 PM MST" · "Saturday & Sunday" / "Emergency Support Only"; accent line with Shield icon: "24/7 Security Operations Center Always Active"
 - "Follow us:" square icon buttons LinkedIn · Facebook · Twitter (hrefs from `COMPANY_SOCIAL`).
 

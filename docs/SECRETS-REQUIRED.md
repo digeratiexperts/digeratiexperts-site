@@ -159,7 +159,11 @@ Optional per feature.
 | `STRIPE_WEBHOOK_SECRET` | secret | `server/production.config.ts` | Stripe webhook signature. |
 | `ENABLE_STRIPE` | config | `server/production.config.ts` | Kill switch. |
 | `ENABLE_ZOHO` | config | `server/production.config.ts` | Kill switch. |
-| `ZEPTOMAIL_API_TOKEN` | secret | `server/services/notificationService.ts`, `server/routes.ts` | Transactional email. Without it notifications only log. |
+| `ZEPTOMAIL_API_TOKEN` | secret | `server/services/notificationService.ts`, `server/routes.ts` | Transactional email only. Without it notifications only log. `sendEmail` refuses newsletter, campaign and promotion mail; the one welcome note sent in reply to a signup is the only marketing email it carries. Bulk mail goes through Zoho Campaigns, which is not wired in: no `ZOHO_CAMPAIGNS_*` settings are read yet, so those sends are refused. |
+| `MARKETING_EMAIL_ENABLED` | config | `server/marketingEmail.ts` | `true` allows marketing email (the signup welcome, and list sends once a bulk sender exists). Off by default. Transactional email is not affected. |
+| `BUSINESS_POSTAL_ADDRESS` | config | `server/marketingEmail.ts`, `shared/marketingEmail.ts` | Mailing address printed in every marketing footer. A PO box or mailbox service address, never a home address. Unset, footers show `[BUSINESS_POSTAL_ADDRESS]` and no marketing email is sent even with the switch on. |
+| `MARKETING_UNSUBSCRIBE_SECRET` | secret | `server/marketingEmail.ts` | Signs and verifies unsubscribe links. Required: unset, no marketing email is sent. No fallback to `SESSION_SECRET`, so rotating that never breaks a link. |
+| `MARKETING_UNSUBSCRIBE_SECRET_PREVIOUS` | secret | `server/marketingEmail.ts` | The key before the last rotation. Verifies links already sent, never signs new ones. To rotate: move the current value here, set a new `MARKETING_UNSUBSCRIBE_SECRET`, and keep this for at least 30 days. |
 | `ADMIN_EMAIL` | config | `server/deskTicketFallback.ts`, `server/services/notificationService.ts` | Recipient of admin notifications. |
 | `SALES_LEAD_EMAIL` | config | `server/services/notificationService.ts` | Recipient of lead notifications. |
 | `DESK_FALLBACK_EMAIL` | config | `server/deskTicketFallback.ts` | Where failover Desk tickets are emailed. |

@@ -17,3 +17,7 @@ Register: https://digeratiexperts.com/events/holiday-invoice-fraud-and-phishing
 
 [Sender name]
 Digerati Experts · Chandler, Arizona
+
+--
+Digerati Experts · [BUSINESS_POSTAL_ADDRESS]
+Unsubscribe: [Unsubscribe link: added by the sending tool]

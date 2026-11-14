@@ -13,3 +13,7 @@ Add it to your calendar: https://digeratiexperts.com/events/cyber-insurance-rene
 
 [Sender name]
 Digerati Experts · Chandler, Arizona
+
+--
+Digerati Experts · [BUSINESS_POSTAL_ADDRESS]
+Unsubscribe: [Unsubscribe link: added by the sending tool]
