@@ -75,7 +75,7 @@ function canonicalDollars(text: string): Set<string> {
 }
 
 function isDomainDigeratiAfter(after: string): boolean {
-  return /^experts\.com/i.test(after) || /^-experts/i.test(after);
+  return /^experts\.com(?:\/|$)/i.test(after) || /^-experts(?:\.com)?(?:\/|$)/i.test(after);
 }
 
 function hasBareDigerati(text: string): boolean {

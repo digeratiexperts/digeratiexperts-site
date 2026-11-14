@@ -112,7 +112,7 @@ export function sanitizeFill(type: ServiceRequestType, proposed: unknown, today:
   return out;
 }
 
-function buildPortalSystemPrompt(input: PortalAssistInput, today: string, knowledge?: string): string {
+function buildPortalSystemPrompt(input: PortalAssistInput, today: string, knowledge?: string): { prefix: string; dynamic: string } {
   const staticRules = [
     "You are Ask DE, the Digerati Experts (DE) help assistant inside the DE Client Portal.",
     "Be brief, warm and precise: 1-3 short sentences. Plain language. No marketing.",
@@ -170,7 +170,7 @@ function buildPortalSystemPrompt(input: PortalAssistInput, today: string, knowle
   if (knowledge) {
     dynamic.push("", knowledge);
   }
-  return [...staticRules, ...dynamic].join("\n");
+  return { prefix: staticRules.join("\n"), dynamic: dynamic.join("\n") };
 }
 
 function parseJson(raw: string | null): { reply?: unknown; actions?: unknown } | null {
@@ -278,12 +278,17 @@ export async function handlePortalAssistChat(input: PortalAssistInput, today: st
         withOpenAIGuard(async () => {
           const client = getOpenAI();
           if (!client) return null;
+          const prompt = buildPortalSystemPrompt(input, today, knowledge);
           const result = await client.chat.completions.create({
             model: process.env.MSP_ADVISOR_MODEL || "gpt-4o",
             temperature: 0.3,
             max_tokens: 450,
             response_format: { type: "json_object" },
-            messages: [{ role: "system", content: buildPortalSystemPrompt(input, today, knowledge) }, ...history, { role: "user", content: message }],
+            messages: [
+              { role: "system", content: prompt.prefix },
+              ...history,
+              { role: "user", content: prompt.dynamic ? `${prompt.dynamic}\n\n${message}` : message },
+            ],
           });
           return result.choices[0]?.message?.content?.trim() || null;
         }),

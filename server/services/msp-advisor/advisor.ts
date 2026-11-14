@@ -21,7 +21,7 @@ import {
   isInformalCompanyName,
   isDeInternalCompanyAnswer,
 } from "./profile";
-import { buildSystemPrompt, INTERNAL_REFUSAL, BANNED_CANNED_OPENER } from "./prompt";
+import { ADVISOR_SYSTEM_PREFIX, buildSystemPrompt, INTERNAL_REFUSAL, BANNED_CANNED_OPENER } from "./prompt";
 import { withTransientModelRetry } from "./model-retry";
 import { verifyAdvisorReply } from "./ground";
 import { sanitizeActions, assertNoInternalLeak, defaultActionsForMode, materializeAction, ensureLoginAction } from "./actions";
@@ -109,9 +109,14 @@ async function callModel(system: string, history: Array<{ role: "user" | "assist
         max_tokens: 550,
         response_format: { type: "json_object" },
         messages: [
-          { role: "system", content: system },
+          { role: "system", content: ADVISOR_SYSTEM_PREFIX },
           ...history.slice(-10),
-          { role: "user", content: userMessage },
+          {
+            role: "user",
+            content: system.startsWith(ADVISOR_SYSTEM_PREFIX)
+              ? `${system.slice(ADVISOR_SYSTEM_PREFIX.length).trim()}\n\n${userMessage}`
+              : userMessage,
+          },
         ],
       });
 
