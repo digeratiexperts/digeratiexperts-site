@@ -91,6 +91,8 @@ const memorySessions = new Map<
     createdAt: string;
     updatedAt: string;
     recordingConsent: DeskChatRecordingConsent | null;
+    legalHold: boolean;
+    ticketId: string | null;
     messages: DeskChatMessage[];
   }
 >();
@@ -176,6 +178,14 @@ async function ensureSchema(): Promise<void> {
       ADD COLUMN IF NOT EXISTS recording_consent jsonb
     `);
     await db.execute(sql`
+      ALTER TABLE de_desk_chat_sessions
+      ADD COLUMN IF NOT EXISTS legal_hold boolean DEFAULT false NOT NULL
+    `);
+    await db.execute(sql`
+      ALTER TABLE de_desk_chat_sessions
+      ADD COLUMN IF NOT EXISTS ticket_id text
+    `);
+    await db.execute(sql`
       CREATE INDEX IF NOT EXISTS idx_de_desk_sessions_email
       ON de_desk_chat_sessions (email, updated_at DESC)
     `);
@@ -211,6 +221,8 @@ function emptyMemSession(now: string) {
     archivedAt: null as string | null,
     archiveFolder: null as string | null,
     recordingConsent: null as DeskChatRecordingConsent | null,
+    legalHold: false,
+    ticketId: null as string | null,
     createdAt: now,
     updatedAt: now,
     messages: [] as DeskChatMessage[],
@@ -577,6 +589,7 @@ export async function getDeskSessionMessages(
       const sessionResult = await db.execute(sql`
         SELECT session_id, email, contact_name, company_name, page_path,
                agent_active, agent_name, agent_joined_at, archived_at, archive_folder,
+               legal_hold, ticket_id,
                created_at, updated_at
         FROM de_desk_chat_sessions
         WHERE session_id = ${sessionId}
@@ -605,6 +618,8 @@ export async function getDeskSessionMessages(
         mem.agentJoinedAt = row.agent_joined_at ? toIso(row.agent_joined_at) : null;
         mem.archivedAt = row.archived_at ? toIso(row.archived_at) : null;
         mem.archiveFolder = row.archive_folder ? String(row.archive_folder) : null;
+        mem.legalHold = !!row.legal_hold;
+        mem.ticketId = row.ticket_id ? String(row.ticket_id) : null;
         mem.createdAt = toIso(row.created_at);
         mem.updatedAt = toIso(row.updated_at);
         mem.messages = messages;
@@ -830,6 +845,180 @@ export async function deleteDeskSession(sessionId: string): Promise<boolean> {
     await db.execute(sql`DELETE FROM de_desk_chat_sessions WHERE session_id = ${sessionId}`);
   }
   return true;
+}
+
+
+export function deskChatRetentionDays(env: NodeJS.ProcessEnv = process.env): number | null {
+  const raw = env.DESK_CHAT_RETENTION_DAYS;
+  if (raw == null) return null;
+  const trimmed = String(raw).trim();
+  if (!trimmed) return null;
+  const days = Number(trimmed);
+  if (!Number.isFinite(days) || days <= 0) return null;
+  return Math.floor(days);
+}
+
+export type DeskChatPurgeResult = {
+  enabled: boolean;
+  retentionDays: number | null;
+  deletedSessions: number;
+  deletedMessages: number;
+  skippedLegalHold: number;
+  skippedTicket: number;
+};
+
+async function loadMemSession(sessionId: string): Promise<ReturnType<typeof emptyMemSession> | null> {
+  if (memorySessions.has(sessionId)) return memorySessions.get(sessionId) || null;
+  const { session } = await getDeskSessionMessages(sessionId);
+  return session ? memorySessions.get(sessionId) || null : null;
+}
+
+export async function setDeskChatLegalHold(sessionId: string, held: boolean): Promise<void> {
+  await ensureSchema();
+  const mem = await loadMemSession(sessionId);
+  if (!mem) return;
+  mem.legalHold = !!held;
+  memorySessions.set(sessionId, mem);
+  if (!(dbReady && db && schemaReady)) return;
+  try {
+    await db.execute(sql`
+      UPDATE de_desk_chat_sessions
+      SET legal_hold = ${mem.legalHold}
+      WHERE session_id = ${sessionId}
+    `);
+  } catch (err: any) {
+    console.warn("[de-desk-persist] set legal hold failed:", err?.message);
+  }
+}
+
+export async function setDeskChatLinkedTicket(sessionId: string, ticketId: string | null): Promise<void> {
+  await ensureSchema();
+  const mem = await loadMemSession(sessionId);
+  if (!mem) return;
+  const value = ticketId && ticketId.trim() ? ticketId.trim().slice(0, 128) : null;
+  mem.ticketId = value;
+  memorySessions.set(sessionId, mem);
+  if (!(dbReady && db && schemaReady)) return;
+  try {
+    await db.execute(sql`
+      UPDATE de_desk_chat_sessions
+      SET ticket_id = ${value}
+      WHERE session_id = ${sessionId}
+    `);
+  } catch (err: any) {
+    console.warn("[de-desk-persist] set linked ticket failed:", err?.message);
+  }
+}
+
+/** Used by retention tests to backdate a session without sending a new message. */
+export async function setDeskChatUpdatedAt(sessionId: string, updatedAt: string): Promise<void> {
+  await ensureSchema();
+  const mem = await loadMemSession(sessionId);
+  if (!mem) return;
+  mem.updatedAt = updatedAt;
+  memorySessions.set(sessionId, mem);
+  if (!(dbReady && db && schemaReady)) return;
+  try {
+    await db.execute(sql`
+      UPDATE de_desk_chat_sessions
+      SET updated_at = ${new Date(updatedAt)}
+      WHERE session_id = ${sessionId}
+    `);
+  } catch (err: any) {
+    console.warn("[de-desk-persist] set updated at failed:", err?.message);
+  }
+}
+
+export async function purgeExpiredDeskChats(opts?: {
+  now?: Date;
+  env?: NodeJS.ProcessEnv;
+}): Promise<DeskChatPurgeResult> {
+  const retentionDays = deskChatRetentionDays(opts?.env);
+  if (retentionDays == null) {
+    return {
+      enabled: false,
+      retentionDays: null,
+      deletedSessions: 0,
+      deletedMessages: 0,
+      skippedLegalHold: 0,
+      skippedTicket: 0,
+    };
+  }
+
+  await ensureSchema();
+  const now = opts?.now ?? new Date();
+  const cutoff = new Date(now.getTime() - retentionDays * 24 * 60 * 60 * 1000);
+  const seen = new Set<string>();
+  const candidates: Array<{ sessionId: string; legalHold: boolean; ticketLinked: boolean; messageCount: number }> = [];
+
+  const consider = (sessionId: string, legalHold: boolean, ticketId: string | null, updatedAt: string, messageCount: number) => {
+    if (seen.has(sessionId)) return;
+    if (new Date(updatedAt).getTime() >= cutoff.getTime()) return;
+    seen.add(sessionId);
+    candidates.push({
+      sessionId,
+      legalHold,
+      ticketLinked: !!(ticketId && ticketId.trim()),
+      messageCount,
+    });
+  };
+
+  for (const [sessionId, mem] of memorySessions) {
+    consider(sessionId, !!mem.legalHold, mem.ticketId, mem.updatedAt, mem.messages.length);
+  }
+
+  if (dbReady && db && schemaReady) {
+    try {
+      const result = await db.execute(sql`
+        SELECT s.session_id, s.legal_hold, s.ticket_id, s.updated_at,
+               (SELECT COUNT(*)::int FROM de_desk_chat_messages m WHERE m.session_id = s.session_id) AS message_count
+        FROM de_desk_chat_sessions s
+        WHERE s.updated_at < ${cutoff}
+      `);
+      for (const row of normalizeRows(result)) {
+        consider(
+          String(row.session_id),
+          !!row.legal_hold,
+          row.ticket_id ? String(row.ticket_id) : null,
+          toIso(row.updated_at),
+          Number(row.message_count || 0),
+        );
+      }
+    } catch (err: any) {
+      console.warn("[de-desk-purge] list expired failed:", err?.message);
+    }
+  }
+
+  let deletedSessions = 0;
+  let deletedMessages = 0;
+  let skippedLegalHold = 0;
+  let skippedTicket = 0;
+  for (const candidate of candidates) {
+    if (candidate.legalHold) {
+      skippedLegalHold += 1;
+      continue;
+    }
+    if (candidate.ticketLinked) {
+      skippedTicket += 1;
+      continue;
+    }
+    const existed = await deleteDeskSession(candidate.sessionId);
+    if (existed) {
+      deletedSessions += 1;
+      deletedMessages += candidate.messageCount;
+    }
+  }
+
+  const result: DeskChatPurgeResult = {
+    enabled: true,
+    retentionDays,
+    deletedSessions,
+    deletedMessages,
+    skippedLegalHold,
+    skippedTicket,
+  };
+  console.info("[de-desk-purge] finished", result);
+  return result;
 }
 
 export function getDeskStoreStatus(): { durable: boolean } {
