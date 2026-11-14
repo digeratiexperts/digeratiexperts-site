@@ -46,10 +46,10 @@ export function registerSituationMatchRoutes(
   opts: { rateLimiter?: RequestHandler; draftRateLimiter?: RequestHandler; turnstile?: RequestHandler } = {},
 ): void {
   const turnstile = opts.turnstile || verifyTurnstile;
-  const extraMatchLimiters = opts.rateLimiter ? [opts.rateLimiter] : [];
-  const extraDraftLimiters = opts.draftRateLimiter ? [opts.draftRateLimiter] : [];
+  const matchLimiter = opts.rateLimiter ?? defaultMatchRateLimiter;
+  const draftLimiter = opts.draftRateLimiter ?? defaultDraftRateLimiter;
 
-  app.post("/api/public/advisor/situation-match", [defaultMatchRateLimiter, ...extraMatchLimiters, situationBodyCap, turnstile], async (req: Request, res: Response) => {
+  app.post("/api/public/advisor/situation-match", matchLimiter, situationBodyCap, turnstile, async (req: Request, res: Response) => {
     try {
       const { handleSituationMatch } = await import("./services/msp-advisor/situation-match");
       const { text, sessionId } = req.body || {};
@@ -75,7 +75,7 @@ export function registerSituationMatchRoutes(
     }
   });
 
-  app.post("/api/public/advisor/situation-draft", [defaultDraftRateLimiter, ...extraDraftLimiters, situationBodyCap, turnstile], async (req: Request, res: Response) => {
+  app.post("/api/public/advisor/situation-draft", draftLimiter, situationBodyCap, turnstile, async (req: Request, res: Response) => {
     if (!profileDraftsEnabled()) return res.status(404).json({ error: "Not available" });
     try {
       const { getSession } = await import("./services/msp-advisor");
