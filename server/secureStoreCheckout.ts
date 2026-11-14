@@ -10,6 +10,8 @@ import {
 } from "./storeClientPricing";
 import { paymentRateLimiter } from "./middleware/rateLimiter";
 import type { TaxableLine } from "./services/salesTax";
+import { autoRenewConsentRequiredSkus } from "@shared/autoRenewContract";
+import { isAutoRenewContractEnabled } from "./config/autoRenewContract";
 
 type StoreRole = "public" | "prospect" | "managed" | "comanaged" | "admin";
 
@@ -83,6 +85,37 @@ export function recurringCheckoutSkus(items: CanonicalCheckoutLineItem[]): strin
       return !!product && isRecurringSubscriptionProduct(product);
     })
     .map((item) => item.sku);
+}
+
+/**
+ * Phishing Simulation Starter and Security Awareness Training cannot be
+ * charged as an unconsented one-time Pay Now, flag on or off. When the
+ * auto-renew contract flag is off they route to a quote; when it is on the
+ * caller must use the Hub subscription create path instead.
+ */
+export function autoRenewPayNowDecision(items: CanonicalCheckoutLineItem[]):
+  | { blocked: false }
+  | {
+      blocked: true;
+      skus: string[];
+      quoteRequired: boolean;
+      subscriptionRequired: boolean;
+      code: "SUBSCRIPTION_BILLING_REQUIRED" | "AUTORENEW_SUBSCRIPTION_REQUIRED";
+      error: string;
+    } {
+  const skus = autoRenewConsentRequiredSkus(items);
+  if (skus.length === 0) return { blocked: false };
+  const enabled = isAutoRenewContractEnabled();
+  return {
+    blocked: true,
+    skus,
+    quoteRequired: !enabled,
+    subscriptionRequired: enabled,
+    code: enabled ? "AUTORENEW_SUBSCRIPTION_REQUIRED" : "SUBSCRIPTION_BILLING_REQUIRED",
+    error: enabled
+      ? "These items renew automatically. Confirm the auto-renewal terms and start a subscription instead of a one-time payment."
+      : "Recurring services require subscription billing setup before online payment. Request a quote for these items.",
+  };
 }
 
 /** Line totals with each product's category, for the sales tax calculation. */
@@ -341,6 +374,23 @@ export function registerSecureZohoStoreCheckout(
             reason: error?.message || "invalid_cart",
           });
           return res.status(400).json({ error: error?.message || "Invalid checkout cart" });
+        }
+
+        const autoRenewDecision = autoRenewPayNowDecision(lineItems);
+        if (autoRenewDecision.blocked) {
+          console.warn("[SECURITY] AUTORENEW_PAYNOW_BLOCKED", {
+            userId: req.userId,
+            clientId: req.user?.clientId,
+            skus: autoRenewDecision.skus,
+            code: autoRenewDecision.code,
+          });
+          return res.status(409).json({
+            code: autoRenewDecision.code,
+            quoteRequired: autoRenewDecision.quoteRequired,
+            subscriptionRequired: autoRenewDecision.subscriptionRequired,
+            skus: autoRenewDecision.skus,
+            error: autoRenewDecision.error,
+          });
         }
 
         const recurringSkus = recurringCheckoutSkus(lineItems);

@@ -74,3 +74,14 @@ it("counts public back/forward visits and preserves native cross-origin history 
   expect(original).toHaveBeenCalledWith({}, "", "https://other.example/portal");
   expect(w.location.assign).not.toHaveBeenCalled();
 });
+
+it("crosses to store checkout through a fresh document so payment CSP can apply", async () => {
+  const {installAnalyticsNavigationBoundary} = await import("./analyticsNavigation");
+  const original = w.history.pushState;
+  installAnalyticsNavigationBoundary(w);
+  w.history.pushState({}, "", "/store/checkout");
+  expect(original).not.toHaveBeenCalled();
+  expect(disable).toHaveBeenCalledOnce();
+  expect(w.location.assign).toHaveBeenCalledWith("https://digeratiexperts.com/store/checkout");
+});
+

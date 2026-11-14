@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { PortalLayout } from "./PortalLayout";
 import { queryClient } from "@/lib/queryClient";
 import { portalFetch } from "@/lib/portalApi";
+import { CARD_DATA_REJECTED_MESSAGE, looksLikeCardData } from "@shared/pciGuard";
 import {
   PORTAL_TICKET_ACCEPT,
   PORTAL_TICKET_MAX_FILES,
@@ -64,6 +65,9 @@ export default function PortalCreateTicket() {
       if (!raw) return;
       const draft = JSON.parse(raw) as { subject?: string; description?: string; priority?: string };
       sessionStorage.removeItem(DESK_TICKET_DRAFT_KEY);
+      if (looksLikeCardData(String(draft.subject || "")) || looksLikeCardData(String(draft.description || ""))) {
+        return;
+      }
       setFormData((prev) => ({
         ...prev,
         subject: typeof draft.subject === "string" ? draft.subject.slice(0, 200) : prev.subject,
@@ -103,6 +107,10 @@ export default function PortalCreateTicket() {
     e.preventDefault();
     if (missingClient) {
       setError(NO_CLIENT_TICKET_ERROR);
+      return;
+    }
+    if (looksLikeCardData(formData.subject) || looksLikeCardData(formData.description)) {
+      setError(CARD_DATA_REJECTED_MESSAGE);
       return;
     }
     setSubmitting(true);
