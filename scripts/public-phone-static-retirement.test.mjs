@@ -17,13 +17,13 @@ const paths = [
   "public/scrollcraft/situation-gallery/index.html",
   "zoho/help-center/footer.html"
 ];
-const retired = /(?:\\+?1[\\s().-]*)?(?:480[\\s().-]*519[\\s().-]*5892|855[\\s().-]*534[\\s().-]*9832|325[\\s().-]*480[\\s().-]*9870)/;
+const retired = /(?:\+?1[\s().-]*)?(?:480[\s().-]*519[\s().-]*5892|855[\s().-]*534[\s().-]*9832|325[\s().-]*480[\s().-]*9870)/;
 for (const path of paths) {
   test(path + ": retired public phone stays non-dialable", () => {
     const content = readFileSync(new URL("../" + path, import.meta.url), "utf8");
     assert.ok(!retired.test(content), "retired phone remains");
     assert.ok(content.includes("[DE_PUBLIC_PHONE]"), "pending phone marker missing");
     assert.ok(!/href=["']tel:[^"']*DE_PUBLIC_PHONE/i.test(content), "placeholder must not be dialable");
-    assert.ok(!/"telephone"\\s*:\\s*"[^"]*DE_PUBLIC_PHONE/i.test(content), "placeholder must not be schema telephone");
+    assert.ok(!/"telephone"\s*:\s*"[^"]*DE_PUBLIC_PHONE/i.test(content), "placeholder must not be schema telephone");
   });
 }
