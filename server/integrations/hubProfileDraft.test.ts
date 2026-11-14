@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { capUtf8, claimProfileDraft, createProfileDraft, profileDraftsEnabled, PROFILE_CLAIM_PATH } from "./hubProfileDraft";
+import { CARD_DATA_REJECTED_CODE, CardDataRejectedError } from "@shared/pciGuard";
 import { signDeSyncRequest } from "./deSyncAuth";
 
 const ENV = { ...process.env };
@@ -40,6 +41,15 @@ describe("createProfileDraft", () => {
     expect(body.consent_text_version).toBe("v1");
     expect(body.situation_ids).toEqual(["backup_continuity"]);
     for (const k of ["email", "phone", "name", "company"]) expect(body).not.toHaveProperty(k);
+  });
+
+  it("refuses card data and does not call the Hub", async () => {
+    on();
+    const f = vi.fn();
+    await expect(
+      createProfileDraft({ sessionId: "s1", words: "please charge 4111111111111111", situationIds: [], serviceIds: [], itPlan: {} }, f as any),
+    ).rejects.toSatisfy((err: unknown) => err instanceof CardDataRejectedError && (err as CardDataRejectedError).code === CARD_DATA_REJECTED_CODE);
+    expect(f).not.toHaveBeenCalled();
   });
 });
 

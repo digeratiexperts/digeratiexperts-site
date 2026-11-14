@@ -5,6 +5,7 @@ import { _resetSessionsForTests, getSession } from "./session";
 import { listKnownServiceIds } from "./knowledge";
 import { SITUATION_FAMILY_IDS } from "@shared/anonymousSituation";
 import { BANNED_CLAIMS, INTENT_IDS, PAGE_SERVICE_IDS, SCENARIO_IDS } from "@shared/situationMatch";
+import { CARD_DATA_REJECTED_CODE, CARD_DATA_REJECTED_MESSAGE, CardDataRejectedError } from "@shared/pciGuard";
 
 beforeEach(() => _resetSessionsForTests());
 
@@ -98,5 +99,40 @@ describe("situation-match (DE Desk structured mode)", () => {
     assert.doesNotMatch(ctx, /480-555-0100/);
     assert.doesNotMatch(ctx, /Call me/);
     assert.ok(!ctx.includes(kept!.text));
+  });
+
+  it("rejects card data before the model runs or the session stores the text", async () => {
+    let called = 0;
+    const model = async () => {
+      called++;
+      return "{}";
+    };
+    const cases = [
+      "please charge 4111111111111111",
+      "card#4111111111111111exp",
+      "visa 4111.1111.1111.1111",
+      "4111  1111  1111  1111",
+      "4111\u00A01111\u00A01111\u00A01111",
+      "my cvv is 123",
+      "CVC: 4567",
+    ];
+    for (const text of cases) {
+      called = 0;
+      await assert.rejects(
+        () => handleSituationMatch({ text, sessionId: "s-pan" }, { model }),
+        (err: unknown) => {
+          assert.ok(err instanceof CardDataRejectedError);
+          const rejected = err as CardDataRejectedError;
+          assert.equal(rejected.code, CARD_DATA_REJECTED_CODE);
+          assert.equal(rejected.status, 422);
+          assert.equal(rejected.message, CARD_DATA_REJECTED_MESSAGE);
+          assert.ok(!rejected.message.includes("4111"));
+          assert.ok(!rejected.message.includes("123"));
+          return true;
+        },
+      );
+      assert.equal(called, 0);
+      assert.equal(sessionSituation("s-pan", getSession), null);
+    }
   });
 });

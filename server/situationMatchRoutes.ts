@@ -12,6 +12,8 @@ import rateLimit from "express-rate-limit";
 import { verifyTurnstile } from "./middleware/security";
 import { createProfileDraft, profileDraftsEnabled } from "./integrations/hubProfileDraft";
 import { PROFILE_DRAFT_CONSENT_VERSION, itPlan, type SituationMatch } from "@shared/situationMatch";
+import { isPreChatConsentGranted, PRE_CHAT_CONSENT_REQUIRED_MESSAGE } from "@shared/preChatConsent";
+import { sendCardDataRejected, sendCardDataRejectedError } from "./pciGuard";
 
 export const SITUATION_BODY_MAX_BYTES = 4 * 1024;
 
@@ -54,6 +56,10 @@ export function registerSituationMatchRoutes(
       const { handleSituationMatch } = await import("./services/msp-advisor/situation-match");
       const { text, sessionId } = req.body || {};
       if (!text || typeof text !== "string") return res.status(400).json({ error: "text is required" });
+      if (sendCardDataRejected(res, text)) return;
+      if (!isPreChatConsentGranted(req.body || {})) {
+        return res.status(400).json({ error: PRE_CHAT_CONSENT_REQUIRED_MESSAGE });
+      }
       const r = await handleSituationMatch({ text, sessionId: typeof sessionId === "string" ? sessionId : undefined });
       res.json({
         sessionId: r.sessionId,
@@ -69,6 +75,7 @@ export function registerSituationMatchRoutes(
         draftEnabled: profileDraftsEnabled(),
       });
     } catch (error: any) {
+      if (sendCardDataRejectedError(res, error)) return;
       const status = error?.status || 500;
       console.error("[msp-advisor] situation-match failed:", error?.message || error);
       res.status(status).json({ error: status === 400 ? error.message : "Situation match unavailable" });

@@ -13,6 +13,7 @@ import { withOpenAIGuard } from "../openai-config";
 import { isPromptInjectionAttempt } from "./classify";
 import { listKnownServiceIds } from "./knowledge";
 import { getOrCreateSession } from "./session";
+import { assertNoCardData } from "@shared/pciGuard";
 import type { SessionSituation } from "./types";
 export type { SessionSituation } from "./types";
 import { SITUATION_FAMILY_IDS, SITUATION_FAMILY_LABELS } from "@shared/anonymousSituation";
@@ -96,6 +97,7 @@ export async function handleSituationMatch(
   input: { text: string; sessionId?: string },
   deps: { model?: SituationMatchModel; knownServiceIds?: () => string[] } = {},
 ): Promise<SituationMatchResult> {
+  assertNoCardData(input.text);
   const text = String(input.text || "").trim().slice(0, SITUATION_TEXT_MAX);
   if (!text) throw Object.assign(new Error("text is required"), { status: 400 });
   const known = (deps.knownServiceIds || listKnownServiceIds)();

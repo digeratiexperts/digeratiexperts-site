@@ -457,6 +457,8 @@
 .b3 .sit__ex { all: unset; cursor: pointer; font-size: .8rem; color: var(--on-light-2); background: var(--bone); border-radius: 999px; padding: .38rem .6rem; }
 .b3 .own__row { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem 1rem; margin-top: 1rem; }
 .b3 .own__priv { font-size: .8rem; color: var(--on-light-3); }
+.b3 .own__ai-notice { display: block; font-size: .9rem; line-height: 1.45; color: var(--on-light); max-width: 42rem; margin-top: .75rem; }
+.b3 .own__match-error { margin-top: .75rem; font-size: .9rem; line-height: 1.45; color: var(--on-light); }
 .b3 .own__out[hidden] { display: none; }
 .b3 .res { animation: resIn 420ms var(--ease) both; }
 @keyframes resIn { from { opacity: 0; transform: translateY(8px); } }

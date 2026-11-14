@@ -1,5 +1,5 @@
 /**
- * IT & Security Profile drafts (Hub contract, Hub Builder 2026-11-13).
+ * IT & Security Profile drafts (Hub contract).
  *
  *  1. Draft:  the site server proxies an anonymous draft to the Hub's
  *             POST /api/public/desk/profile-draft, keyed to the DE Desk sessionId.
@@ -21,6 +21,7 @@ import { buildSignedHeaders, newEventId, outboundSecret } from "./deSyncAuth";
 import { hubOrigin, persistHubAccountId } from "./techSalesClient";
 import { assertMutationAllowed } from "../stagingReviewGuard";
 import { PROFILE_DRAFT_CONSENT_VERSION, SITUATION_DRAFT_WORDS_MAX_BYTES } from "@shared/situationMatch";
+import { assertNoCardData } from "@shared/pciGuard";
 
 export const PROFILE_DRAFT_PATH = "/api/public/desk/profile-draft";
 export const PROFILE_CLAIM_PATH = "/api/integrations/v1/website/profile-claim";
@@ -59,6 +60,7 @@ export function isPlausibleClaimToken(v: unknown): v is string {
 
 /** Anonymous draft through the site server. Returns null when off or when the Hub refuses. */
 export async function createProfileDraft(input: ProfileDraftInput, fetchImpl: typeof fetch = fetch): Promise<ProfileDraftResult | null> {
+  assertNoCardData(input.words);
   if (!profileDraftsEnabled()) return null;
   const origin = hubOrigin();
   if (!origin) return null;

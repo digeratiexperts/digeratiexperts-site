@@ -10,7 +10,6 @@ import { SiteFooter } from "../homepage-v2/sections/SiteFooter";
 import "../homepage-v2/homepage-v2.css";
 import {
   FIT_CALL_URL,
-  composeRead,
   PAGE_SERVICES,
   PROFILE_DRAFT_CONSENT_TEXT,
   PROFILE_DRAFT_CONSENT_VERSION,
@@ -18,67 +17,12 @@ import {
   localMatch,
   matchFromScenario,
   planText,
-  sanitizeMatch,
   scenarioById,
   type SituationMatch,
 } from "@shared/situationMatch";
 import { saveProfileClaim } from "@/lib/profileClaim";
-
-/** DE Desk answers inside this window or the page answers on its own (localMatch). */
-export const DESK_MATCH_TIMEOUT_MS = 2500;
-
-type DeskReply = {
-  sessionId?: string;
-  scenarioIds?: string[];
-  situationIds?: string[];
-  serviceIds?: string[];
-  pageServiceIds?: string[];
-  intentIds?: string[];
-  urgent?: boolean;
-  confident?: boolean;
-  draftEnabled?: boolean;
-};
-
-/**
- * Ask DE Desk's AI (the msp-advisor behind /api/public/advisor/chat) for a structured match.
- * Any error, refusal or a reply slower than 2.5 s falls back to localMatch, so the page never breaks.
- */
-export async function deskMatch(
-  text: string,
-  opts: { turnstileToken: string; sessionId?: string; fetchImpl?: typeof fetch; timeoutMs?: number },
-): Promise<{ match: SituationMatch; sessionId?: string; draftEnabled: boolean }> {
-  const local = () => ({ match: localMatch(text), sessionId: opts.sessionId, draftEnabled: false });
-  const ctl = new AbortController();
-  const timer = setTimeout(() => ctl.abort(), opts.timeoutMs ?? DESK_MATCH_TIMEOUT_MS);
-  try {
-    const res = await (opts.fetchImpl || fetch)("/api/public/advisor/situation-match", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "same-origin",
-      signal: ctl.signal,
-      body: JSON.stringify({ text: text.slice(0, SITUATION_TEXT_MAX), sessionId: opts.sessionId, turnstileToken: opts.turnstileToken }),
-    });
-    if (!res.ok) return local();
-    const j = (await res.json()) as DeskReply;
-    const match = sanitizeMatch({
-      scenarioIds: j.scenarioIds,
-      familyIds: j.situationIds as SituationMatch["familyIds"],
-      serviceIds: j.serviceIds,
-      pageServiceIds: j.pageServiceIds as SituationMatch["pageServiceIds"],
-      intentIds: j.intentIds,
-      summary: composeRead(j.intentIds || []),
-      urgent: j.urgent,
-      confident: j.confident,
-      source: "de-desk",
-    });
-    if (!match.confident) return local();
-    return { match, sessionId: typeof j.sessionId === "string" ? j.sessionId : opts.sessionId, draftEnabled: Boolean(j.draftEnabled) };
-  } catch {
-    return local();
-  } finally {
-    clearTimeout(timer);
-  }
-}
+import { PRE_CHAT_CONSENT_REQUIRED_MESSAGE } from "@shared/preChatConsent";
+import { deskMatch, isDeskMatchErr, SITUATION_MATCH_AI_DISCLOSURE } from "./describeSituationMatch";
 
 type Shown = { r: SituationMatch; text: string; how: "typed" | "picked"; draftEnabled: boolean } | { more: true } | null;
 
@@ -94,6 +38,8 @@ export default function DescribeSituation(): JSX.Element {
   const [busy, setBusy] = useState(false);
   const [token, setToken] = useState("");
   const [tsKey, setTsKey] = useState(0);
+  const [matchConsent, setMatchConsent] = useState(false);
+  const [matchError, setMatchError] = useState("");
   const taRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -114,11 +60,21 @@ export default function DescribeSituation(): JSX.Element {
       setShown({ more: true });
       return;
     }
+    if (!matchConsent) {
+      setMatchError(PRE_CHAT_CONSENT_REQUIRED_MESSAGE);
+      return;
+    }
+    setMatchError("");
     setBusy(true);
     const got = token
       ? await deskMatch(t, { turnstileToken: token, sessionId: readSituationSessionId() })
       : { match: localMatch(t), sessionId: undefined, draftEnabled: false };
     if (token) fresh();
+    if (isDeskMatchErr(got)) {
+      setBusy(false);
+      setMatchError(got.error.message);
+      return;
+    }
     if (got.sessionId) writeSituationSessionId(got.sessionId);
     setBusy(false);
     setShown(got.match.confident ? { r: got.match, text: t, how: "typed", draftEnabled: got.draftEnabled } : { more: true });
@@ -153,7 +109,7 @@ export default function DescribeSituation(): JSX.Element {
                     value={text}
                     onChange={(e) => setText(e.target.value)}
                     placeholder="e.g. Two people start Monday and we still don’t have laptops. Or: our insurer sent a security questionnaire and we don’t know the answers."
-                    aria-describedby="sitHint"
+                    aria-describedby="sitHint sitAiNotice"
                   />
                   <p className="own__ex" id="sitHint">
                     <span>Try:</span>
@@ -166,11 +122,18 @@ export default function DescribeSituation(): JSX.Element {
                   <div className="own__turnstile">
                     <TurnstileWidget key={tsKey} theme="light" onVerify={setToken} onError={() => setToken("")} />
                   </div>
+                  <p className="own__ai-notice" id="sitAiNotice">{SITUATION_MATCH_AI_DISCLOSURE}</p>
+                  {matchError ? <p className="own__match-error" role="alert">{matchError}</p> : null}
                   <div className="own__row">
-                    <button type="submit" className="btn" disabled={busy} aria-busy={busy}>
-                      {busy ? "Matching\u2026" : "Smart match"}
-                    </button>
-                    <span className="own__priv">DE Desk reads it to find a match. Nothing is saved unless you choose to.</span>
+                    {!matchConsent ? (
+                      <button type="button" className="btn" onClick={() => { setMatchConsent(true); setMatchError(""); }}>
+                        Agree and continue
+                      </button>
+                    ) : (
+                      <button type="submit" className="btn" disabled={busy} aria-busy={busy}>
+                        {busy ? "Matching\u2026" : "Smart match"}
+                      </button>
+                    )}
                   </div>
                 </form>
                 <div className="own__out" id="sitResult" aria-live="polite">
