@@ -60,13 +60,13 @@ export function containsPan(text: string): boolean {
 }
 
 const CVV_PATTERN =
-  /\b(?:cvv2?|cvc2?|cid|cav2|csc|security\s*code|card\s*security\s*code|card\s*code|card\s*verification(?:\s*(?:value|code))?)\s*(?:is|was|=|:|->)?\s*["'`]?(\d{3,4})\b/i;
+  /\b(?:cvv2?|cvc2?|cid|cav2|csc|security\s+code|card\s+security\s+code|card\s+code|card\s+verification(?:\s+(?:value|code))?)(?:\s*(?:=|:|->)\s*|\s+(?:(?:is|was)\s+)?)["'`]?(\d{3,4})\b/i;
 
 const CARD_CONTEXT =
   /\b(?:credit\s*(?:and\s+debit\s+)?cards?|debit\s+cards?|cards?|card\s+number|card\s*holder|credit\/debit|visa|mastercard|master\s*card|amex|american\s*express|discover(?:\s+card)?|cvv2?|cvc2?|cid|cav2)\b/i;
 
 const CARD_EXPIRY =
-  /\b(?:exp(?:ires?|iry|iration)?(?:\s*date)?|valid\s*(?:thru|until))\s*(?:is|was|=|:)?\s*(0?[1-9]|1[0-2])\s*[/\-]\s*((?:20)?\d{2})\b/i;
+  /\b(?:exp(?:ires?|iry|iration)?(?:\s+date)?|valid\s+(?:thru|until))(?:\s*[=:]\s*|\s+(?:(?:is|was)\s+)?)(0?[1-9]|1[0-2])\s*[/\-]\s*((?:20)?\d{2})\b/i;
 
 export function containsCvvOrCardExpiry(text: string): boolean {
   const source = String(text || "");
