@@ -3,13 +3,13 @@ import { PageTemplate } from "@/components/PageTemplate";
 import { JsonLd } from "@/components/JsonLd";
 import { Link } from "wouter";
 import { useSEO } from "@/hooks/useSEO";
-import { COMPANY, PRIMARY_PHONE } from "@/data/companyContact";
+import { COMPANY, PRIMARY_PHONE, PUBLIC_PHONE_CTA } from "@/data/companyContact";
 
 const NAP = {
   name: COMPANY.legalName,
   city: COMPANY.addressLocality,
   region: COMPANY.addressRegion,
-  phone: PRIMARY_PHONE.display,
+  phone: PUBLIC_PHONE_CTA.numberLabel,
   email: COMPANY.email,
 };
 
@@ -75,7 +75,7 @@ export default function Press() {
                 {NAP.city}, {NAP.region} · serving Greater Phoenix
                 <br />
                 Phone:{" "}
-                <a className="inline-flex min-h-11 items-center text-de-magenta-paper-ink underline decoration-de-magenta-paper-ink/50 underline-offset-4 hover:decoration-de-magenta-paper-ink" href={PRIMARY_PHONE.telHref}>
+                <a className="inline-flex min-h-11 items-center text-de-magenta-paper-ink underline decoration-de-magenta-paper-ink/50 underline-offset-4 hover:decoration-de-magenta-paper-ink" href={PUBLIC_PHONE_CTA.href}>
                   {NAP.phone}
                 </a>
                 <br />

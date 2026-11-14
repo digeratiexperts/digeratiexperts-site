@@ -178,7 +178,7 @@ export default function UCaaS() {
       features: [
         "Everything in Managed UCaaS",
         "Cytracom or Teams Phone license",
-        "Unlimited US/CA calling",
+        "US and Canada calling, subject to the voice terms in your agreement",
         "Voicemail to email",
         "Mobile & desktop apps",
         "Call center queue (add-on)"
@@ -189,7 +189,7 @@ export default function UCaaS() {
   const comparisonItems = [
     { feature: "Initial setup", diy: "You figure it out", digerati: "White-glove implementation" },
     { feature: "E911 compliance", diy: "Hope it's right", digerati: "Verified quarterly" },
-    { feature: "Call flow changes", diy: "Open a ticket, wait", digerati: "Same-day turnaround" },
+    { feature: "Call flow changes", diy: "Open a ticket, wait", digerati: "Call flow changes handled as tickets, with response targets set in your signed agreement" },
     { feature: "Retention policy", diy: "Default 30 days", digerati: "Custom to your compliance" },
     { feature: "Quality issues", diy: "Escalate and pray", digerati: "Root cause analysis" },
     { feature: "Vendor coordination", diy: "You manage it", digerati: "Single point of contact" },

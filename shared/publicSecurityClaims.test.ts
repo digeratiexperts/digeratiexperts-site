@@ -19,7 +19,10 @@ describe("public alert-monitoring wording", () => {
     expect(meta).not.toMatch(/around the clock|round-the-clock|We run the security room/i);
     const twentyFourSeven = [...meta.matchAll(/24\s*[/x\u00d7]7[^\n]*/gi)].map((m) => m[0]);
     for (const hit of twentyFourSeven) {
-      expect(hit.toLowerCase()).toContain("add-on");
+      const ok =
+        hit.toLowerCase().includes("add-on") ||
+        hit.toLowerCase().includes("24/7 human-led threat monitoring and response");
+      expect(ok, hit).toBe(true);
     }
   });
 });

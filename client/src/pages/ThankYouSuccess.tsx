@@ -1,4 +1,5 @@
 import { Calendar, Clock, MapPin, ShieldCheck, Video } from "lucide-react";
+import { GUARANTEE_MENU_LABEL, GUARANTEE_SHORT } from "@shared/publicGuarantee";
 import { SiGoogle } from "react-icons/si";
 import { PageTemplate } from "@/components/PageTemplate";
 import {
@@ -11,7 +12,7 @@ import {
 } from "@/components/site/chapters";
 import { useSEO } from "@/hooks/useSEO";
 import { CTA } from "@/lib/ctaCopy";
-import { COMPANY, PRIMARY_PHONE } from "@/data/companyContact";
+import { COMPANY, PRIMARY_PHONE, PUBLIC_PHONE_CTA } from "@/data/companyContact";
 
 const calendars = [
   { href: "https://calendar.google.com", label: "Google Calendar", testId: "button-google-calendar", icon: "google" },
@@ -70,8 +71,8 @@ export default function ThankYouSuccess() {
                   Thank you for your interest. Click below to book a time that works for you.
                   <br />
                   Call our office at{" "}
-                  <a href={PRIMARY_PHONE.telHref} className="font-medium text-de-magenta-paper-ink underline underline-offset-4">
-                    {PRIMARY_PHONE.display}
+                  <a href={PUBLIC_PHONE_CTA.href} className="font-medium text-de-magenta-paper-ink underline underline-offset-4">
+                    {PUBLIC_PHONE_CTA.numberLabel}
                   </a>{" "}
                   if you have any questions.
                 </p>
@@ -142,8 +143,8 @@ export default function ThankYouSuccess() {
               >
                 <ShieldCheck className="h-5 w-5 text-white" aria-hidden="true" />
                 <span>
-                  <span className="block text-xs font-semibold text-white">30-day guarantee</span>
-                  <span className="block text-xs text-white/65 underline">Money back, no questions asked</span>
+                  <span className="block text-xs font-semibold text-white">{GUARANTEE_MENU_LABEL}</span>
+                  <span className="block text-xs text-white/65 underline">{GUARANTEE_SHORT}</span>
                 </span>
               </a>
             </li>

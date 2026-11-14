@@ -1,7 +1,7 @@
 import { Shield, Users, Server, Building2, HeadphonesIcon, FileCheck } from "lucide-react";
 import { motion } from "framer-motion";
 import { pricing } from "@/data/pricing";
-import { ALERT_MONITORING_CLAIM_PHRASE, MDR_ADDON_CLAIM } from "@shared/publicSecurityClaims";
+import { ALERT_MONITORING_CLAIM_PHRASE, ENTERPRISE_MDR_CLAIM, MDR_ADDON_CLAIM } from "@shared/publicSecurityClaims";
 
 export default function Ecosystem() {
   const servicePillars = [
@@ -38,7 +38,7 @@ export default function Ecosystem() {
     { 
       name: "DE COMPLIANCE", 
       icon: FileCheck,
-      desc: "HIPAA · GDPR · FTC Safeguards · Cyber Insurance · Policy Enforcement",
+      desc: "HIPAA · FTC Safeguards · Cyber Insurance · Policy Enforcement",
       details: ["Compliance Modules", "Evidence Support", "Audit-Ready Documentation", "Framework Mapping"]
     },
   ];
@@ -60,7 +60,7 @@ export default function Ecosystem() {
       name: pricing.enterprise.name, 
       price: `$${pricing.enterprise.user}`,
       desc: "Full compliance + advanced controls",
-      highlights: ["Everything in Business", "HIPAA/GDPR Modules", "Pen Testing + DR Runbooks", "AI & Cloud Automation"]
+      highlights: ["Everything in Business", ENTERPRISE_MDR_CLAIM, "HIPAA Modules", "Pen Testing + DR Runbooks", "AI & Cloud Automation"]
     },
   ];
 

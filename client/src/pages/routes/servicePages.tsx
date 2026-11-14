@@ -81,7 +81,7 @@ export const servicePageData = {
       { title: "Automated Encrypted Backups", description: "DE continuous backup of endpoints, servers, and M365/Google data with encryption in transit and at rest" },
       { title: "Backup Health Monitoring", description: "Automated monitoring with alerts when backup jobs fail or fall behind" },
       { title: "Verified Restore Testing", description: "Monthly restore verification to confirm backups are recoverable and complete" },
-      { title: "DE Cloud Storage", description: "Cost-effective, secure cloud storage with enterprise-grade durability guarantee" },
+      { title: "DE Cloud Storage", description: "Cost-effective, secure cloud storage" },
       { title: "Exception Reporting", description: "Clear visibility on backup health and any issues requiring attention" },
       { title: "Ransomware Defense", description: "Immutable backup copies protect against ransomware encryption" }
     ],
@@ -106,7 +106,7 @@ export const servicePageData = {
       { title: "Phishing Simulations", description: "Regular simulated phishing attacks with automatic remedial training for repeat offenders" },
       { title: "Risk Scoring & Metrics", description: "Department-level risk scoring, participation rates, and phish-failure trend analysis" },
       { title: "Executive Reporting", description: "Board-ready reporting on security culture maturity and employee readiness" },
-      { title: "Compliance Integration", description: "Training logs stored for audits; maps to HIPAA, GDPR, FTC control requirements (with Compliance modules)" },
+      { title: "Compliance Integration", description: "Training logs stored for audits; maps to HIPAA, FTC control requirements (with Compliance modules)" },
       { title: "Behavioral Coaching", description: "Targeted follow-ups for high-risk users and departments" }
     ],
     benefits: [
@@ -124,12 +124,12 @@ export const servicePageData = {
   'co-managed-it': {
     title: "Co-Managed IT",
     subtitle: "Augment your internal IT team with DE expertise and stack",
-    description: "Already have internal IT? Co-Managed IT partners with your team to fill skill gaps, add after-hours coverage on plans that include it, and add specialized muscle. You keep control; we provide stack, automation, security maturity, and Tier 2/3 escalation. Avoid burnout and tap into deep expertise.",
+    description: "Already have internal IT? Co-Managed IT partners with your team to fill skill gaps, add alert monitoring on plans that include it, and add specialized muscle. You keep control; we provide stack, automation, security maturity, and Tier 2/3 escalation. Avoid burnout and tap into deep expertise.",
     features: [
       { title: "Shared Tooling Platform", description: "Access to DE security and management platform with full visibility into your environment" },
       { title: "Responsibility Matrix", description: "Clear SOW defining who owns onboarding, patching, vendor comms, and incidents" },
       { title: "Tier 2/3 Escalation", description: "Expert escalation for complex issues, security incidents, and strategic decisions" },
-      { title: "Monitoring and response, on plans that include it", description: "After-hours and weekend coverage so your team doesn't burn out" },
+      { title: "Monitoring and response, on plans that include it", description: "Automated security alert monitoring, with alerts triaged by DE technicians during business hours, on plans that include it. Around-the-clock monitoring by human security analysts is available only through our optional 24/7 Managed Detection and Response add-on." },
       { title: "Quarterly Posture Meetings", description: "Regular check-ins with your IT lead on stack optimization and roadmap" },
       { title: "Specialized Expertise", description: "Security, compliance, infrastructure, and cloud experts available on demand" }
     ],
@@ -169,12 +169,12 @@ export const servicePageData = {
     recommendedTier: "business" as const,
   },
   'security-operations': {
-    title: "Security Operations (SOC-as-a-Service)",
+    title: "Security Operations",
     subtitle: ALERT_MONITORING_CLAIM_PHRASE,
-    description: "Security Operations is Threat Detection & Response plus threat hunting, policy tuning, and continuous optimization. Includes detection, triage, response, plus proactive hunting, policy refinement, log correlation, and longer retention. Enterprise-grade security maturity.",
+    description: "Security Operations is Threat Detection & Response plus threat hunting and regular policy tuning. Includes detection, triage, response, plus proactive hunting, policy refinement, log correlation, and longer retention. Around-the-clock monitoring by human security analysts is available only through our optional 24/7 Managed Detection and Response add-on.",
     features: [
       { title: "Threat Hunting Cycles", description: "Proactive investigation for advanced threats, unusual patterns, and insider risk" },
-      { title: "Policy Tuning & Optimization", description: "Continuous refinement of EDR, email, cloud, and access control policies based on threats and trends" },
+      { title: "Policy Tuning", description: "Regular policy tuning of EDR, email, cloud, and access control policies based on threats and trends" },
       { title: "Log Correlation & Analytics", description: "DE SIEM with deeper telemetry retention for pattern detection and forensics" },
       { title: "Security Change Management", description: "Documented policy changes with rationale and testing before deployment" },
       { title: "SOC Monthly Report", description: "Hunt findings, policy changes, incident trends, and audit-support packets" },
@@ -266,9 +266,9 @@ export const servicePageData = {
   'compliance-reports': {
     title: "Compliance & Risk Reports",
     subtitle: "Audit-grade reporting and proof mapped to your framework",
-    description: "Compliance & Risk Reports is where DE becomes audit-ready. We map our stack to your framework (HIPAA, GDPR, FTC Safeguards, CIS, Cyber-Insurance), retain evidence (training logs, access reviews, baselines, incident trails), and produce board-ready compliance posture reports.",
+    description: "Compliance & Risk Reports is where DE becomes audit-ready. We map our stack to your framework (HIPAA, FTC Safeguards, CIS, Cyber-Insurance), retain evidence (training logs, access reviews, baselines, incident trails), and produce board-ready compliance posture reports.",
     features: [
-      { title: "Framework Mapping", description: "Control mapping of DE stack to HIPAA, GDPR, FTC, CIS, and insurance control sets" },
+      { title: "Framework Mapping", description: "Control mapping of DE stack to HIPAA, FTC, CIS, and insurance control sets" },
       { title: "Evidence Retention", description: "Automated collection and storage of training logs, access reviews, configuration baselines, and incident trails" },
       { title: "Risk Scoring & Gap Tracking", description: "Continuous risk assessment with gap identification and remediation tracking" },
       { title: "Monthly Compliance Report", description: "Executive posture report showing compliance progress and remaining gaps" },
@@ -276,10 +276,10 @@ export const servicePageData = {
       { title: "Board-Level Reporting", description: "Owner/board communication on compliance readiness and risk trends" }
     ],
     benefits: [
-      "Pass audits with comprehensive documented evidence",
+      "Documented evidence trails that support your audits",
       "Faster audit cycles with pre-compiled packets",
       "Reduced audit costs and surprise findings",
-      "Insurance premium justification and optimization",
+      "Evidence for insurer questionnaires",
       "Regulatory confidence: proactive, not reactive",
       "Clear roadmap to full compliance certification"
     ],

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { 
   ArrowRight, Shield, Building, Calendar, CheckCircle, Phone, 
-  Star, Clock, Award, Lock
+  Star, Clock, Lock
 } from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
 import { 
@@ -19,7 +19,7 @@ import { CTA } from "@/lib/ctaCopy";
 import { pricing, getPricingFooterText } from "@/data/pricing";
 import { ProductMedia } from "@/components/store/ProductMedia";
 import { getProductVisual } from "@/data/productImages";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PRIMARY_PHONE, PUBLIC_PHONE_CTA } from "@/data/companyContact";
 import { ALERT_MONITORING_CLAIM_PHRASE } from "@shared/publicSecurityClaims";
 
 const ManagedStore = () => {
@@ -255,12 +255,11 @@ const ManagedStore = () => {
               <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">Why Choose Managed IT?</h2>
             </div>
             
-            <div className="grid md:grid-cols-4 gap-6">
+            <div className="grid md:grid-cols-3 gap-6">
               {[
                 { icon: Clock, value: "Signed terms", label: "Service levels", description: "Service levels are set in your signed agreement" },
                 { icon: Shield, value: "Monitoring", label: "Alert monitoring", description: ALERT_MONITORING_CLAIM_PHRASE },
-                { icon: Phone, value: "Emergency", label: "Incident response", description: "Emergency incident response on plans that include it" },
-                { icon: Award, value: "30 days", label: "Money-back guarantee", description: "No questions asked" }
+                { icon: Phone, value: "Emergency", label: "Incident response", description: "Incident response during business hours on plans that include it" }
               ].map((stat, index) => (
                 <div key={index} className="text-center p-4">
                   <div className="w-12 h-12 rounded-full bg-de-raised flex items-center justify-center mx-auto mb-3">
@@ -308,9 +307,9 @@ const ManagedStore = () => {
                 className="h-14 border-2 border-white/30 bg-transparent px-8 text-lg font-semibold text-white hover:bg-white/10"
                 data-testid="button-call-us"
               >
-                <a href={PRIMARY_PHONE.telHref}>
+                <a href={PUBLIC_PHONE_CTA.href}>
                   <Phone className="mr-2 h-5 w-5" />
-                  {PRIMARY_PHONE.display}
+                  {PUBLIC_PHONE_CTA.numberLabel}
                 </a>
               </Button>
             </div>

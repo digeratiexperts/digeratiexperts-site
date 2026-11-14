@@ -165,8 +165,8 @@ export default function PortalStatus() {
           </>
         ) : null}
 
-        <Panel id="response-targets" title="How fast DE responds">
-          <p className="text-sm text-muted-foreground">{formatResponseTargets(" | ")}</p>
+        <Panel id="response-targets" title="Response targets">
+          <p className="text-sm text-muted-foreground">Response targets (not guarantees; your signed agreement governs): {formatResponseTargets(" | ")}</p>
         </Panel>
       </div>
     </PortalLayout>

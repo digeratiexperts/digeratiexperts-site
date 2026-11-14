@@ -12,7 +12,7 @@ import { useSEO } from "@/hooks/useSEO";
 import { ServiceJsonLd, BreadcrumbJsonLd } from "@/components/JsonLd";
 import { pricing } from "@/data/pricing";
 import { CTA } from "@/lib/ctaCopy";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PRIMARY_PHONE, PUBLIC_PHONE_CTA } from "@/data/companyContact";
 import { MDR_ADDON_CLAIM } from "@shared/publicSecurityClaims";
 
 type InclusionStatus = "included" | "limited" | "optional" | "not-included";
@@ -108,7 +108,7 @@ const matrixCategories: MatrixCategory[] = [
 
 const shortCompareRows = [
   { label: "Support hours", value: "8×5 business hours" },
-  { label: "Response targets", value: "Standard (next business day)" },
+  { label: "Response targets", value: "Response targets (not guarantees; your signed agreement governs): next business day" },
   { label: "Patch + monitoring coverage", value: "Full coverage" },
   { label: "Email protection level", value: "Anti-phishing gateway" },
   { label: "Endpoint protection level", value: "EDR (detect + respond)" },
@@ -666,9 +666,9 @@ export default function OfficePage() {
                     className="bg-transparent border border-white/30 text-white hover:bg-white/10"
                     data-testid="btn-final-call"
                   >
-                    <a href={PRIMARY_PHONE.telHref}>
+                    <a href={PUBLIC_PHONE_CTA.href}>
                       <Phone className="mr-2 h-5 w-5" />
-                      Call {PRIMARY_PHONE.display}
+                      {PUBLIC_PHONE_CTA.label}
                     </a>
                   </Button>
                 </div>

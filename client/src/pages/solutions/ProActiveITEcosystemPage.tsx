@@ -37,7 +37,7 @@ const config: TierPageConfig = {
     "Network monitoring & basic firewall management",
     "DNS filtering / web security",
     "User onboarding & offboarding",
-    "Unlimited remote help desk during business hours",
+    "Remote help desk for covered work during business hours",
     "Asset & license inventory",
     "Vendor management for core IT systems",
     "Monthly health & ticket reporting",

@@ -20,8 +20,14 @@
  */
 import { randomBytes } from "crypto";
 import { COMPANY, PRIMARY_PHONE } from "@shared/companyContact";
+
 import { deskTicketSpoolDir, updateSpoolEntry, writeSpoolEntry, type SpoolEntry } from "./publicSolutionSpool";
 import { baseEmailTemplate, sendEmail } from "./services/notificationService";
+
+const PUBLIC_CALL_PHRASE = !PRIMARY_PHONE.display.startsWith("[")
+  ? `call ${PRIMARY_PHONE.display}`
+  : "contact us";
+
 
 export type FallbackTicketSource = "website-widget" | "client-portal";
 
@@ -138,14 +144,14 @@ export const defaultDeskFallbackDeps: DeskFallbackDeps = {
         `<h2>We received your support request</h2>
          <p>Hi ${escapeHtml((ticket.name || "").trim().split(/\s+/)[0] || "there")},</p>
          <p>Your request "${escapeHtml(ticket.subject)}" is with the Digerati Experts desk. Your reference is <span class="highlight">${escapeHtml(ticket.reference)}</span>.</p>
-         <p>An engineer will reply by email. If it is urgent, call ${escapeHtml(PRIMARY_PHONE.display)}.</p>`,
+         <p>An engineer will reply by email. If it is urgent, ${PUBLIC_CALL_PHRASE}.</p>`,
         "Support request received",
       ),
       textBody: [
         "We received your support request.",
         `Request: ${ticket.subject}`,
         `Reference: ${ticket.reference}`,
-        `An engineer will reply by email. If it is urgent, call ${PRIMARY_PHONE.display}.`,
+        `An engineer will reply by email. If it is urgent, ${PUBLIC_CALL_PHRASE}.`,
       ].join("\n"),
     }),
   alertStaff: async (ticket) => {

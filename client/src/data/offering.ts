@@ -12,6 +12,8 @@ export {
   ALERT_MONITORING_CLAIM,
   ALERT_MONITORING_CLAIM_PHRASE,
   MDR_ADDON_CLAIM,
+  ENTERPRISE_MDR_CLAIM,
+  ENTERPRISE_MDR_PHRASE,
 } from "@shared/publicSecurityClaims";
 
 /** Final name for the under-30-user lane. Keep every mention on this constant. */
@@ -23,3 +25,9 @@ export const ASSESSMENT_REQUIRED_LINE =
 
 /** Tiers that include ALERT_MONITORING_CLAIM. */
 export const ALERT_MONITORING_TIERS = "ProActive Business and Enterprise";
+
+export {
+  PAID_STABILIZATION_PRICE,
+  SECURITY_SNAPSHOT_PRICE,
+  ASSESSMENT_CREDIT_LINE,
+} from "@shared/assessmentOffers";

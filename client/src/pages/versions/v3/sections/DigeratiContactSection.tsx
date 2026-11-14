@@ -19,7 +19,7 @@ import { IconWell } from "@/components/visual/IconWell";
 import {
   COMPANY,
   COMPANY_SOCIAL,
-  PRIMARY_PHONE,
+  PRIMARY_PHONE, PUBLIC_PHONE_CTA,
   formatAddressOneLine,
 } from "@/data/companyContact";
 import { ALERT_MONITORING_CLAIM_PHRASE } from "@shared/publicSecurityClaims";
@@ -59,7 +59,7 @@ const directoryItems = [
     icon: Phone,
     label: "Phone",
     value: PRIMARY_PHONE.display,
-    href: PRIMARY_PHONE.telHref,
+    href: PUBLIC_PHONE_CTA.href,
     testId: "contact-phone",
     external: false,
   },
@@ -207,11 +207,11 @@ export const DigeratiContactSection = ({
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </a>
               <a
-                href={PRIMARY_PHONE.telHref}
+                href={PUBLIC_PHONE_CTA.href}
                 className="inline-flex min-h-11 items-center justify-center rounded-lg border border-white/20 px-6 py-2.5 text-base font-semibold text-white transition-colors hover:border-white/40 hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-de-accent/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--de-bg)]"
                 data-testid="contact-cta-call"
               >
-                Call {PRIMARY_PHONE.display}
+                {PUBLIC_PHONE_CTA.label}
               </a>
             </div>
 
@@ -248,7 +248,7 @@ export const DigeratiContactSection = ({
                 <dt>Monday - Friday</dt>
                 <dd className="text-white/80">7:00 AM - 6:00 PM MST</dd>
                 <dt>Saturday &amp; Sunday</dt>
-                <dd className="text-white/80">Emergency Support Only</dd>
+                <dd className="text-white/80">Emergency support is a response target on plans that include it; your signed agreement governs.</dd>
               </dl>
               <p className="mt-4 flex items-start gap-2 text-base font-medium text-de-accent-ink">
                 <Shield className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />

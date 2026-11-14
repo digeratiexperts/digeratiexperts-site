@@ -14,7 +14,7 @@ import {
   isConfigurableProduct,
 } from "@/data/storeMerchandising";
 import { ProductMedia } from "@/components/store/ProductMedia";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PRIMARY_PHONE, PUBLIC_PHONE_CTA } from "@/data/companyContact";
 import { useDockHiddenWhileOpen } from "@/hooks/useDockHiddenWhileOpen";
 import { getPanelThemeStyle, useCart } from "@/contexts/CartContext";
 
@@ -438,12 +438,12 @@ export function ConfigureProductDrawer({
                 </Button>
               )}
               <a
-                href={PRIMARY_PHONE.telHref}
+                href={PUBLIC_PHONE_CTA.href}
                 className="flex h-11 w-full items-center justify-center gap-2 rounded-md border border-[color:var(--dp-border-15)] text-sm text-[color:var(--dp-text-75)] transition-colors hover:bg-[color:var(--dp-hover-bg)] hover:text-[color:var(--dp-text-hover)]"
                 data-testid="link-configure-call"
               >
                 <Phone className="h-4 w-4" />
-                Need help sizing? {PRIMARY_PHONE.display}
+                Need help sizing? {PUBLIC_PHONE_CTA.numberLabel}
               </a>
             </div>
           </motion.aside>

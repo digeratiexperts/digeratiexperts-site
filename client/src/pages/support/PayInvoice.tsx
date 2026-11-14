@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { PageTemplate } from "@/components/PageTemplate";
 import { CreditCard, Lock, Download, Zap, Shield } from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PRIMARY_PHONE, PUBLIC_PHONE_CTA } from "@/data/companyContact";
 import { COMPANY } from "@/data/companyContact";
 import { loadCardCheckoutAvailable } from "@/lib/invoicePaymentAvailability";
 import {
@@ -150,7 +150,7 @@ export default function PayInvoice() {
         lede="Our MSP billing support team is ready to help with any payment questions or issues."
         showPhone={false}
         primary={{ label: "Contact Support", href: "/support/submit-ticket", testId: "button-support-payment" }}
-        secondary={{ label: "Call Us", href: PRIMARY_PHONE.telHref, testId: "button-call-payment" }}
+        secondary={{ label: "Call Us", href: PUBLIC_PHONE_CTA.href, testId: "button-call-payment" }}
       />
     </PageTemplate>
   );

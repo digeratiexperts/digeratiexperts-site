@@ -1,4 +1,4 @@
-import { PRIMARY_PHONE } from "@shared/companyContact";
+import { PRIMARY_PHONE, PUBLIC_PHONE_CTA } from "@shared/companyContact";
 import { StoreAction } from "./primitives";
 
 export type OfflineKind = "durable" | "network" | "rate" | "check";
@@ -14,7 +14,7 @@ const COPY: Record<OfflineKind, { title: string; detail: string }> = {
   },
   rate: {
     title: "Too many attempts from this connection.",
-    detail: `Try again in a while, or call ${PRIMARY_PHONE.display}.`,
+    detail: `Try again in a while, or call ${PUBLIC_PHONE_CTA.numberLabel}.`,
   },
   // The bot check could not load or run (Cloudflare blocked or unreachable), so the
   // form cannot be sent; email and call still reach DE (Joe, 2026-10-14).

@@ -7,7 +7,7 @@ import { DE_LOGO_REVERSE } from "@/lib/brandAssets";
 import { CTA } from "@/lib/ctaCopy";
 import { DashboardMockup } from "@/components/graphics/DashboardMockup";
 import { PronunciationCard } from "@/components/PronunciationCard";
-import { COMPANY, COMPANY_SOCIAL, PRIMARY_PHONE, formatAddressOneLine } from "@/data/companyContact";
+import { COMPANY, COMPANY_SOCIAL, PRIMARY_PHONE, PUBLIC_PHONE_CTA, formatAddressOneLine } from "@/data/companyContact";
 import { pricingTiers, formatPrice, PRICING_SCOPE_NOTE } from "@/data/pricing";
 import { getHomepageCyberFacts } from "@/data/cyberAwarenessFacts";
 import { ProtectionCommandDeck } from "@/components/visual/ProtectionCommandDeck";
@@ -50,9 +50,9 @@ const WHY_WE_EXIST = [
 
 /** The live "What We Tackle" six, each linking to the page that handles it. */
 const TACKLE = [
-  { title: "Ransomware and malware", body: "Advanced threat detection and rapid response to stop malicious activity before damage occurs.", href: "/solutions/threat-detection", link: "Threat detection" },
+  { title: "Ransomware and malware", body: "Threat detection, with alerts triaged by DE technicians during business hours, to help contain attacks early.", href: "/solutions/threat-detection", link: "Threat detection" },
   { title: "Data loss", body: "Backup strategies with tested disaster recovery, so the business keeps running.", href: "/solutions/backup-disaster-recovery", link: "Backup and disaster recovery" },
-  { title: "Compliance gaps", body: "HIPAA, PCI DSS and SOC 2 requirements with continuous monitoring and reporting.", href: "/solutions/compliance-reports", link: "Compliance reports" },
+  { title: "Compliance gaps", body: "HIPAA, PCI DSS and SOC 2 readiness support with regular reporting.", href: "/solutions/compliance-reports", link: "Compliance reports" },
   { title: "Phishing and social engineering", body: "Layered email security combined with ongoing employee security awareness training.", href: "/solutions/security-operations", link: "Security operations" },
   { title: "Zero-day vulnerabilities", body: "Proactive patch management and security assessments that close gaps before exploitation.", href: "/solutions/threat-detection", link: "Threat detection" },
   { title: "Insider threats", body: "User behavior analytics and access controls that prevent internal security breaches.", href: "/solutions/unified-security", link: "Unified security" },
@@ -92,7 +92,7 @@ const OUTCOMES = [
 
 const PROOF = [
   { title: "Client Bill of Rights", body: "What you can expect from us, in writing.", href: "/about/client-bill-of-rights", link: "Read the Bill of Rights" },
-  { title: "30-day guarantee", body: "100% money back. No risk, no small print, no questions asked.", href: "/about/guarantee", link: "Our guarantee" },
+  { title: "30-Day Guarantee", body: "30-day money-back guarantee on managed services only. Hardware, kits, and third-party licenses are not covered.", href: "/about/guarantee", link: "Our guarantee" },
   { title: "Trust Center", body: "Security documentation and operating expectations in one place for diligence and cyber-insurance conversations.", href: "/trust/trust-center", link: "Open the Trust Center" },
   { title: "Case studies", body: "Real engagements with challenge, approach and outcome, published with client permission.", href: "/resources/case-studies", link: "View case studies" },
 ];
@@ -166,7 +166,7 @@ const COMPLIANCE = ["HIPAA-aligned security and compliance", "SOC 2 readiness an
 const CTA_ITEMS = ["Audit readiness support", "Microsoft-aligned stack", "HIPAA-minded controls", "Documented standards"];
 
 /** Office hours as published on the live contact section (DigeratiContactSection). */
-const HOURS = { weekdays: "Monday to Friday, 7:00 AM to 6:00 PM MST", weekend: "Saturday and Sunday: emergency support only. Emergency incident response on plans that include it." };
+const HOURS = { weekdays: "Monday to Friday, 7:00 AM to 6:00 PM MST", weekend: "Saturday and Sunday: emergency support is a response target on plans that include it; your signed agreement governs. Incident response during business hours on plans that include it." };
 
 const FOOTER = [
   {
@@ -249,7 +249,7 @@ function PrimaryAction({ className = "" }: { className?: string }) {
 
 function Status({ state, sent }: { state: SendState; sent: string }) {
   if (state === "sent") return <p className="v6-status v6-status-ok" role="status">{sent}</p>;
-  if (state === "error") return <p className="v6-status v6-status-err" role="alert">Something went wrong. Please try again, or call {PRIMARY_PHONE.display}.</p>;
+  if (state === "error") return <p className="v6-status v6-status-err" role="alert">Something went wrong. Please try again, or call {PUBLIC_PHONE_CTA.numberLabel}.</p>;
   if (state === "sending") return <p className="v6-status" role="status">Sending.</p>;
   return null;
 }
@@ -390,7 +390,7 @@ export default function HomepageV6(): JSX.Element {
   useSEO({
     title: "Managed IT and Cybersecurity for Arizona Businesses",
     description:
-      "Arizona MSP/MSSP. Cybersecurity-first managed IT, written response times, published prices, and a Cyber Risk Assessment that matches the operating model to your environment.",
+      "Arizona MSP/MSSP. Cybersecurity-first managed IT, service levels set in your signed agreement, published prices, and a Cyber Risk Assessment that matches the operating model to your environment.",
   });
 
   // Match the live site well so overscroll does not flash white.
@@ -436,8 +436,8 @@ export default function HomepageV6(): JSX.Element {
             </ul>
           </nav>
           <div className="v6-header-actions">
-            <a className="v6-phone" href={PRIMARY_PHONE.telHref} aria-label={`Call ${PRIMARY_PHONE.display}`}>
-              {PRIMARY_PHONE.display}
+            <a className="v6-phone" href={PUBLIC_PHONE_CTA.href} aria-label={PUBLIC_PHONE_CTA.label}>
+              {PUBLIC_PHONE_CTA.numberLabel}
             </a>
             <PrimaryAction className="v6-header-cta" />
             <details className="v6-menu">
@@ -448,7 +448,7 @@ export default function HomepageV6(): JSX.Element {
                     {item.label}
                   </Link>
                 ))}
-                <a href={PRIMARY_PHONE.telHref}>Call {PRIMARY_PHONE.display}</a>
+                <a href={PUBLIC_PHONE_CTA.href}>{PUBLIC_PHONE_CTA.label}</a>
                 <PrimaryAction className="v6-menu-cta" />
               </div>
             </details>
@@ -479,7 +479,7 @@ export default function HomepageV6(): JSX.Element {
                 <li>No obligation</li>
                 <li>Response within one business day</li>
                 <li>
-                  <a href={PRIMARY_PHONE.telHref}>Call {PRIMARY_PHONE.display}</a>
+                  <a href={PUBLIC_PHONE_CTA.href}>{PUBLIC_PHONE_CTA.label}</a>
                 </li>
               </ul>
               <PronunciationCard variant="compact" />
@@ -694,7 +694,7 @@ export default function HomepageV6(): JSX.Element {
           </div>
         </section>
 
-        {/* 8. Fits how you operate, with the written response times */}
+        {/* 8. Fits how you operate, with response targets in the signed agreement */}
         <section className="v6-section v6-paper" aria-labelledby="v6-fit">
           <div className="v6-wrap v6-two">
             <div>
@@ -719,7 +719,8 @@ export default function HomepageV6(): JSX.Element {
               </div>
             </div>
             <div>
-              <h3>Response times, in writing</h3>
+              <h3>Response targets, in writing</h3>
+              <p className="v6-muted">Response targets (not guarantees; your signed agreement governs):</p>
               <table className="v6-table" style={{ marginTop: 14 }}>
                 <thead>
                   <tr>
@@ -740,7 +741,7 @@ export default function HomepageV6(): JSX.Element {
                 </tbody>
               </table>
               <p className="v6-muted" style={{ marginTop: 12 }}>
-                Service levels are set in your signed agreement. Emergency incident response on plans that include it.
+                Service levels are set in your signed agreement. Incident response during business hours on plans that include it.
               </p>
             </div>
           </div>
@@ -950,8 +951,8 @@ export default function HomepageV6(): JSX.Element {
               </ul>
               <div className="v6-actions" style={{ marginTop: 28 }}>
                 <PrimaryAction />
-                <a className="v6-phone" href={PRIMARY_PHONE.telHref}>
-                  or call {PRIMARY_PHONE.display}
+                <a className="v6-phone" href={PUBLIC_PHONE_CTA.href}>
+                  or call {PUBLIC_PHONE_CTA.numberLabel}
                 </a>
               </div>
             </div>
@@ -1015,8 +1016,8 @@ export default function HomepageV6(): JSX.Element {
             </ul>
             <div className="v6-actions" style={{ marginTop: 32 }}>
               <PrimaryAction />
-              <a className="v6-btn v6-btn-secondary" href={PRIMARY_PHONE.telHref}>
-                Call {PRIMARY_PHONE.display}
+              <a className="v6-btn v6-btn-secondary" href={PUBLIC_PHONE_CTA.href}>
+                {PUBLIC_PHONE_CTA.label}
               </a>
             </div>
           </div>
@@ -1035,7 +1036,7 @@ export default function HomepageV6(): JSX.Element {
                 <div>
                   <dt>Phone</dt>
                   <dd>
-                    <a href={PRIMARY_PHONE.telHref}>{PRIMARY_PHONE.display}</a>
+                    <a href={PUBLIC_PHONE_CTA.href}>{PUBLIC_PHONE_CTA.numberLabel}</a>
                   </dd>
                 </div>
                 <div>
@@ -1094,8 +1095,8 @@ export default function HomepageV6(): JSX.Element {
                 Cybersecurity-first managed IT for Arizona businesses. {COMPANY.addressLocality}, {region}.
               </p>
               <p style={{ marginTop: 10 }}>
-                <a href={PRIMARY_PHONE.telHref}>
-                  <b>{PRIMARY_PHONE.display}</b>
+                <a href={PUBLIC_PHONE_CTA.href}>
+                  <b>{PUBLIC_PHONE_CTA.numberLabel}</b>
                 </a>{" "}
                 · <a href={`mailto:${COMPANY.email}`}>{COMPANY.email}</a>
               </p>

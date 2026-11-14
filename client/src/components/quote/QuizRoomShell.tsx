@@ -1,7 +1,7 @@
 import { useEffect, type ReactNode } from "react";
 import { Phone, X } from "lucide-react";
 import { DE_LOGO_PRIMARY } from "@/lib/brandAssets";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PRIMARY_PHONE, PUBLIC_PHONE_CTA } from "@/data/companyContact";
 import { cn } from "@/lib/utils";
 
 export interface QuizStage {
@@ -66,9 +66,9 @@ export function QuizRoomShell({
             <img src={DE_LOGO_PRIMARY} alt="Digerati Experts" width={300} height={72} className="h-8 w-auto md:h-9" />
           </a>
           <nav aria-label="Quiz" className="flex items-center gap-1 md:gap-3">
-            <a href={PRIMARY_PHONE.telHref} className={chromeLink} aria-label={`Call ${PRIMARY_PHONE.display}`}>
+            <a href={PUBLIC_PHONE_CTA.href} className={chromeLink} aria-label={PUBLIC_PHONE_CTA.label}>
               <Phone className="h-4 w-4" aria-hidden="true" />
-              <span className="hidden sm:inline">{PRIMARY_PHONE.display}</span>
+              <span className="hidden sm:inline">{PUBLIC_PHONE_CTA.numberLabel}</span>
             </a>
             <a href={exitHref} className={chromeLink} data-testid="quiz-exit">
               <X className="h-4 w-4" aria-hidden="true" />

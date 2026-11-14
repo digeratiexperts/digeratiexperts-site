@@ -21,7 +21,7 @@ import {
 import { useSEO } from "@/hooks/useSEO";
 import { photography } from "@/lib/visualAssets";
 import { CTA } from "@/lib/ctaCopy";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PRIMARY_PHONE, PUBLIC_PHONE_CTA } from "@/data/companyContact";
 import { TEAM_OWNER } from "@/data/teamProfile";
 import { ALERT_MONITORING_CLAIM } from "@shared/publicSecurityClaims";
 
@@ -37,7 +37,7 @@ const team = [
   {
     name: "Security operations",
     description:
-      "Detection and response for the DE Security Foundation. Emergency incident response is available on plans that include it. Service levels are set in your signed agreement.",
+      "Detection and response for the DE Security Foundation. Incident response during business hours on plans that include it. Service levels are set in your signed agreement.",
     icon: Shield,
   },
   {
@@ -74,8 +74,8 @@ export default function Team() {
           <HeroActions
             primary={{ label: CTA.primary, href: "/book" }}
             secondary={{
-              label: `Call ${PRIMARY_PHONE.display}`,
-              href: PRIMARY_PHONE.telHref,
+              label: PUBLIC_PHONE_CTA.label,
+              href: PUBLIC_PHONE_CTA.href,
             }}
           />
         </div>

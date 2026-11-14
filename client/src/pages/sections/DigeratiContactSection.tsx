@@ -19,7 +19,7 @@ import { IconWell } from "@/components/visual/IconWell";
 import {
   COMPANY,
   COMPANY_SOCIAL,
-  PRIMARY_PHONE,
+  PRIMARY_PHONE, PUBLIC_PHONE_CTA,
   formatAddressOneLine,
 } from "@/data/companyContact";
 // Closing bookend (Joe 2026-08-31): the hero's Phoenix city-lights plate
@@ -71,7 +71,7 @@ const directoryItems = [
     icon: Phone,
     label: "Phone",
     value: PRIMARY_PHONE.display,
-    href: PRIMARY_PHONE.telHref,
+    href: PUBLIC_PHONE_CTA.href,
     testId: "contact-phone",
     external: false,
   },
@@ -147,7 +147,7 @@ export const DigeratiContactSection = ({
       analytics.contactFormSubmitted(data.service || "general");
       toast({
         title: "Message Sent Successfully!",
-        description: "We'll get back to you within one business day.",
+        description: "We aim to respond within one business day; your signed agreement sets your actual response targets.",
         variant: "default",
       });
 
@@ -225,8 +225,8 @@ export const DigeratiContactSection = ({
                 {CTA.primary}
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </a>
-              <a href={PRIMARY_PHONE.telHref} className={buttonSecondary("well")} data-testid="contact-cta-call">
-                Call {PRIMARY_PHONE.display}
+              <a href={PUBLIC_PHONE_CTA.href} className={buttonSecondary("well")} data-testid="contact-cta-call">
+                {PUBLIC_PHONE_CTA.label}
               </a>
             </div>
 
@@ -263,11 +263,11 @@ export const DigeratiContactSection = ({
                 <dt>Monday - Friday</dt>
                 <dd className="text-white/80">7:00 AM - 6:00 PM MST</dd>
                 <dt>Saturday &amp; Sunday</dt>
-                <dd className="text-white/80">Emergency Support Only</dd>
+                <dd className="text-white/80">Emergency support is a response target on plans that include it; your signed agreement governs.</dd>
               </dl>
               <p className="mt-4 flex items-start gap-2 text-base font-medium text-de-accent-ink">
                 <Shield className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-                <span>Emergency incident response on plans that include it</span>
+                <span>Incident response during business hours on plans that include it</span>
               </p>
             </div>
 

@@ -73,7 +73,7 @@ export const proactiveOffice: Doc = {
       items: [
         { t: "section", title: "Cadence and scope", body: [{ t: "list", items: [
           "One combined technology and cyber review per year.",
-          `Response targets and 24/7/365 emergency incident response availability are defined in the DE Service Level Agreement (${SLA.label}).`,
+          `Service levels are set in your signed agreement. Incident response during business hours on plans that include it. Clients who elect our optional 24/7 Managed Detection and Response add-on also receive 24/7/365 threat containment and endpoint isolation, as described in their signed Order Form or Statement of Work. See the DE Service Level Agreement (${SLA.label}).`,
           "Final coverage depends on the Cyber Risk Assessment, user count, endpoints, locations and backup scope.",
         ] }] },
         { t: "section", title: "When to move up", body: [{ t: "list", items: [
@@ -215,7 +215,7 @@ export const proactiveEnterprise: Doc = {
         t: "scope",
         rows: [
           { cap: "Everything in ProActive Business", st: "in", detail: "Including automated security alert monitoring, with alerts triaged by DE technicians during business hours, and backup and DR posture." },
-          { cap: "24/7 Managed Detection and Response", st: "add", detail: "24/7 Managed Detection and Response, available as an add-on." },
+          { cap: "24/7 Managed Detection and Response", st: "in", detail: "Includes 24/7 human-led threat monitoring and response." },
           { cap: "Unified security posture", st: "in", detail: "Full unified security posture program and reporting." },
           { cap: "Advanced compliance and risk reporting", st: "in", detail: "Audit-grade compliance reporting and security business review cadence." },
           { cap: "Custom BCDR architecture", st: "in", detail: "Advanced or custom backup and BCDR program." },

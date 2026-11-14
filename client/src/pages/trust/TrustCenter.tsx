@@ -1,7 +1,7 @@
 import { PageTemplate } from "@/components/PageTemplate";
 import { Shield, Lock, FileCheck, Award, Eye, Server } from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PRIMARY_PHONE, PUBLIC_PHONE_CTA } from "@/data/companyContact";
 import { EvidenceFrame } from "@/components/evidence/EvidenceFrame";
 import {
   Chapter,
@@ -35,8 +35,8 @@ const infrastructureRows: DefRow[] = [
   { label: "Hosting", value: "Hosted with U.S. cloud providers that maintain their own physical security programs" },
   { label: "Network Security", value: "Next-generation firewalls, DDoS protection, network segmentation" },
   { label: "Access Controls", value: "Role-based access control (RBAC), principle of least privilege" },
-  { label: "Monitoring", value: "Real-time security information and event management (SIEM)" },
-  { label: "Backups", value: "Encrypted, geographically distributed, tested regularly" },
+  { label: "Monitoring", value: "Automated security alert monitoring, with alerts triaged by DE technicians during business hours, on plans that include it." },
+  { label: "Backups", value: "Backups tested on a schedule" },
 ];
 
 const privacyRows: DefRow[] = [
@@ -63,7 +63,7 @@ export default function TrustCenter() {
   ];
 
   const technicalControls = [
-    "Encryption in transit and at rest on the systems that hold client data",
+    "Encryption in transit",
     "Multi-factor authentication (MFA)",
     ALERT_MONITORING_CLAIM_PHRASE,
     "Intrusion detection/prevention",
@@ -200,7 +200,7 @@ export default function TrustCenter() {
           href: "mailto:security@digeratiexperts.com?subject=Security Documentation Request",
           testId: "button-request-docs",
         }}
-        secondary={{ label: `Call ${PRIMARY_PHONE.display}`, href: PRIMARY_PHONE.telHref, testId: "button-call-trust" }}
+        secondary={{ label: PUBLIC_PHONE_CTA.label, href: PUBLIC_PHONE_CTA.href, testId: "button-call-trust" }}
       />
     </PageTemplate>
   );

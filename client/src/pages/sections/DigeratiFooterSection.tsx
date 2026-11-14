@@ -1,4 +1,4 @@
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PRIMARY_PHONE, PUBLIC_PHONE_CTA } from "@/data/companyContact";
 export const DigeratiFooterSection = (): JSX.Element => {
   return (
     <footer className="bg-de-bg text-white py-12">
@@ -57,8 +57,8 @@ export const DigeratiFooterSection = (): JSX.Element => {
             </p>
             <div className="mt-4 md:mt-0 flex items-center space-x-4">
               <span className="text-gray-400">Emergency:</span>
-              <a href={PRIMARY_PHONE.telHref} className="text-de-accent-ink font-semibold hover:text-white">
-                {PRIMARY_PHONE.display}
+              <a href={PUBLIC_PHONE_CTA.href} className="text-de-accent-ink font-semibold hover:text-white">
+                {PUBLIC_PHONE_CTA.numberLabel}
               </a>
             </div>
           </div>

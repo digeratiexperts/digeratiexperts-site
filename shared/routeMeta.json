@@ -1,7 +1,7 @@
 {
   "/": {
     "title": "Managed IT Services & Cybersecurity in Arizona | Digerati Experts",
-    "description": "Arizona MSP/MSSP. Cybersecurity-first managed IT, emergency incident response on plans that include it, and a Cyber Risk Assessment that matches the operating model to your environment.",
+    "description": "Arizona MSP/MSSP. Cybersecurity-first managed IT, incident response during business hours on plans that include it, and a Cyber Risk Assessment that matches the operating model to your environment.",
     "canonical": "/",
     "robots": "index, follow",
     "ogImage": "https://digeratiexperts.com/og-image.png"
@@ -28,8 +28,8 @@
     "ogImage": "https://digeratiexperts.com/og-image.png"
   },
   "/about/guarantee": {
-    "title": "100% Money-Back Guarantee | Digerati Experts",
-    "description": "Digerati Experts 30-day, no-questions-asked money-back guarantee on managed IT and cybersecurity services.",
+    "title": "Our 30-Day Money-Back Guarantee | Digerati Experts",
+    "description": "30-day money-back guarantee on managed services: if you're not satisfied, tell us in writing within 30 days of your start date and we'll refund 100% of your managed-service fees for that period, no questions asked. Hardware, kits, and third-party licenses are not covered.",
     "canonical": "/about/guarantee",
     "robots": "index, follow",
     "ogImage": "https://digeratiexperts.com/og-image.png"
@@ -652,7 +652,7 @@
   },
   "/solutions/proactive-enterprise-ecosystem": {
     "title": "ProActive Enterprise Ecosystem | Digerati Experts",
-    "description": "Governance-grade managed security for Arizona organizations. Starts at $345/user/mo with a $9,000/mo minimum. Unified Security Posture, advanced compliance/risk reporting, custom BCDR, and quarterly executive reviews. Custom after assessment.",
+    "description": "Governance-grade managed security for Arizona organizations. Starts at $345/user/mo with a $9,000/mo minimum. Includes 24/7 human-led threat monitoring and response. Unified Security Posture, advanced compliance/risk reporting, custom BCDR, and quarterly executive reviews. Custom after assessment.",
     "canonical": "/solutions/proactive-enterprise-ecosystem",
     "robots": "index, follow",
     "ogImage": "https://digeratiexperts.com/og-image.png"

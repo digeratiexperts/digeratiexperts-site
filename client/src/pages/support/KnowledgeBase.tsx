@@ -3,7 +3,7 @@ import { Book, FileText, Zap, MonitorSmartphone, Ticket, LogIn } from "lucide-re
 import { KbCard, KbCardGrid, KbSearchField, KbToneScope } from "@/components/kb/docs/KbIndexParts";
 import { useMemo, useState } from "react";
 import { useSEO } from "@/hooks/useSEO";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PRIMARY_PHONE, PUBLIC_PHONE_CTA } from "@/data/companyContact";
 import {
   Chapter,
   Container,
@@ -146,7 +146,7 @@ export default function KnowledgeBase() {
         lede="Our support team is ready to assist."
         showPhone={false}
         primary={{ label: "Submit Support Ticket", href: "/support/submit-ticket", testId: "button-submit-ticket" }}
-        secondary={{ label: "Call Support", href: PRIMARY_PHONE.telHref, testId: "button-call-support" }}
+        secondary={{ label: "Call Support", href: PUBLIC_PHONE_CTA.href, testId: "button-call-support" }}
       />
     </PageTemplate>
   );

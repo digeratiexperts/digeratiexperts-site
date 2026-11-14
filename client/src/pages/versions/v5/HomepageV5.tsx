@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { useSEO } from "@/hooks/useSEO";
 import { DE_LOGO_PRIMARY, DE_MARK } from "@/lib/brandAssets";
-import { COMPANY, COMPANY_SOCIAL, PRIMARY_PHONE, formatAddressOneLine } from "@/data/companyContact";
+import { COMPANY, COMPANY_SOCIAL, PRIMARY_PHONE, PUBLIC_PHONE_CTA, formatAddressOneLine } from "@/data/companyContact";
 import { pricingTiers, pricing, formatPrice, NO_BLACK_BOX_TAGLINE, PRICING_SCOPE_NOTE } from "@/data/pricing";
 import "./v5.css";
 import { ALERT_MONITORING_CLAIM, ALERT_MONITORING_CLAIM_PHRASE } from "@shared/publicSecurityClaims";
@@ -116,8 +116,8 @@ const SLA_ROWS = [
 
 const PLEDGES = [
   {
-    title: "30-day money-back guarantee",
-    body: "No questions asked, on managed IT and cybersecurity services.",
+    title: "30-Day Guarantee",
+    body: "30-day money-back guarantee on managed services only. Hardware, kits, and third-party licenses are not covered.",
     href: "/about/guarantee",
     link: "Read the guarantee",
   },
@@ -186,7 +186,7 @@ export default function HomepageV5(): JSX.Element {
   useSEO({
     title: "Managed IT and Cybersecurity for Arizona Businesses",
     description:
-      "Arizona MSP/MSSP. Cybersecurity-first managed IT, emergency incident response on plans that include it, and a Cyber Risk Assessment that matches the operating model to your environment.",
+      "Arizona MSP/MSSP. Cybersecurity-first managed IT, incident response during business hours on plans that include it, and a Cyber Risk Assessment that matches the operating model to your environment.",
   });
 
   // The site's shell is dark; this page is light to its edges, including the
@@ -222,8 +222,8 @@ export default function HomepageV5(): JSX.Element {
             </ul>
           </nav>
           <div className="v5-header-actions">
-            <a className="v5-phone" href={PRIMARY_PHONE.telHref} aria-label={`Call ${PRIMARY_PHONE.display}`}>
-              {PRIMARY_PHONE.display}
+            <a className="v5-phone" href={PUBLIC_PHONE_CTA.href} aria-label={PUBLIC_PHONE_CTA.label}>
+              {PUBLIC_PHONE_CTA.numberLabel}
             </a>
             <PrimaryAction className="v5-header-cta" />
             <details className="v5-menu">
@@ -234,7 +234,7 @@ export default function HomepageV5(): JSX.Element {
                     {item.label}
                   </Link>
                 ))}
-                <a href={PRIMARY_PHONE.telHref}>Call {PRIMARY_PHONE.display}</a>
+                <a href={PUBLIC_PHONE_CTA.href}>{PUBLIC_PHONE_CTA.label}</a>
                 <PrimaryAction className="v5-menu-cta" />
               </div>
             </details>
@@ -256,8 +256,8 @@ export default function HomepageV5(): JSX.Element {
               </p>
               <div className="v5-actions">
                 <PrimaryAction />
-                <a className="v5-btn v5-btn-secondary" href={PRIMARY_PHONE.telHref}>
-                  Call {PRIMARY_PHONE.display}
+                <a className="v5-btn v5-btn-secondary" href={PUBLIC_PHONE_CTA.href}>
+                  {PUBLIC_PHONE_CTA.label}
                 </a>
               </div>
             </div>
@@ -282,8 +282,8 @@ export default function HomepageV5(): JSX.Element {
                 <span>Service levels are set in your signed agreement.</span>
               </li>
               <li className="v5-fact">
-                <strong>Emergency incident response on plans that include it</strong>
-                <span>Emergency incident response on plans that include it.</span>
+                <strong>Incident response during business hours on plans that include it</strong>
+                <span>Incident response during business hours on plans that include it.</span>
               </li>
             </ul>
           </div>
@@ -422,7 +422,7 @@ export default function HomepageV5(): JSX.Element {
                 </tbody>
               </table>
               <p className="v5-note">
-                Emergency incident response on plans that include it. <Link href="/legal/sla">Read the service levels page</Link>.
+                Incident response during business hours on plans that include it. <Link href="/legal/sla">Read the service levels page</Link>.
               </p>
             </div>
             <div className="v5-pledges">
@@ -503,7 +503,7 @@ export default function HomepageV5(): JSX.Element {
               <div>
                 <dt>Phone</dt>
                 <dd>
-                  <a href={PRIMARY_PHONE.telHref}>{PRIMARY_PHONE.display}</a>
+                  <a href={PUBLIC_PHONE_CTA.href}>{PUBLIC_PHONE_CTA.numberLabel}</a>
                 </dd>
               </div>
               <div>

@@ -9,7 +9,7 @@ import { analytics } from "@/lib/analytics";
 import { useBooking } from "@/contexts/BookingContext";
 import { HOME_CTA } from "../cta";
 import { DE_LOGO_REVERSE } from "@/lib/brandAssets";
-import { COMPANY, COMPANY_SOCIAL, PRIMARY_PHONE, formatAddressOneLine } from "@/data/companyContact";
+import { COMPANY, COMPANY_SOCIAL, PRIMARY_PHONE, PUBLIC_PHONE_CTA, formatAddressOneLine } from "@/data/companyContact";
 // Closing bookend (Joe 2026-08-31): the hero's Phoenix city-lights plate returns behind the contact chapter.
 import contactBgImage from "@assets/de-hero-arizona-dusk-1600.webp";
 import { CopyButton } from "./CopyButton";
@@ -495,8 +495,8 @@ export function V8ContactFooter(): JSX.Element {
                   <path d="m12 5 7 7-7 7" />
                 </svg>
               </a>
-              <a className="v8-btn v8-btn--outline" href={PRIMARY_PHONE.telHref} data-testid="contact-cta-call">
-                {HOME_CTA.secondary} · {PRIMARY_PHONE.display}
+              <a className="v8-btn v8-btn--outline" href={PUBLIC_PHONE_CTA.href} data-testid="contact-cta-call">
+                {PUBLIC_PHONE_CTA.label}
               </a>
             </div>
 
@@ -524,10 +524,18 @@ export function V8ContactFooter(): JSX.Element {
                 </span>
                 <span className="v8-meta">Phone</span>
                 <span className="dir__copyrow">
-                  <a className="dir__value" href={PRIMARY_PHONE.telHref} data-testid="contact-phone">
-                    {PRIMARY_PHONE.display}
-                  </a>
-                  <CopyButton value={PRIMARY_PHONE.display} what="phone number" testId="contact-phone-copy" />
+                  {!PRIMARY_PHONE.display.startsWith("[") ? (
+                    <>
+                      <a className="dir__value" href={PRIMARY_PHONE.telHref} data-testid="contact-phone">
+                        {PRIMARY_PHONE.display}
+                      </a>
+                      <CopyButton value={PRIMARY_PHONE.display} what="phone number" testId="contact-phone-copy" />
+                    </>
+                  ) : (
+                    <a className="dir__value" href="/contact" data-testid="contact-phone">
+                      Contact us
+                    </a>
+                  )}
                 </span>
               </li>
               <li>
@@ -561,13 +569,13 @@ export function V8ContactFooter(): JSX.Element {
                     <dt>Monday - Friday</dt>
                     <dd>7:00 AM - 6:00 PM MST</dd>
                     <dt>Saturday &amp; Sunday</dt>
-                    <dd>Emergency Support Only</dd>
+                    <dd>Emergency support is a response target on plans that include it; your signed agreement governs.</dd>
                   </dl>
                   <p className="hours__soc">
                     <svg {...svgProps}>
                       <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
                     </svg>
-                    <span>Emergency incident response on plans that include it</span>
+                    <span>Incident response during business hours on plans that include it</span>
                   </p>
                 </div>
               </li>
@@ -596,10 +604,16 @@ export function V8ContactFooter(): JSX.Element {
               {/* Phone and email in the footer too, not only in the contact chapter above it
                   (Joe, 2026-10-14). Read from the one NAP source; city only, no street (PR 532). */}
               <address className="foot__reach">
-                <a href={PRIMARY_PHONE.telHref} data-testid="footer-phone">
-                  <span className="v8-sr">Call </span>
-                  {PRIMARY_PHONE.display}
-                </a>
+                {!PRIMARY_PHONE.display.startsWith("[") ? (
+                  <a href={PRIMARY_PHONE.telHref} data-testid="footer-phone">
+                    <span className="v8-sr">Call </span>
+                    {PRIMARY_PHONE.display}
+                  </a>
+                ) : (
+                  <a href="/contact" data-testid="footer-phone">
+                    Contact us
+                  </a>
+                )}
                 <a href={`mailto:${COMPANY.email}`} data-testid="footer-email">
                   <span className="v8-sr">Email </span>
                   {COMPANY.email}

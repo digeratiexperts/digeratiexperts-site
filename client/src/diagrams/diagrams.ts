@@ -418,7 +418,7 @@ function renderAssessment(o: Required<RenderOptions>): string {
 const TIER_DESC: Record<CoverageTier, string> = {
   it: "Operating baseline",
   office: "Adds network + endpoint backup",
-  business: "Adds SOC, BCDR, compliance reporting",
+  business: "Adds alert monitoring, BCDR, compliance reporting",
   enterprise: "Adds governance, audit-grade compliance",
 };
 const TIER_LABEL: Record<CoverageTier, string> = { it: "IT", office: "Office", business: "Business", enterprise: "Enterprise" };

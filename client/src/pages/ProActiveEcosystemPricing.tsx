@@ -117,7 +117,7 @@ const matrixCategories: MatrixCategory[] = [
     isAddon: true,
     ribbon: "Available with any package",
     services: [
-      { name: "24/7 Managed Detection and Response", it: "addon", office: "addon", business: "addon", enterprise: "addon" },
+      { name: "24/7 Managed Detection and Response", it: "addon", office: "addon", business: "addon", enterprise: true },
       { name: "UCaaS: Voice & Meetings", it: "addon", office: "addon", business: "addon", enterprise: "addon" },
       { name: "Company Spend-Card Controls", it: "addon", office: "addon", business: "Included or available", enterprise: "Included / custom" },
       { name: "Advanced Managed Workplace", it: "addon", office: "addon", business: "addon", enterprise: "Included / custom" },

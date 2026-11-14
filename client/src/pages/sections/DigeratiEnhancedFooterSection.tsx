@@ -155,10 +155,16 @@ export const DigeratiEnhancedFooterSection = ({
                 NAP source so a number change never misses the footer. City only, no street (PR 532). */}
             <address className="mt-3 space-y-2 not-italic">
               <p>
-                <FooterLink href={PRIMARY_PHONE.telHref} testId="footer-phone">
-                  <span className="sr-only">Call </span>
-                  {PRIMARY_PHONE.display}
-                </FooterLink>
+                {!PRIMARY_PHONE.display.startsWith("[") ? (
+                  <FooterLink href={PRIMARY_PHONE.telHref} testId="footer-phone">
+                    <span className="sr-only">Call </span>
+                    {PRIMARY_PHONE.display}
+                  </FooterLink>
+                ) : (
+                  <FooterLink href="/contact" testId="footer-phone">
+                    Contact us
+                  </FooterLink>
+                )}
               </p>
               <p>
                 <FooterLink href={`mailto:${COMPANY.email}`} testId="footer-email">

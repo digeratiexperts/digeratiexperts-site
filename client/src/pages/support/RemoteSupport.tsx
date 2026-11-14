@@ -1,7 +1,7 @@
 import { PageTemplate } from "@/components/PageTemplate";
 import { Shield, Clock, RefreshCw, Zap, Phone } from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PRIMARY_PHONE, PUBLIC_PHONE_CTA } from "@/data/companyContact";
 import {
   Chapter,
   Container,
@@ -27,7 +27,7 @@ export default function RemoteSupport() {
     { icon: Clock, title: "Instant Connection", points: ["Connect in under 2 minutes", "No software required", "Windows, Mac, Linux"] },
     { icon: Shield, title: "Secure & Encrypted", points: ["End-to-end encryption", "Session recording", "HIPAA-aligned session controls"] },
     { icon: RefreshCw, title: "Screen Sharing", points: ["Full control capability", "Multi-monitor support", "File transfer included"] },
-    { icon: Zap, title: "Emergency response", points: ["Emergency incident response on plans that include it", "Service levels are set in your signed agreement", "Senior engineer escalation"] },
+    { icon: Zap, title: "Emergency response", points: ["Incident response during business hours on plans that include it", "Service levels are set in your signed agreement", "Senior engineer escalation"] },
   ];
 
   const steps = [
@@ -79,7 +79,7 @@ export default function RemoteSupport() {
             tone="well"
             eyebrow="How it works"
             title="How Remote Support Works"
-            lede="When issues arise, our MSP technicians can securely access your systems to diagnose and resolve problems in minutes. No downtime, no delays."
+            lede="When issues arise, our MSP technicians can securely access your systems to diagnose and resolve problems. Response targets are set in your signed agreement."
           />
           <ul className="grid gap-4 md:grid-cols-2 md:gap-5">
             {features.map((feature) => (
@@ -112,7 +112,7 @@ export default function RemoteSupport() {
       <Chapter tone="well" compact seam={false}>
         <Container>
           <a
-            href={PRIMARY_PHONE.telHref}
+            href={PUBLIC_PHONE_CTA.href}
             className="inline-flex min-h-11 items-center gap-2 font-semibold text-white underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ec4899]"
             data-testid="button-call-remote"
           >

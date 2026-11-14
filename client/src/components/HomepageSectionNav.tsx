@@ -3,7 +3,7 @@ import { LayoutGroup, motion, useReducedMotion, useScroll } from "framer-motion"
 import { ArrowRight, Phone, Shield } from "lucide-react";
 import { useOptionalFullPageScroll } from "@/components/FullPageScroll";
 import { useBooking } from "@/contexts/BookingContext";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PRIMARY_PHONE, PUBLIC_PHONE_CTA } from "@/data/companyContact";
 import { CTA } from "@/lib/ctaCopy";
 
 /** Homepage chapters in the thin top table of contents. */
@@ -340,13 +340,13 @@ export function HomepageDockActions() {
   return (
     <div className="flex items-center gap-1.5" data-testid="homepage-dock-actions">
       <a
-        href={PRIMARY_PHONE.telHref}
+        href={PUBLIC_PHONE_CTA.href}
         className="flex h-10 shrink-0 items-center gap-1.5 rounded-full px-2.5 text-base font-medium text-white/90 transition-colors hover:bg-white/10 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-de-magenta-ink"
         data-testid="nav-phone"
-        aria-label={`Call ${PRIMARY_PHONE.display}`}
+        aria-label={PUBLIC_PHONE_CTA.label}
       >
         <Phone className="h-4 w-4 text-de-magenta-ink" aria-hidden="true" />
-        <span className="hidden xl:inline">{PRIMARY_PHONE.display}</span>
+        <span className="hidden xl:inline">{PUBLIC_PHONE_CTA.numberLabel}</span>
       </a>
 
       <button

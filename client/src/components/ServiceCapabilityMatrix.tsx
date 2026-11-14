@@ -1,7 +1,7 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { Check, ChevronRight } from "lucide-react";
 import { Link } from "wouter";
-import { ALERT_MONITORING_CLAIM_PHRASE, MDR_ADDON_CLAIM } from "@shared/publicSecurityClaims";
+import { ALERT_MONITORING_CLAIM_PHRASE } from "@shared/publicSecurityClaims";
 
 type TierValue = string | boolean;
 
@@ -106,7 +106,7 @@ const allCategories: CategoryData[] = [
       { capability: "UCaaS / VoIP Telephony", essentials: "Add-on", office: "Add-on", business: "Add-on", enterprise: "Add-on" },
       { capability: "Extended Retention & Archiving", essentials: "Add-on", office: "Add-on", business: "Add-on", enterprise: "Add-on" },
       { capability: ALERT_MONITORING_CLAIM_PHRASE, essentials: "Add-on", office: "Add-on", business: true, enterprise: true },
-      { capability: MDR_ADDON_CLAIM, essentials: "Add-on", office: "Add-on", business: "Add-on", enterprise: "Add-on" },
+      { capability: "24/7 Managed Detection and Response", essentials: "Add-on", office: "Add-on", business: "Add-on", enterprise: "Included" },
     ]
   }
 ];
@@ -135,8 +135,8 @@ const serviceToCategory: Record<string, string[]> = {
 
 const tiers = [
   { id: "essentials", name: "IT Essentials", price: "Core IT" },
-  { id: "office", name: "Office", price: "$65/user" },
-  { id: "business", name: "Business", price: "$95/user", featured: true },
+  { id: "office", name: "Office", price: "$165/user/mo" },
+  { id: "business", name: "Business", price: "$245/user/mo", featured: true },
   { id: "enterprise", name: "Enterprise", price: "Custom" },
 ];
 

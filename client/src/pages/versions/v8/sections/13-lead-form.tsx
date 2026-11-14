@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import { revealInitial, revealInView, revealTransition, revealViewport } from "@/lib/animations";
 import { useToast } from "@/hooks/use-toast";
 import { HOME_CTA } from "../cta";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PRIMARY_PHONE, PUBLIC_PHONE_CTA } from "@/data/companyContact";
 import { FieldOk, SubmitFace, submitPhase, useSentFlash } from "./SubmitFace";
 import "./13-lead-form.css";
 import { ChapterPattern } from "@/components/site/Atmosphere";
@@ -238,8 +238,8 @@ export function V8LeadForm(): JSX.Element {
           </form>
           <p className="lead__call v8-body">
             Prefer to call?{" "}
-            <a className="v8-link" href={PRIMARY_PHONE.telHref} data-testid="link-lead-phone">
-              {PRIMARY_PHONE.display}
+            <a className="v8-link" href={PUBLIC_PHONE_CTA.href} data-testid="link-lead-phone">
+              {PUBLIC_PHONE_CTA.numberLabel}
             </a>
           </p>
         </motion.div>

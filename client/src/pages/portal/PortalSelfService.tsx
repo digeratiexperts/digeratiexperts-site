@@ -35,7 +35,7 @@ import { useRequestContext } from "@/components/portal/requests/RequestCommon";
 import { CATALOG_ITEMS, searchCatalog, type CatalogItem } from "@/components/portal/requests/catalog";
 import { useFavorites } from "@/components/portal/requests/favorites";
 import { BASKET_STATUS, TERMINAL_STATUSES } from "@shared/serviceRequests";
-import { PRIMARY_PHONE } from "@shared/companyContact";
+import { PRIMARY_PHONE, PUBLIC_PHONE_CTA } from "@shared/companyContact";
 import { builtInAnnouncements, type PortalAnnouncement } from "@shared/portalAnnouncements";
 import { todayIso } from "@shared/serviceRequests";
 import { AnnouncementCarousel } from "@/components/portal/selfservice/AnnouncementCarousel";
@@ -391,13 +391,13 @@ export default function PortalSelfService() {
             </Card>
 
             <a
-              href={PRIMARY_PHONE.telHref}
+              href={PUBLIC_PHONE_CTA.href}
               className="flex items-center gap-3 rounded-xl border border-border bg-card p-5 shadow-sm hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <Headset className="h-6 w-6 text-muted-foreground" aria-hidden="true" />
               <span>
                 <span className="block text-base font-semibold text-foreground">Phone IT Service Desk</span>
-                <span className="pt-num block text-sm text-muted-foreground">{PRIMARY_PHONE.display}</span>
+                <span className="pt-num block text-sm text-muted-foreground">{PUBLIC_PHONE_CTA.numberLabel}</span>
               </span>
             </a>
 

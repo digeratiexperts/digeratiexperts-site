@@ -5,7 +5,7 @@ import { ArrowRight, ArrowUpRight, Scale, ShieldCheck, type LucideIcon } from "l
 import { revealInitial, revealInView, revealTransition, revealViewport } from "@/lib/animations";
 import { useBooking } from "@/contexts/BookingContext";
 import { HOME_CTA } from "../cta";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PRIMARY_PHONE, PUBLIC_PHONE_CTA } from "@/data/companyContact";
 import { ReviewsCarousel, ReviewSourceChips } from "@/components/ReviewsCarousel";
 import {
   catalogEntriesToPublic,
@@ -404,8 +404,8 @@ export function V8ClientProof(): JSX.Element {
               Serving healthcare, accounting and finance, law firms, real estate, nonprofits, and animal hospitals
               across Greater Phoenix<span className="proof-foot__sep"> · </span>
               <span className="proof-foot__phonewrap">
-                <a className="proof-foot__phone" href={PRIMARY_PHONE.telHref}>
-                  {PRIMARY_PHONE.display}
+                <a className="proof-foot__phone" href={PUBLIC_PHONE_CTA.href}>
+                  {PUBLIC_PHONE_CTA.numberLabel}
                 </a>
               </span>
             </p>

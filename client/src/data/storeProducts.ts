@@ -554,7 +554,7 @@ export const storeProducts: StoreProduct[] = [
     isClientOnly: false,
     requiredClientType: "public",
     minimumQuantity: 1,
-    features: ["Unlimited Calling", "Desktop & Mobile Apps", "Voicemail", "Call Forwarding"],
+    features: ["US and Canada calling, subject to the voice terms in your agreement", "Desktop & Mobile Apps", "Voicemail", "Call Forwarding"],
     sortOrder: 40,
   },
   {

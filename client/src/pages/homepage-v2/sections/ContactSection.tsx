@@ -74,7 +74,7 @@ function AssessmentForm(): JSX.Element {
       </button>
       {state === "sent" && (
         <p className="small" role="status" style={{ marginTop: 12, color: "var(--accent)" }}>
-          Request received — we respond within one business day.
+          We aim to respond within one business day; your signed agreement sets your actual response targets.
         </p>
       )}
       <div className="assure">
@@ -100,9 +100,9 @@ export function ContactSection(): JSX.Element {
             <div><span>Email</span><a href={`mailto:${EMAIL_ADDRESS}`}>{EMAIL_ADDRESS}</a></div>
             <div><span>Office</span>Chandler, AZ</div>
             <div><span>Hours</span>Mon–Fri, 7:00 AM – 6:00 PM MST</div>
-            <div><span>Weekends</span>Emergency support only</div>
+            <div><span>Weekends</span>Emergency support is a response target on plans that include it; your signed agreement governs.</div>
           </div>
-          <div className="live"><i />Emergency incident response on plans that include it</div>
+          <div className="live"><i />Incident response during business hours on plans that include it</div>
         </div>
         <AssessmentForm />
       </div>

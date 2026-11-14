@@ -120,6 +120,7 @@ const tiers = {
     learnMoreUrl: "/solutions/proactive-enterprise-ecosystem",
     inclusions: [
       "Everything in Business, plus",
+      "Includes 24/7 human-led threat monitoring and response",
       "Unified security posture reporting",
       "Advanced compliance / risk reporting",
       "Custom BCDR architecture support",
