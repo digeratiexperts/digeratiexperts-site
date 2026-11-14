@@ -110,6 +110,9 @@ const log = (message: string) => {
 };
 
 import { setSecurityHeaders } from "./middleware/security";
+import { registerCspReportRoute } from "./cspReport";
+import { preparePaymentPageHtml } from "./paymentPageHtml";
+import { isPaymentPagePath } from "@shared/paymentPage";
 import { registerVersionPreviewRobots } from "./versionPreviewRobots";
 app.use(setSecurityHeaders);
 
@@ -433,6 +436,7 @@ app.use("/api/portal", (_req, res, next) => {
 });
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+registerCspReportRoute(app);
 app.use(cookieParser());
 
 registerWarehouseGates(app);
@@ -653,7 +657,12 @@ function listEndpoints(): Array<{ method: string; path: string }> {
       // The shell is HTML: never stored (staticCacheControl), revalidated against the build's mtime.
       res.setHeader("Cache-Control", cacheControlFor("index.html"));
       res.setHeader("Last-Modified", shell.lastModified);
-      res.type("html").send(found ? applyRouteMeta(shell.html, routeMetaFor(req.path)) : shell.html);
+      let html = found ? applyRouteMeta(shell.html, routeMetaFor(req.path)) : shell.html;
+      if (isPaymentPagePath(req.path)) {
+        const nonce = (res as express.Response & { locals?: { cspNonce?: string } }).locals?.cspNonce;
+        html = preparePaymentPageHtml(html, nonce);
+      }
+      res.type("html").send(html);
     };
 
     // A submitted solution's confirmation page (§5.5): an unknown or expired reference is a real 404.
