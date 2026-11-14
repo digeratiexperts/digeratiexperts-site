@@ -3,6 +3,7 @@ import { useToast } from "@/hooks/use-toast";
 import { PhoneIcon } from "../icons";
 import { EMAIL_ADDRESS, INTEREST_OPTIONS, PHONE_DISPLAY, PHONE_HREF, THIRD_LANE_NAME } from "../content";
 import { HOME_CTA } from "../cta";
+import { PhoneLink } from "@/components/PhoneLink";
 
 type SubmitState = "idle" | "sending" | "sent";
 
@@ -95,7 +96,7 @@ export function ContactSection(): JSX.Element {
           <h2>{HOME_CTA.primary}.</h2>
           <p className="lede">Every fully managed and co-managed plan starts here. We find identity, endpoint, email, backup, and operating gaps, then confirm scope after we see the environment.</p>
           <p className="small" style={{ color: "var(--on-band-2)", margin: "-14px 0 28px" }}>Only need devices and licenses for a team under 30? Choose {THIRD_LANE_NAME} in the form.</p>
-          <a href={PHONE_HREF} className="btn btn-line"><PhoneIcon width={18} height={18} />{HOME_CTA.secondary} · {PHONE_DISPLAY}</a>
+          <PhoneLink className="btn btn-line"><PhoneIcon width={18} height={18} />{HOME_CTA.secondary} · {PHONE_DISPLAY}</PhoneLink>
           <div className="info">
             <div><span>Email</span><a href={`mailto:${EMAIL_ADDRESS}`}>{EMAIL_ADDRESS}</a></div>
             <div><span>Office</span>Chandler, AZ</div>

@@ -14,6 +14,7 @@ import {
 } from "../de-intelligence/retrieve";
 import type { KnowledgeRetrievalHit } from "../de-intelligence/types";
 import type { AdvisorMode, PageContext } from "./types";
+import { hasPublicPhone } from "@shared/companyContact";
 
 export const DE_COMPANY = {
   name: COMPANY.legalName,
@@ -190,7 +191,9 @@ function buildKnowledgeSlice(
   const parts: string[] = [
     `Company: ${DE_COMPANY.name}`,
     `Positioning: ${DE_COMPANY.positioning}`,
-    `Phone: ${DE_COMPANY.phoneDisplay}`,
+    hasPublicPhone()
+      ? `Phone: ${DE_COMPANY.phoneDisplay}`
+      : "Phone: no public number yet. Never give or invent one; offer a callback, a message or email instead.",
     `Email: ${DE_COMPANY.email}`,
     `Location: ${DE_COMPANY.address} — serving ${DE_COMPANY.area}`,
     `Booking: ${DE_COMPANY.bookingUrl}`,

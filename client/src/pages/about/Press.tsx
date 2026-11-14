@@ -3,7 +3,8 @@ import { PageTemplate } from "@/components/PageTemplate";
 import { JsonLd } from "@/components/JsonLd";
 import { Link } from "wouter";
 import { useSEO } from "@/hooks/useSEO";
-import { COMPANY, PRIMARY_PHONE } from "@/data/companyContact";
+import { COMPANY, PRIMARY_PHONE, hasPublicPhone, schemaTelephoneProps } from "@/data/companyContact";
+import { PhoneLink } from "@/components/PhoneLink";
 
 const NAP = {
   name: COMPANY.legalName,
@@ -41,7 +42,7 @@ export default function Press() {
             name: NAP.name,
             url: "https://digeratiexperts.com",
             email: NAP.email,
-            telephone: PRIMARY_PHONE.schemaTelephone,
+            ...schemaTelephoneProps(),
             address: {
               "@type": "PostalAddress",
               addressLocality: NAP.city,
@@ -74,11 +75,15 @@ export default function Press() {
                 <br />
                 {NAP.city}, {NAP.region} · serving Greater Phoenix
                 <br />
-                Phone:{" "}
-                <a className="inline-flex min-h-11 items-center text-de-magenta-paper-ink underline decoration-de-magenta-paper-ink/50 underline-offset-4 hover:decoration-de-magenta-paper-ink" href={PRIMARY_PHONE.telHref}>
-                  {NAP.phone}
-                </a>
-                <br />
+                {hasPublicPhone() && (
+                  <>
+                    Phone:{" "}
+                    <PhoneLink className="inline-flex min-h-11 items-center text-de-magenta-paper-ink underline decoration-de-magenta-paper-ink/50 underline-offset-4 hover:decoration-de-magenta-paper-ink">
+                    {NAP.phone}
+                    </PhoneLink>
+                    <br />
+                  </>
+                )}
                 Email:{" "}
                 <a className="inline-flex min-h-11 items-center text-de-magenta-paper-ink underline decoration-de-magenta-paper-ink/50 underline-offset-4 hover:decoration-de-magenta-paper-ink" href={`mailto:${NAP.email}`}>
                   {NAP.email}
@@ -130,7 +135,7 @@ export default function Press() {
                 <a className="text-de-magenta-ink underline decoration-de-magenta-ink/50 underline-offset-4 hover:decoration-de-magenta-ink" href={`mailto:${NAP.email}?subject=Media%20inquiry`}>
                   {NAP.email}
                 </a>{" "}
-                · {NAP.phone}
+               {hasPublicPhone() && <> · {NAP.phone}</>}
               </p>
             </section>
           </div>

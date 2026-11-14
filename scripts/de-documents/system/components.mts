@@ -186,7 +186,7 @@ export function rec(doc: DocLike) {
   const c = doc.cta;
   return `<aside class="rec" aria-label="Next step"><div class="bar" aria-hidden="true"></div><div class="in">
 <p class="eyebrow">Next step</p><h2>${esc(c.label)}</h2><p>${md(c.detail)}</p>
-<p class="ct"><a class="link" href="${esc(c.href)}">${esc(c.hrefLabel)}</a><a class="link" href="${CONTACT.telHref}">${CONTACT.phone}</a><a class="link" href="mailto:${CONTACT.email}">${CONTACT.email}</a></p>
+<p class="ct"><a class="link" href="${esc(c.href)}">${esc(c.hrefLabel)}</a>${CONTACT.telHref ? `<a class="link" href="${CONTACT.telHref}">${CONTACT.phone}</a>` : ""}<a class="link" href="mailto:${CONTACT.email}">${CONTACT.email}</a></p>
 ${scopeNote(doc)}</div></aside>`;
 }
 export const scopeNote = (doc: DocLike) => (doc.scopeNote ? `<p class="scope-note">${md(doc.scopeNote)}</p>` : "");

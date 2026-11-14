@@ -6,10 +6,11 @@ import { useForm } from "react-hook-form";
 import { revealInitial, revealInView, revealTransition, revealViewport } from "@/lib/animations";
 import { useToast } from "@/hooks/use-toast";
 import { CTA } from "@/lib/ctaCopy";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PRIMARY_PHONE, hasPublicPhone } from "@/data/companyContact";
 import { FieldOk, SubmitFace, submitPhase, useSentFlash } from "./SubmitFace";
 import "./13-lead-form.css";
 import { StoryBackdrop } from "../story/StoryBackdrop";
+import { PhoneLink } from "@/components/PhoneLink";
 
 /**
  * Section 13 (mock: artifacts/design-concepts/homepage-sections-2026-10/sections/13-lead-form.html).
@@ -236,12 +237,14 @@ export function V9LeadForm(): JSX.Element {
               </li>
             </ul>
           </form>
-          <p className="lead__call v9-body">
-            Prefer to call?{" "}
-            <a className="v9-link" href={PRIMARY_PHONE.telHref} data-testid="link-lead-phone">
-              {PRIMARY_PHONE.display}
-            </a>
-          </p>
+          {hasPublicPhone() && (
+            <p className="lead__call v9-body">
+              Prefer to call?{" "}
+              <PhoneLink className="v9-link" data-testid="link-lead-phone">
+                {PRIMARY_PHONE.display}
+              </PhoneLink>
+            </p>
+          )}
         </motion.div>
 
         <motion.ul className="lead__assure" {...reveal()}>

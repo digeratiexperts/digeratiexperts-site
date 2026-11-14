@@ -23,6 +23,7 @@ import {
   shouldShowStickyCta,
 } from "@/lib/stickyCtaVisibility";
 import { isCookieBannerBlocking } from "@/lib/deskAskDeMotion";
+import { PhoneLink } from "@/components/PhoneLink";
 
 function publishStickyCtaHeight(px: number) {
   document.documentElement.style.setProperty("--de-sticky-cta-h", `${Math.round(px)}px`);
@@ -310,8 +311,7 @@ export function StickyCTABar() {
                 </div>
 
                 <div className="flex shrink-0 items-center gap-2 md:gap-4">
-                  <a
-                    href={PRIMARY_PHONE.telHref}
+                  <PhoneLink
                     className={cn(
                       "hidden items-center gap-2 text-base transition-colors md:flex focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A] focus-visible:ring-offset-2 rounded-sm",
                       light
@@ -322,7 +322,7 @@ export function StickyCTABar() {
                   >
                     <Phone className="w-4 h-4" />
                     <span>{PRIMARY_PHONE.display}</span>
-                  </a>
+                  </PhoneLink>
 
                   <Button
                     size="sm"

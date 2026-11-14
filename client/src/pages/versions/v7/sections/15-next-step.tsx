@@ -2,8 +2,9 @@ import { motion, useReducedMotion } from "framer-motion";
 import { revealInitial, revealInView, revealTransition, revealViewport } from "@/lib/animations";
 import { useBooking } from "@/contexts/BookingContext";
 import { CTA } from "@/lib/ctaCopy";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PRIMARY_PHONE, hasPublicPhone } from "@/data/companyContact";
 import "./15-next-step.css";
+import { PhoneLink } from "@/components/PhoneLink";
 
 /**
  * Section 15 (mock: artifacts/design-concepts/homepage-sections-2026-10/sections/15-next-step.html).
@@ -82,12 +83,14 @@ export function V7NextStep(): JSX.Element {
             <span className="next__sep" aria-hidden="true">
               ·
             </span>
-            <p className="next__call">
-              Prefer to call?{" "}
-              <a href={PRIMARY_PHONE.telHref} aria-label={`Call ${PRIMARY_PHONE.display}`}>
-                {PRIMARY_PHONE.display}
-              </a>
-            </p>
+            {hasPublicPhone() && (
+              <p className="next__call">
+                Prefer to call?{" "}
+                <PhoneLink aria-label={`Call ${PRIMARY_PHONE.display}`}>
+                  {PRIMARY_PHONE.display}
+                </PhoneLink>
+              </p>
+            )}
           </div>
         </motion.div>
       </div>

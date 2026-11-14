@@ -29,6 +29,7 @@ import { PRIMARY_PHONE } from "@/data/companyContact";
 import { PronunciationCard } from "@/components/PronunciationCard";
 import { TipTag } from "./TipTag";
 import "./01-hero.css";
+import { PhoneLink } from "@/components/PhoneLink";
 
 /**
  * 01 · Hero + attached trust strip, ported from
@@ -71,14 +72,13 @@ function PhoneHeroMeta(): JSX.Element {
           Response within one business day
         </li>
         <li>
-          <a
-            href={PRIMARY_PHONE.telHref}
+          <PhoneLink
             className="inline-flex min-h-11 items-center gap-2 font-medium text-white/85 underline decoration-white/25 underline-offset-4 transition-colors hover:text-white hover:decoration-white/50"
             data-testid="link-hero-phone"
           >
             <Phone className="h-4 w-4 text-de-magenta-ink" aria-hidden="true" />
             Call {PRIMARY_PHONE.display}
-          </a>
+          </PhoneLink>
         </li>
       </ul>
       <p className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-sm text-white/55">
@@ -499,9 +499,9 @@ export function V10Hero(): JSX.Element {
                     Response within one business day
                   </li>
                   <li>
-                    <a className="v10-link--quiet" href={PRIMARY_PHONE.telHref} data-testid="link-hero-phone">
+                    <PhoneLink className="v10-link--quiet" data-testid="link-hero-phone">
                       Call {PRIMARY_PHONE.display}
-                    </a>
+                    </PhoneLink>
                   </li>
                 </ul>
 

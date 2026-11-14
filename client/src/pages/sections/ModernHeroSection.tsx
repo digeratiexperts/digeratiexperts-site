@@ -8,7 +8,8 @@ import { DashboardMockup } from "@/components/graphics";
 import heroBgImage from "@assets/de-hero-arizona-dusk.png";
 import { useBooking } from "@/contexts/BookingContext";
 import { CTA } from "@/lib/ctaCopy";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PRIMARY_PHONE, hasPublicPhone } from "@/data/companyContact";
+import { PhoneLink } from "@/components/PhoneLink";
 
 export const ModernHeroSection = (): JSX.Element => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -162,14 +163,19 @@ export const ModernHeroSection = (): JSX.Element => {
                 </div>
 
                 <p className="text-[14px] leading-5 text-white/60">
-                  Arizona-based · Principal-led · Call{" "}
-                  <a
-                    href={PRIMARY_PHONE.telHref}
-                    className="font-medium text-white/80 underline decoration-white/25 underline-offset-4 transition-colors hover:text-white hover:decoration-white/50"
-                    data-testid="link-hero-phone"
-                  >
-                    {PRIMARY_PHONE.display}
-                  </a>
+                  Arizona-based · Principal-led
+                  {hasPublicPhone() && (
+                    <>
+                      {" "}
+                      · Call{" "}
+                      <PhoneLink
+                        className="font-medium text-white/80 underline decoration-white/25 underline-offset-4 transition-colors hover:text-white hover:decoration-white/50"
+                        data-testid="link-hero-phone"
+                      >
+                        {PRIMARY_PHONE.display}
+                      </PhoneLink>
+                    </>
+                  )}
                 </p>
               </div>
             </motion.div>

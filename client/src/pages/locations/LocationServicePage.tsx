@@ -31,7 +31,7 @@ import { SituationContinuityStrip } from "@/components/SituationContinuityStrip"
 import { situationSubmitPayload, useAnonymousSituation } from "@/lib/anonymousSituation";
 import { getCyberFact, formatFactSource } from "@/data/cyberAwarenessFacts";
 import { CTA } from "@/lib/ctaCopy";
-import { COMPANY, PRIMARY_PHONE, PUBLIC_SOCIAL_LINKS, formatAddressOneLine } from "@/data/companyContact";
+import { COMPANY, PRIMARY_PHONE, PUBLIC_SOCIAL_LINKS, formatAddressOneLine, schemaTelephoneProps } from "@/data/companyContact";
 import { GREATER_PHOENIX_CITIES, cityPageSlug } from "@/data/greaterPhoenixCities";
 import { credentialsOfKind } from "@/data/credentials";
 import { IconWell } from "@/components/visual/IconWell";
@@ -47,6 +47,7 @@ import {
   PageHero,
   buttonSecondary,
 } from "@/components/site/chapters";
+import { PhoneLink } from "@/components/PhoneLink";
 
 const assessmentFormSchema = z.object({
   fullName: z.string().min(2, "Name must be at least 2 characters").max(50),
@@ -115,7 +116,7 @@ export function LocationServicePage(props: LocationPageProps) {
       name: COMPANY.legalName,
       description: props.description,
       url: `${COMPANY.website}/locations/${currentSlug}`,
-      telephone: PRIMARY_PHONE.schemaTelephone ?? PRIMARY_PHONE.display,
+      ...schemaTelephoneProps(),
       email: COMPANY.email,
       address: {
         "@type": "PostalAddress",
@@ -252,10 +253,10 @@ export function LocationServicePage(props: LocationPageProps) {
               <Link href={CTA.secondaryHref} className={buttonSecondary("well")}>
                 {CTA.secondary}
               </Link>
-              <a href={PRIMARY_PHONE.telHref} className={buttonSecondary("well")}>
+              <PhoneLink className={buttonSecondary("well")}>
                 <Phone className="h-4 w-4" aria-hidden="true" />
                 Or call <span className="whitespace-nowrap">{PRIMARY_PHONE.display}</span>
-              </a>
+              </PhoneLink>
             </div>
           }
           note={`Built for regulated environments: ${regulatedBadges.join(" · ")}.${partnerBadges.length ? ` ${partnerBadges.join(" · ")}.` : ""}`}
@@ -402,10 +403,10 @@ export function LocationServicePage(props: LocationPageProps) {
                               size="lg"
                               className="h-auto min-h-12 w-full whitespace-normal border-[var(--de-paper-hairline)] bg-white px-6 py-3 text-center text-base font-semibold leading-snug text-[#1A1228] hover:border-[#D3126A] hover:bg-[#D3126A]/5 sm:w-auto"
                             >
-                              <a href={PRIMARY_PHONE.telHref} className="sm:flex-shrink-0">
+                              <PhoneLink className="sm:flex-shrink-0">
                                 <Phone className="mr-2 h-5 w-5" aria-hidden="true" />
                                 {PRIMARY_PHONE.display}
-                              </a>
+                              </PhoneLink>
                             </Button>
                           </div>
                         </form>
@@ -584,13 +585,12 @@ export function LocationServicePage(props: LocationPageProps) {
                   <p className="mt-3 text-sm leading-relaxed text-[#3A3448]">
                     {props.city} clients are served from our Chandler office and by remote support.
                   </p>
-                  <a
-                    href={PRIMARY_PHONE.telHref}
+                  <PhoneLink
                     className="mt-3 inline-flex min-h-11 items-center gap-2 font-semibold text-de-magenta-paper-ink underline-offset-4 hover:underline"
                   >
                     <Phone className="h-4 w-4" aria-hidden="true" />
                     <span className="whitespace-nowrap">{PRIMARY_PHONE.display}</span>
-                  </a>
+                  </PhoneLink>
                 </div>
               </div>
             </div>

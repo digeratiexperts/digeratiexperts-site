@@ -15,7 +15,7 @@ import { ServiceBlocks } from "@/components/site/IndustriesServiceBlocks";
 import { Heart, Users, Shield, Zap, TrendingUp } from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
 import { CTA } from "@/lib/ctaCopy";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PRIMARY_PHONE, phoneAction, hasPublicPhone } from "@/data/companyContact";
 
 export default function Nonprofits() {
   useSEO({
@@ -86,7 +86,7 @@ export default function Nonprofits() {
       title: "Someone to call",
       text: (
         <>
-          Arizona team for donor-data and grant-system issues — <span className="whitespace-nowrap">{PRIMARY_PHONE.display}</span>.
+          Arizona team for donor-data and grant-system issues{hasPublicPhone() && <> — <span className="whitespace-nowrap">{PRIMARY_PHONE.display}</span></>}.
         </>
       ),
     },
@@ -103,7 +103,7 @@ export default function Nonprofits() {
         <div className="flex flex-col gap-3 sm:flex-row">
           <HeroActions
             primary={{ label: CTA.primary, href: "/book", testId: "button-hero-nonprofit" }}
-            secondary={{ label: `Call ${PRIMARY_PHONE.display}`, href: PRIMARY_PHONE.telHref }}
+            secondary={phoneAction(`Call ${PRIMARY_PHONE.display}`)}
           />
         </div>
       }

@@ -14,6 +14,7 @@ import { PORTAL_LOGIN } from '@/lib/portalUrls';
 import { CTA } from '@/lib/ctaCopy';
 import { PRIMARY_PHONE } from '@/data/companyContact';
 import { isDoor2Path } from '@/lib/isDoor2Path';
+import { PhoneLink } from '@/components/PhoneLink';
 
 const NoiseTexture = ({ id }: { id: string }) => (
   <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-[0.025]" aria-hidden="true">
@@ -735,15 +736,14 @@ export function MegaMenu() {
         )}
         <div className="max-w-[var(--de-canvas)] mx-auto px-3 lg:px-5 flex flex-col md:flex-row items-center justify-end py-1.5 relative z-10 w-full">
           <div className="flex items-center flex-wrap gap-x-5 gap-y-1.5 md:gap-x-7 justify-center md:justify-end">
-            <a
-              href={PRIMARY_PHONE.telHref}
+            <PhoneLink
               className="flex items-center text-white/95 hover:text-de-magenta-ink text-base font-semibold leading-none tracking-wide transition-colors"
               data-testid="utility-phone"
             >
               <Phone className="h-4 w-4 mr-1.5 text-de-magenta-ink shrink-0" />
               <span className="hidden sm:inline">{PRIMARY_PHONE.display}</span>
               <span className="sm:hidden">Call</span>
-            </a>
+            </PhoneLink>
 
             {/* Restored from 61f25fc / live release 20260810193831 — Assist near Portal */}
             <a
@@ -1344,8 +1344,7 @@ export function MegaMenu() {
                   transform: mobileMenuOpen ? 'translateX(0)' : 'translateX(20px)'
                 }}
               >
-                <a
-                  href={PRIMARY_PHONE.telHref}
+                <PhoneLink
                   className="flex items-center gap-3 px-4 py-3 rounded-xl border border-de-hairline bg-de-raised hover:border-white/25 transition-all group"
                   data-testid="mobile-call"
                   aria-label={`Call us at ${PRIMARY_PHONE.display}`}
@@ -1357,7 +1356,7 @@ export function MegaMenu() {
                     <div className="text-base text-white/55">Call Us</div>
                     <div className="font-semibold text-white group-hover:text-[#D3126A] transition-colors">{PRIMARY_PHONE.display}</div>
                   </div>
-                </a>
+                </PhoneLink>
 
                 <a
                   href="https://assist.zoho.com/"

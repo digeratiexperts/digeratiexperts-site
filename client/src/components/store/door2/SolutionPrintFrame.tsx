@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { COMPANY, PRIMARY_PHONE } from "@/data/companyContact";
+import { COMPANY, PRIMARY_PHONE, hasPublicPhone } from "@/data/companyContact";
 import { DE_LOGO_PRIMARY } from "@/lib/brandAssets";
 
 /**
@@ -38,7 +38,7 @@ export function SolutionPrintFrame({
           offer. A Digerati Experts consultant confirms scope, pricing, and next steps after review.
         </p>
         <p className="d2-print-close__contact">
-          {PRIMARY_PHONE.display} · {COMPANY.email} · digeratiexperts.com
+          {hasPublicPhone() && <>{PRIMARY_PHONE.display} · </>}{COMPANY.email} · digeratiexperts.com
         </p>
       </div>
     </>

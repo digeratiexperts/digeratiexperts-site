@@ -1,6 +1,8 @@
 import { PinIcon } from "../icons";
 import { HOME_CTA } from "../cta";
 import { PHONE_DISPLAY, PHONE_HREF } from "../content";
+import { PhoneLink } from "@/components/PhoneLink";
+import { hasPublicPhone } from "@shared/companyContact";
 
 const OWNERS = [
   { title: "Security operations", text: "Monitoring, detection, and response ownership when threats appear." },
@@ -45,7 +47,7 @@ export function TeamSection(): JSX.Element {
             </div>
             <div className="team-cta">
               <a href="#contact" className="btn btn-line">{HOME_CTA.secondary}</a>
-              <span className="small muted">or call <a className="link" href={PHONE_HREF}>{PHONE_DISPLAY}</a></span>
+              {hasPublicPhone() && <span className="small muted">or call <PhoneLink className="link">{PHONE_DISPLAY}</PhoneLink></span>}
             </div>
           </div>
         </div>

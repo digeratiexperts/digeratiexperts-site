@@ -4,6 +4,8 @@ import { DexMark } from "@/components/mascots/Mascots";
 import { CheckIcon, PhoneIcon, SoundIcon } from "../icons";
 import { PHONE_DISPLAY, PHONE_HREF, objectIcon } from "../content";
 import { HOME_CTA } from "../cta";
+import { PhoneLink } from "@/components/PhoneLink";
+import { hasPublicPhone } from "@shared/companyContact";
 
 /** See client/public/audio/README.md for how the file was made and how to replace it. */
 const PRONUNCIATION_AUDIO = "/audio/digerati-pronunciation.wav";
@@ -74,7 +76,7 @@ export function HeroSection(): JSX.Element {
           <div className="facts">
             <span><CheckIcon />No obligation</span>
             <span><CheckIcon />Response within one business day</span>
-            <span><PhoneIcon /><a href={PHONE_HREF}>{PHONE_DISPLAY}</a></span>
+            {hasPublicPhone() && <span><PhoneIcon /><PhoneLink>{PHONE_DISPLAY}</PhoneLink></span>}
           </div>
           <div className="word" data-testid="digerati-pronunciation-card">
             <b>DIG·ER·A·TI</b>

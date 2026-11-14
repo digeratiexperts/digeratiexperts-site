@@ -1,5 +1,5 @@
 import { ACCOUNT_TYPES } from "./licensing";
-import { PRIMARY_PHONE } from "./companyContact";
+import { PRIMARY_PHONE, hasPublicPhone, COMPANY } from "./companyContact";
 
 /**
  * Built-in knowledge articles, inserted once (by number) when the knowledge
@@ -96,7 +96,7 @@ Phishing messages try to get you to click a link, open an attachment, share a pa
 2. Check with the sender another way, such as a phone number you already have.
 3. Report it: [open a support ticket](/portal/tickets/create) and include the sender and subject line.
 
-> ! If you clicked a link, entered a password or approved an MFA prompt you didn't start, call the DE service desk now on ${PRIMARY_PHONE.display}. Acting quickly limits the damage.`,
+> ! If you clicked a link, entered a password or approved an MFA prompt you didn't start, ${hasPublicPhone() ? `call the DE service desk now on ${PRIMARY_PHONE.display}` : `contact the DE service desk now at ${COMPANY.supportEmail} or through DE Desk chat`}. Acting quickly limits the damage.`,
   },
   {
     number: "KB0000004",

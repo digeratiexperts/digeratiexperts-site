@@ -13,6 +13,7 @@ import { ServiceJsonLd, BreadcrumbJsonLd } from "@/components/JsonLd";
 import { pricing } from "@/data/pricing";
 import { CTA } from "@/lib/ctaCopy";
 import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PhoneLink } from "@/components/PhoneLink";
 
 type InclusionStatus = "included" | "limited" | "optional" | "not-included";
 
@@ -665,10 +666,10 @@ export default function OfficePage() {
                     className="bg-transparent border border-white/30 text-white hover:bg-white/10"
                     data-testid="btn-final-call"
                   >
-                    <a href={PRIMARY_PHONE.telHref}>
+                    <PhoneLink>
                       <Phone className="mr-2 h-5 w-5" />
                       Call {PRIMARY_PHONE.display}
-                    </a>
+                    </PhoneLink>
                   </Button>
                 </div>
               </div>

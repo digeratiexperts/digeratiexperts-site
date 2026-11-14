@@ -103,6 +103,7 @@ import {
   DESK_SUGGEST_MAX_PASSES,
   nextSuggestionIndex,
 } from "@/lib/deskComposerSuggestions";
+import { PhoneLink } from "@/components/PhoneLink";
 
 interface ZohoASAPWidgetProps {
   isEnabled?: boolean;
@@ -2390,14 +2391,13 @@ export const ZohoASAPWidget = ({
                         >
                           {isTicketSending ? "Creating ticket…" : "Create ticket"}
                         </button>
-                        <a
-                          href={PRIMARY_PHONE.telHref}
+                        <PhoneLink
                           className="de-desk-form-phone"
                           data-testid="desk-support-phone-link"
                         >
                           <Phone aria-hidden="true" />
                           Call {PRIMARY_PHONE.display}
-                        </a>
+                        </PhoneLink>
                         </div>
                       </>
                     )}

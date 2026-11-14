@@ -11,6 +11,7 @@ import { useForm } from "react-hook-form";
 import { useState } from "react";
 import { CTA } from "@/lib/ctaCopy";
 import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PhoneLink } from "@/components/PhoneLink";
 
 // Form validation schema
 const assessmentFormSchema = z.object({
@@ -132,14 +133,13 @@ export const DigeratiHeroSection = (): JSX.Element => {
               >
                 {CTA.primary} <ArrowRight className="ml-2 h-5 w-5" />
               </a>
-              <a
-                href={PRIMARY_PHONE.telHref}
+              <PhoneLink
                 className="inline-flex h-12 items-center justify-center gap-2 whitespace-nowrap rounded-md border-2 border-white bg-transparent px-8 text-base font-semibold text-white hover:bg-white hover:text-[#D3126A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--de-bg)] group"
                 data-testid="button-hero-phone"
               >
                 <Phone className="h-5 w-5 group-hover:text-[#D3126A] transition-colors duration-200" />
                 {PRIMARY_PHONE.display}
-              </a>
+              </PhoneLink>
             </div>
           </div>
 

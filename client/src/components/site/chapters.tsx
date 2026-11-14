@@ -23,6 +23,7 @@ import {
   type ChapterTone,
   type FieldTone,
 } from "@/components/home/HomeChapter";
+import { PhoneLink } from "@/components/PhoneLink";
 
 /**
  * Site chapter grammar (Tier 2, design/UI-STYLE-RULES.md §5–6).
@@ -608,10 +609,10 @@ export function ClosingCta({
               <ActionAnchor action={secondary} className={buttonSecondary(tone)} />
             ) : (
               showPhone && (
-                <a href={PRIMARY_PHONE.telHref} className={buttonSecondary(tone)} data-testid={phoneTestId}>
+                <PhoneLink className={buttonSecondary(tone)} data-testid={phoneTestId}>
                   <Phone className="h-4 w-4" aria-hidden="true" />
                   <span className="whitespace-nowrap">{PRIMARY_PHONE.display}</span>
-                </a>
+                </PhoneLink>
               )
             )}
           </div>

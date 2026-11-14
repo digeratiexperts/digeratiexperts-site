@@ -17,6 +17,7 @@ import { ProductMedia } from "@/components/store/ProductMedia";
 import { PRIMARY_PHONE } from "@/data/companyContact";
 import { useDockHiddenWhileOpen } from "@/hooks/useDockHiddenWhileOpen";
 import { getPanelThemeStyle, useCart } from "@/contexts/CartContext";
+import { PhoneLink } from "@/components/PhoneLink";
 
 export interface ConfigureConfirmPayload {
   product: StoreProduct;
@@ -437,14 +438,13 @@ export function ConfigureProductDrawer({
                   Request quote
                 </Button>
               )}
-              <a
-                href={PRIMARY_PHONE.telHref}
+              <PhoneLink
                 className="flex h-11 w-full items-center justify-center gap-2 rounded-md border border-[color:var(--dp-border-15)] text-sm text-[color:var(--dp-text-75)] transition-colors hover:bg-[color:var(--dp-hover-bg)] hover:text-[color:var(--dp-text-hover)]"
                 data-testid="link-configure-call"
               >
                 <Phone className="h-4 w-4" />
                 Need help sizing? {PRIMARY_PHONE.display}
-              </a>
+              </PhoneLink>
             </div>
           </motion.aside>
         </>

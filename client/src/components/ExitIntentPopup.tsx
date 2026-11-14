@@ -7,10 +7,11 @@ import { apiRequest } from "@/lib/queryClient";
 import { CTA } from "@/lib/ctaCopy";
 import { DE_LOGO_PRIMARY, DE_LOGO_REVERSE } from "@/lib/brandAssets";
 import { getExitPopupVariant, type ExitPopupVariant } from "@/lib/exitPopupVariant";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PRIMARY_PHONE, reachUsPhrase } from "@/data/companyContact";
 import { isDoor2Path } from "@/lib/isDoor2Path";
 import { isWarehousePath } from "@/lib/warehousePaths";
 import { isQuizRoomPath } from "@/lib/quizRoom";
+import { PhoneLink } from "@/components/PhoneLink";
 
 const PUBLIC_EMAIL_DOMAINS = [
   "gmail.com",
@@ -306,7 +307,7 @@ export function ExitIntentPopup({ delay = 30000 }: ExitIntentPopupProps) {
         handleClose();
       }, 4000);
     } catch {
-      setSubmitError(`We couldn’t send that. Try again, or call us at ${PRIMARY_PHONE.display}.`);
+      setSubmitError(`We couldn’t send that. Try again, or ${reachUsPhrase()}.`);
     } finally {
       setIsSubmitting(false);
     }
@@ -470,13 +471,12 @@ export function ExitIntentPopup({ delay = 30000 }: ExitIntentPopupProps) {
                         <ExampleFindings />
                         <p className={`mt-4 text-[14px] font-medium ${t.body}`}>
                           Rather talk it through?{" "}
-                          <a
-                            href={PRIMARY_PHONE.telHref}
+                          <PhoneLink
                             className={`whitespace-nowrap font-semibold underline-offset-2 hover:underline ${t.phone} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A]`}
                           >
                             <Phone className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />
                             {PRIMARY_PHONE.display}
-                          </a>
+                          </PhoneLink>
                         </p>
                       </div>
                     </div>

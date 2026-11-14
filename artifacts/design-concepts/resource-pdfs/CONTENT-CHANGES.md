@@ -24,7 +24,7 @@ Decision key: **Proposed** = applied in the concept, needs Joe's yes before it s
 
 | # | Addition | Source | Decision |
 |---|---|---|---|
-| A-01 | Live links: `digeratiexperts.com/book`, `325-480-9870`, `info@digeratiexperts.com`. | `shared/companyContact.ts`; `/book` (canonical; `/assessment` is a legacy redirect to it in `client/src/App.tsx`) | Proposed |
+| A-01 | Live links: `digeratiexperts.com/book`, `[DE_PUBLIC_PHONE]`, `info@digeratiexperts.com`. | `shared/companyContact.ts`; `/book` (canonical; `/assessment` is a legacy redirect to it in `client/src/App.tsx`) | Proposed |
 | A-02 | The four-level ladder with rates and minimums (all concepts). | `pricing.ts` | Proposed |
 | A-03 | "How an engagement starts": Cyber Risk Assessment → written recommendation → onboarding → ongoing operations (concept B). | Claims register, "How it works" row (Structural) | Proposed |
 | A-04 | Concept C only: "The decision" question, "Three things to know" and the Office fit-check bullets. Editorial synthesis of C-01…C-04 facts; no new claim. | derived | Proposed if C is chosen |
