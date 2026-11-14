@@ -68,6 +68,7 @@ import { csrfOriginGuard, defaultAutoRenewRouteDeps, registerAutoRenewRoutes } f
 import { eventBus, EventTypes } from "./eventBus";
 import { notificationService, sendEmail } from "./services/notificationService";
 import { logger } from "./logger";
+import { registerDeStoreRoutes } from "./deStoreRoutes";
 import { newPasswordError } from "./passwordBreach";
 import { passwordPolicyError, type PasswordContext } from "@shared/passwordPolicy";
 import {
@@ -6682,5 +6683,7 @@ export async function registerRoutes(app: Express) {
     portalGuards: [authMiddleware as any],
     portalCancelGuards: [csrfOriginGuard, authMiddleware as any],
   });
+  registerDeStoreRoutes(app);
+
   return app;
 }

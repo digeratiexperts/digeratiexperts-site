@@ -206,6 +206,14 @@ const MascotsConcept = lazy(() => import("@/pages/concepts/MascotsConcept").then
 
 const WarehouseGate = lazy(() => import("@/pages/store/WarehouseGate"));
 const PublicStoreCheckout = lazy(() => import("@/pages/store/PublicStoreCheckout"));
+const DeStoreOfferings = lazy(() => import("@/pages/store/DeStoreOfferings"));
+const DeStoreCheckout = lazy(() => import("@/pages/store/DeStoreCheckout"));
+const StoreTermsOfSale = lazy(() => import("@/pages/legal/StoreTermsOfSale"));
+const StoreLimitedWarranty = lazy(() => import("@/pages/legal/StoreLimitedWarranty"));
+const StoreReturnAndRefund = lazy(() => import("@/pages/legal/StoreReturnAndRefund"));
+const StorePreinstalledSoftware = lazy(() => import("@/pages/legal/StorePreinstalledSoftware"));
+const StoreShippingDelay = lazy(() => import("@/pages/legal/StoreShippingDelay"));
+const PortalStoreFulfillment = lazy(() => import("@/pages/portal/PortalStoreFulfillment"));
 
 // Internal DE sales pages were removed from the public bundle for security.
 // They now live behind authentication in the Intelligence Hub (techsales).
@@ -418,6 +426,21 @@ function Router() {
       <Route path="/store/solution" component={() => (
         <Suspense fallback={<PageLoadingSkeleton />}>
           <PublicStoreCheckout />
+        </Suspense>
+      )} />
+      <Route path="/store/offerings/:offering" component={() => (
+        <Suspense fallback={<PageLoadingSkeleton />}>
+          <DeStoreOfferings />
+        </Suspense>
+      )} />
+      <Route path="/store/offerings" component={() => (
+        <Suspense fallback={<PageLoadingSkeleton />}>
+          <DeStoreOfferings />
+        </Suspense>
+      )} />
+      <Route path="/store/order" component={() => (
+        <Suspense fallback={<PageLoadingSkeleton />}>
+          <DeStoreCheckout />
         </Suspense>
       )} />
       <Route path="/store/checkout" component={() => (
@@ -688,6 +711,31 @@ function Router() {
           <TermsOfUse />
         </Suspense>
       )} />
+      <Route path="/legal/store-terms-of-sale" component={() => (
+        <Suspense fallback={<PageLoadingSkeleton />}>
+          <StoreTermsOfSale />
+        </Suspense>
+      )} />
+      <Route path="/legal/limited-warranty" component={() => (
+        <Suspense fallback={<PageLoadingSkeleton />}>
+          <StoreLimitedWarranty />
+        </Suspense>
+      )} />
+      <Route path="/legal/return-and-refund" component={() => (
+        <Suspense fallback={<PageLoadingSkeleton />}>
+          <StoreReturnAndRefund />
+        </Suspense>
+      )} />
+      <Route path="/legal/preinstalled-software" component={() => (
+        <Suspense fallback={<PageLoadingSkeleton />}>
+          <StorePreinstalledSoftware />
+        </Suspense>
+      )} />
+      <Route path="/legal/shipping-delay" component={() => (
+        <Suspense fallback={<PageLoadingSkeleton />}>
+          <StoreShippingDelay />
+        </Suspense>
+      )} />
       <Route path="/legal/msa" component={() => (
         <Suspense fallback={<PageLoadingSkeleton />}>
           <MSA />
@@ -918,6 +966,11 @@ function Router() {
       <Route path="/portal/billing" component={() => (
         <Suspense fallback={<PageLoadingSkeleton />}>
           <PortalBilling />
+        </Suspense>
+      )} />
+      <Route path="/portal/store-orders/:id" component={() => (
+        <Suspense fallback={<PageLoadingSkeleton />}>
+          <PortalStoreFulfillment />
         </Suspense>
       )} />
       <Route path="/portal/company" component={() => (
