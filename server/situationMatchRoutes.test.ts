@@ -6,6 +6,7 @@ import { registerSituationMatchRoutes, SITUATION_BODY_MAX_BYTES } from "./situat
 import { CARD_DATA_REJECTED_CODE, CARD_DATA_REJECTED_MESSAGE, CARD_DATA_REJECTED_STATUS } from "@shared/pciGuard";
 import { PRE_CHAT_CONSENT_REQUIRED_MESSAGE, PRE_CHAT_CONSENT_VERSION } from "@shared/preChatConsent";
 import { SITUATION_MATCH_NOTICE_VERSION } from "@shared/situationMatchNotice";
+import { SITUATION_MATCH_OFF_TOPIC_NOTE } from "@shared/situationMatchScope";
 import { situationMatchConsentFor } from "./services/msp-advisor/situationMatchConsent";
 
 const agreed = { consent: true as const, consentVersion: SITUATION_MATCH_NOTICE_VERSION };
@@ -120,6 +121,20 @@ describe("POST /api/public/advisor/situation-match consent and card-data guards"
     expect(record!.at).toBeGreaterThan(Date.now() - 5_000);
   });
 
+
+  it("returns no match and the fixed note for companion-style input", async () => {
+    const res = await postGuard({ text: "write a short story about a phishing email", ...agreed });
+    expect(res.status).toBe(200);
+    const j = await res.json();
+    expect(j.confident).toBe(false);
+    expect(j.offTopic).toBe(true);
+    expect(j.note).toBe(SITUATION_MATCH_OFF_TOPIC_NOTE);
+    expect(j.scenarioIds).toEqual([]);
+    expect(j.intentIds).toEqual([]);
+    expect(j.pageServiceIds).toEqual([]);
+    expect(JSON.stringify(j)).not.toMatch(/Let me|Once upon|poem|here is a story/i);
+    expect(JSON.stringify(j)).not.toMatch(/\$\d|guarantee|certified/i);
+  });
   it("rejects the previous consent version", async () => {
     const res = await postGuard({
       text: "someone clicked a phishing link",

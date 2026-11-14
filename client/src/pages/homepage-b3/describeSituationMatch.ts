@@ -5,6 +5,7 @@ import {
   sanitizeMatch,
   type SituationMatch,
 } from "@shared/situationMatch";
+import { isOffTopicSituation, SITUATION_MATCH_OFF_TOPIC_NOTE } from "@shared/situationMatchScope";
 import { CARD_DATA_REJECTED_CODE, CARD_DATA_REJECTED_MESSAGE, looksLikeCardData } from "@shared/pciGuard";
 
 import {
@@ -21,6 +22,7 @@ export {
   SITUATION_MATCH_PRIVACY_LINK_TEXT,
   SITUATION_MATCH_PRIVACY_PATH,
 } from "@shared/situationMatchNotice";
+export { isOffTopicSituation, SITUATION_MATCH_OFF_TOPIC_NOTE } from "@shared/situationMatchScope";
 
 /** DE Desk answers inside this window or the page answers on its own (localMatch). */
 export const DESK_MATCH_TIMEOUT_MS = 2500;
@@ -35,9 +37,11 @@ type DeskReply = {
   urgent?: boolean;
   confident?: boolean;
   draftEnabled?: boolean;
+  offTopic?: boolean;
+  note?: string;
 };
 
-export type DeskMatchOk = { match: SituationMatch; sessionId?: string; draftEnabled: boolean };
+export type DeskMatchOk = { match: SituationMatch; sessionId?: string; draftEnabled: boolean; offTopic?: boolean; note?: string };
 export type DeskMatchErr = { error: { code: string; message: string } };
 
 export function isDeskMatchErr(got: DeskMatchOk | DeskMatchErr): got is DeskMatchErr {
@@ -56,7 +60,17 @@ export async function deskMatch(
   if (looksLikeCardData(text)) {
     return { error: { code: CARD_DATA_REJECTED_CODE, message: CARD_DATA_REJECTED_MESSAGE } };
   }
-  const local = (): DeskMatchOk => ({ match: localMatch(text), sessionId: opts.sessionId, draftEnabled: false });
+  const offTopicOk = (sessionId?: string): DeskMatchOk => ({
+    match: sanitizeMatch({ source: "de-desk", confident: false, scenarioIds: [], pageServiceIds: [], intentIds: [], familyIds: [], serviceIds: [], summary: "" }),
+    sessionId,
+    draftEnabled: false,
+    offTopic: true,
+    note: SITUATION_MATCH_OFF_TOPIC_NOTE,
+  });
+  const local = (): DeskMatchOk =>
+    isOffTopicSituation(text)
+      ? offTopicOk(opts.sessionId)
+      : { match: localMatch(text), sessionId: opts.sessionId, draftEnabled: false };
   const ctl = new AbortController();
   const timer = setTimeout(() => ctl.abort(), opts.timeoutMs ?? DESK_MATCH_TIMEOUT_MS);
   try {
@@ -95,8 +109,16 @@ export async function deskMatch(
       confident: j.confident,
       source: "de-desk",
     });
-    if (!match.confident) return local();
-    return { match, sessionId: typeof j.sessionId === "string" ? j.sessionId : opts.sessionId, draftEnabled: Boolean(j.draftEnabled) };
+    const sessionId = typeof j.sessionId === "string" ? j.sessionId : opts.sessionId;
+    if (j.offTopic || j.note === SITUATION_MATCH_OFF_TOPIC_NOTE) {
+      return offTopicOk(sessionId);
+    }
+    // A 200 with no match is the server's answer (including off-topic the
+    // client classifier missed). Do not overwrite it with a local keyword hit.
+    if (!match.confident) {
+      return { match, sessionId, draftEnabled: false };
+    }
+    return { match, sessionId, draftEnabled: Boolean(j.draftEnabled) };
   } catch {
     return local();
   } finally {

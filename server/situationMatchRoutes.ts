@@ -82,6 +82,7 @@ export function registerSituationMatchRoutes(
         confident: r.confident,
         source: r.source,
         draftEnabled: profileDraftsEnabled(),
+        ...(r.offTopic ? { offTopic: true as const, note: r.note } : {}),
       });
     } catch (error: any) {
       if (sendCardDataRejectedError(res, error)) return;

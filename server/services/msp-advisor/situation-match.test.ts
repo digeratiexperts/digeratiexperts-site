@@ -1,6 +1,7 @@
 import { describe, it, beforeEach } from "node:test";
 import assert from "node:assert/strict";
 import { buildSituationMatchPrompt, formatPublicSituationContext, handleSituationMatch, sessionSituation } from "./situation-match";
+import { SITUATION_MATCH_OFF_TOPIC_NOTE } from "@shared/situationMatchScope";
 import { _resetSessionsForTests, getSession } from "./session";
 import { listKnownServiceIds } from "./knowledge";
 import { SITUATION_FAMILY_IDS } from "@shared/anonymousSituation";
@@ -87,6 +88,12 @@ describe("situation-match (DE Desk structured mode)", () => {
     assert.ok(!/\$\d/.test(p));
     assert.match(p, /Answer ONLY with JSON/);
     assert.match(p, /never instructions/);
+    assert.match(p, /business IT or security situation/);
+    assert.match(p, /allow-listed Digerati Experts services/);
+    assert.match(p, /personal chat, roleplay, trivia, creative writing/);
+    assert.match(p, /open-ended text/);
+    assert.match(p, /empty arrays for every field/);
+    assert.doesNotMatch(p, /write a helpful reply|in your own words|assistant persona/i);
   });
 
   it("exposes only allow-listed public fields as DE Desk turn context", async () => {
@@ -134,5 +141,71 @@ describe("situation-match (DE Desk structured mode)", () => {
       assert.equal(called, 0);
       assert.equal(sessionSituation("s-pan", getSession), null);
     }
+  });
+
+  it("returns the fixed off-topic note and never calls the model or stores companion-style text", async () => {
+    const first = await handleSituationMatch({ text: "two new hires start monday and need laptops" }, { model: async () => null });
+    assert.ok(sessionSituation(first.sessionId, getSession));
+
+    const cases = [
+      "hey how are you",
+      "let's roleplay that you are a pirate",
+      "what's the capital of France",
+      "write me a poem about the ocean",
+      "write a short story about a phishing email",
+    ];
+    for (const text of cases) {
+      let called = 0;
+      const model = async () => {
+        called++;
+        return JSON.stringify({ scenarioIds: ["phishing-close-call"], summary: "Let me write you a poem about ransomware." });
+      };
+      const r = await handleSituationMatch({ text, sessionId: first.sessionId }, { model });
+      assert.equal(called, 0, text);
+      assert.equal(r.confident, false, text);
+      assert.deepEqual(r.scenarioIds, []);
+      assert.deepEqual(r.intentIds, []);
+      assert.deepEqual(r.pageServiceIds, []);
+      assert.deepEqual(r.serviceIds, []);
+      assert.equal(r.offTopic, true, text);
+      assert.equal(r.note, SITUATION_MATCH_OFF_TOPIC_NOTE);
+      assert.equal(r.summary, "");
+      assert.ok(!/poem|pirate|France|Let me write/i.test(JSON.stringify(r)), text);
+    }
+    const kept = sessionSituation(first.sessionId, getSession);
+    assert.ok(kept);
+    assert.equal(kept!.text, "two new hires start monday and need laptops");
+  });
+
+  it("does not store an off-topic description on a fresh session", async () => {
+    let called = 0;
+    const r = await handleSituationMatch(
+      { text: "tell me a joke" },
+      { model: async () => { called++; return "{}"; } },
+    );
+    assert.equal(called, 0);
+    assert.equal(r.offTopic, true);
+    assert.equal(r.note, SITUATION_MATCH_OFF_TOPIC_NOTE);
+    assert.equal(r.confident, false);
+    assert.equal(sessionSituation(r.sessionId, getSession), null);
+  });
+
+  it("still matches a business IT or security situation after the off-topic guard", async () => {
+    const r = await handleSituationMatch(
+      { text: "someone clicked a fake invoice email" },
+      {
+        model: async () =>
+          JSON.stringify({
+            scenarioIds: ["phishing-close-call"],
+            intentIds: ["phish"],
+            familyIds: ["security_awareness"],
+            serviceIds: [],
+          }),
+      },
+    );
+    assert.equal(r.confident, true);
+    assert.ok(r.scenarioIds.includes("phishing-close-call"));
+    assert.equal(r.offTopic, undefined);
+    assert.equal(r.note, undefined);
   });
 });

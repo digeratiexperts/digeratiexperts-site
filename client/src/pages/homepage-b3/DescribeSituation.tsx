@@ -26,8 +26,10 @@ import {
   deskMatch,
   HEALTH_INFO_WARNING,
   isDeskMatchErr,
+  isOffTopicSituation,
   looksLikeHealthInfo,
   SITUATION_MATCH_AI_DISCLOSURE,
+  SITUATION_MATCH_OFF_TOPIC_NOTE,
   SITUATION_MATCH_PRIVACY_LINK_TEXT,
   SITUATION_MATCH_PRIVACY_PATH,
 } from "./describeSituationMatch";
@@ -48,7 +50,7 @@ function SituationMatchNotice(): JSX.Element {
   );
 }
 
-type Shown = { r: SituationMatch; text: string; how: "typed" | "picked"; draftEnabled: boolean } | { more: true } | null;
+type Shown = { r: SituationMatch; text: string; how: "typed" | "picked"; draftEnabled: boolean } | { more: true } | { offTopic: true } | null;
 
 /** /describe-your-situation: the custom card's page. DE Desk acting as the sales desk. */
 export default function DescribeSituation(): JSX.Element {
@@ -80,6 +82,10 @@ export default function DescribeSituation(): JSX.Element {
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     const t = text.trim();
+    if (isOffTopicSituation(t)) {
+      setShown({ offTopic: true });
+      return;
+    }
     if (t.replace(/[^a-z]/gi, "").length < 4) {
       setShown({ more: true });
       return;
@@ -101,7 +107,13 @@ export default function DescribeSituation(): JSX.Element {
     }
     if (got.sessionId) writeSituationSessionId(got.sessionId);
     setBusy(false);
-    setShown(got.match.confident ? { r: got.match, text: t, how: "typed", draftEnabled: got.draftEnabled } : { more: true });
+    setShown(
+      got.match.confident
+        ? { r: got.match, text: t, how: "typed", draftEnabled: got.draftEnabled }
+        : got.offTopic || got.note === SITUATION_MATCH_OFF_TOPIC_NOTE
+          ? { offTopic: true }
+          : { more: true },
+    );
   }
 
   return (
@@ -180,6 +192,11 @@ export default function DescribeSituation(): JSX.Element {
                   </div>
                 </form>
                 <div className="own__out" id="sitResult" aria-live="polite">
+                  {!busy && shown && "offTopic" in shown && (
+                    <div className="res res--more">
+                      <p className="res__read">{SITUATION_MATCH_OFF_TOPIC_NOTE}</p>
+                    </div>
+                  )}
                   {!busy && shown && "more" in shown && (
                     <div className="res res--more">
                       <p className="res__read">
