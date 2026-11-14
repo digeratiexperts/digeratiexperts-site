@@ -568,7 +568,9 @@
 .b3 .describe-hero .textlink { color: var(--on-dark); }
 .b3 .describe-hero .textlink::after { content: " →"; color: var(--mag-on-dark); }
 .b3 .describe { padding: clamp(3.5rem, 8vh, 5.5rem) 0 clamp(6rem, 14vh, 9rem); }
-.b3.describe-page .own { margin-top: 0; }
+.b3.describe-page .own { margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.15rem; max-width: 48rem; }
+.b3.describe-page .own__intro { margin: 0; font: 400 1.08rem/1.5 var(--text); color: var(--on-light-2); max-width: 38rem; }
+.b3.describe-page .own__intro-k { display: block; margin: 0 0 .35rem; font: 600 .7rem/1 var(--text); letter-spacing: .1em; text-transform: uppercase; color: var(--mag-on-light); }
 .b3.describe-page .own__form { padding: 1.85rem 1.75rem 1.65rem; }
 .b3.describe-page .own textarea { min-height: 12rem; }
 .b3.describe-page .res--wait .res__read { font: 400 1.02rem/1.5 var(--text); color: var(--on-light-2); letter-spacing: 0; }

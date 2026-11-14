@@ -121,6 +121,18 @@ export default function DescribeSituation(): JSX.Element {
           <section className="describe light sheet" id="describe" aria-label="Describe your situation">
             <div className="wrap">
               <div className="own" id="sitOwn">
+                {!busy && shown === null && (
+                  <p className="own__intro">
+                    <span className="own__intro-k">Smart match</span>
+                    Write a sentence or two, then match. We&rsquo;ll show the closest situations on the page, and what Digerati Experts would look at.
+                  </p>
+                )}
+                {busy && (
+                  <p className="own__intro" aria-live="polite">
+                    <span className="own__intro-k">Smart match</span>
+                    Matching your situation&hellip;
+                  </p>
+                )}
                 <form className="own__form" onSubmit={onSubmit} noValidate>
                   <div className="own__top">
                     <label htmlFor="sitText" className="own__label">Tell us what&rsquo;s going on, in your words.</label>
@@ -168,18 +180,6 @@ export default function DescribeSituation(): JSX.Element {
                   </div>
                 </form>
                 <div className="own__out" id="sitResult" aria-live="polite">
-                  {busy && (
-                    <div className="res res--busy">
-                      <p className="res__k">Smart match</p>
-                      <p className="res__read">Matching your situation&hellip;</p>
-                    </div>
-                  )}
-                  {!busy && shown === null && (
-                    <div className="res res--wait">
-                      <p className="res__k">Smart match</p>
-                      <p className="res__read">Write a sentence or two, then match. We&rsquo;ll show the closest situations on the page, and what Digerati Experts would look at.</p>
-                    </div>
-                  )}
                   {!busy && shown && "more" in shown && (
                     <div className="res res--more">
                       <p className="res__read">
