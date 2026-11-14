@@ -13,6 +13,7 @@ describe("Staff checkout auto-renew wiring", () => {
     expect(source).not.toMatch(/setAutoRenewConsentChecked\(\s*true\s*\)/);
     expect(source).toContain("AUTORENEW_SUBSCRIPTION_REQUIRED");
     expect(source).toContain("/api/store/subscriptions");
+    expect(source).toContain("X-CSRF-Token");
   });
 
   it("routes gated SKUs to a quote when the contract flag is off", () => {

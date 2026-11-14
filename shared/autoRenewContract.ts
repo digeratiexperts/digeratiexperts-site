@@ -2,9 +2,7 @@
  * Site-side auto-renew contract helpers shared by the store checkout UI and
  * the server. Keep this module free of Node-only APIs.
  *
- * Hub endpoints live behind AUTORENEW_CONTRACT_ENABLED (disabled by default)
- * until Joseph approves going live. See /workspace/contracts/hub-autorenew-contract.md
- * (copied into server/integrations/hubSubscriptionsContract.ts).
+ * Disabled by default behind AUTORENEW_CONTRACT_ENABLED.
  */
 
 export const AUTORENEW_CONTRACT_ENV = "AUTORENEW_CONTRACT_ENABLED";

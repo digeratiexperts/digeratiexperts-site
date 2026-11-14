@@ -12,10 +12,9 @@ import {
 } from "@shared/autoRenewContract";
 
 /**
- * Website/portal contract for Hub auto-renew subscriptions (proposed
- * 2026-11-13, Hub PR held pending Joseph). Paths, auth, and payloads match
- * the Hub auto-renew contract. The site calls these only when
- * AUTORENEW_CONTRACT_ENABLED=true.
+ * Website/portal contract for Hub auto-renew subscriptions. Paths, auth,
+ * and payloads match the Hub auto-renew contract. The site calls these only
+ * when AUTORENEW_CONTRACT_ENABLED=true.
  */
 export const HUB_SUBSCRIPTIONS_CONTRACT = "de.hub.website-subscriptions/v1";
 

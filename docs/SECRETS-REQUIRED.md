@@ -215,7 +215,7 @@ Safe defaults; set only to override.
 | `DESK_TICKET_SPOOL_DIR` | config | `server/publicSolutionSpool.ts` | Desk ticket failover spool. |
 | `THREAT_FEED_PATH` | config | `server/services/threat-intel/ingest.ts` | Threat feed file. |
 | `THREAT_FEED_STARTUP_DELAY_MS` | config | `server/services/threat-intel/ingest.ts` | Delay before the first feed refresh. |
-| `AUTORENEW_CONTRACT_ENABLED` | config | `server/config/autoRenewContract.ts`, `server/autoRenewRoutes.ts` | Default off. `true`/`1`/`yes`/`on` enables the site side of the Hub auto-renew subscription contract (store consent checkout, confirmation terms, portal list and one-click cancel). Leave unset until the Hub endpoints exist and Joseph approves going live. |
+| `AUTORENEW_CONTRACT_ENABLED` | config | `server/config/autoRenewContract.ts`, `server/autoRenewRoutes.ts` | Default off. `true`/`1`/`yes`/`on` enables the site side of the Hub auto-renew subscription contract (store consent checkout, confirmation terms, portal list and one-click cancel). Disabled by default behind AUTORENEW_CONTRACT_ENABLED. |
 | `ENABLE_DEV_PORTAL_BOOTSTRAP` | config | `server/portalAuthStore.ts` | Development only: seed a portal admin. Never set in production. |
 | `DEV_PORTAL_ADMIN_PASSWORD_HASH` | secret | `server/portalAuthStore.ts` | Development only: the seeded admin's hash. |
 | `DE_SMOKE_ALLOW_MEMORY_ONLY` | config | `server/healthProbe.ts`, `server/production.config.ts`, `server/middleware/security.ts` | CI smoke only: allow no `DATABASE_URL`. With no `DATABASE_URL` it also skips Turnstile when no secret is set; with a database it does not. |

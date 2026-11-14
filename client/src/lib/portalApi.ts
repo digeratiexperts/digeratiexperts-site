@@ -79,6 +79,7 @@ export async function portalGet<T>(url: string): Promise<T> {
 export async function portalPost<T>(url: string, data: unknown): Promise<T> {
   const response = await portalFetch(url, {
     method: "POST",
+    headers: { "X-CSRF-Token": "1" },
     body: JSON.stringify(data),
   });
 

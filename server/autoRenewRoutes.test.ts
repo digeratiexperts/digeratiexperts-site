@@ -133,14 +133,20 @@ async function invoke(
   path: string,
   body?: unknown,
   headers: Record<string, string> = {},
+  options: { csrfHeader?: boolean } = {},
 ) {
   const server = app.listen(0);
   const address = server.address();
   if (!address || typeof address === "string") throw new Error("no port");
+  const requestHeaders: Record<string, string> = { "Content-Type": "application/json", ...headers };
+  const isUnsafe = !["GET", "HEAD", "OPTIONS"].includes(method.toUpperCase());
+  if (isUnsafe && options.csrfHeader !== false && !("X-CSRF-Token" in requestHeaders) && !("x-csrf-token" in requestHeaders)) {
+    requestHeaders["X-CSRF-Token"] = "1";
+  }
   try {
     const res = await fetch(`http://127.0.0.1:${address.port}${path}`, {
       method,
-      headers: { "Content-Type": "application/json", ...headers },
+      headers: requestHeaders,
       body: body === undefined ? undefined : JSON.stringify(body),
     });
     const json = await res.json().catch(() => null);
@@ -355,5 +361,47 @@ describe("subscriptionPlanFromLines", () => {
     expect(crossOrigin.json.code).toBe("CSRF_FORBIDDEN");
     expect(hub.create).not.toHaveBeenCalled();
     expect(hub.cancel).not.toHaveBeenCalled();
+  });
+
+  it("rejects state-changing requests that omit the CSRF header", async () => {
+    const { app, hub } = appWith({ enabled: true });
+    const missing = await invoke(
+      app,
+      "POST",
+      "/api/portal/subscriptions/sub_1/cancel",
+      { requestedAt: new Date().toISOString() },
+      {},
+      { csrfHeader: false },
+    );
+    expect(missing.status).toBe(403);
+    expect(missing.json.code).toBe("CSRF_FORBIDDEN");
+    expect(hub.cancel).not.toHaveBeenCalled();
+  });
+
+  it("allows a same-origin POST when the CSRF header is present", async () => {
+    const { app, hub } = appWith({ enabled: true });
+    const cancelled = await invoke(app, "POST", "/api/portal/subscriptions/sub_1/cancel", {
+      requestedAt: "2026-11-13T17:00:00.000Z",
+    });
+    expect(cancelled.status).toBe(200);
+    expect(cancelled.json.status).toBe("cancelled");
+    expect(hub.cancel).toHaveBeenCalledTimes(1);
+  });
+
+  it("treats the first X-Forwarded-Host value as a same-origin host", async () => {
+    const { app, hub } = appWith({ enabled: true });
+    const cancelled = await invoke(
+      app,
+      "POST",
+      "/api/portal/subscriptions/sub_1/cancel",
+      { requestedAt: "2026-11-13T17:00:00.000Z" },
+      {
+        Origin: "https://digeratiexperts.com",
+        "X-Forwarded-Host": "digeratiexperts.com, 127.0.0.1:1",
+      },
+    );
+    expect(cancelled.status).toBe(200);
+    expect(cancelled.json.status).toBe("cancelled");
+    expect(hub.cancel).toHaveBeenCalledTimes(1);
   });
 });
