@@ -648,6 +648,7 @@ describe("transient model retry", () => {
     );
     assert.equal(calls, 1);
   });
+});
 
 describe("AI identity guard", () => {
   it("recognizes questions about being a human, bot, robot, or AI, and ignores complaints", () => {
