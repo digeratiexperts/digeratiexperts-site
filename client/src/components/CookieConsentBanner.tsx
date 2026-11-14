@@ -4,6 +4,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { saveConsent } from "@/lib/analytics";
 import { isStorePath } from "@/lib/storeChromeGestures";
 import { cn } from "@/lib/utils";
+import { navigatorSignalsGpc } from "@shared/gpc";
 
 const LEGACY_KEY = "de_cookie_consent";
 const CONSENT_KEY = "de_cookie_consent_v2";
@@ -37,6 +38,15 @@ export function CookieConsentBanner() {
   const [showPreferences, setShowPreferences] = useState(false);
   const [analyticsEnabled, setAnalyticsEnabled] = useState(true);
   const [marketingEnabled, setMarketingEnabled] = useState(true);
+  const [gpcOptOut, setGpcOptOut] = useState(false);
+
+  useEffect(() => {
+    try {
+      const on = navigatorSignalsGpc((navigator as any).globalPrivacyControl);
+      setGpcOptOut(on);
+      if (on) setMarketingEnabled(false);
+    } catch {}
+  }, []);
   const [deskOpen, setDeskOpen] = useState(false);
   const bannerRef = useRef<HTMLDivElement>(null);
 
@@ -45,6 +55,23 @@ export function CookieConsentBanner() {
       const timer = setTimeout(() => setVisible(true), 1200);
       return () => clearTimeout(timer);
     }
+  }, []);
+
+  useEffect(() => {
+    const openPreferences = () => {
+      try {
+        const stored = localStorage.getItem(CONSENT_KEY);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          setAnalyticsEnabled(parsed?.analytics === true);
+          setMarketingEnabled(parsed?.marketing === true);
+        }
+      } catch {}
+      setVisible(true);
+      setShowPreferences(true);
+    };
+    window.addEventListener("de-open-cookie-preferences", openPreferences);
+    return () => window.removeEventListener("de-open-cookie-preferences", openPreferences);
   }, []);
 
   useEffect(() => {
@@ -83,7 +110,7 @@ export function CookieConsentBanner() {
   };
 
   const accept = () => {
-    saveConsent({ analytics: true, marketing: true });
+    saveConsent({ analytics: true, marketing: gpcOptOut ? false : true });
     finishConsent();
   };
 
@@ -93,7 +120,7 @@ export function CookieConsentBanner() {
   };
 
   const savePreferences = () => {
-    saveConsent({ analytics: analyticsEnabled, marketing: marketingEnabled });
+    saveConsent({ analytics: analyticsEnabled, marketing: gpcOptOut ? false : marketingEnabled });
     finishConsent();
   };
 
@@ -143,6 +170,11 @@ export function CookieConsentBanner() {
               <p className={cn("mb-5 text-base leading-relaxed", light ? "text-slate-600" : "text-gray-300")}>
                 Choose which cookies you allow. Strictly necessary cookies are always enabled.
               </p>
+              {gpcOptOut && (
+                <p className={cn("mb-5 text-sm leading-relaxed", light ? "text-slate-600" : "text-gray-300")} data-testid="cookie-gpc-banner-notice">
+                  Your browser sent a Global Privacy Control signal, so advertising technologies stay off.
+                </p>
+              )}
 
               <div className="space-y-4">
                 <div
@@ -209,11 +241,17 @@ export function CookieConsentBanner() {
                     <p className={cn("mt-0.5 text-base", light ? "text-slate-500" : "text-gray-400")}>
                       Used to deliver relevant ads and track campaign effectiveness.
                     </p>
+                    {gpcOptOut && (
+                      <p className={cn("mt-2 text-sm", light ? "text-slate-600" : "text-gray-300")} data-testid="cookie-gpc-notice">
+                        Your browser sent a Global Privacy Control signal, so advertising technologies stay off.
+                      </p>
+                    )}
                   </div>
                   <div
                     role="switch"
-                    aria-checked={marketingEnabled}
-                    onClick={() => setMarketingEnabled(v => !v)}
+                    aria-checked={marketingEnabled && !gpcOptOut}
+                    aria-disabled={gpcOptOut || undefined}
+                    onClick={() => { if (!gpcOptOut) setMarketingEnabled(v => !v); }}
                     className={`relative mt-1 h-5 w-10 flex-shrink-0 cursor-pointer rounded-full transition-colors ${
                       marketingEnabled ? "bg-[#D3126A]" : light ? "bg-slate-300" : "bg-white/20"
                     }`}
