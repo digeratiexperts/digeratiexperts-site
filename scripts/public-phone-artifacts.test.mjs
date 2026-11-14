@@ -5,9 +5,20 @@ import test from "node:test";
 
 const root = new URL("../", import.meta.url);
 const marker = "[DE_PUBLIC_PHONE]";
-const retired = /(?:\+?1[\s().-]*)?(?:480[\s().-]*519[\s().-]*5892|855[\s().-]*534[\s().-]*9832|325[\s().-]*480[\s().-]*9870)/;
+const separator = String.raw`[\s().\[\]\-\u2010-\u2015\u2212\u00ad]*`;
+const retiredParts = [["480", "519", "5892"], ["855", "534", "9832"], ["325", "480", "9870"]];
+const retired = new RegExp(retiredParts.map((parts) => `(?<!\\d)(?:\\+?1${separator})?${parts.join(separator)}(?!\\d)`).join("|"));
 const inspected = JSON.parse(execFileSync(process.env.PYTHON || "python3", ["scripts/public-phone-artifacts.py"], { cwd: root, encoding: "utf8", maxBuffer: 10_000_000 }));
 const required = JSON.parse(readFileSync(new URL("public-phone-pdf-manifest.json", import.meta.url), "utf8")).pdfs;
+
+test("phone guard catches country prefixes, brackets and Unicode separators", () => {
+  for (const [area, exchange, line] of retiredParts) {
+    for (const value of [`${area}${exchange}${line}`, `+1 (${area}) ${exchange}-${line}`, `[${area}] ${exchange}.${line}`, `${area}\u2011${exchange}\u2013${line}`, `${area}-\n${exchange}\u202f${line}`]) {
+      assert.ok(retired.test(value), "retired presentation evaded the guard");
+    }
+  }
+  assert.ok(!retired.test("480-555-0100"));
+});
 
 test("all expected public PDFs are inspected", () => {
   assert.ok(inspected.length >= 46);
@@ -19,8 +30,9 @@ for (const pdf of inspected) {
     assert.ok(pdf.pages > 0);
     assert.ok(!retired.test(pdf.text), "retired phone in extracted text");
     for (const uri of pdf.uris) {
-      assert.ok(!retired.test(uri), "retired phone in link annotation");
-      assert.ok(!/^(?:tel|callto):/i.test(uri) || !/DE_PUBLIC_PHONE|%5b|%5d/i.test(uri), "fake phone link");
+      const decoded = decodeURIComponent(uri);
+      assert.ok(!retired.test(decoded), "retired phone in link annotation");
+      assert.ok(!/^(?:tel|callto):/i.test(decoded) || !/DE_PUBLIC_PHONE|\[|\]/i.test(decoded), "fake phone link");
     }
     if (required.includes(pdf.path)) assert.ok(pdf.text.includes(marker), "contact marker missing");
   });

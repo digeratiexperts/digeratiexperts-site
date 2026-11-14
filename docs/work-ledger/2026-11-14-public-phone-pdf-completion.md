@@ -3,7 +3,7 @@
 Owner: ChatGPT / Codex cloud. Mode: Maintenance.
 Branch: `chatgpt/public-phone-pdf-completion-20261114`.
 Held draft: [site #1036](https://github.com/digeratiexperts/digeratiexperts-site/pull/1036).
-Implementation/test commit: `48579e09fb5dc3977398192319c6181ddf8582d1` (pushed).
+First implementation/test commit: `48579e09fb5dc3977398192319c6181ddf8582d1` (pushed).
 Starting main: `5d8baf37cd30471f8cca476ffcbed6d4bc8f93b8`.
 Claim: [Hub relay #886](https://github.com/digeratiexperts/Intelligence-Hub/issues/886#issuecomment-6885360392).
 Parent handoff: [Hub #1253](https://github.com/digeratiexperts/Intelligence-Hub/issues/1253).
@@ -14,7 +14,7 @@ Joe approved continuing the phone cleanup and preparing safe corrections in an i
 
 - Re-exported the 32 PDFs listed in `scripts/public-phone-pdf-manifest.json`: 16 public resource/portal documents and 16 Word-based contract exports. All display the literal `[DE_PUBLIC_PHONE]`; no callable placeholder or retired phone remains in their text or URI annotations.
 - Three standalone resource concept renderers now use `lib/public-phone.mjs`. It prints a noninteractive marker for pending, retired, invalid or mismatched contact data, even before the canonical source dependency lands. A real configured line still renders correctly. This helper applies only to DE's public concept contact slot, never customer/vendor contact fields.
-- Added a PDF text/annotation scanner and 51 focused regressions. The scanner reads all PDFs in `client/public`, `public` and `document_templates`; it fails closed on extraction errors. Requirements: Python 3 + pikepdf, Node, Poppler `pdftotext`.
+- Added a PDF text/annotation scanner and 52 focused regressions. The scanner reads all PDFs in `client/public`, `public` and `document_templates`; it fails closed on extraction errors. Requirements: Python 3 + pikepdf, Node, Poppler `pdftotext`.
 - A separate read-only `Public phone artifacts` PR workflow runs those regressions when document/source paths change. It installs PDF readers and uses no secrets, application servers, provider calls or deployment steps. Existing CI/deployment workflows are not edited.
 - Added masked before/after contact crops, all unique document page boards, PDF.js fit/zoom renders, concept marker checks and export hashes under `artifacts/visual-qa/public-phone-pdf-completion/`. Before crops mask retired contact digits so the evidence does not republish a personal number.
 - All 27 open PR file lists were inspected before implementation. None owned these PDF binaries or the three concept renderers. #1031 and #1022 own the shared generator; #1031 owns the concept JSON. Those files are **not edited here**. Their two-line integration correction is delivered in `docs/handoffs/public-phone-pdf-source.patch`, tested in the isolated source-export sandbox and awaiting the existing owner.
@@ -26,14 +26,14 @@ The shared generator patch preserves the marker in a plain span when no phone UR
 ## Verification
 
 - Red: the focused guard initially produced **35 failures**: 32 retired-number PDFs and three callable concept markers, with 15 passing checks. These were actual artifact/render failures, not setup errors.
-- Green: `PYTHONPATH=<pikepdf install> node --test scripts/public-phone-artifacts.test.mjs` → **51 passed / 0 failed**. All 46 PDF files were inspected; all 32 replacements contain the marker.
+- Green: `PYTHONPATH=<pikepdf install> node --test scripts/public-phone-artifacts.test.mjs` → **52 passed / 0 failed**. All 46 PDF files were inspected; all 32 replacements contain the marker.
 - Resource/policy generator: all **16 exports passed** its metadata, tagging, embedded-font, split-word and veraPDF 1.30.2 PDF/UA-1 machine checks. This does not claim full accessibility conformance. Contract exports were generated with LibreOffice tagging enabled; full PDF/UA validation of those contracts is not claimed.
 - `npm run check` → passed.
 - `npm run build` → passed, after setting `npm_config_cache` to a writable `/tmp` directory. The first attempt failed in npm's unwritable default cache, before the build. No source repair was necessary.
 - `npm test` → 360 files passed, two failed; **2,673 tests passed, two timed out, one skipped**. The failures were unchanged `server/portalUserInvite.test.ts` and `client/src/pages/locations/locationListSemantics.visual.test.ts` (plus its teardown timeout) while the build/browser work ran concurrently. Rerunning just those two files with one worker → **6/6 passed**. The full suite was not rerun or described as wholly green.
 - `npm run check:active-work` → passed, 173 claims.
 - `git diff --check` → passed.
-- Updated from main `fe69f3b6` with a merge commit; no conflicts. The new 51 checks and #1028's existing 13 static checks then passed together: **64/64**. Exact-head PR CI/security/secret and the new artifact workflow were started; they were still pending at this handoff.
+- Updated from main `fe69f3b6` with a merge commit; no conflicts. The new 52 checks and #1028's existing 13 static checks then passed together: **65/65**. Exact-head PR CI/security/secret and the new artifact workflow were started; they were still pending at this handoff.
 - Visual: reviewed all 32 contact pairs and boards covering 79 unique document pages; no clipped marker, missing page or blank overflow page found. The site's PDF.js rendered representative checklist/report/datasheet pages at fitted 390/768/1440 widths and 2× zoom. Existing fixed Letter documents still require zoom on phones; body text at a 390 fit is about 5.6 CSS px, 11.2 px at 2×.
 - Concept contact DOM checked at 390/768/1440: marker present, no enclosing anchor; marker screenshots inspected. The concepts are fixed-width print layouts, and their marker can sit outside a narrow HTML viewport. These checks establish contact/link behavior, **not responsive HTML operability** or a redesigned concept layout.
 
