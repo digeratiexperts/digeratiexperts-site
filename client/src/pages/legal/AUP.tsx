@@ -1,7 +1,7 @@
 import { LegalDocumentLayout } from "@/components/LegalDocumentLayout";
 import { ShieldAlert, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { COMPANY, PRIMARY_PHONE } from "@/data/companyContact";
 
 export default function AUP() {
   return (
@@ -49,12 +49,29 @@ export default function AUP() {
         compliance with this policy and applicable laws.
       </p>
 
+      <h2 className="mb-4 mt-8 text-xl font-bold text-[#1A1228]">Reporting Abuse</h2>
+      <p className="mb-6 text-[#3A3448]">
+        Report abuse of Digerati Experts services to{" "}
+        <a
+          href={`mailto:${COMPANY.securityEmail}?subject=Abuse`}
+          className="underline underline-offset-4"
+        >
+          {COMPANY.securityEmail}
+        </a>{" "}
+        with &quot;Abuse&quot; in the subject. Report security vulnerabilities in our own systems
+        under our{" "}
+        <a href="/trust/vulnerability-disclosure" className="underline underline-offset-4">
+          Vulnerability Disclosure Policy
+        </a>
+        .
+      </p>
+
       <h2 className="mb-4 mt-8 text-xl font-bold text-[#1A1228]">Request Full AUP</h2>
       <div className="mt-8 flex flex-col gap-4 sm:flex-row">
         <Button
           variant="brand"
           onClick={() => {
-            window.location.href = "mailto:legal@digeratiexperts.com?subject=AUP Request";
+            window.location.href = `mailto:${COMPANY.legalEmail}?subject=AUP Request`;
           }}
           data-testid="button-request-aup"
         >

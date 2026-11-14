@@ -26,13 +26,17 @@ export interface CompanyPhone {
 
 export const COMPANY = {
   legalName: "Digerati Experts",
-  email: "info@digeratiexperts.com",
+  /** Public general inbox. Client-facing addresses use digeratexperts.com, not the hyphenated domain. */
+  email: "admin@digeratiexperts.com",
   supportEmail: "support@digeratiexperts.com",
   /** Sales department inbox (confirmed by DE, 2026-10-03; note the hyphenated domain). */
   salesEmail: "sales@digerati-experts.com",
   /** Invoice questions when card checkout is not connected. Already used by the portal pay route. */
   billingEmail: "billing@digeratiexperts.com",
   privacyEmail: "privacy@digeratiexperts.com",
+  legalEmail: "legal@digeratiexperts.com",
+  securityEmail: "security@digeratiexperts.com",
+  accessibilityEmail: "accessibility@digeratiexperts.com",
   website: "https://digeratiexperts.com",
   bookingUrl: "https://meet.digerati-experts.com/",
   /** Public NAP is city only (Joe, 2026-10-07): no street or ZIP anywhere on the site. */

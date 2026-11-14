@@ -20,4 +20,24 @@ describe("companyContact", () => {
     expect(COMPANY.addressRegion).toBe("AZ");
     expect(COMPANY.mapsUrl).toBe("https://maps.google.com/?cid=1710856351091471339");
   });
+
+  it("routes public topics to dedicated digeratexperts.com mailboxes", () => {
+    expect(COMPANY.email).toBe("admin@digeratiexperts.com");
+    expect(COMPANY.legalEmail).toBe("legal@digeratiexperts.com");
+    expect(COMPANY.privacyEmail).toBe("privacy@digeratiexperts.com");
+    expect(COMPANY.accessibilityEmail).toBe("accessibility@digeratiexperts.com");
+    expect(COMPANY.securityEmail).toBe("security@digeratiexperts.com");
+    for (const address of [
+      COMPANY.email,
+      COMPANY.legalEmail,
+      COMPANY.privacyEmail,
+      COMPANY.accessibilityEmail,
+      COMPANY.securityEmail,
+      COMPANY.supportEmail,
+      COMPANY.billingEmail,
+    ]) {
+      expect(address.endsWith("@digeratiexperts.com")).toBe(true);
+      expect(address).not.toContain("@digerati-experts.com");
+    }
+  });
 });

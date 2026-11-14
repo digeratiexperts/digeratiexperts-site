@@ -12,7 +12,7 @@ import { renderAutoRenewTermsEmailSection, type AutoRenewEmailTerms } from "./au
 const ZEPTOMAIL_API_URL = "https://api.zeptomail.com/v1.1/email";
 const FROM_EMAIL = "noreply@digeratiexperts.com";
 const FROM_NAME = "Digerati Experts";
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "info@digeratiexperts.com";
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || COMPANY.email;
 
 /** Visitor-supplied text goes into these emails escaped. */
 function escapeHtml(value: string): string {
