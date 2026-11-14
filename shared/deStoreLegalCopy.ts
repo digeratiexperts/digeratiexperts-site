@@ -22,7 +22,7 @@ export const WHERE_WE_SELL_ADDRESS_STEP_NO_LIST =
   "Where we sell: Digerati Experts sells only to customers whose billing and shipping addresses are both in a supported state.";
 
 export const BLOCKED_STATE_MESSAGE_TEMPLATE =
-  `Sorry — we can't currently sell to addresses in {{STATE}}. Your billing and shipping addresses must both be in a supported state. You have not been charged. Questions: admin@digeratiexperts.com or ${PRIMARY_PHONE.display}.`;
+  `Sorry — we can't currently sell to addresses in {{STATE}}. Your billing and shipping addresses must both be in a supported state. You have not been charged. Questions: admin@digeratiexperts.com${PRIMARY_PHONE.telHref ? ` or ${PRIMARY_PHONE.display}` : ""}.`;
 
 export const SHIPPING_PROMISE =
   "Ships within 7 calendar days after a paid, accepted order. Ships overnight. Delivery is usually the next business day after shipment, depending on the carrier and your address. If we can't ship by your promised date, we'll email you before that date with a new ship date and the option to cancel for a full refund.";

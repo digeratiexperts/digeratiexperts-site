@@ -31,7 +31,7 @@
 
 **3.1** Store subscriptions renew automatically, monthly or annually, as shown at checkout, until you cancel. The renewal disclosures, your separate consent, the acknowledgment email, one-click online cancellation, the effect of cancellation, and the renewal reminders are in **MSA Exhibit I, Section I.3**, which is incorporated here.
 
-**3.2** **How to cancel.** Use the "Cancel subscription" button in your DE store account, or send DE's preformatted cancellation email. You may also cancel by email to admin@digeratiexperts.com or by phone at (480) 519-5892. Cancellation stops all future renewals and charges immediately, with no early termination fee (MSA Exhibit I, Section I.3(c)–(d)).
+**3.2** **How to cancel.** Use the "Cancel subscription" button in your DE store account, or send DE's preformatted cancellation email. You may also cancel by email to admin@digeratiexperts.com or by phone at [DE_PUBLIC_PHONE]. Cancellation stops all future renewals and charges immediately, with no early termination fee (MSA Exhibit I, Section I.3(c)–(d)).
 
 **3.3** **New York reminder.** If your billing address is in New York and your subscription renews for a period longer than one month, DE will serve the renewal notice personally or by certified mail at least 15 and not more than 30 days before the date by which you must cancel to avoid renewal, as N.Y. General Obligations Law § 5-903 requires (MSA Exhibit I, Section I.3(e)). Because you may cancel a store subscription at any time up to renewal, that date is the renewal date.
 
@@ -87,7 +87,7 @@
 
 **9.1** **Changes.** DE may update these Store Terms for future orders. Changes to an active subscription follow the material-change and fee-change notices in MSA Exhibit I, Section I.3(e). DE keeps each version you accepted as an Agreement Record (MSA Section 19.11).
 
-**9.2** **Contact.** Digerati Experts, LLC, Chandler, Arizona. Phone (480) 519-5892. Billing: billing@digeratiexperts.com. Legal notices and cancellations: admin@digeratiexperts.com.
+**9.2** **Contact.** Digerati Experts, LLC, Chandler, Arizona. Phone [DE_PUBLIC_PHONE]. Billing: billing@digeratiexperts.com. Legal notices and cancellations: admin@digeratiexperts.com.
 
 ## Schedule A. ProActive Ecosystem (Managed)
 
