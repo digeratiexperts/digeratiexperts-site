@@ -64,6 +64,7 @@ import {
   verifyZohoOAuthState,
 } from "./portalZohoAuth";
 import { verifyTurnstile } from "./middleware/security";
+import { registerAutoRenewRoutes } from "./autoRenewRoutes";
 import { eventBus, EventTypes } from "./eventBus";
 import { notificationService, sendEmail } from "./services/notificationService";
 import { logger } from "./logger";
@@ -6663,5 +6664,6 @@ export async function registerRoutes(app: Express) {
     });
   });
 
+  registerAutoRenewRoutes(app, authMiddleware as any, requireRole as any);
   return app;
 }
