@@ -254,7 +254,7 @@ export function CookieConsentBanner() {
             animate={{ y: 0 }}
             exit={reduceMotion ? { opacity: 0 } : { y: "100%" }}
             transition={{ duration: reduceMotion ? 0 : 0.4, ease: "easeOut" }}
-            className={`fixed z-[9991] de-fixed-in-canvas bottom-0${
+            className={`de-cookie-banner fixed z-[9991] de-fixed-in-canvas bottom-0${
               deskOpen ? " invisible pointer-events-none" : ""
             }`}
             data-testid="cookie-consent-banner"

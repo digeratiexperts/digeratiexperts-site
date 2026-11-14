@@ -99,7 +99,7 @@ export function HomeChapters(): JSX.Element {
       <WebSiteJsonLd />
       <MegaMenu />
       <SiteBottomBar autohide />
-      <main id="home-main" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--section-gap)' }}>
+      <main id="main-content" tabIndex={-1} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--section-gap)' }}>
         <nav className={`hc-nav${closing ? " is-closing" : ""}`} aria-label="Sections">
           <ul aria-hidden={closing || undefined}>
             {navItems.map((id) => {

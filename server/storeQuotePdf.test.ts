@@ -33,7 +33,7 @@ describe("store quote PDF", () => {
     expect(html).toContain("Your account manager");
     expect(html).toContain("Joseph Petro");
     expect(html).toContain("data:image/jpeg;base64,");
-    expect(html).toContain("sales@digerati-experts.com");
+    expect(html).toContain("sales@digeratiexperts.com");
   });
 
   it(

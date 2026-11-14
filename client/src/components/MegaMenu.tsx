@@ -6,7 +6,6 @@ import { DE_LOGO_REVERSE } from '@/lib/brandAssets';
 import ebookCover from '@/assets/images/ebook-defending-digital-realm-cover.webp';
 import { motion, AnimatePresence } from 'framer-motion';
 import * as Tooltip from '@radix-ui/react-tooltip';
-import { pricing } from '@/data/pricing';
 import { useBooking } from '@/contexts/BookingContext';
 import { useOptionalFullPageScroll } from '@/components/FullPageScroll';
 import { HomepageOnPageNav } from '@/components/HomepageSectionNav';
@@ -14,6 +13,8 @@ import { PORTAL_LOGIN } from '@/lib/portalUrls';
 import { CTA } from '@/lib/ctaCopy';
 import { PRIMARY_PHONE } from '@/data/companyContact';
 import { isDoor2Path } from '@/lib/isDoor2Path';
+import { acquireBodyScrollLock } from '@/lib/bodyScrollLock';
+import { useDockHiddenWhileOpen } from '@/hooks/useDockHiddenWhileOpen';
 
 const NoiseTexture = ({ id }: { id: string }) => (
   <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-[0.025]" aria-hidden="true">
@@ -114,6 +115,7 @@ function MenuFeaturedRail({
   onNavigate,
   image,
   imageAlt,
+  layout = "column",
 }: {
   href: string;
   eyebrow: string;
@@ -125,6 +127,7 @@ function MenuFeaturedRail({
   onNavigate: () => void;
   image?: string;
   imageAlt?: string;
+  layout?: "column" | "adaptive";
 }) {
   return (
     <motion.div
@@ -143,14 +146,22 @@ function MenuFeaturedRail({
           />
         </div>
       ) : null}
-      <div className="flex flex-1 flex-col p-5">
-        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#D3126A]">{eyebrow}</p>
-        <h4 className="mt-2 font-heading text-lg font-semibold leading-snug text-white md:text-xl">{title}</h4>
-        <p className="mt-2 flex-1 text-sm leading-relaxed text-white/70">{body}</p>
+      <div
+        className={`flex flex-1 ${
+          layout === "adaptive"
+            ? "flex-col p-4 md:flex-row md:items-center md:gap-8"
+            : "flex-col p-5"
+        }`}
+      >
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#D3126A]">{eyebrow}</p>
+          <h4 className={`font-heading font-semibold leading-snug text-white ${layout === "adaptive" ? "mt-1.5 text-lg" : "mt-2 text-lg md:text-xl"}`}>{title}</h4>
+          <p className={`text-sm text-white/70 ${layout === "adaptive" ? "mt-1 leading-snug" : "mt-2 leading-relaxed"}`}>{body}</p>
+        </div>
         <Link
           href={href}
           onClick={onNavigate}
-          className="mt-5 inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[#D3126A] px-4 text-sm font-semibold text-white transition-colors hover:bg-[#f0187a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A] focus-visible:ring-offset-2 focus-visible:ring-offset-de-raised"
+          className={`mt-5 inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-lg bg-[#D3126A] px-4 text-sm font-semibold text-white transition-colors hover:bg-[#f0187a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A] focus-visible:ring-offset-2 focus-visible:ring-offset-de-raised ${layout === "adaptive" ? "md:mt-0" : ""}`}
           data-testid={linkTestId}
         >
           {cta}
@@ -192,6 +203,9 @@ interface NavItem {
 export function MegaMenu() {
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const mobileDrawerRef = useRef<HTMLDivElement>(null);
+  const mobileToggleRef = useRef<HTMLButtonElement>(null);
+  useDockHiddenWhileOpen(mobileMenuOpen || Boolean(activeMenu));
   const [focusedIndex, setFocusedIndex] = useState<number>(-1);
   const [isScrolled, setIsScrolled] = useState(false);
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
@@ -270,57 +284,43 @@ export function MegaMenu() {
           title: 'Ways to Work With Us',
           viewAllUrl: '/solutions',
           items: [
-            { title: 'ProActive Ecosystem', description: 'Cybersecurity-first operating model: IT → Office → Business → Enterprise', icon: <Layers className="h-5 w-5" />, url: '/solutions/proactive-ecosystem' },
+            { title: 'ProActive Ecosystem', description: 'Cybersecurity-first operating model: IT, Office, Business, or Enterprise', icon: <Layers className="h-5 w-5" />, url: '/solutions/proactive-ecosystem' },
             { title: 'Co-Managed IT', description: 'Extend your internal IT team without replacing it', icon: <Users className="h-5 w-5" />, url: '/solutions/co-managed-it' },
-            { title: 'Standalone Services', description: 'A specific gap — backup, UCaaS, awareness, or a project', icon: <Server className="h-5 w-5" />, url: '/solutions/standalone-services' },
+            { title: 'Standalone Services', description: 'A specific gap — backup, phone and meeting systems, awareness, or a project', icon: <Server className="h-5 w-5" />, url: '/solutions/standalone-services' },
             { title: 'Solve a Business Need', description: 'Curated DE solutions organized around the outcome you need', icon: <ClipboardCheck className="h-5 w-5" />, url: '/store' },
-            { title: 'Cyber Risk Assessment', description: 'Match the operating model to your environment', icon: <ClipboardCheck className="h-5 w-5" />, url: '/book' },
             { title: 'Efficiency Before AI', description: 'A working foundation and team first, AI second', icon: <Gauge className="h-5 w-5" />, url: '/solutions/efficiency-before-ai' },
+            { title: 'Virtual CIO', description: 'Executive technology and security guidance', icon: <BarChart3 className="h-5 w-5" />, url: '/solutions/vcio-strategy' },
           ]
         },
         {
           title: 'ProActive Ecosystem',
-          viewAllUrl: '/proactive-ecosystem-pricing',
+          viewAllUrl: '/solutions/proactive-ecosystem',
           items: [
-            { title: 'IT', description: pricing.it.idealBuyer, icon: <Monitor className="h-5 w-5" />, url: pricing.it.learnMoreUrl, price: `From $${pricing.it.user}/user` },
-            { title: 'Office', description: pricing.office.idealBuyer, icon: <Building className="h-5 w-5" />, url: pricing.office.learnMoreUrl, price: `From $${pricing.office.user}/user` },
-            { title: 'Business', description: pricing.business.idealBuyer, icon: <BarChart3 className="h-5 w-5" />, url: pricing.business.learnMoreUrl, price: `From $${pricing.business.user}/user` },
-            { title: 'Enterprise', description: pricing.enterprise.idealBuyer, icon: <Award className="h-5 w-5" />, url: pricing.enterprise.learnMoreUrl, price: `From $${pricing.enterprise.user}/user` },
             { title: 'Compare All Packages', description: 'Capabilities and operating depth — not a ranking', icon: <LayoutGrid className="h-5 w-5" />, url: '/proactive-ecosystem-pricing' },
             { title: 'Find Your Plan', description: 'Six questions, matched to IT, Office, Business or Enterprise', icon: <CheckCircle className="h-5 w-5" />, url: '/quote-wizard' },
           ]
         },
         {
           title: 'Managed IT & Workplace',
-          viewAllUrl: '/solutions',
+          viewAllUrl: '/solutions/managed-it-support',
           items: [
-            { title: 'Managed IT Support', description: 'Service desk and day-to-day issue ownership', icon: <HeadphonesIcon className="h-5 w-5" />, url: '/solutions/managed-it-support' },
+            { title: 'Managed IT Support', description: 'Service desk, firewall, Wi-Fi, connectivity, and day-to-day issue ownership', icon: <HeadphonesIcon className="h-5 w-5" />, url: '/solutions/managed-it-support' },
             { title: 'Managed Workplace', description: 'Identity, devices, apps, and employee lifecycle', icon: <Building className="h-5 w-5" />, url: '/solutions/managed-workplace' },
-            { title: 'Identity & Access', description: 'SSO, MFA, and access architecture', icon: <Lock className="h-5 w-5" />, url: '/solutions/unified-security' },
-            { title: 'Managed Network & Connectivity', description: 'Firewall, Wi-Fi, and connectivity operations', icon: <Server className="h-5 w-5" />, url: '/solutions/managed-it-support' },
-            { title: 'Cloud / SaaS Backup', description: 'Endpoint, M365, and Google backup — not BCDR', icon: <Cloud className="h-5 w-5" />, url: '/solutions/cloud-backup' },
-            { title: 'UCaaS', description: 'Unified phone and meeting systems', icon: <Phone className="h-5 w-5" />, url: '/services/ucaas' },
+            { title: 'Unified Security', description: 'SSO, MFA, and access architecture', icon: <Lock className="h-5 w-5" />, url: '/solutions/unified-security' },
+            { title: 'Cloud / SaaS Backup', description: 'Endpoint, Microsoft 365, and Google backup — separate from disaster recovery', icon: <Cloud className="h-5 w-5" />, url: '/solutions/cloud-backup' },
+            { title: 'Business Phone & Meetings', description: 'Unified phone and meeting systems', icon: <Phone className="h-5 w-5" />, url: '/services/ucaas' },
           ]
         },
         {
-          title: 'Cybersecurity & Resilience',
-          viewAllUrl: '/solutions',
+          title: 'Cybersecurity & Compliance',
+          viewAllUrl: '/solutions/threat-detection',
           items: [
-            { title: 'Endpoint & Email Protection', description: 'Device and mailbox defenses', icon: <Shield className="h-5 w-5" />, url: '/solutions/threat-detection' },
-            { title: 'Threat Detection & Response', description: 'Find and contain attacks before damage spreads', icon: <Zap className="h-5 w-5" />, url: '/solutions/threat-detection' },
+            { title: 'Threat Detection & Response', description: 'Endpoint, email, and attack containment before damage spreads', icon: <Zap className="h-5 w-5" />, url: '/solutions/threat-detection' },
             { title: 'Security Operations / SOC', description: 'Human-led monitoring and response', icon: <Lock className="h-5 w-5" />, url: '/solutions/security-operations' },
             { title: 'Security Awareness', description: 'Training and phishing simulations for staff', icon: <Users className="h-5 w-5" />, url: '/solutions/security-awareness' },
             { title: 'Data Encryption', description: 'Protect data even if an endpoint is lost', icon: <Shield className="h-5 w-5" />, url: '/solutions/data-encryption' },
-            { title: 'Backup & Disaster Recovery', description: 'Continuity, RPO/RTO, failover, and restore testing', icon: <Server className="h-5 w-5" />, url: '/solutions/backup-disaster-recovery' },
-          ]
-        },
-        {
-          title: 'Strategy & Compliance',
-          viewAllUrl: '/solutions',
-          items: [
-            { title: 'vCIO', description: 'Executive technology and security guidance', icon: <BarChart3 className="h-5 w-5" />, url: '/solutions/vcio-strategy' },
-            { title: 'Compliance & Risk Reporting', description: 'Evidence and reporting for audits and insurers', icon: <ClipboardCheck className="h-5 w-5" />, url: '/solutions/compliance-reports' },
-            { title: 'Cyber Insurance Readiness', description: 'Controls and documentation carriers typically ask for', icon: <FileCheck className="h-5 w-5" />, url: '/solutions/compliance-reports' },
+            { title: 'Backup & Disaster Recovery', description: 'Continuity, recovery objectives, failover, and restore testing', icon: <Server className="h-5 w-5" />, url: '/solutions/backup-disaster-recovery' },
+            { title: 'Compliance & Risk Reports', description: 'Evidence for audits, insurers, and cyber-insurance readiness', icon: <ClipboardCheck className="h-5 w-5" />, url: '/solutions/compliance-reports' },
           ]
         }
       ]
@@ -355,7 +355,7 @@ export function MegaMenu() {
           title: 'Learn',
           items: [
             { title: 'Case Studies', description: 'Real Arizona success stories', icon: <TrendingUp className="h-5 w-5" />, url: '/resources/case-studies' },
-            { title: 'Digerati Journal', description: 'Cybersecurity & managed IT field notes', icon: <FileCheck className="h-5 w-5" />, url: '/resources/blog' },
+            { title: 'DE Journal', description: 'Cybersecurity & managed IT field notes', icon: <FileCheck className="h-5 w-5" />, url: '/resources/blog' },
             { title: 'Cyber Facts', description: 'Interactive credibility stats & sources', icon: <Shield className="h-5 w-5" />, url: '/resources/cyber-facts' },
             { title: 'Videos & Webinars', description: 'Educational content library', icon: <Monitor className="h-5 w-5" />, url: '/resources/videos' },
           ]
@@ -367,7 +367,7 @@ export function MegaMenu() {
             { title: 'Security Checklist', description: 'Assess your security posture', icon: <ClipboardCheck className="h-5 w-5" />, url: '/resources/security-checklist' },
             { title: 'Datasheets', description: 'Package PDFs and sample reports', icon: <FileCheck className="h-5 w-5" />, url: '/resources/datasheets' },
             { title: 'Executive briefs', description: 'Short buyer-ready operating notes', icon: <ClipboardCheck className="h-5 w-5" />, url: '/resources/briefs' },
-            { title: 'Campaign offers', description: 'Single-offer pages for ads and search', icon: <BarChart3 className="h-5 w-5" />, url: '/go' },
+            { title: 'Current offers', description: 'Offers and assessments available now', icon: <BarChart3 className="h-5 w-5" />, url: '/go' },
           ]
         }
       ]
@@ -393,7 +393,6 @@ export function MegaMenu() {
           title: 'Company',
           items: [
             { title: 'Mission & Values', description: 'Our commitment to partnership', icon: <Star className="h-5 w-5" />, url: '/about/mission-values' },
-            { title: 'Case Studies', description: 'Arizona business success stories', icon: <TrendingUp className="h-5 w-5" />, url: '/resources/case-studies' },
             { title: 'Meet The Experts', description: 'Chandler, AZ team', icon: <Users className="h-5 w-5" />, url: '/about/team' },
             { title: 'Client Bill of Rights', description: 'Our 8 pledges to you', icon: <Award className="h-5 w-5" />, url: '/about/client-bill-of-rights' },
             { title: '100% Guarantee', description: '30-day money-back promise', icon: <CheckCircle className="h-5 w-5" />, url: '/about/guarantee' },
@@ -424,6 +423,7 @@ export function MegaMenu() {
 
   const closeMobileMenu = useCallback(() => {
     setMobileMenuOpen(false);
+    mobileToggleRef.current?.focus();
   }, []);
 
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
@@ -639,11 +639,45 @@ export function MegaMenu() {
 
   useEffect(() => {
     if (!mobileMenuOpen) return;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = previousOverflow;
+    return acquireBodyScrollLock();
+  }, [mobileMenuOpen]);
+
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    const drawer = mobileDrawerRef.current;
+    const toggle = mobileToggleRef.current;
+    if (!drawer) return;
+
+    const focusableSelector =
+      'a[href], button:not([disabled]), summary, [tabindex]:not([tabindex="-1"])';
+    const getFocusable = () =>
+      Array.from(drawer.querySelectorAll<HTMLElement>(focusableSelector)).filter(
+        (el) => !el.hasAttribute("disabled") && el.getClientRects().length > 0,
+      );
+
+    const first = getFocusable()[0];
+    first?.focus();
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Tab") return;
+      const items = getFocusable();
+      if (items.length === 0) return;
+      const firstItem = items[0];
+      const lastItem = items[items.length - 1];
+      const active = document.activeElement;
+      if (event.shiftKey && (active === firstItem || (toggle && active === toggle))) {
+        event.preventDefault();
+        lastItem.focus();
+        return;
+      }
+      if (!event.shiftKey && active === lastItem) {
+        event.preventDefault();
+        firstItem.focus();
+      }
     };
+
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
   }, [mobileMenuOpen]);
 
   // Close mobile menu when resizing to desktop viewport
@@ -715,7 +749,7 @@ export function MegaMenu() {
               <button
                 type="button"
                 onClick={() => openBooking('announcement-bar')}
-                className="inline-flex shrink-0 items-center gap-1.5 text-base font-semibold leading-snug text-white underline underline-offset-4 transition-colors hover:text-white/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 rounded"
+                className="inline-flex min-h-6 shrink-0 items-center gap-1.5 rounded text-base font-semibold leading-snug text-white underline underline-offset-4 transition-colors hover:text-white/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
                 data-testid="announce-start-assessment"
               >
                 Book a conversation
@@ -737,7 +771,7 @@ export function MegaMenu() {
           <div className="flex items-center flex-wrap gap-x-5 gap-y-1.5 md:gap-x-7 justify-center md:justify-end">
             <a
               href={PRIMARY_PHONE.telHref}
-              className="flex items-center text-white/95 hover:text-de-magenta-ink text-base font-semibold leading-none tracking-wide transition-colors"
+              className="inline-flex min-h-6 items-center text-base font-semibold leading-none tracking-wide text-white/95 transition-colors hover:text-de-magenta-ink"
               data-testid="utility-phone"
             >
               <Phone className="h-4 w-4 mr-1.5 text-de-magenta-ink shrink-0" />
@@ -750,7 +784,7 @@ export function MegaMenu() {
               href="https://assist.zoho.com/"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center text-white/90 hover:text-de-magenta-ink text-base font-medium leading-none transition-colors"
+              className="inline-flex min-h-6 items-center text-base font-medium leading-none text-white/90 transition-colors hover:text-de-magenta-ink"
               data-testid="utility-zoho-assist"
             >
               <Monitor className="h-4 w-4 mr-1.5 text-de-magenta-ink shrink-0" />
@@ -759,7 +793,7 @@ export function MegaMenu() {
 
             <a
               href={PORTAL_LOGIN}
-              className="flex items-center text-white/90 hover:text-de-magenta-ink text-base font-medium leading-none transition-colors"
+              className="inline-flex min-h-6 items-center text-base font-medium leading-none text-white/90 transition-colors hover:text-de-magenta-ink"
               data-testid="utility-portal"
             >
               <span className="hidden sm:inline">Client Portal</span>
@@ -898,7 +932,7 @@ export function MegaMenu() {
                         >
                         <div className={`relative ${
                           item.name === 'Solutions' 
-                            ? 'grid grid-cols-5 divide-x divide-white/5' 
+                            ? 'p-6 grid grid-cols-4 gap-6 items-start' 
                             : item.name === 'About'
                               ? 'p-8 grid grid-cols-3 gap-8 items-start'
                               : item.name === 'Industries'
@@ -907,6 +941,22 @@ export function MegaMenu() {
                                   ? 'p-8 grid grid-cols-3 gap-8 items-start' 
                                   : 'p-8 flex gap-8 items-start'
                         }`}>
+
+                          {item.name === 'Solutions' && (
+                            <div className="col-span-4">
+                              <MenuFeaturedRail
+                                href="/book"
+                                eyebrow="Cyber Risk Assessment"
+                                title="Match the operating model to your environment"
+                                body="Understand your cyber risk and choose a practical next step."
+                                cta="Book a conversation"
+                                layout="adaptive"
+                                testId="menu-featured-solutions"
+                                linkTestId="link-featured-solutions"
+                                onNavigate={handleLinkClick}
+                              />
+                            </div>
+                          )}
                           {item.sections.map((section, sectionIdx) => (
                             <motion.div 
                               key={section.title}
@@ -918,7 +968,7 @@ export function MegaMenu() {
                               transition={{ delay: sectionIdx * 0.05 }}
                               className={`relative overflow-hidden ${
                                 item.name === 'Solutions' 
-                                  ? 'mega-menu-col min-w-0 px-4 py-4' 
+                                  ? 'mega-menu-col min-w-0 px-2 py-1 min-[1440px]:px-3 min-[1440px]:py-2' 
                                   : 'flex-1 min-w-0'
                               }`}
                               onMouseMove={(e) => item.name === 'Solutions' && handleColumnMouseMove(e, sectionIdx)}
@@ -936,9 +986,11 @@ export function MegaMenu() {
                                 />
                               )}
                               {/* Section Header */}
-                              <div className={item.name === 'Solutions' ? 'mb-2' : 'mb-4'}>
+                              <div className={item.name === 'Solutions' ? 'mb-1.5' : 'mb-4'}>
                                 <h3 
-                                  className={`font-bold text-xs uppercase tracking-[0.18em] flex items-center gap-2 ${
+                                  className={`font-bold text-xs uppercase flex items-center gap-2 ${
+                                    item.name === 'Solutions' ? 'tracking-[0.12em] whitespace-nowrap' : 'tracking-[0.18em]'
+                                  } ${
                                     section.featured ? 'text-de-accent-ink' : 'text-gray-400'
                                   }`}
                                   id={`menu-section-${section.title.replace(/\s+/g, '-')}`}
@@ -953,7 +1005,7 @@ export function MegaMenu() {
                               </div>
                               
                               <ul 
-                                className="space-y-1"
+                                className={item.name === 'Solutions' ? 'space-y-0' : 'space-y-1'}
                                 role="menu"
                                 aria-labelledby={`menu-section-${section.title.replace(/\s+/g, '-')}`}
                                 onMouseLeave={() => setHoveredItem(null)}
@@ -975,9 +1027,7 @@ export function MegaMenu() {
                                         <a
                                           href={subItem.url || '#'}
                                           className={`group/item flex items-start rounded-xl transition-all duration-200 focus:outline-none focus:ring-1 focus:ring-de-accent border ${
-                                            item.name === 'Solutions'
-                                              ? 'gap-2.5 px-2.5 py-1.5'
-                                              : 'gap-3.5 px-3 py-3'
+                                            item.name === 'Solutions' ? 'gap-2.5 px-2 py-1.5' : 'gap-3.5 px-3 py-2.5'
                                           } ${
                                             isHovered 
                                               ? 'bg-de-raised border-de-hairline' 
@@ -997,7 +1047,7 @@ export function MegaMenu() {
                                           <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2 flex-wrap">
                                               <span className={`font-semibold transition-colors leading-snug ${
-                                                item.name === 'Solutions' ? 'text-sm' : 'text-[15px]'
+                                                item.name === 'Solutions' ? 'text-[14px]' : 'text-[15px]'
                                               } ${
                                                 isHovered ? 'text-white' : 'text-gray-200 group-hover/item:text-white'
                                               }`}>
@@ -1014,11 +1064,7 @@ export function MegaMenu() {
                                               )}
                                             </div>
                                             {subItem.description && (
-                                              <p className={`text-white/70 group-hover/item:text-gray-400 transition-colors leading-snug ${
-                                                item.name === 'Solutions'
-                                                  ? 'mt-0.5 text-[13px] line-clamp-1'
-                                                  : 'mt-1 text-sm line-clamp-2'
-                                              }`}>
+                                              <p className={`text-white/70 group-hover/item:text-gray-400 transition-colors ${item.name === 'Solutions' ? 'mt-0.5 text-[13px] leading-tight' : 'mt-1 text-sm leading-snug'}`}>
                                                 {subItem.description}
                                               </p>
                                             )}
@@ -1047,13 +1093,11 @@ export function MegaMenu() {
                               {section.viewAllUrl && (
                                 <a
                                   href={section.viewAllUrl}
-                                  className={`inline-flex items-center gap-1.5 px-3 text-xs font-bold text-white/70 hover:text-de-accent-ink transition-colors group/view uppercase tracking-wider ${
-                                    item.name === 'Solutions' ? 'mt-2' : 'mt-3'
-                                  }`}
+                                  className={`${item.name === 'Solutions' ? 'mt-1.5' : 'mt-3'} inline-flex min-h-11 items-center gap-1.5 px-3 text-sm font-bold uppercase tracking-wider text-white/70 transition-colors hover:text-de-accent-ink group/view`}
                                   onClick={handleLinkClick}
                                 >
                                   Explore
-                                  <ArrowRight className="w-3.5 h-3.5 group-hover/view:translate-x-0.5 transition-transform" />
+                                  <ArrowRight className="h-3.5 w-3.5 group-hover/view:translate-x-0.5 transition-transform" />
                                 </a>
                               )}
                             </motion.div>
@@ -1094,10 +1138,11 @@ export function MegaMenu() {
                               </a>
                             </motion.div>
                           )}
-                          
+
+
                           {item.name === 'Industries' && (
                             <MenuFeaturedRail
-                              href="/#industries"
+                              href="/industries"
                               eyebrow="Arizona practices"
                               title="HIPAA, privilege, tax data, and wire fraud"
                               body="Healthcare, legal, accounting, and real estate each fail in a different place. Start with the industry that matches how you actually operate."
@@ -1162,16 +1207,18 @@ export function MegaMenu() {
 
             {/* Mobile/Tablet Menu Button */}
             <button
+              ref={mobileToggleRef}
               className="lg:hidden relative inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-de-hairline bg-de-raised hover:border-white/25 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A] focus-visible:ring-offset-2 focus-visible:ring-offset-black transition-colors"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               data-testid="mobile-menu-toggle"
               aria-expanded={mobileMenuOpen}
+              aria-controls="mobile-navigation-menu"
               aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
             >
-              <div className="relative w-6 h-6 flex items-center justify-center" aria-hidden="true">
-                <span className="absolute w-5 h-0.5 -translate-y-1.5 bg-white rounded-full" />
-                <span className="absolute w-5 h-0.5 bg-white rounded-full" />
-                <span className="absolute w-5 h-0.5 translate-y-1.5 bg-white rounded-full" />
+              <div className="relative flex h-6 w-6 items-center justify-center" aria-hidden="true">
+                <span className={`absolute h-0.5 w-5 rounded-full bg-white transition-transform duration-200 ${mobileMenuOpen ? 'rotate-45' : '-translate-y-1.5'}`} />
+                <span className={`absolute h-0.5 w-5 rounded-full bg-white transition-opacity duration-200 ${mobileMenuOpen ? 'opacity-0' : 'opacity-100'}`} />
+                <span className={`absolute h-0.5 w-5 rounded-full bg-white transition-transform duration-200 ${mobileMenuOpen ? '-rotate-45' : 'translate-y-1.5'}`} />
               </div>
             </button>
           </div>
@@ -1204,23 +1251,26 @@ export function MegaMenu() {
             className={`absolute inset-0 bg-black/70 transition-opacity duration-300 ${
               mobileMenuOpen ? 'opacity-100' : 'opacity-0'
             }`}
-            onClick={() => setMobileMenuOpen(false)}
+            onClick={closeMobileMenu}
           />
           
           <div 
+            ref={mobileDrawerRef}
+            id="mobile-navigation-menu"
             className={`absolute right-0 top-0 h-full w-full max-w-md border-l border-de-hairline bg-[#050312] shadow-[0_24px_60px_rgba(0,0,0,0.55)] transform transition-transform duration-300 ease-out overflow-hidden ${
               mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
             }`}
             role="dialog"
+            aria-modal="true"
             aria-label="Navigation menu"
           >
-            <div className="relative h-full overflow-y-auto overscroll-contain p-5 pb-24 space-y-2">
+            <div className="relative h-full space-y-2 overflow-y-auto overscroll-contain p-5 pb-[calc(2.5rem+env(safe-area-inset-bottom,0px))]">
               <div className="flex items-center justify-between mb-5 pb-4 border-b border-de-hairline">
                 <span className="font-heading text-lg font-semibold text-white">
                   Menu
                 </span>
                 <button
-                  onClick={() => setMobileMenuOpen(false)}
+                  onClick={closeMobileMenu}
                   className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-de-hairline bg-de-raised hover:border-white/25 transition-colors"
                   aria-label="Close menu"
                   data-testid="mobile-menu-close"

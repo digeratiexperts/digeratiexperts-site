@@ -11,6 +11,8 @@ const read = (...parts: string[]) =>
   readFileSync(resolve(__dirname, ...parts), "utf8");
 
 const GUARDED_PAGES = [
+  ["DigeratiHomepage.tsx"],
+  ["homepage-v2", "HomepageV2.tsx"],
   ["Contact.tsx"],
   ["solutions", "SolutionsIndex.tsx"],
   ["solutions", "CoManagedIT.tsx"],

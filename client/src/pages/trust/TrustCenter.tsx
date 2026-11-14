@@ -3,6 +3,7 @@ import { Shield, Lock, FileCheck, Award, Eye, Server } from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
 import { PRIMARY_PHONE } from "@/data/companyContact";
 import { EvidenceFrame } from "@/components/evidence/EvidenceFrame";
+import { EmailDomainNotice } from "@/components/EmailDomainNotice";
 import {
   Chapter,
   Container,
@@ -189,6 +190,12 @@ export default function TrustCenter() {
               <DefinitionList rows={privacyRows} tone="surface" />
             </div>
           </div>
+        </Container>
+      </Chapter>
+
+      <Chapter tone="well">
+        <Container>
+          <EmailDomainNotice />
         </Container>
       </Chapter>
 

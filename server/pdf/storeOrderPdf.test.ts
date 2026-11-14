@@ -88,7 +88,7 @@ describe("account team", () => {
     expect(html).toContain("Joseph Petro");
     expect(html).toContain("Founder &amp; Account Manager");
     expect(html).toContain("Sales department");
-    expect(html).toContain("sales@digerati-experts.com");
+    expect(html).toContain("sales@digeratiexperts.com");
   });
 
   it("falls back to the default team when none is passed", () => {
