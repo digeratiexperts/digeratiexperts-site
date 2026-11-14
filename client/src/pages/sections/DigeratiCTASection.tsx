@@ -1,13 +1,13 @@
-import { Shield, Award, CheckCircle, Star } from "lucide-react";
+import { Shield, Mail, CheckCircle, KeyRound } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
 import ctaBgImage from "@assets/lucid-origin_a_cinematic_photo_of_ultra_wide_abstract_backgrou_1775876876672.jpg";
 
 
 const badges = [
-  { name: "SOC 2 Type II", icon: Shield },
-  { name: "Microsoft Partner", icon: Award },
-  { name: "HIPAA Compliant", icon: CheckCircle },
-  { name: "ISO 27001", icon: Shield },
+  { name: "Identity & Access", icon: KeyRound },
+  { name: "Endpoints", icon: Shield },
+  { name: "Backup & Recovery", icon: CheckCircle },
+  { name: "Email Security", icon: Mail },
 ];
 
 export const DigeratiCTASection = (): JSX.Element => {
@@ -35,11 +35,11 @@ export const DigeratiCTASection = (): JSX.Element => {
         >
           <h2 className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-white leading-tight mb-6 relative overflow-hidden">
             <span className="relative z-10">
-              Get a{" "}
+              Start With a{" "}
               <span className="text-violet-400">
-                $20,000 Pen Test
+                Clear Assessment
               </span>
-              {" "}– Free
+              {" "}of What Matters
             </span>
             {/* Light sweep animation - hidden for reduced motion */}
             {!prefersReducedMotion && (
@@ -65,7 +65,7 @@ export const DigeratiCTASection = (): JSX.Element => {
           transition={{ duration: 0.6, delay: 0.2 }}
           className="text-lg md:text-xl text-gray-300 leading-relaxed mb-2"
         >
-          Discover vulnerabilities before attackers do – without paying a cent.
+          We will look at the environment first, explain the meaningful risks, and recommend what fits—without forcing a package before we understand the problem.
         </motion.p>
         <motion.p
           initial={{ opacity: 0 }}
@@ -74,29 +74,8 @@ export const DigeratiCTASection = (): JSX.Element => {
           transition={{ duration: 0.5, delay: 0.3 }}
           className="text-sm text-gray-400 mb-6"
         >
-          *With qualifying managed services package. Limited availability.
+          Scope, deliverables, timing, and any applicable credit are confirmed in writing before work begins.
         </motion.p>
-        
-        {/* Stars */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-          className="flex items-center justify-center gap-1 mb-4"
-        >
-          {[...Array(5)].map((_, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, scale: 0 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.3, delay: 0.4 + i * 0.1 }}
-            >
-              <Star className="h-6 w-6 text-yellow-400 fill-current drop-shadow-[0_0_8px_rgba(250,204,21,0.5)]" />
-            </motion.div>
-          ))}
-        </motion.div>
         
         <motion.p
           initial={{ opacity: 0 }}
@@ -105,7 +84,7 @@ export const DigeratiCTASection = (): JSX.Element => {
           transition={{ duration: 0.5, delay: 0.6 }}
           className="text-gray-300 mb-10 font-semibold"
         >
-          Trusted by 100+ Arizona Businesses.
+          No scare tactics. No mystery score. No handoff after the sale.
         </motion.p>
         
         {/* CTA Button with intense glow */}
@@ -124,7 +103,7 @@ export const DigeratiCTASection = (): JSX.Element => {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
-            Get My Free Assessment
+            Request My Assessment
           </motion.button>
         </motion.div>
         
@@ -137,7 +116,7 @@ export const DigeratiCTASection = (): JSX.Element => {
           className="mt-16"
         >
           <p className="text-gray-500 text-sm uppercase tracking-wider mb-6">
-            Enterprise-Grade Compliance & Certifications
+            What the assessment covers
           </p>
           <div className="flex flex-wrap items-center justify-center gap-4">
             {badges.map((badge, index) => {

@@ -105,7 +105,7 @@ export default function PortalLogin() {
               <CardHeader className="space-y-2">
                 <CardTitle className="text-2xl text-white">Client Portal</CardTitle>
                 <CardDescription className="text-gray-300">
-                  Sign in to access your account and manage support
+                  Welcome back. Sign in to manage support, services, and account details.
                 </CardDescription>
               </CardHeader>
 
@@ -119,10 +119,11 @@ export default function PortalLogin() {
                   )}
 
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-white">Email</label>
+                    <label htmlFor="portal-email" className="text-sm font-medium text-white">Email</label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                       <Input
+                        id="portal-email"
                         type="email"
                         placeholder="your@company.com"
                         value={email}
@@ -135,10 +136,11 @@ export default function PortalLogin() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-white">Password</label>
+                    <label htmlFor="portal-password" className="text-sm font-medium text-white">Password</label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                       <Input
+                        id="portal-password"
                         type="password"
                         placeholder="••••••••"
                         value={password}
@@ -177,7 +179,7 @@ export default function PortalLogin() {
                     </a>
                   </p>
                   <p className="text-xs text-gray-400 text-center">
-                    Need help? Contact support@digeratiexperts.com
+                    Need help? <a href="mailto:support@digeratiexperts.com" className="text-violet-400 hover:underline">Email support@digeratiexperts.com</a>
                   </p>
                 </div>
               </CardContent>

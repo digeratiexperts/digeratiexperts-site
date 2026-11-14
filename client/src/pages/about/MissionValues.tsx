@@ -44,7 +44,7 @@ export default function MissionValues() {
     { icon: Users, title: "Human-First Technology", desc: "While we use advanced tools and automation, every client has a dedicated team of real people who know your business." },
     { icon: Award, title: "Compliance Expertise", desc: "We specialize in helping businesses meet complex compliance requirements like HIPAA, PCI DSS, and SOC 2." },
     { icon: Star, title: "Transparent Pricing", desc: "No hidden fees, no surprises. You'll always know exactly what you're paying for and why." },
-    { icon: Clock, title: "15-Minute Response", desc: "When you need help, we're there – with an industry-leading 15-minute response time during business hours." }
+    { icon: Clock, title: "Responsive Support", desc: "When something needs attention, you should know who owns it, what happens next, and when you will hear back." }
   ];
 
   return (
@@ -161,13 +161,13 @@ export default function MissionValues() {
           transition={{ duration: 0.5 }}
         >
           {[
-            { value: "10+", label: "Years Experience" },
-            { value: "100+", label: "Arizona Clients" },
-            { value: "99.9%", label: "Uptime SLA" },
-            { value: "15 min", label: "Response Time" }
+            { value: "Local", label: "Based in Chandler, Arizona" },
+            { value: "Clear", label: "Recommendations in plain English" },
+            { value: "Practical", label: "Controls sized to the business" },
+            { value: "Accountable", label: "Ownership after the sale" }
           ].map((stat, idx) => (
             <div key={idx} className="text-center p-4 bg-white/10 rounded-xl backdrop-blur-sm">
-              <p className="text-3xl font-bold mb-1">{stat.value}</p>
+              <p className="text-2xl font-bold mb-1">{stat.value}</p>
               <p className="text-purple-100 text-sm">{stat.label}</p>
             </div>
           ))}
@@ -196,7 +196,7 @@ export default function MissionValues() {
           <div className="relative p-8 md:p-12 text-center">
             <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white">Ready to Experience the Difference?</h2>
             <p className="text-lg md:text-xl mb-8 text-white/90 max-w-2xl mx-auto">
-              Join the Arizona businesses that trust Digerati Experts with their IT and security.
+              Bring us the recurring problem, the security questionnaire, or the decision you have been putting off. We will help you make sense of it.
             </p>
             <a 
               href="/book"

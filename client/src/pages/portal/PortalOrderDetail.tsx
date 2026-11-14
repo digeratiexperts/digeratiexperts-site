@@ -88,8 +88,6 @@ export default function PortalOrderDetail() {
     switch (method) {
       case "stripe":
         return "Credit Card";
-      case "zoho":
-        return "Credit Card";
       case "invoice":
         return "Invoice";
       case "quote_request":

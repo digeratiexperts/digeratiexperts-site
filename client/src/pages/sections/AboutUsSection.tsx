@@ -93,7 +93,7 @@ export const AboutUsSection = (): JSX.Element => {
                   {checklistItems.map((item, index) => (
                     <div
                       key={index}
-                      className="relative w-[149px] h-[19px] [background:url(../figmaAssets/item-2.png)_50%_50%_/_cover]"
+                      className="relative w-[149px] h-[19px] [background:url(/figmaAssets/item-2.png)_50%_50%_/_cover]"
                     >
                       <div className="absolute top-[-3px] left-[31px] h-6 flex items-center justify-center font-normal text-[#020029bf] text-sm tracking-[0] leading-[23.8px] whitespace-nowrap">
                         {item}

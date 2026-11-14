@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback, useId } from 'react';
 import { Link } from 'wouter';
-import { ChevronDown, Shield, Server, Users, FileCheck, Phone, ExternalLink, X, ArrowRight, Monitor, Cloud, Lock, Zap, HeadphonesIcon, Building, BarChart3, ClipboardCheck, Layers, TrendingUp, Star, CheckCircle, Award, LayoutGrid, Heart } from 'lucide-react';
+import { ChevronDown, Shield, Server, Users, FileCheck, Phone, ExternalLink, ArrowRight, Monitor, Cloud, Lock, Zap, HeadphonesIcon, Building, BarChart3, ClipboardCheck, Layers, TrendingUp, Star, CheckCircle, Award, LayoutGrid, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import logoImage from '@assets/DE-Logo-new_1762461524794.webp';
 import ebookCover from '@/assets/images/ebook-defending-digital-realm-cover.png';
@@ -165,9 +165,9 @@ export function MegaMenu() {
       featuredPanel: {
         title: 'Why Digerati?',
         stats: [
-          { value: '99.9%', label: 'Uptime SLA' },
-          { value: '<15min', label: 'Response Time' },
-          { value: '$50K+', label: 'Avg. Savings' },
+          { value: 'Local', label: 'Arizona-based' },
+          { value: 'Clear', label: 'Plain-English guidance' },
+          { value: 'Owned', label: 'Accountable delivery' },
         ],
         cta: { text: 'Get Free Assessment', url: '/book' },
       },
@@ -239,7 +239,7 @@ export function MegaMenu() {
         {
           title: 'Learn',
           items: [
-            { title: 'Case Studies', description: 'Real Arizona success stories', icon: <TrendingUp className="h-5 w-5" />, url: '/resources/case-studies' },
+            { title: 'Case Studies', description: 'Representative Arizona engagement scenarios', icon: <TrendingUp className="h-5 w-5" />, url: '/resources/case-studies' },
             { title: 'Blog & News', description: 'Latest security insights', icon: <FileCheck className="h-5 w-5" />, url: '/resources/blog' },
             { title: 'Videos & Webinars', description: 'Educational content library', icon: <Monitor className="h-5 w-5" />, url: '/resources/videos' },
           ]
@@ -274,8 +274,8 @@ export function MegaMenu() {
           title: 'Company',
           items: [
             { title: 'Mission & Values', description: 'Our commitment to partnership', icon: <Star className="h-5 w-5" />, url: '/about/mission-values' },
-            { title: 'Case Studies', description: 'Arizona business success stories', icon: <TrendingUp className="h-5 w-5" />, url: '/resources/case-studies' },
-            { title: 'Meet The Experts', description: 'Our certified Chandler team', icon: <Users className="h-5 w-5" />, url: '/about/team' },
+            { title: 'Case Studies', description: 'See how common client situations can be solved', icon: <TrendingUp className="h-5 w-5" />, url: '/resources/case-studies' },
+            { title: 'Meet The Experts', description: 'Principal-led, specialist-supported delivery', icon: <Users className="h-5 w-5" />, url: '/about/team' },
             { title: 'Client Bill of Rights', description: 'Our 8 pledges to you', icon: <Award className="h-5 w-5" />, url: '/about/client-bill-of-rights' },
             { title: '100% Guarantee', description: '30-day money-back promise', icon: <CheckCircle className="h-5 w-5" />, url: '/about/guarantee' },
             { title: '21 Questions to Ask', description: 'Before hiring any IT company', icon: <ClipboardCheck className="h-5 w-5" />, url: '/about/21-questions' },
@@ -487,12 +487,12 @@ export function MegaMenu() {
         <div className="container mx-auto px-4 lg:px-8 h-full flex flex-col md:flex-row items-center justify-end py-2 md:py-0 relative z-10">
           <div className="flex items-center flex-wrap gap-3 md:gap-8 justify-center md:justify-end">
             <a
-              href="tel:325-480-9870"
+              href="tel:[DE_PUBLIC_PHONE]"
               className="flex items-center text-white/70 hover:text-violet-300 text-xs md:text-sm font-medium transition-colors"
               data-testid="utility-phone"
             >
               <Phone className="h-3.5 w-3.5 mr-1.5 text-violet-400" />
-              <span className="hidden sm:inline">325-480-9870</span>
+              <span className="hidden sm:inline">[DE_PUBLIC_PHONE]</span>
               <span className="sm:hidden">Call</span>
             </a>
 
@@ -819,18 +819,18 @@ export function MegaMenu() {
                                 />
                                 <div className="absolute inset-0 bg-gradient-to-t from-[#0a0826] via-transparent to-transparent" />
                                 <div className="absolute top-2 left-2">
-                                  <span className="bg-violet-600/90 text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Case Study</span>
+                                  <span className="bg-violet-600/90 text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Representative Scenario</span>
                                 </div>
                               </div>
                               <div className="p-3 flex flex-col flex-1">
-                                <h4 className="text-sm font-semibold text-white mb-1 leading-tight">How We Stopped a Ransomware Attack on an AZ Medical Practice</h4>
-                                <p className="text-xs text-gray-400 mb-3 flex-1">Our 24/7 SOC detected and neutralized the threat in under 4 minutes, saving $2.3M in potential damages.</p>
+                                <h4 className="text-sm font-semibold text-white mb-1 leading-tight">When Ransomware Risk Reaches an Arizona Medical Practice</h4>
+                                <p className="text-xs text-gray-400 mb-3 flex-1">See how layered monitoring, tested recovery, and clear response ownership can change the outcome.</p>
                                 <a 
                                   href="/resources/case-studies" 
                                   className="inline-flex items-center text-xs font-semibold text-violet-400 hover:text-violet-300 transition-colors"
                                   data-testid="link-featured-case-study-industries"
                                 >
-                                  Read the Full Story
+                                  Explore the Scenario
                                   <ArrowRight className="w-3 h-3 ml-1.5" />
                                 </a>
                               </div>
@@ -858,12 +858,12 @@ export function MegaMenu() {
                                 />
                                 <div className="absolute inset-0 bg-gradient-to-t from-[#0a0826] via-transparent to-transparent" />
                                 <div className="absolute top-2 left-2">
-                                  <span className="bg-emerald-600/90 text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Our Team</span>
+                                  <span className="bg-emerald-600/90 text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">How We Work</span>
                                 </div>
                               </div>
                               <div className="p-3 flex flex-col flex-1">
-                                <h4 className="text-sm font-semibold text-white mb-1 leading-tight">Your Dedicated Arizona Security Operations Team</h4>
-                                <p className="text-xs text-gray-400 mb-3 flex-1">Certified experts monitoring your business 24/7 from our Chandler, AZ operations center.</p>
+                                <h4 className="text-sm font-semibold text-white mb-1 leading-tight">Principal-Led, Specialist-Supported</h4>
+                                <p className="text-xs text-gray-400 mb-3 flex-1">Joe stays involved while the right security, cloud, and support specialists join the work as needed.</p>
                                 <a 
                                   href="/about/team" 
                                   className="inline-flex items-center text-xs font-semibold text-violet-400 hover:text-violet-300 transition-colors"
@@ -950,27 +950,33 @@ export function MegaMenu() {
         </div>
 
         {/* Mobile/Tablet Menu - Premium Glassmorphism Slide-out */}
-        <div 
-          className={`lg:hidden fixed left-0 right-0 z-40 transition-all duration-500 ${
-            mobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
-          }`}
+        <AnimatePresence>
+        {mobileMenuOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.25 }}
+          className="lg:hidden fixed left-0 right-0 z-40"
           style={{ 
-            top: isScrolled ? '64px' : '104px',
+            top: '100%',
             height: isScrolled ? 'calc(100dvh - 64px)' : 'calc(100dvh - 104px)'
           }}
         >
           {/* Backdrop with blur */}
           <div 
-            className={`absolute inset-0 bg-[#0a0118]/95 backdrop-blur-md transition-opacity duration-300 ${
-              mobileMenuOpen ? 'opacity-100' : 'opacity-0'
-            }`}
+            className="absolute inset-0 bg-[#0a0118]/95 backdrop-blur-md"
             onClick={() => setMobileMenuOpen(false)}
           />
           
           {/* Slide-out Panel */}
-          <div 
+          <motion.div
+            initial={{ x: '100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '100%' }}
+            transition={{ duration: 0.35, ease: 'easeOut' }}
             className="absolute right-0 top-0 h-full w-full max-w-md bg-gradient-to-b from-[#0d0720] via-[#0a0118] to-[#050210] border-l border-white/10 shadow-[0_0_60px_rgba(139,92,246,0.3)] transition-transform duration-500 ease-out overflow-hidden"
-            style={{ transform: mobileMenuOpen ? 'translateX(0)' : 'translateX(100%)' }}
+            style={{ backgroundColor: '#0a0118' }}
             role="dialog"
             aria-label="Navigation menu"
             aria-modal="true"
@@ -981,18 +987,10 @@ export function MegaMenu() {
             
             <div className="relative h-full overflow-y-auto overscroll-contain p-6 pb-24 space-y-2">
               {/* Menu Header */}
-              <div className="flex items-center justify-between mb-6 pb-4 border-b border-white/10">
+              <div className="flex items-center mb-6 pb-4 border-b border-white/10">
                 <span className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-purple-400">
                   Menu
                 </span>
-                <button
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="p-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 transition-all"
-                  aria-label="Close menu"
-                  data-testid="mobile-menu-close"
-                >
-                  <X className="w-5 h-5 text-gray-400" />
-                </button>
               </div>
 
               {/* Navigation Items */}
@@ -1083,17 +1081,17 @@ export function MegaMenu() {
                 }}
               >
                 <a
-                  href="tel:325-480-9870"
+                  href="tel:[DE_PUBLIC_PHONE]"
                   className="flex items-center gap-3 px-4 py-3 rounded-xl bg-violet-500/10 border border-violet-500/20 hover:border-violet-500/40 transition-all group"
                   data-testid="mobile-call"
-                  aria-label="Call us at 325-480-9870"
+                  aria-label="Call us at [DE_PUBLIC_PHONE]"
                 >
                   <div className="w-10 h-10 rounded-lg bg-violet-500/20 flex items-center justify-center border border-violet-500/20">
                     <Phone className="h-5 w-5 text-violet-400" aria-hidden="true" />
                   </div>
                   <div>
                     <div className="text-sm text-gray-400">Talk to a real person</div>
-                    <div className="font-semibold text-white group-hover:text-violet-400 transition-colors">325-480-9870</div>
+                    <div className="font-semibold text-white group-hover:text-violet-400 transition-colors">[DE_PUBLIC_PHONE]</div>
                   </div>
                 </a>
                 
@@ -1141,8 +1139,10 @@ export function MegaMenu() {
                 </p>
               </div>
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
+        )}
+        </AnimatePresence>
       </div>
     </nav>
       </>

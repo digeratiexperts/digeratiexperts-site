@@ -9,68 +9,68 @@ export default function Team() {
   const prefersReducedMotion = useReducedMotion() ?? false;
 
   useSEO({
-    title: 'Our Team - Certified IT & Security Experts',
-    description: 'Meet the Digerati Experts team. Certified cybersecurity professionals, system engineers, and IT support specialists serving Arizona businesses.',
+    title: 'Our Team - Arizona IT & Cybersecurity Experts',
+    description: 'Meet the principal-led Digerati Experts team and the specialists who help Arizona businesses operate securely and confidently.',
     canonical: '/about/team',
   });
   
   const team = [
     {
-      name: "Leadership Team",
-      description: "Industry veterans with decades of combined experience in IT and cybersecurity",
-      certifications: ["CISSP", "CISM", "Microsoft Certified", "CompTIA Security+"],
+      name: "Principal-Led Strategy",
+      description: "Joe stays close to the work, from the first conversation through delivery and the decisions that follow.",
+      specialties: ["Business Alignment", "Risk Priorities", "Roadmaps", "Accountability"],
       icon: Trophy,
       gradient: "from-purple-500 to-indigo-600"
     },
     {
-      name: "Security Engineers",
-      description: "Specialized cybersecurity experts protecting your business 24/7",
-      certifications: ["CEH", "GIAC", "OSCP", "Security+"],
+      name: "Security Operations",
+      description: "Specialist capability for identity, endpoints, monitoring, response planning, and practical risk reduction.",
+      specialties: ["Identity", "Endpoints", "Monitoring", "Response"],
       icon: Shield,
       gradient: "from-purple-500 to-violet-600"
     },
     {
-      name: "System Engineers",
-      description: "Infrastructure experts ensuring your systems run smoothly",
-      certifications: ["MCSE", "VMware VCP", "AWS Certified", "Azure Administrator"],
+      name: "Systems & Cloud",
+      description: "The hands-on expertise that keeps Microsoft 365, networks, devices, backups, and cloud services working together.",
+      specialties: ["Microsoft 365", "Networks", "Cloud", "Continuity"],
       icon: Briefcase,
       gradient: "from-violet-500 to-fuchsia-600"
     },
     {
-      name: "Support Team",
-      description: "Friendly, responsive technicians ready to help when you need it",
-      certifications: ["A+", "Network+", "ITIL", "HDI Support"],
+      name: "Client Support",
+      description: "Friendly help from people who understand the environment, communicate clearly, and own the next step.",
+      specialties: ["Human Help", "Clear Updates", "Vendor Coordination", "Follow-Through"],
       icon: Users,
       gradient: "from-fuchsia-500 to-pink-600"
     }
   ];
 
-  const certCategories = [
+  const deliveryCategories = [
     {
-      title: "Security Certifications",
+      title: "Security Discipline",
       items: [
-        "CISSP - Certified Information Systems Security Professional",
-        "CISM - Certified Information Security Manager",
-        "CEH - Certified Ethical Hacker",
-        "OSCP - Offensive Security Certified Professional"
+        "Start with the risks that matter to the business",
+        "Build identity and endpoint controls in layers",
+        "Document response and recovery before an incident",
+        "Review evidence instead of relying on dashboard theater"
       ]
     },
     {
-      title: "Technical Certifications",
+      title: "Technical Breadth",
       items: [
-        "Microsoft Certified Solutions Expert",
-        "VMware Certified Professional",
-        "AWS Certified Solutions Architect",
-        "CompTIA A+, Network+, Security+"
+        "Microsoft 365, cloud, network, and device operations",
+        "Backup strategy and practical recovery planning",
+        "Security tooling selected for the environment",
+        "Specialists added when the work calls for them"
       ]
     },
     {
-      title: "Partner Status",
+      title: "Working Style",
       items: [
-        "Microsoft Partner Network",
-        "Apple Consultants Network",
-        "SOC 2 Type II Certified",
-        "Better Business Bureau A+ Rating"
+        "A real person accountable for the relationship",
+        "Plain-English recommendations and tradeoffs",
+        "Right-sized plans without pressure or scare tactics",
+        "Current credentials shared when a requirement calls for them"
       ]
     }
   ];
@@ -78,7 +78,7 @@ export default function Team() {
   return (
     <PageTemplate
       title="Meet The Experts"
-      subtitle="Our certified team of IT and security professionals serving Chandler and the Phoenix metro area"
+      subtitle="A principal-led team with the right specialists around the table when your business needs them"
       icon={<Users className="w-10 h-10 text-white" />}
       breadcrumbs={[{ label: "About", href: "/" }, { label: "Team" }]}
     >
@@ -92,8 +92,7 @@ export default function Team() {
           transition={{ duration: 0.5 }}
         >
           <p className="text-xl text-gray-300 leading-relaxed">
-            Our team brings together decades of experience in IT management, cybersecurity, and business technology. 
-            We're passionate about protecting Arizona businesses and helping them succeed with technology.
+            You should know who is accountable for your technology. Digerati Experts combines hands-on leadership, trusted specialists, and a genuinely human support experience for Arizona businesses.
           </p>
         </motion.div>
 
@@ -122,12 +121,12 @@ export default function Team() {
                   <CardContent>
                     <p className="text-gray-400 mb-4 leading-relaxed">{group.description}</p>
                     <div className="flex flex-wrap gap-2">
-                      {group.certifications.map((cert, idx) => (
+                      {group.specialties.map((specialty, idx) => (
                         <Badge 
                           key={idx} 
                           className={`bg-gradient-to-r ${group.gradient} text-white border-0`}
                         >
-                          {cert}
+                          {specialty}
                         </Badge>
                       ))}
                     </div>
@@ -147,10 +146,10 @@ export default function Team() {
           transition={{ duration: 0.5 }}
         >
           {[
-            { value: "50+", label: "Certifications" },
-            { value: "100+", label: "Years Combined Experience" },
-            { value: "24/7", label: "Support Coverage" },
-            { value: "15 min", label: "Avg Response Time" }
+            { value: "Local", label: "Arizona Perspective" },
+            { value: "Direct", label: "Principal Involvement" },
+            { value: "Clear", label: "Plain-English Guidance" },
+            { value: "Owned", label: "Accountable Follow-Through" }
           ].map((stat, idx) => (
             <div key={idx} className="text-center p-4 bg-white/10 rounded-xl backdrop-blur-sm">
               <p className="text-3xl font-bold mb-1">{stat.value}</p>
@@ -159,7 +158,7 @@ export default function Team() {
           ))}
         </motion.div>
 
-        {/* Certifications & Partnerships */}
+        {/* Delivery standards */}
         <motion.div 
           className="relative bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-8 md:p-12 overflow-hidden"
           initial={prefersReducedMotion ? {} : { opacity: 0, y: 20 }}
@@ -174,11 +173,11 @@ export default function Team() {
               <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center">
                 <Award className="w-6 h-6 text-white" />
               </div>
-              <h2 className="text-3xl font-bold text-white">Our Certifications & Partnerships</h2>
+              <h2 className="text-3xl font-bold text-white">How the Work Comes Together</h2>
             </div>
             
             <div className="grid md:grid-cols-3 gap-8">
-              {certCategories.map((category, catIdx) => (
+              {deliveryCategories.map((category, catIdx) => (
                 <motion.div 
                   key={catIdx}
                   className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10 hover:border-purple-500/50 hover:bg-white/10 transition-all duration-300"
@@ -226,9 +225,9 @@ export default function Team() {
           </div>
           
           <div className="relative p-8 md:p-12 text-center">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white">Ready to Work with Our Team?</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white">Let’s Put the Right People on the Problem</h2>
             <p className="text-lg md:text-xl mb-8 text-white/90 max-w-2xl mx-auto">
-              Schedule a free consultation to meet the team that will protect your business.
+              Bring us the challenge, the questionnaire, or the decision keeping you up at night. We’ll help you turn it into a practical next step.
             </p>
             <a 
               href="/book" 

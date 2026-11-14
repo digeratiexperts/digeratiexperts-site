@@ -91,16 +91,16 @@ export default function CaseStudies() {
   ];
 
   const stats = [
-    { value: "100+", label: "Arizona Businesses Served" },
-    { value: "95%", label: "Average Incident Reduction" },
-    { value: "$2M+", label: "Client Savings in Fines" },
-    { value: "99.9%", label: "Uptime Achieved" }
+    { value: "Assess", label: "Understand the Real Risk" },
+    { value: "Prioritize", label: "Choose the Right Next Move" },
+    { value: "Protect", label: "Build Practical Controls" },
+    { value: "Prove", label: "Document What Changed" }
   ];
 
   return (
     <PageTemplate
       title="Case Studies"
-      subtitle="Real-world success stories from Arizona businesses that transformed their IT security and operations."
+      subtitle="Representative engagement scenarios showing how stronger IT and cybersecurity can change the day-to-day for Arizona businesses."
       icon={<Target className="w-10 h-10 text-white" />}
       breadcrumbs={[{ label: "Resources", href: "/" }, { label: "Case Studies" }]}
     >
@@ -142,7 +142,7 @@ export default function CaseStudies() {
                         </div>
                         <div>
                           <Badge className={`mb-2 bg-gradient-to-r ${study.gradient} text-white border-0`}>
-                            {study.industry}
+                            Representative · {study.industry}
                           </Badge>
                           <CardTitle className="text-2xl text-white">{study.title}</CardTitle>
                         </div>
@@ -179,7 +179,7 @@ export default function CaseStudies() {
                           <div className="w-8 h-8 rounded-lg bg-green-500/20 flex items-center justify-center">
                             <CheckCircle className="w-4 h-4 text-green-400" />
                           </div>
-                          <h4 className="font-semibold text-lg text-white">Results</h4>
+                          <h4 className="font-semibold text-lg text-white">Illustrative Outcomes</h4>
                         </div>
                         <ul className="space-y-2">
                           {study.results.map((result, idx) => (
@@ -219,9 +219,9 @@ export default function CaseStudies() {
           </div>
           
           <div className="relative p-8 md:p-12 text-center">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white">Ready to Write Your Success Story?</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white">Which Story Feels Closest to Yours?</h2>
             <p className="text-lg md:text-xl mb-8 text-white/90 max-w-2xl mx-auto">
-              Let's discuss how we can help your business achieve similar results.
+              Bring us the real situation. We’ll map the practical path from where you are now to where the business needs to be.
             </p>
             <a 
               href="/book" 

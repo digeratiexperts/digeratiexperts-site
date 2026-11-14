@@ -7,34 +7,34 @@ import { motion, useReducedMotion } from "framer-motion";
 export default function TrustCenter() {
   const prefersReducedMotion = useReducedMotion() ?? false;
   
-  const certifications = [
-    { icon: Award, title: "SOC 2 Type II", desc: "Independently audited security controls for Service Organization Control", status: "Certified", gradient: "from-violet-500 to-purple-600" },
-    { icon: FileCheck, title: "HIPAA Compliant", desc: "Business Associate Agreements available for healthcare clients", status: "Compliant", gradient: "from-purple-500 to-fuchsia-600" },
-    { icon: Lock, title: "PCI DSS", desc: "Payment Card Industry Data Security Standard compliance", status: "Compliant", gradient: "from-fuchsia-500 to-pink-600" }
+  const assuranceAreas = [
+    { icon: Award, title: "Security Documentation", desc: "Architecture notes, control summaries, and vendor questionnaires scoped to the services you use", status: "By Request", gradient: "from-violet-500 to-purple-600" },
+    { icon: FileCheck, title: "HIPAA Readiness", desc: "Practical safeguards, documentation support, and Business Associate Agreement review for healthcare environments", status: "Supported", gradient: "from-purple-500 to-fuchsia-600" },
+    { icon: Lock, title: "Cyber Insurance Readiness", desc: "Evidence gathering and control planning for common insurer requirements and renewal questions", status: "Supported", gradient: "from-fuchsia-500 to-pink-600" }
   ];
 
   const technicalControls = [
-    "AES-256 encryption at rest",
-    "TLS 1.3 encryption in transit",
-    "Multi-factor authentication (MFA)",
-    "24/7 Security Operations Center",
-    "Intrusion detection/prevention",
-    "Regular vulnerability scanning"
+    "Encryption for data at rest and in transit",
+    "Multi-factor authentication and conditional access",
+    "Endpoint monitoring and response workflows",
+    "Network segmentation and secure configuration",
+    "Vulnerability identification and prioritization",
+    "Backup protection and recovery validation"
   ];
 
   const adminControls = [
-    "Background checks for all staff",
-    "Security awareness training",
-    "Incident response procedures",
-    "Annual penetration testing",
-    "Third-party security audits",
-    "NIST Cybersecurity Framework alignment"
+    "Security awareness and role-based training",
+    "Incident response roles and procedures",
+    "Access reviews and joiner-mover-leaver processes",
+    "Vendor and third-party risk documentation",
+    "Policy ownership and evidence collection",
+    "Framework mapping when the business requires it"
   ];
 
   return (
     <PageTemplate
       title="Trust Center"
-      subtitle="Security, Compliance, and Privacy Information"
+      subtitle="Clear information about security, compliance support, and the evidence available to clients"
       icon={<Shield className="w-10 h-10 text-white" />}
       gradientColors="from-slate-700 via-slate-800 to-slate-900"
       breadcrumbs={[{ label: "Trust", href: "/" }, { label: "Trust Center" }]}
@@ -48,14 +48,13 @@ export default function TrustCenter() {
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
         >
-          Digerati Experts is committed to maintaining the highest standards of security, compliance, 
-          and privacy. Our Trust Center provides transparency into our security practices and certifications.
+          Trust should come from clear answers and evidence—not a wall of badges. This center explains the control areas we help with and how to request documentation relevant to your environment.
         </motion.p>
 
-        {/* Security Certifications */}
+        {/* Assurance areas */}
         <div className="grid md:grid-cols-3 gap-6">
-          {certifications.map((cert, idx) => {
-            const Icon = cert.icon;
+          {assuranceAreas.map((area, idx) => {
+            const Icon = area.icon;
             return (
               <motion.div
                 key={idx}
@@ -65,18 +64,18 @@ export default function TrustCenter() {
                 transition={{ delay: idx * 0.1, duration: 0.5 }}
               >
                 <Card className="group h-full bg-white/5 backdrop-blur-sm border border-white/10 hover:border-purple-500/50 hover:shadow-xl transition-all duration-300 overflow-hidden">
-                  <div className={`absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl ${cert.gradient} opacity-10 rounded-bl-full`} />
+                  <div className={`absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl ${area.gradient} opacity-10 rounded-bl-full`} />
                   <CardHeader>
-                    <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${cert.gradient} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
+                    <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${area.gradient} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
                       <Icon className="h-7 w-7 text-white" />
                     </div>
-                    <CardTitle className="text-xl text-white">{cert.title}</CardTitle>
+                    <CardTitle className="text-xl text-white">{area.title}</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-gray-400 mb-4 leading-relaxed">{cert.desc}</p>
+                    <p className="text-gray-400 mb-4 leading-relaxed">{area.desc}</p>
                     <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
                       <CheckCircle className="w-3 h-3 mr-1" />
-                      {cert.status}
+                      {area.status}
                     </Badge>
                   </CardContent>
                 </Card>
@@ -100,7 +99,7 @@ export default function TrustCenter() {
               <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-violet-600 to-purple-600 flex items-center justify-center">
                 <Lock className="w-6 h-6 text-white" />
               </div>
-              <h2 className="text-3xl font-bold text-white">Our Security Practices</h2>
+              <h2 className="text-3xl font-bold text-white">Control Areas We Review</h2>
             </div>
             
             <div className="grid md:grid-cols-2 gap-8">
@@ -162,15 +161,15 @@ export default function TrustCenter() {
             <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-violet-600 to-purple-600 flex items-center justify-center">
               <Server className="w-5 h-5 text-white" />
             </div>
-            <h2 className="text-2xl font-bold text-white">Infrastructure Security</h2>
+            <h2 className="text-2xl font-bold text-white">Infrastructure Questions We Help Answer</h2>
           </div>
           <div className="grid md:grid-cols-2 gap-4">
             {[
-              { label: "Data Centers", value: "Tier III/IV facilities with physical security, redundant power, climate control" },
-              { label: "Network Security", value: "Next-generation firewalls, DDoS protection, network segmentation" },
-              { label: "Access Controls", value: "Role-based access control (RBAC), principle of least privilege" },
-              { label: "Monitoring", value: "Real-time security information and event management (SIEM)" },
-              { label: "Backups", value: "Encrypted, geographically distributed, tested regularly" }
+              { label: "Hosting", value: "Where data lives, which provider controls apply, and what evidence is available" },
+              { label: "Network Security", value: "Firewall policy, segmentation, remote access, and exposure management" },
+              { label: "Access Controls", value: "Role-based access, least privilege, and accountable administrative access" },
+              { label: "Monitoring", value: "Which signals are collected, who reviews them, and how escalation works" },
+              { label: "Backups", value: "What is protected, where copies live, and how recovery is validated" }
             ].map((item, idx) => (
               <div key={idx} className="p-4 bg-white/5 backdrop-blur-sm rounded-lg border border-white/10">
                 <span className="font-semibold text-white">{item.label}:</span>{" "}
@@ -233,7 +232,7 @@ export default function TrustCenter() {
           <div className="relative p-8 md:p-12 text-center">
             <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white">Need Security Documentation?</h2>
             <p className="text-lg md:text-xl mb-8 text-white/90 max-w-2xl mx-auto">
-              Request our SOC 2 report, security questionnaires, or compliance documentation for vendor onboarding.
+              Request a security overview, service-specific control information, or help completing a vendor questionnaire.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <a 
@@ -245,12 +244,12 @@ export default function TrustCenter() {
                 Request Documentation
               </a>
               <a 
-                href="tel:325-480-9870"
+                href="tel:[DE_PUBLIC_PHONE]"
                 className="inline-flex items-center justify-center border-2 border-white bg-white/10 backdrop-blur-sm text-white hover:bg-white hover:text-purple-700 px-8 py-4 rounded-xl font-semibold transition-all"
                 data-testid="button-call-trust"
               >
                 <Phone className="mr-2 h-5 w-5" />
-                Call 325-480-9870
+                Call [DE_PUBLIC_PHONE]
               </a>
             </div>
           </div>

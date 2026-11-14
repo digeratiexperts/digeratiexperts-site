@@ -9,12 +9,12 @@ export const DigeratiAIAssistanceSection = (): JSX.Element => {
   const prefersReducedMotion = useReducedMotion();
   
   const aiFeatures = [
-    "Predictive threat analysis using machine learning",
-    "Automated incident response and remediation",
-    "Smart vulnerability prioritization",
-    "Behavioral anomaly detection",
-    "Intelligent security recommendations",
-    "24/7 autonomous monitoring"
+    "AI-assisted signal triage and pattern detection",
+    "Automated response for pre-approved workflows",
+    "Risk-based vulnerability prioritization",
+    "Behavior and anomaly signals for human review",
+    "Clearer summaries for faster decisions",
+    "Escalation paths with accountable human oversight"
   ];
 
   return (
@@ -53,16 +53,16 @@ export const DigeratiAIAssistanceSection = (): JSX.Element => {
                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-6">
                   <div className="flex gap-6">
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-white">0.3s</div>
+                      <div className="text-base font-bold text-white">Automated</div>
                       <div className="text-xs text-gray-300">Detection</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-white">99.9%</div>
-                      <div className="text-xs text-gray-300">Accuracy</div>
+                      <div className="text-base font-bold text-white">Human</div>
+                      <div className="text-xs text-gray-300">Review</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-white">24/7</div>
-                      <div className="text-xs text-gray-300">Monitoring</div>
+                      <div className="text-base font-bold text-white">Clear</div>
+                      <div className="text-xs text-gray-300">Escalation</div>
                     </div>
                   </div>
                 </div>
@@ -94,7 +94,7 @@ export const DigeratiAIAssistanceSection = (): JSX.Element => {
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                         <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
                       </span>
-                      Active
+                      AI-Assisted
                     </div>
                   </div>
                 </div>
@@ -113,14 +113,13 @@ export const DigeratiAIAssistanceSection = (): JSX.Element => {
             <div className="mb-6">
               <Badge className="bg-purple-500/20 text-purple-300 border border-purple-500/30 hover:bg-purple-500/30 mb-4">
                 <Sparkles className="h-3 w-3 mr-1" />
-                AI-Powered Protection
+                Human-Led, AI-Assisted
               </Badge>
               <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-white">
-                Expert Assistance <span className="text-violet-400">Using AI</span>
+                Expert Judgment, <span className="text-violet-400">Accelerated by AI</span>
               </h2>
               <p className="text-lg text-gray-300 mb-6 leading-relaxed">
-                Our AI-powered security platform works 24/7 to predict, prevent, and respond to threats 
-                before they impact your business. Think of it as your tireless digital security expert.
+                Automation can sort signals, surface patterns, and move routine work faster. Experienced people still bring the business context, make judgment calls, and stay accountable for what happens next.
               </p>
             </div>
 
@@ -137,32 +136,32 @@ export const DigeratiAIAssistanceSection = (): JSX.Element => {
             <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10 mb-8">
               <h3 className="text-white font-semibold mb-2">Smarter Security, Better Results</h3>
               <p className="text-gray-300 text-base">
-                Our AI reduces false positives by 85% and identifies real threats 3x faster than traditional methods.
+                Automation helps sort signals and speed up routine work. People remain responsible for context, escalation, and the decisions that affect your business.
               </p>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4">
-              <a href="/book">
-                <Button 
+              <Button
+                  asChild
                   size="lg"
                   variant="outline"
                   className="border-2 border-white/50 text-white bg-transparent hover:bg-white hover:text-black hover:border-white"
                   data-testid="button-ai-action"
                 >
-                  See AI in Action
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </a>
-              <a href="/solutions/security-operations">
-                <Button 
+                  <a href="/book">
+                    See AI in Action
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </a>
+              </Button>
+              <Button
+                  asChild
                   size="lg"
                   variant="outline"
                   className="border-2 border-white/50 text-white bg-transparent hover:bg-white hover:text-black hover:border-white"
                   data-testid="button-ai-learn-more"
                 >
-                  Learn More
-                </Button>
-              </a>
+                  <a href="/solutions/security-operations">Learn More</a>
+              </Button>
             </div>
           </motion.div>
         </div>

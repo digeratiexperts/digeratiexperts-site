@@ -53,7 +53,7 @@ const testimonialData = {
 
 export const MainContentSection = (): JSX.Element => {
   return (
-    <section className="flex flex-col w-full items-start gap-2.5 px-4 md:px-8 lg:px-[120px] py-12 md:py-16 lg:py-[100px] relative [background:url(../figmaAssets/background-1.png)_50%_50%_/_cover,linear-gradient(0deg,rgba(3,2,40,1)_0%,rgba(3,2,40,1)_100%)]">
+    <section className="flex flex-col w-full items-start gap-2.5 px-4 md:px-8 lg:px-[120px] py-12 md:py-16 lg:py-[100px] relative [background:url(/figmaAssets/background-1.png)_50%_50%_/_cover,linear-gradient(0deg,rgba(3,2,40,1)_0%,rgba(3,2,40,1)_100%)]">
       <div className="flex flex-col items-start gap-12 md:gap-16 lg:gap-[100px] relative self-stretch w-full flex-[0_0_auto]">
         <div className="flex flex-col lg:flex-row items-start gap-8 lg:gap-[125px] relative self-stretch w-full flex-[0_0_auto]">
           <div className="inline-flex flex-col items-start justify-center gap-[19px] relative flex-[0_0_auto] w-full lg:w-auto">

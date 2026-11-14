@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar, Clock, ArrowRight, User, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { useMemo, useState } from "react";
 
 import trendsImg from "@assets/stock_images/cybersecurity_trends_d69267d4.jpg";
 import hipaaImg from "@assets/stock_images/healthcare_medical_r_3bfa1a64.jpg";
@@ -106,8 +107,21 @@ const blogPosts = [
 const categories = ["All", "Cybersecurity", "Compliance", "Security", "Backup & Recovery", "Industry Focus", "Training"];
 
 export default function Blog() {
-  const featuredPosts = blogPosts.filter(post => post.featured);
-  const regularPosts = blogPosts.filter(post => !post.featured);
+  const [query, setQuery] = useState("");
+  const [activeCategory, setActiveCategory] = useState("All");
+
+  const filteredPosts = useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase();
+    return blogPosts.filter((post) => {
+      const categoryMatches = activeCategory === "All" || post.category === activeCategory;
+      const queryMatches = !normalizedQuery || [post.title, post.excerpt, post.category]
+        .some((value) => value.toLowerCase().includes(normalizedQuery));
+      return categoryMatches && queryMatches;
+    });
+  }, [activeCategory, query]);
+
+  const featuredPosts = filteredPosts.filter(post => post.featured);
+  const regularPosts = filteredPosts.filter(post => !post.featured);
 
   return (
     <div className="min-h-screen bg-[#0a0a0a]">
@@ -134,6 +148,9 @@ export default function Blog() {
               <Search className="absolute left-3 top-3 h-5 w-5 text-white/40" />
               <Input 
                 placeholder="Search articles..." 
+                aria-label="Search articles"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
                 className="pl-10 bg-white/[0.04] border-white/10 text-white placeholder:text-white/40"
                 data-testid="input-search-blog"
               />
@@ -144,7 +161,11 @@ export default function Blog() {
                   key={category}
                   variant="outline"
                   size="sm"
-                  className="border-violet-500/30 bg-transparent text-white/70 hover:bg-violet-500/10 hover:text-violet-400 hover:border-violet-400"
+                  aria-pressed={activeCategory === category}
+                  onClick={() => setActiveCategory(category)}
+                  className={activeCategory === category
+                    ? "border-violet-400 bg-violet-500/20 text-white"
+                    : "border-violet-500/30 bg-transparent text-white/70 hover:bg-violet-500/10 hover:text-violet-400 hover:border-violet-400"}
                   data-testid={`button-category-${category.toLowerCase().replace(/\s+/g, '-')}`}
                 >
                   {category}
@@ -154,7 +175,7 @@ export default function Blog() {
           </div>
 
           {/* Featured Posts */}
-          <div className="mb-12">
+          {featuredPosts.length > 0 && <div className="mb-12">
             <h2 className="text-2xl font-bold text-white mb-6">Featured Articles</h2>
             <div className="grid md:grid-cols-2 gap-6">
               {featuredPosts.map((post) => (
@@ -189,19 +210,19 @@ export default function Blog() {
                           <Calendar className="h-4 w-4" />
                           {new Date(post.date).toLocaleDateString()}
                         </div>
-                        <Button variant="ghost" size="sm" className="text-violet-400 hover:text-violet-300 hover:bg-violet-500/10">
+                        <span className="inline-flex items-center text-sm font-medium text-violet-400">
                           Read More <ArrowRight className="ml-2 h-4 w-4" />
-                        </Button>
+                        </span>
                       </div>
                     </CardContent>
                   </Card>
                 </Link>
               ))}
             </div>
-          </div>
+          </div>}
 
           {/* Recent Posts */}
-          <div>
+          {regularPosts.length > 0 && <div>
             <h2 className="text-2xl font-bold text-white mb-6">Recent Articles</h2>
             <div className="grid md:grid-cols-3 gap-6">
               {regularPosts.map((post) => (
@@ -232,7 +253,17 @@ export default function Blog() {
                 </Link>
               ))}
             </div>
-          </div>
+          </div>}
+
+          {filteredPosts.length === 0 && (
+            <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-6 py-12 text-center" role="status">
+              <h2 className="mb-2 text-2xl font-bold text-white">Nothing matched that search.</h2>
+              <p className="mb-5 text-white/60">Try a broader phrase or return to all topics.</p>
+              <Button type="button" onClick={() => { setQuery(""); setActiveCategory("All"); }} className="bg-violet-600 text-white hover:bg-violet-500">
+                Show all articles
+              </Button>
+            </div>
+          )}
 
           {/* Newsletter CTA */}
           <Card className="mt-12 bg-gradient-to-r from-violet-600/20 to-purple-600/20 border-violet-500/30">

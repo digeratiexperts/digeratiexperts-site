@@ -101,17 +101,18 @@ const StoreLanding = () => {
                 </Button>
               </div>
             ) : (
-              <Link href="/portal/login">
-                <Button 
+              <Button
+                  asChild
                   variant="outline"
                   size="sm"
                   className="bg-violet-600 hover:bg-violet-500 text-white border-none"
                   data-testid="button-store-login"
                 >
-                  <User className="w-4 h-4 mr-2" />
-                  Login for Client Pricing
-                </Button>
-              </Link>
+                  <Link href="/portal/login">
+                    <User className="w-4 h-4 mr-2" />
+                    Login for Client Pricing
+                  </Link>
+              </Button>
             )}
             <CartButton />
           </div>
@@ -168,15 +169,16 @@ const StoreLanding = () => {
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-white/50 text-sm">{contractOnlyProducts.length} packages available</span>
-                    <Link href="/store/managed">
-                      <Button 
+                    <Button
+                        asChild
                         className="bg-violet-600 hover:bg-violet-500 text-white"
                         data-testid="button-view-managed"
                       >
-                        View Packages
-                        <ArrowRight className="w-4 h-4 ml-2" />
-                      </Button>
-                    </Link>
+                        <Link href="/store/managed">
+                          View Packages
+                          <ArrowRight className="w-4 h-4 ml-2" />
+                        </Link>
+                    </Button>
                   </div>
                 </div>
               </motion.div>
@@ -202,15 +204,16 @@ const StoreLanding = () => {
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-white/50 text-sm">{checkoutProducts.length} products available</span>
-                    <Link href="/store/co-managed">
-                      <Button 
+                    <Button
+                        asChild
                         className="bg-violet-600 hover:bg-violet-500 text-white border-none"
                         data-testid="button-view-comanaged"
                       >
-                        Browse Products
-                        <ArrowRight className="w-4 h-4 ml-2" />
-                      </Button>
-                    </Link>
+                        <Link href="/store/co-managed">
+                          Browse Products
+                          <ArrowRight className="w-4 h-4 ml-2" />
+                        </Link>
+                    </Button>
                   </div>
                 </div>
               </motion.div>
@@ -276,16 +279,17 @@ const StoreLanding = () => {
                 <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">Featured Products</h2>
                 <p className="text-white/60">Popular items available for immediate purchase.</p>
               </div>
-              <Link href="/store/co-managed">
-                <Button 
+              <Button
+                  asChild
                   variant="outline" 
                   className="border-white/20 text-white hover:bg-white/10"
                   data-testid="button-view-all-products"
                 >
-                  View All
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              </Link>
+                  <Link href="/store/co-managed">
+                    View All
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Link>
+              </Button>
             </div>
             
             <motion.div 
@@ -316,15 +320,14 @@ const StoreLanding = () => {
                     <p className="text-white/60 text-sm mb-4 line-clamp-2">{product.shortDescription}</p>
                     <div className="flex items-center justify-between">
                       <span className="text-violet-400 font-semibold">{formatPrice(product)}</span>
-                      <Link href="/store/co-managed">
-                        <Button 
+                      <Button
+                          asChild
                           size="sm" 
                           className="bg-violet-600/80 hover:bg-violet-600 text-white text-xs"
                           data-testid={`button-add-${product.id}`}
                         >
-                          View Details
-                        </Button>
-                      </Link>
+                          <Link href="/store/co-managed">View Details</Link>
+                      </Button>
                     </div>
                   </motion.div>
                 );
@@ -348,26 +351,28 @@ const StoreLanding = () => {
               to discuss your IT needs and find the right solution.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <a href="/book">
-                <Button 
+              <Button
+                  asChild
                   size="lg"
                   className="h-12 px-6 bg-violet-600 hover:bg-violet-500 text-white"
                   data-testid="button-schedule-consult"
                 >
-                  Schedule Free Consultation
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              </a>
-              <a href="tel:325-480-9870">
-                <Button 
+                  <a href="/book">
+                    Schedule Free Consultation
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </a>
+              </Button>
+              <Button
+                  asChild
                   size="lg"
                   className="h-12 px-6 bg-transparent border-2 border-white/30 text-white hover:bg-white/10"
                   data-testid="button-call-us"
                 >
-                  <Phone className="w-4 h-4 mr-2" />
-                  325-480-9870
-                </Button>
-              </a>
+                  <a href="tel:[DE_PUBLIC_PHONE]">
+                    <Phone className="w-4 h-4 mr-2" />
+                    [DE_PUBLIC_PHONE]
+                  </a>
+              </Button>
             </div>
           </motion.section>
 

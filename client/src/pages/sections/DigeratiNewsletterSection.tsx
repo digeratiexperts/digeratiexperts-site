@@ -180,7 +180,7 @@ export const DigeratiNewsletterSection = (): JSX.Element => {
 
             {/* Trust indicator */}
             <p className="text-base text-gray-500">
-              Join 5,000+ business leaders getting monthly security insights.
+              Practical monthly security insights for busy Arizona business leaders.
               <br />
               <span className="text-sm text-gray-400">Unsubscribe anytime. We respect your privacy.</span>
             </p>

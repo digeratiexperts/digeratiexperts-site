@@ -107,7 +107,7 @@ export const DigeratiHowWeProtectSection = (): JSX.Element => {
             How We Protect Your Business
           </h2>
           <p className="text-base md:text-lg lg:text-xl text-gray-600 leading-relaxed max-w-3xl mx-auto px-4">
-            Our proven 4-step process ensures your business stays secure and compliant
+            A clear four-step process that keeps security work practical, visible, and accountable
           </p>
         </motion.div>
 

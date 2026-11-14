@@ -8,10 +8,10 @@ export default function AnimalHospitals() {
   const prefersReducedMotion = useReducedMotion() ?? false;
   
   const metrics = [
-    { label: "Data Protection", value: "100%", icon: Shield, color: "from-violet-500 to-purple-500" },
-    { label: "System Uptime", value: "99.95%", icon: Activity, color: "from-purple-500 to-fuchsia-500" },
-    { label: "Response Time", value: "<15min", icon: Clock, color: "from-violet-500 to-purple-500" },
-    { label: "Veterinary Clients", value: "20+", icon: Heart, color: "from-purple-500 to-fuchsia-500" }
+    { label: "Data Protection", value: "Layered", icon: Shield, color: "from-violet-500 to-purple-500" },
+    { label: "System Planning", value: "Reliable", icon: Activity, color: "from-purple-500 to-fuchsia-500" },
+    { label: "Response Ownership", value: "Clear", icon: Clock, color: "from-violet-500 to-purple-500" },
+    { label: "Veterinary Focus", value: "Practical", icon: Heart, color: "from-purple-500 to-fuchsia-500" }
   ];
 
   const challenges = [
@@ -200,11 +200,11 @@ export default function AnimalHospitals() {
               Schedule a Consultation
             </a>
             <a 
-              href="tel:325-480-9870"
+              href="tel:[DE_PUBLIC_PHONE]"
               className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/10 hover:bg-white/20 text-white font-semibold rounded-lg border border-white/20 transition-colors"
               data-testid="button-call-now"
             >
-              Call 325-480-9870
+              Call [DE_PUBLIC_PHONE]
             </a>
           </div>
         </motion.div>

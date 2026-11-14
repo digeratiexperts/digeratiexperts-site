@@ -234,10 +234,10 @@ const ManagedStore = () => {
             
             <div className="grid md:grid-cols-4 gap-6">
               {[
-                { icon: Clock, value: "<15 min", label: "Response Time", description: "Guaranteed SLA" },
-                { icon: Shield, value: "99.9%", label: "Uptime SLA", description: "Enterprise reliability" },
-                { icon: Phone, value: "24/7", label: "Support", description: "Real humans, always" },
-                { icon: Award, value: "$50K+", label: "Avg. Savings", description: "Per client annually" }
+                { icon: Clock, value: "Clear", label: "Response", description: "Know who owns the next step" },
+                { icon: Shield, value: "Secure", label: "By Design", description: "Risk considered from the start" },
+                { icon: Phone, value: "Human", label: "Support", description: "People you can actually reach" },
+                { icon: Award, value: "Right-sized", label: "Recommendations", description: "Assessment before package" }
               ].map((stat, index) => (
                 <div key={index} className="text-center p-4">
                   <div className="w-12 h-12 rounded-full bg-violet-500/20 flex items-center justify-center mx-auto mb-3">
@@ -277,14 +277,14 @@ const ManagedStore = () => {
                   Schedule Consultation
                 </Button>
               </a>
-              <a href="tel:325-480-9870">
+              <a href="tel:[DE_PUBLIC_PHONE]">
                 <Button 
                   size="lg"
                   className="h-14 px-8 text-lg font-semibold bg-transparent border-2 border-white/30 text-white hover:bg-white/10"
                   data-testid="button-call-us"
                 >
                   <Phone className="w-5 h-5 mr-2" />
-                  325-480-9870
+                  [DE_PUBLIC_PHONE]
                 </Button>
               </a>
             </div>

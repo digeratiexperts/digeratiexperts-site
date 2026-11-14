@@ -14,20 +14,24 @@ export const DigeratiFAQSection = (): JSX.Element => {
 
   const faqs: FAQ[] = [
     {
-      question: "What is your best service?",
-      answer: "Our most comprehensive service is the Enterprise package, which includes full compliance modules (HIPAA, GDPR), penetration testing, disaster recovery runbooks, and privileged access controls. However, most businesses find our Business package provides the perfect balance of SOC/MDR protection, SMART HR, and vCIO advisory at a great value."
+      question: "Where do we start if we are not sure what we need?",
+      answer: "Start with the business, not a package. We look at your environment, the risks that matter, what is already working, and where a practical improvement would have the most value. Then we recommend a right-sized next step in plain English."
     },
     {
-      question: "How do I choose the right plan for my business?",
-      answer: "Evaluate your business size, needs, and goals. Our Office package is ideal for small teams (5-30 users) who need security-first IT basics. Business adds SOC/MDR monitoring and SMART HR. Enterprise is designed for organizations with compliance requirements. We offer a free FTA (First Time Appointment) to help you choose."
+      question: "Do we need a fully managed plan?",
+      answer: "Not always. Some clients want Digerati Experts to own day-to-day IT and security; others already have internal staff and need a co-managed partner. We can help you decide based on your team, risk, budget, and the amount of responsibility you want to keep in-house."
     },
     {
       question: "Can I customize the solutions?",
-      answer: "Yes! We understand every business is unique. Our packages can be customized with additional services, and we offer both co-managed and fully managed options to fit your existing IT structure."
+      answer: "Yes. The packages create a clear starting point, but the final scope should fit your users, locations, existing tools, compliance obligations, and internal capabilities. We will explain what belongs in the core plan and what is genuinely optional."
     },
     {
-      question: "Is my data secure?",
-      answer: "Absolutely. We employ enterprise-grade encryption, 24/7 monitoring, and follow strict security protocols. We're SOC 2 Type II certified and help our clients meet HIPAA, PCI DSS, and other compliance standards."
+      question: "How do you handle security and compliance questions?",
+      answer: "With evidence and context. We can walk through the controls included in your service, explain how monitoring and escalation work, and help organize documentation for insurers, auditors, and vendor reviews. Specific requirements are confirmed against your actual scope—never assumed from a badge."
+    },
+    {
+      question: "Will I get handed off after the sale?",
+      answer: "No disappearing act. You will know who owns the relationship, what happens next, and where to go when priorities change. Specialists may join for particular work, but accountability stays clear."
     }
   ];
 
@@ -51,7 +55,7 @@ export const DigeratiFAQSection = (): JSX.Element => {
             Frequently Asked Questions
           </h2>
           <p className="text-base md:text-lg text-gray-500 px-4">
-            Find answers to common queries about us.
+            Straight answers to the questions business owners ask before trusting an IT and security partner.
           </p>
         </motion.div>
 

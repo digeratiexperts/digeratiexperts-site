@@ -71,7 +71,7 @@ export function LocationServicePage(props: LocationPageProps) {
       "name": "Digerati Experts",
       "description": props.description,
       "url": `https://digeratiexperts.com/locations/${props.city.toLowerCase().replace(/\s+/g, '-')}-az`,
-      "telephone": "325-480-9870",
+      "telephone": "[DE_PUBLIC_PHONE]",
       "email": "info@digeratiexperts.com",
       "address": {
         "@type": "PostalAddress",
@@ -156,9 +156,9 @@ export function LocationServicePage(props: LocationPageProps) {
   };
 
   const stats = [
-    { icon: Shield, value: "99.9%", label: "Uptime SLA" },
-    { icon: Zap, value: "<15min", label: "Response Time" },
-    { icon: Clock, value: "24/7", label: "Monitoring" },
+    { icon: Shield, value: "Secure", label: "By Design" },
+    { icon: Zap, value: "Clear", label: "Next Steps" },
+    { icon: Clock, value: "Local", label: "Accountability" },
   ];
 
   const features = [
@@ -293,9 +293,9 @@ export function LocationServicePage(props: LocationPageProps) {
                           <Button type="submit" size="lg" data-testid={`button-${props.city.toLowerCase()}-submit`} disabled={isSubmitting} className="flex-1 h-12 text-base font-semibold bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 border-0 shadow-lg shadow-purple-500/25">
                             {isSubmitting ? <><Loader2 className="mr-2 h-5 w-5 animate-spin" />Submitting...</> : <>Get Free {props.city} Assessment<ArrowRight className="w-5 h-5 ml-2" /></>}
                           </Button>
-                          <a href="tel:325-480-9870" className="sm:flex-shrink-0">
+                          <a href="tel:[DE_PUBLIC_PHONE]" className="sm:flex-shrink-0">
                             <Button type="button" variant="outline" size="lg" className="w-full sm:w-auto h-12 px-6 text-base font-semibold border-white/20 bg-white/5 hover:bg-white/10 text-white">
-                              <Phone className="w-5 h-5 mr-2" />325-480-9870
+                              <Phone className="w-5 h-5 mr-2" />[DE_PUBLIC_PHONE]
                             </Button>
                           </a>
                         </div>
@@ -441,9 +441,9 @@ export function LocationServicePage(props: LocationPageProps) {
                   Start Your Free Assessment <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
               </a>
-              <a href="tel:325-480-9870">
+              <a href="tel:[DE_PUBLIC_PHONE]">
                 <Button variant="outline" size="lg" className="px-8 py-6 text-lg font-semibold border-white/20 bg-white/5 hover:bg-white/10 text-white">
-                  <Phone className="mr-2 w-5 h-5" /> Call 325-480-9870
+                  <Phone className="mr-2 w-5 h-5" /> Call [DE_PUBLIC_PHONE]
                 </Button>
               </a>
             </div>

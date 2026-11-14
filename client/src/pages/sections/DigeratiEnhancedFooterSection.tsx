@@ -58,12 +58,32 @@ export const DigeratiEnhancedFooterSection = (): JSX.Element => {
   const currentYear = new Date().getFullYear();
   const [email, setEmail] = useState("");
   const [isSubscribed, setIsSubscribed] = useState(false);
+  const [isSubscribing, setIsSubscribing] = useState(false);
+  const [subscriptionError, setSubscriptionError] = useState("");
 
-  const handleNewsletterSubmit = (e: React.FormEvent) => {
+  const handleNewsletterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (email) {
+    if (!email || isSubscribing) return;
+
+    setIsSubscribing(true);
+    setSubscriptionError("");
+
+    try {
+      const response = await fetch('/api/newsletter', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || 'We could not add you right now.');
+      }
       setIsSubscribed(true);
       setEmail("");
+    } catch (error) {
+      setSubscriptionError(error instanceof Error ? error.message : 'Please try again in a moment.');
+    } finally {
+      setIsSubscribing(false);
     }
   };
 
@@ -112,11 +132,11 @@ export const DigeratiEnhancedFooterSection = (): JSX.Element => {
     { name: "Scottsdale", href: "/locations/scottsdale-az", primary: false }
   ];
 
-  const complianceSeals = [
-    { name: "SOC 2 Type II", icon: Shield, verified: true },
-    { name: "HIPAA Compliant", icon: Lock, verified: true },
-    { name: "Microsoft Partner", icon: CheckCircle, verified: true },
-    { name: "Apple Consultants", icon: CheckCircle, verified: true }
+  const assuranceAreas = [
+    { name: "Security Documentation", icon: Shield, available: true },
+    { name: "HIPAA Readiness", icon: Lock, available: true },
+    { name: "Cyber Insurance", icon: CheckCircle, available: true },
+    { name: "Vendor Reviews", icon: CheckCircle, available: true }
   ];
 
   const socialLinks = [
@@ -224,13 +244,13 @@ export const DigeratiEnhancedFooterSection = (): JSX.Element => {
                 </div>
                 <div>
                   <h3 className="text-white font-semibold mb-1 flex items-center gap-2 ">
-                    COMPLIANCE READY
+                    EVIDENCE READY
                   </h3>
                   <p className="text-gray-400 text-sm font-normal">
-                    Need SOC 2 or Security Documentation?
+                    Need security documentation or questionnaire help?
                   </p>
                   <p className="text-gray-500 text-sm mt-1 font-normal">
-                    Request compliance documents for vendor onboarding and security reviews
+                    Ask for service-specific evidence for vendor onboarding, insurance, or security reviews
                   </p>
                 </div>
               </div>
@@ -250,18 +270,18 @@ export const DigeratiEnhancedFooterSection = (): JSX.Element => {
 
         <div className="border-t border-white/10 py-8 px-4 md:px-8 lg:px-0">
           <h4 className="text-white text-sm font-semibold mb-6 uppercase tracking-wider ">
-            Compliance Certifications
+            Assurance Areas
           </h4>
           <div className="flex flex-wrap gap-4">
-            {complianceSeals.map((seal, index) => (
+            {assuranceAreas.map((area, index) => (
               <div 
                 key={index}
                 className="flex items-center gap-3 px-4 py-3 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl hover:bg-white/10 hover:border-white/20 transition-all duration-300"
                 data-testid={`footer-seal-${index}`}
               >
-                <seal.icon className="h-5 w-5 text-purple-400" />
-                <span className="text-gray-400 text-sm font-medium ">{seal.name}</span>
-                {seal.verified && (
+                <area.icon className="h-5 w-5 text-purple-400" />
+                <span className="text-gray-400 text-sm font-medium ">{area.name}</span>
+                {area.available && (
                   <CheckCircle className="h-4 w-4 text-green-400" />
                 )}
               </div>
@@ -291,18 +311,25 @@ export const DigeratiEnhancedFooterSection = (): JSX.Element => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="Enter your email"
+                    aria-label="Email address for newsletter"
+                    required
                     className="flex-1 px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20 transition-all duration-300 text-sm"
                     data-testid="footer-newsletter-input"
                   />
                   <button
                     type="submit"
-                    className="px-6 py-3 bg-violet-600 hover:bg-violet-500 text-white font-semibold rounded-xl shadow-[0_0_20px_rgba(139,92,246,0.3)] hover:shadow-[0_0_30px_rgba(139,92,246,0.4)] transition-all duration-300 flex items-center gap-2"
+                    disabled={isSubscribing}
+                    aria-label="Subscribe to newsletter"
+                    className="px-6 py-3 bg-violet-600 hover:bg-violet-500 disabled:cursor-wait disabled:opacity-60 text-white font-semibold rounded-xl shadow-[0_0_20px_rgba(139,92,246,0.3)] hover:shadow-[0_0_30px_rgba(139,92,246,0.4)] transition-all duration-300 flex items-center gap-2"
                     data-testid="footer-newsletter-submit"
                   >
                     <Send className="h-4 w-4" />
-                    <span className="hidden sm:inline ">Subscribe</span>
+                    <span className="hidden sm:inline ">{isSubscribing ? 'Joining…' : 'Subscribe'}</span>
                   </button>
                 </form>
+              )}
+              {subscriptionError && (
+                <p className="mt-3 text-sm text-red-300 relative z-10" role="alert">{subscriptionError}</p>
               )}
             </div>
             

@@ -85,7 +85,7 @@ export const DigeratiHeroSection = (): JSX.Element => {
               <span className="text-white">Protect Your Business Now.</span>
             </h1>
             <p className="text-lg md:text-xl text-gray-100 mb-8">
-              Get 24/7 protection, cut cyber liability, and pass compliance checks — all without hiring in-house IT.
+              Strengthen protection, reduce avoidable cyber risk, and stay ready for compliance conversations—without building an entire IT department in-house.
             </p>
             
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
@@ -119,12 +119,12 @@ export const DigeratiHeroSection = (): JSX.Element => {
                 Get Free Assessment <ArrowRight className="ml-2 h-5 w-5" />
               </a>
               <a
-                href="tel:325-480-9870"
+                href="tel:[DE_PUBLIC_PHONE]"
                 className="h-12 px-8 rounded-md border-2 border-white bg-transparent text-white hover:bg-white hover:text-purple-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-purple-600 transition-all duration-200 inline-flex items-center justify-center gap-2 whitespace-nowrap text-base font-semibold group"
                 data-testid="button-hero-phone"
               >
                 <Phone className="h-5 w-5 group-hover:text-purple-600 transition-colors duration-200" />
-                325-480-9870
+                [DE_PUBLIC_PHONE]
               </a>
             </div>
           </div>

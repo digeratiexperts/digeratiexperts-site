@@ -37,42 +37,42 @@ export const DigeratiTestimonialsSection = (): JSX.Element => {
   const testimonials: Testimonial[] = [
     {
       rating: 5,
-      text: "Digerati delivered beyond our expectations. Their encryption protocols and risk assessments helped us meet strict compliance standards with ease.",
-      author: "James Torres",
-      role: "CEO",
-      company: "Phoenix Manufacturing",
+      text: "I need security explained in business terms, with a clear plan my team can actually follow—not another dashboard full of noise.",
+      author: "The Business Owner",
+      role: "Manufacturing perspective",
+      company: "Representative Arizona client",
       avatar: avatar1
     },
     {
       rating: 5,
-      text: "After a ransomware scare hit a firm down the street, we called Digerati. They implemented 24/7 SOC monitoring and now I actually sleep at night knowing client files are protected.",
-      author: "Rebecca Thornton",
-      role: "Managing Partner",
-      company: "Thornton & Associates Law",
+      text: "Client confidentiality is non-negotiable. I want to know who is watching the environment, who calls us, and what happens next if something looks wrong.",
+      author: "The Managing Partner",
+      role: "Legal perspective",
+      company: "Representative Arizona client",
       avatar: avatar2
     },
     {
       rating: 5, 
-      text: "We passed our HIPAA audit with zero findings. Digerati's team documented everything, trained our staff, and handled the technical controls. Worth every penny.",
-      author: "Dr. David Nguyen",
-      role: "Owner",
-      company: "East Valley Family Medicine",
+      text: "I need the controls and the documentation to tell the same story. When an auditor asks, my team should know where the evidence is and why it matters.",
+      author: "The Practice Owner",
+      role: "Healthcare perspective",
+      company: "Representative Arizona client",
       avatar: avatar3
     },
     {
       rating: 5,
-      text: "We had a wire fraud attempt during a $400K closing. Digerati's email security flagged it instantly and saved us from disaster. That alone paid for years of service.",
-      author: "Mark Rodriguez",
-      role: "Broker/Owner",
-      company: "Sonoran Realty Partners",
+      text: "Email is where our biggest transactions move. We need layers that protect the business without making every agent fight the technology.",
+      author: "The Broker-Owner",
+      role: "Real estate perspective",
+      company: "Representative Arizona client",
       avatar: avatar4
     },
     {
       rating: 5,
-      text: "Moving to their ProActive platform consolidated 6 different vendors into one bill. Now I have one number to call and one team that knows our entire environment.",
-      author: "Jennifer Blackwood",
-      role: "Operations Director",
-      company: "Blackwood Veterinary Hospital",
+      text: "When something breaks, I don’t want to coordinate five vendors. I want one accountable partner who knows the environment and owns the next step.",
+      author: "The Operations Leader",
+      role: "Veterinary perspective",
+      company: "Representative Arizona client",
       avatar: avatar5
     }
   ];
@@ -202,14 +202,18 @@ export const DigeratiTestimonialsSection = (): JSX.Element => {
         >
           <div className="inline-flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-full bg-violet-500/10 border border-violet-500/20 mb-4 md:mb-6">
             <Building2 className="w-3.5 h-3.5 md:w-4 md:h-4 text-violet-400" />
-            <span className="text-xs md:text-sm font-medium text-violet-300">Client Success Stories</span>
+            <span className="text-xs md:text-sm font-medium text-violet-300">Representative Client Perspectives</span>
           </div>
           
           <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4 md:mb-6 text-white px-4">
-            Trusted by <span className="bg-gradient-to-r from-violet-400 via-purple-400 to-fuchsia-400 bg-clip-text text-transparent">100+ Arizona</span> Businesses
+            Built Around What <span className="bg-gradient-to-r from-violet-400 via-purple-400 to-fuchsia-400 bg-clip-text text-transparent">Arizona Leaders</span> Actually Need
           </h2>
           
-          <div className="flex items-center justify-center gap-1 mb-2 md:mb-4" role="img" aria-label="5 star rating">
+          <p className="mx-auto mb-5 max-w-3xl px-4 text-sm leading-relaxed text-white/55 md:text-base">
+            These perspectives capture common conversations with local business leaders. Named client stories will appear only with their approval.
+          </p>
+
+          <div className="flex items-center justify-center gap-1 mb-2 md:mb-4" role="img" aria-label="Five priorities highlighted">
             {[...Array(5)].map((_, i) => (
               <Star 
                 key={i} 
@@ -222,7 +226,7 @@ export const DigeratiTestimonialsSection = (): JSX.Element => {
                 data-testid={`star-rating-${i}`}
               />
             ))}
-            <span className="ml-2 md:ml-3 text-base md:text-lg font-semibold text-amber-400">5.0</span>
+            <span className="ml-2 md:ml-3 text-base md:text-lg font-semibold text-amber-400">5 priorities</span>
           </div>
         </motion.div>
 
@@ -251,7 +255,7 @@ export const DigeratiTestimonialsSection = (): JSX.Element => {
             <Card className="relative bg-[#111111]/90 backdrop-blur-xl border-0 rounded-2xl md:rounded-3xl overflow-hidden">
               <CardContent className="px-6 py-8 md:p-12">
                 {/* Stars row */}
-                <div className="flex items-center justify-center gap-1 mb-4 md:mb-8" role="img" aria-label="5 star rating">
+                <div className="flex items-center justify-center gap-1 mb-4 md:mb-8" role="img" aria-label="A representative client priority">
                   {[...Array(5)].map((_, i) => (
                     <Star 
                       key={i} 
@@ -264,7 +268,7 @@ export const DigeratiTestimonialsSection = (): JSX.Element => {
                       data-testid={`testimonial-star-${i}`}
                     />
                   ))}
-                  <span className="ml-2 md:ml-3 text-xs md:text-sm font-medium text-white/60">5-Star Rating</span>
+                  <span className="ml-2 md:ml-3 text-xs md:text-sm font-medium text-white/60">What good partnership feels like</span>
                 </div>
                 
                 {/* Testimonial content with animation */}

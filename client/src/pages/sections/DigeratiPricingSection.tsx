@@ -77,7 +77,7 @@ export const DigeratiPricingSection = (): JSX.Element => {
       learnMoreUrl: pricing.enterprise.learnMoreUrl,
       features: [
         "Everything in Business",
-        "HIPAA / GDPR Compliance Modules",
+        "Compliance Readiness Modules",
         "Penetration Testing (scoped)",
         "Disaster Recovery Runbooks",
         "Privileged Access + Audit Logs",
