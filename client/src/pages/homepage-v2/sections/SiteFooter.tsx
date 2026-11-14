@@ -22,8 +22,8 @@ const SOCIAL_ICONS: Record<string, JSX.Element> = {
 };
 
 const COLUMNS = [
-  { title: "Client", links: [["Client Portal", "/portal/login"], ["Submit Ticket", "/support/submit-ticket"], ["Remote Support", "/support/remote-support"], ["Pay Invoice", "/support/pay-invoice"]] },
-  { title: "Services", links: [["Managed IT", "/solutions/managed-it-support"], ["Cybersecurity", "/solutions"], ["Compliance & Risk", "/about/compliance"], ["Backup & Disaster Recovery", "/solutions/backup-disaster-recovery"]] },
+  { title: "Client", links: [["Client Portal", "/portal/login"], ["Submit Ticket", "/support/submit-ticket"], ["Remote Support", "/support/remote-support"], ["Help Desk", "/help-desk"], ["Pay Invoice", "/support/pay-invoice"]] },
+  { title: "Services", links: [["Managed IT", "/solutions/managed-it-support"], ["Cybersecurity", "/solutions"], ["Compliance & Risk", "/about/compliance"], ["Backup & Disaster Recovery", "/solutions/backup-disaster-recovery"], ["Switching IT Providers", "/solutions/switching-it-providers"]] },
   { title: "Resources", links: [["Digerati Journal", "/resources/blog"], ["Cyber Facts", "/resources/cyber-facts"], ["Knowledge Base", "/support/knowledge-base"], ["Contact", "#contact"]] },
 ];
 

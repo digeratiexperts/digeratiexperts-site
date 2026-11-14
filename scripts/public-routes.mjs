@@ -13,6 +13,8 @@ export const PUBLIC_ROUTES = [
   "/solutions/co-managed-it",
   "/solutions/efficiency-before-ai",
   "/solutions/standalone-services",
+  "/solutions/switching-it-providers",
+  "/help-desk",
   "/solutions/managed-it-support",
   "/proactive-ecosystem-pricing",
   "/pricing",
