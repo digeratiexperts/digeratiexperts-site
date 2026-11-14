@@ -10,7 +10,9 @@ import {
   HeroFacts,
   IndexedList,
   cardDark,
+  FaqChapter,
 } from "@/components/site/chapters";
+import { NONPROFIT_FAQS } from "@/data/localFaqs";
 import { ServiceBlocks } from "@/components/site/IndustriesServiceBlocks";
 import { Heart, Users, Shield, Zap, TrendingUp } from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
@@ -175,6 +177,10 @@ export default function Nonprofits() {
           <IndexedList tone="well" items={promises} />
         </Container>
       </Chapter>
+
+      <div data-testid="section-faq">
+        <FaqChapter faqs={NONPROFIT_FAQS} title="Questions nonprofit leaders ask" />
+      </div>
 
       <div data-testid="section-final-cta">
         <ClosingCta
