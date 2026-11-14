@@ -2,6 +2,8 @@
 
 Owner: ChatGPT / Codex cloud. Mode: Maintenance.
 Branch: `chatgpt/public-phone-pdf-completion-20261114`.
+Held draft: [site #1036](https://github.com/digeratiexperts/digeratiexperts-site/pull/1036).
+Implementation/test commit: `48579e09fb5dc3977398192319c6181ddf8582d1` (pushed).
 Starting main: `5d8baf37cd30471f8cca476ffcbed6d4bc8f93b8`.
 Claim: [Hub relay #886](https://github.com/digeratiexperts/Intelligence-Hub/issues/886#issuecomment-6885360392).
 Parent handoff: [Hub #1253](https://github.com/digeratiexperts/Intelligence-Hub/issues/1253).
@@ -31,6 +33,7 @@ The shared generator patch preserves the marker in a plain span when no phone UR
 - `npm test` → 360 files passed, two failed; **2,673 tests passed, two timed out, one skipped**. The failures were unchanged `server/portalUserInvite.test.ts` and `client/src/pages/locations/locationListSemantics.visual.test.ts` (plus its teardown timeout) while the build/browser work ran concurrently. Rerunning just those two files with one worker → **6/6 passed**. The full suite was not rerun or described as wholly green.
 - `npm run check:active-work` → passed, 173 claims.
 - `git diff --check` → passed.
+- Updated from main `fe69f3b6` with a merge commit; no conflicts. The new 51 checks and #1028's existing 13 static checks then passed together: **64/64**. Exact-head PR CI/security/secret and the new artifact workflow were started; they were still pending at this handoff.
 - Visual: reviewed all 32 contact pairs and boards covering 79 unique document pages; no clipped marker, missing page or blank overflow page found. The site's PDF.js rendered representative checklist/report/datasheet pages at fitted 390/768/1440 widths and 2× zoom. Existing fixed Letter documents still require zoom on phones; body text at a 390 fit is about 5.6 CSS px, 11.2 px at 2×.
 - Concept contact DOM checked at 390/768/1440: marker present, no enclosing anchor; marker screenshots inspected. The concepts are fixed-width print layouts, and their marker can sit outside a narrow HTML viewport. These checks establish contact/link behavior, **not responsive HTML operability** or a redesigned concept layout.
 
@@ -55,7 +58,7 @@ Changing the three portal agreement PDF bytes changes the hashes attached to fut
 
 ## Release state and next checkpoint
 
-Implemented locally and prepared for a held draft; no production action by this slice. #1028's narrow static marker work was merged separately by the parent coordinator at `fe69f3b6`, after #992; these static files are not edited here and will be preserved when updating this branch from main. That parent release is partial phone cleanup, not proof this companion is live.
+Implemented and pushed as held draft #1036; no production action by this slice. #1028's narrow static marker work was merged separately by the parent coordinator at `fe69f3b6`, after #992; these static files are not edited here and are preserved in this branch's merge from main. That parent release is partial phone cleanup, not proof this companion is live.
 
 Next: independent review of the companion's binary/text/visual evidence and explicit adoption of the generator/JSON patch by #1031's owner. Full canonical/UI cleanup, claim reconciliation and deployed verification remain separate gates. Do not mark this work merged or live based on local tests.
 

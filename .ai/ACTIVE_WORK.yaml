@@ -37,6 +37,7 @@ claims:
     base_sha: 5d8baf37cd30471f8cca476ffcbed6d4bc8f93b8
     started: 2026-11-14
     status: implemented
+    pr: "1036"
     files:
       - client/public/assets/**/*.pdf
       - document_templates/**/*.pdf
