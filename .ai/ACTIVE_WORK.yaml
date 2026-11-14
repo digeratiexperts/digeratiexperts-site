@@ -44,6 +44,7 @@ claims:
       - artifacts/design-concepts/resource-pdfs/lib/public-phone.mjs
       - scripts/public-phone-artifacts*
       - scripts/public-phone-pdf-manifest.json
+      - .github/workflows/public-phone-artifacts.yml
       - docs/handoffs/public-phone-pdf-source.patch
       - docs/work-ledger/2026-11-14-public-phone-pdf-completion.md
       - artifacts/visual-qa/public-phone-pdf-completion/**

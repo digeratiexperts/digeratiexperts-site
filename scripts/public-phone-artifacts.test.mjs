@@ -6,7 +6,7 @@ import test from "node:test";
 const root = new URL("../", import.meta.url);
 const marker = "[DE_PUBLIC_PHONE]";
 const retired = /(?:\+?1[\s().-]*)?(?:480[\s().-]*519[\s().-]*5892|855[\s().-]*534[\s().-]*9832|325[\s().-]*480[\s().-]*9870)/;
-const inspected = JSON.parse(execFileSync("python3", ["scripts/public-phone-artifacts.py"], { cwd: root, encoding: "utf8", maxBuffer: 10_000_000 }));
+const inspected = JSON.parse(execFileSync(process.env.PYTHON || "python3", ["scripts/public-phone-artifacts.py"], { cwd: root, encoding: "utf8", maxBuffer: 10_000_000 }));
 const required = JSON.parse(readFileSync(new URL("public-phone-pdf-manifest.json", import.meta.url), "utf8")).pdfs;
 
 test("all expected public PDFs are inspected", () => {
