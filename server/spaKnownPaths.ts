@@ -101,6 +101,7 @@ const EXACT = new Set([
   "/industries/professional-services",
   "/privacy",
   "/terms",
+  "/cookies",
   "/legal/privacy-policy",
   "/legal/terms-of-use",
   "/legal/msa",
