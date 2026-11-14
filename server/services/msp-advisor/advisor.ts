@@ -10,7 +10,7 @@ import {
   namesJoe,
   wantsPerson,
 } from "./classify";
-import { selectKnowledgeSlice } from "./knowledge";
+import { buildAdvisorRetrievalQueries, selectKnowledgeSliceStorageBacked } from "./knowledge";
 import {
   extractProfileFromText,
   mergeProfile,
@@ -22,6 +22,8 @@ import {
   isDeInternalCompanyAnswer,
 } from "./profile";
 import { buildSystemPrompt, INTERNAL_REFUSAL, BANNED_CANNED_OPENER } from "./prompt";
+import { withTransientModelRetry } from "./model-retry";
+import { verifyAdvisorReply } from "./ground";
 import { sanitizeActions, assertNoInternalLeak, defaultActionsForMode, materializeAction, ensureLoginAction } from "./actions";
 import { buildHeuristicReply, ensureFreshReply, isNearDuplicate } from "./fallback";
 import {
@@ -94,26 +96,28 @@ function applyCompanyGuess(profile: ConversationProfile, raw: string): Conversat
 }
 
 async function callModel(system: string, history: Array<{ role: "user" | "assistant"; content: string }>, userMessage: string): Promise<string | null> {
-  return withOpenAIGuard(async () => {
-    const client = getOpenAI();
-    if (!client) return null;
+  return withTransientModelRetry(() =>
+    withOpenAIGuard(async () => {
+      const client = getOpenAI();
+      if (!client) return null;
 
-    const result = await client.chat.completions.create({
-      // Stronger default tier (Joe 2026-08-31: "improve the intelligence").
-      // Env-overridable so cost can be tuned without a deploy.
-      model: process.env.MSP_ADVISOR_MODEL || "gpt-4o",
-      temperature: 0.4,
-      max_tokens: 550,
-      response_format: { type: "json_object" },
-      messages: [
-        { role: "system", content: system },
-        ...history.slice(-10),
-        { role: "user", content: userMessage },
-      ],
-    });
+      const result = await client.chat.completions.create({
+        // Stronger default tier (Joe 2026-08-31: "improve the intelligence").
+        // Env-overridable so cost can be tuned without a deploy.
+        model: process.env.MSP_ADVISOR_MODEL || "gpt-4o",
+        temperature: 0.4,
+        max_tokens: 550,
+        response_format: { type: "json_object" },
+        messages: [
+          { role: "system", content: system },
+          ...history.slice(-10),
+          { role: "user", content: userMessage },
+        ],
+      });
 
-    return result.choices[0]?.message?.content?.trim() || null;
-  });
+      return result.choices[0]?.message?.content?.trim() || null;
+    }),
+  );
 }
 
 function identityNamePrompt(): string {
@@ -436,7 +440,15 @@ export async function handleAdvisorChat(req: AdvisorChatRequest): Promise<Adviso
     mode = classifyMode(userTurn, page);
   }
 
-  const knowledge = selectKnowledgeSlice(mode, page);
+  const knowledge = await selectKnowledgeSliceStorageBacked(
+    mode,
+    page,
+    buildAdvisorRetrievalQueries({
+      mode,
+      userMessage: userTurn,
+      originalIntent: session.originalIntent,
+    }),
+  );
   const system = buildSystemPrompt({
     mode,
     knowledge,
@@ -540,6 +552,20 @@ export async function handleAdvisorChat(req: AdvisorChatRequest): Promise<Adviso
       fallbackVariant: session.fallbackVariant,
     }).reply;
   }
+
+  const grounded = verifyAdvisorReply(modelOut.reply, {
+    knowledge,
+    userMessage: userTurn,
+    fallbackReply: buildHeuristicReply({
+      ...heuristicInput,
+      mode,
+      fallbackVariant: session.fallbackVariant || 0,
+    }).reply,
+  });
+  if (grounded.fellBack) {
+    session.fallbackVariant = (session.fallbackVariant || 0) + 1;
+  }
+  modelOut.reply = grounded.reply;
 
   profile = mergeProfile(profile, modelOut.profilePatch);
   profile = mergeProfile(profile, extractProfileFromText(userTurn));
