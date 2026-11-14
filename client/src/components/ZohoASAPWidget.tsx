@@ -1682,12 +1682,17 @@ export const ZohoASAPWidget = ({
                   {agentLive ? <span className="de-desk-avatar-dot" /> : null}
                 </div>
                 <div className="min-w-0">
-                  <h2 data-testid="text-widget-title">DE Desk · AI assistant</h2>
-                  <p data-testid="text-widget-status">
-                    {agentLive
-                      ? `${agentName || "Specialist"} joined · live handoff`
-                      : "AI assistant"}
-                  </p>
+                  <h2 data-testid="text-widget-title">
+                    DE Desk
+                    <span className="de-desk-ai-badge" data-testid="text-widget-ai-label">
+                      AI assistant
+                    </span>
+                  </h2>
+                  {agentLive ? (
+                    <p data-testid="text-widget-status">
+                      {`${agentName || "Specialist"} joined · live handoff`}
+                    </p>
+                  ) : null}
                 </div>
               </div>
               {canDrag ? (
@@ -2729,12 +2734,14 @@ export const ZohoASAPWidget = ({
                 </div>
                 <p className="de-desk-composer-caption">
                   <Lock aria-hidden="true" />
-                  <a href={DESK_CHAT_CONSENT_PRIVACY_HREF} data-testid="desk-chat-recorded">
-                    {DESK_CHAT_RECORDED_LABEL}
-                  </a>
-                  {agentLive
-                    ? ". A DE agent is in this thread. Never paste passwords or MFA codes in chat."
-                    : ". Never paste passwords, MFA codes, or private keys in chat."}
+                  <span className="de-desk-composer-caption-text">
+                    <a href={DESK_CHAT_CONSENT_PRIVACY_HREF} data-testid="desk-chat-recorded">
+                      {DESK_CHAT_RECORDED_LABEL}
+                    </a>
+                    {agentLive
+                      ? ". A DE agent is in this thread. Never paste passwords or MFA codes in chat."
+                      : ". Never paste passwords, MFA codes, or private keys in chat."}
+                  </span>
                 </p>
               </>
             ) : null}
@@ -2943,6 +2950,23 @@ export const ZohoASAPWidget = ({
               font-weight: 600;
               font-size: 17px;
               color: var(--desk-ink);
+              line-height: 1.2;
+              display: flex;
+              align-items: center;
+              flex-wrap: wrap;
+              gap: 8px;
+            }
+            .de-desk-ai-badge {
+              display: inline-flex;
+              align-items: center;
+              padding: 2px 7px;
+              border-radius: 999px;
+              border: 1px solid rgba(227, 178, 60, 0.7);
+              color: var(--desk-gold-ink);
+              font-family: "Space Grotesk", sans-serif;
+              font-size: 11px;
+              font-weight: 600;
+              letter-spacing: 0.02em;
               line-height: 1.2;
             }
             .de-desk-id p { font-size: 14px; color: var(--desk-ink-muted); margin-top: 1px; }
@@ -4256,14 +4280,24 @@ export const ZohoASAPWidget = ({
             .de-desk-composer-caption {
               position: relative;
               z-index: 1;
-              display: flex; align-items: center; gap: 6px;
+              display: flex; align-items: flex-start; gap: 6px;
               margin: 0;
               padding: 0 16px 10px;
               background: transparent;
-              font-size: 13px; color: var(--desk-ink-dim);
+              font-size: 13px; line-height: 1.45; color: var(--desk-ink-dim);
               flex-shrink: 0;
             }
-            .de-desk-composer-caption svg { width: 11px; height: 11px; color: var(--desk-ink-dim); }
+            .de-desk-composer-caption svg { width: 11px; height: 11px; margin-top: 4px; flex: none; color: var(--desk-ink-dim); }
+            .de-desk-composer-caption-text {
+              flex: 1;
+              min-width: 0;
+              text-wrap: pretty;
+            }
+            .de-desk-composer-caption a {
+              color: inherit;
+              text-decoration: underline;
+              text-underline-offset: 2px;
+            }
             .de-desk-shell[data-tab="ticket"] .de-desk-body,
             .de-desk-shell[data-tab="resources"] .de-desk-body {
               margin-bottom: 0;

@@ -58,7 +58,12 @@ describe("DE Desk shell positioning", () => {
     expect(src).toMatch(/role="tab"/);
     expect(src).toMatch(/aria-selected=\{isActive\}/);
     expect(src).not.toMatch(/aria-current=\{isActive \? "page"/);
-    expect(src).toMatch(/DE Desk · AI assistant/);
+    expect(src).toMatch(/data-testid="text-widget-title"/);
+    expect(src).toContain("DE Desk");
+    expect(src).toMatch(/data-testid="text-widget-ai-label"/);
+    expect(src).toContain("de-desk-ai-badge");
+    expect(src).toContain("AI assistant");
+    expect(src).not.toMatch(/>DE Desk . AI assistant</);
     expect(src).toMatch(/Want a person\?/);
     expect(src).toMatch(/Book a Fit Call/);
     expect(src).toMatch(/data-testid="desk-human-path"/);
@@ -264,6 +269,8 @@ describe("DE Desk shell positioning", () => {
     expect(src).toMatch(/\.de-desk-bubble \{[\s\S]*?font-size: 15px;/);
     expect(src).toMatch(/\.de-desk-composer textarea \{[\s\S]*?font-size: 15\.5px;/);
     expect(src).toMatch(/\.de-desk-composer-caption \{[\s\S]*?font-size: 13px;/);
+    expect(src).toContain("de-desk-composer-caption-text");
+    expect(src).toMatch(/text-wrap:\s*pretty/);
     expect(src).toMatch(/\.de-desk-tool-title \{[\s\S]*?font-size: 15\.5px;/);
   });
 
