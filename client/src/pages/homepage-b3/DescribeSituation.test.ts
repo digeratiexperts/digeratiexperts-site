@@ -7,9 +7,10 @@ describe("SITUATION_MATCH_AI_DISCLOSURE", () => {
   it("identifies an AI assistant for Digerati Experts and describes what is kept", () => {
     expect(SITUATION_MATCH_AI_DISCLOSURE).toMatch(/AI assistant for Digerati Experts/);
     expect(SITUATION_MATCH_AI_DISCLOSURE).toMatch(/AI service provider/);
-    expect(SITUATION_MATCH_AI_DISCLOSURE).toMatch(/keep it in your session for 1 year/);
+    expect(SITUATION_MATCH_AI_DISCLOSURE).toMatch(/for up to 2 hours of inactivity/);
+    expect(SITUATION_MATCH_AI_DISCLOSURE).toMatch(/which we keep for 1 year/);
     expect(SITUATION_MATCH_AI_DISCLOSURE).not.toMatch(/\{\{CHAT_RETENTION\}\}/);
-    expect(SITUATION_MATCH_AI_DISCLOSURE).toMatch(/IT & Security Profile/);
+    expect(SITUATION_MATCH_AI_DISCLOSURE).not.toMatch(/IT & Security Profile/);
     expect(SITUATION_MATCH_AI_DISCLOSURE).toMatch(/See our Privacy Policy\./);
     expect(SITUATION_MATCH_AI_DISCLOSURE).not.toMatch(/Nothing is saved unless you choose to/);
     expect(SITUATION_MATCH_AI_DISCLOSURE).not.toMatch(/Digerati(?! Experts)/);

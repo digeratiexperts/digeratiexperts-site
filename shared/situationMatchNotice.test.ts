@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { ADVISOR_SESSION_IDLE_TTL_HOURS, formatAdvisorSessionIdleTtl } from "./advisorSessionTtl";
 import {
   CHAT_RETENTION,
   HEALTH_INFO_WARNING,
@@ -9,14 +10,19 @@ import {
 } from "./situationMatchNotice";
 
 describe("SITUATION_MATCH_AI_DISCLOSURE", () => {
-  it("uses the approved notice text, with a 1-year retention period and a no-training clause that can be dropped", () => {
+  it("uses the approved notice text, with the session idle TTL, a 1-year DE Desk period, and a no-training clause that can be dropped", () => {
     expect(CHAT_RETENTION).toBe("1 year");
-    expect(SITUATION_MATCH_NOTICE_VERSION).toBe("situation-match-v3");
+    expect(formatAdvisorSessionIdleTtl()).toBe("2 hours");
+    expect(ADVISOR_SESSION_IDLE_TTL_HOURS).toBe(2);
+    expect(SITUATION_MATCH_NOTICE_VERSION).toBe("situation-match-v4");
     expect(SITUATION_MATCH_AI_DISCLOSURE).toBe(
-      "An AI assistant for Digerati Experts (DE) reads your description to suggest services. We send it to our AI service provider, which is not allowed to use it to train its models, and keep it in your session for 1 year so DE Desk can pick up where you left off. It is not saved to an IT & Security Profile unless you later choose to save a draft. Please don't include passwords, card numbers, or health or patient information. See our Privacy Policy.",
+      "An AI assistant for Digerati Experts (DE) reads your description to suggest services. We send it to our AI service provider, which is not allowed to use it to train its models. We keep what you type here for up to 2 hours of inactivity so DE Desk can pick up where you left off. If you continue in DE Desk, your description becomes part of that chat, which we keep for 1 year. Don't enter passwords, card numbers, or health information. See our Privacy Policy.",
     );
     expect(SITUATION_MATCH_AI_DISCLOSURE).toContain(SITUATION_MATCH_NO_TRAINING);
     expect(SITUATION_MATCH_AI_DISCLOSURE).toContain(CHAT_RETENTION);
+    expect(SITUATION_MATCH_AI_DISCLOSURE).toContain(`for up to ${formatAdvisorSessionIdleTtl()} of inactivity`);
+    expect(SITUATION_MATCH_AI_DISCLOSURE).not.toMatch(/If you create an account/);
+    expect(SITUATION_MATCH_AI_DISCLOSURE).not.toMatch(/IT & Security Profile/);
     expect(SITUATION_MATCH_AI_DISCLOSURE).toMatch(/See our Privacy Policy\./);
     expect(SITUATION_MATCH_AI_DISCLOSURE).not.toMatch(/Digerati(?! Experts)/);
   });

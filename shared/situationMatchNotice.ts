@@ -3,14 +3,16 @@
  * This is not the DE Desk pre-chat notice.
  */
 
-/** Published retention period for the describe-box notice. */
+import { formatAdvisorSessionIdleTtl } from "./advisorSessionTtl";
+
+/** Published retention period for DE Desk chat transcripts. */
 export const CHAT_RETENTION = "1 year";
 
 /** Depends on the AI provider API terms. Drop this clause if those terms change. */
 export const SITUATION_MATCH_NO_TRAINING = "which is not allowed to use it to train its models";
 
-/** Bumped for the 1-year retention wording. */
-export const SITUATION_MATCH_NOTICE_VERSION = "situation-match-v3";
+/** Bumped for the idle-TTL and DE Desk retention wording. */
+export const SITUATION_MATCH_NOTICE_VERSION = "situation-match-v4";
 
 export const SITUATION_MATCH_PRIVACY_PATH = "/legal/privacy-policy";
 export const SITUATION_MATCH_PRIVACY_LINK_TEXT = "Privacy Policy";
@@ -18,9 +20,11 @@ export const SITUATION_MATCH_PRIVACY_LINK_TEXT = "Privacy Policy";
 export const SITUATION_MATCH_AI_DISCLOSURE = [
   "An AI assistant for Digerati Experts (DE) reads your description to suggest services. We send it to our AI service provider, ",
   SITUATION_MATCH_NO_TRAINING,
-  ", and keep it in your session for ",
+  ". We keep what you type here for up to ",
+  formatAdvisorSessionIdleTtl(),
+  " of inactivity so DE Desk can pick up where you left off. If you continue in DE Desk, your description becomes part of that chat, which we keep for ",
   CHAT_RETENTION,
-  " so DE Desk can pick up where you left off. It is not saved to an IT & Security Profile unless you later choose to save a draft. Please don't include passwords, card numbers, or health or patient information. See our ",
+  ". Don't enter passwords, card numbers, or health information. See our ",
   SITUATION_MATCH_PRIVACY_LINK_TEXT,
   ".",
 ].join("");
