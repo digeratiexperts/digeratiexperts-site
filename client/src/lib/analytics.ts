@@ -1,4 +1,10 @@
 import { isPaymentPagePath } from "@shared/paymentPage";
+import { marketingAllowedByConsent, navigatorSignalsGpc } from "@shared/gpc";
+import {
+  isPortalContext as portalContextOf,
+  skipMarketingPixels as skipMarketingPixelsFor,
+} from "@shared/trackingExclusions";
+
 
 declare function gtag(...args: any[]): void;
 
@@ -63,8 +69,15 @@ function publicReferrer(value: string): string {
 
 function skipMarketingPixels(): boolean {
   if (typeof window === "undefined") return false;
-  return isPortalContext(window.location.hostname, window.location.pathname) ||
-    isPaymentPagePath(window.location.pathname);
+  return skipMarketingPixelsFor(window.location.hostname, window.location.pathname);
+}
+
+function readGpc(): boolean {
+  try {
+    return navigatorSignalsGpc((navigator as any).globalPrivacyControl);
+  } catch {
+    return false;
+  }
 }
 
 /** Basic consent mode: no Google tag request before analytics consent. */
@@ -99,13 +112,20 @@ function getConsent(): ConsentConfig {
     const stored = localStorage.getItem(CONSENT_KEY);
     if (stored) {
       const parsed = JSON.parse(stored);
-      return { analytics: parsed?.analytics === true, marketing: parsed?.marketing === true };
+      return applyGpc({ analytics: parsed?.analytics === true, marketing: parsed?.marketing === true });
     }
     const legacy = localStorage.getItem("de_cookie_consent");
-    if (legacy === "accepted") return { analytics: true, marketing: true };
-    if (legacy === "rejected") return { analytics: false, marketing: false };
+    if (legacy === "accepted") return applyGpc({ analytics: true, marketing: true });
+    if (legacy === "rejected") return applyGpc({ analytics: false, marketing: false });
   } catch {}
-  return { analytics: false, marketing: false };
+  return applyGpc({ analytics: false, marketing: false });
+}
+
+function applyGpc(config: ConsentConfig): ConsentConfig {
+  return {
+    ...config,
+    marketing: marketingAllowedByConsent(config.marketing, readGpc()),
+  };
 }
 
 function updateGtagConsent(config: ConsentConfig) {
@@ -214,14 +234,9 @@ export function saveConsent(config: ConsentConfig) {
  * staff-only internal routes and the standalone challenger preview are also excluded.
  */
 export function isPortalContext(hostname: string, pathname: string): boolean {
-  const host = hostname.toLowerCase();
-  if (host === "portal.digeratiexperts.com" || host.startsWith("portal.")) return true;
-  const path = pathname.split(/[?#]/)[0].replace(/\/+$/, "").toLowerCase() || "/";
-  return path === "/portal" || path.startsWith("/portal/") ||
-    path === "/login" || path === "/signup" || path === "/agreement-gate" ||
-    path === "/internal" || path.startsWith("/internal/") ||
-    path === "/official-network-planner" || path === "/homepage-challenger";
+  return portalContextOf(hostname, pathname);
 }
+
 
 export function initAnalytics() {
   injectSearchVerificationTags();
@@ -235,7 +250,12 @@ export function initAnalytics() {
 
   // Microsoft Clarity (analytics-gated)
   const clarityId = import.meta.env.VITE_CLARITY_ID;
-  if (clarityId && consent.analytics && !(window as any).__CLARITY_ID__) {
+  if (clarityId && consent.analytics && !(window as any).__CLARITY_ID__ && !(window as any).__DE_DESK_OPEN__) {
+    const w = window as any;
+    w.clarity = w.clarity || function () { (w.clarity.q = w.clarity.q || []).push(arguments); };
+    // Strict masking: all text and inputs are masked.
+    w.clarity("set", "maskAllText", true);
+    w.clarity("set", "maskAllInputs", true);
     (function (c: any, l: any, a: any, r: any, i: any) {
       c[a] = c[a] || function () { (c[a].q = c[a].q || []).push(arguments); };
       const t = l.createElement(r);
@@ -556,3 +576,17 @@ export const analytics = {
     track("off_topic_redirected", { event_category: "advisor_chat" });
   },
 };
+
+
+// DE Desk is a widget on marketing pages. Pause Clarity while it is open so
+// session replay is not captured inside the chat. Marketing pixels are already
+// skipped on portal, checkout, and store paths.
+if (typeof window !== "undefined" && typeof window.addEventListener === "function") {
+  window.addEventListener("de-desk-open-change", ((event: Event) => {
+    const open = !!(event as CustomEvent<{ open?: boolean }>).detail?.open;
+    (window as any).__DE_DESK_OPEN__ = open;
+    try {
+      if (open && (window as any).clarity) (window as any).clarity("stop");
+    } catch {}
+  }) as EventListener);
+}

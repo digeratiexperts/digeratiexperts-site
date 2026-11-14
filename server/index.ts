@@ -435,6 +435,11 @@ app.use("/api/portal", (_req, res, next) => {
   next();
 });
 app.use(express.json());
+
+app.use((_req, res, next) => {
+  res.set("Supports-GPC", "1");
+  next();
+});
 app.use(express.urlencoded({ extended: false }));
 registerCspReportRoute(app);
 app.use(cookieParser());
