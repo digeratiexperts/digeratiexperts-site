@@ -14,7 +14,7 @@ import { placeStoreOrder, quoteStoreOrder, type StoreCheckoutCommand } from "./d
 import { getStoreFulfillmentRecord, recordHubFulfillmentEvent } from "./deStoreFulfillment";
 import { hubStoreClient, type HubStoreClient } from "./integrations/hubStoreClient";
 import { verifySignedRequest } from "./integrations/deSyncAuth";
-import { paymentRateLimiter } from "./middleware/rateLimiter";
+import { apiGeneralRateLimiter, paymentRateLimiter } from "./middleware/rateLimiter";
 import type { PaymentCaptureResult } from "./deStoreCheckout";
 
 type AuthedRequest = Request & {
@@ -223,7 +223,7 @@ export function registerDeStoreRoutes(app: Express, deps: DeStoreRouteDeps = def
     return res.json(record);
   });
 
-  app.post("/api/store/webhooks/hub", allowIfEnabled, (req, res) => {
+  app.post("/api/store/webhooks/hub", allowIfEnabled, apiGeneralRateLimiter, (req, res) => {
     const verified = verifySignedRequest(req, "hub_to_website");
     if (!verified.ok) {
       return res.status(verified.status).json({ error: verified.error });

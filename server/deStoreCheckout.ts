@@ -82,7 +82,6 @@ export type StoreQuoteResult =
   | { ok: true; status: 200; quote: TaxQuoteResponse; paymentAttempted: false }
   | StoreCheckoutFailure;
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function isCompleteAddress(address: PostalAddress | null | undefined): address is PostalAddress {
   if (!address) return false;
@@ -257,6 +256,19 @@ function clickwrapFailure(result: ClickwrapFailure): StoreCheckoutFailure {
   };
 }
 
+
+function isUsableEmail(value: string): boolean {
+  const email = value.trim();
+  if (email.length < 3 || email.length > 320) return false;
+  const at = email.indexOf("@");
+  if (at <= 0 || at !== email.lastIndexOf("@")) return false;
+  const domain = email.slice(at + 1);
+  const dot = domain.lastIndexOf(".");
+  if (dot <= 0 || dot === domain.length - 1) return false;
+  if (email.includes(" ") || email.includes("\n") || email.includes("\r")) return false;
+  return true;
+}
+
 export function resolveServiceAddress(addresses: StoreCheckoutAddresses): PostalAddress {
   return addresses.serviceAddress && isCompleteAddress(addresses.serviceAddress)
     ? addresses.serviceAddress
@@ -267,7 +279,7 @@ export async function quoteStoreOrder(
   command: Pick<StoreCheckoutCommand, "email" | "buyerRole" | "accountId" | "currency" | "addresses" | "lines" | "idempotencyKey">,
   deps: Omit<StoreCheckoutDeps, "capturePayment" | "consumerCheckout">,
 ): Promise<StoreQuoteResult> {
-  if (!EMAIL_RE.test(command.email.trim())) {
+  if (!isUsableEmail(command.email)) {
     return {
       ok: false,
       status: 400,

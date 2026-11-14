@@ -1,4 +1,5 @@
 import { LegalDocumentLayout } from "@/components/LegalDocumentLayout";
+import { PRIMARY_PHONE } from "@/data/companyContact";
 
 export default function StoreReturnAndRefund() {
   return (
@@ -13,7 +14,7 @@ export default function StoreReturnAndRefund() {
       </p>
       <h2 className="text-2xl font-bold text-[#1A1228] mb-4">Dead on arrival or damaged in transit</h2>
       <p className="text-[#3A3448] leading-relaxed mb-8">
-        If a kit arrives damaged, incomplete, or does not power on or work as described, tell DE within five (5) Business Days after delivery through the DE support portal or by phone at (480) 519-5892. DE will send a prepaid return label and, at your choice, ship a replacement or refund the full price including shipping. No restocking fee applies. Please keep the packaging and photograph any shipping damage.
+        If a kit arrives damaged, incomplete, or does not power on or work as described, tell DE within five (5) Business Days after delivery through the DE support portal or by phone at {PRIMARY_PHONE.display}. DE will send a prepaid return label and, at your choice, ship a replacement or refund the full price including shipping. No restocking fee applies. Please keep the packaging and photograph any shipping damage.
       </p>
       <h2 className="text-2xl font-bold text-[#1A1228] mb-4">Returns for any reason — business buyers</h2>
       <ul className="list-disc pl-6 text-[#3A3448] space-y-3 mb-8">

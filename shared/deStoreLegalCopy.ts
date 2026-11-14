@@ -2,6 +2,7 @@
  * Store legal copy, kept verbatim from the Digerati Experts store legal set
  * (draft v2026.10-store). Placeholders stay named until Joseph fills them in.
  */
+import { PRIMARY_PHONE } from "./companyContact";
 import { DE_STORE_PLACE_ORDER_BUTTON, regionDisplayName } from "./deStoreContract";
 
 export const POSTAL_ADDRESS_PLACEHOLDER = "{{POSTAL_ADDRESS}}";
@@ -21,7 +22,7 @@ export const WHERE_WE_SELL_ADDRESS_STEP_NO_LIST =
   "Where we sell: Digerati Experts sells only to customers whose billing and shipping addresses are both in a supported state.";
 
 export const BLOCKED_STATE_MESSAGE_TEMPLATE =
-  "Sorry — we can't currently sell to addresses in {{STATE}}. Your billing and shipping addresses must both be in a supported state. You have not been charged. Questions: admin@digeratiexperts.com or (480) 519-5892.";
+  `Sorry — we can't currently sell to addresses in {{STATE}}. Your billing and shipping addresses must both be in a supported state. You have not been charged. Questions: admin@digeratiexperts.com or ${PRIMARY_PHONE.display}.`;
 
 export const SHIPPING_PROMISE =
   "Ships within 7 calendar days after a paid, accepted order. Ships overnight. Delivery is usually the next business day after shipment, depending on the carrier and your address. If we can't ship by your promised date, we'll email you before that date with a new ship date and the option to cancel for a full refund.";
@@ -45,7 +46,7 @@ export const BOX_4_SELF_MANAGED_ADDENDUM =
   "I understand I may remove it at any time using the removal guide.";
 
 export const CONSUMER_ESIGN_BOX =
-  "I agree to receive notices, receipts, warranty terms, and other records from Digerati Experts electronically for this order and any subscription. I can get a free paper copy by calling (480) 519-5892, and I can withdraw this consent at any time by emailing admin@digeratiexperts.com, which takes effect for records sent after DE processes it. To view these records I need a device that can open PDF files and receive email. I confirm I could open the sample.";
+  `I agree to receive notices, receipts, warranty terms, and other records from Digerati Experts electronically for this order and any subscription. I can get a free paper copy by calling ${PRIMARY_PHONE.display}, and I can withdraw this consent at any time by emailing admin@digeratiexperts.com, which takes effect for records sent after DE processes it. To view these records I need a device that can open PDF files and receive email. I confirm I could open the sample.`;
 
 export const REFURBISHED_USED_GRADE_LABEL = "Refurbished (used) - Grade";
 

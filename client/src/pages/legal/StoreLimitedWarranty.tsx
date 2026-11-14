@@ -1,4 +1,5 @@
 import { LegalDocumentLayout } from "@/components/LegalDocumentLayout";
+import { PRIMARY_PHONE } from "@/data/companyContact";
 import { WARRANTY_MAILING_ADDRESS_PLACEHOLDER } from "@shared/deStoreLegalCopy";
 
 export default function StoreLimitedWarranty() {
@@ -11,7 +12,7 @@ export default function StoreLimitedWarranty() {
     >
       <h2 className="text-2xl font-bold text-[#1A1228] mb-4">DE 90-Day Limited Warranty</h2>
       <p className="text-[#3A3448] leading-relaxed mb-4">
-        <strong>90-DAY LIMITED WARRANTY.</strong> Digerati Experts, LLC, {WARRANTY_MAILING_ADDRESS_PLACEHOLDER}, (480) 519-5892, admin@digeratiexperts.com ("DE"), warrants to the original purchaser that each hardware item DE sells, new or refurbished, will be free from defects in materials and workmanship and will perform substantially as described on its product page under normal use for ninety (90) days from the date it is delivered.
+        <strong>90-DAY LIMITED WARRANTY.</strong> Digerati Experts, LLC, {WARRANTY_MAILING_ADDRESS_PLACEHOLDER}, {PRIMARY_PHONE.display}, admin@digeratiexperts.com ("DE"), warrants to the original purchaser that each hardware item DE sells, new or refurbished, will be free from defects in materials and workmanship and will perform substantially as described on its product page under normal use for ninety (90) days from the date it is delivered.
       </p>
       <ul className="list-disc pl-6 text-[#3A3448] space-y-3 mb-8">
         <li><strong className="text-[#1A1228]">Not covered.</strong> Cosmetic wear consistent with the stated refurbished grade; damage from accident, drops, liquid, power surges, misuse, or repair by others that caused the defect; software, data, and consumables; and normal battery wear, except that a battery that fails or falls below sixty percent (60%) of design capacity during the warranty period is covered. Using non-DE service or parts does not void this warranty unless they caused the defect.</li>
