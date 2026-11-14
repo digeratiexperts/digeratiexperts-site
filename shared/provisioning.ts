@@ -108,7 +108,7 @@ export function buildProvisioningSummary(input: {
     },
     {
       key: "blackpoint",
-      label: offboard ? "24/7 MDR add-on removed" : "24/7 MDR add-on",
+      label: offboard ? "Managed detection and response removed" : "Managed detection and response",
       state: bpState,
       detail: integrationDetail(run?.blackpoint, bpState),
       at,
