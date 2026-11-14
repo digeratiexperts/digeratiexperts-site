@@ -12,7 +12,8 @@ import { useSEO } from "@/hooks/useSEO";
 import { ServiceJsonLd, BreadcrumbJsonLd } from "@/components/JsonLd";
 import { pricing } from "@/data/pricing";
 import { CTA } from "@/lib/ctaCopy";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PRIMARY_PHONE, PUBLIC_PHONE_CTA } from "@/data/companyContact";
+import { MDR_ADDON_CLAIM } from "@shared/publicSecurityClaims";
 
 type InclusionStatus = "included" | "limited" | "optional" | "not-included";
 
@@ -46,7 +47,7 @@ const matrixCategories: MatrixCategory[] = [
     icon: <Monitor className="w-5 h-5" />,
     rows: [
       { id: "service-desk", capability: "Service Desk (remote support + ticketing)", status: "limited", tooltip: "Business hours coverage; priority response is add-on" },
-      { id: "support-hours", capability: "Support hours (SLA)", status: "limited", tooltip: "8×5 business hours; after-hours is add-on" },
+      { id: "support-hours", capability: "Support hours", status: "limited", tooltip: "8×5 business hours; after-hours is add-on" },
       { id: "monitoring", capability: "Device monitoring & alerting", status: "included" },
       { id: "patching", capability: "OS & third-party patching", status: "included" },
       { id: "onboarding", capability: "New user onboarding (accounts + access)", status: "limited", tooltip: "Standard workflow; complex app roles may be add-on" },
@@ -70,7 +71,7 @@ const matrixCategories: MatrixCategory[] = [
       { id: "awareness", capability: "Security awareness baseline (guidance + templates)", status: "limited", tooltip: "Baseline training materials; interactive simulations are add-on" },
       { id: "vuln-scan", capability: "Vulnerability scan (external / basic)", status: "limited", tooltip: "Quarterly snapshot; remediation planning included" },
       { id: "ir-readiness", capability: "Incident response readiness (basic plan + contacts)", status: "limited", tooltip: "Basic playbook; full IR retainer is add-on" },
-      { id: "soc", capability: "Advanced monitoring / SOC response", status: "optional", tooltip: "24/7 SOC monitoring available as add-on" },
+      { id: "soc", capability: "24/7 Managed Detection and Response", status: "optional", tooltip: MDR_ADDON_CLAIM },
       { id: "compliance", capability: "Compliance frameworks & reporting", status: "optional", tooltip: "HIPAA, SOC 2, CMMC modules available" }
     ]
   },
@@ -106,8 +107,8 @@ const matrixCategories: MatrixCategory[] = [
 ];
 
 const shortCompareRows = [
-  { label: "Support hours (SLA)", value: "8×5 business hours" },
-  { label: "Response targets", value: "Standard (next business day)" },
+  { label: "Support hours", value: "8×5 business hours" },
+  { label: "Response targets", value: "Response targets (not guarantees; your signed agreement governs): next business day" },
   { label: "Patch + monitoring coverage", value: "Full coverage" },
   { label: "Email protection level", value: "Anti-phishing gateway" },
   { label: "Endpoint protection level", value: "EDR (detect + respond)" },
@@ -119,7 +120,7 @@ const shortCompareRows = [
 ];
 
 const notIncludedItems = [
-  { item: "MDR / 24×7 SOC monitoring", reason: "Available as add-on for organizations needing continuous threat hunting" },
+  { item: "Alert monitoring, on plans that include it", reason: "Available as an add-on on plans that include it" },
   { item: "Continuous vulnerability management", reason: "Quarterly scans included; continuous scanning is add-on" },
   { item: "Disaster Recovery (DRaaS) / warm standby", reason: "Available as add-on for critical systems requiring rapid failover" },
   { item: "Privileged Access Management (PAM)", reason: "Available as add-on for environments with elevated access requirements" },
@@ -665,9 +666,9 @@ export default function OfficePage() {
                     className="bg-transparent border border-white/30 text-white hover:bg-white/10"
                     data-testid="btn-final-call"
                   >
-                    <a href={PRIMARY_PHONE.telHref}>
+                    <a href={PUBLIC_PHONE_CTA.href}>
                       <Phone className="mr-2 h-5 w-5" />
-                      Call {PRIMARY_PHONE.display}
+                      {PUBLIC_PHONE_CTA.label}
                     </a>
                   </Button>
                 </div>

@@ -1,3 +1,4 @@
+import { ALERT_MONITORING_CLAIM } from "@shared/publicSecurityClaims";
 /** Deeper sales narrative layered onto GenericServicePage shells. */
 
 export interface PageNarrative {
@@ -35,7 +36,7 @@ export const pageNarratives: Record<string, PageNarrative> = {
       {
         title: "Operate",
         description:
-          "Helpdesk with response targets by priority (15 minutes for critical incidents, per our SLA), vendor coordination, and monthly visibility into what we fixed and prevented.",
+          "Helpdesk with response targets set in your signed agreement, vendor coordination, and monthly visibility into what we fixed and prevented.",
       },
       {
         title: "Improve",
@@ -183,7 +184,7 @@ export const pageNarratives: Record<string, PageNarrative> = {
     painPoints: [
       "Alerts fire into a mailbox nobody watches after 5pm",
       "Ransomware or BEC would be noticed by a client before your team",
-      "Insurance and customers ask about 24/7 monitoring — you don’t have a real answer",
+      "Insurance and customers ask about continuous monitoring — you don’t have a real answer",
       "Containment means hoping someone knows which laptop to unplug",
     ],
     process: [
@@ -193,7 +194,7 @@ export const pageNarratives: Record<string, PageNarrative> = {
       },
       {
         title: "Detect & triage",
-        description: "24/7 eyes on telemetry with human triage so noise doesn’t bury the real incident.",
+        description: ALERT_MONITORING_CLAIM,
       },
       {
         title: "Contain",
@@ -229,7 +230,7 @@ export const pageNarratives: Record<string, PageNarrative> = {
         a: "Managed IT keeps the lights on. Detection & response assumes attackers are already trying. Most growing firms eventually need both.",
       },
     ],
-    ctaHeadline: "See what 24/7 detection would catch in your environment",
+    ctaHeadline: "See what automated security alert monitoring would catch in your environment",
     ctaBody:
       "Book a cyber risk assessment. We’ll review your current stack and tell you honestly whether you have monitoring — or just tools.",
   },
@@ -308,7 +309,7 @@ export const pageNarratives: Record<string, PageNarrative> = {
       {
         title: "Targets",
         description:
-          "Agree RPO/RTO with ownership first — recovery objectives with SLA backing, not marketing slogans.",
+          "Agree RPO/RTO with ownership first — recovery objectives set in your signed agreement, not marketing slogans.",
       },
       {
         title: "Protect",

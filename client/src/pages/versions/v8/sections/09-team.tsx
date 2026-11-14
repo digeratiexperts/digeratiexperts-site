@@ -3,7 +3,7 @@ import { Link } from "wouter";
 import { ArrowRight, MapPin } from "lucide-react";
 import { revealInitial, revealInView, revealTransition, revealViewport } from "@/lib/animations";
 import { useBooking } from "@/contexts/BookingContext";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PRIMARY_PHONE, PUBLIC_PHONE_CTA } from "@/data/companyContact";
 import { HOME_CTA } from "../cta";
 import "./09-team.css";
 import { ChapterPattern } from "@/components/site/Atmosphere";
@@ -107,8 +107,8 @@ export function V8Team(): JSX.Element {
               >
                 {HOME_CTA.secondary} <ArrowRight {...icon} />
               </a>
-              <a className="v8-link--quiet lead__phone" href={PRIMARY_PHONE.telHref} data-testid="link-team-phone">
-                or call {PRIMARY_PHONE.display}
+              <a className="v8-link--quiet lead__phone" href={PUBLIC_PHONE_CTA.href} data-testid="link-team-phone">
+                or call {PUBLIC_PHONE_CTA.numberLabel}
               </a>
             </p>
           </div>

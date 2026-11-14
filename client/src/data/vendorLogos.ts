@@ -139,7 +139,7 @@ export const deOwnedServiceSkus: ReadonlySet<string> = new Set([
 ]);
 
 /** Security providers that never appear as a Store mark on a DE-owned service. */
-export const internalSecurityProviderSlugs: ReadonlySet<string> = new Set(["guardz", "blackpoint"]);
+export const internalSecurityProviderSlugs: ReadonlySet<string> = new Set(["guardz", "blackpoint", "huntress"]);
 
 export function isDeOwnedServiceSku(sku: string): boolean {
   return deOwnedServiceSkus.has(sku);
@@ -173,10 +173,10 @@ export function resolveVendorSlug(
 ): string | null {
   if (isDeOwnedServiceSku(sku)) return null;
   const mapped = skuVendorMap[sku];
-  if (mapped && vendorLogoCatalog[mapped]) return mapped;
+  if (mapped && vendorLogoCatalog[mapped] && !internalSecurityProviderSlugs.has(mapped)) return mapped;
   if (category) {
     const fallback = categoryVendorFallback[category];
-    if (fallback && vendorLogoCatalog[fallback]) return fallback;
+    if (fallback && vendorLogoCatalog[fallback] && !internalSecurityProviderSlugs.has(fallback)) return fallback;
   }
   return null;
 }
@@ -186,7 +186,7 @@ export function getVendorForSku(
   category?: string
 ): { slug: string; name: string; logoUrl: string } | null {
   const slug = resolveVendorSlug(sku, category);
-  if (!slug || !vendorLogoCatalog[slug]) return null;
+  if (!slug || internalSecurityProviderSlugs.has(slug) || !vendorLogoCatalog[slug]) return null;
   return { slug, name: vendorLogoCatalog[slug], logoUrl: vendorLogoUrl(slug) };
 }
 
@@ -197,8 +197,6 @@ export function inferVendorFromText(text: string): { slug: string; name: string;
     ["jumpcloud", "jumpcloud"],
     ["mimecast", "mimecast"],
     ["coro", "coro"],
-    ["blackpoint", "blackpoint"],
-    ["huntress", "huntress"],
     ["sophos", "sophos"],
     ["proofpoint", "proofpoint"],
     ["threatlocker", "threatlocker"],
@@ -219,7 +217,7 @@ export function inferVendorFromText(text: string): { slug: string; name: string;
     ["bitdefender", "bitdefender"],
   ];
   for (const [needle, slug] of hints) {
-    if (hay.includes(needle) && vendorLogoCatalog[slug]) {
+    if (hay.includes(needle) && vendorLogoCatalog[slug] && !internalSecurityProviderSlugs.has(slug)) {
       return { slug, name: vendorLogoCatalog[slug], logoUrl: vendorLogoUrl(slug) };
     }
   }

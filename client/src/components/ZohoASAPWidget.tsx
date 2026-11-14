@@ -35,7 +35,7 @@ import {
   X,
   DollarSign,
 } from "lucide-react";
-import { PRIMARY_PHONE } from "@shared/companyContact";
+import { PRIMARY_PHONE, PUBLIC_PHONE_CTA } from "@shared/companyContact";
 import { readDeskTicketResponse } from "@/lib/deskTicketResponse";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -2391,12 +2391,12 @@ export const ZohoASAPWidget = ({
                           {isTicketSending ? "Creating ticket…" : "Create ticket"}
                         </button>
                         <a
-                          href={PRIMARY_PHONE.telHref}
+                          href={PUBLIC_PHONE_CTA.href}
                           className="de-desk-form-phone"
                           data-testid="desk-support-phone-link"
                         >
                           <Phone aria-hidden="true" />
-                          Call {PRIMARY_PHONE.display}
+                          {PUBLIC_PHONE_CTA.label}
                         </a>
                         </div>
                       </>

@@ -1,3 +1,4 @@
+import { ALERT_MONITORING_CLAIM_PHRASE } from "@shared/publicSecurityClaims";
 /**
  * Canonical ProActive Ecosystem pricing — single source of truth.
  * Homepage, pricing page, store ProActive SKUs, advisor, and industry copy
@@ -96,7 +97,7 @@ const tiers = {
     learnMoreUrl: "/solutions/proactive-business-ecosystem",
     inclusions: [
       "Everything in Office, plus",
-      "DE Security Foundation with 24/7 managed detection and response",
+      "DE Security Foundation with " + ALERT_MONITORING_CLAIM_PHRASE,
       "Enhanced security operations / threat detection",
       "Security awareness training",
       "Backup & disaster recovery posture",
@@ -119,6 +120,7 @@ const tiers = {
     learnMoreUrl: "/solutions/proactive-enterprise-ecosystem",
     inclusions: [
       "Everything in Business, plus",
+      "Includes 24/7 human-led threat monitoring and response",
       "Unified security posture reporting",
       "Advanced compliance / risk reporting",
       "Custom BCDR architecture support",

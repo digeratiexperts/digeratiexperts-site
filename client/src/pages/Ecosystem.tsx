@@ -1,6 +1,7 @@
 import { Shield, Users, Server, Building2, HeadphonesIcon, FileCheck } from "lucide-react";
 import { motion } from "framer-motion";
 import { pricing } from "@/data/pricing";
+import { ALERT_MONITORING_CLAIM_PHRASE, ENTERPRISE_MDR_CLAIM, MDR_ADDON_CLAIM } from "@shared/publicSecurityClaims";
 
 export default function Ecosystem() {
   const servicePillars = [
@@ -13,8 +14,8 @@ export default function Ecosystem() {
     { 
       name: "DE SECURITY", 
       icon: Shield,
-      desc: "Email Protection · EDR · SOC/MDR · Security Awareness · DLP",
-      details: ["24/7 Threat Monitoring", "Endpoint Detection & Response", "Phishing Protection", "Security Logging & Reporting"]
+      desc: "Email Protection · EDR · Alert monitoring · Security Awareness · DLP",
+      details: [ALERT_MONITORING_CLAIM_PHRASE, "Endpoint Detection & Response", "Phishing Protection", "Security Logging & Reporting"]
     },
     { 
       name: "DE INFRASTRUCTURE", 
@@ -37,7 +38,7 @@ export default function Ecosystem() {
     { 
       name: "DE COMPLIANCE", 
       icon: FileCheck,
-      desc: "HIPAA · GDPR · FTC Safeguards · Cyber Insurance · Policy Enforcement",
+      desc: "HIPAA · FTC Safeguards · Cyber Insurance · Policy Enforcement",
       details: ["Compliance Modules", "Evidence Support", "Audit-Ready Documentation", "Framework Mapping"]
     },
   ];
@@ -52,14 +53,14 @@ export default function Ecosystem() {
     { 
       name: pricing.business.name, 
       price: `$${pricing.business.user}`,
-      desc: "SOC/MDR + SMART HR + vCIO advisory",
-      highlights: ["Everything in Office", "SOC / MDR Monitoring", "SMART HR Workflows", "Security Awareness + vCIO"]
+      desc: "Alert monitoring + SMART HR + vCIO advisory",
+      highlights: ["Everything in Office", "Alert monitoring", "SMART HR Workflows", MDR_ADDON_CLAIM]
     },
     { 
       name: pricing.enterprise.name, 
       price: `$${pricing.enterprise.user}`,
       desc: "Full compliance + advanced controls",
-      highlights: ["Everything in Business", "HIPAA/GDPR Modules", "Pen Testing + DR Runbooks", "AI & Cloud Automation"]
+      highlights: ["Everything in Business", ENTERPRISE_MDR_CLAIM, "HIPAA Modules", "Pen Testing + DR Runbooks", "AI & Cloud Automation"]
     },
   ];
 

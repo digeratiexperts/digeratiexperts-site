@@ -22,11 +22,12 @@ import { THIRD_LANE_NAME } from "@/data/offering";
 import { pricingTiers, getPricingFooterText } from "@/data/pricing";
 import { CTA } from "@/lib/ctaCopy";
 import { IncidentFlow } from "@/components/evidence/IncidentFlow";
+import { ALERT_MONITORING_CLAIM, ALERT_MONITORING_CLAIM_PHRASE } from "@shared/publicSecurityClaims";
 
 const SolutionsIndex = () => {
   useSEO({
     title: 'Managed IT & Security Solutions',
-    description: 'Comprehensive managed IT and cybersecurity solutions. Network security, endpoint protection, cloud security, compliance support, and 24/7 managed detection on Business and Enterprise for Arizona businesses.',
+    description: "Comprehensive managed IT and cybersecurity solutions. Network security, endpoint protection, cloud security, and compliance support for Arizona businesses. " + ALERT_MONITORING_CLAIM,
     canonical: '/solutions',
   });
 
@@ -76,8 +77,8 @@ const SolutionsIndex = () => {
   const securityServices = [
     {
       icon: Lock,
-      title: "24/7 SOC Monitoring",
-      description: "Security Operations Center with real human analysts watching your environment around the clock.",
+      title: ALERT_MONITORING_CLAIM_PHRASE,
+      description: ALERT_MONITORING_CLAIM,
       tier: "Business+"
     },
     {
@@ -128,10 +129,10 @@ const SolutionsIndex = () => {
   ];
 
   const trustFacts = [
-    { icon: Lock, title: "24/7 Human-Led SOC", text: "Real analysts, on Business and Enterprise" },
+    { icon: Lock, title: ALERT_MONITORING_CLAIM_PHRASE, text: "On ProActive Business and Enterprise" },
     { icon: MapPin, title: "Arizona local engineering team", text: "Chandler / East Valley operator" },
     { icon: Shield, title: "8 blocks", text: "Assessed & protected" },
-    { icon: Activity, title: "RTO / RPO defined", text: "SLA commitments set in your agreement" },
+    { icon: Activity, title: "RTO / RPO defined", text: "Recovery targets set in your signed agreement" },
   ];
 
   const whyFacts = [
@@ -258,7 +259,7 @@ const SolutionsIndex = () => {
             tone="well"
             eyebrow="Security"
             title="Security & Threat Containment"
-            lede="Real human analysts backed by behavioral telemetry watching and neutralizing threat vectors around the clock."
+            lede={ALERT_MONITORING_CLAIM}
           />
           <div className="mb-12">
             <IncidentFlow />

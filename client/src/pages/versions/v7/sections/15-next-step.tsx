@@ -2,7 +2,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { revealInitial, revealInView, revealTransition, revealViewport } from "@/lib/animations";
 import { useBooking } from "@/contexts/BookingContext";
 import { CTA } from "@/lib/ctaCopy";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PRIMARY_PHONE, PUBLIC_PHONE_CTA } from "@/data/companyContact";
 import "./15-next-step.css";
 
 /**
@@ -84,8 +84,8 @@ export function V7NextStep(): JSX.Element {
             </span>
             <p className="next__call">
               Prefer to call?{" "}
-              <a href={PRIMARY_PHONE.telHref} aria-label={`Call ${PRIMARY_PHONE.display}`}>
-                {PRIMARY_PHONE.display}
+              <a href={PUBLIC_PHONE_CTA.href} aria-label={PUBLIC_PHONE_CTA.label}>
+                {PUBLIC_PHONE_CTA.numberLabel}
               </a>
             </p>
           </div>

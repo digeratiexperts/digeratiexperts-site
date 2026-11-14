@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { analytics } from "@/lib/analytics";
 import { CTA } from "@/lib/ctaCopy";
 import { DE_LOGO_REVERSE } from "@/lib/brandAssets";
-import { COMPANY, COMPANY_SOCIAL, PRIMARY_PHONE, formatAddressOneLine } from "@/data/companyContact";
+import { COMPANY, COMPANY_SOCIAL, PRIMARY_PHONE, PUBLIC_PHONE_CTA, formatAddressOneLine } from "@/data/companyContact";
 // Closing bookend (Joe 2026-08-31): the hero's Phoenix city-lights plate returns behind the contact chapter.
 import contactBgImage from "@assets/de-hero-arizona-dusk-1600.webp";
 import { CopyButton } from "./CopyButton";
@@ -77,7 +77,7 @@ const trustLegalLinks = [
   { name: "Privacy", href: "/legal/privacy-policy" },
   { name: "Terms", href: "/legal/terms-of-use" },
   { name: "MSA", href: "/legal/msa" },
-  { name: "SLA", href: "/legal/sla" },
+  { name: "Service levels", href: "/legal/sla" },
 ];
 
 const svgProps = {
@@ -484,8 +484,8 @@ export function V10ContactFooter(): JSX.Element {
                   <path d="m12 5 7 7-7 7" />
                 </svg>
               </a>
-              <a className="v10-btn v10-btn--outline" href={PRIMARY_PHONE.telHref} data-testid="contact-cta-call">
-                Call {PRIMARY_PHONE.display}
+              <a className="v10-btn v10-btn--outline" href={PUBLIC_PHONE_CTA.href} data-testid="contact-cta-call">
+                {PUBLIC_PHONE_CTA.label}
               </a>
             </div>
 
@@ -513,10 +513,18 @@ export function V10ContactFooter(): JSX.Element {
                 </span>
                 <span className="v10-meta">Phone</span>
                 <span className="dir__copyrow">
-                  <a className="dir__value" href={PRIMARY_PHONE.telHref} data-testid="contact-phone">
-                    {PRIMARY_PHONE.display}
-                  </a>
-                  <CopyButton value={PRIMARY_PHONE.display} what="phone number" testId="contact-phone-copy" />
+                  {!PRIMARY_PHONE.display.startsWith("[") ? (
+                    <>
+                      <a className="dir__value" href={PRIMARY_PHONE.telHref} data-testid="contact-phone">
+                        {PRIMARY_PHONE.display}
+                      </a>
+                      <CopyButton value={PRIMARY_PHONE.display} what="phone number" testId="contact-phone-copy" />
+                    </>
+                  ) : (
+                    <a className="dir__value" href="/contact" data-testid="contact-phone">
+                      Contact us
+                    </a>
+                  )}
                 </span>
               </li>
               <li>
@@ -550,13 +558,13 @@ export function V10ContactFooter(): JSX.Element {
                     <dt>Monday - Friday</dt>
                     <dd>7:00 AM - 6:00 PM MST</dd>
                     <dt>Saturday &amp; Sunday</dt>
-                    <dd>Emergency Support Only</dd>
+                    <dd>Emergency support is a response target on plans that include it; your signed agreement governs.</dd>
                   </dl>
                   <p className="hours__soc">
                     <svg {...svgProps}>
                       <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
                     </svg>
-                    <span>24/7/365 emergency incident{" "}response</span>
+                    <span>Incident response during business hours on plans that include it</span>
                   </p>
                 </div>
               </li>

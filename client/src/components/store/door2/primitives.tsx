@@ -1,7 +1,7 @@
 import { useEffect, useId, useState, type ReactNode } from "react";
 import { Link } from "wouter";
 import { ArrowRight, Check, Copy, MessageCircle, Phone } from "lucide-react";
-import { PRIMARY_PHONE } from "@shared/companyContact";
+import { PRIMARY_PHONE, PUBLIC_PHONE_CTA } from "@shared/companyContact";
 import { openMspAdvisor } from "@/lib/openMspAdvisor";
 import { useAnnouncer } from "@/components/AccessibleAnnouncer";
 
@@ -340,13 +340,13 @@ export function HelpRow({
         {askLabel}
       </button>
       <a
-        href={PRIMARY_PHONE.telHref}
+        href={PUBLIC_PHONE_CTA.href}
         className="d2-action d2-action--quiet"
-        aria-label={`Call ${PRIMARY_PHONE.display} (${PRIMARY_PHONE.label})`}
+        aria-label={PUBLIC_PHONE_CTA.label}
         data-testid="call-de"
       >
         <Phone className="h-4 w-4" aria-hidden="true" />
-        Call {PRIMARY_PHONE.display}
+        {PUBLIC_PHONE_CTA.label}
       </a>
     </div>
   );

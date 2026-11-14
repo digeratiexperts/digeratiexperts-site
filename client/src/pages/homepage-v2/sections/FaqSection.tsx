@@ -1,4 +1,5 @@
 import { CheckIcon } from "../icons";
+import { ALERT_MONITORING_CLAIM } from "@shared/publicSecurityClaims";
 
 const QUESTIONS = [
   {
@@ -19,7 +20,7 @@ const QUESTIONS = [
   },
   {
     question: "Is my data secure?",
-    answer: "Yes. We use enterprise-grade controls and documented security protocols, with monitoring matched to your plan — 24/7 SOC/MDR on Business and Enterprise. We help Arizona businesses prepare for HIPAA, PCI DSS, SOC 2, and cyber-insurance reviews, with clear ownership of credentials, policies, and evidence.",
+    answer: "Yes. We use enterprise-grade controls and documented security protocols, with monitoring matched to your plan. " + ALERT_MONITORING_CLAIM + " We help Arizona businesses prepare for HIPAA, PCI DSS, SOC 2, and cyber-insurance reviews, with clear ownership of credentials, policies, and evidence.",
   },
 ];
 

@@ -98,6 +98,9 @@ export function planDeskAction(action: DeskAction): DeskActionPlan | null {
  * to someone reporting a live incident.
  */
 export function deskActionLabel(action: DeskAction, phoneDisplay: string): string {
-  if (action.type === "contact_sales" && action.href?.startsWith("tel:")) return `Call ${phoneDisplay}`;
+  if (action.type === "contact_sales" && action.href?.startsWith("tel:")) {
+    if (phoneDisplay.startsWith("[")) return "Contact us";
+    return `Call ${phoneDisplay}`;
+  }
   return action.label;
 }

@@ -1,7 +1,7 @@
 import { LegalDocumentLayout } from "@/components/LegalDocumentLayout";
 import { Clock, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PRIMARY_PHONE, PUBLIC_PHONE_CTA } from "@/data/companyContact";
 
 export default function SLA() {
   return (
@@ -72,10 +72,10 @@ export default function SLA() {
           variant="outline"
           className="border-black/25 text-[#1A1228] hover:bg-black/5"
           onClick={() => {
-            window.location.href = PRIMARY_PHONE.telHref;
+            window.location.href = PUBLIC_PHONE_CTA.href;
           }}
         >
-          Call {PRIMARY_PHONE.display}
+          {PUBLIC_PHONE_CTA.label}
         </Button>
       </div>
     </LegalDocumentLayout>

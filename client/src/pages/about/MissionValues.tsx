@@ -13,7 +13,7 @@ import {
 import { Heart, MapPin, Target, Users, Shield, Clock, Award, Star, Layers, Building2 } from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
 import { CTA } from "@/lib/ctaCopy";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PRIMARY_PHONE, PUBLIC_PHONE_CTA } from "@/data/companyContact";
 // 37KB WebP sized for the ~448px frame (was a 2.1MB PNG) — review finding F2.
 import officeEveningImg from "@assets/de-arizona-office-evening-960.webp";
 
@@ -62,8 +62,8 @@ const differentiators = [
   },
   {
     icon: Clock,
-    title: "15-Minute Critical Response",
-    desc: "When a breach is active or a system is down, our published SLA sets a 15-minute response, with emergency incident response available 24/7/365.",
+    title: "Response when it matters",
+    desc: "Service levels are set in your signed agreement. Incident response during business hours on plans that include it.",
   },
 ];
 
@@ -92,7 +92,7 @@ export default function MissionValues() {
         <div className="flex flex-col gap-3 sm:flex-row">
           <HeroActions
             primary={{ label: CTA.primary, href: "/book" }}
-            secondary={{ label: `Call ${PRIMARY_PHONE.display}`, href: PRIMARY_PHONE.telHref }}
+            secondary={{ label: PUBLIC_PHONE_CTA.label, href: PUBLIC_PHONE_CTA.href }}
           />
         </div>
       }

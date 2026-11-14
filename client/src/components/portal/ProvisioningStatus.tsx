@@ -56,7 +56,7 @@ export function ProvisioningStatusPanel() {
       category="account"
       icon={ShieldCheck}
       title="Account provisioning"
-      description="What DE has set up for you: your JumpCloud sign-in, Blackpoint protection and any Store orders being set up."
+      description="What DE has set up for you: your JumpCloud sign-in, managed detection and response, and any Store orders being set up."
       actions={overall ? <Token label={overall.label} tone={overall.tone} dot={live} /> : undefined}
     >
       {isLoading ? (

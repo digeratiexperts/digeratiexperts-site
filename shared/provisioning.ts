@@ -108,7 +108,7 @@ export function buildProvisioningSummary(input: {
     },
     {
       key: "blackpoint",
-      label: offboard ? "Blackpoint protection removed" : "Blackpoint protection",
+      label: offboard ? "Managed detection and response removed" : "Managed detection and response",
       state: bpState,
       detail: integrationDetail(run?.blackpoint, bpState),
       at,

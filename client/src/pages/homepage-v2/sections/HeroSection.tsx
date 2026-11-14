@@ -73,7 +73,7 @@ export function HeroSection(): JSX.Element {
           </div>
           <div className="facts">
             <span><CheckIcon />No obligation</span>
-            <span><CheckIcon />Response within one business day</span>
+            <span><CheckIcon />We aim to respond within one business day; your signed agreement sets your actual response targets.</span>
             <span><PhoneIcon /><a href={PHONE_HREF}>{PHONE_DISPLAY}</a></span>
           </div>
           <div className="word" data-testid="digerati-pronunciation-card">

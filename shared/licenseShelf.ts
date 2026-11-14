@@ -48,7 +48,7 @@ const STARTER: ShelfEntry[] = [
   // Security and identity: the vendors DE already deploys (desktop agents, lifecycle).
   { key: "starter:jumpcloud-platform", kind: "license", vendor: "JumpCloud", product: "JumpCloud Platform", category: "Identity & devices", source: "starter" },
   { key: "starter:coro", kind: "license", vendor: "Coro", product: "Coro Cybersecurity", category: "Security", source: "starter" },
-  { key: "starter:blackpoint-mdr", kind: "license", vendor: "Blackpoint", product: "Blackpoint MDR", category: "Security", source: "starter" },
+  { key: "starter:blackpoint-mdr", kind: "license", vendor: "Digerati Experts", product: "24/7 MDR add-on", category: "Security", source: "starter" }, // key is stable for stored pool data; never display the key
   { key: "starter:defender-business", kind: "license", vendor: "Microsoft", product: "Microsoft Defender for Business", category: "Security", source: "starter" },
   { key: "starter:entra-p1", kind: "license", vendor: "Microsoft", product: "Microsoft Entra ID P1", category: "Identity & devices", source: "starter" },
   { key: "starter:intune-p1", kind: "license", vendor: "Microsoft", product: "Microsoft Intune Plan 1", category: "Identity & devices", source: "starter" },
@@ -70,7 +70,7 @@ const STARTER: ShelfEntry[] = [
   { key: "starter:agent-jumpcloud", kind: "app", vendor: "JumpCloud", product: "JumpCloud Agent", category: "Agents", source: "starter" },
   { key: "starter:agent-de", kind: "app", vendor: "Digerati Experts", product: "DE Desktop Agent", category: "Agents", source: "starter" },
   { key: "starter:agent-coro", kind: "app", vendor: "Coro", product: "Coro Agent", category: "Agents", source: "starter" },
-  { key: "starter:agent-blackpoint", kind: "app", vendor: "Blackpoint", product: "Blackpoint Agent", category: "Agents", source: "starter" },
+  { key: "starter:agent-blackpoint", kind: "app", vendor: "Digerati Experts", product: "24/7 MDR add-on agent", category: "Agents", source: "starter" }, // key is stable for stored pool data; never display the key
 ];
 
 /** The licensing catalog as shelf entries (all Productivity). */

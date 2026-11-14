@@ -5,7 +5,7 @@ import { Headphones, Link2Off, Mic, Phone, PhoneCall, PhoneOff, Volume2 } from "
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PortalLayout } from "./PortalLayout";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PRIMARY_PHONE, PUBLIC_PHONE_CTA } from "@/data/companyContact";
 import { Callout, DataTable, EmptyState, Field, Panel, StatTile, Token, type DataColumn } from "@/components/portal/ui";
 import { portalGet } from "@/lib/portalApi";
 import { usePortalIntegrations, type IntegrationStatus } from "@/lib/portalIntegrations";
@@ -107,7 +107,7 @@ function PhoneSupportCallout() {
     <Callout tone="info" title="Cytracom phone support">
       For phone system issues, check our <Link href="/portal/kb">Knowledge Base</Link> or contact support at{" "}
       <strong className="text-foreground">support@digeratiexperts.com</strong>. For urgent issues, call{" "}
-      <strong className="text-foreground">{PRIMARY_PHONE.display}</strong>.
+      <strong className="text-foreground">{PUBLIC_PHONE_CTA.numberLabel}</strong>.
     </Callout>
   );
 }

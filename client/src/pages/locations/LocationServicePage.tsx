@@ -31,7 +31,7 @@ import { SituationContinuityStrip } from "@/components/SituationContinuityStrip"
 import { situationSubmitPayload, useAnonymousSituation } from "@/lib/anonymousSituation";
 import { getCyberFact, formatFactSource } from "@/data/cyberAwarenessFacts";
 import { CTA } from "@/lib/ctaCopy";
-import { COMPANY, PRIMARY_PHONE, PUBLIC_SOCIAL_LINKS, formatAddressOneLine } from "@/data/companyContact";
+import { COMPANY, PRIMARY_PHONE, PUBLIC_PHONE_CTA, PUBLIC_SOCIAL_LINKS, formatAddressOneLine } from "@/data/companyContact";
 import { GREATER_PHOENIX_CITIES, cityPageSlug } from "@/data/greaterPhoenixCities";
 import { credentialsOfKind } from "@/data/credentials";
 import { IconWell } from "@/components/visual/IconWell";
@@ -216,14 +216,13 @@ export function LocationServicePage(props: LocationPageProps) {
 
   const stats = [
     { icon: Shield, value: "Security-first", label: "Operating model" },
-    { icon: Zap, value: "15 min", label: "Critical response (SLA)" },
-    // 24/7 MDR is ProActive Business and Enterprise only; the SLA line applies to every client.
-    { icon: Clock, value: "24/7/365", label: "Emergency incident response (SLA)" },
+    { icon: Zap, value: "Signed terms", label: "Service levels are set in your signed agreement" },
+    { icon: Clock, value: "Emergency", label: "Incident response on plans that include it" },
   ];
 
   const features = [
     { icon: FileCheck, text: "Insurance & Compliance-Ready" },
-    { icon: Shield, text: "24/7/365 Emergency Incident Response" },
+    { icon: Shield, text: "Incident response during business hours on plans that include it" },
     { icon: Building, text: `Built for ${props.city} Businesses` },
     { icon: CheckCircle, text: "Easy-to-Read Risk Reports" },
   ];
@@ -252,9 +251,9 @@ export function LocationServicePage(props: LocationPageProps) {
               <Link href={CTA.secondaryHref} className={buttonSecondary("well")}>
                 {CTA.secondary}
               </Link>
-              <a href={PRIMARY_PHONE.telHref} className={buttonSecondary("well")}>
+              <a href={PUBLIC_PHONE_CTA.href} className={buttonSecondary("well")}>
                 <Phone className="h-4 w-4" aria-hidden="true" />
-                Or call <span className="whitespace-nowrap">{PRIMARY_PHONE.display}</span>
+                Or call <span className="whitespace-nowrap">{PUBLIC_PHONE_CTA.numberLabel}</span>
               </a>
             </div>
           }
@@ -402,9 +401,9 @@ export function LocationServicePage(props: LocationPageProps) {
                               size="lg"
                               className="h-auto min-h-12 w-full whitespace-normal border-[var(--de-paper-hairline)] bg-white px-6 py-3 text-center text-base font-semibold leading-snug text-[#1A1228] hover:border-[#D3126A] hover:bg-[#D3126A]/5 sm:w-auto"
                             >
-                              <a href={PRIMARY_PHONE.telHref} className="sm:flex-shrink-0">
+                              <a href={PUBLIC_PHONE_CTA.href} className="sm:flex-shrink-0">
                                 <Phone className="mr-2 h-5 w-5" aria-hidden="true" />
-                                {PRIMARY_PHONE.display}
+                                {PUBLIC_PHONE_CTA.numberLabel}
                               </a>
                             </Button>
                           </div>
@@ -585,11 +584,11 @@ export function LocationServicePage(props: LocationPageProps) {
                     {props.city} clients are served from our Chandler office and by remote support.
                   </p>
                   <a
-                    href={PRIMARY_PHONE.telHref}
+                    href={PUBLIC_PHONE_CTA.href}
                     className="mt-3 inline-flex min-h-11 items-center gap-2 font-semibold text-de-magenta-paper-ink underline-offset-4 hover:underline"
                   >
                     <Phone className="h-4 w-4" aria-hidden="true" />
-                    <span className="whitespace-nowrap">{PRIMARY_PHONE.display}</span>
+                    <span className="whitespace-nowrap">{PUBLIC_PHONE_CTA.numberLabel}</span>
                   </a>
                 </div>
               </div>

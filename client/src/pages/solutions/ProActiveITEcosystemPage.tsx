@@ -1,5 +1,6 @@
 import { TierDetailTemplate, type TierPageConfig } from "@/components/TierDetailTemplate";
 import { pricing, formatPrice, formatUserPrice } from "@/data/pricing";
+import { ALERT_MONITORING_CLAIM_PHRASE } from "@shared/publicSecurityClaims";
 
 const config: TierPageConfig = {
   id: "it",
@@ -23,7 +24,7 @@ const config: TierPageConfig = {
     "A documented, professionally managed Microsoft 365 and endpoint environment",
     "A single accountable help desk with response-time commitments — no more guessing who to call",
     "Clear visibility into user lifecycle, licensing, and device health",
-    "A managed security foundation that can step up cleanly into 24/7 MDR, deeper recovery, compliance, and governance",
+    "A managed security foundation that can step up cleanly into " + ALERT_MONITORING_CLAIM_PHRASE + ", plus deeper recovery, compliance, and governance",
   ],
   included: [
     "Microsoft 365 / Entra ID tenant management",
@@ -36,18 +37,23 @@ const config: TierPageConfig = {
     "Network monitoring & basic firewall management",
     "DNS filtering / web security",
     "User onboarding & offboarding",
-    "Unlimited remote help desk during business hours",
+    "Remote help desk for covered work during business hours",
     "Asset & license inventory",
     "Vendor management for core IT systems",
     "Monthly health & ticket reporting",
   ],
   notIncluded: [
     "Endpoint Backup, BCDR, and User Cloud Storage Backup (add-on or step up to Business)",
-    "24/7 Security Operations Center (SOC) and Managed Detection & Response (MDR)",
+    ALERT_MONITORING_CLAIM_PHRASE,
     "Compliance and risk reporting (HIPAA, CMMC, PCI, SOC 2 mapping)",
     "Semi-annual technology + security reviews (vCIO / QBR cadence)",
   ],
   addOnsOrUpgrades: [
+    {
+      label: "24/7 Managed Detection and Response",
+      desc: "24/7 Managed Detection and Response, available as an add-on.",
+    },
+
     {
       label: "Microsoft 365 Backup",
       desc: "Independent backup of Exchange, SharePoint, OneDrive, and Teams data — recommended for any business that lives in M365.",
@@ -58,7 +64,7 @@ const config: TierPageConfig = {
     },
     {
       label: "Step up to ProActive Office or Business",
-      desc: "Office adds managed endpoint detection (EDR) plus managed network and endpoint backup; Business adds 24/7 managed detection and response, deeper security operations, BCDR, compliance/risk reporting, and semi-annual reviews.",
+      desc: "Office adds managed endpoint detection (EDR) plus managed network and endpoint backup; Business adds " + ALERT_MONITORING_CLAIM_PHRASE + ", deeper security operations, BCDR, compliance/risk reporting, and semi-annual reviews.",
     },
   ],
   reviewCadence:

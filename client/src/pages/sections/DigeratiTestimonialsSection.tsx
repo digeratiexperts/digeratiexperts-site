@@ -25,7 +25,7 @@ import {
   type PublicReviewItem,
   type ReviewSourceId,
 } from "@/data/reviewsCatalog";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PRIMARY_PHONE, PUBLIC_PHONE_CTA } from "@/data/companyContact";
 
 type PublicReviewsResponse = {
   status: "ok" | "empty" | "partial";
@@ -333,7 +333,7 @@ export const DigeratiTestimonialsSection = (): JSX.Element => {
           </div>
           <p className="text-sm text-white/55">
             Serving professional services, healthcare, construction, nonprofit, and regulated
-            organizations across Greater Phoenix · <span className="whitespace-nowrap">{PRIMARY_PHONE.display}</span>
+            organizations across Greater Phoenix · {!PRIMARY_PHONE.display.startsWith("[") ? <span className="whitespace-nowrap">{PRIMARY_PHONE.display}</span> : "Contact us"}
           </p>
         </div>
       </HomeContainer>

@@ -205,7 +205,7 @@ export const resourceLandingMeta: Record<string, ResourceLandingMeta> = {
       "1× combined technology + cybersecurity review per year",
     ],
     positioning:
-      "The right starting point for offices that need managed endpoint security but not yet the 24/7 MDR, deeper BCDR, compliance, and governance scope of ProActive Business.",
+      "The right starting point for offices that need managed endpoint security but not yet the deeper BCDR, compliance, and governance scope of ProActive Business. 24/7 Managed Detection and Response is available as an add-on.",
   },
   "proactive-business-ecosystem-datasheet": {
     tagline:
@@ -214,7 +214,7 @@ export const resourceLandingMeta: Record<string, ResourceLandingMeta> = {
       "Established businesses that need enhanced security, real backup and business continuity, and recurring leadership reviews.",
     inside: [
       "Everything in ProActive Office, with enhanced endpoint, email, and identity controls",
-      "Threat detection & response / SOC included",
+      "Threat detection and response, with business-hours alert triage, included",
       "Endpoint backup, BCDR, and user cloud storage backup included",
       "Security Awareness Training included",
       "Compliance & Risk Reports (basic) included",

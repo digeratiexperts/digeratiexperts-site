@@ -1,6 +1,6 @@
 import { DE_COMPANY } from "./knowledge";
 import type { AdvisorAction, AdvisorActionType } from "./types";
-import { PRIMARY_PHONE } from "@shared/companyContact";
+import { PRIMARY_PHONE, PUBLIC_PHONE_CTA } from "@shared/companyContact";
 
 const ALLOWED_TYPES: AdvisorActionType[] = [
   "schedule_consultation",
@@ -132,7 +132,7 @@ export function materializeAction(
     case "request_assessment":
       return { type, label: lbl };
     case "contact_sales":
-      return { type, label: lbl, href: `tel:${DE_COMPANY.phoneE164}` };
+      return { type, label: lbl, href: PUBLIC_PHONE_CTA.href };
     case "create_lead":
       return { type, label: lbl };
     case "open_portal":
@@ -156,7 +156,7 @@ export function defaultActionsForMode(mode?: string): AdvisorAction[] {
   if (mode === "security_incident") {
     return [
       materializeAction("request_callback", "Emergency callback")!,
-      materializeAction("contact_sales", `Call ${PRIMARY_PHONE.display}`)!,
+      materializeAction("contact_sales", PUBLIC_PHONE_CTA.label)!,
     ];
   }
   if (mode === "existing_client") {

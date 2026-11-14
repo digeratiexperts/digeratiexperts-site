@@ -48,7 +48,7 @@ async function bpFetch<T>(
   init?: RequestInit,
 ): Promise<{ ok: boolean; status: number; data?: T; error?: string }> {
   const headers = bpHeaders();
-  if (!headers) return { ok: false, status: 0, error: "BLACKPOINT_API_KEY not configured" };
+  if (!headers) return { ok: false, status: 0, error: "24/7 MDR add-on API key not configured" };
   try {
     const res = await fetch(`${BP_BASE}${path}`, {
       ...init,
@@ -71,7 +71,7 @@ async function bpFetch<T>(
     }
     return { ok: true, status: res.status, data: data as T };
   } catch (err: any) {
-    return { ok: false, status: 0, error: err?.message || "Blackpoint request failed" };
+    return { ok: false, status: 0, error: err?.message || "24/7 MDR add-on request failed" };
   }
 }
 
@@ -82,26 +82,26 @@ export async function blackpointTestConnection(): Promise<{
   endpoint?: string;
 }> {
   if (!blackpointConfigured()) {
-    return { success: false, message: "BLACKPOINT_API_KEY not configured" };
+    return { success: false, message: "24/7 MDR add-on API key not configured" };
   }
   const candidates = ["/tenants", "/accounts", "/partners/me", "/me", "/organizations"];
   for (const path of candidates) {
     const r = await bpFetch(path);
     if (r.ok) {
-      return { success: true, message: `Blackpoint API connected via ${path}`, endpoint: path };
+      return { success: true, message: `24/7 MDR add-on API connected via ${path}`, endpoint: path };
     }
     // 401/403 = key present but wrong scope; still "configured"
     if (r.status === 401 || r.status === 403) {
       return {
         success: false,
-        message: `Blackpoint auth rejected (${r.status}) on ${path}: ${r.error}`,
+        message: `24/7 MDR add-on auth rejected (${r.status}) on ${path}: ${r.error}`,
         endpoint: path,
       };
     }
   }
   return {
     success: false,
-    message: "Blackpoint API key set but no known tenant endpoint responded OK — check partner API docs/base URL",
+    message: "24/7 MDR add-on API key set but no known tenant endpoint responded OK - check partner API docs and base URL",
   };
 }
 
@@ -126,7 +126,7 @@ export async function blackpointListTenants(): Promise<{
             : [];
     return { success: true, tenants: list, message: `Listed ${list.length} via ${path}` };
   }
-  return { success: false, tenants: [], message: "Could not list Blackpoint tenants" };
+  return { success: false, tenants: [], message: "Could not list 24/7 MDR add-on tenants" };
 }
 
 export async function blackpointFindTenantByName(companyName: string): Promise<BpTenant | null> {
@@ -157,7 +157,7 @@ export async function blackpointOnboardPackage(input: {
   if (!blackpointConfigured()) {
     return {
       success: false,
-      message: "BLACKPOINT_API_KEY not configured",
+      message: "24/7 MDR add-on API key not configured",
       checklist: [],
     };
   }
@@ -165,19 +165,19 @@ export async function blackpointOnboardPackage(input: {
   const installerUrl = (process.env.BLACKPOINT_INSTALLER_URL || "").trim() || null;
   const checklist = [
     tenant
-      ? `Matched Blackpoint tenant: ${tenant.name || tenant.accountName || tenant.id || tenant.uid}`
-      : `No tenant match for "${input.companyName}" — create/map tenant in CompassOne partner portal`,
+      ? `Matched MDR tenant: ${tenant.name || tenant.accountName || tenant.id || tenant.uid}`
+      : `No tenant match for "" - create or map the tenant in the partner portal`,
     installerUrl
       ? "Agent installer URL available for device onboard"
-      : "Set BLACKPOINT_INSTALLER_URL (or per-tenant link) for agent deploy packaging",
+      : "Set the 24/7 MDR add-on installer URL (or per-tenant link) for agent deploy packaging",
     input.email ? `Notify user ${input.email} after agent install` : "Collect end-user email for install notice",
-    "Confirm SNAP/MDR coverage active for tenant in CompassOne",
+    "Confirm MDR coverage is active for the tenant in the partner portal",
   ];
   return {
     success: true,
     message: tenant
-      ? "Blackpoint onboard package prepared (tenant matched)"
-      : "Blackpoint onboard package prepared (tenant mapping needed)",
+      ? "24/7 MDR add-on onboard package prepared (tenant matched)"
+      : "24/7 MDR add-on onboard package prepared (tenant mapping needed)",
     tenant,
     installerUrl,
     checklist,
@@ -194,20 +194,20 @@ export async function blackpointOffboardPackage(input: {
   checklist: string[];
 }> {
   if (!blackpointConfigured()) {
-    return { success: false, message: "BLACKPOINT_API_KEY not configured", checklist: [] };
+    return { success: false, message: "24/7 MDR add-on API key not configured", checklist: [] };
   }
   const tenant = await blackpointFindTenantByName(input.companyName);
   const checklist = [
     tenant
       ? `Tenant: ${tenant.name || tenant.accountName || tenant.id || tenant.uid}`
-      : `No tenant match for "${input.companyName}" — verify in CompassOne`,
+      : `No tenant match for "" - verify in the partner portal`,
     input.email ? `Remove / deactivate agent for user ${input.email}` : "Identify devices/users to remove from MDR",
-    "Uninstall Blackpoint agent from endpoints (or quarantine via CompassOne)",
+    "Uninstall the 24/7 MDR add-on agent from endpoints (or quarantine via the partner portal)",
     "Confirm alerts silenced / license seat released in partner portal",
   ];
   return {
     success: true,
-    message: "Blackpoint offboard checklist prepared",
+    message: "24/7 MDR add-on offboard checklist prepared",
     tenant,
     checklist,
   };

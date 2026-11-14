@@ -89,6 +89,23 @@ export const PRIMARY_PHONE: CompanyPhone = {
 };
 
 /**
+ * Public call-to-action. When display is a [PLACEHOLDER], do not render a
+ * tel: link or the placeholder string; send people to the contact page.
+ * Check: !PRIMARY_PHONE.display.startsWith("[").
+ */
+export const PUBLIC_PHONE_CTA = !PRIMARY_PHONE.display.startsWith("[")
+  ? {
+      label: `Call ${PRIMARY_PHONE.display}` as const,
+      href: PRIMARY_PHONE.telHref,
+      numberLabel: PRIMARY_PHONE.display,
+    }
+  : {
+      label: "Contact us" as const,
+      href: "/contact" as const,
+      numberLabel: "Contact us" as const,
+    };
+
+/**
  * Known phone identities. Only `primary` is public.
  * Do not add a second unlabeled public number.
  */

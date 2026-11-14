@@ -1,7 +1,7 @@
 {
   "/": {
     "title": "Managed IT Services & Cybersecurity in Arizona | Digerati Experts",
-    "description": "Arizona MSP/MSSP. Cybersecurity-first managed IT, 24/7 emergency incident response, and a Cyber Risk Assessment that matches the operating model to your environment.",
+    "description": "Arizona MSP/MSSP. Cybersecurity-first managed IT, incident response during business hours on plans that include it, and a Cyber Risk Assessment that matches the operating model to your environment.",
     "canonical": "/",
     "robots": "index, follow",
     "ogImage": "https://digeratiexperts.com/og-image.png"
@@ -28,8 +28,8 @@
     "ogImage": "https://digeratiexperts.com/og-image.png"
   },
   "/about/guarantee": {
-    "title": "100% Money-Back Guarantee | Digerati Experts",
-    "description": "Digerati Experts 30-day, no-questions-asked money-back guarantee on managed IT and cybersecurity services.",
+    "title": "Our 30-Day Money-Back Guarantee | Digerati Experts",
+    "description": "30-day money-back guarantee on managed services: if you're not satisfied, tell us in writing within 30 days of your start date and we'll refund 100% of your managed-service fees for that period, no questions asked. Hardware, kits, and third-party licenses are not covered.",
     "canonical": "/about/guarantee",
     "robots": "index, follow",
     "ogImage": "https://digeratiexperts.com/og-image.png"
@@ -218,7 +218,7 @@
   },
   "/locations/chandler-az": {
     "title": "Managed IT Services & Cybersecurity in Chandler, AZ | Digerati Experts",
-    "description": "Chandler-based managed IT and cybersecurity for healthcare, law, accounting and growing Arizona businesses, with a published SLA: 15-minute response for critical incidents.",
+    "description": "Chandler-based managed IT and cybersecurity for healthcare, law, accounting and growing Arizona businesses.",
     "canonical": "/locations/chandler-az",
     "robots": "index, follow",
     "ogImage": "https://digeratiexperts.com/og-image.png"
@@ -239,7 +239,7 @@
   },
   "/locations/phoenix-az": {
     "title": "Managed IT Services & Cybersecurity in Phoenix, AZ | Digerati Experts",
-    "description": "Managed IT services, IT support and cybersecurity for Phoenix businesses from a Chandler-based team, with a published SLA and 24/7/365 incident response.",
+    "description": "Managed IT services, IT support and cybersecurity for Phoenix businesses from a Chandler-based team.",
     "canonical": "/locations/phoenix-az",
     "robots": "index, follow",
     "ogImage": "https://digeratiexperts.com/og-image.png"
@@ -568,14 +568,14 @@
   },
   "/services/ucaas": {
     "title": "Business Phone Systems | UCaaS Voice & Meetings | Digerati Experts",
-    "description": "We design, secure, and run your business phone system and meeting stack so it actually supports the business. E911 compliance, call routing, retention policies, and 24/7 support.",
+    "description": "We design, secure, and run your business phone system and meeting stack so it actually supports the business. E911 compliance, call routing, retention policies, and support as set in your signed agreement.",
     "canonical": "/services/ucaas",
     "robots": "index, follow",
     "ogImage": "https://digeratiexperts.com/og-image.png"
   },
   "/solutions": {
     "title": "Managed IT & Security Solutions | Digerati Experts",
-    "description": "Comprehensive managed IT and cybersecurity solutions. Network security, endpoint protection, cloud security, compliance support, and 24/7 managed detection on Business and Enterprise for Arizona businesses.",
+    "description": "Comprehensive managed IT and cybersecurity solutions. Network security, endpoint protection, cloud security, and compliance support for Arizona businesses. Automated security alert monitoring, with alerts triaged by DE technicians during business hours, on plans that include it.",
     "canonical": "/solutions",
     "robots": "index, follow",
     "ogImage": "https://digeratiexperts.com/og-image.png"
@@ -624,7 +624,7 @@
   },
   "/solutions/managed-it-support": {
     "title": "Managed IT Support for Small Businesses | Digerati Experts",
-    "description": "Managed IT support for small businesses: service desk, remote troubleshooting, onboarding and device support, with a 15-minute SLA for critical incidents.",
+    "description": "Managed IT support for small businesses: service desk, remote troubleshooting, onboarding and device support. Service levels are set in your signed agreement.",
     "canonical": "/solutions/managed-it-support",
     "robots": "index, follow",
     "ogImage": "https://digeratiexperts.com/og-image.png"
@@ -638,7 +638,7 @@
   },
   "/solutions/proactive-business-ecosystem": {
     "title": "ProActive Business Ecosystem | Digerati Experts",
-    "description": "Security-first managed IT for Arizona SMBs. Starts at $245/user/mo with a $5,400/mo minimum. Includes 24/7 SOC, MDR, Security Awareness Training, full backup and BCDR, compliance/risk reporting, and semi-annual technology + security reviews.",
+    "description": "Security-first managed IT for Arizona SMBs. Starts at $245/user/mo with a $5,400/mo minimum. Automated security alert monitoring, with alerts triaged by DE technicians during business hours, on plans that include it. Includes Security Awareness Training, full backup and BCDR, compliance/risk reporting, and semi-annual technology + security reviews.",
     "canonical": "/solutions/proactive-business-ecosystem",
     "robots": "index, follow",
     "ogImage": "https://digeratiexperts.com/og-image.png"
@@ -652,7 +652,7 @@
   },
   "/solutions/proactive-enterprise-ecosystem": {
     "title": "ProActive Enterprise Ecosystem | Digerati Experts",
-    "description": "Governance-grade managed security for Arizona organizations. Starts at $345/user/mo with a $9,000/mo minimum. Unified Security Posture, advanced compliance/risk reporting, custom BCDR, and quarterly executive reviews. Custom after assessment.",
+    "description": "Governance-grade managed security for Arizona organizations. Starts at $345/user/mo with a $9,000/mo minimum. Includes 24/7 human-led threat monitoring and response. Unified Security Posture, advanced compliance/risk reporting, custom BCDR, and quarterly executive reviews. Custom after assessment.",
     "canonical": "/solutions/proactive-enterprise-ecosystem",
     "robots": "index, follow",
     "ogImage": "https://digeratiexperts.com/og-image.png"
@@ -680,7 +680,7 @@
   },
   "/solutions/security-operations": {
     "title": "Security Operations (SOC-as-a-Service) | Digerati Experts",
-    "description": "Security Operations is Threat Detection & Response plus threat hunting, policy tuning, and continuous optimization. We run the security room. Includes detection, triage, response, plus proactive hunting, policy refinement, log correlation, and longer retention. Enterprise-grade security maturity.",
+    "description": "Security Operations is Threat Detection & Response plus threat hunting, policy tuning, and continuous optimization. Includes detection, triage, response, plus proactive hunting, policy refinement, log correlation, and longer retention. Enterprise-grade security maturity.",
     "canonical": "/solutions/security-operations",
     "robots": "index, follow",
     "ogImage": "https://digeratiexperts.com/og-image.png"
@@ -694,7 +694,7 @@
   },
   "/solutions/threat-detection": {
     "title": "Threat Detection & Response | Digerati Experts",
-    "description": "Threat Detection & Response is detection + triage + containment + guided recovery. We monitor endpoints, cloud apps, email, and network events 24/7 for threats. When we see something, we investigate, contain (isolate endpoints, reset credentials), and walk you through recovery. Not just alerts—real response.",
+    "description": "Threat Detection & Response is detection + triage + containment + guided recovery. Automated security alert monitoring, with alerts triaged by DE technicians during business hours, on plans that include it. When we see something, we investigate, contain (isolate endpoints, reset credentials), and walk you through recovery. Not just alerts—real response.",
     "canonical": "/solutions/threat-detection",
     "robots": "index, follow",
     "ogImage": "https://digeratiexperts.com/og-image.png"

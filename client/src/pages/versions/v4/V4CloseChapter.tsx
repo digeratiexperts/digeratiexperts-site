@@ -1,6 +1,7 @@
 import { ChapterLabel, PrimaryAction, T } from "./V4Primitives";
 import { EnvironmentMap } from "./V4EnvironmentMap";
 import { environmentStarted, useEnvironmentDraft } from "./useEnvironmentDraft";
+import { GUARANTEE_SHORT } from "@shared/publicGuarantee";
 
 /**
  * 10 — The final frame.
@@ -51,9 +52,7 @@ export function V4CloseChapter({ reduced }: { reduced: boolean }) {
                 {/* Verbatim from client/src/pages/about/Guarantee.tsx — the
                     wording DE signs, not a tidier paraphrase of it. */}
                 <blockquote className={`mt-3 max-w-[44ch] ${T.h3} text-balance text-de-paper`}>
-                  “If you are not over-the-top thrilled with our support, customer service, or
-                  problem-resolution by the end of the first 30 days, you can cancel your
-                  agreement and we'll refund 100% of your services fees, no questions asked.”
+                  {GUARANTEE_SHORT}
                 </blockquote>
                 <p className={`mt-3 ${T.small} text-white/50`}>
                   From the published guarantee, quoted on the first screen.

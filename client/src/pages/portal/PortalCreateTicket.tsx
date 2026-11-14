@@ -15,7 +15,7 @@ import {
   uploadPortalTicketAttachment,
   validatePortalTicketFile,
 } from "@/lib/portalTicketAttach";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PRIMARY_PHONE, PUBLIC_PHONE_CTA } from "@/data/companyContact";
 import { isDeAdmin, readImpersonatingCompany, readPortalUser } from "@/lib/portalRoles";
 import { RESPONSE_TARGETS, formatResponseTargets } from "@shared/responseTargets";
 import { INTERNAL_COMPANY_NAME, NO_CLIENT_TICKET_ERROR, ticketCompanyName } from "@shared/portalTicketOrg";
@@ -198,10 +198,10 @@ export default function PortalCreateTicket() {
           </Callout>
         )}
 
-        <Callout tone="warn" title={<>Something down right now? <a href={PRIMARY_PHONE.telHref} className="inline-block whitespace-nowrap underline underline-offset-2">Call {PRIMARY_PHONE.display}</a>.</>}>
+        <Callout tone="warn" title={<>Something down right now? <a href={PUBLIC_PHONE_CTA.href} className="inline-block whitespace-nowrap underline underline-offset-2">{PUBLIC_PHONE_CTA.label}</a>.</>}>
           <span className="inline-flex items-center gap-1.5">
             <Phone className="h-3.5 w-3.5" aria-hidden="true" />
-            Response targets: {formatResponseTargets()}.
+            Response targets (not guarantees; your signed agreement governs): {formatResponseTargets()}.
           </span>
         </Callout>
 

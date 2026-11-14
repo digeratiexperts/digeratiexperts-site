@@ -1,3 +1,4 @@
+import { ALERT_MONITORING_CLAIM_PHRASE } from "@shared/publicSecurityClaims";
 /**
  * Plan match for the /quote-wizard flow.
  *
@@ -44,13 +45,13 @@ const ENTERPRISE_REASONS = [
 ];
 
 const BUSINESS_BOTH_REASONS = [
-  "Deeper security operations + 24/7 managed threat response",
+  "Deeper security operations + " + ALERT_MONITORING_CLAIM_PHRASE,
   "BCDR + compliance/risk reporting + Security Awareness Training",
   "Technology + security business reviews + Cyber Insurance Readiness",
 ];
 
 const BUSINESS_CONNECTIVITY_REASONS = [
-  "24/7 managed threat response with deeper security operations",
+  "Deeper security operations with " + ALERT_MONITORING_CLAIM_PHRASE,
   "Advanced identity controls + BCDR / risk reporting depth",
   "Cyber insurance readiness and recurring security reviews",
 ];

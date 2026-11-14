@@ -15,6 +15,7 @@ import { V4OutcomesChapter } from "./V4OutcomesChapter";
 import { V4ProofChapter } from "./V4ProofChapter";
 import { V4FitChapter } from "./V4FitChapter";
 import { V4CloseChapter } from "./V4CloseChapter";
+import { GUARANTEE_SHORT } from "@shared/publicGuarantee";
 
 /**
  * Digerati Experts homepage — Version 4.
@@ -66,12 +67,8 @@ function GuaranteeFigure() {
     <figure className="border-l border-white/20 pl-6 sm:pl-8">
       <figcaption className={`${T.label} text-white/55`}>From the published guarantee</figcaption>
       <blockquote className={`mt-3 ${T.h3} text-balance text-de-paper`}>
-        “Digerati Experts 30-day, no-questions-asked money-back guarantee on managed IT
-        and cybersecurity services.”
+        {GUARANTEE_SHORT}
       </blockquote>
-      <p className={`mt-3 ${T.small} text-white/60`}>
-        Release from contracts without penalties. No questions asked, no fine print.
-      </p>
       <Link
         href="/about/guarantee"
         data-testid="v4-link-guarantee"
@@ -95,7 +92,7 @@ export default function HomepageV4() {
   useSEO({
     title: "Managed Security Service Provider",
     description:
-      "Arizona MSP/MSSP. Cybersecurity-first managed IT, 24/7 emergency incident response, and a Cyber Risk Assessment that matches the operating model to your environment.",
+      "Arizona MSP/MSSP. Cybersecurity-first managed IT, emergency incident response on plans that include it, and a Cyber Risk Assessment that matches the operating model to your environment.",
     canonical: "/",
   });
 

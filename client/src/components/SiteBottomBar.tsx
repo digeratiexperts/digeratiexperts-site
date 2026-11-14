@@ -17,7 +17,7 @@ import {
 } from "@/components/HomepageSectionNav";
 import { openMspAdvisor } from "@/lib/openMspAdvisor";
 import { isDoor2Path } from "@/lib/isDoor2Path";
-import { PRIMARY_PHONE } from "@shared/companyContact";
+import { PRIMARY_PHONE, PUBLIC_PHONE_CTA } from "@shared/companyContact";
 import { AskDeGlyph } from "@/components/icons/AskDeGlyph";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { useDockAutohide } from "@/hooks/useDockAutohide";
@@ -377,11 +377,11 @@ function AskDELauncherButton({ compact = false }: { compact?: boolean }) {
             <div className="mt-5 border-t border-white/10 pt-4 text-sm text-[#b4b4ba]">
               <p className="font-medium text-[#f5f5f4]">We&apos;re here to help!</p>
               <a
-                href={PRIMARY_PHONE.telHref}
+                href={PUBLIC_PHONE_CTA.href}
                 className="mt-1 inline-flex font-medium text-[#f5f5f4] underline decoration-white/25 underline-offset-4 hover:decoration-white/60"
                 data-testid="ask-de-choice-phone"
               >
-                Call {PRIMARY_PHONE.display}
+                {PUBLIC_PHONE_CTA.label}
               </a>
             </div>
             {/* Last in the DOM, pinned top-right on screen: keyboard focus lands on

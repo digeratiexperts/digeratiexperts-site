@@ -34,6 +34,7 @@ import {
   type CoverageTier,
 } from "@/lib/proactiveCoverage";
 import { cn } from "@/lib/utils";
+import { ALERT_MONITORING_CLAIM_PHRASE } from "@shared/publicSecurityClaims";
 
 type CellValue = boolean | string;
 
@@ -95,8 +96,8 @@ const matrixCategories: MatrixCategory[] = [
     services: [
       { name: "DE Security Foundation", tooltip: "Managed security is included in every ProActive tier. Higher tiers add deeper monitoring, response, recovery, compliance, and governance.", it: "Included", office: "Included", business: "Included", enterprise: "Included" },
       { name: "Security Awareness Training", it: "Included", office: "Included + phishing simulation", business: "Enhanced", enterprise: "Role-based / advanced" },
-      { name: "Threat Detection & Response", tooltip: "Monitoring, detection, triage, containment, and guided recovery signals from endpoint, identity, email, cloud, or other detection systems.", it: "Managed platform baseline", office: "Managed EDR + alerting", business: "24/7 MDR + deeper response", enterprise: "Advanced / custom" },
-      { name: "Security Operations / SOC-as-a-Service", tooltip: "Security monitoring, alert triage, tuning, escalation, reporting, and response coordination.", it: "Platform monitoring", office: "Platform monitoring + alerting", business: "24/7 security operations", enterprise: "Advanced / custom" },
+      { name: "Threat Detection & Response", tooltip: "Monitoring, detection, triage, containment, and guided recovery signals from endpoint, identity, email, cloud, or other detection systems.", it: "Managed platform baseline", office: "Managed EDR + alerting", business: ALERT_MONITORING_CLAIM_PHRASE, enterprise: "Advanced / custom" },
+      { name: "Security Operations / SOC-as-a-Service", tooltip: "Security monitoring, alert triage, tuning, escalation, reporting, and response coordination.", it: "Platform monitoring", office: "Platform monitoring + alerting", business: ALERT_MONITORING_CLAIM_PHRASE, enterprise: "Advanced / custom" },
     ],
   },
   {
@@ -116,6 +117,7 @@ const matrixCategories: MatrixCategory[] = [
     isAddon: true,
     ribbon: "Available with any package",
     services: [
+      { name: "24/7 Managed Detection and Response", it: "addon", office: "addon", business: "addon", enterprise: true },
       { name: "UCaaS: Voice & Meetings", it: "addon", office: "addon", business: "addon", enterprise: "addon" },
       { name: "Company Spend-Card Controls", it: "addon", office: "addon", business: "Included or available", enterprise: "Included / custom" },
       { name: "Advanced Managed Workplace", it: "addon", office: "addon", business: "addon", enterprise: "Included / custom" },
@@ -206,7 +208,7 @@ const plans: PlanCard[] = [
       "Enhanced Managed Workplace",
       "Deeper security operations / response",
       "Security Awareness Training included",
-      "24/7 MDR included",
+      ALERT_MONITORING_CLAIM_PHRASE,
       "BCDR + user cloud storage backup included",
       "Compliance & Risk Reporting included",
       "Budgeting / planning + 2× tech & security business reviews per year",

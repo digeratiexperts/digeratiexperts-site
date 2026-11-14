@@ -50,7 +50,7 @@ const trustLegalLinks = [
   { name: "Privacy", href: "/legal/privacy-policy" },
   { name: "Terms", href: "/legal/terms-of-use" },
   { name: "MSA", href: "/legal/msa" },
-  { name: "SLA", href: "/legal/sla" },
+  { name: "Service levels", href: "/legal/sla" },
 ];
 
 const footerColumns = [

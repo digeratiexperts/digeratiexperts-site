@@ -10,7 +10,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useState } from "react";
 import { CTA } from "@/lib/ctaCopy";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PRIMARY_PHONE, PUBLIC_PHONE_CTA } from "@/data/companyContact";
 
 // Form validation schema
 const assessmentFormSchema = z.object({
@@ -99,7 +99,7 @@ export const DigeratiHeroSection = (): JSX.Element => {
               <span className="text-white">Protect Your Business Now.</span>
             </h1>
             <p className="text-lg md:text-xl text-gray-100 mb-8">
-              Get 24/7 protection, cut cyber liability, and pass compliance checks — all without hiring in-house IT.
+              Get automated alert monitoring, cut cyber liability, and pass compliance checks — all without hiring in-house IT.
             </p>
             
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
@@ -109,7 +109,7 @@ export const DigeratiHeroSection = (): JSX.Element => {
               </div>
               <div className="bg-de-raised border border-de-hairline rounded-lg p-3">
                 <Shield className="h-5 w-5 text-de-accent-ink mb-1" />
-                <p className="text-xs text-white/80">24/7 Human-Led<br/>Monitoring</p>
+                <p className="text-xs text-white/80">Automated<br/>Alert Monitoring</p>
               </div>
               <div className="bg-de-raised border border-de-hairline rounded-lg p-3">
                 <Building className="h-5 w-5 text-de-accent-ink mb-1" />
@@ -133,12 +133,12 @@ export const DigeratiHeroSection = (): JSX.Element => {
                 {CTA.primary} <ArrowRight className="ml-2 h-5 w-5" />
               </a>
               <a
-                href={PRIMARY_PHONE.telHref}
+                href={PUBLIC_PHONE_CTA.href}
                 className="inline-flex h-12 items-center justify-center gap-2 whitespace-nowrap rounded-md border-2 border-white bg-transparent px-8 text-base font-semibold text-white hover:bg-white hover:text-[#D3126A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--de-bg)] group"
                 data-testid="button-hero-phone"
               >
                 <Phone className="h-5 w-5 group-hover:text-[#D3126A] transition-colors duration-200" />
-                {PRIMARY_PHONE.display}
+                {PUBLIC_PHONE_CTA.numberLabel}
               </a>
             </div>
           </div>
