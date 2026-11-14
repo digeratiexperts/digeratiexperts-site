@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { PortalLayout } from "./PortalLayout";
 import { queryClient } from "@/lib/queryClient";
 import { portalGet, portalPost } from "@/lib/portalApi";
+import { CARD_DATA_REJECTED_MESSAGE, looksLikeCardData } from "@shared/pciGuard";
 import { formatDeskTimestamp } from "@/lib/deskTimestamp";
 import {
   PORTAL_TICKET_ACCEPT,
@@ -57,6 +58,7 @@ export default function PortalTicketDetail() {
   const { user: portalSessionUser } = usePortalSession();
   const isDeStaff = portalSessionUser?.role === "admin";
   const [commentText, setCommentText] = useState("");
+  const [commentError, setCommentError] = useState("");
   const [attachError, setAttachError] = useState("");
   const [attaching, setAttaching] = useState(false);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
@@ -81,6 +83,11 @@ export default function PortalTicketDetail() {
   const handleAddComment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!commentText.trim()) return;
+    if (looksLikeCardData(commentText)) {
+      setCommentError(CARD_DATA_REJECTED_MESSAGE);
+      return;
+    }
+    setCommentError("");
     addCommentMutation.mutate(commentText);
   };
 
@@ -282,9 +289,9 @@ export default function PortalTicketDetail() {
                   {attaching ? "Uploading…" : "Upload attachments"}
                 </Button>
               </div>
-              {addCommentMutation.isError && (
+              {(commentError || addCommentMutation.isError) && (
                 <Callout tone="bad" title="Your reply wasn't sent">
-                  {addCommentMutation.error instanceof Error ? addCommentMutation.error.message : "Please try again."}
+                  {commentError || (addCommentMutation.error instanceof Error ? addCommentMutation.error.message : "Please try again.")}
                 </Callout>
               )}
             </form>

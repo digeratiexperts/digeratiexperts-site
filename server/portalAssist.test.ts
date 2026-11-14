@@ -1,11 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
   fallbackPortalReply,
+  handlePortalAssistChat,
   materializePortalActions,
   portalAssistSessionId,
+  PORTAL_ASSIST_CARD_RULE,
   sanitizeFill,
   sanitizePageInput,
 } from "./services/msp-advisor/portal-assist";
+import { isCardDataRejection } from "@shared/pciGuard";
 
 /**
  * The portal help chat may only propose whitelisted fields, only show the
@@ -69,3 +72,23 @@ describe("portal assist guard rails", () => {
     expect(out.actions).toEqual([]);
   });
 });
+
+describe("portal assist PCI card guard", () => {
+  it("forbids asking for card details, as Digerati Experts", () => {
+    expect(PORTAL_ASSIST_CARD_RULE).toMatch(/Zoho checkout/i);
+    expect(PORTAL_ASSIST_CARD_RULE).not.toMatch(/Digerati(?! Experts)/);
+  });
+
+  it("refuses a PAN before calling the model", async () => {
+    await expect(
+      handlePortalAssistChat(
+        {
+          ...input,
+          message: "please charge 4111111111111111",
+        },
+        TODAY,
+      ),
+    ).rejects.toSatisfy((err) => isCardDataRejection(err));
+  });
+});
+

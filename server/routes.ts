@@ -88,6 +88,7 @@ import {
   ensureInternalMspClient,
 } from "./portalAuthStore";
 import { annotateTicketOrg, resolveTicketCreateTarget } from "./portalTicketCreate";
+import { sendCardDataRejected, sendCardDataRejectedError } from "./pciGuard";
 import {
   initPortalChatStore,
   conversationIdForUser,
@@ -924,7 +925,8 @@ export async function registerRoutes(app: Express) {
       if (!title || !description) {
         return res.status(400).json({ error: "Title and description required" });
       }
-      
+      if (sendCardDataRejected(res, title, description)) return;
+
       const { classifyTicket } = await import("./openaiService");
       const classification = await classifyTicket(title, description);
       
@@ -948,7 +950,11 @@ export async function registerRoutes(app: Express) {
       if (!message) {
         return res.status(400).json({ error: "Message required" });
       }
-      
+      const historyText = Array.isArray(conversationHistory)
+        ? conversationHistory.map((m: { content?: unknown }) => String(m?.content ?? "")).join("\n")
+        : "";
+      if (sendCardDataRejected(res, message, historyText)) return;
+
       const { generateChatResponse } = await import("./openaiService");
       const aiResponse = await generateChatResponse(message, conversationHistory);
       
@@ -1005,6 +1011,7 @@ export async function registerRoutes(app: Express) {
       if (!content || typeof content !== "string" || !content.trim()) {
         return res.status(400).json({ error: "Message content required" });
       }
+      if (sendCardDataRejected(res, content)) return;
 
       const conversationId = conversationIdForUser(req.userId);
       await ensureWelcomeMessage(conversationId, req.userId);
@@ -2121,6 +2128,7 @@ export async function registerRoutes(app: Express) {
       if (!subject || !description) {
         return res.status(400).json({ error: "Subject and description are required" });
       }
+      if (sendCardDataRejected(res, subject, description)) return;
 
       const userId = req.userId || "";
       const userEmail = req.user?.email || "";
@@ -2463,6 +2471,7 @@ export async function registerRoutes(app: Express) {
       if (!content) {
         return res.status(400).json({ error: "Content is required" });
       }
+      if (sendCardDataRejected(res, content)) return;
 
       const hubOnlyId = parseHubPortalTicketId(id);
       if (hubOnlyId != null) {
@@ -5224,6 +5233,7 @@ export async function registerRoutes(app: Express) {
       if (!message || typeof message !== "string") {
         return res.status(400).json({ error: "message is required" });
       }
+      if (sendCardDataRejected(res, message)) return;
       const result = await handleAdvisorChat({
         sessionId: typeof sessionId === "string" ? sessionId : undefined,
         message,
@@ -5244,6 +5254,7 @@ export async function registerRoutes(app: Express) {
       });
       res.json(result);
     } catch (error: any) {
+      if (sendCardDataRejectedError(res, error)) return;
       const status = error?.status || 500;
       console.error("[msp-advisor] chat failed:", error?.message || error);
       res.status(status).json({ error: error?.message || "Advisor unavailable" });
@@ -5333,6 +5344,7 @@ export async function registerRoutes(app: Express) {
       const phone = String(payload?.phone || session.profile.phone || "").trim();
       const company = String(payload?.company || session.profile.companyName || "").trim();
       const visitorMessage = String(payload?.message || "").trim();
+      if (sendCardDataRejected(res, visitorMessage, name, company)) return;
 
       if (email) {
         try {
@@ -6280,6 +6292,7 @@ export async function registerRoutes(app: Express) {
       if (!subject || !description) {
         return res.status(400).json({ error: "Subject and description required" });
       }
+      if (sendCardDataRejected(res, subject, description)) return;
 
       // Check for existing contact or create one if needed
       let contactId: string | undefined;

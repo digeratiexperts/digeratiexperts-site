@@ -1,5 +1,6 @@
 import { Suspense, lazy } from "react";
 import { useLocation } from "wouter";
+import { isPaymentPagePath } from "@shared/paymentPage";
 
 // The Desk widget is ~140 KB of source and was statically bundled into the
 // entry chunk of every marketing route. It has no above-the-fold UI of its own
@@ -25,7 +26,7 @@ const ZohoASAPWidget = lazy(() =>
 export function MarketingChrome() {
   const [location] = useLocation();
 
-  if (location.startsWith("/portal")) {
+  if (location.startsWith("/portal") || isPaymentPagePath(location)) {
     return null;
   }
 

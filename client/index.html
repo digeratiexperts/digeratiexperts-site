@@ -56,7 +56,7 @@
     <meta name="theme-color" content="#050312">
     
     <!-- Structured Data for Local Business -->
-    <script type="application/ld+json">
+    <script type="application/ld+json" data-cfasync="false">
     {
       "@context": "https://schema.org",
       "@type": "ProfessionalService",
@@ -98,7 +98,7 @@
     </noscript>
     
     <!-- Google Consent Mode v2 — must run before GA4 loads -->
-    <script>
+    <script data-cfasync="false">
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       // Default: deny all until user consents via cookie banner
@@ -115,6 +115,6 @@
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <script type="module" data-cfasync="false" src="/src/main.tsx"></script>
   </body>
 </html>

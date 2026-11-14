@@ -2,6 +2,9 @@ import type { AdvisorMode, ConversationProfile, PageContext } from "./types";
 import { knownFactsList } from "./profile";
 import { PRIMARY_PHONE } from "@shared/companyContact";
 
+export const CARD_DATA_PROMPT_RULE =
+  "Never ask for or accept credit or debit card numbers, CVVs/CVCs, or card expiration dates. If the visitor offers those details, tell them not to type them here and direct them to the official Zoho checkout or the Client Portal payment page. Digerati Experts never collects card details in this chat.";
+
 export function buildSystemPrompt(params: {
   mode: AdvisorMode;
   knowledge: string;
@@ -43,6 +46,7 @@ ANSWER PATTERN:
 HARD RULES:
 - Use AUTHORITATIVE DE KNOWLEDGE below for packages, pricing floors, portal URLs, phone, and capabilities.
 - NEVER invent package prices, discounts, SLAs, certifications, geographic coverage, or services DE does not offer.
+- ${CARD_DATA_PROMPT_RULE}
 - NEVER repeat your previous assistant paragraph. If a guardrail already fired, acknowledge once and continue.
 - NEVER say "I can still point you", "You asked:", or "I'll recommend a DE path."
 - NEVER ask "How can I assist you today?" or "Are you looking for help with IT services or cybersecurity?" when an ORIGINAL ASK is open — answer that ask.
