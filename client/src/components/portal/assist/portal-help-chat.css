@@ -88,3 +88,17 @@
 .phc-human-path button:hover {
   color: #E3B23C;
 }
+/* Recording-consent notice, reused from DE Desk, styled for the portal shell. */
+.phc-panel .de-desk-consent { flex: 1; overflow-y: auto; padding: 16px; }
+.phc-panel .de-desk-consent-heading { font-size: 18px; font-weight: 600; color: #f5f3f7; margin: 0 0 10px; }
+.phc-panel .de-desk-consent-copy { font-size: 13.5px; line-height: 1.55; color: rgba(245, 243, 247, 0.75); margin: 0; }
+.phc-panel .de-desk-consent-policy { color: #f5f3f7; text-decoration: underline; text-underline-offset: 2px; }
+.phc-panel .de-desk-consent-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+.phc-panel .de-desk-consent-btn {
+  display: flex; align-items: center; justify-content: center; width: 100%; min-height: 44px;
+  padding: 10px 14px; border-radius: 10px; border: 1px solid rgba(227, 178, 60, 0.65);
+  background: transparent; color: #f5f3f7; font-size: 14px; font-weight: 600; text-align: center; cursor: pointer;
+}
+.phc-panel .de-desk-consent-btn:hover { border-color: #E3B23C; background: rgba(227, 178, 60, 0.12); }
+.phc-panel .de-desk-consent-phone { margin: 14px 0 0; font-size: 13px; color: rgba(245, 243, 247, 0.7); }
+.phc-panel .de-desk-consent-phone a { color: #f5f3f7; text-decoration: underline; text-underline-offset: 2px; }

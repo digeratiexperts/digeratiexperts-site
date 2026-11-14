@@ -18,6 +18,13 @@ export type DeskChatMessage = {
   createdAt: string;
 };
 
+export type DeskChatRecordingConsent = {
+  version: string;
+  noticeHash: string;
+  consentedAt: string;
+  ip: string | null;
+};
+
 export type DeskChatSessionSummary = {
   sessionId: string;
   email: string | null;
@@ -83,6 +90,7 @@ const memorySessions = new Map<
     archiveFolder: string | null;
     createdAt: string;
     updatedAt: string;
+    recordingConsent: DeskChatRecordingConsent | null;
     messages: DeskChatMessage[];
   }
 >();
@@ -164,6 +172,10 @@ async function ensureSchema(): Promise<void> {
       ADD COLUMN IF NOT EXISTS archive_folder text
     `);
     await db.execute(sql`
+      ALTER TABLE de_desk_chat_sessions
+      ADD COLUMN IF NOT EXISTS recording_consent jsonb
+    `);
+    await db.execute(sql`
       CREATE INDEX IF NOT EXISTS idx_de_desk_sessions_email
       ON de_desk_chat_sessions (email, updated_at DESC)
     `);
@@ -198,6 +210,7 @@ function emptyMemSession(now: string) {
     agentJoinedAt: null as string | null,
     archivedAt: null as string | null,
     archiveFolder: null as string | null,
+    recordingConsent: null as DeskChatRecordingConsent | null,
     createdAt: now,
     updatedAt: now,
     messages: [] as DeskChatMessage[],
@@ -735,6 +748,78 @@ export async function unarchiveDeskSession(sessionId: string): Promise<DeskChatS
 }
 
 /** Permanently remove a chat and its messages. Returns false if it did not exist. */
+
+export async function recordDeskChatConsent(input: {
+  sessionId: string;
+  version: string;
+  noticeHash: string;
+  consentedAt: string;
+  ip: string | null;
+}): Promise<void> {
+  await ensureSchema();
+  const now = new Date().toISOString();
+  const record: DeskChatRecordingConsent = {
+    version: input.version,
+    noticeHash: input.noticeHash,
+    consentedAt: input.consentedAt,
+    ip: input.ip ? input.ip.slice(0, 64) : null,
+  };
+  const mem = memorySessions.get(input.sessionId) || emptyMemSession(now);
+  if (!mem.recordingConsent) mem.recordingConsent = record;
+  mem.updatedAt = now;
+  memorySessions.set(input.sessionId, mem);
+
+  if (!(dbReady && db && schemaReady)) return;
+  try {
+    const payload = JSON.stringify(mem.recordingConsent);
+    await db.execute(sql`
+      INSERT INTO de_desk_chat_sessions (session_id, recording_consent, created_at, updated_at)
+      VALUES (
+        ${input.sessionId},
+        CAST(${payload} AS jsonb),
+        ${new Date(mem.createdAt)},
+        ${new Date(now)}
+      )
+      ON CONFLICT (session_id) DO UPDATE SET
+        recording_consent = COALESCE(de_desk_chat_sessions.recording_consent, EXCLUDED.recording_consent),
+        updated_at = EXCLUDED.updated_at
+    `);
+  } catch (err: any) {
+    console.warn("[de-desk-persist] record consent failed:", err?.message);
+  }
+}
+
+export async function getDeskChatRecordingConsent(sessionId: string): Promise<DeskChatRecordingConsent | null> {
+  const mem = memorySessions.get(sessionId);
+  if (mem?.recordingConsent) return mem.recordingConsent;
+  await ensureSchema();
+  if (!(dbReady && db && schemaReady)) return null;
+  try {
+    const result = await db.execute(sql`
+      SELECT recording_consent
+      FROM de_desk_chat_sessions
+      WHERE session_id = ${sessionId}
+      LIMIT 1
+    `);
+    const row = normalizeRows(result)[0];
+    const raw = row?.recording_consent;
+    if (!raw || typeof raw !== "object") return null;
+    const record = raw as Record<string, unknown>;
+    if (typeof record.version !== "string" || typeof record.noticeHash !== "string" || typeof record.consentedAt !== "string") {
+      return null;
+    }
+    return {
+      version: record.version,
+      noticeHash: record.noticeHash,
+      consentedAt: record.consentedAt,
+      ip: typeof record.ip === "string" ? record.ip : null,
+    };
+  } catch (err: any) {
+    console.warn("[de-desk-persist] read consent failed:", err?.message);
+    return null;
+  }
+}
+
 export async function deleteDeskSession(sessionId: string): Promise<boolean> {
   await ensureSchema();
   const { session } = await getDeskSessionMessages(sessionId);

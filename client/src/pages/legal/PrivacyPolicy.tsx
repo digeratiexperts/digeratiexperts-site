@@ -3,7 +3,7 @@ import { Shield, Lock, Database, FileText, AlertTriangle } from "lucide-react";
 import { PRIMARY_PHONE, formatAddressOneLine } from "@/data/companyContact";
 
 export default function PrivacyPolicy() {
-  const lastUpdated = "November 6, 2025";
+  const lastUpdated = "November 13, 2026";
 
   return (
     <LegalDocumentLayout
@@ -222,9 +222,16 @@ export default function PrivacyPolicy() {
               </ul>
             </div>
 
+            <div className="mb-12" id="chat-recording">
+              <h2 className="text-2xl font-bold text-[#1A1228] mb-4">7. Chat and call recording and AI processing</h2>
+              <p className="text-[#3A3448] leading-relaxed">
+                When you use DE Desk, our website and client portal chat, or call or receive calls from Digerati Experts (DE), we record the conversation and keep a transcript. We tell you before any recording starts, and chat begins only after you agree. We use AI service providers acting on our behalf to understand and answer your messages and to analyze, summarize, and quality-check conversations. These providers process the content only to perform services for DE, and our agreements with them do not allow them to use your conversations to train their own models. DE staff may review recordings and transcripts to support you, resolve issues, and improve our service. We keep them only as long as we need them for those purposes or as the law requires, and then we delete them. If you don't want to be recorded or have your conversation processed by AI, don't start a chat. Use our contact form, open a support ticket, or call us. On a call, tell us you don't want to be recorded, and we'll stop recording and AI processing for the rest of that call. Please don't share passwords, payment card numbers, government ID numbers, or health information in chat or on recorded calls.
+              </p>
+            </div>
+
             {/* Data Retention */}
             <div className="mb-12">
-              <h2 className="text-2xl font-bold text-[#1A1228] mb-4">7. Data Retention and Deletion</h2>
+              <h2 className="text-2xl font-bold text-[#1A1228] mb-4">8. Data Retention and Deletion</h2>
               <p className="text-[#3A3448] mb-4">
                 We retain your information only as long as necessary to provide services and comply with legal obligations:
               </p>
@@ -236,7 +243,7 @@ export default function PrivacyPolicy() {
                 <li><strong className="text-[#1A1228]">Billing Records</strong>: 7 years per tax and accounting requirements</li>
               </ul>
 
-              <h3 className="text-xl font-semibold text-[#1A1228] mb-3 mt-6">7.1 Secure Deletion</h3>
+              <h3 className="text-xl font-semibold text-[#1A1228] mb-3 mt-6">8.1 Secure Deletion</h3>
               <p className="text-[#3A3448]">
                 When data is deleted, we use secure deletion methods including cryptographic erasure, overwriting, 
                 and physical destruction of storage media per NIST SP 800-88 guidelines.
@@ -245,7 +252,7 @@ export default function PrivacyPolicy() {
 
             {/* Cookies */}
             <div className="mb-12">
-              <h2 className="text-2xl font-bold text-[#1A1228] mb-4">8. Cookies and Tracking Technologies</h2>
+              <h2 className="text-2xl font-bold text-[#1A1228] mb-4">9. Cookies and Tracking Technologies</h2>
               <p className="text-[#3A3448] mb-4">
                 Our website uses cookies and similar technologies to improve your experience:
               </p>
@@ -262,7 +269,7 @@ export default function PrivacyPolicy() {
 
             {/* Your Rights */}
             <div className="mb-12">
-              <h2 className="text-2xl font-bold text-[#1A1228] mb-4">9. Your Privacy Rights</h2>
+              <h2 className="text-2xl font-bold text-[#1A1228] mb-4">10. Your Privacy Rights</h2>
               <p className="text-[#3A3448] mb-4">You have the following rights regarding your personal information:</p>
               <ul className="list-disc pl-6 text-[#3A3448] space-y-2 mb-4">
                 <li><strong className="text-[#1A1228]">Access</strong>: Request a copy of the personal information we hold about you</li>
@@ -284,7 +291,7 @@ export default function PrivacyPolicy() {
 
             {/* HIPAA Clients */}
             <div className="mb-12 border border-[var(--de-paper-hairline)] border-l-4 border-l-[#D3126A] bg-white p-6 rounded">
-              <h2 className="text-2xl font-bold text-[#1A1228] mb-4">10. HIPAA-Covered Clients</h2>
+              <h2 className="text-2xl font-bold text-[#1A1228] mb-4">11. HIPAA-Covered Clients</h2>
               <p className="text-[#3A3448] mb-4">
                 For healthcare clients handling Protected Health Information (PHI), we act as a Business Associate 
                 under HIPAA regulations:
@@ -303,7 +310,7 @@ export default function PrivacyPolicy() {
 
             {/* Third-Party Links */}
             <div className="mb-12">
-              <h2 className="text-2xl font-bold text-[#1A1228] mb-4">11. Third-Party Links</h2>
+              <h2 className="text-2xl font-bold text-[#1A1228] mb-4">12. Third-Party Links</h2>
               <p className="text-[#3A3448]">
                 Our website may contain links to third-party websites. We are not responsible for the privacy 
                 practices of these external sites. We encourage you to review their privacy policies before 
@@ -313,7 +320,7 @@ export default function PrivacyPolicy() {
 
             {/* Children's Privacy */}
             <div className="mb-12">
-              <h2 className="text-2xl font-bold text-[#1A1228] mb-4">12. Children's Privacy</h2>
+              <h2 className="text-2xl font-bold text-[#1A1228] mb-4">13. Children's Privacy</h2>
               <p className="text-[#3A3448]">
                 Our services are not directed to individuals under 18 years of age. We do not knowingly collect 
                 personal information from children. If you believe we have collected information from a child, 
@@ -323,7 +330,7 @@ export default function PrivacyPolicy() {
 
             {/* International Data Transfers */}
             <div className="mb-12">
-              <h2 className="text-2xl font-bold text-[#1A1228] mb-4">13. International Data Transfers</h2>
+              <h2 className="text-2xl font-bold text-[#1A1228] mb-4">14. International Data Transfers</h2>
               <p className="text-[#3A3448]">
                 Our services are primarily provided within the United States. We do not routinely transfer data 
                 internationally. If international transfers are necessary, we implement appropriate safeguards 
@@ -333,7 +340,7 @@ export default function PrivacyPolicy() {
 
             {/* Changes to Privacy Policy */}
             <div className="mb-12">
-              <h2 className="text-2xl font-bold text-[#1A1228] mb-4">14. Changes to This Privacy Policy</h2>
+              <h2 className="text-2xl font-bold text-[#1A1228] mb-4">15. Changes to This Privacy Policy</h2>
               <p className="text-[#3A3448]">
                 We may update this Privacy Policy periodically to reflect changes in our practices or applicable laws. 
                 We will notify clients of material changes via email or prominent website notice. The "Last Updated" 
@@ -345,7 +352,7 @@ export default function PrivacyPolicy() {
             <div className="mb-12 border border-[var(--de-paper-hairline)] bg-white border-l-4 border-l-[#D3126A] p-6 rounded">
               <h2 className="text-2xl font-bold text-[#1A1228] mb-4 flex items-center gap-3">
                 <FileText className="h-5 w-5 text-de-magenta-paper-ink" />
-                15. Contact Us
+                16. Contact Us
               </h2>
               <p className="text-[#3A3448] mb-4">
                 If you have questions about this Privacy Policy or wish to exercise your privacy rights, please contact:

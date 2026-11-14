@@ -57,6 +57,15 @@ import { clearPendingMspAdvisorOpen, takePendingMspAdvisorOpen } from "@/lib/ope
 import { deskOpenSeed } from "@/lib/deskOpenSeed";
 import { analytics } from "@/lib/analytics";
 import { clearDeskChat, readDeskChat, ticketDraftFromChat, writeDeskChat } from "@/lib/deskChatSession";
+import {
+  DESK_CHAT_CONSENT_PRIVACY_HREF,
+  DESK_CHAT_RECORDED_LABEL,
+  deskChatConsentRequestBody,
+  hasStoredDeskChatConsent,
+  isDeskChatConsentRequiredError,
+  storeDeskChatConsent,
+} from "@/lib/deskChatConsent";
+import { DeskChatConsentGate } from "@/components/desk/DeskChatConsentGate";
 import { deskActionLabel, planDeskAction, sanitizeDeskActions, type DeskAction, type DeskActionType } from "@/lib/deskActions";
 import { DeskRichText } from "@/lib/deskRichText";
 import { SecureFieldCard, postSecureField } from "@/components/desk/SecureFieldCard";
@@ -289,6 +298,8 @@ export const ZohoASAPWidget = ({
   const deskPage = inferDeskPageType(location);
   // A conversation already under way in this tab (reload, full page load) picks up where it was.
   const [restoredChat] = useState(() => readDeskChat());
+  const [recordingConsent, setRecordingConsent] = useState(() => hasStoredDeskChatConsent());
+  const [declinedRecording, setDeclinedRecording] = useState(false);
   const [advisorSessionId, setAdvisorSessionId] = useState<string | null>(() => restoredChat?.sessionId ?? null);
   const [pendingSeed, setPendingSeed] = useState<string | null>(null);
   const [showInlineLogin, setShowInlineLogin] = useState(false);
@@ -657,7 +668,7 @@ export const ZohoASAPWidget = ({
   }, [isEnabled, accountId, portalId]);
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || !recordingConsent) return;
     // DE Desk (advisor API) powers the Desk tab on the public site.
     setAssistantAvailable(true);
     analytics.chatOpened();
@@ -698,7 +709,7 @@ export const ZohoASAPWidget = ({
       greetingCancelRef.current.cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen]);
+  }, [isOpen, recordingConsent]);
 
   useEffect(() => () => {
     revealCancelRef.current.cancelled = true;
@@ -894,7 +905,7 @@ export const ZohoASAPWidget = ({
 
   const handleSendChat = async (prompt?: string) => {
     const content = (prompt ?? chatInput).trim();
-    if (!content || isChatSending) return;
+    if (!content || isChatSending || !recordingConsent) return;
 
     if (content.length > 2000) {
       toast({
@@ -948,6 +959,7 @@ export const ZohoASAPWidget = ({
         body: JSON.stringify({
           sessionId: advisorSessionId,
           message: content,
+          ...deskChatConsentRequestBody(),
           pageContext: {
             pathname: location,
             pageTitle: typeof document !== "undefined" ? document.title : undefined,
@@ -956,6 +968,12 @@ export const ZohoASAPWidget = ({
         }),
       });
       const data = await response.json().catch(() => ({}));
+      if (isDeskChatConsentRequiredError(data, response.status)) {
+        setRecordingConsent(false);
+        setChatMessages((current) => current.filter((m) => m.id !== userMessage.id));
+        setIsChatSending(false);
+        return;
+      }
       if (!response.ok) {
         throw new Error(data.error || "DE Desk couldn't answer right now. Try again or open a ticket.");
       }
@@ -1055,12 +1073,12 @@ export const ZohoASAPWidget = ({
 
 
   useEffect(() => {
-    if (!pendingSeed || !isOpen || isChatSending || activeTab !== "chat") return;
+    if (!pendingSeed || !isOpen || !recordingConsent || isChatSending || activeTab !== "chat") return;
     const seed = pendingSeed;
     setPendingSeed(null);
     void handleSendChat(seed);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pendingSeed, isOpen, activeTab]);
+  }, [pendingSeed, isOpen, activeTab, recordingConsent]);
 
   const applyTicketChip = (chipId: DeskTicketChipId) => {
     if (ticketSendingRef.current) return;
@@ -1094,6 +1112,7 @@ export const ZohoASAPWidget = ({
   // Ask DE text box hint: once the greeting has finished, on the Ask DE tab,
   // for a visitor who has not said anything yet and with nobody live.
   useEffect(() => {
+    if (!recordingConsent) return;
     const stored = readDeskHint(DESK_COMPOSER_HINT_KEY);
     const decision = composerHintDecision({
       isOpen,
@@ -1113,7 +1132,7 @@ export const ZohoASAPWidget = ({
       setComposerHint(true);
     }, DESK_COMPOSER_HINT_DELAY_MS);
     return () => window.clearTimeout(timer);
-  }, [isOpen, activeTab, greetingComplete, visitorHasSpoken, agentLive, expandHint]);
+  }, [isOpen, activeTab, greetingComplete, visitorHasSpoken, agentLive, expandHint, recordingConsent]);
   useEffect(() => {
     if (!composerHint) return;
     const stop = window.setTimeout(() => {
@@ -1228,7 +1247,23 @@ export const ZohoASAPWidget = ({
     if (action.type === "open_portal" || action.type === "existing_client_support") analytics.chatSupportRouted();
   };
 
+  const agreeToRecording = () => {
+    storeDeskChatConsent();
+    setRecordingConsent(true);
+    setDeclinedRecording(false);
+  };
+
+  const declineRecording = () => {
+    setDeclinedRecording(true);
+    setActiveTab("ticket");
+  };
+
   const openPersistentLeaveMessage = () => {
+    if (!recordingConsent) {
+      setDeclinedRecording(true);
+      setActiveTab("ticket");
+      return;
+    }
     if (activeTab !== "chat") setActiveTab("chat");
     const last = [...chatMessages].reverse().find((message) => message.role === "assistant");
     const messageId = last?.id || CHAT_WELCOME_ID;
@@ -1760,7 +1795,7 @@ export const ZohoASAPWidget = ({
                   </button>
                 </div>
               ) : null}
-              {activeTab === "chat" && (
+              {activeTab === "chat" && !recordingConsent ? (
                 <div
                   className="de-desk-panel"
                   id="desk-panel-chat"
@@ -1768,7 +1803,17 @@ export const ZohoASAPWidget = ({
                   aria-labelledby="desk-tab-chat"
                   data-testid="panel-support-chat"
                 >
-                  <div className="de-desk-scroll" aria-live="polite" ref={chatScrollRef} onScroll={onChatScroll}>
+                  <DeskChatConsentGate onAgree={agreeToRecording} onDecline={declineRecording} />
+                </div>
+              ) : activeTab === "chat" && (
+                <div
+                  className="de-desk-panel"
+                  id="desk-panel-chat"
+                  role="tabpanel"
+                  aria-labelledby="desk-tab-chat"
+                  data-testid="panel-support-chat"
+                >
+                  <div className="de-desk-scroll" aria-live="polite" ref={chatScrollRef} onScroll={onChatScroll} data-clarity-mask="true">
                     {chatMessages.map((chatMessage) => {
                       const isUser = chatMessage.role === "user";
                       const isAgent = chatMessage.role === "agent";
@@ -2093,6 +2138,12 @@ export const ZohoASAPWidget = ({
                   aria-labelledby="desk-tab-ticket"
                   data-testid="panel-support-ticket"
                 >
+                  {declinedRecording ? (
+                    <p className="de-desk-other-ways" data-testid="desk-other-contact-ways">
+                      Call <a href={PRIMARY_PHONE.telHref}>{PRIMARY_PHONE.display}</a> or{" "}
+                      <a href="/contact">use our contact form</a>. You can also send a support ticket here.
+                    </p>
+                  ) : null}
                   <div className="de-desk-scroll">
                     {ticketResult ? (
                       <div className="de-desk-hero de-desk-success">
@@ -2562,7 +2613,7 @@ export const ZohoASAPWidget = ({
               )}
             </div>
 
-            {activeTab === "chat" ? (
+            {activeTab === "chat" && recordingConsent ? (
               <>
                 {visitorHasSpoken ? (
                   <div className="de-desk-chat-actions" data-testid="desk-chat-actions">
@@ -2618,6 +2669,8 @@ export const ZohoASAPWidget = ({
                     id="desk-chat-input"
                     data-testid="input-support-chat"
                     aria-label="Ask DE message"
+                    autoComplete="off"
+                    data-clarity-mask="true"
                   />
                   {suggestionOnShow ? (
                     // Decoration only: the textarea keeps its own stable placeholder for assistive tech.
@@ -2644,9 +2697,12 @@ export const ZohoASAPWidget = ({
                 </div>
                 <p className="de-desk-composer-caption">
                   <Lock aria-hidden="true" />
+                  <a href={DESK_CHAT_CONSENT_PRIVACY_HREF} data-testid="desk-chat-recorded">
+                    {DESK_CHAT_RECORDED_LABEL}
+                  </a>
                   {agentLive
-                    ? "A DE agent is in this thread. Never paste passwords or MFA codes in chat."
-                    : "Never paste passwords, MFA codes, or private keys in chat."}
+                    ? ". A DE agent is in this thread. Never paste passwords or MFA codes in chat."
+                    : ". Never paste passwords, MFA codes, or private keys in chat."}
                 </p>
               </>
             ) : null}
@@ -2849,6 +2905,82 @@ export const ZohoASAPWidget = ({
               line-height: 1.2;
             }
             .de-desk-id p { font-size: 14px; color: var(--desk-ink-muted); margin-top: 1px; }
+
+            .de-desk-consent {
+              flex: 1;
+              overflow-y: auto;
+              padding: 16px 16px 20px;
+            }
+            .de-desk-consent-heading {
+              font-family: "Space Grotesk", sans-serif;
+              font-size: 18px;
+              font-weight: 600;
+              color: var(--desk-ink);
+              margin: 0 0 10px;
+            }
+            .de-desk-consent-copy {
+              font-size: 13.5px;
+              line-height: 1.55;
+              color: var(--desk-ink-muted);
+              margin: 0;
+            }
+            .de-desk-consent-policy {
+              color: var(--desk-ink);
+              text-decoration: underline;
+              text-underline-offset: 2px;
+            }
+            .de-desk-consent-policy:hover { color: #E3B23C; }
+            .de-desk-consent-actions {
+              display: flex;
+              flex-direction: column;
+              gap: 8px;
+              margin-top: 16px;
+            }
+            .de-desk-consent-btn {
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              width: 100%;
+              min-height: 44px;
+              padding: 10px 14px;
+              border-radius: 10px;
+              border: 1px solid rgba(227, 178, 60, 0.65);
+              background: transparent;
+              color: var(--desk-ink);
+              font-size: 14px;
+              font-weight: 600;
+              line-height: 1.3;
+              text-align: center;
+              cursor: pointer;
+            }
+            .de-desk-consent-btn:hover {
+              border-color: #E3B23C;
+              background: rgba(227, 178, 60, 0.12);
+            }
+            .de-desk-consent-phone {
+              margin: 14px 0 0;
+              font-size: 13px;
+              color: var(--desk-ink-muted);
+            }
+            .de-desk-consent-phone a {
+              color: var(--desk-ink);
+              text-decoration: underline;
+              text-underline-offset: 2px;
+            }
+            .de-desk-consent-phone a:hover { color: #E3B23C; }
+            .de-desk-other-ways {
+              flex-shrink: 0;
+              padding: 0 16px 12px;
+              font-size: 13px;
+              line-height: 1.5;
+              color: var(--desk-ink-muted);
+            }
+            .de-desk-other-ways a {
+              color: var(--desk-ink);
+              text-decoration: underline;
+              text-underline-offset: 2px;
+            }
+            .de-desk-other-ways a:hover { color: #E3B23C; }
             .de-desk-human-path {
               flex-shrink: 0;
               padding: 0 16px 10px;

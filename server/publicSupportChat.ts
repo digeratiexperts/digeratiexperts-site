@@ -2,6 +2,7 @@ import { randomBytes } from "crypto";
 import type { Express } from "express";
 import rateLimit from "express-rate-limit";
 import { generateChatResponse } from "./openaiService";
+import { rejectIfMissingDeskChatConsent } from "./deskChatConsent";
 import { DE_KNOWLEDGE_CATALOG } from "./services/de-intelligence/catalog";
 
 export type PublicChatHistoryEntry = {
@@ -69,6 +70,7 @@ export function registerPublicSupportChat(app: Express): void {
   });
 
   app.post("/api/portal/zoho/chat", publicSupportChatRateLimiter, async (req, res) => {
+    if (rejectIfMissingDeskChatConsent(req, res)) return;
     try {
       const rawMessage = typeof req.body?.message === "string" ? req.body.message.trim() : "";
       if (!rawMessage) {

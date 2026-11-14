@@ -62,6 +62,15 @@ describe("DE Desk shell positioning", () => {
     expect(src).toMatch(/Want a person\?/);
     expect(src).toMatch(/Book a Fit Call/);
     expect(src).toMatch(/data-testid="desk-human-path"/);
+    expect(src).toContain("DeskChatConsentGate");
+    expect(src).toContain("hasStoredDeskChatConsent");
+    expect(src).toContain("deskChatConsentRequestBody");
+    expect(src).toContain('data-testid="desk-chat-recorded"');
+    expect(src).toContain("data-clarity-mask");
+    expect(src).toContain("DESK_CHAT_CONSENT_PRIVACY_HREF");
+    expect(src).toContain('href="/contact"');
+    expect(src).toMatch(/activeTab === "chat" && !recordingConsent/);
+    expect(src).toMatch(/activeTab === "chat" && recordingConsent \?/);
     expect(src).not.toMatch(/AZ SOC Live/);
     expect(src).toMatch(/\.de-desk-tab\.is-active::after/);
     expect(src).not.toMatch(/\.de-desk-tab\.is-active \{\s*background: #E3B23C;/);
