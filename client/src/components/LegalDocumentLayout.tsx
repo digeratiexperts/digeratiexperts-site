@@ -3,6 +3,7 @@ import { PageTemplate } from "@/components/PageTemplate";
 import { useSEO } from "@/hooks/useSEO";
 import { Link } from "wouter";
 import { Chapter, Container, Eyebrow } from "@/components/site/chapters";
+import { LEGAL_NAV_DOCS } from "@/pages/legal/legalDocumentLinks";
 
 type LegalDocumentLayoutProps = {
   title: string;
@@ -11,17 +12,9 @@ type LegalDocumentLayoutProps = {
   canonical: string;
   icon?: React.ReactNode;
   children: React.ReactNode;
+  eyebrow?: string;
+  breadcrumbs?: { label: string; href?: string }[];
 };
-
-const LEGAL_DOCS = [
-  { label: "Privacy Policy", href: "/legal/privacy-policy" },
-  { label: "Terms of Service", href: "/legal/terms-of-use" },
-  { label: "Acceptable Use Policy", href: "/legal/aup" },
-  { label: "Data Processing Addendum", href: "/legal/dpa" },
-  { label: "Master Service Agreement", href: "/legal/msa" },
-  { label: "Service Level Agreement", href: "/legal/sla" },
-  { label: "Sample Statement of Work", href: "/legal/sample-sow" },
-];
 
 type TocEntry = { id: string; label: string };
 
@@ -40,10 +33,10 @@ function slugify(text: string, taken: Set<string>) {
 }
 
 /**
- * Long-form legal reading surface (Trust / legal doctrine, UI-STYLE-RULES §6):
- * quiet hero, then one paper chapter with a ~68ch measure. When a document has
- * many sections an in-page table of contents sticks beside it at lg. The
- * document text itself is never touched; headings only gain anchor ids.
+ * Long-form legal reading surface: quiet hero, then one paper chapter with a
+ * ~68ch measure. When a document has many sections an in-page table of
+ * contents sticks beside it at lg. The document text itself is never touched;
+ * headings only gain anchor ids when they do not already have one.
  */
 export function LegalDocumentLayout({
   title,
@@ -51,6 +44,8 @@ export function LegalDocumentLayout({
   description,
   canonical,
   children,
+  eyebrow = "Legal",
+  breadcrumbs,
 }: LegalDocumentLayoutProps): JSX.Element {
   useSEO({ title, description, canonical });
 
@@ -68,20 +63,23 @@ export function LegalDocumentLayout({
       if (!h.id) h.id = slugify(label, taken);
       else taken.add(h.id);
       h.classList.add("scroll-mt-28");
-      entries.push({ id: h.id, label });
+      // A wrapping section (for example #chat-recording) keeps its own id.
+      // Do not add the heading a second time when the id already appears.
+      if (!entries.some((e) => e.id === h.id)) entries.push({ id: h.id, label });
     });
     setToc(entries);
   }, [children]);
 
   const showToc = toc.length >= 5;
+  const crumbs = breadcrumbs ?? [{ label: "Legal" }, { label: title }];
 
   return (
     <PageTemplate
       layout="chapters"
-      eyebrow="Legal"
+      eyebrow={eyebrow}
       title={title}
       subtitle={subtitle}
-      breadcrumbs={[{ label: "Legal" }, { label: title }]}
+      breadcrumbs={crumbs}
     >
       <Chapter tone="paper" seam={false}>
         <Container>
@@ -119,7 +117,7 @@ export function LegalDocumentLayout({
                 Legal documents
               </Eyebrow>
               <ul className="grid gap-x-8 sm:grid-cols-2 lg:grid-cols-4">
-                {LEGAL_DOCS.map((d) => {
+                {LEGAL_NAV_DOCS.map((d) => {
                   const current = d.href === canonical;
                   return (
                     <li key={d.href} className="border-b border-[var(--de-paper-hairline)]">

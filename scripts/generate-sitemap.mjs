@@ -101,6 +101,11 @@ const STATIC = [
   ["/trust/vulnerability-disclosure", "yearly", "0.4"],
   ["/legal/privacy-policy", "yearly", "0.4"],
   ["/legal/terms-of-use", "yearly", "0.4"],
+  ["/legal/cookie-notice", "yearly", "0.4"],
+  ["/legal/ai-use", "yearly", "0.4"],
+  ["/legal/subprocessors", "yearly", "0.4"],
+  ["/legal/aup", "yearly", "0.4"],
+  ["/trust/accessibility", "yearly", "0.4"],
   ["/contact", "monthly", "0.7"],
   ["/store", "weekly", "0.8"],
 ];

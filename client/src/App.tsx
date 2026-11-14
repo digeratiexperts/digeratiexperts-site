@@ -85,6 +85,9 @@ const SLA = lazy(() => import("@/pages/legal/SLA"));
 const AUP = lazy(() => import("@/pages/legal/AUP"));
 const DPA = lazy(() => import("@/pages/legal/DPA"));
 const SampleSOW = lazy(() => import("@/pages/legal/SampleSOW"));
+const CookieNotice = lazy(() => import("@/pages/legal/CookieNotice"));
+const AiUseDisclosure = lazy(() => import("@/pages/legal/AiUseDisclosure"));
+const Subprocessors = lazy(() => import("@/pages/legal/Subprocessors"));
 const TrustCenter = lazy(() => import("@/pages/trust/TrustCenter"));
 const VulnerabilityDisclosure = lazy(() => import("@/pages/trust/VulnerabilityDisclosure"));
 const Accessibility = lazy(() => import("@/pages/trust/Accessibility"));
@@ -713,6 +716,22 @@ function Router() {
           <SampleSOW />
         </Suspense>
       )} />
+      <Route path="/legal/cookie-notice" component={() => (
+        <Suspense fallback={<PageLoadingSkeleton />}>
+          <CookieNotice />
+        </Suspense>
+      )} />
+      <Route path="/legal/ai-use" component={() => (
+        <Suspense fallback={<PageLoadingSkeleton />}>
+          <AiUseDisclosure />
+        </Suspense>
+      )} />
+      <Route path="/legal/subprocessors" component={() => (
+        <Suspense fallback={<PageLoadingSkeleton />}>
+          <Subprocessors />
+        </Suspense>
+      )} />
+      <Route path="/cookies">{() => <Redirect to="/legal/cookie-notice" />}</Route>
       
       {/* Trust Pages */}
       <Route path="/trust">{() => <Redirect to="/trust/trust-center" />}</Route>

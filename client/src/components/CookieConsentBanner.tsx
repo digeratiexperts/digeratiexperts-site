@@ -48,6 +48,23 @@ export function CookieConsentBanner() {
   }, []);
 
   useEffect(() => {
+    const openPreferences = () => {
+      try {
+        const stored = localStorage.getItem(CONSENT_KEY);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          setAnalyticsEnabled(parsed?.analytics === true);
+          setMarketingEnabled(parsed?.marketing === true);
+        }
+      } catch {}
+      setVisible(true);
+      setShowPreferences(true);
+    };
+    window.addEventListener("de-open-cookie-preferences", openPreferences);
+    return () => window.removeEventListener("de-open-cookie-preferences", openPreferences);
+  }, []);
+
+  useEffect(() => {
     const onDesk = (event: Event) => {
       const open = !!(event as CustomEvent<{ open?: boolean }>).detail?.open;
       setDeskOpen(open);

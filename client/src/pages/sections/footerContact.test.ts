@@ -37,10 +37,11 @@ describe("footer phone and email", () => {
  * (docs/STORE-EXPERIENCE-SOURCE-OF-TRUTH.md §12(a), §16.2). The default footer keeps the link.
  */
 describe("store footer legal list", () => {
-  it("hides the SLA link only for the store variant", () => {
+  it("hides the service-levels link only for the store variant", () => {
     const source = read(footers.shared);
-    expect(source).toMatch(/const STORE_HIDDEN_LEGAL = new Set\(\["SLA"\]\)/);
-    expect(source).toMatch(/variant === "store" \? column\.links\.filter\(\(item\) => !STORE_HIDDEN_LEGAL\.has\(item\.name\)\) : column\.links/);
-    expect(source).toContain('{ name: "SLA", href: "/legal/sla" }');
+    expect(source).toMatch(/const STORE_HIDDEN_HREFS = new Set\(\["\/legal\/sla"\]\)/);
+    expect(source).toMatch(/variant === "store" \? column\.links\.filter\(\(item\) => !STORE_HIDDEN_HREFS\.has\(item\.href\)\) : column\.links/);
+    expect(source).toContain('{ name: "Service levels", href: "/legal/sla" }');
+    expect(source).not.toMatch(/name: "SLA"/);
   });
 });
