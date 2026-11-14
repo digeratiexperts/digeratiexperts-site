@@ -29,6 +29,7 @@ import { PRIMARY_PHONE } from "@/data/companyContact";
 import { PronunciationCard } from "@/components/PronunciationCard";
 import { TipTag } from "./TipTag";
 import "./01-hero.css";
+import { PhoneLink } from "@/components/PhoneLink";
 
 /**
  * 01 · Hero + attached trust strip, ported from
@@ -71,14 +72,13 @@ function PhoneHeroMeta(): JSX.Element {
           Response within one business day
         </li>
         <li>
-          <a
-            href={PRIMARY_PHONE.telHref}
+          <PhoneLink
             className="inline-flex min-h-11 items-center gap-2 font-medium text-white/85 underline decoration-white/25 underline-offset-4 transition-colors hover:text-white hover:decoration-white/50"
             data-testid="link-hero-phone"
           >
             <Phone className="h-4 w-4 text-de-magenta-ink" aria-hidden="true" />
             Call {PRIMARY_PHONE.display}
-          </a>
+          </PhoneLink>
         </li>
       </ul>
       {/* Every item carries its leading dot; the row is pulled left by one dot slot and
@@ -507,9 +507,9 @@ export function V8Hero({ aside }: { aside?: ReactNode } = {}): JSX.Element {
                     Response within one business day
                   </li>
                   <li>
-                    <a className="v8-link--quiet" href={PRIMARY_PHONE.telHref} data-testid="link-hero-phone">
+                    <PhoneLink className="v8-link--quiet" data-testid="link-hero-phone">
                       Call {PRIMARY_PHONE.display}
-                    </a>
+                    </PhoneLink>
                   </li>
                 </ul>
 

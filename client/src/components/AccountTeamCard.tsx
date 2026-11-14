@@ -60,10 +60,12 @@ export function AccountTeamCard({
           <Mail className="h-4 w-4 shrink-0" aria-hidden="true" />
           <span className="min-w-0">{manager.email}</span>
         </a>
-        <a href={manager.phoneHref} className={`mt-1 flex items-center gap-2 ${link}`} data-testid="account-manager-phone">
-          <Phone className="h-4 w-4 shrink-0" aria-hidden="true" />
-          {manager.phoneDisplay}
-        </a>
+        {manager.phoneHref && (
+          <a href={manager.phoneHref} className={`mt-1 flex items-center gap-2 ${link}`} data-testid="account-manager-phone">
+            <Phone className="h-4 w-4 shrink-0" aria-hidden="true" />
+            {manager.phoneDisplay}
+          </a>
+        )}
       </div>
       <div className={`text-sm border-t pt-4 ${stacked ? "" : "sm:border-t-0 sm:border-l sm:pt-0 sm:pl-5"} ${divider}`}>
         <p className={`text-xs uppercase tracking-wide ${muted}`}>{sales.name}</p>
@@ -71,10 +73,12 @@ export function AccountTeamCard({
           <Mail className="h-4 w-4 shrink-0" aria-hidden="true" />
           <span className="min-w-0">{sales.email}</span>
         </a>
-        <a href={sales.phoneHref} className={`mt-1 flex items-center gap-2 ${link}`} data-testid="sales-phone">
-          <Phone className="h-4 w-4 shrink-0" aria-hidden="true" />
-          {sales.phoneDisplay}
-        </a>
+        {sales.phoneHref && (
+          <a href={sales.phoneHref} className={`mt-1 flex items-center gap-2 ${link}`} data-testid="sales-phone">
+            <Phone className="h-4 w-4 shrink-0" aria-hidden="true" />
+            {sales.phoneDisplay}
+          </a>
+        )}
       </div>
     </div>
   );

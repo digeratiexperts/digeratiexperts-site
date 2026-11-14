@@ -61,8 +61,8 @@
     "detail": "Confirm the right service level, required controls and implementation roadmap for your environment.",
     "url": "https://digeratiexperts.com/book",
     "urlLabel": "digeratiexperts.com/book",
-    "phone": "325-480-9870",
-    "phoneHref": "tel:+13254809870",
+    "phone": "[DE_PUBLIC_PHONE]",
+    "phoneHref": "tel:[DE_PUBLIC_PHONE]",
     "email": "info@digeratiexperts.com"
   },
   "scopeNote": "Published rates are starting points, not quotes. Final pricing depends on users, endpoints, locations, infrastructure, backup requirements and security and compliance scope; your Cyber Risk Assessment confirms final scope. This datasheet names no customers and makes no vendor-specific claims.",

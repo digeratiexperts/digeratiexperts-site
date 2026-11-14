@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { COMPANY, PRIMARY_PHONE, PUBLIC_SOCIAL_LINKS } from "@/data/companyContact";
+import { COMPANY, PRIMARY_PHONE, PUBLIC_SOCIAL_LINKS, schemaTelephoneProps } from "@/data/companyContact";
 
 const SITE_URL = COMPANY.website;
 
@@ -36,7 +36,7 @@ const ORGANIZATION = {
   "sameAs": PUBLIC_SOCIAL_LINKS.map((s) => s.href),
   "contactPoint": {
     "@type": "ContactPoint",
-    "telephone": PRIMARY_PHONE.schemaTelephone || PRIMARY_PHONE.e164,
+    ...schemaTelephoneProps(),
     "contactType": "sales",
     "email": COMPANY.email,
     "areaServed": "US",
@@ -51,7 +51,7 @@ const LOCAL_BUSINESS = {
   "alternateName": "Digerati Experts MSP",
   "description": "Cybersecurity-first managed IT for Arizona businesses. Partner-backed monitoring, identity/endpoint protection, and accountable day-to-day IT in one operating model.",
   "url": SITE_URL,
-  "telephone": PRIMARY_PHONE.schemaTelephone || PRIMARY_PHONE.e164,
+  ...schemaTelephoneProps(),
   "email": COMPANY.email,
   "logo": `${SITE_URL}/favicon-512x512.png`,
   "image": `${SITE_URL}/og-image.png`,

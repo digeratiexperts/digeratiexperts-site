@@ -132,7 +132,7 @@ Real and usable:
 - **52 real vendor logos** at `client/public/images/vendors/` (Pax8, Sophos,
   Huntress, SonicWall, ThreatLocker, Zoho, Lenovo, TD Synnex, …).
 - **Real business facts**: NAP (3165 S Alma School Rd Suite 29, Chandler AZ
-  85248; 325-480-9870; info@digeratiexperts.com), booking flow
+  85248; [DE_PUBLIC_PHONE]; info@digeratiexperts.com), booking flow
   (meet.digerati-experts.com), canonical CTA label "Get My Cyber Risk
   Assessment", ProActive tiers IT/Office/Business/Enterprise
   ($125/$165/$245/$345 per user; $1,600/$2,400/$5,400/$9,000 floors), Greater

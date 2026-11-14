@@ -246,7 +246,7 @@ import {
 } from "@shared/permissions";
 import { getEntitlements, hasSharedFiles } from "./portalAccessStore";
 import { enqueueOutbox } from "./integrations/deSyncStore";
-import { COMPANY, PRIMARY_PHONE } from "@shared/companyContact";
+import { COMPANY, PRIMARY_PHONE, hasPublicPhone } from "@shared/companyContact";
 import {
   ACCOUNT_MANAGERS,
   DEFAULT_ACCOUNT_MANAGER_ID,
@@ -5491,7 +5491,7 @@ export async function registerRoutes(app: Express) {
         success: true,
         leadId,
         zohoLeadId,
-        phone: DE_COMPANY.phoneDisplay,
+        ...(hasPublicPhone() ? { phone: DE_COMPANY.phoneDisplay } : {}),
         bookingUrl: DE_COMPANY.bookingUrl,
         message: "Thanks — our team will follow up with this conversation context.",
       });

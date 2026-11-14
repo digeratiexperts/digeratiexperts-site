@@ -33,7 +33,7 @@ import { CoverageScorePanel } from "@/components/store/CoverageScorePanel";
 import { shouldShowOngoingEquivalent } from "@/components/store/solutionCartUx";
 import { analytics } from "@/lib/analytics";
 import { CTA } from "@/lib/ctaCopy";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PRIMARY_PHONE, hasPublicPhone } from "@/data/companyContact";
 import { useDockHiddenWhileOpen } from "@/hooks/useDockHiddenWhileOpen";
 import { formatSnapshotMoney } from "@/lib/solutionSnapshotView";
 import { SolutionDrawerPane } from "@/components/store/SolutionDrawerPane";
@@ -48,6 +48,7 @@ import {
   type SolutionDrawerPaneId,
   type SolutionDrawerPaneState,
 } from "@/components/store/solutionDrawerPanes";
+import { PhoneLink } from "@/components/PhoneLink";
 
 export function ShoppingCart() {
   const {
@@ -538,14 +539,13 @@ export function ShoppingCart() {
 
                   <p className="mt-4 text-xs text-[color:var(--dp-text-55)]">
                     Estimated onboarding: typically 7–10 business days after kickoff (varies by
-                    stack). Questions?{" "}
-                    <a
-                      href={PRIMARY_PHONE.telHref}
+                    stack).{hasPublicPhone() && " Questions? "}
+                    <PhoneLink
                       className="inline-flex items-center gap-1 text-de-accent-ink hover:text-de-accent-ink"
                     >
                       <Phone className="h-3 w-3" />
                       {PRIMARY_PHONE.display}
-                    </a>
+                    </PhoneLink>
                   </p>
                 </SolutionDrawerPane>
 

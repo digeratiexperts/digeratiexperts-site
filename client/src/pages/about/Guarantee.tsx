@@ -1,7 +1,7 @@
 import { PageTemplate } from "@/components/PageTemplate";
 import { Chapter, Container, ClosingCta, CheckList, Eyebrow, FactStrip, HeroActions } from "@/components/site/chapters";
 import { useSEO } from "@/hooks/useSEO";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PRIMARY_PHONE, phoneAction, hasPublicPhone } from "@/data/companyContact";
 import { CTA } from "@/lib/ctaCopy";
 
 export default function Guarantee() {
@@ -105,9 +105,9 @@ export default function Guarantee() {
       <ClosingCta
         tone="well"
         eyebrow="Talk to us"
-        title="Call us today to see what Elite IT & Cybersecurity is all about"
+        title={`${hasPublicPhone() ? "Call" : "Talk to"} us today to see what Elite IT & Cybersecurity is all about`}
         showPhone={false}
-        primary={{ label: PRIMARY_PHONE.display, href: PRIMARY_PHONE.telHref, testId: "link-phone" }}
+        primary={phoneAction(PRIMARY_PHONE.display, "link-phone") ?? { label: "Contact us", href: "/contact", testId: "link-contact" }}
         secondary={{ label: "Client Bill of Rights", href: "/about/client-bill-of-rights", testId: "link-bill-of-rights" }}
       />
     </PageTemplate>

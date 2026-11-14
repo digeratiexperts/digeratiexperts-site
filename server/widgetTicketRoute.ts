@@ -7,7 +7,7 @@ import { storage } from "./storage";
 import { splitVisitorName, zohoClient, zohoDeskService } from "./zoho";
 import { isZohoOAuthError } from "./zoho/zohoOAuthErrors";
 import { isZohoAuthUnavailableError, type ZohoConnectionState } from "./zoho/oauth";
-import { PRIMARY_PHONE } from "@shared/companyContact";
+import { PRIMARY_PHONE, reachUsPhrase } from "@shared/companyContact";
 import { deskTicketSchema } from "@shared/deskTicket";
 import { sendCardDataRejected } from "./pciGuard";
 import { fallbackTicket, saveTicketOutsideDesk, type DeskFallbackOutcome, type FallbackTicket } from "./deskTicketFallback";
@@ -50,7 +50,7 @@ export const DESK_STATUS_PATH = "/api/zoho/desk/status";
 // The number comes from the canonical contact module: shared/publicPhone.test.ts
 // fails the build if it is spelled out anywhere else.
 export const DESK_UNAVAILABLE_MESSAGE =
-  `Our support desk is temporarily unavailable. Your message is still here — please try again in a few minutes, or call ${PRIMARY_PHONE.display}.`;
+  `Our support desk is temporarily unavailable. Your message is still here — please try again in a few minutes, or ${reachUsPhrase()}.`;
 export const TICKET_REJECTED_MESSAGE = "We couldn't open the ticket right now. Please try again.";
 
 export type DeskFailureKind = "unavailable" | "rejected";

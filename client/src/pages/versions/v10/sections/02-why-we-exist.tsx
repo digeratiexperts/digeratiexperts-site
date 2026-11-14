@@ -6,6 +6,7 @@ import { PRIMARY_PHONE } from "@/data/companyContact";
 import { revealInitial, revealInView, revealTransition, revealViewport } from "@/lib/animations";
 import "./02-why-we-exist.css";
 import { SceneBackdrop } from "../scene/SceneBackdrop";
+import { PhoneLink } from "@/components/PhoneLink";
 
 /**
  * 02 · Why we exist, ported from
@@ -94,13 +95,12 @@ export function V10WhyWeExist(): JSX.Element {
             <a className="v10-btn v10-btn--primary" href="/book" data-testid="button-schedule-consultation-banner">
               Schedule Consultation <ArrowRight {...ICON} />
             </a>
-            <a
+            <PhoneLink
               className="v10-btn v10-btn--outline-paper"
-              href={PRIMARY_PHONE.telHref}
               data-testid="button-call-banner"
             >
               <Phone {...ICON} /> Call {PRIMARY_PHONE.display}
-            </a>
+            </PhoneLink>
           </div>
         </motion.div>
       </div>

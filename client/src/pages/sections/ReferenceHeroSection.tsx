@@ -14,6 +14,7 @@ import { PRIMARY_PHONE } from "@/data/companyContact";
 // 50KB WebP (was a 2.0MB PNG): under the dark field the aggressive
 // compression is invisible — review finding F1.
 import heroCityLights from "@assets/de-hero-arizona-dusk-1600.webp";
+import { PhoneLink } from "@/components/PhoneLink";
 
 const trustItems = [
   {
@@ -175,14 +176,13 @@ export function ReferenceHeroSection(): JSX.Element {
               </li>
             ))}
             <li>
-              <a
-                href={PRIMARY_PHONE.telHref}
+              <PhoneLink
                 className="inline-flex min-h-11 items-center gap-2 font-medium text-white/85 underline decoration-white/25 underline-offset-4 transition-colors hover:text-white hover:decoration-white/50"
                 data-testid="link-hero-phone"
               >
                 <Phone className="h-4 w-4 text-de-magenta-ink" aria-hidden="true" />
                 Call {PRIMARY_PHONE.display}
-              </a>
+              </PhoneLink>
             </li>
           </ul>
 

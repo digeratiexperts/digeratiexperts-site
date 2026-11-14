@@ -20,6 +20,7 @@ import { pricing, getPricingFooterText } from "@/data/pricing";
 import { ProductMedia } from "@/components/store/ProductMedia";
 import { getProductVisual } from "@/data/productImages";
 import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PhoneLink } from "@/components/PhoneLink";
 
 const ManagedStore = () => {
   const prefersReducedMotion = useReducedMotion();
@@ -307,10 +308,10 @@ const ManagedStore = () => {
                 className="h-14 border-2 border-white/30 bg-transparent px-8 text-lg font-semibold text-white hover:bg-white/10"
                 data-testid="button-call-us"
               >
-                <a href={PRIMARY_PHONE.telHref}>
+                <PhoneLink>
                   <Phone className="mr-2 h-5 w-5" />
                   {PRIMARY_PHONE.display}
-                </a>
+                </PhoneLink>
               </Button>
             </div>
             

@@ -11,7 +11,7 @@
  */
 import fs from "node:fs";
 import path from "node:path";
-import { COMPANY, PRIMARY_PHONE } from "@shared/companyContact";
+import { COMPANY, PRIMARY_PHONE, hasPublicPhone } from "@shared/companyContact";
 import { DE_DOC_FONT_FACES, DE_DOC_FONTS_DIR, DE_DOC_TOKENS } from "@shared/deDocumentTokens";
 import type { AccountTeam } from "@shared/accountManagers";
 import { DE_LOGO_WHITE_DATA_URI } from "./deLogoWhiteDataUri";
@@ -337,7 +337,7 @@ export function closeBlock(opts: {
   const contacts = team
     ? `${teamRow(team)}<div class="ct">${emailLink}${site}</div>`
     : `<div class="ct">
-      <a class="link" href="${esc(PRIMARY_PHONE.telHref)}">${esc(PRIMARY_PHONE.display)}</a>
+      ${hasPublicPhone() ? `<a class="link" href="${esc(PRIMARY_PHONE.telHref)}">${esc(PRIMARY_PHONE.display)}</a>` : ""}
       ${emailLink}
       ${site}
     </div>`;
@@ -379,14 +379,14 @@ function teamRow(team: AccountTeam): string {
         ${photo ? `<td class="ph"><img src="${photo}" alt="${esc(m.photo.alt)}"/></td>` : ""}
         <td>
           <div class="nm">${esc(m.name)} <span class="tt">\u00B7 ${esc(m.title)}</span></div>
-          <div class="ct"><a class="link" href="mailto:${esc(m.email)}">${esc(m.email)}</a><a class="link" href="${esc(m.phoneHref)}">${esc(m.phoneDisplay)}</a></div>
+          <div class="ct"><a class="link" href="mailto:${esc(m.email)}">${esc(m.email)}</a>${m.phoneHref ? `<a class="link" href="${esc(m.phoneHref)}">${esc(m.phoneDisplay)}</a>` : ""}</div>
         </td>
       </tr></table>
     </td>
     <td class="dept">
       <div class="eyebrow">${esc(team.sales.name)}</div>
       <div class="ct"><a class="link" href="mailto:${esc(team.sales.email)}">${esc(team.sales.email)}</a></div>
-      <div class="ct"><a class="link" href="${esc(team.sales.phoneHref)}">${esc(team.sales.phoneDisplay)}</a></div>
+      ${team.sales.phoneHref ? `<div class="ct"><a class="link" href="${esc(team.sales.phoneHref)}">${esc(team.sales.phoneDisplay)}</a></div>` : ""}
     </td>
   </tr></table>`;
 }

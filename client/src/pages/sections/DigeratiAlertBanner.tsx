@@ -12,6 +12,7 @@ import {
   buttonPrimary,
   buttonSecondary,
 } from "@/components/home/HomeChapter";
+import { PhoneLink } from "@/components/PhoneLink";
 
 const features = [
   {
@@ -113,10 +114,10 @@ export const DigeratiAlertBanner = (): JSX.Element => {
               {CTA.primary}
               <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </button>
-            <a href={PRIMARY_PHONE.telHref} className={buttonSecondary("well")} data-testid="button-call-banner">
+            <PhoneLink className={buttonSecondary("well")} data-testid="button-call-banner">
               <Phone className="h-4 w-4" aria-hidden="true" />
               Call {PRIMARY_PHONE.display}
-            </a>
+            </PhoneLink>
           </div>
         </motion.div>
       </HomeContainer>

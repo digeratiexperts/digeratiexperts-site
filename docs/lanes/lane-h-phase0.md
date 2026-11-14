@@ -48,7 +48,7 @@ Labels actually rendered by V8 (the plan's list came from an older build — "St
 | "Discuss Your Security Needs" | 04 (tackle-cta) | `v8-btn--primary` | 1 |
 | "Get Industry-Specific Protection" | 10 (button-industries-cta + ind-ask) | `v8-btn--primary` | 2 |
 | "See Plans & Pricing" (`CTA.secondary`) | hero (button-hero-pricing) | `v8-btn--outline` | 1 |
-| "Call 325-480-9870" | hero checks, 02 (button-call-banner), 13, 15, 16, 07 proof-foot | link / `v8-btn--outline-paper` | 5 |
+| "Call [DE_PUBLIC_PHONE]" | hero checks, 02 (button-call-banner), 13, 15, 16, 07 proof-foot | link / `v8-btn--outline-paper` | 5 |
 | Non-assessment buttons | "Explore managed services", "See co-managed", "View Standalone Services", "How the ProActive Ecosystem works", "Details ×6", "Full methodology", "View case studies", "Read the Bill of Rights", "Open Trust Center", "Compare Everything", "Pricing tools", "View All Security Updates", "Read the Digerati Journal", "Send Message", "Subscribe" | mixed | — |
 
 Compact surfaces (`CTA.primaryNavCompact` = "Risk Assessment", `CTA.primaryShort` = "Cyber Risk Assessment")

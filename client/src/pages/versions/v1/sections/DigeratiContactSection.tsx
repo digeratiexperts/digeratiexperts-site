@@ -21,11 +21,13 @@ import {
   COMPANY_SOCIAL,
   PRIMARY_PHONE,
   formatAddressOneLine,
+  hasPublicPhone,
 } from "@/data/companyContact";
 // Closing bookend (Joe 2026-08-31): the hero's Phoenix city-lights plate
 // returns behind the contact chapter, fainter still, so the page ends where
 // it began. 50KB WebP.
 import contactBgImage from "@assets/de-hero-arizona-dusk-1600.webp";
+import { PhoneLink } from "@/components/PhoneLink";
 
 const contactFormSchema = z.object({
   name: z.string()
@@ -54,14 +56,18 @@ const directoryItems = [
     testId: "contact-email",
     external: false,
   },
-  {
-    icon: Phone,
-    label: "Phone",
-    value: PRIMARY_PHONE.display,
-    href: PRIMARY_PHONE.telHref,
-    testId: "contact-phone",
-    external: false,
-  },
+  ...(hasPublicPhone()
+    ? [
+      {
+        icon: Phone,
+        label: "Phone",
+        value: PRIMARY_PHONE.display,
+        href: PRIMARY_PHONE.telHref,
+        testId: "contact-phone",
+        external: false,
+      },
+      ]
+    : []),
   {
     icon: MapPin,
     label: "Office",
@@ -205,13 +211,12 @@ export const DigeratiContactSection = ({
                 {CTA.primary}
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </a>
-              <a
-                href={PRIMARY_PHONE.telHref}
+              <PhoneLink
                 className="inline-flex min-h-11 items-center justify-center rounded-lg border border-white/20 px-6 py-2.5 text-base font-semibold text-white transition-colors hover:border-white/40 hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-de-accent/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--de-bg)]"
                 data-testid="contact-cta-call"
               >
                 Call {PRIMARY_PHONE.display}
-              </a>
+              </PhoneLink>
             </div>
 
             <div className="grid border-t border-de-hairline md:grid-cols-2">

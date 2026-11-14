@@ -39,6 +39,7 @@ import { PRIMARY_PHONE } from "@shared/companyContact";
 import { builtInAnnouncements, type PortalAnnouncement } from "@shared/portalAnnouncements";
 import { todayIso } from "@shared/serviceRequests";
 import { AnnouncementCarousel } from "@/components/portal/selfservice/AnnouncementCarousel";
+import { PhoneLink } from "@/components/PhoneLink";
 
 /**
  * Self-Service home (/portal/self-service): one page to start anything —
@@ -390,8 +391,7 @@ export default function PortalSelfService() {
               </ul>
             </Card>
 
-            <a
-              href={PRIMARY_PHONE.telHref}
+            <PhoneLink
               className="flex items-center gap-3 rounded-xl border border-border bg-card p-5 shadow-sm hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <Headset className="h-6 w-6 text-muted-foreground" aria-hidden="true" />
@@ -399,7 +399,7 @@ export default function PortalSelfService() {
                 <span className="block text-base font-semibold text-foreground">Phone IT Service Desk</span>
                 <span className="pt-num block text-sm text-muted-foreground">{PRIMARY_PHONE.display}</span>
               </span>
-            </a>
+            </PhoneLink>
 
             <Card labelledBy="ss-feedback" className="p-5">
               <h2 id="ss-feedback" className="flex items-center gap-2 text-lg font-semibold text-foreground">

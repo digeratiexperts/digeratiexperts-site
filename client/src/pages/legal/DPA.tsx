@@ -1,7 +1,7 @@
 import { LegalDocumentLayout } from "@/components/LegalDocumentLayout";
 import { Database, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PRIMARY_PHONE, hasPublicPhone } from "@/data/companyContact";
 
 export default function DPA() {
   return (
@@ -68,15 +68,17 @@ export default function DPA() {
           <Mail className="mr-2 h-5 w-5" />
           Request DPA via Email
         </Button>
-        <Button
-          variant="outline"
-          className="border-black/25 text-[#1A1228] hover:bg-black/5"
-          onClick={() => {
-            window.location.href = PRIMARY_PHONE.telHref;
-          }}
-        >
-          Call {PRIMARY_PHONE.display}
-        </Button>
+        {hasPublicPhone() && (
+            <Button
+            variant="outline"
+            className="border-black/25 text-[#1A1228] hover:bg-black/5"
+            onClick={() => {
+              window.location.href = PRIMARY_PHONE.telHref;
+            }}
+          >
+            Call {PRIMARY_PHONE.display}
+          </Button>
+        )}
       </div>
     </LegalDocumentLayout>
   );

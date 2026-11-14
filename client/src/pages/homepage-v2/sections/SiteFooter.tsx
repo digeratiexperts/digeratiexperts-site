@@ -1,7 +1,8 @@
 import { useState, type FormEvent } from "react";
 import { DE_LOGO_REVERSE } from "@/lib/brandAssets";
-import { PUBLIC_SOCIAL_LINKS } from "@shared/companyContact";
+import { PUBLIC_SOCIAL_LINKS, hasPublicPhone } from "@shared/companyContact";
 import { EMAIL_ADDRESS, PHONE_DISPLAY, PHONE_HREF } from "../content";
+import { PhoneLink } from "@/components/PhoneLink";
 
 /** Same icons as the V8 footer, so the social row looks the same on both. */
 const SOCIAL_ICONS: Record<string, JSX.Element> = {
@@ -81,7 +82,7 @@ export function SiteFooter(): JSX.Element {
           <div>
             <a href="/" className="logo"><img src={DE_LOGO_REVERSE} alt="Digerati Experts" /></a>
             <p style={{ marginTop: 18 }}>Cybersecurity and managed IT<br />Chandler, Arizona</p>
-            <p style={{ marginTop: 12 }}><a href={PHONE_HREF}>{PHONE_DISPLAY}</a><br /><a href={`mailto:${EMAIL_ADDRESS}`}>{EMAIL_ADDRESS}</a></p>
+            <p style={{ marginTop: 12 }}><PhoneLink fallback={null}>{PHONE_DISPLAY}</PhoneLink>{hasPublicPhone() && <br />}<a href={`mailto:${EMAIL_ADDRESS}`}>{EMAIL_ADDRESS}</a></p>
             <h4 style={{ marginTop: 28 }}>Stay updated</h4>
             <p className="small" style={{ marginTop: 6 }}>Get the latest cybersecurity insights and IT tips delivered to your inbox.</p>
             <NewsletterForm />

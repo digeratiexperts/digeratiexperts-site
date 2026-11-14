@@ -12,7 +12,8 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { CTA } from "@/lib/ctaCopy";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PRIMARY_PHONE, hasPublicPhone } from "@/data/companyContact";
+import { PhoneLink } from "@/components/PhoneLink";
 
 const formSchema = z.object({
   fullName: z.string()
@@ -251,22 +252,23 @@ export const DigeratiLeadFormSection = (): JSX.Element => {
               </Form>
             </motion.div>
 
-            <motion.p 
-              className="mt-6 text-center text-base text-black/70"
-              initial={prefersReducedMotion ? false : { opacity: 0.55 }}
-              whileInView={{ opacity: 1 }}
-              viewport={revealViewport}
-              transition={revealTransition}
-            >
-              Prefer to call?{" "}
-              <a 
-                href={PRIMARY_PHONE.telHref}
-                data-testid="link-lead-phone"
-                className="text-[#D3126A] hover:text-[#f0187a] font-medium transition-colors"
+            {hasPublicPhone() && (
+              <motion.p 
+                className="mt-6 text-center text-base text-black/70"
+                initial={prefersReducedMotion ? false : { opacity: 0.55 }}
+                whileInView={{ opacity: 1 }}
+                viewport={revealViewport}
+                transition={revealTransition}
               >
-                {PRIMARY_PHONE.display}
-              </a>
-            </motion.p>
+                Prefer to call?{" "}
+                <PhoneLink
+                  data-testid="link-lead-phone"
+                  className="text-[#D3126A] hover:text-[#f0187a] font-medium transition-colors"
+                >
+                  {PRIMARY_PHONE.display}
+                </PhoneLink>
+              </motion.p>
+            )}
           </div>
         </div>
       </div>

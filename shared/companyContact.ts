@@ -2,7 +2,9 @@
  * Canonical public contact identity for Digerati Experts.
  * Import from here instead of hardcoding phone/email literals.
  *
- * Primary public sales/business number: 325-480-9870
+ * The public phone number is set in one place: PUBLIC_PHONE_NUMBER below.
+ * Until DE has a dedicated public line it holds PUBLIC_PHONE_PLACEHOLDER, and
+ * every call link, phone button and schema telephone stays hidden.
  * Additional numbers must be labeled by function (Sales / Client Support / Emergency).
  * Do not invent alternate numbers; confirm with Joseph Petro before changing.
  * Never publish a personal/cell number as the public NAP.
@@ -12,13 +14,13 @@ export type PhoneRole = "primary" | "sales" | "client_support" | "emergency";
 
 export interface CompanyPhone {
   role: PhoneRole;
-  /** Display form, e.g. 325-480-9870 */
+  /** Display form, e.g. 480-555-0100 (the placeholder while unset) */
   display: string;
-  /** tel: href, e.g. tel:+13254809870 */
+  /** tel: href, e.g. tel:+14805550100 (empty while unset) */
   telHref: string;
-  /** E.164, e.g. +13254809870 */
+  /** E.164, e.g. +14805550100 (empty while unset) */
   e164: string;
-  /** Schema.org telephone, e.g. +1-325-480-9870 */
+  /** Schema.org telephone, e.g. +1-480-555-0100 (omitted while unset) */
   schemaTelephone?: string;
   /** Short label when multiple numbers appear */
   label: string;
@@ -78,15 +80,71 @@ export const PUBLIC_SOCIAL_LINKS = [
   { key: "instagram", ...COMPANY_SOCIAL.instagram },
 ] as const;
 
-/** Official public NAP — sales / business / click-to-call. */
-export const PRIMARY_PHONE: CompanyPhone = {
-  role: "primary",
-  display: "325-480-9870",
-  telHref: "tel:+13254809870",
-  e164: "+13254809870",
-  schemaTelephone: "+1-325-480-9870",
-  label: "Sales & Business",
-};
+/**
+ * Literal token used wherever the public number is not set yet. Legal pages,
+ * document templates and email templates may print it as plain text so a
+ * single find-and-replace can fill them in later.
+ */
+export const PUBLIC_PHONE_PLACEHOLDER = "[DE_PUBLIC_PHONE]";
+
+/**
+ * The public business number. Set this to the real line in 480-555-0100 form
+ * to turn phone links, buttons and schema telephone back on everywhere.
+ */
+export const PUBLIC_PHONE_NUMBER: string = PUBLIC_PHONE_PLACEHOLDER;
+
+function nanpDigits(value: string): string | null {
+  const digits = value.replace(/\D/g, "");
+  if (digits.length === 10) return digits;
+  if (digits.length === 11 && digits.startsWith("1")) return digits.slice(1);
+  return null;
+}
+
+function buildPrimaryPhone(value: string): CompanyPhone {
+  const digits = nanpDigits(value);
+  if (!digits) {
+    return { role: "primary", display: PUBLIC_PHONE_PLACEHOLDER, telHref: "", e164: "", label: "Sales & Business" };
+  }
+  const display = `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`;
+  return {
+    role: "primary",
+    display,
+    telHref: `tel:+1${digits}`,
+    e164: `+1${digits}`,
+    schemaTelephone: `+1-${display}`,
+    label: "Sales & Business",
+  };
+}
+
+/** Official public NAP - sales / business / click-to-call. */
+export const PRIMARY_PHONE: CompanyPhone = buildPrimaryPhone(PUBLIC_PHONE_NUMBER);
+
+/** True once a real public number is configured. Gate every tel: link and phone button on this. */
+export function hasPublicPhone(): boolean {
+  return PRIMARY_PHONE.telHref !== "";
+}
+
+/**
+ * Sentence fragment for "how to reach us" copy: "call us at 480-555-0100"
+ * when a number is set, otherwise "email us at info@digeratiexperts.com".
+ */
+export function reachUsPhrase(): string {
+  return hasPublicPhone() ? `call us at ${PRIMARY_PHONE.display}` : `email us at ${COMPANY.email}`;
+}
+
+/**
+ * `{ label, href }` call-to-action for the public number, or undefined while
+ * it is unset so optional CTA slots simply drop the call button.
+ */
+export function phoneAction(label: string, testId?: string): { label: string; href: string; testId?: string } | undefined {
+  if (!hasPublicPhone()) return undefined;
+  return testId ? { label, href: PRIMARY_PHONE.telHref, testId } : { label, href: PRIMARY_PHONE.telHref };
+}
+
+/** Schema.org `telephone` property, or nothing while the number is unset. */
+export function schemaTelephoneProps(): { telephone?: string } {
+  return hasPublicPhone() ? { telephone: PRIMARY_PHONE.schemaTelephone || PRIMARY_PHONE.e164 } : {};
+}
 
 /**
  * Known phone identities. Only `primary` is public.

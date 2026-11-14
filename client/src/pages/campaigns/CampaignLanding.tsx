@@ -4,7 +4,7 @@ import { PageTemplate } from "@/components/PageTemplate";
 import { Button } from "@/components/ui/button";
 import { useSEO } from "@/hooks/useSEO";
 import { CTA } from "@/lib/ctaCopy";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PRIMARY_PHONE, hasPublicPhone } from "@/data/companyContact";
 import { campaignBySlug } from "@/data/campaigns";
 import { RESOURCE_TYPE_LABEL, resourceBySlug, resourceLandingMeta } from "@/data/resourceRegistry";
 import { briefBySlug } from "@/data/executiveBriefs";
@@ -23,6 +23,7 @@ import {
   StepRail,
   cardDark,
 } from "@/components/site/chapters";
+import { PhoneLink } from "@/components/PhoneLink";
 
 export default function CampaignLanding() {
   const params = useParams<{ slug?: string }>();
@@ -65,17 +66,20 @@ export default function CampaignLanding() {
           title="Who this is for"
           rows={[
             { label: "Audience", value: campaign.audience },
-            {
-              label: "Call",
-              value: (
-                <a
-                  href={PRIMARY_PHONE.telHref}
-                  className="inline-flex min-h-11 items-center hover:text-de-accent-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ec4899]"
-                >
-                  {PRIMARY_PHONE.display}
-                </a>
-              ),
-            },
+            ...(hasPublicPhone()
+              ? [
+                  {
+                    label: "Call",
+                    value: (
+                    <PhoneLink
+                      className="inline-flex min-h-11 items-center hover:text-de-accent-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ec4899]"
+                    >
+                      {PRIMARY_PHONE.display}
+                    </PhoneLink>
+                  ),
+                  },
+                ]
+              : []),
           ]}
         />
       }

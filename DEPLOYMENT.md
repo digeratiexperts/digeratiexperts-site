@@ -51,6 +51,31 @@ Production secrets live only in `/home/digeratiexperts.com/shared/.env`
 Key groups: `DATABASE_URL`, JWT/SESSION secrets, Zoho (Desk/CRM/Payments +
 Portal OIDC), OpenAI, Turnstile, TechSales sync URL/token, `PORT=3300`.
 
+## Public phone number
+
+The site has no public phone number yet. `PUBLIC_PHONE_NUMBER` in
+`shared/companyContact.ts` holds the placeholder `[DE_PUBLIC_PHONE]`, and while
+it does every call link, phone button, `tel:` desk action and schema.org
+`telephone` stays hidden. Visitors are pointed to DE Desk, the contact page or
+info@digeratiexperts.com instead.
+
+To publish a number:
+
+1. Set `PUBLIC_PHONE_NUMBER` to the line in `480-555-0100` form. The display,
+   `tel:` link, E.164 and schema forms are all derived from it.
+2. Find and replace `[DE_PUBLIC_PHONE]` across the repo. That fills plain-text
+   spots such as the Word templates in `document_templates/` and the datasheet
+   content sources.
+3. Add the number back to the static pages that cannot read the constant:
+   `client/index.html` (JSON-LD `telephone`), `public/llms.txt`,
+   `zoho/help-center/footer.html`, and the pages under `public/v2/` and
+   `public/scrollcraft/`.
+4. Run `npm run documents:build -- --publish` to rebuild the PDFs under
+   `client/public/assets/`, then `npm test`.
+
+`shared/publicPhone.test.ts` fails if a retired number shows up in any served
+source or document template.
+
 ## OpenLiteSpeed
 
 OLS terminates TLS and reverse-proxies to Node on `:3300`. Do **not** serve

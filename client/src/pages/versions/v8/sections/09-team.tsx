@@ -7,6 +7,7 @@ import { PRIMARY_PHONE } from "@/data/companyContact";
 import { HOME_CTA } from "../cta";
 import "./09-team.css";
 import { ChapterPattern } from "@/components/site/Atmosphere";
+import { PhoneLink } from "@/components/PhoneLink";
 
 /**
  * 09 · The people behind your technology (mock: sections/09-team.html).
@@ -107,9 +108,9 @@ export function V8Team(): JSX.Element {
               >
                 {HOME_CTA.secondary} <ArrowRight {...icon} />
               </a>
-              <a className="v8-link--quiet lead__phone" href={PRIMARY_PHONE.telHref} data-testid="link-team-phone">
+              <PhoneLink className="v8-link--quiet lead__phone" data-testid="link-team-phone">
                 or call {PRIMARY_PHONE.display}
-              </a>
+              </PhoneLink>
             </p>
           </div>
         </motion.div>

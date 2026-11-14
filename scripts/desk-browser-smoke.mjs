@@ -299,7 +299,9 @@ for (const viewport of [
     ["ask-de-choice-tools", "resources"],
     ["ask-de-choice-feedback", "chat"],
   ];
-  const expectedStops = [...choices.map(([id]) => id), "ask-de-choice-phone", "ask-de-close"];
+  // The call link only renders once a real public number is configured
+  // (shared/companyContact.ts). While the placeholder is active it must be absent.
+  const stopsFor = (hasPhone) => [...choices.map(([id]) => id), ...(hasPhone ? ["ask-de-choice-phone"] : []), "ask-de-close"];
   const controlVisible = (page, selector = null) => page.evaluate((selector) => {
     const el = selector ? document.querySelector(selector) : document.activeElement;
     const clip = document.querySelector('[data-testid="ask-de-quick-menu-scroll"]') || document.querySelector('[data-testid="ask-de-quick-menu"]');
@@ -373,8 +375,10 @@ for (const viewport of [
         await page.screenshot({ path: `${outDir}/chooser-${where}.png` });
         // A failed fit is already a red gate; avoid a pointless 30s click timeout on that same defect.
         if (!fits) continue;
+        const hasPhone = (await panel.locator('a[href^="tel:"]').count()) > 0;
+        const expectedStops = stopsFor(hasPhone);
         const stops = await panel.locator("button, a[href]").evaluateAll(elements => elements.map(el => el.getAttribute("data-testid")));
-        check("chooser", `${where}: every existing choice, phone and close is retained`, JSON.stringify(stops) === JSON.stringify(expectedStops), JSON.stringify(stops));
+        check("chooser", `${where}: every existing choice, phone (when configured) and close is retained`, JSON.stringify(stops) === JSON.stringify(expectedStops), JSON.stringify(stops));
         const seen = new Set();
         let keyboardHidden = 0;
         for (const key of [...Array(6).fill("Tab"), ...Array(6).fill("Shift+Tab")]) {
@@ -413,10 +417,14 @@ for (const viewport of [
           await page.waitForFunction(() => document.querySelector('[data-testid="ask-de-quick-menu-scroll"]').scrollTop > 0, null, { timeout: 5000 });
         }
         check("chooser", `${where}: wheel scrolling stays in the chooser`, await page.evaluate(() => scrollY) === pageY);
-        const phone = page.getByTestId("ask-de-choice-phone");
-        await phone.scrollIntoViewIfNeeded();
-        await phone.click({ trial: true, timeout: 10000 });
-        check("chooser", `${where}: phone link is reachable without placing a call`, (await controlVisible(page, '[data-testid="ask-de-choice-phone"]')).visible && (await phone.getAttribute("href")).startsWith("tel:"));
+        if (hasPhone) {
+          const phone = page.getByTestId("ask-de-choice-phone");
+          await phone.scrollIntoViewIfNeeded();
+          await phone.click({ trial: true, timeout: 10000 });
+          check("chooser", `${where}: phone link is reachable without placing a call`, (await controlVisible(page, '[data-testid="ask-de-choice-phone"]')).visible && (await phone.getAttribute("href")).startsWith("tel:"));
+        } else {
+          check("chooser", `${where}: no call link while the public number is unset`, (await page.getByTestId("ask-de-choice-phone").count()) === 0);
+        }
         await scrollArea.hover();
         await page.mouse.wheel(0, -scrollSize.content);
         await page.waitForFunction(() => document.querySelector('[data-testid="ask-de-quick-menu-scroll"]').scrollTop === 0, null, { timeout: 5000 });
