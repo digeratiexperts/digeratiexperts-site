@@ -9,11 +9,11 @@ import {
 } from "./situationMatchNotice";
 
 describe("SITUATION_MATCH_AI_DISCLOSURE", () => {
-  it("uses the approved notice text, with a retention placeholder and a no-training clause that can be dropped", () => {
-    expect(CHAT_RETENTION).toBe("{{CHAT_RETENTION}}");
-    expect(SITUATION_MATCH_NOTICE_VERSION).toBe("situation-match-v2");
+  it("uses the approved notice text, with a 1-year retention period and a no-training clause that can be dropped", () => {
+    expect(CHAT_RETENTION).toBe("1 year");
+    expect(SITUATION_MATCH_NOTICE_VERSION).toBe("situation-match-v3");
     expect(SITUATION_MATCH_AI_DISCLOSURE).toBe(
-      "An AI assistant for Digerati Experts (DE) reads your description to suggest services. We send it to our AI service provider, which is not allowed to use it to train its models, and keep it in your session for {{CHAT_RETENTION}} so DE Desk can pick up where you left off. It is not saved to an IT & Security Profile unless you later choose to save a draft. Please don't include passwords, card numbers, or health or patient information. See our Privacy Policy.",
+      "An AI assistant for Digerati Experts (DE) reads your description to suggest services. We send it to our AI service provider, which is not allowed to use it to train its models, and keep it in your session for 1 year so DE Desk can pick up where you left off. It is not saved to an IT & Security Profile unless you later choose to save a draft. Please don't include passwords, card numbers, or health or patient information. See our Privacy Policy.",
     );
     expect(SITUATION_MATCH_AI_DISCLOSURE).toContain(SITUATION_MATCH_NO_TRAINING);
     expect(SITUATION_MATCH_AI_DISCLOSURE).toContain(CHAT_RETENTION);

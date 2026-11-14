@@ -3,14 +3,14 @@
  * This is not the DE Desk pre-chat notice.
  */
 
-/** Open decision. Do not merge until this is replaced with the chosen retention wording. */
-export const CHAT_RETENTION = "{{CHAT_RETENTION}}";
+/** Published retention period for the describe-box notice. */
+export const CHAT_RETENTION = "1 year";
 
 /** Depends on the AI provider API terms. Drop this clause if those terms change. */
 export const SITUATION_MATCH_NO_TRAINING = "which is not allowed to use it to train its models";
 
-/** Bumped for the revised notice text. */
-export const SITUATION_MATCH_NOTICE_VERSION = "situation-match-v2";
+/** Bumped for the 1-year retention wording. */
+export const SITUATION_MATCH_NOTICE_VERSION = "situation-match-v3";
 
 export const SITUATION_MATCH_PRIVACY_PATH = "/legal/privacy-policy";
 export const SITUATION_MATCH_PRIVACY_LINK_TEXT = "Privacy Policy";
