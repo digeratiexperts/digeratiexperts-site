@@ -31,7 +31,7 @@ const serviceCategories: ServiceCategory[] = [
     title: "Managed IT",
     icon: <Monitor className="w-5 h-5" />,
     rows: [
-      { capability: "Help Desk & SLA", essentials: false, office: "8×5", business: "8×5 + Priority", enterprise: "VIP + 24×7 opt" },
+      { capability: "Help Desk", essentials: false, office: "8×5", business: "8×5 + Priority", enterprise: "VIP + 24×7 opt" },
       { capability: "Remote Monitoring & Alerting", essentials: true, office: true, business: true, enterprise: true },
       { capability: "Patch & App Management", essentials: true, office: true, business: true, enterprise: true },
       { capability: "Remote Support & Quick Assist", essentials: false, office: true, business: true, enterprise: true },
@@ -71,7 +71,7 @@ const serviceCategories: ServiceCategory[] = [
       { capability: "Immutable Backup Copies", essentials: false, office: false, business: true, enterprise: true },
       { capability: "Verified Restore Testing", essentials: false, office: "Quarterly", business: "Monthly", enterprise: "Weekly" },
       { capability: "Disaster Recovery (DRaaS)", essentials: false, office: "Optional", business: "Optional", enterprise: true },
-      { capability: "Agreed RPO/RTO targets", essentials: false, office: false, business: "Standard", enterprise: "Custom SLA" },
+      { capability: "Agreed RPO/RTO targets", essentials: false, office: false, business: "Standard", enterprise: "Custom terms in your agreement" },
     ]
   },
   {
@@ -108,8 +108,8 @@ const serviceCategories: ServiceCategory[] = [
       { capability: "UCaaS / VoIP Telephony", essentials: "Add-on", office: "Add-on", business: "Add-on", enterprise: "Add-on" },
       { capability: "Compliance Modules (HIPAA, SOC 2)", essentials: "Add-on", office: "Add-on", business: "Add-on", enterprise: "Included" },
       { capability: "Extended Retention & Archiving", essentials: "Add-on", office: "Add-on", business: "Add-on", enterprise: "Add-on" },
-      { capability: "Penetration Testing", essentials: "Add-on", office: "Add-on", business: "Add-on", enterprise: "Annual included" },
-      { capability: "24/7 SOC Monitoring", essentials: "Add-on", office: true, business: true, enterprise: true },
+      { capability: "Penetration Testing", essentials: "Add-on", office: "Add-on", business: "Add-on", enterprise: "Coordinated, when included in your agreement" },
+      { capability: "24/7 alert monitoring, on plans that include it", essentials: "Add-on", office: true, business: true, enterprise: true },
     ]
   }
 ];

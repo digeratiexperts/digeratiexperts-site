@@ -90,7 +90,7 @@ const workplaceData = {
     }
   ],
   addons: [
-    { name: "Managed IT Help Desk", description: "Full support desk with SLA-backed response times" },
+    { name: "Managed IT Help Desk", description: "Full support desk with response times set in your signed agreement" },
     { name: "Privileged Access Management", description: "Secure admin credentials with session recording" },
     { name: "Data Loss Prevention", description: "Prevent sensitive data exfiltration" },
     { name: "Advanced Email Security", description: "Enhanced phishing and malware protection" },

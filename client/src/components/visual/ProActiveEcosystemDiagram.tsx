@@ -48,7 +48,7 @@ export const ProActiveEcosystemDiagram: React.FC = () => {
       num: "04",
       title: "Continuous 24/7 Management",
       detail:
-        "Human SOC monitoring, regular restore drills, patch automation, and quarterly strategic reviews (vCIO).",
+        "Alert monitoring through our contracted security operations partner, regular restore drills, patch automation, and quarterly strategic reviews (vCIO).",
       output: "Verified Posture & Active Defense",
     },
   ];

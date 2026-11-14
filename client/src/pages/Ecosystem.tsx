@@ -14,7 +14,7 @@ export default function Ecosystem() {
       name: "DE SECURITY", 
       icon: Shield,
       desc: "Email Protection · EDR · SOC/MDR · Security Awareness · DLP",
-      details: ["24/7 Threat Monitoring", "Endpoint Detection & Response", "Phishing Protection", "Security Logging & Reporting"]
+      details: ["24/7 alert monitoring, on plans that include it", "Endpoint Detection & Response", "Phishing Protection", "Security Logging & Reporting"]
     },
     { 
       name: "DE INFRASTRUCTURE", 

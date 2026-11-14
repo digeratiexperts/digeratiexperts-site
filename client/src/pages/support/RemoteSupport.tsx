@@ -56,8 +56,8 @@ export default function RemoteSupport() {
           title="Session facts"
           rows={[
             { label: "Connection", value: "2 mins typical" },
-            { label: "Critical response", value: "15 min (SLA)" },
-            { label: "Availability", value: "24/7" },
+            { label: "Service levels", value: "Set in your signed agreement" },
+            { label: "Incident response", value: "On plans that include it" },
             { label: "Sessions", value: "Encrypted (Zoho Assist)" },
           ]}
         />

@@ -308,7 +308,7 @@ export const pageNarratives: Record<string, PageNarrative> = {
       {
         title: "Targets",
         description:
-          "Agree RPO/RTO with ownership first — recovery objectives with SLA backing, not marketing slogans.",
+          "Agree RPO/RTO with ownership first — recovery objectives set in your signed agreement, not marketing slogans.",
       },
       {
         title: "Protect",

@@ -146,7 +146,7 @@ export const storeProducts: StoreProduct[] = [
     sku: "DE-SVC-MGD-ENTERPRISE-MO",
     name: "ProActive Ecosystem - Enterprise",
     shortDescription: "Full compliance and security suite",
-    description: "Complete compliance and enterprise security package with 24/7 SOC, compliance reporting, and dedicated vCISO support.",
+    description: "Complete compliance and enterprise security package with 24/7 alert monitoring through our contracted security operations partner, on plans that include it, compliance reporting, and dedicated vCISO support.",
     category: "contract_services",
     pricingType: "per_user",
     basePrice: pricing.enterprise.user,
@@ -156,7 +156,7 @@ export const storeProducts: StoreProduct[] = [
     isClientOnly: false,
     requiredClientType: "public",
     minimumQuantity: 1,
-    features: ["Everything in Business", "24/7 SOC Monitoring", "Full Compliance Suite", "vCISO Support", "Quarterly Security Reviews"],
+    features: ["Everything in Business", "24/7 alert monitoring, on plans that include it", "Full Compliance Suite", "vCISO Support", "Quarterly Security Reviews"],
     sortOrder: 3,
   },
   {
@@ -173,7 +173,7 @@ export const storeProducts: StoreProduct[] = [
     isClientOnly: false,
     requiredClientType: "public",
     minimumQuantity: 1,
-    features: ["Custom Solution Design", "Dedicated Account Manager", "Flexible Service Levels", "Tailored SLAs"],
+    features: ["Custom Solution Design", "Dedicated Account Manager", "Flexible Service Levels", "Service levels set in your signed agreement"],
     sortOrder: 4,
   },
   {
@@ -190,7 +190,7 @@ export const storeProducts: StoreProduct[] = [
     isClientOnly: false,
     requiredClientType: "public",
     minimumQuantity: 1,
-    features: ["24/7 Threat Monitoring", "Incident Response", "Vulnerability Management", "Security Operations"],
+    features: ["24/7 alert monitoring, on plans that include it", "Incident Response", "Vulnerability Management", "Security Operations"],
     sortOrder: 5,
   },
   {

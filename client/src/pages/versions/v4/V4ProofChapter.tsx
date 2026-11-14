@@ -43,10 +43,10 @@ const EXCERPTS: Array<{ source: string; title: string; quote: string; note?: str
     note: "Written on the page where other providers put badges.",
   },
   {
-    source: "Service Level Agreement",
-    title: "Critical (Active Breach/System Down)",
-    quote: "15 minutes",
-    note: "The published response target for the Critical tier. Lower tiers are slower, and the SLA says so.",
+    source: "Service levels",
+    title: "Where response times live",
+    quote: "Service levels are set in your signed agreement.",
+    note: "Public pages do not publish response times, uptime, or service credits.",
   },
 ];
 

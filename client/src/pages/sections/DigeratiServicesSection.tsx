@@ -93,7 +93,7 @@ const capabilityPreview: {
     icon: Eye,
     title: "SOC / MDR Monitoring",
     link: "/solutions/security-operations",
-    desc: "24/7 detection and response.",
+    desc: "24/7 alert monitoring through our contracted security operations partner, on plans that include it.",
   },
   {
     icon: ShieldCheck,

@@ -8,7 +8,7 @@ const config: TierPageConfig = {
   canonicalPath: "/solutions/proactive-business-ecosystem",
   seoTitle: "ProActive Business Ecosystem | Digerati Experts",
   seoDescription:
-    `Security-first managed IT for Arizona SMBs. Starts at ${formatUserPrice("business")} with a ${formatPrice(pricing.business.monthlyMin)}/mo minimum. Includes 24/7 SOC, MDR, Security Awareness Training, full backup and BCDR, compliance/risk reporting, and semi-annual technology + security reviews.`,
+    `Security-first managed IT for Arizona SMBs. Starts at ${formatUserPrice("business")} with a ${formatPrice(pricing.business.monthlyMin)}/mo minimum. Includes 24/7 alert monitoring through our contracted security operations partner, on plans that include it, Security Awareness Training, full backup and BCDR, compliance/risk reporting, and semi-annual technology + security reviews.`,
   heroBadge: "Security-first business package",
   tagline: "Security-first managed IT — built for businesses that cannot afford a quiet breach.",
   positioning:

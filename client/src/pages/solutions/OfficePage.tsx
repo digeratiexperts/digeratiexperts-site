@@ -46,7 +46,7 @@ const matrixCategories: MatrixCategory[] = [
     icon: <Monitor className="w-5 h-5" />,
     rows: [
       { id: "service-desk", capability: "Service Desk (remote support + ticketing)", status: "limited", tooltip: "Business hours coverage; priority response is add-on" },
-      { id: "support-hours", capability: "Support hours (SLA)", status: "limited", tooltip: "8×5 business hours; after-hours is add-on" },
+      { id: "support-hours", capability: "Support hours", status: "limited", tooltip: "8×5 business hours; after-hours is add-on" },
       { id: "monitoring", capability: "Device monitoring & alerting", status: "included" },
       { id: "patching", capability: "OS & third-party patching", status: "included" },
       { id: "onboarding", capability: "New user onboarding (accounts + access)", status: "limited", tooltip: "Standard workflow; complex app roles may be add-on" },
@@ -70,7 +70,7 @@ const matrixCategories: MatrixCategory[] = [
       { id: "awareness", capability: "Security awareness baseline (guidance + templates)", status: "limited", tooltip: "Baseline training materials; interactive simulations are add-on" },
       { id: "vuln-scan", capability: "Vulnerability scan (external / basic)", status: "limited", tooltip: "Quarterly snapshot; remediation planning included" },
       { id: "ir-readiness", capability: "Incident response readiness (basic plan + contacts)", status: "limited", tooltip: "Basic playbook; full IR retainer is add-on" },
-      { id: "soc", capability: "Advanced monitoring / SOC response", status: "optional", tooltip: "24/7 SOC monitoring available as add-on" },
+      { id: "soc", capability: "Advanced monitoring / SOC response", status: "optional", tooltip: "24/7 alert monitoring, on plans that include it available as add-on" },
       { id: "compliance", capability: "Compliance frameworks & reporting", status: "optional", tooltip: "HIPAA, SOC 2, CMMC modules available" }
     ]
   },
@@ -106,7 +106,7 @@ const matrixCategories: MatrixCategory[] = [
 ];
 
 const shortCompareRows = [
-  { label: "Support hours (SLA)", value: "8×5 business hours" },
+  { label: "Support hours", value: "8×5 business hours" },
   { label: "Response targets", value: "Standard (next business day)" },
   { label: "Patch + monitoring coverage", value: "Full coverage" },
   { label: "Email protection level", value: "Anti-phishing gateway" },

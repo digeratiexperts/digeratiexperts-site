@@ -96,7 +96,7 @@ const tiers = {
     learnMoreUrl: "/solutions/proactive-business-ecosystem",
     inclusions: [
       "Everything in Office, plus",
-      "DE Security Foundation with 24/7 managed detection and response",
+      "DE Security Foundation with 24/7 managed detection and response through our contracted security operations partner, on plans that include it",
       "Enhanced security operations / threat detection",
       "Security awareness training",
       "Backup & disaster recovery posture",

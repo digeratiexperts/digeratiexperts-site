@@ -267,7 +267,7 @@ export const DigeratiContactSection = ({
               </dl>
               <p className="mt-4 flex items-start gap-2 text-base font-medium text-de-accent-ink">
                 <Shield className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-                <span>24/7/365 emergency incident response</span>
+                <span>Emergency incident response on plans that include it</span>
               </p>
             </div>
 

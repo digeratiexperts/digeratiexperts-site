@@ -44,7 +44,7 @@ const SERVICES = [
   {
     title: "Cybersecurity, watched around the clock",
     href: "/solutions/threat-detection",
-    body: "24/7 managed detection and response across your devices, accounts and email, plus phishing training so your staff become a defence rather than a risk.",
+    body: "24/7 managed detection and response through our contracted security operations partner, on plans that include it across your devices, accounts and email, plus phishing training so your staff become a defence rather than a risk.",
   },
   {
     title: "Backup and disaster recovery",
@@ -110,10 +110,7 @@ const STEPS = [
 ];
 
 const SLA_ROWS = [
-  { severity: "Critical", meaning: "Active breach or system down", response: "15 minutes" },
-  { severity: "High", meaning: "Major functionality impaired", response: "1 hour" },
-  { severity: "Medium", meaning: "Partial loss", response: "4 hours" },
-  { severity: "Low", meaning: "Questions and minor issues", response: "Next business day" },
+  { severity: "All priorities", meaning: "Response times, monitoring coverage, and credits", response: "Set in your signed agreement" },
 ];
 
 const PLEDGES = [
@@ -153,7 +150,7 @@ const FAQ = [
   },
   {
     q: "Is my data secure?",
-    a: "Yes. We use enterprise-grade controls, 24/7 monitoring, and documented security protocols. We help Arizona businesses prepare for HIPAA, PCI DSS, SOC 2, and cyber-insurance reviews — with clear ownership of credentials, policies, and evidence.",
+    a: "Yes. We use enterprise-grade controls and documented security protocols, with monitoring matched to your plan — 24/7 alert monitoring through our contracted security operations partner, on plans that include it. We help Arizona businesses prepare for HIPAA, PCI DSS, SOC 2, and cyber-insurance reviews — with clear ownership of credentials, policies, and evidence.",
   },
 ];
 
@@ -188,7 +185,7 @@ export default function HomepageV5(): JSX.Element {
   useSEO({
     title: "Managed IT and Cybersecurity for Arizona Businesses",
     description:
-      "Arizona MSP/MSSP. Cybersecurity-first managed IT, 24/7 emergency incident response, and a Cyber Risk Assessment that matches the operating model to your environment.",
+      "Arizona MSP/MSSP. Cybersecurity-first managed IT, emergency incident response on plans that include it, and a Cyber Risk Assessment that matches the operating model to your environment.",
   });
 
   // The site's shell is dark; this page is light to its edges, including the
@@ -254,7 +251,7 @@ export default function HomepageV5(): JSX.Element {
               <h1 id="v5-h1">Managed IT and cybersecurity for Arizona businesses.</h1>
               <p className="v5-lede">
                 Digerati Experts runs and protects your company's technology: the help desk, security monitoring, backups and the
-                network, from one accountable team, with published prices and a written SLA.
+                network, from one accountable team, with published prices; service levels are set in your signed agreement.
               </p>
               <div className="v5-actions">
                 <PrimaryAction />
@@ -280,11 +277,11 @@ export default function HomepageV5(): JSX.Element {
                 <span className="v5-num">{formatPrice(pricing.it.monthlyMinimum)} monthly minimum. Four plans, all priced on the pricing page.</span>
               </li>
               <li className="v5-fact">
-                <strong>15 minutes to a critical issue</strong>
-                <span>Response times are written into our SLA, with service credits if we miss them.</span>
+                <strong>Response times in your agreement</strong>
+                <span>Service levels are set in your signed agreement.</span>
               </li>
               <li className="v5-fact">
-                <strong>24/7/365 emergency response</strong>
+                <strong>Emergency incident response on plans that include it</strong>
                 <span>Emergency incident response availability, around the clock, all year.</span>
               </li>
             </ul>
@@ -401,8 +398,8 @@ export default function HomepageV5(): JSX.Element {
             <div>
               <div className="v5-head">
                 <p className="v5-eyebrow">Response times</p>
-                <h2 id="v5-sla">Response times, in writing.</h2>
-                <p className="v5-lede">Published in our Service Level Agreement, with service credits if we miss them.</p>
+                <h2 id="v5-sla">Service levels, in your agreement.</h2>
+                <p className="v5-lede">Service levels are set in your signed agreement.</p>
               </div>
               <table className="v5-table">
                 <thead>
@@ -424,7 +421,7 @@ export default function HomepageV5(): JSX.Element {
                 </tbody>
               </table>
               <p className="v5-note">
-                24/7/365 emergency incident response availability. <Link href="/legal/sla">Read the SLA</Link>.
+                Emergency incident response on plans that include it. <Link href="/legal/sla">Read the service levels page</Link>.
               </p>
             </div>
             <div className="v5-pledges">
@@ -546,7 +543,7 @@ export default function HomepageV5(): JSX.Element {
               <Link href="/pricing">Pricing</Link>
             </li>
             <li>
-              <Link href="/legal/sla">Service Level Agreement</Link>
+              <Link href="/legal/sla">Service levels</Link>
             </li>
             <li>
               <Link href="/legal/terms-of-use">Terms of Use</Link>

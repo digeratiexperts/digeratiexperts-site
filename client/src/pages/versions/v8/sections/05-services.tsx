@@ -68,7 +68,7 @@ const paths: {
 ];
 
 const capabilityPreview: { icon: LucideIcon; title: string; link: string; desc: string }[] = [
-  { icon: Eye, title: "Detection & Response (SOC / MDR)", link: "/solutions/security-operations", desc: "24/7 detection and response." },
+  { icon: Eye, title: "Detection & Response (SOC / MDR)", link: "/solutions/security-operations", desc: "24/7 alert monitoring through our contracted security operations partner, on plans that include it." },
   { icon: ShieldCheck, title: "Endpoint Security / EDR-MDR", link: "/solutions/threat-detection", desc: "Protect devices across the environment." },
   { icon: UserCheck, title: "Identity & Access Management", link: "/solutions/unified-security", desc: "Stronger access without user chaos." },
   { icon: KeyRound, title: "Privileged Access Controls", link: "/solutions/unified-security", desc: "Admin controls and audit visibility." },

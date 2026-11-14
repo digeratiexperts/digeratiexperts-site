@@ -66,7 +66,7 @@ const PATHS = [
 
 /** The live services section's six capabilities, with their pages. */
 const CAPABILITIES = [
-  { title: "SOC / MDR monitoring", body: "24/7 detection and response.", href: "/solutions/security-operations" },
+  { title: "SOC / MDR monitoring", body: "24/7 alert monitoring through our contracted security operations partner, on plans that include it.", href: "/solutions/security-operations" },
   { title: "Endpoint security (EDR)", body: "Protect devices across the environment.", href: "/solutions/threat-detection" },
   { title: "SMART Identity (MFA + SSO)", body: "Stronger access without user chaos.", href: "/solutions/unified-security" },
   { title: "Privileged access controls", body: "Admin controls and audit visibility.", href: "/solutions/unified-security" },
@@ -110,12 +110,8 @@ const PILLARS = [
   { title: "Sized to your business", body: "Controls and tooling matched to your risk, not an enterprise stack you will not use." },
 ];
 
-/** Published in the Service Level Agreement (client/src/pages/legal/SLA.tsx). */
 const SLA_ROWS = [
-  { severity: "Critical", meaning: "Active breach or system down", response: "15 minutes" },
-  { severity: "High", meaning: "Major functionality impaired", response: "1 hour" },
-  { severity: "Medium", meaning: "Partial loss", response: "4 hours" },
-  { severity: "Low", meaning: "Questions and minor issues", response: "Next business day" },
+  { severity: "All priorities", meaning: "Response times, monitoring coverage, and credits", response: "Set in your signed agreement" },
 ];
 
 /** The live team section's three roles (DigeratiMeetExpertsSection). */
@@ -169,7 +165,7 @@ const COMPLIANCE = ["HIPAA-aligned security and compliance", "SOC 2 readiness an
 const CTA_ITEMS = ["Audit readiness support", "Microsoft-aligned stack", "HIPAA-minded controls", "Documented standards"];
 
 /** Office hours as published on the live contact section (DigeratiContactSection). */
-const HOURS = { weekdays: "Monday to Friday, 7:00 AM to 6:00 PM MST", weekend: "Saturday and Sunday: emergency support only. 24/7/365 emergency incident response." };
+const HOURS = { weekdays: "Monday to Friday, 7:00 AM to 6:00 PM MST", weekend: "Saturday and Sunday: emergency support only. Emergency incident response on plans that include it." };
 
 const FOOTER = [
   {
@@ -207,7 +203,7 @@ const FOOTER = [
       { href: "/legal/privacy-policy", label: "Privacy" },
       { href: "/legal/terms-of-use", label: "Terms" },
       { href: "/legal/msa", label: "MSA" },
-      { href: "/legal/sla", label: "SLA" },
+      { href: "/legal/sla", label: "Service levels" },
     ],
   },
 ];
@@ -743,8 +739,7 @@ export default function HomepageV6(): JSX.Element {
                 </tbody>
               </table>
               <p className="v6-muted" style={{ marginTop: 12 }}>
-                From the published <Link href="/legal/sla">Service Level Agreement</Link>. 24/7/365 emergency incident response; service credits
-                when we miss a target.
+                Service levels are set in your signed agreement. Emergency incident response on plans that include it.
               </p>
             </div>
           </div>

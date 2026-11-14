@@ -216,14 +216,13 @@ export function LocationServicePage(props: LocationPageProps) {
 
   const stats = [
     { icon: Shield, value: "Security-first", label: "Operating model" },
-    { icon: Zap, value: "15 min", label: "Critical response (SLA)" },
-    // 24/7 MDR is ProActive Business and Enterprise only; the SLA line applies to every client.
-    { icon: Clock, value: "24/7/365", label: "Emergency incident response (SLA)" },
+    { icon: Zap, value: "Signed terms", label: "Service levels are set in your signed agreement" },
+    { icon: Clock, value: "Emergency", label: "Incident response on plans that include it" },
   ];
 
   const features = [
     { icon: FileCheck, text: "Insurance & Compliance-Ready" },
-    { icon: Shield, text: "24/7/365 Emergency Incident Response" },
+    { icon: Shield, text: "Emergency incident response on plans that include it" },
     { icon: Building, text: `Built for ${props.city} Businesses` },
     { icon: CheckCircle, text: "Easy-to-Read Risk Reports" },
   ];

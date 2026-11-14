@@ -75,7 +75,7 @@ const bcdrData = {
         "Priority restore sequencing",
         "Quarterly restore testing",
         "DR runbook documentation",
-        "RPO/RTO SLA commitments",
+        "RPO/RTO targets set in your signed agreement",
         "Restore test reports"
       ],
       test_cadence: "Quarterly",
@@ -388,7 +388,7 @@ export default function BackupDisasterRecovery() {
                 </div>
                 <div className="rounded-lg border border-white/10 bg-black/40 p-3">
                   <p className="font-mono text-[10px] uppercase text-white/50">Achieved RTO</p>
-                  <p className="mt-0.5 font-mono text-sm font-bold text-emerald-400">2h 14m (SLA: 4h)</p>
+                  <p className="mt-0.5 font-mono text-sm font-bold text-emerald-400">2h 14m (sample recovery time)</p>
                 </div>
                 <div className="rounded-lg border border-white/10 bg-black/40 p-3">
                   <p className="font-mono text-[10px] uppercase text-white/50">Data Integrity Check</p>

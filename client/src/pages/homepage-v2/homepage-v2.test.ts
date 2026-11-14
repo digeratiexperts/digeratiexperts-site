@@ -33,8 +33,11 @@ describe("Homepage v2 content rules", () => {
     expect(everySource).not.toMatch(/https:\/\/digeratiexperts\.com/);
   });
 
-  it("uses the Assessment-first wording and no unqualified 24/7 monitoring claim", () => {
-    expect(everySource).not.toMatch(/24\/7 monitoring(?! on Business)/i);
+  it("does not publish an in-house SOC, a sitewide SLA, or unqualified 24/7 coverage", () => {
+    expect(everySource).not.toMatch(/24\/7 SOC(?! 2)/i);
+    expect(everySource).not.toMatch(/24\/7\/365/);
+    expect(everySource).not.toMatch(/published SLA/i);
+    expect(everySource).toMatch(/contracted security operations partner/i);
   });
 });
 

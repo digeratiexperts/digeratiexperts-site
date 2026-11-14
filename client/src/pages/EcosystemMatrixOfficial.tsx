@@ -49,7 +49,7 @@ const matrixData: Section[] = [
     id: "managed-it",
     title: "Managed IT",
     features: [
-      { name: "Help Desk & SLA", tiers: { essentials: false, office: "8×5", business: "8×5 + Priority", enterprise: "VIP + 24×7 opt" } },
+      { name: "Help Desk", tiers: { essentials: false, office: "8×5", business: "8×5 + Priority", enterprise: "VIP + 24×7 opt" } },
       { name: "Remote Monitoring & Alerting", tiers: { essentials: true, office: true, business: true, enterprise: true } },
       { name: "Patch & App Management", tiers: { essentials: true, office: true, business: true, enterprise: true } },
       { name: "Remote Support & Quick Assist", tiers: { essentials: false, office: true, business: true, enterprise: true } },

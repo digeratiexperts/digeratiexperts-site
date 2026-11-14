@@ -102,7 +102,7 @@ export function ContactSection(): JSX.Element {
             <div><span>Hours</span>Mon–Fri, 7:00 AM – 6:00 PM MST</div>
             <div><span>Weekends</span>Emergency support only</div>
           </div>
-          <div className="live"><i />24/7/365 emergency incident response</div>
+          <div className="live"><i />Emergency incident response on plans that include it</div>
         </div>
         <AssessmentForm />
       </div>

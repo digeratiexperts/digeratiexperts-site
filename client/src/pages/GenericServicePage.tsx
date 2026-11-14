@@ -97,7 +97,7 @@ const serviceFacts = [
   { icon: Shield, title: "24/7 human-led SOC", text: "On ProActive Business and Enterprise" },
   { icon: Users, title: "Arizona engineering team", text: "Chandler / East Valley operator" },
   { icon: Award, title: "8 blocks of managed protection", text: "One program, not point tools" },
-  { icon: Clock, title: "Defined response times", text: "SLA-backed support" },
+  { icon: Clock, title: "Defined response times", text: "Service levels are set in your signed agreement" },
 ];
 
 export default function GenericServicePage({

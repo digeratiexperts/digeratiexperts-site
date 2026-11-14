@@ -65,7 +65,7 @@ function IconCards({
 export default function UCaaS() {
   useSEO({
     title: "Business Phone Systems | UCaaS Voice & Meetings",
-    description: "We design, secure, and run your business phone system and meeting stack so it actually supports the business. E911 compliance, call routing, retention policies, and 24/7 support.",
+    description: "We design, secure, and run your business phone system and meeting stack so it actually supports the business. E911 compliance, call routing, retention policies, and support as set in your signed agreement.",
     canonical: "/services/ucaas",
   });
 

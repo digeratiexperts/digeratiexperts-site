@@ -45,7 +45,7 @@ export const serviceCatalog: ServiceCategory[] = [
         documentKey: 'de-core-it-infrastructure-and-support-2026',
         tier: 'office',
         features: [
-          '24/7 monitoring & alerting',
+          '24/7 alert monitoring, on plans that include it',
           'Help desk support',
           'Patch management',
           'Asset inventory',
@@ -78,7 +78,7 @@ export const serviceCatalog: ServiceCategory[] = [
         id: 'core-it-enterprise',
         name: 'Core IT Infrastructure & Support - Enterprise',
         shortName: 'Core IT Enterprise',
-        description: 'Enterprise-grade IT management with SLA guarantees',
+        description: 'Enterprise-grade IT management with service levels set in your signed agreement',
         category: 'core',
         pricingType: 'custom',
         basePrice: 0,
@@ -88,7 +88,7 @@ export const serviceCatalog: ServiceCategory[] = [
         tier: 'enterprise',
         features: [
           'Everything in Business tier',
-          '4-hour SLA guarantee',
+          'Service levels are set in your signed agreement',
           'On-site support included',
           'Executive reporting',
           'Strategic IT planning'
@@ -126,7 +126,7 @@ export const serviceCatalog: ServiceCategory[] = [
         id: 'security-stack-business',
         name: 'Security Stack & Operations - Business',
         shortName: 'Security Business',
-        description: 'Advanced security with 24/7 SOC',
+        description: 'Advanced security with 24/7 alert monitoring through our contracted security operations partner, on plans that include it',
         category: 'security',
         pricingType: 'custom',
         basePrice: 0,
@@ -136,7 +136,7 @@ export const serviceCatalog: ServiceCategory[] = [
         tier: 'business',
         features: [
           'Everything in Office tier',
-          '24/7 SOC monitoring',
+          '24/7 alert monitoring, on plans that include it',
           'SIEM integration',
           'Incident response',
           'Vulnerability scanning'
@@ -252,7 +252,7 @@ export const serviceCatalog: ServiceCategory[] = [
         minQuantity: 1,
         documentKey: 'de-network-integration-and-advanced-networking-2026',
         features: [
-          'Network monitoring 24/7',
+          'Network alert monitoring, on plans that include it',
           'Configuration management',
           'Performance optimization',
           'Security policies',

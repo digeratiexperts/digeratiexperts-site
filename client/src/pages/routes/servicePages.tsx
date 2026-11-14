@@ -6,7 +6,7 @@ export const servicePageData = {
     subtitle: "Four fit-based operating models — IT, Office, Business, Enterprise",
     description: "The ProActive Ecosystem is the umbrella operating model, not a single Office package. IT, Office, Business, and Enterprise are matched to how your environment actually runs. Final scope is confirmed after a Cyber Risk Assessment.",
     features: [
-      { title: "Managed Helpdesk & Support", description: "DE ticketing + remote/onsite support with response SLAs and vendor coordination" },
+      { title: "Managed Helpdesk & Support", description: "DE ticketing + remote/onsite support with response targets set in your signed agreement and vendor coordination" },
       { title: "Core Security Baseline", description: "Endpoint EDR, email security, MFA enforcement, and basic cloud security" },
       { title: "Identity & Access Management", description: "DE IAM with SSO, MFA, and automated provisioning/deprovisioning for users and apps" },
       { title: "Continuous Maintenance", description: "Proactive patching, hardening, updates, and least-privilege enforcement" },
@@ -16,7 +16,7 @@ export const servicePageData = {
     benefits: [
       "Predictable monthly costs with no surprises",
       "Zero internal IT staff required",
-      "Security baseline built into every plan; 24/7 MDR on Business and Enterprise",
+      "Security baseline built into every plan; 24/7 managed detection and response through our contracted security operations partner, on Business and Enterprise",
       "Vendor coordination handled—no more vendor juggling",
       "Compliance optional: add modules only when needed",
       "Monthly service summaries and quarterly business reviews available"
@@ -31,7 +31,7 @@ export const servicePageData = {
     subtitle: "Fast, proactive help anchored to the DE stack",
     description: "Managed IT Support is not generic helpdesk—it's support built on our proven DE stack. We handle remote troubleshooting, endpoint remediation, user onboarding, SaaS provisioning, and device basics. Support for everything you've deployed with DE; out-of-scope items are escalated or handled via education.",
     features: [
-      { title: "Service Desk Coverage", description: "Fast response to user issues with clear resolution pathways and SLAs" },
+      { title: "Service Desk Coverage", description: "Fast response to user issues with clear resolution pathways and response targets set in your signed agreement" },
       { title: "Remote Troubleshooting", description: "Secure remote access for quick diagnosis and remediation of endpoint issues" },
       { title: "User Lifecycle Support", description: "Onboarding/offboarding with IAM, device setup, and app provisioning" },
       { title: "Password & Login Management", description: "Self-service resets via SSO, MFA issues resolved by our team" },
@@ -123,12 +123,12 @@ export const servicePageData = {
   'co-managed-it': {
     title: "Co-Managed IT",
     subtitle: "Augment your internal IT team with DE expertise and stack",
-    description: "Already have internal IT? Co-Managed IT partners with your team to fill skill gaps, provide 24/7 coverage, and add specialized muscle. You keep control; we provide stack, automation, security maturity, and Tier 2/3 escalation. Avoid burnout and tap into deep expertise.",
+    description: "Already have internal IT? Co-Managed IT partners with your team to fill skill gaps, add after-hours coverage on plans that include it, and add specialized muscle. You keep control; we provide stack, automation, security maturity, and Tier 2/3 escalation. Avoid burnout and tap into deep expertise.",
     features: [
       { title: "Shared Tooling Platform", description: "Access to DE security and management platform with full visibility into your environment" },
       { title: "Responsibility Matrix", description: "Clear SOW defining who owns onboarding, patching, vendor comms, and incidents" },
       { title: "Tier 2/3 Escalation", description: "Expert escalation for complex issues, security incidents, and strategic decisions" },
-      { title: "24/7 Monitoring & Response", description: "After-hours and weekend coverage so your team doesn't burn out" },
+      { title: "Monitoring and response, on plans that include it", description: "After-hours and weekend coverage so your team doesn't burn out" },
       { title: "Quarterly Posture Meetings", description: "Regular check-ins with your IT lead on stack optimization and roadmap" },
       { title: "Specialized Expertise", description: "Security, compliance, infrastructure, and cloud experts available on demand" }
     ],
@@ -145,10 +145,10 @@ export const servicePageData = {
   },
   'threat-detection': {
     title: "Threat Detection & Response",
-    subtitle: "24/7 security monitoring and real incident response on ProActive Business and Enterprise",
-    description: "Threat Detection & Response is detection + triage + containment + guided recovery. We monitor endpoints, cloud apps, email, and network events 24/7 for threats. When we see something, we investigate, contain (isolate endpoints, reset credentials), and walk you through recovery. Not just alerts—real response.",
+    subtitle: "Alert monitoring and incident response through our contracted security operations partner, on ProActive Business and Enterprise",
+    description: "Threat Detection & Response is detection + triage + containment + guided recovery. On plans that include it, our contracted security operations partner monitors endpoints, cloud apps, email, and network events around the clock. When we see something, we investigate, contain (isolate endpoints, reset credentials), and walk you through recovery. Not just alerts—real response.",
     features: [
-      { title: "24/7 Telemetry Monitoring", description: "Real-time monitoring of endpoints, cloud apps, email, and gateway security events" },
+      { title: "Telemetry monitoring, on plans that include it", description: "Real-time monitoring of endpoints, cloud apps, email, and gateway security events" },
       { title: "Advanced Endpoint Detection", description: "DE EDR detects suspicious behavior, lateral movement, and advanced techniques" },
       { title: "Automated Containment", description: "Safe automated actions like endpoint isolation, credential reset, and session termination" },
       { title: "Incident Runbooks", description: "Documented response playbooks maintained in DE documentation platform, customized to your environment" },
@@ -156,12 +156,12 @@ export const servicePageData = {
       { title: "DE SIEM Integration", description: "Deeper log correlation and retention for complex organizations" }
     ],
     benefits: [
-      "Real-time threat detection 24/7/365",
+      "Threat detection through our contracted security operations partner, on plans that include it",
       "Service levels are set in your signed agreement",
       "Automated containment stops spread in seconds",
       "Forensic investigation and root cause analysis",
       "Compliance-ready incident documentation",
-      "24/7 detection + real response, not 'good luck with alerts'"
+      "Detection and response through our contracted security operations partner, on plans that include it — not just alerts"
     ],
     gradientColors: "from-[#050312] via-[#0a0a0a] to-[#050312]",
     stat: toDisplayStat(getCyberFact("dbir-smb-ransomware-victims-2026")),
@@ -169,7 +169,7 @@ export const servicePageData = {
   },
   'security-operations': {
     title: "Security Operations (SOC-as-a-Service)",
-    subtitle: "Full SOC without hiring a SOC team",
+    subtitle: "Security operations through our contracted partner, without hiring an in-house SOC team",
     description: "Security Operations is Threat Detection & Response plus threat hunting, policy tuning, and continuous optimization. We run the security room. Includes detection, triage, response, plus proactive hunting, policy refinement, log correlation, and longer retention. Enterprise-grade security maturity.",
     features: [
       { title: "Threat Hunting Cycles", description: "Proactive investigation for advanced threats, unusual patterns, and insider risk" },
@@ -185,7 +185,7 @@ export const servicePageData = {
       "Reduced vulnerability dwell time",
       "Stronger incident response and containment",
       "Compliance evidence and audit readiness",
-      "Full SOC maturity without hiring SOC analysts"
+      "Security-operations coverage through our contracted partner, without hiring in-house SOC analysts"
     ],
     gradientColors: "from-[#050312] via-[#0a0a0a] to-[#050312]",
     recommendedTier: "business" as const,
@@ -196,7 +196,7 @@ export const servicePageData = {
     description: "BCDR is tested continuity, not just 'we have backups.' Agreed RPO/RTO targets, image-based backups, scheduled restore tests, and DR runbooks. Your business comes back up on a timeline you define—not when backups finally work.",
     stat: { value: "$1.53M", label: "average ransomware recovery cost (excluding ransom)", source: "Sophos 2025" },
     features: [
-      { title: "Agreed RPO/RTO Targets", description: "Contract-defined recovery time and data-loss objectives with SLA backing" },
+      { title: "Agreed RPO/RTO Targets", description: "Contract-defined recovery time and data-loss objectives set in your signed agreement" },
       { title: "Image-Based Backups", description: "DE Server/VM backup features for full-system restore, not file-by-file recovery" },
       { title: "Scheduled Restore Tests", description: "Regular failover drills to confirm your systems can actually be restored" },
       { title: "DR Runbooks & Tabletop Exercises", description: "Documented recovery procedures with periodic team exercises" },

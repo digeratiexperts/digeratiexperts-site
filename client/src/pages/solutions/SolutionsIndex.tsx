@@ -26,7 +26,7 @@ import { IncidentFlow } from "@/components/evidence/IncidentFlow";
 const SolutionsIndex = () => {
   useSEO({
     title: 'Managed IT & Security Solutions',
-    description: 'Comprehensive managed IT and cybersecurity solutions. Network security, endpoint protection, cloud security, compliance support, and 24/7 managed detection on Business and Enterprise for Arizona businesses.',
+    description: 'Comprehensive managed IT and cybersecurity solutions. Network security, endpoint protection, cloud security, compliance support, and 24/7 managed detection through our contracted security operations partner, on Business and Enterprise for Arizona businesses.',
     canonical: '/solutions',
   });
 
@@ -76,7 +76,7 @@ const SolutionsIndex = () => {
   const securityServices = [
     {
       icon: Lock,
-      title: "24/7 SOC Monitoring",
+      title: "24/7 alert monitoring, on plans that include it",
       description: "Security Operations Center with real human analysts watching your environment around the clock.",
       tier: "Business+"
     },
@@ -131,7 +131,7 @@ const SolutionsIndex = () => {
     { icon: Lock, title: "24/7 Human-Led SOC", text: "Real analysts, on Business and Enterprise" },
     { icon: MapPin, title: "Arizona local engineering team", text: "Chandler / East Valley operator" },
     { icon: Shield, title: "8 blocks", text: "Assessed & protected" },
-    { icon: Activity, title: "RTO / RPO defined", text: "SLA commitments set in your agreement" },
+    { icon: Activity, title: "RTO / RPO defined", text: "Recovery targets set in your signed agreement" },
   ];
 
   const whyFacts = [

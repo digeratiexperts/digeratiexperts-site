@@ -50,7 +50,7 @@ export const locationPageData = {
     localNote: "Phoenix is the largest city we serve. Offices spread across the metro get one operating model, whether a site is Downtown, in North Phoenix or on the West side. Service levels are set in your signed agreement.",
     whyChooseUs: [
       "Service levels are set in your signed agreement",
-      "Emergency incident response 24/7/365",
+      "Emergency incident response on plans that include it",
       "HIPAA-aligned support, including Business Associate Agreements for healthcare",
       "Planning reviews at the cadence your tier sets",
       "A Chandler-based team serving the whole Phoenix metro"

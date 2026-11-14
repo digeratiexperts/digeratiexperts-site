@@ -44,13 +44,13 @@ const ENTERPRISE_REASONS = [
 ];
 
 const BUSINESS_BOTH_REASONS = [
-  "Deeper security operations + 24/7 managed threat response",
+  "Deeper security operations + 24/7 managed detection and response through our contracted security operations partner, on plans that include it",
   "BCDR + compliance/risk reporting + Security Awareness Training",
   "Technology + security business reviews + Cyber Insurance Readiness",
 ];
 
 const BUSINESS_CONNECTIVITY_REASONS = [
-  "24/7 managed threat response with deeper security operations",
+  "Deeper security operations with 24/7 managed detection and response through our contracted security operations partner, on plans that include it",
   "Advanced identity controls + BCDR / risk reporting depth",
   "Cyber insurance readiness and recurring security reviews",
 ];

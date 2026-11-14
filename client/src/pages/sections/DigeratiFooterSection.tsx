@@ -56,7 +56,7 @@ export const DigeratiFooterSection = (): JSX.Element => {
               © {new Date().getFullYear()} Digerati Experts. All rights reserved. | Security & Compliance Support | Cybersecurity-First MSP
             </p>
             <div className="mt-4 md:mt-0 flex items-center space-x-4">
-              <span className="text-gray-400">24/7 Emergency:</span>
+              <span className="text-gray-400">Emergency:</span>
               <a href={PRIMARY_PHONE.telHref} className="text-de-accent-ink font-semibold hover:text-white">
                 {PRIMARY_PHONE.display}
               </a>

@@ -33,14 +33,14 @@ describe("footer phone and email", () => {
 });
 
 /**
- * Door 2 (variant="store") never shows the word "SLA" in visible footer text
+ * Door 2 (variant="store") never shows a public service-level promise in visible footer text
  * (docs/STORE-EXPERIENCE-SOURCE-OF-TRUTH.md §12(a), §16.2). The default footer keeps the link.
  */
 describe("store footer legal list", () => {
   it("hides the SLA link only for the store variant", () => {
     const source = read(footers.shared);
-    expect(source).toMatch(/const STORE_HIDDEN_LEGAL = new Set\(\["SLA"\]\)/);
+    expect(source).toMatch(/const STORE_HIDDEN_LEGAL = new Set\(\["Service levels"\]\)/);
     expect(source).toMatch(/variant === "store" \? column\.links\.filter\(\(item\) => !STORE_HIDDEN_LEGAL\.has\(item\.name\)\) : column\.links/);
-    expect(source).toContain('{ name: "SLA", href: "/legal/sla" }');
+    expect(source).toContain('{ name: "Service levels", href: "/legal/sla" }');
   });
 });

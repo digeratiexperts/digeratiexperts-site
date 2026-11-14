@@ -28,7 +28,7 @@ const TIERS = [
     price: "$245",
     minimum: "$5,400 monthly minimum",
     summary: "Deeper infrastructure, cyber operations, recovery, governance, and strategy.",
-    features: ["Identity, endpoint, and email", "24/7 SOC / MDR", "BCDR and strategy reviews"],
+    features: ["Identity, endpoint, and email", "24/7 alert monitoring through our contracted security operations partner, on plans that include it", "BCDR and strategy reviews"],
     cta: "ProActive Business",
     ctaClass: "btn btn-cta",
     flagship: true,
