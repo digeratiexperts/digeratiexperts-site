@@ -17,6 +17,11 @@ describe("spaKnownPaths", () => {
     expect(isKnownSpaPath("/")).toBe(true);
     expect(isKnownSpaPath("/store")).toBe(true);
     expect(isKnownSpaPath("/store/")).toBe(true);
+    expect(isKnownSpaPath("/store/offerings")).toBe(true);
+    expect(isKnownSpaPath("/store/offerings/proactive_ecosystem")).toBe(true);
+    expect(isKnownSpaPath("/store/order")).toBe(true);
+    expect(isKnownSpaPath("/legal/store-terms-of-sale")).toBe(true);
+    expect(isKnownSpaPath("/store/offerings/not-a-real-offering")).toBe(false);
     expect(isKnownSpaPath("/portal/marketplace")).toBe(true);
     expect(isKnownSpaPath("/resources/blog/some-slug")).toBe(true);
   });

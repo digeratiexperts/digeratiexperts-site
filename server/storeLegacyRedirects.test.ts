@@ -5,6 +5,9 @@ describe("legacy /store destage", () => {
   it("sends public workshop URLs to Door 1 or Door 2", () => {
     expect(classifyLegacyStorePath("/store")).toEqual({ kind: "public_store" });
     expect(classifyLegacyStorePath("/store/checkout")).toEqual({ kind: "public_store" });
+    expect(classifyLegacyStorePath("/store/offerings")).toEqual({ kind: "public_store" });
+    expect(classifyLegacyStorePath("/store/offerings/proactive_ecosystem")).toEqual({ kind: "public_store" });
+    expect(classifyLegacyStorePath("/store/order")).toEqual({ kind: "public_store" });
     expect(classifyLegacyStorePath("/store/solution")).toEqual({ kind: "public_store" });
     expect(classifyLegacyStorePath("/store/solutions/identity-access")).toEqual({ kind: "public_store" });
     expect(classifyLegacyStorePath("/store/managed")).toEqual({
