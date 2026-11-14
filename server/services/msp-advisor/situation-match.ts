@@ -13,6 +13,8 @@ import { withOpenAIGuard } from "../openai-config";
 import { isPromptInjectionAttempt } from "./classify";
 import { listKnownServiceIds } from "./knowledge";
 import { getOrCreateSession } from "./session";
+import type { SessionSituation } from "./types";
+export type { SessionSituation } from "./types";
 import { SITUATION_FAMILY_IDS, SITUATION_FAMILY_LABELS } from "@shared/anonymousSituation";
 import {
   INTENTS,
@@ -77,17 +79,18 @@ function parseIds(raw: string | null): Record<string, unknown> | null {
 
 export type SituationMatchResult = SituationMatch & { sessionId: string; rationale: string[] };
 
-/** What the session keeps, so a later profile draft uses the server's own match, never browser-sent ids. */
-export type SessionSituation = {
-  text: string;
-  at: number;
-  scenarioIds: string[];
-  familyIds: string[];
-  serviceIds: string[];
-  pageServiceIds: string[];
-  intentIds: string[];
-  summary: string;
-};
+export function formatPublicSituationContext(situation: SessionSituation): string {
+  return [
+    situation.summary ? `Summary: ${situation.summary}` : "",
+    situation.scenarioIds.length ? `Scenarios: ${situation.scenarioIds.join(", ")}` : "",
+    situation.familyIds.length ? `Families: ${situation.familyIds.join(", ")}` : "",
+    situation.intentIds.length ? `Intents: ${situation.intentIds.join(", ")}` : "",
+    situation.pageServiceIds.length ? `Page services: ${situation.pageServiceIds.join(", ")}` : "",
+    situation.serviceIds.length ? `Recommended services (not entitlements): ${situation.serviceIds.join(", ")}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
 
 export async function handleSituationMatch(
   input: { text: string; sessionId?: string },
@@ -120,7 +123,7 @@ export async function handleSituationMatch(
     pathname: "/describe-your-situation",
     pageType: "other",
   } as any);
-  (session as any).situation = {
+  session.situation = {
     text,
     at: Date.now(),
     scenarioIds: match.scenarioIds,

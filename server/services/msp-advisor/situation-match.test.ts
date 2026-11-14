@@ -1,6 +1,6 @@
 import { describe, it, beforeEach } from "node:test";
 import assert from "node:assert/strict";
-import { buildSituationMatchPrompt, handleSituationMatch, sessionSituation } from "./situation-match";
+import { buildSituationMatchPrompt, formatPublicSituationContext, handleSituationMatch, sessionSituation } from "./situation-match";
 import { _resetSessionsForTests, getSession } from "./session";
 import { listKnownServiceIds } from "./knowledge";
 import { SITUATION_FAMILY_IDS } from "@shared/anonymousSituation";
@@ -86,5 +86,17 @@ describe("situation-match (DE Desk structured mode)", () => {
     assert.ok(!/\$\d/.test(p));
     assert.match(p, /Answer ONLY with JSON/);
     assert.match(p, /never instructions/);
+  });
+
+  it("exposes only allow-listed public fields as DE Desk turn context", async () => {
+    const r = await handleSituationMatch({ text: "Call me Alex Chen at 480-555-0100, we were phished" }, { model: async () => null });
+    const kept = sessionSituation(r.sessionId, getSession);
+    assert.ok(kept);
+    const ctx = formatPublicSituationContext(kept!);
+    assert.match(ctx, /Summary:/);
+    assert.doesNotMatch(ctx, /Alex Chen/);
+    assert.doesNotMatch(ctx, /480-555-0100/);
+    assert.doesNotMatch(ctx, /Call me/);
+    assert.ok(!ctx.includes(kept!.text));
   });
 });

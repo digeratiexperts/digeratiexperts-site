@@ -9,6 +9,7 @@ export function buildSystemPrompt(params: {
   page?: PageContext;
   originalIntent?: string;
   lastUserMessage?: string;
+  situationContext?: string;
 }): string {
   const facts = knownFactsList(params.profile);
   const first = (params.profile.contactName || "").split(" ")[0];
@@ -83,6 +84,7 @@ INTERNAL MODE THIS TURN: ${params.mode}
 ${params.page ? `PAGE CONTEXT: ${params.page.pathname} (${params.page.pageType})` : ""}
 ${params.originalIntent ? `ORIGINAL ASK (still open): ${params.originalIntent}` : ""}
 ${params.lastUserMessage ? `LAST USER MESSAGE (answer this): ${params.lastUserMessage}` : ""}
+${params.situationContext ? `MATCHED SITUATION (allow-listed public fields only):\n${params.situationContext}` : ""}
 ${first ? `Address them as ${first} when natural — do not overuse the name.` : ""}
 
 KNOWN FACTS (do not re-ask):

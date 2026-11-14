@@ -5,6 +5,7 @@ import { MegaMenu } from "@/components/MegaMenu";
 import { useSEO } from "@/hooks/useSEO";
 import TurnstileWidget from "@/components/TurnstileWidget";
 import { openMspAdvisor } from "@/lib/openMspAdvisor";
+import { readSituationSessionId, writeSituationSessionId } from "@/lib/situationDeskSession";
 import { SiteFooter } from "../homepage-v2/sections/SiteFooter";
 import "../homepage-v2/homepage-v2.css";
 import {
@@ -25,7 +26,6 @@ import { saveProfileClaim } from "@/lib/profileClaim";
 
 /** DE Desk answers inside this window or the page answers on its own (localMatch). */
 export const DESK_MATCH_TIMEOUT_MS = 2500;
-const SESSION_KEY = "de-situation-session";
 
 type DeskReply = {
   sessionId?: string;
@@ -82,14 +82,6 @@ export async function deskMatch(
 
 type Shown = { r: SituationMatch; text: string; how: "typed" | "picked"; draftEnabled: boolean } | { more: true } | null;
 
-function readSession(): string | undefined {
-  try {
-    return sessionStorage.getItem(SESSION_KEY) || undefined;
-  } catch {
-    return undefined;
-  }
-}
-
 /** /describe-your-situation: the custom card's page. DE Desk acting as the sales desk. */
 export default function DescribeSituation(): JSX.Element {
   useSEO({
@@ -124,16 +116,10 @@ export default function DescribeSituation(): JSX.Element {
     }
     setBusy(true);
     const got = token
-      ? await deskMatch(t, { turnstileToken: token, sessionId: readSession() })
+      ? await deskMatch(t, { turnstileToken: token, sessionId: readSituationSessionId() })
       : { match: localMatch(t), sessionId: undefined, draftEnabled: false };
     if (token) fresh();
-    if (got.sessionId) {
-      try {
-        sessionStorage.setItem(SESSION_KEY, got.sessionId);
-      } catch {
-        /* private mode: the match still shows */
-      }
-    }
+    if (got.sessionId) writeSituationSessionId(got.sessionId);
     setBusy(false);
     setShown(got.match.confident ? { r: got.match, text: t, how: "typed", draftEnabled: got.draftEnabled } : { more: true });
   }
@@ -202,7 +188,7 @@ export default function DescribeSituation(): JSX.Element {
                       </p>
                     </div>
                   )}
-                  {shown && "r" in shown && <MatchResult key={shown.text + shown.how} {...shown} sessionId={readSession()} />}
+                  {shown && "r" in shown && <MatchResult key={shown.text + shown.how} {...shown} sessionId={readSituationSessionId()} />}
                 </div>
               </div>
             </div>
@@ -331,7 +317,7 @@ function MatchResult({ r, text, how, draftEnabled, sessionId }: { r: SituationMa
         <a className="btn" href={FIT_CALL_URL} target="_blank" rel="noopener">
           Book a Fit Call <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h9M8.5 4.5 12 8l-3.5 3.5" /></svg>
         </a>
-        <button type="button" className="btn btn--ghost" onClick={() => openMspAdvisor({ seedMessage: seed, context: "home", tab: "chat" })}>
+        <button type="button" className="btn btn--ghost" onClick={() => openMspAdvisor({ seedMessage: seed, context: "home", tab: "chat", sessionId: sessionId || readSituationSessionId() })}>
           Keep talking with DE Desk
         </button>
         <button type="button" className="btn btn--ghost" onClick={copy}>
