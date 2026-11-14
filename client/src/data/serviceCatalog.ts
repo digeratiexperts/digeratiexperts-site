@@ -159,7 +159,7 @@ export const serviceCatalog: ServiceCategory[] = [
         features: [
           'Everything in Business tier',
           'Advanced threat hunting',
-          'Penetration testing',
+          'Penetration testing coordination (separate authorization and quote)',
           'Compliance reporting',
           'Executive security briefings'
         ]
@@ -328,7 +328,7 @@ export const serviceCatalog: ServiceCategory[] = [
         documentKey: 'csra-ultimate-cybersecurity-risk-assessment',
         features: [
           'Vulnerability assessment',
-          'Penetration testing',
+          'Penetration testing coordination (separate authorization and quote)',
           'Policy review',
           'Risk prioritization',
           'Remediation roadmap'

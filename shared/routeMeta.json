@@ -679,8 +679,8 @@
     "ogImage": "https://digeratiexperts.com/og-image.png"
   },
   "/solutions/security-operations": {
-    "title": "Security Operations (SOC-as-a-Service) | Digerati Experts",
-    "description": "Security Operations is Threat Detection & Response plus threat hunting, policy tuning, and continuous optimization. Includes detection, triage, response, plus proactive hunting, policy refinement, log correlation, and longer retention. Enterprise-grade security maturity.",
+    "title": "Security Operations | Digerati Experts",
+    "description": "Security Operations is Threat Detection & Response plus threat hunting and regular policy tuning. Includes detection, triage, response, plus proactive hunting, policy refinement, log correlation, and longer retention. ProActive Enterprise includes 24/7 Managed Detection and Response: around-the-clock human-led monitoring, threat containment, and endpoint isolation. Optional 24/7 Managed Detection and Response: around-the-clock human-led monitoring, threat containment, and endpoint isolation for clients who add it.",
     "canonical": "/solutions/security-operations",
     "robots": "index, follow",
     "ogImage": "https://digeratiexperts.com/og-image.png"

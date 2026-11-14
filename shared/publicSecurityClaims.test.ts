@@ -16,12 +16,20 @@ describe("public alert-monitoring wording", () => {
     const meta = readFileSync(path.resolve(__dirname, "routeMeta.json"), "utf8");
     expect(meta).toContain(ALERT_MONITORING_CLAIM_PHRASE);
     expect(meta).not.toMatch(/security operations partner/i);
-    expect(meta).not.toMatch(/around the clock|round-the-clock|We run the security room/i);
+    const metaWithoutApprovedMdr = meta.replaceAll(
+      /around-the-clock human-led monitoring, threat containment, and endpoint isolation/gi,
+      "",
+    );
+    expect(metaWithoutApprovedMdr).not.toMatch(/around the clock|round-the-clock|We run the security room/i);
     const twentyFourSeven = [...meta.matchAll(/24\s*[/x\u00d7]7[^\n]*/gi)].map((m) => m[0]);
     for (const hit of twentyFourSeven) {
+      const lower = hit.toLowerCase();
       const ok =
-        hit.toLowerCase().includes("add-on") ||
-        hit.toLowerCase().includes("24/7 human-led threat monitoring and response");
+        lower.includes("add-on") ||
+        lower.includes("add it") ||
+        lower.includes("optional 24/7") ||
+        lower.includes("24/7 human-led threat monitoring and response") ||
+        lower.includes("24/7 managed detection and response");
       expect(ok, hit).toBe(true);
     }
   });

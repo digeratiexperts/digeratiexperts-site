@@ -63,7 +63,7 @@ export const locationPageData = {
     },
     serviceFocus: [
       "Enterprise Managed IT",
-      "Security alert monitoring (24/7 MDR available as an add-on)",
+      "Security alert monitoring (24/7 Managed Detection and Response included in Enterprise, add-on on other plans)",
       "Threat Detection & Incident Response",
       "Compliance & Audit Support",
       "Multi-location IT management"

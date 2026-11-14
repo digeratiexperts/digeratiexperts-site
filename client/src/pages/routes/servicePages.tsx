@@ -171,13 +171,13 @@ export const servicePageData = {
   'security-operations': {
     title: "Security Operations",
     subtitle: ALERT_MONITORING_CLAIM_PHRASE,
-    description: "Security Operations is Threat Detection & Response plus threat hunting and regular policy tuning. Includes detection, triage, response, plus proactive hunting, policy refinement, log correlation, and longer retention. Around-the-clock monitoring by human security analysts is available only through our optional 24/7 Managed Detection and Response add-on.",
+    description: "Security Operations is Threat Detection & Response plus threat hunting and regular policy tuning. Includes detection, triage, response, plus proactive hunting, policy refinement, log correlation, and longer retention. ProActive Enterprise includes 24/7 Managed Detection and Response: around-the-clock human-led monitoring, threat containment, and endpoint isolation. Optional 24/7 Managed Detection and Response: around-the-clock human-led monitoring, threat containment, and endpoint isolation for clients who add it.",
     features: [
       { title: "Threat Hunting Cycles", description: "Proactive investigation for advanced threats, unusual patterns, and insider risk" },
       { title: "Policy Tuning", description: "Regular policy tuning of EDR, email, cloud, and access control policies based on threats and trends" },
       { title: "Log Correlation & Analytics", description: "DE SIEM with deeper telemetry retention for pattern detection and forensics" },
       { title: "Security Change Management", description: "Documented policy changes with rationale and testing before deployment" },
-      { title: "SOC Monthly Report", description: "Hunt findings, policy changes, incident trends, and audit-support packets" },
+      { title: "Monthly security operations report", description: "Hunt findings, policy changes, incident trends, and audit-support packets" },
       { title: "Escalation & IR Coordination", description: "Full incident response coordination and external comms when needed" }
     ],
     benefits: [

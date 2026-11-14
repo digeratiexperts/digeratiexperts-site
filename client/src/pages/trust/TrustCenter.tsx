@@ -63,10 +63,10 @@ export default function TrustCenter() {
   ];
 
   const technicalControls = [
-    "Encryption in transit",
+    "Encryption in transit and at rest on the systems that hold client data",
     "Multi-factor authentication (MFA)",
     ALERT_MONITORING_CLAIM_PHRASE,
-    "Intrusion detection/prevention",
+    "ProActive Enterprise includes 24/7 Managed Detection and Response: around-the-clock human-led monitoring, threat containment, and endpoint isolation.",
     "Regular vulnerability scanning"
   ];
 

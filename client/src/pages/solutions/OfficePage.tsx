@@ -143,7 +143,7 @@ const faqs = [
   },
   {
     question: "Can I add capabilities not included in Office?",
-    answer: "Yes. Items marked 'Optional Add-On' (like SOC monitoring, DRaaS, or compliance modules) can be added to your Office package. We'll quote these separately based on your needs."
+    answer: "Yes. Items marked 'Optional Add-On' (like 24/7 Managed Detection and Response, DRaaS, or compliance modules) can be added to your Office package. We'll quote these separately based on your needs."
   },
   {
     question: "How does pricing work?",

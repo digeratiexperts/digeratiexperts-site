@@ -188,7 +188,7 @@ const SolutionsIndex = () => {
             tone="well"
             eyebrow="Operating models"
             title="Four operating models. One matched to your environment"
-            lede="Baseline capabilities are shared. Network, backup, SOC, BCDR, and governance depth increase by fit — not because a higher tier is universally “better.”"
+            lede="Baseline capabilities are shared. Network, backup, detection and response, BCDR, and governance depth increase by fit — not because a higher tier is universally “better.”"
           />
           <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-5 xl:grid-cols-4">
             {plans.map((plan) => (
