@@ -18,7 +18,8 @@ describe("Privacy Policy chat and call recording section", () => {
       "If you describe your situation in the box on our homepage, that description is handled the same way: it is sent to our AI service provider to suggest services and kept with your chat session. It is saved to an IT &amp; Security Profile only if you later choose to save a draft.",
     );
     expect(section).toContain("A current list of these providers is available on request.");
-    expect(section).toContain("{{CHAT_RETENTION}}");
+    expect(section).toContain("1 year");
+    expect(section).not.toContain("{{CHAT_RETENTION}}");
     expect(section).toContain('say "do not record."');
     expect(section).toContain("admin@digeratiexperts.com");
     expect(section).not.toContain("Internal — do not publish this note.");

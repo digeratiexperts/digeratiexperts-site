@@ -848,12 +848,17 @@ export async function deleteDeskSession(sessionId: string): Promise<boolean> {
 }
 
 
+export const DEFAULT_DESK_CHAT_RETENTION_DAYS = 365;
+
+/** On only when DESK_CHAT_PURGE_ENABLED is 1, true, yes, or on. Off by default. */
+export function isDeskChatPurgeEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
+  return /^(1|true|yes|on)$/i.test(env.DESK_CHAT_PURGE_ENABLED?.trim() ?? "");
+}
+
 export function deskChatRetentionDays(env: NodeJS.ProcessEnv = process.env): number | null {
   const raw = env.DESK_CHAT_RETENTION_DAYS;
-  if (raw == null) return null;
-  const trimmed = String(raw).trim();
-  if (!trimmed) return null;
-  const days = Number(trimmed);
+  if (raw == null || !String(raw).trim()) return DEFAULT_DESK_CHAT_RETENTION_DAYS;
+  const days = Number(String(raw).trim());
   if (!Number.isFinite(days) || days <= 0) return null;
   return Math.floor(days);
 }
@@ -865,7 +870,43 @@ export type DeskChatPurgeResult = {
   deletedMessages: number;
   skippedLegalHold: number;
   skippedTicket: number;
+  skippedLookupError: number;
 };
+
+export type DeskChatPurgeGuards = {
+  ok: boolean;
+  legalHold: boolean;
+  ticketLinked: boolean;
+};
+
+/**
+ * Read hold and ticket flags immediately before a purge delete.
+ * If the lookup throws, the caller must skip the delete.
+ */
+export async function lookupDeskChatPurgeGuards(sessionId: string): Promise<DeskChatPurgeGuards> {
+  try {
+    const mem = memorySessions.get(sessionId);
+    let legalHold = !!mem?.legalHold;
+    let ticketLinked = !!(mem?.ticketId && mem.ticketId.trim());
+    if (dbReady && db && schemaReady) {
+      const result = await db.execute(sql`
+        SELECT legal_hold, ticket_id
+        FROM de_desk_chat_sessions
+        WHERE session_id = ${sessionId}
+      `);
+      const rows = normalizeRows(result);
+      if (rows.length > 0) {
+        legalHold = legalHold || !!rows[0].legal_hold;
+        const ticketId = rows[0].ticket_id ? String(rows[0].ticket_id) : "";
+        ticketLinked = ticketLinked || !!ticketId.trim();
+      }
+    }
+    return { ok: true, legalHold, ticketLinked };
+  } catch (err: any) {
+    console.warn("[de-desk-purge] hold or ticket lookup failed:", err?.message || err);
+    return { ok: false, legalHold: false, ticketLinked: false };
+  }
+}
 
 async function loadMemSession(sessionId: string): Promise<ReturnType<typeof emptyMemSession> | null> {
   if (memorySessions.has(sessionId)) return memorySessions.get(sessionId) || null;
@@ -932,57 +973,51 @@ export async function setDeskChatUpdatedAt(sessionId: string, updatedAt: string)
 export async function purgeExpiredDeskChats(opts?: {
   now?: Date;
   env?: NodeJS.ProcessEnv;
+  lookupGuards?: (sessionId: string) => Promise<DeskChatPurgeGuards> | DeskChatPurgeGuards;
 }): Promise<DeskChatPurgeResult> {
-  const retentionDays = deskChatRetentionDays(opts?.env);
-  if (retentionDays == null) {
-    return {
-      enabled: false,
-      retentionDays: null,
-      deletedSessions: 0,
-      deletedMessages: 0,
-      skippedLegalHold: 0,
-      skippedTicket: 0,
-    };
+  const env = opts?.env ?? process.env;
+  const retentionDays = deskChatRetentionDays(env);
+  const empty: DeskChatPurgeResult = {
+    enabled: false,
+    retentionDays,
+    deletedSessions: 0,
+    deletedMessages: 0,
+    skippedLegalHold: 0,
+    skippedTicket: 0,
+    skippedLookupError: 0,
+  };
+  if (!isDeskChatPurgeEnabled(env) || retentionDays == null) {
+    return empty;
   }
 
   await ensureSchema();
   const now = opts?.now ?? new Date();
+  // Cutoff is last activity (updated_at), not creation time.
   const cutoff = new Date(now.getTime() - retentionDays * 24 * 60 * 60 * 1000);
   const seen = new Set<string>();
-  const candidates: Array<{ sessionId: string; legalHold: boolean; ticketLinked: boolean; messageCount: number }> = [];
+  const candidates: Array<{ sessionId: string; messageCount: number }> = [];
 
-  const consider = (sessionId: string, legalHold: boolean, ticketId: string | null, updatedAt: string, messageCount: number) => {
+  const consider = (sessionId: string, updatedAt: string, messageCount: number) => {
     if (seen.has(sessionId)) return;
     if (new Date(updatedAt).getTime() >= cutoff.getTime()) return;
     seen.add(sessionId);
-    candidates.push({
-      sessionId,
-      legalHold,
-      ticketLinked: !!(ticketId && ticketId.trim()),
-      messageCount,
-    });
+    candidates.push({ sessionId, messageCount });
   };
 
   for (const [sessionId, mem] of memorySessions) {
-    consider(sessionId, !!mem.legalHold, mem.ticketId, mem.updatedAt, mem.messages.length);
+    consider(sessionId, mem.updatedAt, mem.messages.length);
   }
 
   if (dbReady && db && schemaReady) {
     try {
       const result = await db.execute(sql`
-        SELECT s.session_id, s.legal_hold, s.ticket_id, s.updated_at,
+        SELECT s.session_id, s.updated_at,
                (SELECT COUNT(*)::int FROM de_desk_chat_messages m WHERE m.session_id = s.session_id) AS message_count
         FROM de_desk_chat_sessions s
         WHERE s.updated_at < ${cutoff}
       `);
       for (const row of normalizeRows(result)) {
-        consider(
-          String(row.session_id),
-          !!row.legal_hold,
-          row.ticket_id ? String(row.ticket_id) : null,
-          toIso(row.updated_at),
-          Number(row.message_count || 0),
-        );
+        consider(String(row.session_id), toIso(row.updated_at), Number(row.message_count || 0));
       }
     } catch (err: any) {
       console.warn("[de-desk-purge] list expired failed:", err?.message);
@@ -993,12 +1028,26 @@ export async function purgeExpiredDeskChats(opts?: {
   let deletedMessages = 0;
   let skippedLegalHold = 0;
   let skippedTicket = 0;
+  let skippedLookupError = 0;
+  const resolveGuards = opts?.lookupGuards ?? lookupDeskChatPurgeGuards;
   for (const candidate of candidates) {
-    if (candidate.legalHold) {
+    let guards: DeskChatPurgeGuards;
+    try {
+      guards = await resolveGuards(candidate.sessionId);
+    } catch (err: any) {
+      console.warn("[de-desk-purge] hold or ticket lookup failed:", err?.message || err);
+      skippedLookupError += 1;
+      continue;
+    }
+    if (!guards.ok) {
+      skippedLookupError += 1;
+      continue;
+    }
+    if (guards.legalHold) {
       skippedLegalHold += 1;
       continue;
     }
-    if (candidate.ticketLinked) {
+    if (guards.ticketLinked) {
       skippedTicket += 1;
       continue;
     }
@@ -1016,6 +1065,7 @@ export async function purgeExpiredDeskChats(opts?: {
     deletedMessages,
     skippedLegalHold,
     skippedTicket,
+    skippedLookupError,
   };
   console.info("[de-desk-purge] finished", result);
   return result;

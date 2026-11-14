@@ -242,7 +242,7 @@ export default function PrivacyPolicy() {
                 <strong className="text-[#1A1228]">Why we use it.</strong> To answer your questions, open and route support tickets, verify that you are an authorized contact before discussing an account, improve our own support processes, keep records of what was requested, and protect our systems.
               </p>
               <p className="text-[#3A3448] leading-relaxed mb-4">
-                <strong className="text-[#1A1228]">Retention.</strong> We keep chat transcripts for {"{{CHAT_RETENTION}}"} after the conversation, or longer if they become part of a support ticket, a contract record, or a legal hold. Our AI model provider may keep chat content for up to 30 days for abuse monitoring unless a shorter period applies.
+                <strong className="text-[#1A1228]">Retention.</strong> We keep chat transcripts for 1 year after the conversation, or longer if they become part of a support ticket, a contract record, or a legal hold. Our AI model provider may keep chat content for up to 30 days for abuse monitoring unless a shorter period applies.
               </p>
               <p className="text-[#3A3448] leading-relaxed mb-4">
                 <strong className="text-[#1A1228]">Sensitive information.</strong> Please do not type passwords, payment card numbers, health information, or Social Security numbers into chat. If you do, we will delete them from the transcript when we notice.
@@ -263,7 +263,7 @@ export default function PrivacyPolicy() {
                 <a href="mailto:admin@digeratiexperts.com">admin@digeratiexperts.com</a>. Opting out does not affect the service we provide; some requests (for example, changes to account authority) may need written confirmation instead.
               </p>
               <p className="text-[#3A3448] leading-relaxed mb-4">
-                <strong className="text-[#1A1228]">Retention.</strong> Recordings: {"{{CHAT_RETENTION}}"}. Transcripts and summaries: {"{{CHAT_RETENTION}}"} or as part of the related ticket. Longer if required for a legal hold or dispute.
+                <strong className="text-[#1A1228]">Retention.</strong> Recordings: 1 year. Transcripts and summaries: 1 year or as part of the related ticket. Longer if required for a legal hold or dispute.
               </p>
               <p className="text-[#3A3448] leading-relaxed mb-4">
                 <strong className="text-[#1A1228]">Voice service customers.</strong> If you buy voice (phone) service from DE, information about your calls (customer proprietary network information, or CPNI) is protected under federal law and our CPNI policy. We do not record your calls with third parties on our voice service unless you configure recording yourself; if you do, you are responsible for giving any notice and getting any consent the law requires.

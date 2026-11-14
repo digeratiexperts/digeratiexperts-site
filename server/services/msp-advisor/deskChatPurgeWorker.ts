@@ -1,6 +1,9 @@
 /**
- * Purges expired DE Desk transcripts when a retention period is configured.
- * Disabled by default: unset or invalid DESK_CHAT_RETENTION_DAYS is a no-op.
+ * Purges expired DE Desk transcripts when DESK_CHAT_PURGE_ENABLED is on.
+ * The switch is off by default. DESK_CHAT_RETENTION_DAYS defaults to 365.
+ * Production must enable the job with 365. Sessions under legal hold or
+ * linked to a ticket are skipped. If a hold or ticket lookup fails, that
+ * session is left in place.
  */
 import { purgeExpiredDeskChats } from "./persist";
 
