@@ -62,8 +62,8 @@ const differentiators = [
   },
   {
     icon: Clock,
-    title: "15-Minute Critical Response",
-    desc: "When a breach is active or a system is down, our published SLA sets a 15-minute response, with emergency incident response available 24/7/365.",
+    title: "Response when it matters",
+    desc: "Service levels are set in your signed agreement. Emergency incident response is available on plans that include it.",
   },
 ];
 

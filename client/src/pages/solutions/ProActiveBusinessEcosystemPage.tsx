@@ -28,7 +28,7 @@ const config: TierPageConfig = {
   included: [
     "Everything in ProActive Office Ecosystem",
     "DE Security Foundation with 24/7 Managed Detection & Response",
-    "24/7 Security Operations Center (SOC)",
+    "24/7 alert monitoring through our contracted security operations partner, on plans that include it",
     "Managed Detection & Response (MDR)",
     "Threat Detection & response across endpoints, identity, and email",
     "Endpoint Backup",

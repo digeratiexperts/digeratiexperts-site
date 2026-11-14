@@ -43,7 +43,7 @@ const config: TierPageConfig = {
   ],
   notIncluded: [
     "Endpoint Backup, BCDR, and User Cloud Storage Backup (add-on or step up to Business)",
-    "24/7 Security Operations Center (SOC) and Managed Detection & Response (MDR)",
+    "24/7 alert monitoring through our contracted security operations partner, and Managed Detection & Response (MDR), on plans that include them",
     "Compliance and risk reporting (HIPAA, CMMC, PCI, SOC 2 mapping)",
     "Semi-annual technology + security reviews (vCIO / QBR cadence)",
   ],

@@ -31,7 +31,7 @@ function DefinitionList({ rows, tone }: { rows: DefRow[]; tone: "well" | "surfac
 }
 
 const infrastructureRows: DefRow[] = [
-  { label: "Data Centers", value: "Tier III/IV facilities with physical security, redundant power, climate control" },
+  { label: "Hosting", value: "Hosted with U.S. cloud providers that maintain their own physical security programs" },
   { label: "Network Security", value: "Next-generation firewalls, DDoS protection, network segmentation" },
   { label: "Access Controls", value: "Role-based access control (RBAC), principle of least privilege" },
   { label: "Monitoring", value: "Real-time security information and event management (SIEM)" },
@@ -43,7 +43,7 @@ const privacyRows: DefRow[] = [
   { label: "Data Minimization", value: "We collect only data necessary for service delivery" },
   { label: "Data Retention", value: "Clear retention schedules and secure deletion procedures" },
   { label: "Client Rights", value: "Access, correction, deletion, and portability rights" },
-  { label: "No Data Selling", value: "We never sell client data to third parties" },
+  { label: "No data sale", value: "We do not sell personal information for money. Advertising cookies load only if you accept them." },
 ];
 
 export default function TrustCenter() {
@@ -62,20 +62,16 @@ export default function TrustCenter() {
   ];
 
   const technicalControls = [
-    "AES-256 encryption at rest",
-    "TLS 1.3 encryption in transit",
+    "Encryption in transit and at rest on the systems that hold client data",
     "Multi-factor authentication (MFA)",
-    "24/7 Security Operations Center",
+    "24/7 alert monitoring through our contracted security operations partner, on plans that include it",
     "Intrusion detection/prevention",
     "Regular vulnerability scanning"
   ];
 
   const adminControls = [
-    "Background checks for all staff",
     "Security awareness training",
     "Incident response procedures",
-    "Annual penetration testing",
-    "Third-party security audits",
     "NIST Cybersecurity Framework alignment"
   ];
 

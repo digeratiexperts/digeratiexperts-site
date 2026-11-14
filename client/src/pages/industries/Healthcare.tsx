@@ -102,7 +102,7 @@ export default function Healthcare() {
 
   const securityStack = [
     "Business Associate Agreements (BAA)",
-    "AES-256 encryption where applicable",
+    "Encryption in transit and at rest on the systems that hold client data",
     "PHI access controls & audit logs",
     "Encrypted email solutions",
     "Secure file sharing",
@@ -148,7 +148,7 @@ export default function Healthcare() {
           title="Program focus"
           rows={[
             { label: "Framework", value: "HIPAA-aware operations" },
-            { label: "Encryption", value: "AES-256 where applicable" },
+            { label: "Encryption", value: "Encryption in transit and at rest on the systems that hold client data" },
             { label: "Priority", value: "PHI access and audit trails" },
             { label: "Outcome", value: "Audit- and insurer-ready evidence" },
           ]}

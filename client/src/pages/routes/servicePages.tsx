@@ -27,7 +27,7 @@ export const servicePageData = {
   'managed-it-support': {
     title: "Managed IT Support",
     seoTitle: "Managed IT Support for Small Businesses",
-    metaDescription: "Managed IT support for small businesses: service desk, remote troubleshooting, onboarding and device support, with a 15-minute SLA for critical incidents.",
+    metaDescription: "Managed IT support for small businesses: service desk, remote troubleshooting, onboarding and device support. Service levels are set in your signed agreement.",
     subtitle: "Fast, proactive help anchored to the DE stack",
     description: "Managed IT Support is not generic helpdesk—it's support built on our proven DE stack. We handle remote troubleshooting, endpoint remediation, user onboarding, SaaS provisioning, and device basics. Support for everything you've deployed with DE; out-of-scope items are escalated or handled via education.",
     features: [
@@ -39,7 +39,7 @@ export const servicePageData = {
       { title: "Repeat Issue Reduction", description: "Tracking and follow-up to reduce repeat incidents over time" }
     ],
     benefits: [
-      "Published SLA response targets by priority: 15 minutes for critical incidents",
+      "Service levels are set in your signed agreement",
       "Reduced repeat incident rate",
       "Users guided toward solutions, not band-aids",
       "Vendor issues resolved—we handle ISPs, SaaS vendors, hardware vendors",
@@ -77,7 +77,7 @@ export const servicePageData = {
     subtitle: "Baseline data protection with verified recovery",
     description: "Cloud Backup is your minimum continuity layer. Automated encryption-at-rest and in-transit protection for endpoints, servers, and cloud data (M365/Google). We verify monthly that restores actually work—because a backup that doesn't restore is worthless.",
     features: [
-      { title: "Automated Encrypted Backups", description: "DE continuous backup of endpoints, servers, and M365/Google data with AES-256 encryption" },
+      { title: "Automated Encrypted Backups", description: "DE continuous backup of endpoints, servers, and M365/Google data with encryption in transit and at rest" },
       { title: "Backup Health Monitoring", description: "Automated monitoring with alerts when backup jobs fail or fall behind" },
       { title: "Verified Restore Testing", description: "Monthly restore verification to confirm backups are recoverable and complete" },
       { title: "DE Cloud Storage", description: "Cost-effective, secure cloud storage with enterprise-grade durability guarantee" },
@@ -157,7 +157,7 @@ export const servicePageData = {
     ],
     benefits: [
       "Real-time threat detection 24/7/365",
-      "15-minute response for critical incidents, per our published SLA",
+      "Service levels are set in your signed agreement",
       "Automated containment stops spread in seconds",
       "Forensic investigation and root cause analysis",
       "Compliance-ready incident documentation",

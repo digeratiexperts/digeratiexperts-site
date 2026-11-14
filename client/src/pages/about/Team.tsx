@@ -36,7 +36,7 @@ const team = [
   {
     name: "Security operations",
     description:
-      "Detection and response for the DE Security Foundation, with emergency incident response available 24/7/365 under our published SLA.",
+      "Detection and response for the DE Security Foundation. Emergency incident response is available on plans that include it. Service levels are set in your signed agreement.",
     icon: Shield,
   },
   {
@@ -48,7 +48,7 @@ const team = [
   {
     name: "Service desk",
     description:
-      "Owns each ticket to resolution, with response targets by priority set in the SLA: 15 minutes for a critical incident.",
+      "Owns each ticket to resolution. Service levels are set in your signed agreement.",
     icon: Users,
   },
 ];
@@ -135,8 +135,8 @@ export default function Team() {
           },
           {
             icon: Clock,
-            title: "15-minute critical response",
-            text: "Our published SLA response for an active breach or system down.",
+            title: "Response targets in your agreement",
+            text: "Service levels are set in your signed agreement.",
           },
           {
             icon: MapPin,

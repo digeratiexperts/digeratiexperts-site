@@ -27,7 +27,7 @@ export default function RemoteSupport() {
     { icon: Clock, title: "Instant Connection", points: ["Connect in under 2 minutes", "No software required", "Windows, Mac, Linux"] },
     { icon: Shield, title: "Secure & Encrypted", points: ["End-to-end encryption", "Session recording", "HIPAA-aligned session controls"] },
     { icon: RefreshCw, title: "Screen Sharing", points: ["Full control capability", "Multi-monitor support", "File transfer included"] },
-    { icon: Zap, title: "24/7 Emergency Response", points: ["Emergency incident response 24/7/365", "15-minute response for critical issues, per our SLA", "Senior engineer escalation"] },
+    { icon: Zap, title: "Emergency response", points: ["Emergency incident response on plans that include it", "Service levels are set in your signed agreement", "Senior engineer escalation"] },
   ];
 
   const steps = [

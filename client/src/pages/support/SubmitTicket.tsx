@@ -230,28 +230,10 @@ export default function SubmitTicket() {
 
             <aside className="space-y-8 lg:col-span-4">
               <section>
-                <h2 className="font-heading text-lg font-semibold text-[#1A1228]">Response Times</h2>
-                {/* The four tiers of client/src/pages/legal/SLA.tsx, verbatim. */}
-                <dl className="mt-3 border-t border-[var(--de-paper-hairline)]">
-                  <div className="border-b border-[var(--de-paper-hairline)] py-3">
-                    <dt className="font-semibold text-de-magenta-paper-ink">Critical (active breach or system down)</dt>
-                    <dd className="text-sm text-[#3A3448]">15 minutes</dd>
-                  </div>
-                  <div className="border-b border-[var(--de-paper-hairline)] py-3">
-                    <dt className="font-semibold text-[#1A1228]">High (major functionality impaired)</dt>
-                    <dd className="text-sm text-[#3A3448]">1 hour</dd>
-                  </div>
-                  <div className="border-b border-[var(--de-paper-hairline)] py-3">
-                    <dt className="font-semibold text-[#1A1228]">Medium (partial loss)</dt>
-                    <dd className="text-sm text-[#3A3448]">4 hours</dd>
-                  </div>
-                  <div className="border-b border-[var(--de-paper-hairline)] py-3">
-                    <dt className="font-semibold text-[#1A1228]">Low (questions, minor issues)</dt>
-                    <dd className="text-sm text-[#3A3448]">Next business day</dd>
-                  </div>
-                </dl>
+                <h2 className="font-heading text-lg font-semibold text-[#1A1228]">Service levels</h2>
                 <p className="mt-3 text-sm text-[#3A3448]">
-                  From our <a href="/legal/sla" className="underline underline-offset-2">Service Level Agreement</a>.
+                  Service levels are set in your signed agreement. See{" "}
+                  <a href="/legal/sla" className="underline underline-offset-2">service levels</a>.
                 </p>
               </section>
 
