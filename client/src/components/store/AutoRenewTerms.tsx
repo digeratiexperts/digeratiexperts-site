@@ -85,12 +85,12 @@ export function AutoRenewTerms({
         </p>
       </div>
       <div
-        className="max-h-48 overflow-y-auto whitespace-pre-wrap rounded-md border border-white/10 bg-black/30 p-3 text-xs leading-relaxed text-white/80"
+        className="max-h-48 overflow-y-auto whitespace-pre-wrap rounded-md border border-white/10 bg-black/30 p-3 text-base leading-relaxed text-white"
         data-testid="auto-renew-terms-text"
       >
         {termsText}
       </div>
-      <p className="text-xs leading-relaxed text-white/65" data-testid="auto-renew-cancel-policy">
+      <p className="text-base leading-relaxed text-white" data-testid="auto-renew-cancel-policy">
         {AUTO_RENEW_CANCEL_POLICY_TEXT}
       </p>
       <label htmlFor="auto-renew-consent" className="flex cursor-pointer items-start gap-3 text-sm text-white">

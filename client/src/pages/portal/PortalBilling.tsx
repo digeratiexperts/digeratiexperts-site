@@ -288,7 +288,7 @@ export default function PortalBilling() {
                         <dd className="pt-num mt-1 text-lg font-semibold">{formatDate(sub.currentTermEnd)}</dd>
                       </div>
                     </dl>
-                    {sub.terms && <p className="whitespace-pre-wrap text-sm text-muted-foreground">{sub.terms}</p>}
+                    {sub.terms && <p className="whitespace-pre-wrap text-base text-foreground" data-testid="hub-subscription-terms">{sub.terms}</p>}
                     {sub.status !== "cancelled" && sub.status !== "cancel_scheduled" && (
                       <Button
                         variant="outline"
@@ -445,7 +445,7 @@ export default function PortalBilling() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Cancel this subscription?</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogDescription className="text-base text-foreground">
               {cancelTarget
                 ? `This cancels ${cancelTarget.plan || "this plan"} in one step. You will keep access through ${formatDate(cancelTarget.currentTermEnd || cancelTarget.renewsAt)}. No phone call is required.`
                 : "This cancels the plan in one step. No phone call is required."}

@@ -23,6 +23,7 @@ import {
 } from "./integrations/hubSubscriptionsContract";
 import { hubSubscriptionsClient, type HubSubscriptionsClient } from "./integrations/hubSubscriptionsClient";
 import { paymentRateLimiter } from "./middleware/rateLimiter";
+import { queueSubscriptionConfirmation } from "./services/autoRenewEmailDelivery";
 
 type StoreRole = "public" | "prospect" | "managed" | "comanaged" | "admin";
 
@@ -129,8 +130,7 @@ function stringValue(value: unknown, max = 200): string {
 }
 
 function requestIp(req: Request): string {
-  const forwarded = stringValue(req.headers["x-forwarded-for"], 200).split(",")[0]?.trim();
-  return forwarded || stringValue(req.ip, 200) || stringValue(req.socket?.remoteAddress, 200) || "unknown";
+  return stringValue(req.ip, 200) || "unknown";
 }
 
 function requestUserAgent(req: Request): string {
@@ -297,7 +297,10 @@ export function registerAutoRenewRoutes(
           currency: parsed.data.currency,
           frequency: plan.frequency,
           termMonths: plan.termMonths,
-          consent: parsed.data.consent,
+          consent: {
+            ...parsed.data.consent,
+            autoRenewConsentAt: new Date().toISOString(),
+          },
         });
       } catch (error) {
         if (error instanceof AutoRenewConsentError) {
@@ -348,8 +351,8 @@ export function registerAutoRenewRoutes(
       const email = stringValue(billing.email || req.user?.email, 200);
       const name = stringValue(billing.name || req.user?.fullName, 200) || "there";
       if (email) {
-        void deps
-          .sendSubscriptionConfirmation({
+        queueSubscriptionConfirmation(
+          {
             email,
             name,
             subscriptionId: created.data.subscriptionId,
@@ -364,10 +367,9 @@ export function registerAutoRenewRoutes(
             termsText: consent.termsTextSnapshot,
             cancelPolicyText: AUTO_RENEW_CANCEL_POLICY_TEXT,
             confirmationUrl: created.data.confirmation?.url,
-          })
-          .catch((error) => {
-            console.error("[AUTORENEW CONFIRMATION EMAIL ERROR]", error);
-          });
+          },
+          { send: deps.sendSubscriptionConfirmation },
+        );
       }
 
       return res.status(201).json({
@@ -433,9 +435,9 @@ export function registerAutoRenewRoutes(
       if (!portalUserId) {
         return res.status(401).json({ error: "Authentication required" });
       }
-      const requestedAt = stringValue(req.body?.requestedAt, 80) || new Date().toISOString();
+      const requestedAt = new Date().toISOString();
       const reason = stringValue(req.body?.reason, 2000) || undefined;
-      const idempotencyKey = stringValue(req.get("idempotency-key"), 100) || `portal-cancel-${subscriptionId}-${requestedAt}`;
+      const idempotencyKey = stringValue(req.get("idempotency-key"), 100) || `portal-cancel-${subscriptionId}`;
       const cancelled = await deps.hub.cancel(
         subscriptionId,
         {

@@ -7,6 +7,11 @@ import {
   buildAutoRenewTermsText,
 } from "@shared/autoRenewContract";
 import { registerAutoRenewRoutes, subscriptionPlanFromLines, type AutoRenewRouteDeps } from "./autoRenewRoutes";
+import {
+  getAutoRenewEmailDelivery,
+  resetAutoRenewEmailDeliveries,
+  waitForAutoRenewEmailDeliveries,
+} from "./services/autoRenewEmailDelivery";
 import type { HubSubscriptionsClient } from "./integrations/hubSubscriptionsClient";
 import { AUTORENEW_CONTRACT_ENV } from "./config/autoRenewContract";
 
@@ -15,6 +20,7 @@ const originalFlag = process.env[AUTORENEW_CONTRACT_ENV];
 afterEach(() => {
   if (originalFlag === undefined) delete process.env[AUTORENEW_CONTRACT_ENV];
   else process.env[AUTORENEW_CONTRACT_ENV] = originalFlag;
+  resetAutoRenewEmailDeliveries();
 });
 
 const consent = {
@@ -258,8 +264,15 @@ describe("auto-renew routes", () => {
     expect(body.consent.ip).toBeTruthy();
     expect(body.consent.userAgent).toBe("CheckoutTest/1.0");
     expect(body.consent.termsTextSnapshot).toContain("$199.00");
+    await waitForAutoRenewEmailDeliveries();
     expect(send).toHaveBeenCalledTimes(1);
     expect((send as any).mock.calls[0][0].termsText).toContain("Cancellation:");
+    expect(getAutoRenewEmailDelivery("sub_1")).toMatchObject({
+      status: "sent",
+      attempts: 1,
+      lastError: null,
+      to: "alex@example.com",
+    });
   });
 
   it("lists Hub subscriptions and cancels with one request when the flag is on", async () => {
@@ -280,7 +293,8 @@ describe("auto-renew routes", () => {
     expect(id).toBe("sub_1");
     expect(body.portalClientId).toBe("client-1");
     expect(body.portalUserId).toBe("user-1");
-    expect(body.requestedAt).toBe("2026-11-13T17:00:00.000Z");
+    expect(body.requestedAt).not.toBe("2026-11-13T17:00:00.000Z");
+    expect(Math.abs(Date.now() - Date.parse(body.requestedAt))).toBeLessThan(10_000);
   });
 });
 
@@ -403,5 +417,54 @@ describe("subscriptionPlanFromLines", () => {
     expect(cancelled.status).toBe(200);
     expect(cancelled.json.status).toBe("cancelled");
     expect(hub.cancel).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("server-assigned consent and cancel metadata", () => {
+  it("sets consent IP from req.ip and ignores client X-Forwarded-For and timestamps", async () => {
+    const { app, hub } = appWith({ enabled: true });
+    const clientStamp = "2020-01-02T03:04:05.000Z";
+    const res = await invoke(
+      app,
+      "POST",
+      "/api/store/subscriptions",
+      {
+        portalClientId: "client-1",
+        skuIds: ["DE-DIG-ASMT-PHISH-MO"],
+        priceCents: 19900,
+        currency: "USD",
+        frequency: "month",
+        termMonths: 1,
+        customerType: "business",
+        customerState: "AZ",
+        consent: { ...consent, autoRenewConsentAt: clientStamp },
+        lineItems: [phishingLine],
+        billing: { name: "Alex Rivera", email: "alex@example.com" },
+        ip: "203.0.113.9",
+      },
+      { "X-Forwarded-For": "203.0.113.9" },
+    );
+    expect(res.status).toBe(201);
+    const body = (hub.create as any).mock.calls[0][0];
+    expect(body.consent.autoRenewConsentAt).not.toBe(clientStamp);
+    const stamped = Date.parse(body.consent.autoRenewConsentAt);
+    expect(Number.isFinite(stamped)).toBe(true);
+    expect(Math.abs(Date.now() - stamped)).toBeLessThan(10_000);
+    expect(body.consent.ip).toMatch(/^(::ffff:)?127\.0\.0\.1$|^::1$/);
+    expect(body.consent.ip).not.toBe("203.0.113.9");
+  });
+
+  it("sets cancel requestedAt on the server and ignores the client value", async () => {
+    const { app, hub } = appWith({ enabled: true });
+    const clientStamp = "2020-01-02T03:04:05.000Z";
+    const cancelled = await invoke(app, "POST", "/api/portal/subscriptions/sub_1/cancel", {
+      requestedAt: clientStamp,
+    });
+    expect(cancelled.status).toBe(200);
+    const [, body] = (hub.cancel as any).mock.calls[0];
+    expect(body.requestedAt).not.toBe(clientStamp);
+    const stamped = Date.parse(body.requestedAt);
+    expect(Number.isFinite(stamped)).toBe(true);
+    expect(Math.abs(Date.now() - stamped)).toBeLessThan(10_000);
   });
 });

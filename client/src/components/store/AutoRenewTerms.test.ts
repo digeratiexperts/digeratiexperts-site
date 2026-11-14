@@ -32,4 +32,13 @@ describe("AutoRenewTerms", () => {
     expect(consent.cancelPolicyText.toLowerCase()).toContain("one click");
     expect(consent.checkboxLabelText).toBe(AUTO_RENEW_CHECKBOX_LABEL_TEXT);
   });
+
+  it("shows cancel and renewal terms at body size with full-contrast text", () => {
+    expect(source).toContain('data-testid="auto-renew-terms-text"');
+    expect(source).toContain('data-testid="auto-renew-cancel-policy"');
+    expect(source).toContain("text-base leading-relaxed text-white");
+    expect(source).not.toMatch(/auto-renew-terms-text[\s\S]{0,200}text-xs/);
+    expect(source).not.toContain("text-white/65");
+    expect(source).not.toContain("text-white/80");
+  });
 });
