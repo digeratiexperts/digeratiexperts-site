@@ -65,6 +65,8 @@ import {
   verifyZohoOAuthState,
 } from "./portalZohoAuth";
 import { verifyTurnstile } from "./middleware/security";
+import { registerSituationMatchRoutes } from "./situationMatchRoutes";
+import { claimProfileDraft, isPlausibleClaimToken } from "./integrations/hubProfileDraft";
 import { csrfOriginGuard, defaultAutoRenewRouteDeps, registerAutoRenewRoutes } from "./autoRenewRoutes";
 import { eventBus, EventTypes } from "./eventBus";
 import { notificationService, sendEmail } from "./services/notificationService";
@@ -2675,6 +2677,19 @@ export async function registerRoutes(app: Express) {
       // Reload after client link
       const saved = portalUsers.get(email) || newUser;
 
+      // An anonymous IT & Security Profile draft (DE Desk, /describe-your-situation) is claimed for the
+      // new prospect client. Signed website_to_hub; the Hub's canonicalAccountId becomes
+      // portal_clients.hub_account_id. Never an id from the browser, and never blocks registration.
+      const { claimToken } = req.body || {};
+      if (saved.clientId && isPlausibleClaimToken(claimToken)) {
+        void claimProfileDraft({
+          claimToken,
+          portalClientId: saved.clientId,
+          company: (portalClients.get(saved.clientId) as any)?.companyName || companyName || null,
+          email: saved.email,
+        });
+      }
+
       // Generate email verification token (durable, hashed). The account is already
       // committed; if the token cannot be stored the user can request a new link.
       let verificationToken: string | null = null;
@@ -5268,6 +5283,9 @@ export async function registerRoutes(app: Express) {
       res.status(status).json({ error: error?.message || "Advisor unavailable" });
     }
   });
+
+  // DE Desk structured situation match + IT & Security Profile drafts (B3 homepage). Same chat limiter.
+  registerSituationMatchRoutes(app, { rateLimiter: advisorChatRateLimiter, draftRateLimiter: advisorActionRateLimiter });
 
   app.get("/api/public/advisor/session/:id", [advisorPollRateLimiter], async (req: AuthenticatedRequest, res: Response) => {
     try {

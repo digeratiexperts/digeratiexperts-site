@@ -2,10 +2,9 @@
  * Shared PCI guard: catch cardholder data before it is stored, sent to a
  * model, written to a ticket, or kept in sessionStorage.
  *
- * Detects Luhn-valid PANs (13-19 digits, including numbers split by spaces,
- * dots, dashes, slashes or line breaks) and explicit CVV / card-expiry
- * patterns. Ordinary phone numbers, ZIP codes and ticket or invoice IDs are
- * left alone.
+ * Detects Luhn-valid PANs (13-19 digits; spaces, dashes, dots, slashes and
+ * newlines allowed as separators) and explicit CVV / card-expiry patterns.
+ * Ordinary phone numbers, ZIP codes and ticket or invoice IDs are left alone.
  */
 
 export const CARD_DATA_REJECTED_CODE = "card_data_rejected" as const;
@@ -44,77 +43,58 @@ export function luhnValid(digits: string): boolean {
   return sum % 10 === 0;
 }
 
+/** ASCII and Unicode space, dash, slash, backslash and dot characters used to split a PAN. */
 function isPanSeparator(ch: string): boolean {
-  if (!ch) return false;
-  if (ch === "." || ch === "-" || ch === "/") return true;
-  const code = ch.charCodeAt(0);
-  return (
-    ch === " " ||
-    ch === "\t" ||
-    ch === "\n" ||
-    ch === "\r" ||
-    ch === "\v" ||
-    ch === "\f" ||
-    code === 0x00a0 ||
-    code === 0x2007 ||
-    code === 0x202f ||
-    (code >= 0x2000 && code <= 0x200a) ||
-    code === 0x2028 ||
-    code === 0x2029 ||
-    code === 0x205f ||
-    code === 0x3000
-  );
+  if (ch === "." || ch === "/" || ch === "\\") return true;
+  const c = ch.charCodeAt(0);
+  // hyphen-minus, non-breaking hyphen, figure dash, en/em dashes, minus, horizontal bar
+  if (c === 0x2d || c === 0x2010 || c === 0x2011 || c === 0x2012 || c === 0x2013 || c === 0x2014 || c === 0x2212 || c === 0x2015) {
+    return true;
+  }
+  return /\s/u.test(ch);
 }
 
-function isDigitChar(ch: string): boolean {
-  return ch >= "0" && ch <= "9";
-}
-
-function runHasLuhnPan(digits: string): boolean {
-  if (digits.length < 13) return false;
-  const max = Math.min(19, digits.length);
-  for (let len = max; len >= 13; len -= 1) {
-    for (let start = 0; start + len <= digits.length; start += 1) {
-      const slice = digits.slice(start, start + len);
+function digitRunHasPan(digits: string): boolean {
+  const n = digits.length;
+  if (n < 13) return false;
+  const maxLen = Math.min(19, n);
+  for (let len = maxLen; len >= 13; len--) {
+    for (let i = 0; i + len <= n; i++) {
+      const slice = digits.slice(i, i + len);
       if (isPlausibleIin(slice) && luhnValid(slice)) return true;
     }
   }
   return false;
 }
 
+/**
+ * Walk the string, treating spaces (including Unicode), newlines, dashes,
+ * dots, slashes and backslashes as separators. Letters and other punctuation
+ * break a run, so a PAN may sit directly against words or symbols (card#4111…exp).
+ */
 export function containsPan(text: string): boolean {
   const source = String(text || "");
   if (!source) return false;
-  let i = 0;
-  while (i < source.length) {
-    if (!isDigitChar(source[i]!)) {
-      i += 1;
+  let digits = "";
+  for (const ch of source) {
+    const c = ch.charCodeAt(0);
+    if (c >= 48 && c <= 57) {
+      digits += ch;
+    } else if (isPanSeparator(ch)) {
       continue;
+    } else if (digitRunHasPan(digits)) {
+      return true;
+    } else {
+      digits = "";
     }
-    let digits = "";
-    let j = i;
-    while (j < source.length) {
-      const ch = source[j]!;
-      if (isDigitChar(ch)) {
-        digits += ch;
-        j += 1;
-        continue;
-      }
-      if (isPanSeparator(ch)) {
-        j += 1;
-        continue;
-      }
-      break;
-    }
-    if (runHasLuhnPan(digits)) return true;
-    i = j > i ? j : i + 1;
   }
-  return false;
+  return digitRunHasPan(digits);
 }
 
+const CVV_LABEL =
+  /\b(?:cvv2?|cvc2?|cid|cav2|csc|security\s+code|card\s+security\s+code|card\s+code|card\s+verification(?:\s+(?:value|code))?)\b/gi;
 
-const CVV_PATTERN =
-  /\b(?:cvv2?|cvc2?|cid|cav2|csc|security\s+code|card\s+security\s+code|card\s+code|card\s+verification(?:\s+(?:value|code))?)(?:\s*(?:=|:|->)\s*|\s+(?:(?:is|was)\s+)?)["'`]?(\d{3,4})\b/i;
+const CVV_AFTER_LABEL = new RegExp("^\\s*(?::|=|#|\\.|/|-|->)*\\s*(?:(?:is|was)\\s+)?['\"`]?(\\d{3,4})\\b", "i");
 
 const CARD_CONTEXT =
   /\b(?:credit\s*(?:and\s+debit\s+)?cards?|debit\s+cards?|cards?|card\s+number|card\s*holder|credit\/debit|visa|mastercard|master\s*card|amex|american\s*express|discover(?:\s+card)?|cvv2?|cvc2?|cid|cav2)\b/i;
@@ -125,7 +105,12 @@ const CARD_EXPIRY =
 export function containsCvvOrCardExpiry(text: string): boolean {
   const source = String(text || "");
   if (!source) return false;
-  if (CVV_PATTERN.test(source)) return true;
+  CVV_LABEL.lastIndex = 0;
+  let match: RegExpExecArray | null;
+  while ((match = CVV_LABEL.exec(source))) {
+    const after = source.slice(match.index + match[0].length, match.index + match[0].length + 24);
+    if (CVV_AFTER_LABEL.test(after)) return true;
+  }
   return CARD_CONTEXT.test(source) && CARD_EXPIRY.test(source);
 }
 

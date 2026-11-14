@@ -11,6 +11,7 @@ import {
   wantsPerson,
 } from "./classify";
 import { buildAdvisorRetrievalQueries, selectKnowledgeSliceStorageBacked } from "./knowledge";
+import { formatPublicSituationContext } from "./situation-match";
 import {
   extractProfileFromText,
   mergeProfile,
@@ -447,6 +448,12 @@ export async function handleAdvisorChat(req: AdvisorChatRequest): Promise<Adviso
     mode = classifyMode(userTurn, page);
   }
 
+  if (!session.originalIntent && session.situation?.summary) {
+    session.originalIntent = session.situation.summary;
+  }
+  const situationContext = session.situation
+    ? formatPublicSituationContext(session.situation)
+    : undefined;
   const knowledge = await selectKnowledgeSliceStorageBacked(
     mode,
     page,
@@ -463,6 +470,7 @@ export async function handleAdvisorChat(req: AdvisorChatRequest): Promise<Adviso
     page,
     originalIntent: session.originalIntent,
     lastUserMessage: userTurn,
+    situationContext,
   });
 
   const history = session.messages.map((m) => ({

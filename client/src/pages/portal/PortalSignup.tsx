@@ -10,6 +10,7 @@ import "@/styles/portal.css";
 import { usePortalAppearance } from "@/components/portal/shell/portalTheme";
 import { PasswordRequirements, PasswordVisibilityToggle, isBreachedPasswordMessage } from "@/components/portal/PasswordRequirements";
 import { passwordPolicyError } from "@shared/passwordPolicy";
+import { clearProfileClaim, readProfileClaim } from "@/lib/profileClaim";
 
 export default function PortalSignup() {
   const { theme } = usePortalAppearance();
@@ -74,7 +75,8 @@ export default function PortalSignup() {
       const response = await fetch("/api/portal/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, username, password, turnstileToken }),
+        // A profile draft saved on /describe-your-situation is claimed by this account (server side).
+        body: JSON.stringify({ email, username, password, turnstileToken, ...(readProfileClaim() ? { claimToken: readProfileClaim() } : {}) }),
       });
 
       const data = await response.json();
@@ -87,6 +89,7 @@ export default function PortalSignup() {
         return;
       }
 
+      clearProfileClaim();
       setSuccess(true);
       setTimeout(() => {
         navigate("/portal/login");

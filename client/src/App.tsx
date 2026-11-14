@@ -197,6 +197,9 @@ const HomepageV5 = lazy(() => import("@/pages/versions/v5/HomepageV5"));
 const HomepageV6 = lazy(() => import("@/pages/versions/v6/HomepageV6"));
 const HomepageV7 = lazy(() => import("@/pages/versions/v7/HomepageV7"));
 const HomepageV2 = lazy(() => import("@/pages/homepage-v2/HomepageV2"));
+const HomepageB3 = lazy(() => import("@/pages/homepage-b3/HomepageB3"));
+const DescribeSituation = lazy(() => import("@/pages/homepage-b3/DescribeSituation"));
+const HomeV2 = lazy(() => import("@/pages/concepts/HomeV2"));
 const HomeClassic = lazy(() => import("@/pages/concepts/HomeClassic"));
 const HomepageV9 = lazy(() => import("@/pages/versions/v9/HomepageV9"));
 const HomepageV10 = lazy(() => import("@/pages/versions/v10/HomepageV10"));
@@ -216,10 +219,24 @@ function Router() {
   if (!isAnalyticsDocumentContextCurrent()) return null;
   return (
     <Switch>
-      {/* Homepage: v2 (Joe, 2026-10-22: approved). The previous homepage is kept at /concepts/home-classic (noindex). */}
+      {/* Homepage: B3 (Joe, 2026-11-13: "all approved"). Homepage v2 is kept at /concepts/home-v2 (noindex). */}
       <Route path="/" component={() => (
         <Suspense fallback={<PageLoadingSkeleton />}>
-          <HomepageV2 />
+          <HomepageB3 />
+        </Suspense>
+      )} />
+
+      {/* The homepage's "Describe your own" card: DE Desk situation match (B3). */}
+      <Route path="/describe-your-situation" component={() => (
+        <Suspense fallback={<PageLoadingSkeleton />}>
+          <DescribeSituation />
+        </Suspense>
+      )} />
+
+      {/* Concept: Homepage v2, the homepage before B3 (2026-11-13) - review only, noindex, not in navigation */}
+      <Route path="/concepts/home-v2" component={() => (
+        <Suspense fallback={<PageLoadingSkeleton />}>
+          <HomeV2 />
         </Suspense>
       )} />
 
@@ -1244,7 +1261,7 @@ function AppContent() {
   const isPortal = location.startsWith("/portal");
   const isHome = location === "/";
   // / (Version 8), /version-0 (the previous homepage), /version-7, /version-9 and /version-10 mount their own bottom bar.
-  const ownsBottomBar = isHome || location === "/version-0" || location === "/version-7" || location === "/version-9" || location === "/version-10" || location === "/concepts/home-chapters" || location === "/concepts/home-mesh" || location === "/concepts/home-classic";
+  const ownsBottomBar = isHome || location === "/version-0" || location === "/version-7" || location === "/version-9" || location === "/version-10" || location === "/concepts/home-chapters" || location === "/concepts/home-mesh" || location === "/concepts/home-classic" || location === "/concepts/home-v2";
   const hideDoor2HelpDock = isDoor2Path(location) && location.split("?")[0] !== "/store";
   const hideWarehouseChrome = isWarehousePath(location);
   const accent = isPortal ? undefined : accentFor(location);
