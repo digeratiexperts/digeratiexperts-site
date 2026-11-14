@@ -1,6 +1,7 @@
 import { getOpenAI } from "../../openaiService";
 import { withOpenAIGuard } from "../openai-config";
 import { assertNoCardData } from "@shared/pciGuard";
+import { CRISIS_REPLY, isCrisisMessage } from "@shared/deskCrisis";
 import { isPromptInjectionAttempt, askedForHuman } from "./classify";
 import { assertNoInternalLeak } from "./actions";
 import { INTERNAL_REFUSAL } from "./prompt";
@@ -245,6 +246,16 @@ export async function handlePortalAssistChat(input: PortalAssistInput, today: st
   const message = input.message.trim().slice(0, 2000);
   if (!message) throw Object.assign(new Error("Message is required"), { status: 400 });
   assertNoCardData(message);
+  if (isCrisisMessage(message)) {
+    const sessionId = portalAssistSessionId(input.user.id);
+    return {
+      sessionId,
+      reply: CRISIS_REPLY,
+      actions: [],
+      agentLive: false,
+      agentName: null,
+    };
+  }
   const sessionId = portalAssistSessionId(input.user.id);
   const meta = {
     email: input.user.email || null,
