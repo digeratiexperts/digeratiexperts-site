@@ -1,5 +1,6 @@
 import { describe, expect, it, vi, afterEach } from "vitest";
 import {
+  DESK_AI_GREETING_OPENER,
   DESK_INCIDENT_STARTER,
   DESK_PAGE_COPY,
   greetingForPage,
@@ -26,7 +27,9 @@ describe("deskAskDeMotion", () => {
     ];
     for (const [path, page] of cases) {
       expect(inferDeskPageType(path)).toBe(page);
-      expect(greetingForPage(page)).toBe(DESK_PAGE_COPY[page].greet);
+      const rest = DESK_PAGE_COPY[page].greet.replace(/^DE Desk here\.\s*/, "");
+      expect(greetingForPage(page)).toBe(`${DESK_AI_GREETING_OPENER} ${rest}`);
+      expect(greetingForPage(page).startsWith(DESK_AI_GREETING_OPENER)).toBe(true);
     }
   });
 
@@ -135,7 +138,8 @@ describe("deskAskDeMotion", () => {
     });
     const motion = await import("./deskAskDeMotion");
     const greet = motion.greetingForPage("home");
-    expect(greet.startsWith(motion.DESK_PAGE_COPY.home.greet)).toBe(true);
+    expect(greet.startsWith(motion.DESK_AI_GREETING_OPENER)).toBe(true);
+    expect(greet).toContain(motion.DESK_PAGE_COPY.home.greet.replace(/^DE Desk here\.\s*/, ""));
     expect(greet).toMatch(/You started a solution in the Store on this device\./);
     expect(greet).not.toMatch(/Store situation|name or email/);
     expect(greet).not.toContain("jo@acme.test");

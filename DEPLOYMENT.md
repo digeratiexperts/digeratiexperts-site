@@ -51,6 +51,13 @@ Production secrets live only in `/home/digeratiexperts.com/shared/.env`
 Key groups: `DATABASE_URL`, JWT/SESSION secrets, Zoho (Desk/CRM/Payments +
 Portal OIDC), OpenAI, Turnstile, TechSales sync URL/token, `PORT=3300`.
 
+DE Desk transcript purge: `DESK_CHAT_PURGE_ENABLED` is off by default.
+`DESK_CHAT_RETENTION_DAYS` defaults to 365 (1 year). Production must set
+`DESK_CHAT_PURGE_ENABLED=true` and `DESK_CHAT_RETENTION_DAYS=365`. The job
+uses last activity, not creation time, and skips sessions under legal hold
+or linked to a ticket. If a hold or ticket lookup fails, that session is
+left in place.
+
 ## OpenLiteSpeed
 
 OLS terminates TLS and reverse-proxies to Node on `:3300`. Do **not** serve

@@ -820,6 +820,11 @@ function listEndpoints(): Array<{ method: string; path: string }> {
       .catch((error) => {
         log(`⚠️ desk ticket replay worker not started: ${error?.message || error}`);
       });
+    void import("./services/msp-advisor/deskChatPurgeWorker")
+      .then(({ startDeskChatPurgeWorker }) => startDeskChatPurgeWorker())
+      .catch((error) => {
+        log(`desk chat purge worker not started: ${error?.message || error}`);
+      });
     void import("./services/threat-intel/ingest")
       .then(({ startThreatIntelScheduler }) => startThreatIntelScheduler())
       .catch((error) => {

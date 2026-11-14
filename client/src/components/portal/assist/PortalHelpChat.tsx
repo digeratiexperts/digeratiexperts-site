@@ -2,6 +2,17 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from "react"
 import { Link } from "wouter";
 import { ArrowUp, CheckCircle2, Loader2, Sparkles, X } from "lucide-react";
 import { AskDeGlyph } from "@/components/icons/AskDeGlyph";
+import { COMPANY, PRIMARY_PHONE } from "@shared/companyContact";
+import { DeskChatConsentGate } from "@/components/desk/DeskChatConsentGate";
+import {
+  DESK_CHAT_CONSENT_PRIVACY_HREF,
+  DESK_CHAT_RECORDED_LABEL,
+  deskChatConsentRequestBody,
+  hasStoredDeskChatConsent,
+  isDeskChatConsentRequiredError,
+  readPriorSituationAttachment,
+  storeDeskChatConsent,
+} from "@/lib/deskChatConsent";
 import { usePortalSession } from "@/components/portal/shell/portalSession";
 import { portalFetch, portalPost } from "@/lib/portalApi";
 import { CARD_DATA_REJECTED_MESSAGE, looksLikeCardData } from "@shared/pciGuard";
@@ -115,6 +126,8 @@ const nid = () => `m${Date.now().toString(36)}${(idSeq++).toString(36)}`;
 export function PortalHelpChat({ page, form }: { page: Page; form?: FormBridge }) {
   const { user } = usePortalSession();
   const [open, setOpen] = useState(false);
+  const [recordingConsent, setRecordingConsent] = useState(() => hasStoredDeskChatConsent());
+  const [declinedRecording, setDeclinedRecording] = useState(false);
   const [bubble, setBubble] = useState(() => !readDismissed());
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
@@ -130,8 +143,8 @@ export function PortalHelpChat({ page, form }: { page: Page; form?: FormBridge }
   const first = (user?.fullName || "").split(" ")[0];
   const greeting =
     page.kind === "service_request_form"
-      ? `Hi${first ? ` ${first}` : ""}! I can help you fill out ${page.title}, check on a request, or get you to the team.`
-      : `Hi${first ? ` ${first}` : ""}! Ask me about your requests, or I can get you to the team.`;
+      ? `I'm DE Desk, an AI assistant for Digerati Experts. Hi${first ? ` ${first}` : ""}! I can help you fill out ${page.title}, check on a request, or get you to the team.`
+      : `I'm DE Desk, an AI assistant for Digerati Experts. Hi${first ? ` ${first}` : ""}! Ask me about your requests, or I can get you to the team.`;
   const typed = useTypewriter(greeting, open && !greeted);
 
   const prompts =
@@ -170,9 +183,11 @@ export function PortalHelpChat({ page, form }: { page: Page; form?: FormBridge }
       if (e.key === "Escape") close();
     };
     window.addEventListener("keydown", onKey);
-    requestAnimationFrame(() => inputRef.current?.focus());
+    requestAnimationFrame(() => {
+      if (recordingConsent) inputRef.current?.focus();
+    });
     return () => window.removeEventListener("keydown", onKey);
-  }, [open, close]);
+  }, [open, close, recordingConsent]);
 
   useEffect(() => {
     logRef.current?.scrollTo({ top: logRef.current.scrollHeight, behavior: prefersReducedMotion() ? "auto" : "smooth" });
@@ -206,9 +221,19 @@ export function PortalHelpChat({ page, form }: { page: Page; form?: FormBridge }
     return () => window.clearInterval(t);
   }, [open, agentLive, pull]);
 
+  const agreeToRecording = () => {
+    storeDeskChatConsent();
+    setRecordingConsent(true);
+    setDeclinedRecording(false);
+  };
+
+  const declineRecording = () => {
+    setDeclinedRecording(true);
+  };
+
   const send = async (text: string) => {
     const message = text.trim();
-    if (!message || sending) return;
+    if (!message || sending || !recordingConsent) return;
     if (looksLikeCardData(message)) {
       setMessages((prev) => [...prev, { id: nid(), role: "system", content: CARD_DATA_REJECTED_MESSAGE }]);
       return;
@@ -224,6 +249,7 @@ export function PortalHelpChat({ page, form }: { page: Page; form?: FormBridge }
           message,
           page,
           form: form ? { values: form.values, missing: form.chips.map((c) => c.label) } : null,
+          ...deskChatConsentRequestBody(),
         },
       );
       setAgentLive(body.agentLive);
@@ -236,9 +262,14 @@ export function PortalHelpChat({ page, form }: { page: Page; form?: FormBridge }
         setMessages((prev) => [...prev, { id: nid(), role: "assistant", content: body.reply, actions: body.actions }]);
       }
     } catch (e) {
+      const message = e instanceof Error && e.message ? e.message : "";
+      if (isDeskChatConsentRequiredError({ error: message }, 403)) {
+        setRecordingConsent(false);
+        return;
+      }
       setMessages((prev) => [
         ...prev,
-        { id: nid(), role: "system", content: e instanceof Error && e.message ? e.message : "Ask DE is unavailable right now. Try again, or open a ticket." },
+        { id: nid(), role: "system", content: message || "Ask DE is unavailable right now. Try again, or open a ticket." },
       ]);
     } finally {
       setSending(false);
@@ -335,9 +366,9 @@ export function PortalHelpChat({ page, form }: { page: Page; form?: FormBridge }
             </span>
             <div className="min-w-0 flex-1">
               <h2 id="phc-title" className="text-sm font-semibold">
-                Ask DE
+                Ask DE · AI assistant
               </h2>
-              <p className="text-xs text-white/60">{agentLive ? "A DE team member is in this chat" : "DE Desk · help with this page"}</p>
+              <p className="text-xs text-white/60">{agentLive ? "A DE team member is in this chat" : "DE Desk · AI assistant"}</p>
             </div>
             <button
               type="button"
@@ -349,7 +380,42 @@ export function PortalHelpChat({ page, form }: { page: Page; form?: FormBridge }
             </button>
           </header>
 
-          <div ref={logRef} role="log" aria-live="polite" aria-relevant="additions" className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
+          <p className="phc-human-path" data-testid="portal-help-human-path">
+            Want a person?{" "}
+            <a href={PRIMARY_PHONE.telHref}>Call</a>,{" "}
+            <button
+              type="button"
+              onClick={() => {
+                if (!recordingConsent) {
+                  setDeclinedRecording(true);
+                  window.location.assign("/portal/requests");
+                  return;
+                }
+                void send("I'd like to leave a message for a person on the team.");
+              }}
+            >
+              leave a message
+            </button>
+            , or{" "}
+            <a href={COMPANY.bookingUrl} target="_blank" rel="noopener noreferrer">
+              Book a Fit Call
+            </a>
+            .
+          </p>
+          {!recordingConsent ? (
+            <DeskChatConsentGate
+              onAgree={agreeToRecording}
+              onDecline={declineRecording}
+              declined={declinedRecording}
+              descriptionAttached={readPriorSituationAttachment()?.descriptionAttached === true}
+              ticketHref="/portal/requests"
+              ticketLabel="Open a support request"
+              contactHref="/contact"
+              testId="portal-help-chat-consent"
+            />
+          ) : (
+            <>
+          <div ref={logRef} role="log" aria-live="polite" aria-relevant="additions" className="flex-1 space-y-3 overflow-y-auto px-4 py-4" data-clarity-mask="true">
             <div className="phc-msg max-w-[88%] rounded-2xl rounded-tl-sm bg-white/[0.06] px-3.5 py-2.5 text-sm leading-relaxed">
               {greeted ? greeting : typed}
               {!greeted && typed.length < greeting.length && <span className="phc-caret" aria-hidden="true" />}
@@ -442,6 +508,12 @@ export function PortalHelpChat({ page, form }: { page: Page; form?: FormBridge }
             </div>
           )}
 
+          <p className="px-4 pb-1 text-xs text-white/60">
+            <a href={DESK_CHAT_CONSENT_PRIVACY_HREF} className="underline underline-offset-2" data-testid="portal-help-chat-recorded">
+              {DESK_CHAT_RECORDED_LABEL}
+            </a>
+            .
+          </p>
           <form onSubmit={onSubmit} className="flex items-end gap-2 border-t border-white/10 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
             <label htmlFor="phc-input" className="sr-only">
               Message Ask DE
@@ -460,6 +532,8 @@ export function PortalHelpChat({ page, form }: { page: Page; form?: FormBridge }
                 }
               }}
               placeholder="Ask about this request…"
+              autoComplete="off"
+              data-clarity-mask="true"
               className="max-h-32 min-h-[44px] flex-1 resize-none rounded-xl border border-white/10 bg-white/[0.05] px-3 py-2.5 text-sm text-white placeholder:text-white/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A]"
             />
             <button
@@ -471,6 +545,8 @@ export function PortalHelpChat({ page, form }: { page: Page; form?: FormBridge }
               <ArrowUp className="h-5 w-5" aria-hidden="true" />
             </button>
           </form>
+            </>
+          )}
         </section>
       )}
     </>

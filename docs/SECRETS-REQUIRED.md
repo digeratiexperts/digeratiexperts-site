@@ -154,6 +154,8 @@ Optional per feature.
 | `ENABLE_OPENAI` | config | `server/production.config.ts` | Kill switch (`false` turns it off). |
 | `ENABLE_OPENAI_INTEGRATION` | config | `server/services/openai-config.ts`, `server/routes.ts` | OpenAI integration on/off for the admin toggle (`server/services/openai-config.ts`). |
 | `MSP_ADVISOR_MODEL` | config | `server/services/msp-advisor/advisor.ts`, `server/services/msp-advisor/portal-assist.ts` | Model id for the MSP advisor. |
+| `DESK_CHAT_PURGE_ENABLED` | config | `server/services/msp-advisor/persist.ts`, `server/services/msp-advisor/deskChatPurgeWorker.ts` | Transcript purge switch. Off unless `1`, `true`, `yes`, or `on`. Production must enable this. |
+| `DESK_CHAT_RETENTION_DAYS` | config | `server/services/msp-advisor/persist.ts` | Days to keep DE Desk transcripts, measured from last activity. Defaults to 365. Production must set 365. Invalid values disable the purge. |
 | `STRIPE_SECRET_KEY` | secret | `server/production.config.ts` | Stripe (legacy; Zoho Payments is current). |
 | `STRIPE_LIVE_API_KEY` | secret | `server/production.config.ts` | Alias of the above. |
 | `STRIPE_WEBHOOK_SECRET` | secret | `server/production.config.ts` | Stripe webhook signature. |

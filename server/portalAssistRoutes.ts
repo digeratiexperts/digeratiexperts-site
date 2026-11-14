@@ -3,6 +3,7 @@ import { listServiceRequestsForUser } from "./serviceRequestStore";
 import { effectiveClientId, type DirectoryClient, type DirectoryUser, type ServiceRequestUser } from "./serviceRequestRoutes";
 import { BASKET_STATUS, todayIso } from "@shared/serviceRequests";
 import { sendCardDataRejected, sendCardDataRejectedError } from "./pciGuard";
+import { recordAcceptedDeskChatConsent, rejectIfMissingDeskChatConsent } from "./deskChatConsent";
 
 /**
  * Ask DE in the Client Portal (bottom-right help chat). Signed-in only; the
@@ -22,6 +23,7 @@ export function registerPortalAssistRoutes(
   },
 ): void {
   app.post("/api/portal/assist/chat", ...deps.guards, async (req: AuthedRequest, res: Response) => {
+    if (rejectIfMissingDeskChatConsent(req, res)) return;
     const message = typeof req.body?.message === "string" ? req.body.message : "";
     if (!message.trim()) return res.status(400).json({ error: "Message is required" });
     if (sendCardDataRejected(res, message)) return;
@@ -64,6 +66,7 @@ export function registerPortalAssistRoutes(
         },
         todayIso(),
       );
+      await recordAcceptedDeskChatConsent(req, advisor.portalAssistSessionId(user.id));
       res.json({ success: true, ...out });
     } catch (error: any) {
       if (sendCardDataRejectedError(res, error)) return;

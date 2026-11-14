@@ -162,10 +162,14 @@ export function startersForPage(page: DeskMotionPage): DeskMotionChip[] {
   return [...chips, DESK_INCIDENT_STARTER];
 }
 
+/** First sentence of every public DE Desk greeting. */
+export const DESK_AI_GREETING_OPENER = "I'm DE Desk, an AI assistant for Digerati Experts.";
+
 export function greetingForPage(page: DeskMotionPage): string {
-  const base = DESK_PAGE_COPY[page].greet;
+  const base = DESK_PAGE_COPY[page].greet.replace(/^DE Desk here\.\s*/, "");
   const clause = deskSituationClause();
-  return clause ? `${base} ${clause}` : base;
+  const body = clause ? `${base} ${clause}` : base;
+  return `${DESK_AI_GREETING_OPENER} ${body}`;
 }
 
 export function prefersReducedMotion(): boolean {

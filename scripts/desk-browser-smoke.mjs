@@ -85,11 +85,19 @@ async function newPage({ width, height }, { freshHints = false } = {}) {
   return { context, page, errors };
 }
 
+async function agreeToRecording(page) {
+  const agree = page.getByTestId("desk-chat-consent-agree");
+  if ((await agree.count()) === 0) return;
+  await agree.click({ timeout: 10000 });
+  await page.waitForSelector(COMPOSER, { timeout: 10000 });
+}
+
 async function openFromChooser(page) {
   await page.locator(LAUNCHER).first().click({ timeout: 10000 });
   await page.waitForSelector(CHOOSER, { timeout: 10000 });
   await page.locator('[data-testid="ask-de-choice-help"]').click();
   await page.waitForSelector(MODAL, { timeout: 15000 });
+  await agreeToRecording(page);
   await page.waitForTimeout(600);
 }
 
@@ -183,7 +191,37 @@ for (const viewport of [
   await context.close();
 }
 
-// 3. First-visit hints at 1440 with fresh storage.
+// 3. Recording notice: the composer stays hidden until the visitor agrees.
+{
+  const { context, page } = await newPage({ width: 1440, height: 900 });
+  await page.locator(LAUNCHER).first().click({ timeout: 10000 });
+  await page.waitForSelector(CHOOSER, { timeout: 10000 });
+  await page.locator('[data-testid="ask-de-choice-help"]').click();
+  await page.waitForSelector(MODAL, { timeout: 15000 });
+  check("consent", "the recording notice is shown before chat", (await page.getByTestId("desk-chat-consent").count()) === 1);
+  check("consent", "the composer is hidden until the visitor agrees", (await page.locator(COMPOSER).count()) === 0);
+  await page.getByTestId("desk-chat-consent-decline").click();
+  await page.waitForTimeout(300);
+  check(
+    "consent",
+    "declining shows contact form, ticket, and phone options and starts no chat",
+    (await page.getByTestId("desk-other-contact-ways").count()) === 1
+      && (await page.getByTestId("desk-other-contact-form").count()) === 1
+      && (await page.getByTestId("desk-other-ticket").count()) === 1
+      && (await page.getByTestId("desk-chat-consent-phone").count()) === 1
+      && (await page.locator(COMPOSER).count()) === 0,
+  );
+  await page.getByTestId("desk-other-ticket").click();
+  await page.waitForTimeout(300);
+  check(
+    "consent",
+    "the ticket option opens Get Support without starting a chat",
+    (await page.getByTestId("panel-support-ticket").count()) === 1 && (await page.locator(COMPOSER).count()) === 0,
+  );
+  await context.close();
+}
+
+// 4. First-visit hints at 1440 with fresh storage.
 {
   const { context, page } = await newPage({ width: 1440, height: 900 }, { freshHints: true });
   await openFromChooser(page);
@@ -214,7 +252,7 @@ for (const viewport of [
   await context.close();
 }
 
-// 4. Polish invariants.
+// 5. Polish invariants.
 {
   const { context, page } = await newPage({ width: 1440, height: 900 });
   await openFromChooser(page);
@@ -233,7 +271,7 @@ for (const viewport of [
   await context.close();
 }
 
-// 5. The Ask DE launcher (Joe, 2026-10-03): "B on desktop, C on mobile".
+// 6. The Ask DE launcher (Joe, 2026-10-03): "B on desktop, C on mobile".
 {
   const GOLD = "rgb(227, 178, 60)";
   const CHARCOAL = "rgb(11, 11, 13)";

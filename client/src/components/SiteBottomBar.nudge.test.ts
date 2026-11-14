@@ -45,3 +45,10 @@ describe("Ask DE nudge on phones", () => {
     expect(block).not.toMatch(/markDeskNudgeDismissed/);
   });
 });
+
+describe("Ask DE nudge copy", () => {
+  it("discloses that Ask DE is an AI assistant", () => {
+    expect(bottomBarSrc).toContain("Ask DE \u2014 an AI assistant, and a clear next step.");
+    expect(bottomBarSrc).not.toContain("real engineers, clear next step");
+  });
+});

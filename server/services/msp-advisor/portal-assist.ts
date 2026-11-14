@@ -2,6 +2,7 @@ import { getOpenAI } from "../../openaiService";
 import { withOpenAIGuard } from "../openai-config";
 import { assertNoCardData } from "@shared/pciGuard";
 import { isPromptInjectionAttempt, askedForHuman } from "./classify";
+import { AI_IDENTITY_REPLY, isAskingAiIdentity } from "./identity";
 import { assertNoInternalLeak } from "./actions";
 import { INTERNAL_REFUSAL } from "./prompt";
 import { selectPublicPortalKnowledge } from "./knowledge";
@@ -120,6 +121,7 @@ function buildPortalSystemPrompt(input: PortalAssistInput, today: string, knowle
   const staticRules = [
     "You are Ask DE, the Digerati Experts (DE) help assistant inside the DE Client Portal.",
     "Be brief, warm and precise: 1-3 short sentences. Plain language. No marketing.",
+    "If asked who you are, or whether you are a human, a bot, a robot, or AI: say clearly that you are DE Desk, an AI assistant for Digerati Experts, not a person, and offer the ways to reach a person. Always disclose this honestly.",
     "Never invent request numbers, statuses, devices, people, prices or delivery times. Only use the request list, form state, and PUBLIC DE KNOWLEDGE given below.",
     "Never invent this client's licenses, entitlements, contract terms, or topology. If you do not have a fact, say you need to check or offer to escalate.",
     "You cannot submit forms, place orders, approve, assign devices or change a request's status. If asked, say the person clicks Order Now themselves, or that the DE team handles it.",
@@ -265,6 +267,9 @@ export async function handlePortalAssistChat(input: PortalAssistInput, today: st
 
   if (isPromptInjectionAttempt(message)) {
     reply = INTERNAL_REFUSAL;
+  } else if (isAskingAiIdentity(message)) {
+    reply = AI_IDENTITY_REPLY;
+    actions = [{ type: "escalate_to_team", label: "Talk to the team", summary: message.slice(0, 200) }];
   } else if (askedForHuman(message)) {
     reply = "I'll connect you with the DE team. Send this and they'll pick it up from here.";
     actions = [{ type: "escalate_to_team", label: "Talk to the team", summary: message.slice(0, 200) }];
