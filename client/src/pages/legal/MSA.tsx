@@ -1,7 +1,7 @@
 import { LegalDocumentLayout } from "@/components/LegalDocumentLayout";
 import { FileText, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { PRIMARY_PHONE, formatAddressOneLine } from "@/data/companyContact";
+import { PRIMARY_PHONE, PUBLIC_PHONE_CTA, formatAddressOneLine } from "@/data/companyContact";
 
 export default function MSA() {
   return (
@@ -55,11 +55,11 @@ export default function MSA() {
           variant="outline"
           className="border-black/25 text-[#1A1228] hover:bg-black/5"
           onClick={() => {
-            window.location.href = PRIMARY_PHONE.telHref;
+            window.location.href = PUBLIC_PHONE_CTA.href;
           }}
           data-testid="button-call-legal"
         >
-          Call {PRIMARY_PHONE.display}
+          {PUBLIC_PHONE_CTA.label}
         </Button>
       </div>
 
@@ -69,7 +69,7 @@ export default function MSA() {
           <strong className="text-[#1A1228]">Email:</strong> legal@digeratiexperts.com
         </p>
         <p className="mb-2 text-[#3A3448]">
-          <strong className="text-[#1A1228]">Phone:</strong> {PRIMARY_PHONE.display}
+          <strong className="text-[#1A1228]">Phone:</strong> {PUBLIC_PHONE_CTA.numberLabel}
         </p>
         <p className="text-[#3A3448]">
           <strong className="text-[#1A1228]">Address:</strong> {formatAddressOneLine()}

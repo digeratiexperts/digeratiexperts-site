@@ -49,7 +49,7 @@ const trustLegalLinks = [
   { name: "Privacy", href: "/legal/privacy-policy" },
   { name: "Terms", href: "/legal/terms-of-use" },
   { name: "MSA", href: "/legal/msa" },
-  { name: "SLA", href: "/legal/sla" },
+  { name: "Service levels", href: "/legal/sla" },
 ];
 
 const footerColumns = [
@@ -71,7 +71,7 @@ const STORE_WORKSPACE_PATH = "/store/solution";
  * Door 2 pages never print the word "SLA" in visible text (§12(a), grep-gated
  * by §14.21). Only the store variant hides it; the default footer keeps it.
  */
-const STORE_HIDDEN_LEGAL = new Set(["SLA"]);
+const STORE_HIDDEN_LEGAL = new Set(["Service levels"]);
 
 export const DigeratiEnhancedFooterSection = ({
   variant = "default",
@@ -155,10 +155,16 @@ export const DigeratiEnhancedFooterSection = ({
                 NAP source so a number change never misses the footer. City only, no street (PR 532). */}
             <address className="mt-3 space-y-2 not-italic">
               <p>
-                <FooterLink href={PRIMARY_PHONE.telHref} testId="footer-phone">
-                  <span className="sr-only">Call </span>
-                  {PRIMARY_PHONE.display}
-                </FooterLink>
+                {!PRIMARY_PHONE.display.startsWith("[") ? (
+                  <FooterLink href={PRIMARY_PHONE.telHref} testId="footer-phone">
+                    <span className="sr-only">Call </span>
+                    {PRIMARY_PHONE.display}
+                  </FooterLink>
+                ) : (
+                  <FooterLink href="/contact" testId="footer-phone">
+                    Contact us
+                  </FooterLink>
+                )}
               </p>
               <p>
                 <FooterLink href={`mailto:${COMPANY.email}`} testId="footer-email">

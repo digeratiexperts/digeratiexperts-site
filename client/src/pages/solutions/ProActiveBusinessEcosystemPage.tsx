@@ -1,5 +1,6 @@
 import { TierDetailTemplate, type TierPageConfig } from "@/components/TierDetailTemplate";
 import { pricing, formatPrice, formatUserPrice } from "@/data/pricing";
+import { ALERT_MONITORING_CLAIM, ALERT_MONITORING_CLAIM_PHRASE } from "@shared/publicSecurityClaims";
 
 const config: TierPageConfig = {
   id: "business",
@@ -8,11 +9,11 @@ const config: TierPageConfig = {
   canonicalPath: "/solutions/proactive-business-ecosystem",
   seoTitle: "ProActive Business Ecosystem | Digerati Experts",
   seoDescription:
-    `Security-first managed IT for Arizona SMBs. Starts at ${formatUserPrice("business")} with a ${formatPrice(pricing.business.monthlyMin)}/mo minimum. Includes 24/7 SOC, MDR, Security Awareness Training, full backup and BCDR, compliance/risk reporting, and semi-annual technology + security reviews.`,
+    `Security-first managed IT for Arizona SMBs. Starts at ${formatUserPrice("business")} with a ${formatPrice(pricing.business.monthlyMin)}/mo minimum. ${ALERT_MONITORING_CLAIM} Includes Security Awareness Training, full backup and BCDR, compliance/risk reporting, and semi-annual technology + security reviews.`,
   heroBadge: "Security-first business package",
   tagline: "Security-first managed IT — built for businesses that cannot afford a quiet breach.",
   positioning:
-    "ProActive Business is our most-deployed package and the level at which we stop describing ourselves as an IT provider and start operating as a managed security partner. Every endpoint is monitored 24/7 by a Security Operations Center, every user goes through ongoing Security Awareness Training, every mailbox and workstation is backed up, and twice a year we sit down with leadership for a documented technology and security review. This is the level Arizona SMBs typically land on when leadership has decided that downtime, ransomware, or a regulatory event would be material to the business.",
+    "ProActive Business is our most-deployed package and the level at which we stop describing ourselves as an IT provider and start operating as a managed security partner. Every endpoint is covered by " + ALERT_MONITORING_CLAIM_PHRASE + ", every user goes through ongoing Security Awareness Training, every mailbox and workstation is backed up, and twice a year we sit down with leadership for a documented technology and security review. This is the level Arizona SMBs typically land on when leadership has decided that downtime, ransomware, or a regulatory event would be material to the business.",
   whoFor: [
     "Established SMBs (typically 15–100+ users) where downtime or a breach would be a board-level event",
     "Professional services, healthcare, legal, financial, and manufacturing firms with sensitive client data",
@@ -20,16 +21,14 @@ const config: TierPageConfig = {
     "Companies that already have IT in place and are stepping up to a true security-first operating posture",
   ],
   outcomes: [
-    "A 24/7 monitored, defended, and documented environment — no blind spots between business hours",
+    "A monitored, defended, and documented environment, on plans that include it",
     "Demonstrable security posture for cyber insurance applications and client security questionnaires",
     "Recoverable in hours, not days, when something does go wrong (ransomware, hardware failure, accidental deletion)",
     "A standing semi-annual review where leadership sees risk, spend, and roadmap in plain English",
   ],
   included: [
     "Everything in ProActive Office Ecosystem",
-    "DE Security Foundation with 24/7 Managed Detection & Response",
-    "24/7 Security Operations Center (SOC)",
-    "Managed Detection & Response (MDR)",
+    "DE Security Foundation with " + ALERT_MONITORING_CLAIM_PHRASE,
     "Threat Detection & response across endpoints, identity, and email",
     "Endpoint Backup",
     "Backup & Disaster Recovery (BCDR)",
@@ -49,6 +48,10 @@ const config: TierPageConfig = {
     "Quarterly executive reviews on a strict cadence with vCIO and vCISO involvement — Enterprise",
   ],
   addOnsOrUpgrades: [
+    {
+      label: "24/7 Managed Detection and Response",
+      desc: "24/7 Managed Detection and Response, available as an add-on.",
+    },
     {
       label: "Compliance accelerators",
       desc: "Add framework-specific evidence packages and gap remediation for HIPAA, PCI, SOC 2, or CMMC engagements.",

@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { useSEO } from "@/hooks/useSEO";
 import { Loader2 } from "lucide-react";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PRIMARY_PHONE, PUBLIC_PHONE_CTA } from "@/data/companyContact";
 
 const fieldClass =
   "h-11 border-[var(--de-paper-hairline)] bg-white text-[#1A1228] placeholder:text-black/55 focus-visible:border-[#D3126A] focus-visible:ring-2 focus-visible:ring-[#D3126A]/40";
@@ -106,7 +106,7 @@ export default function SubmitTicket() {
       actions={
         <div className="flex flex-col gap-3 sm:flex-row">
           <HeroActions
-            primary={{ label: `Call ${PRIMARY_PHONE.display}`, href: PRIMARY_PHONE.telHref }}
+            primary={{ label: PUBLIC_PHONE_CTA.label, href: PUBLIC_PHONE_CTA.href }}
             secondary={{ label: "Remote Support", href: "/support/remote-support" }}
           />
         </div>
@@ -230,28 +230,10 @@ export default function SubmitTicket() {
 
             <aside className="space-y-8 lg:col-span-4">
               <section>
-                <h2 className="font-heading text-lg font-semibold text-[#1A1228]">Response Times</h2>
-                {/* The four tiers of client/src/pages/legal/SLA.tsx, verbatim. */}
-                <dl className="mt-3 border-t border-[var(--de-paper-hairline)]">
-                  <div className="border-b border-[var(--de-paper-hairline)] py-3">
-                    <dt className="font-semibold text-de-magenta-paper-ink">Critical (active breach or system down)</dt>
-                    <dd className="text-sm text-[#3A3448]">15 minutes</dd>
-                  </div>
-                  <div className="border-b border-[var(--de-paper-hairline)] py-3">
-                    <dt className="font-semibold text-[#1A1228]">High (major functionality impaired)</dt>
-                    <dd className="text-sm text-[#3A3448]">1 hour</dd>
-                  </div>
-                  <div className="border-b border-[var(--de-paper-hairline)] py-3">
-                    <dt className="font-semibold text-[#1A1228]">Medium (partial loss)</dt>
-                    <dd className="text-sm text-[#3A3448]">4 hours</dd>
-                  </div>
-                  <div className="border-b border-[var(--de-paper-hairline)] py-3">
-                    <dt className="font-semibold text-[#1A1228]">Low (questions, minor issues)</dt>
-                    <dd className="text-sm text-[#3A3448]">Next business day</dd>
-                  </div>
-                </dl>
+                <h2 className="font-heading text-lg font-semibold text-[#1A1228]">Service levels</h2>
                 <p className="mt-3 text-sm text-[#3A3448]">
-                  From our <a href="/legal/sla" className="underline underline-offset-2">Service Level Agreement</a>.
+                  Service levels are set in your signed agreement. See{" "}
+                  <a href="/legal/sla" className="underline underline-offset-2">service levels</a>.
                 </p>
               </section>
 
@@ -259,17 +241,17 @@ export default function SubmitTicket() {
                 <h2 className="font-heading text-lg font-semibold text-[#1A1228]">Need Immediate Help?</h2>
                 <p className="mb-2 mt-2 text-[#3A3448]">For urgent issues, call us directly:</p>
                 <a
-                  href={PRIMARY_PHONE.telHref}
+                  href={PUBLIC_PHONE_CTA.href}
                   className="inline-flex min-h-11 items-center text-2xl font-semibold text-de-magenta-paper-ink underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ec4899]"
                 >
-                  {PRIMARY_PHONE.display}
+                  {PUBLIC_PHONE_CTA.numberLabel}
                 </a>
               </section>
 
               <section className="border-t border-[var(--de-paper-hairline)] pt-8">
                 <h2 className="font-heading text-lg font-semibold text-[#1A1228]">Emergency Contact</h2>
                 <p className="mt-2 text-sm leading-relaxed text-[#3A3448]">
-                  For after-hours emergencies, use our emergency hotline available 24/7 to all managed service clients.
+                  For after-hours emergencies, use the emergency number in your signed agreement.
                 </p>
               </section>
             </aside>

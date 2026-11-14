@@ -10,7 +10,7 @@ import { Eyebrow, containerClass } from "@/components/home/HomeChapter";
 import { useBooking } from "@/contexts/BookingContext";
 import { analytics } from "@/lib/analytics";
 import { CTA } from "@/lib/ctaCopy";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PRIMARY_PHONE, PUBLIC_PHONE_CTA } from "@/data/companyContact";
 // 50KB WebP (was a 2.0MB PNG): under the dark field the aggressive
 // compression is invisible — review finding F1.
 import heroCityLights from "@assets/de-hero-arizona-dusk-1600.webp";
@@ -176,12 +176,12 @@ export function ReferenceHeroSection(): JSX.Element {
             ))}
             <li>
               <a
-                href={PRIMARY_PHONE.telHref}
+                href={PUBLIC_PHONE_CTA.href}
                 className="inline-flex min-h-11 items-center gap-2 font-medium text-white/85 underline decoration-white/25 underline-offset-4 transition-colors hover:text-white hover:decoration-white/50"
                 data-testid="link-hero-phone"
               >
                 <Phone className="h-4 w-4 text-de-magenta-ink" aria-hidden="true" />
-                Call {PRIMARY_PHONE.display}
+                {PUBLIC_PHONE_CTA.label}
               </a>
             </li>
           </ul>

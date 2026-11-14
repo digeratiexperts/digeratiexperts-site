@@ -2,9 +2,10 @@ import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { useSEO } from "@/hooks/useSEO";
 import { DE_LOGO_PRIMARY, DE_MARK } from "@/lib/brandAssets";
-import { COMPANY, COMPANY_SOCIAL, PRIMARY_PHONE, formatAddressOneLine } from "@/data/companyContact";
+import { COMPANY, COMPANY_SOCIAL, PRIMARY_PHONE, PUBLIC_PHONE_CTA, formatAddressOneLine } from "@/data/companyContact";
 import { pricingTiers, pricing, formatPrice, NO_BLACK_BOX_TAGLINE, PRICING_SCOPE_NOTE } from "@/data/pricing";
 import "./v5.css";
+import { ALERT_MONITORING_CLAIM, ALERT_MONITORING_CLAIM_PHRASE } from "@shared/publicSecurityClaims";
 
 /**
  * Digerati Experts homepage, Version 5: the practical one.
@@ -42,9 +43,9 @@ const SERVICES = [
     body: "A help desk that owns your issue until it is fixed, keeps devices patched, and documents how your environment is built.",
   },
   {
-    title: "Cybersecurity, watched around the clock",
+    title: "Cybersecurity, monitored on plans that include it",
     href: "/solutions/threat-detection",
-    body: "24/7 managed detection and response across your devices, accounts and email, plus phishing training so your staff become a defence rather than a risk.",
+    body: ALERT_MONITORING_CLAIM_PHRASE + " across your devices, accounts and email, plus phishing training so your staff become a defence rather than a risk.",
   },
   {
     title: "Backup and disaster recovery",
@@ -110,16 +111,13 @@ const STEPS = [
 ];
 
 const SLA_ROWS = [
-  { severity: "Critical", meaning: "Active breach or system down", response: "15 minutes" },
-  { severity: "High", meaning: "Major functionality impaired", response: "1 hour" },
-  { severity: "Medium", meaning: "Partial loss", response: "4 hours" },
-  { severity: "Low", meaning: "Questions and minor issues", response: "Next business day" },
+  { severity: "All priorities", meaning: "Response times, monitoring coverage, and credits", response: "Set in your signed agreement" },
 ];
 
 const PLEDGES = [
   {
-    title: "30-day money-back guarantee",
-    body: "No questions asked, on managed IT and cybersecurity services.",
+    title: "30-Day Guarantee",
+    body: "30-day money-back guarantee on managed services only. Hardware, kits, and third-party licenses are not covered.",
     href: "/about/guarantee",
     link: "Read the guarantee",
   },
@@ -153,7 +151,7 @@ const FAQ = [
   },
   {
     q: "Is my data secure?",
-    a: "Yes. We use enterprise-grade controls, 24/7 monitoring, and documented security protocols. We help Arizona businesses prepare for HIPAA, PCI DSS, SOC 2, and cyber-insurance reviews — with clear ownership of credentials, policies, and evidence.",
+    a: "Yes. We use enterprise-grade controls and documented security protocols, with monitoring matched to your plan. " + ALERT_MONITORING_CLAIM + " We help Arizona businesses prepare for HIPAA, PCI DSS, SOC 2, and cyber-insurance reviews — with clear ownership of credentials, policies, and evidence.",
   },
 ];
 
@@ -188,7 +186,7 @@ export default function HomepageV5(): JSX.Element {
   useSEO({
     title: "Managed IT and Cybersecurity for Arizona Businesses",
     description:
-      "Arizona MSP/MSSP. Cybersecurity-first managed IT, 24/7 emergency incident response, and a Cyber Risk Assessment that matches the operating model to your environment.",
+      "Arizona MSP/MSSP. Cybersecurity-first managed IT, incident response during business hours on plans that include it, and a Cyber Risk Assessment that matches the operating model to your environment.",
   });
 
   // The site's shell is dark; this page is light to its edges, including the
@@ -224,8 +222,8 @@ export default function HomepageV5(): JSX.Element {
             </ul>
           </nav>
           <div className="v5-header-actions">
-            <a className="v5-phone" href={PRIMARY_PHONE.telHref} aria-label={`Call ${PRIMARY_PHONE.display}`}>
-              {PRIMARY_PHONE.display}
+            <a className="v5-phone" href={PUBLIC_PHONE_CTA.href} aria-label={PUBLIC_PHONE_CTA.label}>
+              {PUBLIC_PHONE_CTA.numberLabel}
             </a>
             <PrimaryAction className="v5-header-cta" />
             <details className="v5-menu">
@@ -236,7 +234,7 @@ export default function HomepageV5(): JSX.Element {
                     {item.label}
                   </Link>
                 ))}
-                <a href={PRIMARY_PHONE.telHref}>Call {PRIMARY_PHONE.display}</a>
+                <a href={PUBLIC_PHONE_CTA.href}>{PUBLIC_PHONE_CTA.label}</a>
                 <PrimaryAction className="v5-menu-cta" />
               </div>
             </details>
@@ -254,12 +252,12 @@ export default function HomepageV5(): JSX.Element {
               <h1 id="v5-h1">Managed IT and cybersecurity for Arizona businesses.</h1>
               <p className="v5-lede">
                 Digerati Experts runs and protects your company's technology: the help desk, security monitoring, backups and the
-                network, from one accountable team, with published prices and a written SLA.
+                network, from one accountable team, with published prices; service levels are set in your signed agreement.
               </p>
               <div className="v5-actions">
                 <PrimaryAction />
-                <a className="v5-btn v5-btn-secondary" href={PRIMARY_PHONE.telHref}>
-                  Call {PRIMARY_PHONE.display}
+                <a className="v5-btn v5-btn-secondary" href={PUBLIC_PHONE_CTA.href}>
+                  {PUBLIC_PHONE_CTA.label}
                 </a>
               </div>
             </div>
@@ -280,12 +278,12 @@ export default function HomepageV5(): JSX.Element {
                 <span className="v5-num">{formatPrice(pricing.it.monthlyMinimum)} monthly minimum. Four plans, all priced on the pricing page.</span>
               </li>
               <li className="v5-fact">
-                <strong>15 minutes to a critical issue</strong>
-                <span>Response times are written into our SLA, with service credits if we miss them.</span>
+                <strong>Response times in your agreement</strong>
+                <span>Service levels are set in your signed agreement.</span>
               </li>
               <li className="v5-fact">
-                <strong>24/7/365 emergency response</strong>
-                <span>Emergency incident response availability, around the clock, all year.</span>
+                <strong>Incident response during business hours on plans that include it</strong>
+                <span>Incident response during business hours on plans that include it.</span>
               </li>
             </ul>
           </div>
@@ -401,8 +399,8 @@ export default function HomepageV5(): JSX.Element {
             <div>
               <div className="v5-head">
                 <p className="v5-eyebrow">Response times</p>
-                <h2 id="v5-sla">Response times, in writing.</h2>
-                <p className="v5-lede">Published in our Service Level Agreement, with service credits if we miss them.</p>
+                <h2 id="v5-sla">Service levels, in your agreement.</h2>
+                <p className="v5-lede">Service levels are set in your signed agreement.</p>
               </div>
               <table className="v5-table">
                 <thead>
@@ -424,7 +422,7 @@ export default function HomepageV5(): JSX.Element {
                 </tbody>
               </table>
               <p className="v5-note">
-                24/7/365 emergency incident response availability. <Link href="/legal/sla">Read the SLA</Link>.
+                Incident response during business hours on plans that include it. <Link href="/legal/sla">Read the service levels page</Link>.
               </p>
             </div>
             <div className="v5-pledges">
@@ -505,7 +503,7 @@ export default function HomepageV5(): JSX.Element {
               <div>
                 <dt>Phone</dt>
                 <dd>
-                  <a href={PRIMARY_PHONE.telHref}>{PRIMARY_PHONE.display}</a>
+                  <a href={PUBLIC_PHONE_CTA.href}>{PUBLIC_PHONE_CTA.numberLabel}</a>
                 </dd>
               </div>
               <div>
@@ -546,7 +544,7 @@ export default function HomepageV5(): JSX.Element {
               <Link href="/pricing">Pricing</Link>
             </li>
             <li>
-              <Link href="/legal/sla">Service Level Agreement</Link>
+              <Link href="/legal/sla">Service levels</Link>
             </li>
             <li>
               <Link href="/legal/terms-of-use">Terms of Use</Link>

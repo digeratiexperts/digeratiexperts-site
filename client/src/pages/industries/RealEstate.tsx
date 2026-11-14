@@ -15,7 +15,7 @@ import { ServiceBlocks } from "@/components/site/IndustriesServiceBlocks";
 import { CheckCircle, AlertCircle, Shield, Lock, DollarSign, TrendingDown } from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
 import { CTA } from "@/lib/ctaCopy";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PRIMARY_PHONE, PUBLIC_PHONE_CTA } from "@/data/companyContact";
 
 export default function RealEstate() {
   useSEO({
@@ -82,7 +82,7 @@ export default function RealEstate() {
       title: "Someone to call",
       text: (
         <>
-          Arizona team when a closing looks off — <span className="whitespace-nowrap">{PRIMARY_PHONE.display}</span>.
+          Arizona team when a closing looks off — {!PRIMARY_PHONE.display.startsWith("[") ? <span className="whitespace-nowrap">{PRIMARY_PHONE.display}</span> : "Contact us"}.
         </>
       ),
     },
@@ -99,7 +99,7 @@ export default function RealEstate() {
         <div className="flex flex-col gap-3 sm:flex-row">
           <HeroActions
             primary={{ label: CTA.primary, href: "/book", testId: "button-hero-real-estate" }}
-            secondary={{ label: `Call ${PRIMARY_PHONE.display}`, href: PRIMARY_PHONE.telHref }}
+            secondary={{ label: PUBLIC_PHONE_CTA.label, href: PUBLIC_PHONE_CTA.href }}
           />
         </div>
       }

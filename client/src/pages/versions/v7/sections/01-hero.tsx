@@ -21,7 +21,7 @@ import { Link } from "wouter";
 import { useBooking } from "@/contexts/BookingContext";
 import { analytics } from "@/lib/analytics";
 import { CTA } from "@/lib/ctaCopy";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PRIMARY_PHONE, PUBLIC_PHONE_CTA } from "@/data/companyContact";
 import heroCityLights from "@assets/de-hero-arizona-dusk-1600.webp";
 import { TipTag } from "./TipTag";
 import "./01-hero.css";
@@ -422,8 +422,8 @@ export function V7Hero(): JSX.Element {
                 Response within one business day
               </li>
               <li>
-                <a className="v7-link--quiet" href={PRIMARY_PHONE.telHref} data-testid="link-hero-phone">
-                  Call {PRIMARY_PHONE.display}
+                <a className="v7-link--quiet" href={PUBLIC_PHONE_CTA.href} data-testid="link-hero-phone">
+                  {PUBLIC_PHONE_CTA.label}
                 </a>
               </li>
             </ul>

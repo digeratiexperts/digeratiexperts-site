@@ -7,7 +7,7 @@ import { revealInitial, revealInView, revealTransition, revealViewport } from "@
 import { Diagram } from "@/diagrams/Diagram";
 import { Input } from "@/components/ui/input";
 import { CTA } from "@/lib/ctaCopy";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PRIMARY_PHONE, PUBLIC_PHONE_CTA } from "@/data/companyContact";
 import { useBooking } from "@/contexts/BookingContext";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -159,10 +159,10 @@ export const DigeratiCTASection = (): JSX.Element => {
               <p className="text-sm font-medium text-[#5A5368]">
                 Prefer to call?{" "}
                 <a
-                  href={PRIMARY_PHONE.telHref}
+                  href={PUBLIC_PHONE_CTA.href}
                   className="font-semibold text-[#1A1228] underline-offset-2 hover:text-[#D3126A] hover:underline"
                 >
-                  {PRIMARY_PHONE.display}
+                  {PUBLIC_PHONE_CTA.numberLabel}
                 </a>
               </p>
             </motion.div>

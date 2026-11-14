@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Loader2, Calendar, ExternalLink, Phone } from "lucide-react";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PRIMARY_PHONE, PUBLIC_PHONE_CTA } from "@/data/companyContact";
 
 const BOOKING_URL = "https://meet.digerati-experts.com/portal-embed#/digeratexperts";
 const FALLBACK_URL = "https://meet.digerati-experts.com/";
@@ -91,11 +91,11 @@ function BookingFallback({ className = "" }: { className?: string }) {
         <ExternalLink className="h-4 w-4 opacity-80" aria-hidden="true" />
       </a>
       <a
-        href={PRIMARY_PHONE.telHref}
+        href={PUBLIC_PHONE_CTA.href}
         className="mt-4 inline-flex min-h-11 items-center justify-center gap-2 text-base font-semibold text-white hover:text-[#D3126A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A]"
       >
         <Phone className="h-4 w-4 text-[#D3126A]" aria-hidden="true" />
-        {PRIMARY_PHONE.display}
+        {PUBLIC_PHONE_CTA.numberLabel}
       </a>
     </div>
   );

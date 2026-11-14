@@ -23,7 +23,7 @@ const CHALLENGES = [
   {
     title: "Ransomware & Malware",
     description:
-      "Advanced threat detection and rapid response to eliminate malicious attacks before damage occurs",
+      "Threat detection, with alerts triaged by DE technicians during business hours, to help contain attacks early.",
     href: "/solutions/threat-detection",
   },
   {
@@ -35,7 +35,7 @@ const CHALLENGES = [
   {
     title: "Compliance Gaps",
     description:
-      "Navigate HIPAA, PCI DSS, and SOC 2 requirements with continuous monitoring and reporting",
+      "HIPAA, PCI DSS and SOC 2 readiness support with regular reporting",
     href: "/resources/cyber-facts",
   },
   {

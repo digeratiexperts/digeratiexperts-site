@@ -268,7 +268,7 @@ export const ecosystemOverview: Doc = {
         widths: ["20%", "27%", "38%", "15%"],
         rows: [
           ["ProActive IT", "Businesses that need core managed IT and security direction.", "Foundational support, endpoint visibility, DE Security Foundation, security awareness and a documented baseline.", lv("it")],
-          ["ProActive Office", "Teams that need secure workplace operations.", "Users, devices, productivity platforms, managed network, endpoint backup and 24/7 managed detection and response.", lv("office")],
+          ["ProActive Office", "Teams that need secure workplace operations.", "Users, devices, productivity platforms, managed network, endpoint backup and managed endpoint detection (EDR).", lv("office")],
           ["ProActive Business", "Companies that need stronger protection and leadership reporting.", "Backup and DR posture, user cloud backup, enhanced threat detection, security awareness training, compliance and risk reporting, semi-annual reviews.", lv("business")],
           ["ProActive Enterprise", "Complex, multi-site or compliance-driven organizations.", "Advanced or custom security, compliance reporting, business continuity, quarterly planning and audit-grade evidence.", lv("enterprise")],
         ],

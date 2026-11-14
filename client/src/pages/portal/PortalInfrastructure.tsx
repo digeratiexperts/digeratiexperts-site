@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PRIMARY_PHONE, PUBLIC_PHONE_CTA } from "@/data/companyContact";
 import { Callout, Field, Panel } from "@/components/portal/ui";
 
 const ISSUE_TYPES = [
@@ -101,7 +101,7 @@ export function PortalInfrastructure() {
           </Callout>
         )}
 
-        <Callout tone="warn" title={<>Business down right now? <a href={PRIMARY_PHONE.telHref} className="inline-block whitespace-nowrap underline underline-offset-2">Call {PRIMARY_PHONE.display}</a>.</>}>
+        <Callout tone="warn" title={<>Business down right now? <a href={PUBLIC_PHONE_CTA.href} className="inline-block whitespace-nowrap underline underline-offset-2">{PUBLIC_PHONE_CTA.label}</a>.</>}>
           <span className="inline-flex items-center gap-1.5">
             <Phone className="h-3.5 w-3.5" aria-hidden="true" />
             A phone call reaches an engineer faster than a form during an active outage.

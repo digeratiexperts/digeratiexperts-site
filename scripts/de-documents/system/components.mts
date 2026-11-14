@@ -94,7 +94,7 @@ ${b.rows.map((r, i) => `<tr${b.cur === i ? ' class="cur"' : ""}>${r.map((c, j) =
 
 const LADDER_ADDS: Record<ProActiveTierKey, string> = {
   it: "Service desk, DE Security Foundation, security monitoring baseline, awareness",
-  office: "Managed network, endpoint backup, 24/7 managed detection and response, annual review",
+  office: "Managed network, endpoint backup, managed EDR, annual review",
   business: "Backup and DR posture, compliance and risk reporting, semi-annual reviews",
   enterprise: "Privileged access elements, advanced reporting, quarterly executive reviews",
 };

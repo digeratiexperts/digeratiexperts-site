@@ -21,8 +21,9 @@ import {
 import { useSEO } from "@/hooks/useSEO";
 import { photography } from "@/lib/visualAssets";
 import { CTA } from "@/lib/ctaCopy";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PRIMARY_PHONE, PUBLIC_PHONE_CTA } from "@/data/companyContact";
 import { TEAM_OWNER } from "@/data/teamProfile";
+import { ALERT_MONITORING_CLAIM } from "@shared/publicSecurityClaims";
 
 // What each discipline does. Credentials are not typed here: they come from
 // client/src/data/credentials.ts with the issuer's verification link.
@@ -36,7 +37,7 @@ const team = [
   {
     name: "Security operations",
     description:
-      "Detection and response for the DE Security Foundation, with emergency incident response available 24/7/365 under our published SLA.",
+      "Detection and response for the DE Security Foundation. Incident response during business hours on plans that include it. Service levels are set in your signed agreement.",
     icon: Shield,
   },
   {
@@ -48,7 +49,7 @@ const team = [
   {
     name: "Service desk",
     description:
-      "Owns each ticket to resolution, with response targets by priority set in the SLA: 15 minutes for a critical incident.",
+      "Owns each ticket to resolution. Service levels are set in your signed agreement.",
     icon: Users,
   },
 ];
@@ -73,8 +74,8 @@ export default function Team() {
           <HeroActions
             primary={{ label: CTA.primary, href: "/book" }}
             secondary={{
-              label: `Call ${PRIMARY_PHONE.display}`,
-              href: PRIMARY_PHONE.telHref,
+              label: PUBLIC_PHONE_CTA.label,
+              href: PUBLIC_PHONE_CTA.href,
             }}
           />
         </div>
@@ -130,13 +131,13 @@ export default function Team() {
         facts={[
           {
             icon: Activity,
-            title: "24/7 monitoring",
-            text: "On ProActive Business and Enterprise, as documented in our SLA.",
+            title: "Alert monitoring",
+            text: ALERT_MONITORING_CLAIM,
           },
           {
             icon: Clock,
-            title: "15-minute critical response",
-            text: "Our published SLA response for an active breach or system down.",
+            title: "Response targets in your agreement",
+            text: "Service levels are set in your signed agreement.",
           },
           {
             icon: MapPin,

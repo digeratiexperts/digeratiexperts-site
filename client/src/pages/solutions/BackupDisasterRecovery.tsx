@@ -34,7 +34,6 @@ import {
   FaqChapter,
   FeatureGrid,
   HeroActions,
-  HeroFacts,
   IndexedList,
   StepRail,
   buttonPrimary,
@@ -75,12 +74,12 @@ const bcdrData = {
         "Priority restore sequencing",
         "Quarterly restore testing",
         "DR runbook documentation",
-        "RPO/RTO SLA commitments",
+        "RPO/RTO targets set in your signed agreement",
         "Restore test reports"
       ],
       test_cadence: "Quarterly",
       starting_price: "Custom after assessment",
-      price_note: "scoped to protected environments & RTO/RPO"
+      price_note: "scoped to protected environments and recovery targets in your agreement"
     },
     {
       sku: "bcdr_enterprise",
@@ -175,7 +174,7 @@ const bcdrData = {
     },
     {
       question: "Do you provide warm standby / failover?",
-      answer: "Yes, in our Enterprise tier. Warm standby means we maintain a ready-to-activate copy of your critical systems in the cloud. If your primary systems fail, we can failover within your agreed RTO—typically 1-4 hours."
+      answer: "Yes, in our Enterprise tier. Warm standby means we maintain a ready-to-activate copy of your critical systems in the cloud. If your primary systems fail, we can failover on the timeline in your agreement."
     },
     {
       question: "What happens during a real disaster?",
@@ -306,16 +305,7 @@ export default function BackupDisasterRecovery() {
           />
         </div>
       }
-      heroAside={
-        <HeroFacts
-          title="Recovery targets by tier"
-          rows={bcdrData.packages.map((pkg) => ({
-            label: pkg.name.replace("BCDR ", ""),
-            value: `RPO ${pkg.rpo} · RTO ${pkg.rto}`,
-          }))}
-          footnote="Targets are documented in your agreement and proven by scheduled restore tests."
-        />
-      }
+
     >
       <ServiceJsonLd
         name="Backup & Disaster Recovery (BCDR)"
@@ -372,7 +362,7 @@ export default function BackupDisasterRecovery() {
           <EvidenceFrame
             classification="EXAMPLE"
             title="Quarterly BCDR Restore Verification Runbook"
-            subtitle="How Digerati Experts verifies recovery integrity in isolated sandboxes to guarantee RTO/RPO SLAs."
+            subtitle="How Digerati Experts tests recovery in isolated sandboxes against the RPO/RTO targets in your agreement."
             status="verified"
             statusLabel="RESTORE DRILL COMPLETE"
             timestamp="Cadence: Quarterly"
@@ -388,7 +378,7 @@ export default function BackupDisasterRecovery() {
                 </div>
                 <div className="rounded-lg border border-white/10 bg-black/40 p-3">
                   <p className="font-mono text-[10px] uppercase text-white/50">Achieved RTO</p>
-                  <p className="mt-0.5 font-mono text-sm font-bold text-emerald-400">2h 14m (SLA: 4h)</p>
+                  <p className="mt-0.5 font-mono text-sm font-bold text-emerald-400">2h 14m (sample recovery time)</p>
                 </div>
                 <div className="rounded-lg border border-white/10 bg-black/40 p-3">
                   <p className="font-mono text-[10px] uppercase text-white/50">Data Integrity Check</p>
@@ -483,18 +473,7 @@ export default function BackupDisasterRecovery() {
                 <p className="mt-1 font-mono text-sm font-medium text-de-accent-ink">{pkg.subtitle}</p>
                 <p className="mt-3 text-sm text-white/70">{pkg.best_for}</p>
 
-                <dl className="mt-6 grid grid-cols-3 divide-x divide-[var(--de-hairline)] rounded-lg border border-[var(--de-hairline)] bg-de-bg text-center">
-                  {[
-                    ["RPO", pkg.rpo],
-                    ["RTO", pkg.rto],
-                    ["Tests", pkg.test_cadence],
-                  ].map(([k, v]) => (
-                    <div key={k} className="px-2 py-3">
-                      <dt className="text-xs text-white/60">{k}</dt>
-                      <dd className="mt-1 text-sm font-semibold text-white">{v}</dd>
-                    </div>
-                  ))}
-                </dl>
+                <p className="mt-6 text-sm text-white/70">Recovery targets are set in your signed agreement. Restore tests: {pkg.test_cadence}.</p>
 
                 <div className="mt-6">
                   <CheckList tone="surface" columns={1} items={pkg.includes} />

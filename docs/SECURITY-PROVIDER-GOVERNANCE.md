@@ -14,9 +14,9 @@ Public and client-facing surfaces sell DE-managed capabilities, not vendor plans
 Approved public positioning:
 
 - **IT** — managed IT plus the DE Security Foundation: endpoint, identity, email, awareness, and managed security monitoring baseline.
-- **Office** — everything in IT plus 24/7 managed detection and response, managed network, and endpoint backup.
-- **Business** — everything in Office plus deeper security operations/response, BCDR, user-cloud backup, compliance/risk reporting, and semi-annual reviews.
-- **Enterprise** — everything in Business plus the deepest security tier, unified posture, advanced compliance/governance, custom recovery architecture, and quarterly executive reviews.
+- **Office** — everything in IT plus managed network and endpoint backup. 24/7 Managed Detection and Response is a paid add-on.
+- **Business** — everything in Office plus deeper security operations, BCDR, user-cloud backup, compliance/risk reporting, and semi-annual reviews. 24/7 Managed Detection and Response remains a paid add-on (also on Business GCC High).
+- **Enterprise** — everything in Business plus 24/7 human-led threat monitoring and response, the deepest security tier, unified posture, advanced compliance/governance, custom recovery architecture, and quarterly executive reviews. The same 24/7 MDR inclusion applies to Enterprise GCC High.
 
 ## Internal provider rule
 

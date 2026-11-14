@@ -21,6 +21,7 @@ import {
 import { CTA } from "@/lib/ctaCopy";
 import { IconWell } from "@/components/visual/IconWell";
 import { revealInitial, revealInView, revealTransition, revealViewport } from "@/lib/animations";
+import { ALERT_MONITORING_CLAIM } from "@shared/publicSecurityClaims";
 
 /**
  * Homepage engagement paths — three primary choices.
@@ -74,9 +75,9 @@ const capabilityPreview: {
 }[] = [
   {
     icon: Eye,
-    title: "SOC / MDR Monitoring",
+    title: "Alert Monitoring",
     link: "/solutions/security-operations",
-    desc: "24/7 detection and response.",
+    desc: ALERT_MONITORING_CLAIM,
   },
   {
     icon: ShieldCheck,
@@ -112,7 +113,7 @@ const capabilityPreview: {
 
 /** Which node of the environment diagram each capability lives on. */
 const capabilityNode: Record<string, string> = {
-  "SOC / MDR Monitoring": "operations",
+  "Alert Monitoring": "operations",
   "Endpoint Security (EDR)": "devices",
   "SMART Identity (MFA + SSO)": "identity",
   "Privileged Access Controls": "identity",

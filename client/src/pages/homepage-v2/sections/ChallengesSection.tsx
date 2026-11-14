@@ -2,9 +2,9 @@ import { objectIcon } from "../content";
 import { HOME_CTA } from "../cta";
 
 const CHALLENGES = [
-  { icon: "lock", title: "Ransomware & malware", text: "Threat detection and rapid response to stop attacks before damage occurs." },
+  { icon: "lock", title: "Ransomware & malware", text: "Threat detection, with alerts triaged by DE technicians during business hours, to help contain attacks early." },
   { icon: "backup", title: "Data loss", text: "Backup strategies with tested disaster recovery to keep the business running." },
-  { icon: "clipboard", title: "Compliance gaps", text: "Navigate HIPAA, PCI DSS, and SOC 2 requirements with continuous monitoring and reporting." },
+  { icon: "clipboard", title: "Compliance gaps", text: "HIPAA, PCI DSS and SOC 2 readiness support with regular reporting." },
   { icon: "email", title: "Phishing & social engineering", text: "Layered email security plus ongoing security awareness training." },
   { icon: "bell", title: "Zero-day vulnerabilities", text: "Proactive patching and assessments to close gaps before they're exploited." },
   { icon: "eye", title: "Insider threats", text: "Behavior analytics and access controls to prevent internal breaches." },

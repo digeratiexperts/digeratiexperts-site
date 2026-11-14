@@ -21,6 +21,7 @@ import { IconWell } from "@/components/visual/IconWell";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { revealInitial, revealInView, revealTransition, revealViewport } from "@/lib/animations";
+import { ALERT_MONITORING_CLAIM } from "@shared/publicSecurityClaims";
 
 /**
  * Homepage engagement paths — three primary choices.
@@ -74,9 +75,9 @@ const capabilityPreview: {
 }[] = [
   {
     icon: Eye,
-    title: "SOC / MDR Monitoring",
+    title: "Alert Monitoring",
     link: "/solutions/security-operations",
-    desc: "24/7 detection and response.",
+    desc: ALERT_MONITORING_CLAIM,
   },
   {
     icon: ShieldCheck,

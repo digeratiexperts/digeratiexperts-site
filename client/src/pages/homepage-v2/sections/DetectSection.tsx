@@ -4,7 +4,7 @@ import { HOME_CTA } from "../cta";
 
 const STEPS = [
   { title: "Signal", text: "Detection tooling surfaces the signals" },
-  { title: "Human triage", text: "Our team investigates and prioritizes" },
+  { title: "Alert triage", text: "Alerts triaged by DE technicians during business hours, on plans that include it" },
   { title: "Named owner", text: "A person owns the outcome, with documented next steps" },
 ];
 
@@ -15,11 +15,11 @@ export function DetectSection(): JSX.Element {
       <div className="wrap detect">
         <div>
           <p className="mark">Detection and response</p>
-          <h2>Monitoring that ends with a person who owns the outcome.</h2>
+          <h2>Automated security alert monitoring, with alerts triaged by DE technicians during business hours, on plans that include it.</h2>
           <p className="lede" style={{ marginTop: 16 }}>Modern detection tooling surfaces the signals. Our team investigates, prioritizes, and acts. Technology scales coverage; accountability stays human.</p>
           <ul className="check">
             <li><CheckIcon />Partner-backed detection across endpoints and identity</li>
-            <li><CheckIcon />Human triage — analysts decide what matters before you get a false alarm</li>
+            <li><CheckIcon />Automated security alert monitoring, with alerts triaged by DE technicians during business hours, on plans that include it.</li>
             <li><CheckIcon />Prioritized remediation tied to your environment</li>
             <li><CheckIcon />Documented response paths when something needs escalation</li>
           </ul>

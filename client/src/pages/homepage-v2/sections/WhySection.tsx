@@ -1,7 +1,7 @@
 import { objectIcon } from "../content";
 
 const REASONS = [
-  { icon: "shield", title: "Security-first operations", text: "Every system, endpoint, and user is protected — by design, not by reaction." },
+  { icon: "shield", title: "Security-first operations", text: "Security is built into every ProActive level, not added after an incident." },
   { icon: "people", title: "Co-managed or fully managed", text: "We support your internal IT or serve as your outsourced technology team." },
   { icon: "chart", title: "Executive-level transparency", text: "Reports, KPIs, and compliance insights that make sense — and drive decisions." },
 ];

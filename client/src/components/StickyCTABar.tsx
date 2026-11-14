@@ -5,7 +5,7 @@ import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { useBooking } from "@/contexts/BookingContext";
 import { CTA } from "@/lib/ctaCopy";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PRIMARY_PHONE, PUBLIC_PHONE_CTA } from "@/data/companyContact";
 import { isStorePath } from "@/lib/storeChromeGestures";
 import { cn } from "@/lib/utils";
 import {
@@ -311,7 +311,7 @@ export function StickyCTABar() {
 
                 <div className="flex shrink-0 items-center gap-2 md:gap-4">
                   <a
-                    href={PRIMARY_PHONE.telHref}
+                    href={PUBLIC_PHONE_CTA.href}
                     className={cn(
                       "hidden items-center gap-2 text-base transition-colors md:flex focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A] focus-visible:ring-offset-2 rounded-sm",
                       light
@@ -321,7 +321,7 @@ export function StickyCTABar() {
                     data-testid="link-phone-sticky"
                   >
                     <Phone className="w-4 h-4" />
-                    <span>{PRIMARY_PHONE.display}</span>
+                    <span>{PUBLIC_PHONE_CTA.numberLabel}</span>
                   </a>
 
                   <Button

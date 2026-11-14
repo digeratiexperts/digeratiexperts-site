@@ -49,7 +49,7 @@ import {
   type ConfigureConfirmPayload,
 } from "@/components/store/ConfigureProductDrawer";
 import { StoreTrustStrip } from "@/components/store/StoreTrustStrip";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PRIMARY_PHONE, PUBLIC_PHONE_CTA } from "@/data/companyContact";
 import { getSolutionChips, recommendationWhy } from "@/lib/storeSolutionIntelligence";
 import { computeSolutionSnapshot } from "@shared/storeCommerce";
 import { formatSnapshotMoney } from "@/lib/solutionSnapshotView";
@@ -406,12 +406,12 @@ const ProductDetail = () => {
                   </a>
                 </Button>
                   <a
-                    href={PRIMARY_PHONE.telHref}
+                    href={PUBLIC_PHONE_CTA.href}
                     className="flex h-12 w-full items-center justify-center gap-2 rounded-md border border-white/15 text-white/80 transition-colors hover:bg-white/5 hover:text-white"
                     data-testid="button-call-product"
                   >
                     <Phone className="h-5 w-5" />
-                    Call {PRIMARY_PHONE.display}
+                    {PUBLIC_PHONE_CTA.label}
                   </a>
                 </div>
               ) : (
@@ -518,12 +518,12 @@ const ProductDetail = () => {
 
                   <div className="grid gap-2 sm:grid-cols-2">
                     <a
-                      href={PRIMARY_PHONE.telHref}
+                      href={PUBLIC_PHONE_CTA.href}
                       className="flex h-11 items-center justify-center gap-2 rounded-md border border-white/15 text-sm text-white/75 transition-colors hover:bg-white/5 hover:text-white"
                       data-testid="button-call-product"
                     >
                       <Phone className="h-4 w-4" />
-                      {PRIMARY_PHONE.display}
+                      {PUBLIC_PHONE_CTA.numberLabel}
                     </a>
                     <a
                       href="/book"

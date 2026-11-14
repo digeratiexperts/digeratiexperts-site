@@ -4,7 +4,7 @@ import { useLocation } from "wouter";
 import { motion, useReducedMotion } from "framer-motion";
 import { AlertCircle, CheckCircle2, Clock, ExternalLink, FileText, LogOut, PlayCircle, Sparkles } from "lucide-react";
 import type { AgreementGateItem, AgreementGateStatus, WelcomeVideo } from "@shared/portalAgreements";
-import { COMPANY, PRIMARY_PHONE } from "@shared/companyContact";
+import { COMPANY, PRIMARY_PHONE, PUBLIC_PHONE_CTA } from "@shared/companyContact";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -78,7 +78,7 @@ export default function PortalAgreementGate() {
           <a className="pt-link underline-offset-2 hover:underline" href={`mailto:${COMPANY.supportEmail}`}>
             Support Team
           </a>{" "}
-          at <a className="pt-link pt-num underline-offset-2 hover:underline" href={PRIMARY_PHONE.telHref}>{PRIMARY_PHONE.display}</a> or your account representative.
+          at <a className="pt-link pt-num underline-offset-2 hover:underline" href={PUBLIC_PHONE_CTA.href}>{PUBLIC_PHONE_CTA.numberLabel}</a> or your account representative.
         </p>
       </main>
     </div>

@@ -75,7 +75,7 @@ export default function HomepageV10(): JSX.Element {
   useSpotlight(rootRef);
   useSEO({
     title: "Managed Security Service Provider",
-    description: "Arizona MSP/MSSP. Cybersecurity-first managed IT, 24/7 emergency incident response, and a Cyber Risk Assessment that matches the operating model to your environment.",
+    description: "Arizona MSP/MSSP. Cybersecurity-first managed IT, emergency incident response on plans that include it, and a Cyber Risk Assessment that matches the operating model to your environment.",
     canonical: "/",
   });
   return (

@@ -1,6 +1,7 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { Check, ChevronRight } from "lucide-react";
 import { Link } from "wouter";
+import { ALERT_MONITORING_CLAIM_PHRASE } from "@shared/publicSecurityClaims";
 
 type TierValue = string | boolean;
 
@@ -23,7 +24,7 @@ const allCategories: CategoryData[] = [
     id: "managed-it",
     title: "Managed IT",
     rows: [
-      { capability: "Help Desk & SLA", essentials: false, office: "8×5", business: "8×5 + Priority", enterprise: "VIP + 24×7 opt" },
+      { capability: "Help Desk", essentials: false, office: "8×5", business: "8×5 + Priority", enterprise: "VIP + after-hours option" },
       { capability: "Remote Monitoring & Alerting", essentials: true, office: true, business: true, enterprise: true },
       { capability: "Patch & App Management", essentials: true, office: true, business: true, enterprise: true },
       { capability: "Remote Support & Quick Assist", essentials: false, office: true, business: true, enterprise: true },
@@ -41,7 +42,7 @@ const allCategories: CategoryData[] = [
       { capability: "Baseline Threat Protection", essentials: true, office: true, business: true, enterprise: true },
       { capability: "Data Safeguards & Identity Controls", essentials: true, office: true, business: true, enterprise: true },
       { capability: "Email Security & MFA", essentials: "Managed baseline", office: "Advanced protection", business: "Enhanced", enterprise: "Advanced + SSO" },
-      { capability: "Endpoint Detection & Response", essentials: "Managed baseline", office: "Managed EDR", business: "Enhanced EDR + 24/7 MDR", enterprise: "Advanced EDR + MDR" },
+      { capability: "Endpoint Detection & Response", essentials: "Managed baseline", office: "Managed EDR", business: "Enhanced EDR + alert monitoring", enterprise: "Advanced EDR + alert monitoring" },
       { capability: "Security Awareness & Phishing", essentials: "Included baseline", office: "Training + simulations", business: "Enhanced + simulations", enterprise: "Role-based + simulations" },
       { capability: "SaaS App Security Monitoring", essentials: false, office: "Optional", business: true, enterprise: true },
       { capability: "Dark Web Monitoring", essentials: false, office: true, business: true, enterprise: true },
@@ -60,7 +61,7 @@ const allCategories: CategoryData[] = [
       { capability: "Immutable Backup Copies", essentials: false, office: false, business: true, enterprise: true },
       { capability: "Verified Restore Testing", essentials: false, office: "Quarterly", business: "Monthly", enterprise: "Weekly" },
       { capability: "Disaster Recovery (DRaaS)", essentials: false, office: "Optional", business: "Optional", enterprise: true },
-      { capability: "Agreed RPO/RTO targets", essentials: false, office: false, business: "Standard", enterprise: "Custom SLA" },
+      { capability: "Agreed RPO/RTO targets", essentials: false, office: false, business: "Standard", enterprise: "Custom terms in your agreement" },
     ]
   },
   {
@@ -93,7 +94,7 @@ const allCategories: CategoryData[] = [
     rows: [
       { capability: "HIPAA Compliance Module", essentials: false, office: "Add-on", business: "Add-on", enterprise: true },
       { capability: "SOC 2 Readiness", essentials: false, office: "Add-on", business: "Add-on", enterprise: true },
-      { capability: "Penetration Testing", essentials: false, office: "Add-on", business: "Add-on", enterprise: "Annual included" },
+      { capability: "Penetration Testing", essentials: false, office: "Add-on", business: "Add-on", enterprise: "Coordinated, when included in your agreement" },
       { capability: "Policy & Procedure Templates", essentials: false, office: false, business: "Basic", enterprise: "Custom" },
       { capability: "Audit Log Retention", essentials: false, office: "30 days", business: "90 days", enterprise: "1 year+" },
     ]
@@ -104,7 +105,8 @@ const allCategories: CategoryData[] = [
     rows: [
       { capability: "UCaaS / VoIP Telephony", essentials: "Add-on", office: "Add-on", business: "Add-on", enterprise: "Add-on" },
       { capability: "Extended Retention & Archiving", essentials: "Add-on", office: "Add-on", business: "Add-on", enterprise: "Add-on" },
-      { capability: "24/7 SOC Monitoring", essentials: "Add-on", office: "Add-on", business: true, enterprise: true },
+      { capability: ALERT_MONITORING_CLAIM_PHRASE, essentials: "Add-on", office: "Add-on", business: true, enterprise: true },
+      { capability: "24/7 Managed Detection and Response", essentials: "Add-on", office: "Add-on", business: "Add-on", enterprise: "Included" },
     ]
   }
 ];
@@ -133,8 +135,8 @@ const serviceToCategory: Record<string, string[]> = {
 
 const tiers = [
   { id: "essentials", name: "IT Essentials", price: "Core IT" },
-  { id: "office", name: "Office", price: "$65/user" },
-  { id: "business", name: "Business", price: "$95/user", featured: true },
+  { id: "office", name: "Office", price: "$165/user/mo" },
+  { id: "business", name: "Business", price: "$245/user/mo", featured: true },
   { id: "enterprise", name: "Enterprise", price: "Custom" },
 ];
 

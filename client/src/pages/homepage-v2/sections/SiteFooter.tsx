@@ -34,7 +34,7 @@ const LEGAL_LINKS = [
   ["Privacy", "/legal/privacy-policy"],
   ["Terms", "/legal/terms-of-use"],
   ["MSA", "/legal/msa"],
-  ["SLA", "/legal/sla"],
+  ["Service levels", "/legal/sla"],
 ];
 
 /** Newsletter: the same POST /api/newsletter the homepage footer used. */

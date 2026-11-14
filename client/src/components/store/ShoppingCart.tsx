@@ -33,7 +33,7 @@ import { CoverageScorePanel } from "@/components/store/CoverageScorePanel";
 import { shouldShowOngoingEquivalent } from "@/components/store/solutionCartUx";
 import { analytics } from "@/lib/analytics";
 import { CTA } from "@/lib/ctaCopy";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PRIMARY_PHONE, PUBLIC_PHONE_CTA } from "@/data/companyContact";
 import { useDockHiddenWhileOpen } from "@/hooks/useDockHiddenWhileOpen";
 import { formatSnapshotMoney } from "@/lib/solutionSnapshotView";
 import { SolutionDrawerPane } from "@/components/store/SolutionDrawerPane";
@@ -540,11 +540,11 @@ export function ShoppingCart() {
                     Estimated onboarding: typically 7–10 business days after kickoff (varies by
                     stack). Questions?{" "}
                     <a
-                      href={PRIMARY_PHONE.telHref}
+                      href={PUBLIC_PHONE_CTA.href}
                       className="inline-flex items-center gap-1 text-de-accent-ink hover:text-de-accent-ink"
                     >
                       <Phone className="h-3 w-3" />
-                      {PRIMARY_PHONE.display}
+                      {PUBLIC_PHONE_CTA.numberLabel}
                     </a>
                   </p>
                 </SolutionDrawerPane>

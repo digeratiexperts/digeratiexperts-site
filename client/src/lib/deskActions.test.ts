@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { PRIMARY_PHONE } from "@shared/companyContact";
+import { PRIMARY_PHONE, PUBLIC_PHONE_CTA } from "@shared/companyContact";
 import { DESK_ASSESSMENT_PATH, deskActionLabel, planDeskAction, sanitizeDeskActions } from "./deskActions";
 
 describe("advisor next steps on the Desk", () => {
@@ -25,14 +25,14 @@ describe("advisor next steps on the Desk", () => {
         { type: "navigate", label: "Evil", href: "javascript:alert(1)" },
         { type: "navigate", label: "Off-site", href: "//evil.example/path" },
         { type: "open_portal", label: "Open Client Portal", href: "http://portal.example" },
-        { type: "contact_sales", label: "Call", href: PRIMARY_PHONE.telHref },
-        { type: "contact_sales", label: "Call again", href: PRIMARY_PHONE.telHref },
+        { type: "contact_sales", label: "Call", href: PUBLIC_PHONE_CTA.href },
+        { type: "contact_sales", label: "Call again", href: PUBLIC_PHONE_CTA.href },
         { type: "request_assessment", label: "Assessment" },
         { type: "leave_message", label: "Leave a message" },
         { type: "create_lead", label: "One too many" },
       ]),
     ).toEqual([
-      { type: "contact_sales", label: "Call", href: PRIMARY_PHONE.telHref },
+      { type: "contact_sales", label: "Call", href: PUBLIC_PHONE_CTA.href },
       { type: "request_assessment", label: "Assessment" },
       { type: "leave_message", label: "Leave a message" },
     ]);
@@ -49,9 +49,9 @@ describe("advisor next steps on the Desk", () => {
     expect(planDeskAction({ type: "leave_message", label: "Msg" })).toEqual({ kind: "form", form: "message" });
     expect(planDeskAction({ type: "request_assessment", label: "Assess" })).toEqual({ kind: "route", path: DESK_ASSESSMENT_PATH });
     expect(planDeskAction({ type: "navigate", label: "Pricing", href: "/pricing" })).toEqual({ kind: "route", path: "/pricing" });
-    expect(planDeskAction({ type: "contact_sales", label: "Call", href: PRIMARY_PHONE.telHref })).toEqual({
+    expect(planDeskAction({ type: "contact_sales", label: "Call", href: PUBLIC_PHONE_CTA.href })).toEqual({
       kind: "link",
-      href: PRIMARY_PHONE.telHref,
+      href: PUBLIC_PHONE_CTA.href,
       external: false,
     });
     expect(planDeskAction({ type: "open_portal", label: "Portal", href: "https://portal.digeratiexperts.com/portal/login" })).toEqual({
@@ -63,11 +63,14 @@ describe("advisor next steps on the Desk", () => {
   });
 
   it("labels a phone action by what it does, never 'Contact sales'", () => {
-    expect(deskActionLabel({ type: "contact_sales", label: "Contact sales", href: PRIMARY_PHONE.telHref }, PRIMARY_PHONE.display)).toBe(
-      `Call ${PRIMARY_PHONE.display}`,
+    expect(deskActionLabel({ type: "contact_sales", label: "Contact sales", href: PUBLIC_PHONE_CTA.href }, PRIMARY_PHONE.display)).toBe(
+      `${PUBLIC_PHONE_CTA.label}`,
     );
     expect(deskActionLabel({ type: "open_portal", label: "Open Client Portal", href: "https://x.example/" }, "325")).toBe(
       "Open Client Portal",
+    );
+    expect(deskActionLabel({ type: "contact_sales", label: "Contact sales", href: "tel:+10000000000" }, "[DE_PUBLIC_PHONE]")).toBe(
+      "Contact us",
     );
   });
 });

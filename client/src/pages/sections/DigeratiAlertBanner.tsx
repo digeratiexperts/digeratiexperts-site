@@ -1,7 +1,7 @@
 import { ArrowRight, Phone } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
 import { Link } from "wouter";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PRIMARY_PHONE, PUBLIC_PHONE_CTA } from "@/data/companyContact";
 import { useBooking } from "@/contexts/BookingContext";
 import { revealInitial, revealInView, revealTransition, revealViewport } from "@/lib/animations";
 import { CTA } from "@/lib/ctaCopy";
@@ -113,9 +113,9 @@ export const DigeratiAlertBanner = (): JSX.Element => {
               {CTA.primary}
               <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </button>
-            <a href={PRIMARY_PHONE.telHref} className={buttonSecondary("well")} data-testid="button-call-banner">
+            <a href={PUBLIC_PHONE_CTA.href} className={buttonSecondary("well")} data-testid="button-call-banner">
               <Phone className="h-4 w-4" aria-hidden="true" />
-              Call {PRIMARY_PHONE.display}
+              {PUBLIC_PHONE_CTA.label}
             </a>
           </div>
         </motion.div>

@@ -12,7 +12,8 @@ import { useOptionalFullPageScroll } from '@/components/FullPageScroll';
 import { HomepageOnPageNav } from '@/components/HomepageSectionNav';
 import { PORTAL_LOGIN } from '@/lib/portalUrls';
 import { CTA } from '@/lib/ctaCopy';
-import { PRIMARY_PHONE } from '@/data/companyContact';
+import { PRIMARY_PHONE, PUBLIC_PHONE_CTA } from '@/data/companyContact';
+import { GUARANTEE_MENU_LABEL, GUARANTEE_SHORT } from '@shared/publicGuarantee';
 import { isDoor2Path } from '@/lib/isDoor2Path';
 
 const NoiseTexture = ({ id }: { id: string }) => (
@@ -308,7 +309,7 @@ export function MegaMenu() {
           items: [
             { title: 'Endpoint & Email Protection', description: 'Device and mailbox defenses', icon: <Shield className="h-5 w-5" />, url: '/solutions/threat-detection' },
             { title: 'Threat Detection & Response', description: 'Find and contain attacks before damage spreads', icon: <Zap className="h-5 w-5" />, url: '/solutions/threat-detection' },
-            { title: 'Security Operations / SOC', description: 'Human-led monitoring and response', icon: <Lock className="h-5 w-5" />, url: '/solutions/security-operations' },
+            { title: 'Security Operations', description: 'Automated security alert monitoring, with alerts triaged by DE technicians during business hours, on plans that include it', icon: <Lock className="h-5 w-5" />, url: '/solutions/security-operations' },
             { title: 'Security Awareness', description: 'Training and phishing simulations for staff', icon: <Users className="h-5 w-5" />, url: '/solutions/security-awareness' },
             { title: 'Data Encryption', description: 'Protect data even if an endpoint is lost', icon: <Shield className="h-5 w-5" />, url: '/solutions/data-encryption' },
             { title: 'Backup & Disaster Recovery', description: 'Continuity, RPO/RTO, failover, and restore testing', icon: <Server className="h-5 w-5" />, url: '/solutions/backup-disaster-recovery' },
@@ -332,7 +333,7 @@ export function MegaMenu() {
         {
           title: 'Industries We Serve',
           items: [
-            { title: 'Healthcare', description: 'HIPAA compliance made simple', icon: <Shield className="h-5 w-5" />, url: '/industries/healthcare' },
+            { title: 'Healthcare', description: 'HIPAA-aligned security support', icon: <Shield className="h-5 w-5" />, url: '/industries/healthcare' },
             { title: 'Law Firms', description: 'Protect client confidentiality', icon: <FileCheck className="h-5 w-5" />, url: '/industries/law-firms' },
             { title: 'Accounting', description: 'Secure tax & financial data', icon: <Server className="h-5 w-5" />, url: '/industries/accounting-finance' },
           ]
@@ -396,7 +397,7 @@ export function MegaMenu() {
             { title: 'Case Studies', description: 'Arizona business success stories', icon: <TrendingUp className="h-5 w-5" />, url: '/resources/case-studies' },
             { title: 'Meet The Experts', description: 'Chandler, AZ team', icon: <Users className="h-5 w-5" />, url: '/about/team' },
             { title: 'Client Bill of Rights', description: 'Our 8 pledges to you', icon: <Award className="h-5 w-5" />, url: '/about/client-bill-of-rights' },
-            { title: '100% Guarantee', description: '30-day money-back promise', icon: <CheckCircle className="h-5 w-5" />, url: '/about/guarantee' },
+            { title: GUARANTEE_MENU_LABEL, description: GUARANTEE_SHORT, icon: <CheckCircle className="h-5 w-5" />, url: '/about/guarantee' },
             { title: '21 Questions to Ask', description: 'Before hiring any IT company', icon: <ClipboardCheck className="h-5 w-5" />, url: '/about/21-questions' },
           ]
         }
@@ -736,12 +737,12 @@ export function MegaMenu() {
         <div className="max-w-[var(--de-canvas)] mx-auto px-3 lg:px-5 flex flex-col md:flex-row items-center justify-end py-1.5 relative z-10 w-full">
           <div className="flex items-center flex-wrap gap-x-5 gap-y-1.5 md:gap-x-7 justify-center md:justify-end">
             <a
-              href={PRIMARY_PHONE.telHref}
+              href={PUBLIC_PHONE_CTA.href}
               className="flex items-center text-white/95 hover:text-de-magenta-ink text-base font-semibold leading-none tracking-wide transition-colors"
               data-testid="utility-phone"
             >
               <Phone className="h-4 w-4 mr-1.5 text-de-magenta-ink shrink-0" />
-              <span className="hidden sm:inline">{PRIMARY_PHONE.display}</span>
+              <span className="hidden sm:inline">{PUBLIC_PHONE_CTA.numberLabel}</span>
               <span className="sm:hidden">Call</span>
             </a>
 
@@ -1345,17 +1346,17 @@ export function MegaMenu() {
                 }}
               >
                 <a
-                  href={PRIMARY_PHONE.telHref}
+                  href={PUBLIC_PHONE_CTA.href}
                   className="flex items-center gap-3 px-4 py-3 rounded-xl border border-de-hairline bg-de-raised hover:border-white/25 transition-all group"
                   data-testid="mobile-call"
-                  aria-label={`Call us at ${PRIMARY_PHONE.display}`}
+                  aria-label={PUBLIC_PHONE_CTA.label}
                 >
                   <div className="w-10 h-10 rounded-lg border border-de-hairline bg-[#0a0a0a] flex items-center justify-center">
                     <Phone className="h-5 w-5 text-[#D3126A]" aria-hidden="true" />
                   </div>
                   <div>
                     <div className="text-base text-white/55">Call Us</div>
-                    <div className="font-semibold text-white group-hover:text-[#D3126A] transition-colors">{PRIMARY_PHONE.display}</div>
+                    <div className="font-semibold text-white group-hover:text-[#D3126A] transition-colors">{PUBLIC_PHONE_CTA.numberLabel}</div>
                   </div>
                 </a>
 

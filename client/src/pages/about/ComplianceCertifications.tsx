@@ -87,7 +87,7 @@ const complianceFrameworks = [
       "Scope reduction strategies",
       "Network segmentation implementation",
       "Cardholder data environment (CDE) security",
-      "Quarterly vulnerability scanning",
+      "Quarterly external scans coordinated through a PCI-approved scanning vendor, for clients who need them",
       "Penetration testing coordination",
       "Security awareness training",
       "SAQ and ROC preparation assistance"
@@ -139,7 +139,7 @@ const complianceFrameworks = [
       "Written Information Security Program (WISP)",
       "Multi-factor authentication implementation",
       "Encryption for customer data",
-      "Annual penetration testing",
+      "Penetration testing coordination",
       "Employee training programs",
       "Vendor security assessments"
     ]

@@ -12,7 +12,7 @@ import { useCardObjects } from "./CardObjects";
 import { useTheme, ThemeToggle } from "./ThemeToggle";
 import { Link } from "wouter";
 import { ArrowRight } from "lucide-react";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PRIMARY_PHONE, PUBLIC_PHONE_CTA } from "@/data/companyContact";
 import { MegaMenu } from "@/components/MegaMenu";
 import { SiteBottomBar } from "@/components/SiteBottomBar";
 import { useSEO } from "@/hooks/useSEO";
@@ -136,7 +136,7 @@ export function HomeChapters(): JSX.Element {
               <p className="hc-poster__sub">Managed IT, security and compliance for Arizona businesses that can&rsquo;t afford downtime.</p>
               <div className="hc-poster__actions">
                 <Link href="/book" className="hc-poster__btn">Get a Cyber Risk Assessment <ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
-                <a href={PRIMARY_PHONE.telHref} className="hc-poster__call">Call {PRIMARY_PHONE.display}</a>
+                <a href={PUBLIC_PHONE_CTA.href} className="hc-poster__call">{PUBLIC_PHONE_CTA.label}</a>
               </div>
             </div>
             <figure className="hc-poster__figure">

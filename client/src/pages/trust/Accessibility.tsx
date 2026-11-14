@@ -1,7 +1,7 @@
 import { PageTemplate } from "@/components/PageTemplate";
 import { Eye, Mail, Phone, MapPin, Monitor, Ear, Hand, Brain } from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
-import { PRIMARY_PHONE, formatAddressOneLine } from "@/data/companyContact";
+import { PRIMARY_PHONE, PUBLIC_PHONE_CTA, formatAddressOneLine } from "@/data/companyContact";
 import {
   Chapter,
   Container,
@@ -174,8 +174,8 @@ export default function Accessibility() {
                 </div>
                 <div className={contactCard}>
                   <Phone className="mt-3 h-5 w-5 shrink-0 text-de-magenta-paper-ink" aria-hidden="true" />
-                  <a href={PRIMARY_PHONE.telHref} className={contactLink}>
-                    {PRIMARY_PHONE.display}
+                  <a href={PUBLIC_PHONE_CTA.href} className={contactLink}>
+                    {PUBLIC_PHONE_CTA.numberLabel}
                   </a>
                 </div>
                 <div className={`${contactCard} sm:col-span-2`}>

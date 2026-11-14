@@ -13,9 +13,9 @@ import {
 /**
  * #226: DE-owned managed security is sold as DE Security Foundation / Managed
  * Threat Protection. Guardz (primary) and Blackpoint (alternate) are internal
- * providers and must not appear as a Store mark, logo, alt text or vendor badge.
+ * providers (and Huntress) must not appear as a Store mark, logo, alt text or vendor badge.
  */
-const providerPattern = /guardz|blackpoint/i;
+const providerPattern = /guardz|blackpoint|huntress/i;
 
 describe("DE-owned Store services carry no third-party provider mark (#226)", () => {
   it("covers the managed security tiers", () => {
@@ -57,12 +57,10 @@ describe("DE-owned Store services carry no third-party provider mark (#226)", ()
       expect(`${visual.vendor?.name ?? ""} ${visual.logoUrl ?? ""} ${visual.alt}`, product.sku).not.toMatch(providerPattern);
       expect(getProductVendorMarkUrl(product.sku, product.category) ?? "", product.sku).not.toMatch(providerPattern);
     }
-    expect(listVendorsForProducts(storeProducts).map((v) => v.slug)).not.toEqual(
-      expect.arrayContaining(["guardz"]),
-    );
-    expect(listVendorsForProducts(storeProducts).map((v) => v.slug)).not.toEqual(
-      expect.arrayContaining(["blackpoint"]),
-    );
+    const listed = listVendorsForProducts(storeProducts).map((v) => v.slug);
+    expect(listed).not.toContain("guardz");
+    expect(listed).not.toContain("blackpoint");
+    expect(listed).not.toContain("huntress");
   });
 
   it("the SKU map assigns no internal security provider", () => {

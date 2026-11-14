@@ -3,7 +3,7 @@ import { ArrowRight, ChevronDown, ChevronRight, Phone, type LucideIcon } from "l
 import { Link } from "wouter";
 import { cn } from "@/lib/utils";
 import { FAQJsonLd } from "@/components/JsonLd";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PRIMARY_PHONE, PUBLIC_PHONE_CTA } from "@/data/companyContact";
 import { IconWell } from "@/components/visual/IconWell";
 import { HeroArt } from "@/components/site/Atmosphere";
 import {
@@ -605,13 +605,26 @@ export function ClosingCta({
               icon={<ArrowRight className="h-4 w-4" aria-hidden="true" />}
             />
             {secondary ? (
-              <ActionAnchor action={secondary} className={buttonSecondary(tone)} />
+              <ActionAnchor
+                action={
+                  secondary.href?.startsWith("tel:") && PRIMARY_PHONE.display.startsWith("[")
+                    ? { ...secondary, label: PUBLIC_PHONE_CTA.label, href: PUBLIC_PHONE_CTA.href }
+                    : secondary
+                }
+                className={buttonSecondary(tone)}
+              />
             ) : (
               showPhone && (
-                <a href={PRIMARY_PHONE.telHref} className={buttonSecondary(tone)} data-testid={phoneTestId}>
-                  <Phone className="h-4 w-4" aria-hidden="true" />
-                  <span className="whitespace-nowrap">{PRIMARY_PHONE.display}</span>
-                </a>
+                !PRIMARY_PHONE.display.startsWith("[") ? (
+                  <a href={PUBLIC_PHONE_CTA.href} className={buttonSecondary(tone)} data-testid={phoneTestId}>
+                    <Phone className="h-4 w-4" aria-hidden="true" />
+                    <span className="whitespace-nowrap">{PRIMARY_PHONE.display}</span>
+                  </a>
+                ) : (
+                  <a href="/contact" className={buttonSecondary(tone)} data-testid={phoneTestId}>
+                    Contact us
+                  </a>
+                )
               )
             )}
           </div>

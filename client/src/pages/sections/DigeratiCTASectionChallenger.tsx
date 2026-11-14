@@ -4,7 +4,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { revealInitial, revealInView, revealTransition, revealViewport } from "@/lib/animations";
 import { Input } from "@/components/ui/input";
 import { CTA } from "@/lib/ctaCopy";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PRIMARY_PHONE, PUBLIC_PHONE_CTA } from "@/data/companyContact";
 import { useBooking } from "@/contexts/BookingContext";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -82,11 +82,11 @@ export const DigeratiCTASectionChallenger = (): JSX.Element => {
                   Talk to DE
                 </button>
                 <a
-                  href={PRIMARY_PHONE.telHref}
+                  href={PUBLIC_PHONE_CTA.href}
                   className="inline-flex items-center gap-1.5 font-medium text-white/60 transition-colors hover:text-white"
                 >
                   <Phone className="h-3.5 w-3.5" aria-hidden="true" />
-                  {PRIMARY_PHONE.display}
+                  {PUBLIC_PHONE_CTA.numberLabel}
                 </a>
                 <a
                   href="#contact"

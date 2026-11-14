@@ -16,7 +16,7 @@ const highlights: Record<PricingTierKey, string[]> = {
   office: ["Everything in IT", "Managed network", "Endpoint backup"],
   business: [
     "Identity · endpoint · email",
-    "SOC / MDR",
+    "Alert monitoring",
     "BCDR · strategy reviews",
   ],
   enterprise: ["Advanced governance", "Audit-ready reporting", "Quarterly strategy"],

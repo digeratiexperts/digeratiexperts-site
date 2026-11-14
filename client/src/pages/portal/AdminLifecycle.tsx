@@ -115,7 +115,7 @@ export function AdminLifecycle() {
       className: "max-w-md",
       cell: (ev) => (
         <span className="text-xs text-muted-foreground">
-          JC: {String(ev.jumpcloud.message || "—")} · BP: {String(ev.blackpoint.message || "—")}
+          JC: {String(ev.jumpcloud.message || "—")} · MDR: {String(ev.blackpoint.message || "—")}
         </span>
       ),
     },
@@ -124,7 +124,7 @@ export function AdminLifecycle() {
   return (
     <PortalLayout
       title="Onboard / Offboard"
-      description="API-connected onboarding and offboarding for the directory (JumpCloud) and MDR (Blackpoint Cyber)."
+      description="API-connected onboarding and offboarding for the directory (JumpCloud) and the 24/7 MDR add-on."
       actions={
         <>
           <Button size="sm" variant="outline" className="border-border bg-card hover:bg-accent" onClick={() => refetch()} disabled={isFetching}>
@@ -147,11 +147,11 @@ export function AdminLifecycle() {
             hint="Uses JUMPCLOUD_API_KEY (optional JUMPCLOUD_ORG_ID). Creates / unsuspends on onboard; suspends (or deletes) on offboard."
           />
           <StatusPanel
-            id="status-blackpoint"
-            title="Blackpoint Cyber"
+            id="status-mdr-addon"
+            title="24/7 MDR add-on"
             loading={isLoading}
             status={bp}
-            hint="Uses BLACKPOINT_API_KEY (or BLACKPOINT_API_TOKEN). Matches tenant by company name; returns agent install / offboard checklist. Optional BLACKPOINT_INSTALLER_URL."
+            hint="Uses the 24/7 MDR add-on API key or token from the server environment. Matches tenant by company name; returns agent install / offboard checklist. Optional installer URL."
           />
         </div>
 
@@ -168,7 +168,7 @@ export function AdminLifecycle() {
                   className="border-border bg-background"
                 />
               </Field>
-              <Field label="Company (Blackpoint tenant match)" htmlFor="lc-company">
+              <Field label="Company (MDR tenant match)" htmlFor="lc-company">
                 <Input
                   id="lc-company"
                   value={companyName}

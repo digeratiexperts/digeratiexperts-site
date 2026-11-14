@@ -12,7 +12,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { CTA } from "@/lib/ctaCopy";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PRIMARY_PHONE, PUBLIC_PHONE_CTA } from "@/data/companyContact";
 import {
   HomeChapter,
   HomeChapterHeader,
@@ -132,11 +132,11 @@ export const DigeratiLeadFormSection = (): JSX.Element => {
             <p className="mt-6 text-base text-[#5A5368]">
               Prefer to call?{" "}
               <a
-                href={PRIMARY_PHONE.telHref}
+                href={PUBLIC_PHONE_CTA.href}
                 data-testid="link-lead-phone"
                 className="font-semibold text-de-magenta-paper-ink transition-colors hover:text-[#D3126A]"
               >
-                {PRIMARY_PHONE.display}
+                {PUBLIC_PHONE_CTA.numberLabel}
               </a>
             </p>
           </motion.div>

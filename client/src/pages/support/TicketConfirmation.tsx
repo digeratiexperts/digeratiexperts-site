@@ -3,7 +3,7 @@ import { CheckCircle, Phone } from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
 import { PageTemplate } from "@/components/PageTemplate";
 import { Chapter, Container, buttonPrimary, buttonSecondary } from "@/components/site/chapters";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PRIMARY_PHONE, PUBLIC_PHONE_CTA } from "@/data/companyContact";
 
 export default function TicketConfirmation() {
   useSEO({
@@ -32,11 +32,11 @@ export default function TicketConfirmation() {
                   We’ll follow up at the email you provided. For urgent production issues, call us now.
                 </p>
                 <a
-                  href={PRIMARY_PHONE.telHref}
+                  href={PUBLIC_PHONE_CTA.href}
                   className="mt-3 inline-flex min-h-11 items-center gap-2 text-2xl font-semibold text-de-magenta-paper-ink underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ec4899]"
                 >
                   <Phone className="h-6 w-6" aria-hidden="true" />
-                  {PRIMARY_PHONE.display}
+                  {PUBLIC_PHONE_CTA.numberLabel}
                 </a>
               </div>
             </div>

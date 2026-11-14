@@ -4,7 +4,7 @@ import { PageTemplate } from "@/components/PageTemplate";
 import { Button } from "@/components/ui/button";
 import { useSEO } from "@/hooks/useSEO";
 import { CTA } from "@/lib/ctaCopy";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PRIMARY_PHONE, PUBLIC_PHONE_CTA } from "@/data/companyContact";
 import { campaignBySlug } from "@/data/campaigns";
 import { RESOURCE_TYPE_LABEL, resourceBySlug, resourceLandingMeta } from "@/data/resourceRegistry";
 import { briefBySlug } from "@/data/executiveBriefs";
@@ -69,10 +69,10 @@ export default function CampaignLanding() {
               label: "Call",
               value: (
                 <a
-                  href={PRIMARY_PHONE.telHref}
+                  href={PUBLIC_PHONE_CTA.href}
                   className="inline-flex min-h-11 items-center hover:text-de-accent-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ec4899]"
                 >
-                  {PRIMARY_PHONE.display}
+                  {PUBLIC_PHONE_CTA.numberLabel}
                 </a>
               ),
             },

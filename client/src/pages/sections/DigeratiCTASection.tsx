@@ -4,7 +4,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { revealInitial, revealInView, revealTransition, revealViewport } from "@/lib/animations";
 import { Input } from "@/components/ui/input";
 import { CTA } from "@/lib/ctaCopy";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PRIMARY_PHONE, PUBLIC_PHONE_CTA } from "@/data/companyContact";
 import { useBooking } from "@/contexts/BookingContext";
 import {
   HomeChapter,
@@ -145,10 +145,10 @@ export const DigeratiCTASection = (): JSX.Element => {
               <p className="text-sm text-white/65">
                 Prefer to call?{" "}
                 <a
-                  href={PRIMARY_PHONE.telHref}
+                  href={PUBLIC_PHONE_CTA.href}
                   className="font-semibold text-white underline-offset-2 hover:text-de-magenta-ink hover:underline"
                 >
-                  {PRIMARY_PHONE.display}
+                  {PUBLIC_PHONE_CTA.numberLabel}
                 </a>
               </p>
             </div>

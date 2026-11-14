@@ -1,3 +1,4 @@
+import { GUARANTEE_MENU_LABEL, GUARANTEE_SHORT } from "@shared/publicGuarantee";
 import {
   Star,
   Shield,
@@ -24,14 +25,14 @@ const rights: RightCard[] = [
   {
     icon: Star,
     title: "Complete Satisfaction",
-    rightText: "You have a right to expect complete satisfaction from all services you receive from Digerati Experts. If you are ever unhappy with a service provided, we will correct and redeliver that service until you are completely satisfied with the result.",
-    pledgeText: "We Pledge to make it right—at no additional cost to you—until we've exceeded your expectations."
+    rightText: "If a service doesn't meet your agreement, tell us and we'll work with you to fix it under the services warranty in your signed agreement.",
+    pledgeText: "We Pledge to work with you under the services warranty in your signed agreement."
   },
   {
     icon: Shield,
     title: "Compliance-First Solutions",
-    rightText: "You have the right to trust that we are recommending and delivering solutions that meet all relevant compliance requirements for your industry—including HIPAA, PCI-DSS, FTC Safeguards, and SOC 2 standards.",
-    pledgeText: "We Pledge to never recommend or deliver a service that would put you at risk for non-compliance."
+    rightText: "DE helps implement and document technical controls for the frameworks you answer to. Compliance determinations remain with you, your auditors and your advisers.",
+    pledgeText: "We Pledge to help implement and document technical controls for the frameworks you answer to, without certifying compliance on your behalf."
   },
   {
     icon: MessageCircle,
@@ -55,7 +56,7 @@ const rights: RightCard[] = [
     icon: DollarSign,
     title: "Transparent Pricing",
     rightText: "You have a right to know exactly what a project, solution, or service will cost before we begin. No surprises, no confusion, no hidden fees.",
-    pledgeText: "We Pledge to deliver solutions on budget with straightforward, clear billing—without mistakes, hidden fees, or unexpected expenses."
+    pledgeText: "We quote before we start and bill as quoted in your agreement."
   },
   {
     icon: Mail,
@@ -157,8 +158,8 @@ export default function ClientBillOfRights() {
       <ClosingCta
         tone="surface"
         eyebrow="See also"
-        title="See also our money-back guarantee"
-        primary={{ label: "100% Money-Back Guarantee", href: "/about/guarantee", testId: "link-guarantee" }}
+        title={GUARANTEE_SHORT}
+        primary={{ label: GUARANTEE_MENU_LABEL, href: "/about/guarantee", testId: "link-guarantee" }}
         showPhone={false}
       />
     </PageTemplate>

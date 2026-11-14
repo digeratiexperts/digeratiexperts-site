@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, ChevronRight, Phone } from "lucide-react";
 import { Link } from "wouter";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PRIMARY_PHONE, PUBLIC_PHONE_CTA } from "@/data/companyContact";
 import { revealInitial, revealInView, revealTransition, revealViewport } from "@/lib/animations";
 import "./02-why-we-exist.css";
 
@@ -94,10 +94,10 @@ export function V7WhyWeExist(): JSX.Element {
             </a>
             <a
               className="v7-btn v7-btn--outline-paper"
-              href={PRIMARY_PHONE.telHref}
+              href={PUBLIC_PHONE_CTA.href}
               data-testid="button-call-banner"
             >
-              <Phone {...ICON} /> Call {PRIMARY_PHONE.display}
+              <Phone {...ICON} /> {PUBLIC_PHONE_CTA.label}
             </a>
           </div>
         </motion.div>

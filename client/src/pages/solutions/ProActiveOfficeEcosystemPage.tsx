@@ -16,7 +16,7 @@ const config: TierPageConfig = {
   whoFor: [
     "Small offices (typically 5–30 users) that need dependable IT plus a professionally managed network",
     "Teams that want endpoint backup included rather than bolted on later",
-    "Organizations that want managed endpoint security, network and backup without the 24/7 MDR, deeper BCDR, compliance, and governance scope of Business",
+    "Organizations that want managed endpoint security, network and backup without the deeper BCDR, compliance, and governance scope of Business. 24/7 Managed Detection and Response is available as an add-on",
     "Buyers who want transparent per-user pricing with a predictable monthly minimum",
   ],
   outcomes: [
@@ -42,6 +42,11 @@ const config: TierPageConfig = {
     "Semi-annual technology + security reviews (Business) or quarterly executive reviews (Enterprise)",
   ],
   addOnsOrUpgrades: [
+    {
+      label: "24/7 Managed Detection and Response",
+      desc: "24/7 Managed Detection and Response, available as an add-on.",
+    },
+
     {
       label: "Backup & Disaster Recovery (BCDR)",
       desc: "Add server/workload continuity and recovery depth when endpoint backup alone is not enough.",

@@ -2,7 +2,7 @@ import { TIER_ORDER, isTierLit, type CoverageTier } from "@/lib/proactiveCoverag
 
 const RING_ORDER: { id: CoverageTier; label: string; radius: number; desc: string }[] = [
   { id: "it", label: "IT", radius: 46, desc: "Operating + managed security baseline" },
-  { id: "office", label: "Office", radius: 76, desc: "Adds network, endpoint backup + 24×7 MDR" },
+  { id: "office", label: "Office", radius: 76, desc: "Adds network, endpoint backup + alert monitoring" },
   { id: "business", label: "Business", radius: 106, desc: "Adds deeper security ops, BCDR + compliance reporting" },
   { id: "enterprise", label: "Enterprise", radius: 136, desc: "Adds governance, audit-grade compliance" },
 ];
@@ -20,7 +20,7 @@ export type CoverageHours = "business" | "extended" | "always-on";
 const COVERAGE_HOURS: { id: CoverageHours; label: string; minTier: CoverageTier; desc: string }[] = [
   { id: "business", label: "Business Hours", minTier: "it", desc: "Standard support window" },
   { id: "extended", label: "Extended Hours", minTier: "office", desc: "Early/late coverage, add-on below Business" },
-  { id: "always-on", label: "24×7 Monitoring", minTier: "office", desc: "Managed detection and response / security monitoring" },
+  { id: "always-on", label: "Alert Monitoring", minTier: "business", desc: "Automated alert monitoring, triaged by DE technicians during business hours" },
 ];
 
 const CX = 178;
