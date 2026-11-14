@@ -5,8 +5,10 @@ import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { registerSituationMatchRoutes, SITUATION_BODY_MAX_BYTES } from "./situationMatchRoutes";
 import { CARD_DATA_REJECTED_CODE, CARD_DATA_REJECTED_MESSAGE, CARD_DATA_REJECTED_STATUS } from "@shared/pciGuard";
 import { PRE_CHAT_CONSENT_REQUIRED_MESSAGE, PRE_CHAT_CONSENT_VERSION } from "@shared/preChatConsent";
+import { SITUATION_MATCH_NOTICE_VERSION } from "@shared/situationMatchNotice";
+import { situationMatchConsentFor } from "./services/msp-advisor/situationMatchConsent";
 
-const agreed = { consent: true as const, consentVersion: PRE_CHAT_CONSENT_VERSION };
+const agreed = { consent: true as const, consentVersion: SITUATION_MATCH_NOTICE_VERSION };
 
 vi.mock("./openaiService", () => ({ getOpenAI: () => null }));
 
@@ -107,4 +109,27 @@ describe("POST /api/public/advisor/situation-match consent and card-data guards"
     expect(j.code).toBe(CARD_DATA_REJECTED_CODE);
     expect(JSON.stringify(j)).not.toMatch(/123/);
   });
+
+  it("records the bumped notice version and a server timestamp", async () => {
+    const res = await postGuard({ text: "someone clicked a phishing link", ...agreed });
+    expect(res.status).toBe(200);
+    const j = await res.json();
+    const record = situationMatchConsentFor(j.sessionId);
+    expect(record?.version).toBe(SITUATION_MATCH_NOTICE_VERSION);
+    expect(typeof record?.at).toBe("number");
+    expect(record!.at).toBeGreaterThan(Date.now() - 5_000);
+  });
+
+  it("rejects the previous consent version", async () => {
+    const res = await postGuard({
+      text: "someone clicked a phishing link",
+      consent: true,
+      consentVersion: PRE_CHAT_CONSENT_VERSION,
+    });
+    expect(res.status).toBe(400);
+    const j = await res.json();
+    expect(j.error).toBe(PRE_CHAT_CONSENT_REQUIRED_MESSAGE);
+    expect(j.sessionId).toBeUndefined();
+  });
 });
+

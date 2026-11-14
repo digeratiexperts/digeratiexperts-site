@@ -164,7 +164,7 @@ export function WhoSection(): JSX.Element {
   );
 }
 
-/** 3c · START FROM A SITUATION (light) · B3: situation picker; last card always links to describe/ */
+/** 3c - START FROM A SITUATION (light): three category panels; the custom card is last and links to describe/ */
 export function SituationsSection(): JSX.Element {
   return (
     <section className="sits light sheet" id="situations" aria-labelledby="sits-h">

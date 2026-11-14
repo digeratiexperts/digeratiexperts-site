@@ -13,6 +13,7 @@ import { verifyTurnstile } from "./middleware/security";
 import { createProfileDraft, profileDraftsEnabled } from "./integrations/hubProfileDraft";
 import { PROFILE_DRAFT_CONSENT_VERSION, itPlan, type SituationMatch } from "@shared/situationMatch";
 import { isPreChatConsentGranted, PRE_CHAT_CONSENT_REQUIRED_MESSAGE } from "@shared/preChatConsent";
+import { SITUATION_MATCH_NOTICE_VERSION } from "@shared/situationMatchNotice";
 import { sendCardDataRejected, sendCardDataRejectedError } from "./pciGuard";
 
 export const SITUATION_BODY_MAX_BYTES = 4 * 1024;
@@ -57,10 +58,18 @@ export function registerSituationMatchRoutes(
       const { text, sessionId } = req.body || {};
       if (!text || typeof text !== "string") return res.status(400).json({ error: "text is required" });
       if (sendCardDataRejected(res, text)) return;
-      if (!isPreChatConsentGranted(req.body || {})) {
+      if (!isPreChatConsentGranted(req.body || {}, SITUATION_MATCH_NOTICE_VERSION)) {
         return res.status(400).json({ error: PRE_CHAT_CONSENT_REQUIRED_MESSAGE });
       }
       const r = await handleSituationMatch({ text, sessionId: typeof sessionId === "string" ? sessionId : undefined });
+      const { getSession } = await import("./services/msp-advisor");
+      const { recordSituationMatchConsent } = await import("./services/msp-advisor/situationMatchConsent");
+      const consent = recordSituationMatchConsent({
+        version: SITUATION_MATCH_NOTICE_VERSION,
+        sessionId: r.sessionId,
+      });
+      const session = getSession(r.sessionId);
+      if (session) session.situationMatchConsent = { version: consent.version, at: consent.at };
       res.json({
         sessionId: r.sessionId,
         scenarioIds: r.scenarioIds,
@@ -110,3 +119,4 @@ export function registerSituationMatchRoutes(
     }
   });
 }
+

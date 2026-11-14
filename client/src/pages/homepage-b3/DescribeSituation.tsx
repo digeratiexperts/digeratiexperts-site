@@ -22,7 +22,31 @@ import {
 } from "@shared/situationMatch";
 import { saveProfileClaim } from "@/lib/profileClaim";
 import { PRE_CHAT_CONSENT_REQUIRED_MESSAGE } from "@shared/preChatConsent";
-import { deskMatch, isDeskMatchErr, SITUATION_MATCH_AI_DISCLOSURE } from "./describeSituationMatch";
+import {
+  deskMatch,
+  HEALTH_INFO_WARNING,
+  isDeskMatchErr,
+  looksLikeHealthInfo,
+  SITUATION_MATCH_AI_DISCLOSURE,
+  SITUATION_MATCH_PRIVACY_LINK_TEXT,
+  SITUATION_MATCH_PRIVACY_PATH,
+} from "./describeSituationMatch";
+
+function SituationMatchNotice(): JSX.Element {
+  const marker = "See our " + SITUATION_MATCH_PRIVACY_LINK_TEXT + ".";
+  const at = SITUATION_MATCH_AI_DISCLOSURE.lastIndexOf(marker);
+  const before = at >= 0 ? SITUATION_MATCH_AI_DISCLOSURE.slice(0, at) : SITUATION_MATCH_AI_DISCLOSURE;
+  return (
+    <p className="own__ai-notice" id="sitAiNotice">
+      {before}
+      {at >= 0 ? (
+        <>
+          See our <Link href={SITUATION_MATCH_PRIVACY_PATH}>{SITUATION_MATCH_PRIVACY_LINK_TEXT}</Link>.
+        </>
+      ) : null}
+    </p>
+  );
+}
 
 type Shown = { r: SituationMatch; text: string; how: "typed" | "picked"; draftEnabled: boolean } | { more: true } | null;
 
@@ -104,46 +128,59 @@ export default function DescribeSituation(): JSX.Element {
                   <textarea
                     id="sitText"
                     ref={taRef}
-                    rows={5}
+                    rows={8}
                     maxLength={SITUATION_TEXT_MAX}
                     value={text}
                     onChange={(e) => setText(e.target.value)}
-                    placeholder="e.g. Two people start Monday and we still don’t have laptops. Or: our insurer sent a security questionnaire and we don’t know the answers."
-                    aria-describedby="sitHint sitAiNotice"
+                    placeholder="e.g. Two people start Monday and we still don't have laptops. Or: our insurer sent a security questionnaire and we don't know the answers."
+                    aria-describedby={looksLikeHealthInfo(text) ? "sitHint sitHealth sitAiNotice" : "sitHint sitAiNotice"}
                   />
                   <p className="own__ex" id="sitHint">
                     <span>Try:</span>
-                    {["Someone clicked a link in a fake invoice email", "We’re moving to a bigger office in March", "A client wants our HIPAA policies"].map((x) => (
+                    {["Someone clicked a link in a fake invoice email", "We're moving to a bigger office in March", "A client wants our HIPAA policies"].map((x) => (
                       <button key={x} type="button" className="sit__ex" onClick={() => { setText(x); taRef.current?.focus(); }}>
                         &ldquo;{x}&rdquo;
                       </button>
                     ))}
                   </p>
+                  {looksLikeHealthInfo(text) ? (
+                    <p className="own__health" id="sitHealth" role="status">
+                      {HEALTH_INFO_WARNING}
+                    </p>
+                  ) : null}
                   <div className="own__turnstile">
-                    <TurnstileWidget key={tsKey} theme="light" onVerify={setToken} onError={() => setToken("")} />
+                    <TurnstileWidget key={tsKey} theme="dark" onVerify={setToken} onError={() => setToken("")} />
                   </div>
-                  <p className="own__ai-notice" id="sitAiNotice">{SITUATION_MATCH_AI_DISCLOSURE}</p>
-                  {matchError ? <p className="own__match-error" role="alert">{matchError}</p> : null}
-                  <div className="own__row">
-                    {!matchConsent ? (
-                      <button type="button" className="btn" onClick={() => { setMatchConsent(true); setMatchError(""); }}>
-                        Agree and continue
-                      </button>
-                    ) : (
-                      <button type="submit" className="btn" disabled={busy} aria-busy={busy}>
-                        {busy ? "Matching\u2026" : "Smart match"}
-                      </button>
-                    )}
+                  <div className="own__consent-step">
+                    <SituationMatchNotice />
+                    {matchError ? <p className="own__match-error" role="alert">{matchError}</p> : null}
+                    <div className="own__row">
+                      {!matchConsent ? (
+                        <button type="button" className="btn btn--lg" onClick={() => { setMatchConsent(true); setMatchError(""); }}>
+                          Agree and continue
+                        </button>
+                      ) : (
+                        <button type="submit" className="btn btn--lg" disabled={busy} aria-busy={busy}>
+                          {busy ? "Matching\u2026" : "Smart match"}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </form>
                 <div className="own__out" id="sitResult" aria-live="polite">
-                  {shown === null && (
+                  {busy && (
+                    <div className="res res--busy">
+                      <p className="res__k">Smart match</p>
+                      <p className="res__read">Matching your situation&hellip;</p>
+                    </div>
+                  )}
+                  {!busy && shown === null && (
                     <div className="res res--wait">
                       <p className="res__k">Smart match</p>
                       <p className="res__read">Write a sentence or two, then match. We&rsquo;ll show the closest situations on the page, and what Digerati Experts would look at.</p>
                     </div>
                   )}
-                  {shown && "more" in shown && (
+                  {!busy && shown && "more" in shown && (
                     <div className="res res--more">
                       <p className="res__read">
                         <b>Tell us a bit more.</b> A sentence or two about what&rsquo;s happening (who it affects, what broke or what&rsquo;s changing) is plenty. Or{" "}
@@ -151,7 +188,7 @@ export default function DescribeSituation(): JSX.Element {
                       </p>
                     </div>
                   )}
-                  {shown && "r" in shown && <MatchResult key={shown.text + shown.how} {...shown} sessionId={readSituationSessionId()} />}
+                  {!busy && shown && "r" in shown && <MatchResult key={shown.text + shown.how} {...shown} sessionId={readSituationSessionId()} />}
                 </div>
               </div>
             </div>

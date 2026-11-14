@@ -104,6 +104,8 @@ export interface AdvisorSession {
   analyticsFlags: Record<string, boolean>;
   pageContext?: PageContext;
   situation?: SessionSituation;
+  /** Notice version and server timestamp from a granted situation-match consent. */
+  situationMatchConsent?: { version: string; at: number };
   /** Substantive first question held until name + company are collected. */
   heldUserMessage?: string;
   /** First real ask — kept after identity so later turns do not forget it. */
@@ -121,6 +123,8 @@ export interface AdvisorChatRequest {
   message: string;
   pageContext?: PageContext;
   situation?: SessionSituation;
+  /** Notice version and server timestamp from a granted situation-match consent. */
+  situationMatchConsent?: { version: string; at: number };
 }
 
 export interface AdvisorChatResponse {
@@ -172,3 +176,4 @@ export function emptyProfile(): ConversationProfile {
     prospectOrClient: "unknown",
   };
 }
+
