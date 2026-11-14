@@ -320,4 +320,40 @@ describe("subscriptionPlanFromLines", () => {
     ]);
     expect("error" in mixed).toBe(true);
   });
+
+  it("rejects cross-site or cross-origin POST requests with 403 CSRF_FORBIDDEN", async () => {
+    const { app, hub } = appWith({ enabled: true });
+    const crossSite = await invoke(
+      app,
+      "POST",
+      "/api/portal/subscriptions/sub_1/cancel",
+      { requestedAt: new Date().toISOString() },
+      { "Sec-Fetch-Site": "cross-site" },
+    );
+    expect(crossSite.status).toBe(403);
+    expect(crossSite.json.code).toBe("CSRF_FORBIDDEN");
+
+    const crossOrigin = await invoke(
+      app,
+      "POST",
+      "/api/store/subscriptions",
+      {
+        portalClientId: "client-1",
+        skuIds: ["DE-DIG-ASMT-PHISH-MO"],
+        priceCents: 19900,
+        currency: "USD",
+        frequency: "month",
+        termMonths: 1,
+        customerType: "business",
+        customerState: "AZ",
+        consent,
+        lineItems: [phishingLine],
+      },
+      { Origin: "https://evil.example" },
+    );
+    expect(crossOrigin.status).toBe(403);
+    expect(crossOrigin.json.code).toBe("CSRF_FORBIDDEN");
+    expect(hub.create).not.toHaveBeenCalled();
+    expect(hub.cancel).not.toHaveBeenCalled();
+  });
 });

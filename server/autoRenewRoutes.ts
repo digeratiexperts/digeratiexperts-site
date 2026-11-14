@@ -1,4 +1,4 @@
-import type { Express, NextFunction, Request, Response } from "express";
+import type { Express, NextFunction, Request, RequestHandler, Response } from "express";
 import {
   AUTO_RENEW_CANCEL_POLICY_TEXT,
   AUTO_RENEW_CHECKBOX_LABEL_TEXT,
@@ -46,6 +46,45 @@ export interface AutoRenewRouteDeps {
   hub: HubSubscriptionsClient;
   sendSubscriptionConfirmation: typeof notificationService.sendSubscriptionConfirmation;
   resolvePricing: (clientId: string | null | undefined) => Promise<ReturnType<typeof toPriceOverrides>>;
+  storeGuards?: RequestHandler[];
+  portalGuards?: RequestHandler[];
+  portalCancelGuards?: RequestHandler[];
+}
+
+export const STORE_SUBSCRIPTIONS_PATH = "/api/store/subscriptions";
+export const PORTAL_SUBSCRIPTIONS_PATH = "/api/portal/subscriptions";
+export const PORTAL_SUBSCRIPTION_CANCEL_PATH = "/api/portal/subscriptions/:id/cancel";
+
+export function csrfOriginGuard(req: Request, res: Response, next: NextFunction) {
+  const secFetchSite = stringValue(req.get("sec-fetch-site"), 40).toLowerCase();
+  if (secFetchSite === "cross-site") {
+    return res.status(403).json({ code: "CSRF_FORBIDDEN", error: "Cross-site request rejected." });
+  }
+  const host = stringValue(req.get("host"), 200).toLowerCase();
+  const origin = stringValue(req.get("origin"), 300);
+  if (origin) {
+    try {
+      const originHost = new URL(origin).host.toLowerCase();
+      if (!host || originHost !== host) {
+        return res.status(403).json({ code: "CSRF_FORBIDDEN", error: "Cross-origin request rejected." });
+      }
+    } catch {
+      return res.status(403).json({ code: "CSRF_FORBIDDEN", error: "Invalid origin." });
+    }
+  } else {
+    const referer = stringValue(req.get("referer"), 500);
+    if (referer) {
+      try {
+        const refHost = new URL(referer).host.toLowerCase();
+        if (!host || refHost !== host) {
+          return res.status(403).json({ code: "CSRF_FORBIDDEN", error: "Cross-origin referer rejected." });
+        }
+      } catch {
+        return res.status(403).json({ code: "CSRF_FORBIDDEN", error: "Invalid referer." });
+      }
+    }
+  }
+  return next();
 }
 
 export const defaultAutoRenewRouteDeps: AutoRenewRouteDeps = {
@@ -149,14 +188,23 @@ export function registerAutoRenewRoutes(
   requireRole: (...roles: StoreRole[]) => AuthMiddleware,
   deps: AutoRenewRouteDeps = defaultAutoRenewRouteDeps,
 ) {
+  const storeGuards = deps.storeGuards ?? [
+    csrfOriginGuard,
+    paymentRateLimiter as any,
+    authMiddleware as any,
+    requireRole("comanaged", "admin") as any,
+  ];
+  const portalGuards = deps.portalGuards ?? [authMiddleware as any];
+  const portalCancelGuards = deps.portalCancelGuards ?? [csrfOriginGuard, authMiddleware as any];
+
   app.get("/api/public/capabilities", (_req, res) => {
     res.setHeader("Cache-Control", "no-store");
     return res.json(publicCapabilitiesPayload(deps.isEnabled()));
   });
 
   app.post(
-    "/api/store/subscriptions",
-    [paymentRateLimiter as any, authMiddleware as any, requireRole("comanaged", "admin") as any],
+    STORE_SUBSCRIPTIONS_PATH,
+    storeGuards,
     async (req: AuthedRequest, res: Response) => {
       if (!deps.isEnabled()) {
         return res.status(404).json({
@@ -309,7 +357,7 @@ export function registerAutoRenewRoutes(
     },
   );
 
-  app.get("/api/portal/subscriptions", [authMiddleware as any], async (req: AuthedRequest, res: Response) => {
+  app.get(PORTAL_SUBSCRIPTIONS_PATH, portalGuards, async (req: AuthedRequest, res: Response) => {
     res.setHeader("Cache-Control", "private, no-store");
     if (!deps.isEnabled()) {
       return res.json({ autoRenewContractEnabled: false, subscriptions: [] });
@@ -335,8 +383,8 @@ export function registerAutoRenewRoutes(
   });
 
   app.post(
-    "/api/portal/subscriptions/:id/cancel",
-    [authMiddleware as any],
+    PORTAL_SUBSCRIPTION_CANCEL_PATH,
+    portalCancelGuards,
     async (req: AuthedRequest, res: Response) => {
       if (!deps.isEnabled()) {
         return res.status(404).json({
