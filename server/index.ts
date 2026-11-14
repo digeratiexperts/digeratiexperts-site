@@ -23,6 +23,7 @@ import { getPublicSolutionRequestByReferenceDurable } from "./publicSolutionRequ
 import { registerWidgetTicketRoute } from "./widgetTicketRoute";
 import { registerWarehouseGates } from "./warehouseRoutes";
 import { registerPortalMarketplaceRoutes } from "./portalMarketplaceRoutes";
+import { registerAutoRenewRoutes } from "./autoRenewRoutes";
 import { registerPublicSupportChat } from "./publicSupportChat";
 import { isKnownSpaPath } from "./spaKnownPaths";
 import { applyRouteMeta, readIndexShell, routeMetaFor } from "./routeMeta";
@@ -441,6 +442,7 @@ registerStoreSolutionRoutes(app, authMiddleware as any);
 registerPublicSolutionRoutes(app);
 registerWidgetTicketRoute(app);
 registerPortalMarketplaceRoutes(app, authMiddleware as any);
+registerAutoRenewRoutes(app, authMiddleware as any, requireRole as any);
 
 app.use((req, res, next) => {
   if (req.path.toLowerCase() === "/solutions/proactive-ecosystem-packages") {

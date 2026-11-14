@@ -3962,10 +3962,12 @@ export async function registerRoutes(app: Express) {
       const { zohoClient } = await import("./zoho/zohoClient");
       
       if (!zohoClient.isConfigured()) {
+        const { isAutoRenewContractEnabled } = await import("./config/autoRenewContract");
         return res.json({
           subscription: null,
           invoices: [],
           zohoConnected: false,
+          autoRenewContractEnabled: isAutoRenewContractEnabled(),
           message: "Billing integration not configured",
         });
       }
@@ -4010,10 +4012,12 @@ export async function registerRoutes(app: Express) {
         zohoLink: `https://billing.zoho.com/app#/invoices/${inv.invoice_id}`,
       }));
       
+      const { isAutoRenewContractEnabled } = await import("./config/autoRenewContract");
       res.json({
         subscription: subscriptionWithLink,
         invoices: invoicesWithLinks,
         zohoConnected,
+        autoRenewContractEnabled: isAutoRenewContractEnabled(),
         message: !zohoConnected ? "Your billing account is being set up" : undefined,
       });
     } catch (error: any) {
