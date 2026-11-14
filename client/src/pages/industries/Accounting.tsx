@@ -8,7 +8,9 @@ import {
   HeroActions,
   HeroFacts,
   IndexedList,
+  FaqChapter,
 } from "@/components/site/chapters";
+import { ACCOUNTING_FAQS } from "@/data/localFaqs";
 import { ServiceBlocks } from "@/components/site/IndustriesServiceBlocks";
 import { Shield, Lock, FileText, DollarSign, Activity } from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
@@ -157,6 +159,10 @@ export default function Accounting() {
           <IndexedList tone="well" items={honest} />
         </Container>
       </Chapter>
+
+      <div data-testid="section-faq">
+        <FaqChapter faqs={ACCOUNTING_FAQS} title="Questions firm partners ask" />
+      </div>
 
       <div data-testid="section-final-cta">
         <ClosingCta
