@@ -293,7 +293,7 @@ export function ExitIntentPopup({ delay = 30000 }: ExitIntentPopupProps) {
     setIsSubmitting(true);
 
     try {
-      await apiRequest("POST", "/api/newsletter", {
+      await apiRequest("POST", "/api/assessment", {
         email: email.trim(),
         source: "exit_intent_popup",
         website_url: "",

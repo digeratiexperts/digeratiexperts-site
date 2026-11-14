@@ -23,6 +23,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parse } from "yaml";
 import { DE_EVENT_SESSIONS, DE_EVENT_TIME_ZONE, sessionEnd, sessionStart, type DeEventSession } from "../../client/src/data/deEvents";
+import { BUSINESS_POSTAL_ADDRESS_PLACEHOLDER } from "../../shared/marketingEmail";
 
 export const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 export const SRC_DIR = resolve(ROOT, "docs/marketing/sessions");
@@ -227,6 +228,12 @@ const MAGENTA = "#D3126A";
 const PAPER_INK = "#A30E52";
 const NIGHT = "#050312";
 const SIGN_OFF = ["[Sender name]", "Digerati Experts · Chandler, Arizona"];
+/**
+ * Commercial email footer. The sending tool fills in the postal address
+ * (BUSINESS_POSTAL_ADDRESS) and the unsubscribe link; the kit keeps the
+ * placeholders so no address is ever committed here.
+ */
+const FOOTER_TEXT = [`Digerati Experts · ${BUSINESS_POSTAL_ADDRESS_PLACEHOLDER}`, "Unsubscribe: [Unsubscribe link: added by the sending tool]"];
 
 export function emailText(kit: Kit, e: EmailSrc): string {
   const t = kit.tokens;
@@ -246,6 +253,7 @@ export function emailText(kit: Kit, e: EmailSrc): string {
     if (e.cta) lines.push("", `${e.cta}: ${fill(e.cta_url ?? "{page}", t, where)}`);
     lines.push("", ...SIGN_OFF);
   }
+  lines.push("", "--", ...FOOTER_TEXT);
   return `${lines.join("\n")}\n`;
 }
 
@@ -304,7 +312,7 @@ ${heading}${greeting}${bodyHtml}
 ${cta}${signOff}
 </td></tr>
 <tr><td style="padding:16px 28px 24px;border-top:1px solid #ece8f1;font:400 12px/1.5 ${bodyFont};color:#5f5a68">
-  Digerati Experts · Chandler, Arizona · <a href="${SITE}" style="color:${PAPER_INK}">digeratiexperts.com</a><br>[Unsubscribe link: added by the sending tool]
+  Digerati Experts · ${BUSINESS_POSTAL_ADDRESS_PLACEHOLDER} · <a href="${SITE}" style="color:${PAPER_INK}">digeratiexperts.com</a><br>[Unsubscribe link: added by the sending tool]
 </td></tr>
 </table></td></tr></table>
 </body></html>

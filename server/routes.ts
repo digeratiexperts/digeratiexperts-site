@@ -68,6 +68,8 @@ import { verifyTurnstile } from "./middleware/security";
 import { csrfOriginGuard, defaultAutoRenewRouteDeps, registerAutoRenewRoutes } from "./autoRenewRoutes";
 import { eventBus, EventTypes } from "./eventBus";
 import { notificationService, sendEmail } from "./services/notificationService";
+import { sendNewsletterWelcome } from "./marketingEmail";
+import { registerMarketingUnsubscribeRoutes } from "./marketingUnsubscribeRoutes";
 import { logger } from "./logger";
 import { newPasswordError } from "./passwordBreach";
 import { passwordPolicyError, type PasswordContext } from "@shared/passwordPolicy";
@@ -5504,9 +5506,12 @@ export async function registerRoutes(app: Express) {
   // ===== ASSESSMENT / LEAD CAPTURE FORM =====
   app.post("/api/assessment", [leadQuoteRateLimiter, validateInput], async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { fullName, email, phone, company, source } = req.body;
+      const { email, phone, company, source } = req.body;
       const situation = parseAnonymousSituation(req.body?.situation);
 
+      // The exit-intent popup asks only for a work email.
+      const emailOnly = source === "exit_intent_popup";
+      const fullName: string = req.body?.fullName || (emailOnly && typeof email === "string" ? email.split("@")[0] : "");
       if (!fullName || !email) {
         return res.status(400).json({ error: "Name and email are required" });
       }
@@ -5671,6 +5676,9 @@ export async function registerRoutes(app: Express) {
     }
   });
 
+  // One-click unsubscribe for marketing email (RFC 8058).
+  registerMarketingUnsubscribeRoutes(app, { adminGuards: [authMiddleware as any, requireAdmin as any] });
+
   // ===== NEWSLETTER SUBSCRIPTION =====
   app.post("/api/newsletter", [leadQuoteRateLimiter, validateInput], async (req: AuthenticatedRequest, res: Response) => {
     try {
@@ -5739,8 +5747,9 @@ export async function registerRoutes(app: Express) {
         // Don't fail the request if Zoho fails
       }
 
-      // Confirmation / welcome email (ZeptoMail) — warms engagement + List-Unsubscribe
-      notificationService.sendNewsletterWelcome({ email }).catch((err) => {
+      // Marketing email: sent only when switched on, the postal address is set
+      // and the address has not unsubscribed (server/marketingEmail.ts).
+      sendNewsletterWelcome(email).catch((err) => {
         console.warn("[NEWSLETTER] Welcome email failed (non-blocking):", err?.message || err);
       });
 
