@@ -21,7 +21,7 @@ describe("DE Desk chat consent guard", () => {
   beforeAll(async () => {
     const app = express();
     app.use(express.json());
-    app.set("trust proxy", true);
+    app.set("trust proxy", 1);
     app.post("/api/public/advisor/chat", async (req, res) => {
       if (rejectIfMissingDeskChatConsent(req, res)) return;
       const message = typeof req.body?.message === "string" ? req.body.message : "";
@@ -86,6 +86,7 @@ describe("DE Desk chat consent guard", () => {
   it("accepts a current consent payload, calls the advisor, and stores the consent record", async () => {
     handleAdvisorChat.mockClear();
     const sessionId = `consent-record-${Date.now()}`;
+    const before = Date.now();
     const response = await fetch(`${baseUrl}/api/public/advisor/chat`, {
       method: "POST",
       headers: { "Content-Type": "application/json", "X-Forwarded-For": "203.0.113.10" },
@@ -93,6 +94,8 @@ describe("DE Desk chat consent guard", () => {
         sessionId,
         message: "What services do you offer?",
         consent: currentDeskChatConsent(),
+        ip: "198.51.100.99",
+        consentedAt: "2000-01-01T00:00:00.000Z",
       }),
     });
     expect(response.status).toBe(200);
@@ -109,5 +112,37 @@ describe("DE Desk chat consent guard", () => {
       ip: "203.0.113.10",
     });
     expect(recorded?.consentedAt).toEqual(expect.any(String));
+    const consentedAt = Date.parse(recorded!.consentedAt);
+    expect(consentedAt).toBeGreaterThanOrEqual(before - 1000);
+    expect(consentedAt).toBeLessThanOrEqual(Date.now() + 1000);
+    expect(recorded?.consentedAt).not.toBe("2000-01-01T00:00:00.000Z");
+    expect(recorded?.ip).not.toBe("198.51.100.99");
+  });
+
+  it("records req.ip and ignores a spoofed left-most X-Forwarded-For address", async () => {
+    handleAdvisorChat.mockClear();
+    const sessionId = `consent-ip-${Date.now()}`;
+    const response = await fetch(`${baseUrl}/api/public/advisor/chat`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Forwarded-For": "198.51.100.1, 203.0.113.10",
+      },
+      body: JSON.stringify({
+        sessionId,
+        message: "What services do you offer?",
+        consent: currentDeskChatConsent(),
+      }),
+    });
+    expect(response.status).toBe(200);
+    const { getDeskChatRecordingConsent } = await import("./services/msp-advisor/persist");
+    const recorded = await getDeskChatRecordingConsent(sessionId);
+    expect(recorded?.ip).toBe("203.0.113.10");
+    expect(recorded?.ip).not.toBe("198.51.100.1");
+    expect(recorded?.sessionId).toBeUndefined();
+    expect(recorded).toMatchObject({
+      version: currentDeskChatConsent().version,
+      noticeHash: currentDeskChatConsent().noticeHash,
+    });
   });
 });

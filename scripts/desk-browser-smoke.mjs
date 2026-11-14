@@ -204,7 +204,18 @@ for (const viewport of [
   await page.waitForTimeout(300);
   check(
     "consent",
-    "declining opens Get Support without starting a chat",
+    "declining shows contact form, ticket, and phone options and starts no chat",
+    (await page.getByTestId("desk-other-contact-ways").count()) === 1
+      && (await page.getByTestId("desk-other-contact-form").count()) === 1
+      && (await page.getByTestId("desk-other-ticket").count()) === 1
+      && (await page.getByTestId("desk-chat-consent-phone").count()) === 1
+      && (await page.locator(COMPOSER).count()) === 0,
+  );
+  await page.getByTestId("desk-other-ticket").click();
+  await page.waitForTimeout(300);
+  check(
+    "consent",
+    "the ticket option opens Get Support without starting a chat",
     (await page.getByTestId("panel-support-ticket").count()) === 1 && (await page.locator(COMPOSER).count()) === 0,
   );
   await context.close();

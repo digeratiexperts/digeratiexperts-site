@@ -63,9 +63,11 @@ import {
   deskChatConsentRequestBody,
   hasStoredDeskChatConsent,
   isDeskChatConsentRequiredError,
+  readPriorSituationAttachment,
   storeDeskChatConsent,
 } from "@/lib/deskChatConsent";
 import { DeskChatConsentGate } from "@/components/desk/DeskChatConsentGate";
+import { AskDeGlyph } from "@/components/icons/AskDeGlyph";
 import { deskActionLabel, planDeskAction, sanitizeDeskActions, type DeskAction, type DeskActionType } from "@/lib/deskActions";
 import { DeskRichText } from "@/lib/deskRichText";
 import { SecureFieldCard, postSecureField } from "@/components/desk/SecureFieldCard";
@@ -492,10 +494,20 @@ export const ZohoASAPWidget = ({
       // opened with its focus ring lit). On a desktop Ask DE that is the
       // composer, so the visitor can type straight away; on a phone the
       // composer would pop the keyboard over the greeting, so the active tab.
+      const agree = document.querySelector<HTMLElement>('[data-testid="desk-chat-consent-agree"]');
+      const otherWay = document.querySelector<HTMLElement>(
+        '[data-testid="desk-other-contact-ways"] a, [data-testid="desk-other-contact-ways"] button',
+      );
       const composer = document.getElementById("desk-chat-input");
       const wide = window.matchMedia("(min-width: 640px) and (pointer: fine)").matches;
       const target =
-        (wide && composer && !(composer as HTMLInputElement).disabled ? composer : null) ??
+        (!recordingConsent
+          ? declinedRecording
+            ? otherWay
+            : agree
+          : wide && composer && !(composer as HTMLInputElement).disabled
+            ? composer
+            : null) ??
         document.querySelector<HTMLElement>('.de-desk-tab[aria-selected="true"]') ??
         getFocusable()[0];
       target?.focus({ preventScroll: true });
@@ -541,6 +553,26 @@ export const ZohoASAPWidget = ({
       window.setTimeout(returnToLauncher, 0);
     };
   }, [isOpen, deskDrag.panelRef]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    window.requestAnimationFrame(() => {
+      if (!recordingConsent) {
+        const target = declinedRecording
+          ? document.querySelector<HTMLElement>(
+              '[data-testid="desk-other-contact-ways"] a, [data-testid="desk-other-contact-ways"] button',
+            )
+          : document.querySelector<HTMLElement>('[data-testid="desk-chat-consent-agree"]');
+        target?.focus({ preventScroll: true });
+        return;
+      }
+      const composer = document.getElementById("desk-chat-input");
+      const wide = window.matchMedia("(min-width: 640px) and (pointer: fine)").matches;
+      if (wide && composer && !(composer as HTMLInputElement).disabled) {
+        composer.focus({ preventScroll: true });
+      }
+    });
+  }, [isOpen, recordingConsent, declinedRecording]);
 
   useEffect(() => () => {
     if (headsUpTimerRef.current) window.clearTimeout(headsUpTimerRef.current);
@@ -1255,7 +1287,6 @@ export const ZohoASAPWidget = ({
 
   const declineRecording = () => {
     setDeclinedRecording(true);
-    setActiveTab("ticket");
   };
 
   const openPersistentLeaveMessage = () => {
@@ -1646,9 +1677,9 @@ export const ZohoASAPWidget = ({
                 data-testid="desk-drag-handle"
                 aria-label={canDrag && !isDeskFullscreen ? "Move DE Desk window. Double-click to reset size and position." : undefined}
               >
-                <div className="de-desk-avatar de-desk-avatar-idle">
-                  DE
-                  <span className="de-desk-avatar-dot" />
+                <div className="de-desk-avatar">
+                  <AskDeGlyph className="de-desk-mark" />
+                  {agentLive ? <span className="de-desk-avatar-dot" /> : null}
                 </div>
                 <div className="min-w-0">
                   <h2 data-testid="text-widget-title">DE Desk · AI assistant</h2>
@@ -1803,7 +1834,14 @@ export const ZohoASAPWidget = ({
                   aria-labelledby="desk-tab-chat"
                   data-testid="panel-support-chat"
                 >
-                  <DeskChatConsentGate onAgree={agreeToRecording} onDecline={declineRecording} />
+                  <DeskChatConsentGate
+                    onAgree={agreeToRecording}
+                    onDecline={declineRecording}
+                    declined={declinedRecording}
+                    descriptionAttached={readPriorSituationAttachment()?.descriptionAttached === true}
+                    onOpenTicket={() => setActiveTab("ticket")}
+                    contactHref="/contact"
+                  />
                 </div>
               ) : activeTab === "chat" && (
                 <div
@@ -2138,12 +2176,6 @@ export const ZohoASAPWidget = ({
                   aria-labelledby="desk-tab-ticket"
                   data-testid="panel-support-ticket"
                 >
-                  {declinedRecording ? (
-                    <p className="de-desk-other-ways" data-testid="desk-other-contact-ways">
-                      Call <a href={PRIMARY_PHONE.telHref}>{PRIMARY_PHONE.display}</a> or{" "}
-                      <a href="/contact">use our contact form</a>. You can also send a support ticket here.
-                    </p>
-                  ) : null}
                   <div className="de-desk-scroll">
                     {ticketResult ? (
                       <div className="de-desk-hero de-desk-success">
@@ -2782,6 +2814,14 @@ export const ZohoASAPWidget = ({
             .de-desk-shell::before {
               content: none;
             }
+            .de-desk-shell {
+              animation: de-desk-in 320ms cubic-bezier(0.22, 1, 0.32, 1) both;
+              transform-origin: bottom right;
+            }
+            @keyframes de-desk-in {
+              from { opacity: 0; transform: translateY(16px) scale(0.98); }
+              to { opacity: 1; transform: none; }
+            }
             .de-desk-shell :is(button, a, input, textarea, select):focus-visible {
               outline: 2px solid var(--desk-gold);
               outline-offset: 2px;
@@ -2812,14 +2852,14 @@ export const ZohoASAPWidget = ({
               width: 32px; height: 32px;
               border-radius: 9px;
               background: var(--desk-box);
-              border: 1px solid rgba(227,178,60,0.6);
+              border: 1px solid rgba(227,178,60,0.85);
               color: var(--desk-ink);
               display: flex; align-items: center; justify-content: center;
               flex: none;
-              font-family: "Space Grotesk", sans-serif;
-              font-weight: 700;
-              font-size: 11px;
-              letter-spacing: 0.02em;
+            }
+            .de-desk-avatar .de-desk-mark {
+              width: 20px;
+              height: 20px;
             }
             .de-desk-avatar-dot {
               position: absolute; right: -2px; bottom: -2px;
@@ -2888,6 +2928,7 @@ export const ZohoASAPWidget = ({
               box-shadow: inset 3px 0 0 var(--desk-gold);
             }
             @media (prefers-reduced-motion: reduce) {
+              .de-desk-shell { animation: none !important; opacity: 1 !important; transform: none !important; }
               .de-desk-avatar-idle,
               .de-desk-caret,
               .de-desk-typing i,
@@ -2908,19 +2949,37 @@ export const ZohoASAPWidget = ({
 
             .de-desk-consent {
               flex: 1;
+              min-height: 0;
+              display: flex;
+              flex-direction: column;
               overflow-y: auto;
-              padding: 16px 16px 20px;
+              padding: 8px 20px 20px;
             }
             .de-desk-consent-heading {
               font-family: "Space Grotesk", sans-serif;
-              font-size: 18px;
+              font-size: 20px;
               font-weight: 600;
+              letter-spacing: -0.02em;
               color: var(--desk-ink);
-              margin: 0 0 10px;
+              margin: 0 0 12px;
+            }
+            .de-desk-consent-heading::after {
+              content: "";
+              display: block;
+              width: 28px;
+              height: 1px;
+              margin-top: 10px;
+              background: #E3B23C;
+            }
+            .de-desk-consent-attached {
+              margin: 0 0 12px;
+              font-size: 14px;
+              line-height: 1.5;
+              color: var(--desk-ink);
             }
             .de-desk-consent-copy {
-              font-size: 13.5px;
-              line-height: 1.55;
+              font-size: 14px;
+              line-height: 1.65;
               color: var(--desk-ink-muted);
               margin: 0;
             }
@@ -2930,13 +2989,16 @@ export const ZohoASAPWidget = ({
               text-underline-offset: 2px;
             }
             .de-desk-consent-policy:hover { color: #E3B23C; }
-            .de-desk-consent-actions {
+            .de-desk-consent-actions,
+            .de-desk-other-list {
               display: flex;
               flex-direction: column;
               gap: 8px;
-              margin-top: 16px;
+              margin-top: auto;
+              padding-top: 20px;
             }
-            .de-desk-consent-btn {
+            .de-desk-consent-btn,
+            .de-desk-other-card {
               display: flex;
               align-items: center;
               justify-content: center;
@@ -2951,23 +3013,20 @@ export const ZohoASAPWidget = ({
               font-weight: 600;
               line-height: 1.3;
               text-align: center;
+              text-decoration: none;
               cursor: pointer;
             }
-            .de-desk-consent-btn:hover {
+            .de-desk-consent-btn:hover,
+            .de-desk-other-card:hover {
               border-color: #E3B23C;
               background: rgba(227, 178, 60, 0.12);
             }
-            .de-desk-consent-phone {
-              margin: 14px 0 0;
-              font-size: 13px;
-              color: var(--desk-ink-muted);
+            .de-desk-consent-btn:focus-visible,
+            .de-desk-other-card:focus-visible {
+              outline: 2px solid var(--desk-gold);
+              outline-offset: 2px;
             }
-            .de-desk-consent-phone a {
-              color: var(--desk-ink);
-              text-decoration: underline;
-              text-underline-offset: 2px;
-            }
-            .de-desk-consent-phone a:hover { color: #E3B23C; }
+            .de-desk-other-card-label { text-align: center; }
             .de-desk-other-ways {
               flex-shrink: 0;
               padding: 0 16px 12px;

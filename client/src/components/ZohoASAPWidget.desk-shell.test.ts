@@ -68,7 +68,7 @@ describe("DE Desk shell positioning", () => {
     expect(src).toContain('data-testid="desk-chat-recorded"');
     expect(src).toContain("data-clarity-mask");
     expect(src).toContain("DESK_CHAT_CONSENT_PRIVACY_HREF");
-    expect(src).toContain('href="/contact"');
+    expect(src).toContain('contactHref="/contact"');
     expect(src).toMatch(/activeTab === "chat" && !recordingConsent/);
     expect(src).toMatch(/activeTab === "chat" && recordingConsent \?/);
     expect(src).not.toMatch(/AZ SOC Live/);
@@ -76,6 +76,13 @@ describe("DE Desk shell positioning", () => {
     expect(src).not.toMatch(/\.de-desk-tab\.is-active \{\s*background: #E3B23C;/);
     expect(src).toMatch(/previous\?\.focus/);
     expect(src).toMatch(/useEscapeKey/);
+    expect(src).toContain("AskDeGlyph");
+    expect(src).toContain("readPriorSituationAttachment");
+    expect(src).toContain('data-testid="desk-chat-consent-agree"');
+    expect(src).toMatch(/animation:\s*de-desk-in/);
+    expect(src).toMatch(/@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.de-desk-shell \{ animation: none/);
+    expect(src).toContain("declined={declinedRecording}");
+    expect(src).toContain('contactHref="/contact"');
     // With nobody in the chat, the composer claims no one is waiting, and the
     // line fits a 390px field (the old one cut to "we're ready no").
     expect(src).toMatch(/: "Type the issue…"/);

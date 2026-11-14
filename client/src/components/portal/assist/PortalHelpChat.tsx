@@ -10,6 +10,7 @@ import {
   deskChatConsentRequestBody,
   hasStoredDeskChatConsent,
   isDeskChatConsentRequiredError,
+  readPriorSituationAttachment,
   storeDeskChatConsent,
 } from "@/lib/deskChatConsent";
 import { usePortalSession } from "@/components/portal/shell/portalSession";
@@ -379,13 +380,6 @@ export function PortalHelpChat({ page, form }: { page: Page; form?: FormBridge }
             </button>
           </header>
 
-          {declinedRecording && !recordingConsent ? (
-            <p className="px-4 pb-2 text-xs text-white/70" data-testid="portal-help-other-ways">
-              Call <a href={PRIMARY_PHONE.telHref} className="underline underline-offset-2">{PRIMARY_PHONE.display}</a>
-              {" "}or{" "}
-              <Link href="/portal/requests" className="underline underline-offset-2">open a support request</Link>.
-            </p>
-          ) : null}
           <p className="phc-human-path" data-testid="portal-help-human-path">
             Want a person?{" "}
             <a href={PRIMARY_PHONE.telHref}>Call</a>,{" "}
@@ -409,7 +403,16 @@ export function PortalHelpChat({ page, form }: { page: Page; form?: FormBridge }
             .
           </p>
           {!recordingConsent ? (
-            <DeskChatConsentGate onAgree={agreeToRecording} onDecline={declineRecording} testId="portal-help-chat-consent" />
+            <DeskChatConsentGate
+              onAgree={agreeToRecording}
+              onDecline={declineRecording}
+              declined={declinedRecording}
+              descriptionAttached={readPriorSituationAttachment()?.descriptionAttached === true}
+              ticketHref="/portal/requests"
+              ticketLabel="Open a support request"
+              contactHref="/contact"
+              testId="portal-help-chat-consent"
+            />
           ) : (
             <>
           <div ref={logRef} role="log" aria-live="polite" aria-relevant="additions" className="flex-1 space-y-3 overflow-y-auto px-4 py-4" data-clarity-mask="true">

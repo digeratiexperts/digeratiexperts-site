@@ -59,3 +59,23 @@ export function splitDeskChatConsentNotice(): { before: string; after: string } 
     after: DESK_CHAT_CONSENT_NOTICE.slice(at + label.length),
   };
 }
+
+export const DESK_CHAT_PRIOR_DESCRIPTION_NOTE = "Your earlier description is attached to this chat";
+
+/** Optional carry-forward from the homepage situation box. */
+export type DeskPriorSituationState = {
+  descriptionAttached?: boolean;
+};
+
+export function deskPriorDescriptionNote(state: DeskPriorSituationState | null | undefined): string | null {
+  if (!state?.descriptionAttached) return null;
+  return DESK_CHAT_PRIOR_DESCRIPTION_NOTE;
+}
+
+/**
+ * Wired when the homepage situation box can hand a description to DE Desk.
+ * Until that flow lands, this returns null and the recording notice is always shown in full.
+ */
+export function readPriorSituationAttachment(): DeskPriorSituationState | null {
+  return null;
+}

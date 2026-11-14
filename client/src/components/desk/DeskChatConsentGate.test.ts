@@ -25,6 +25,14 @@ describe("DeskChatConsentGate", () => {
     expect(src).not.toContain("defaultChecked");
     expect(src).not.toContain("checked={true}");
     expect(src).toContain("PRIMARY_PHONE");
+    expect(src).toContain("descriptionAttached");
+    expect(src).toContain("DESK_CHAT_PRIOR_DESCRIPTION_NOTE");
+    expect(src).toContain('data-testid="desk-other-contact-ways"');
+    expect(src).toContain('data-testid="desk-other-contact-form"');
+    expect(src).toContain('data-testid="desk-other-ticket"');
+    expect(src).toContain('href={contactHref}');
+    expect(src).toContain("Contact DE another way");
+    expect(src).not.toContain("de-desk-consent-phone");
     expect(DESK_CHAT_CONSENT_HEADING).toBe("Before you chat");
     expect(DESK_CHAT_CONSENT_AGREE_LABEL).toBe("Agree and start chat");
     expect(DESK_CHAT_CONSENT_DECLINE_LABEL).toBe("No thanks, contact DE another way");

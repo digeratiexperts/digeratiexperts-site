@@ -10,8 +10,11 @@ import {
   DESK_CHAT_CONSENT_VERSION,
   currentDeskChatConsent,
   deskChatConsentStorageKey,
+  deskPriorDescriptionNote,
   isCurrentDeskChatConsent,
+  readPriorSituationAttachment,
   splitDeskChatConsentNotice,
+  DESK_CHAT_PRIOR_DESCRIPTION_NOTE,
 } from "./deskChatConsent";
 
 describe("DE Desk recording consent notice", () => {
@@ -40,5 +43,14 @@ describe("DE Desk recording consent notice", () => {
     expect(deskChatConsentStorageKey()).toContain(DESK_CHAT_CONSENT_NOTICE_SHA256.slice(0, 16));
     const parts = splitDeskChatConsentNotice();
     expect(`${parts.before}Privacy Policy${parts.after}`).toBe(DESK_CHAT_CONSENT_NOTICE);
+  });
+
+  it("can note a description already attached from an earlier agree step", () => {
+    expect(DESK_CHAT_PRIOR_DESCRIPTION_NOTE).toBe("Your earlier description is attached to this chat");
+    expect(deskPriorDescriptionNote(null)).toBeNull();
+    expect(deskPriorDescriptionNote({})).toBeNull();
+    expect(deskPriorDescriptionNote({ descriptionAttached: false })).toBeNull();
+    expect(deskPriorDescriptionNote({ descriptionAttached: true })).toBe(DESK_CHAT_PRIOR_DESCRIPTION_NOTE);
+    expect(readPriorSituationAttachment()).toBeNull();
   });
 });

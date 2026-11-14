@@ -7,8 +7,16 @@ import {
   DESK_CHAT_CONSENT_VERSION,
   isCurrentDeskChatConsent,
 } from "@shared/deskChatConsent";
-import { clientIpFromReq } from "./portalLoginKnocksStore";
 import { recordDeskChatConsent } from "./services/msp-advisor/persist";
+
+
+/** Use Express req.ip (honors trust proxy). Never read client-supplied headers. */
+function consentIpFromReq(req: Request): string | null {
+  const ip = typeof req.ip === "string" ? req.ip.trim() : "";
+  if (ip) return ip.slice(0, 64);
+  const remote = req.socket?.remoteAddress;
+  return remote ? String(remote).slice(0, 64) : null;
+}
 
 export function currentDeskChatNoticeHash(): string {
   return createHash("sha256").update(DESK_CHAT_CONSENT_NOTICE, "utf8").digest("hex");
@@ -33,6 +41,6 @@ export async function recordAcceptedDeskChatConsent(req: Request, sessionId: str
     version: DESK_CHAT_CONSENT_VERSION,
     noticeHash: currentDeskChatNoticeHash(),
     consentedAt: new Date().toISOString(),
-    ip: clientIpFromReq(req),
+    ip: consentIpFromReq(req),
   });
 }

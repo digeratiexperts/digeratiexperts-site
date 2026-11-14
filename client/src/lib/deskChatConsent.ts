@@ -13,12 +13,16 @@ export {
   DESK_CHAT_CONSENT_NOTICE_SHA256,
   DESK_CHAT_CONSENT_PRIVACY_HREF,
   DESK_CHAT_CONSENT_VERSION,
+  DESK_CHAT_PRIOR_DESCRIPTION_NOTE,
   DESK_CHAT_RECORDED_LABEL,
   currentDeskChatConsent,
   deskChatConsentStorageKey,
+  deskPriorDescriptionNote,
   isCurrentDeskChatConsent,
+  readPriorSituationAttachment,
   splitDeskChatConsentNotice,
 } from "@shared/deskChatConsent";
+export type { DeskPriorSituationState } from "@shared/deskChatConsent";
 
 function browserStorage(): Storage | null {
   try {

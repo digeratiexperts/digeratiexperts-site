@@ -5,12 +5,20 @@ import {
   DESK_CHAT_CONSENT_DECLINE_LABEL,
   DESK_CHAT_CONSENT_HEADING,
   DESK_CHAT_CONSENT_PRIVACY_HREF,
+  DESK_CHAT_PRIOR_DESCRIPTION_NOTE,
   splitDeskChatConsentNotice,
 } from "@/lib/deskChatConsent";
 
-type DeskChatConsentGateProps = {
+export type DeskChatConsentGateProps = {
   onAgree: () => void;
   onDecline: () => void;
+  declined?: boolean;
+  descriptionAttached?: boolean;
+  onOpenTicket?: () => void;
+  ticketHref?: string;
+  ticketLabel?: string;
+  contactHref?: string;
+  contactLabel?: string;
   testId?: string;
 };
 
@@ -19,11 +27,55 @@ type DeskChatConsentGateProps = {
  * composer is shown or any message is sent. Closing the window or
  * scrolling is not consent. The other-way button never starts a chat.
  */
-export function DeskChatConsentGate({ onAgree, onDecline, testId = "desk-chat-consent" }: DeskChatConsentGateProps) {
+export function DeskChatConsentGate({
+  onAgree,
+  onDecline,
+  declined = false,
+  descriptionAttached = false,
+  onOpenTicket,
+  ticketHref,
+  ticketLabel = "Open a support ticket",
+  contactHref = "/contact",
+  contactLabel = "Use our contact form",
+  testId = "desk-chat-consent",
+}: DeskChatConsentGateProps) {
+  if (declined) {
+    return (
+      <div className="de-desk-consent de-desk-consent--other" data-testid="desk-other-contact-ways">
+        <h3 className="de-desk-consent-heading">Contact DE another way</h3>
+        <p className="de-desk-consent-copy">
+          You can reach Digerati Experts (DE) through our contact form, by opening a support ticket, or by phone.
+        </p>
+        <div className="de-desk-other-list">
+          <a href={contactHref} className="de-desk-other-card" data-testid="desk-other-contact-form">
+            <span className="de-desk-other-card-label">{contactLabel}</span>
+          </a>
+          {ticketHref ? (
+            <a href={ticketHref} className="de-desk-other-card" data-testid="desk-other-ticket">
+              <span className="de-desk-other-card-label">{ticketLabel}</span>
+            </a>
+          ) : (
+            <button type="button" className="de-desk-other-card" data-testid="desk-other-ticket" onClick={onOpenTicket}>
+              <span className="de-desk-other-card-label">{ticketLabel}</span>
+            </button>
+          )}
+          <a href={PRIMARY_PHONE.telHref} className="de-desk-other-card" data-testid="desk-chat-consent-phone">
+            <span className="de-desk-other-card-label">Call {PRIMARY_PHONE.display}</span>
+          </a>
+        </div>
+      </div>
+    );
+  }
+
   const parts = splitDeskChatConsentNotice();
   return (
     <div className="de-desk-consent" data-testid={testId} data-clarity-mask="true">
       <h3 className="de-desk-consent-heading">{DESK_CHAT_CONSENT_HEADING}</h3>
+      {descriptionAttached ? (
+        <p className="de-desk-consent-attached" data-testid="desk-chat-prior-description">
+          {DESK_CHAT_PRIOR_DESCRIPTION_NOTE}
+        </p>
+      ) : null}
       <p className="de-desk-consent-copy">
         {parts.before}
         <Link href={DESK_CHAT_CONSENT_PRIVACY_HREF} className="de-desk-consent-policy">
@@ -39,13 +91,6 @@ export function DeskChatConsentGate({ onAgree, onDecline, testId = "desk-chat-co
           {DESK_CHAT_CONSENT_DECLINE_LABEL}
         </button>
       </div>
-      <p className="de-desk-consent-phone">
-        Or call{" "}
-        <a href={PRIMARY_PHONE.telHref} data-testid="desk-chat-consent-phone">
-          {PRIMARY_PHONE.display}
-        </a>
-        .
-      </p>
     </div>
   );
 }

@@ -224,8 +224,9 @@ export default function PrivacyPolicy() {
 
             <div className="mb-12" id="chat-recording">
               <h2 className="text-2xl font-bold text-[#1A1228] mb-4">7. Chat and call recording and AI processing</h2>
-              <p className="text-[#3A3448] leading-relaxed">
-                When you use DE Desk, our website and client portal chat, or call or receive calls from Digerati Experts (DE), we record the conversation and keep a transcript. We tell you before any recording starts, and chat begins only after you agree. We use AI service providers acting on our behalf to understand and answer your messages and to analyze, summarize, and quality-check conversations. These providers process the content only to perform services for DE, and our agreements with them do not allow them to use your conversations to train their own models. DE staff may review recordings and transcripts to support you, resolve issues, and improve our service. We keep them only as long as we need them for those purposes or as the law requires, and then we delete them. If you don't want to be recorded or have your conversation processed by AI, don't start a chat. Use our contact form, open a support ticket, or call us. On a call, tell us you don't want to be recorded, and we'll stop recording and AI processing for the rest of that call. Please don't share passwords, payment card numbers, government ID numbers, or health information in chat or on recorded calls.
+              {/* TODO: Replace this placeholder with Legal-approved wording. Do not invent policy text. */}
+              <p className="text-[#3A3448] leading-relaxed italic" data-testid="privacy-chat-recording-pending">
+                TODO: Legal-approved wording for this section is pending and must be added before this page is published.
               </p>
             </div>
 
