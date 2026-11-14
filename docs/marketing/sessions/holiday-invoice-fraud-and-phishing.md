@@ -53,6 +53,10 @@ On Thursday 19 November at 11:00 AM Arizona time we'll walk through what payment
 Forward this to whoever pays your bills. They'll thank you in January.
 
 Register: https://digeratiexperts.com/events/holiday-invoice-fraud-and-phishing
+
+--
+Digerati Experts · [BUSINESS_POSTAL_ADDRESS]
+Unsubscribe: [Unsubscribe link: added by the sending tool]
 ```
 
 ### B — Prospects (Thu 22 Oct; resend to non-openers Thu 5 Nov)
@@ -77,6 +81,10 @@ Register: https://digeratiexperts.com/events/holiday-invoice-fraud-and-phishing
 
 [Sender name]
 Digerati Experts · Chandler, Arizona
+
+--
+Digerati Experts · [BUSINESS_POSTAL_ADDRESS]
+Unsubscribe: [Unsubscribe link: added by the sending tool]
 ```
 
 ### C — Registrants (Thu 12 Nov)
@@ -97,6 +105,10 @@ See the session page: https://digeratiexperts.com/events/holiday-invoice-fraud-a
 
 [Sender name]
 Digerati Experts · Chandler, Arizona
+
+--
+Digerati Experts · [BUSINESS_POSTAL_ADDRESS]
+Unsubscribe: [Unsubscribe link: added by the sending tool]
 ```
 
 ### D — Registrants (Wed 18 Nov)
@@ -117,6 +129,10 @@ Bring whoever approves payments. And whoever approves them when that person is o
 
 [Sender name]
 Digerati Experts · Chandler, Arizona
+
+--
+Digerati Experts · [BUSINESS_POSTAL_ADDRESS]
+Unsubscribe: [Unsubscribe link: added by the sending tool]
 ```
 
 ### E — Registrants and attendees (Mon 23 Nov)
@@ -140,6 +156,10 @@ Check my email security: https://digeratiexperts.com/go/email-security
 
 [Sender name]
 Digerati Experts · Chandler, Arizona
+
+--
+Digerati Experts · [BUSINESS_POSTAL_ADDRESS]
+Unsubscribe: [Unsubscribe link: added by the sending tool]
 ```
 
 ## 3. LinkedIn

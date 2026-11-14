@@ -160,6 +160,9 @@ Optional per feature.
 | `ENABLE_STRIPE` | config | `server/production.config.ts` | Kill switch. |
 | `ENABLE_ZOHO` | config | `server/production.config.ts` | Kill switch. |
 | `ZEPTOMAIL_API_TOKEN` | secret | `server/services/notificationService.ts`, `server/routes.ts` | Transactional email. Without it notifications only log. |
+| `MARKETING_EMAIL_ENABLED` | config | `server/marketingEmail.ts` | `true` allows marketing email (newsletter welcome and other list sends). Off by default. Transactional email is not affected. |
+| `BUSINESS_POSTAL_ADDRESS` | config | `server/marketingEmail.ts`, `shared/marketingEmail.ts` | Mailing address printed in every marketing footer. A PO box or mailbox service address, never a home address. Unset, footers show `[BUSINESS_POSTAL_ADDRESS]` and no marketing email is sent even with the switch on. |
+| `MARKETING_UNSUBSCRIBE_SECRET` | secret | `server/marketingEmail.ts` | Signs unsubscribe links; falls back to `SESSION_SECRET`. Changing it breaks links already sent. |
 | `ADMIN_EMAIL` | config | `server/deskTicketFallback.ts`, `server/services/notificationService.ts` | Recipient of admin notifications. |
 | `SALES_LEAD_EMAIL` | config | `server/services/notificationService.ts` | Recipient of lead notifications. |
 | `DESK_FALLBACK_EMAIL` | config | `server/deskTicketFallback.ts` | Where failover Desk tickets are emailed. |

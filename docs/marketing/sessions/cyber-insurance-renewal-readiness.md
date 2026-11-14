@@ -62,6 +62,10 @@ Save your seat: https://digeratiexperts.com/events/cyber-insurance-renewal-readi
 
 [Sender name]
 Digerati Experts · Chandler, Arizona
+
+--
+Digerati Experts · [BUSINESS_POSTAL_ADDRESS]
+Unsubscribe: [Unsubscribe link: added by the sending tool]
 ```
 
 ### B — Prospects (Thu 22 Oct; resend to non-openers Thu 29 Oct)
@@ -86,6 +90,10 @@ Save your seat: https://digeratiexperts.com/events/cyber-insurance-renewal-readi
 
 [Sender name]
 Digerati Experts · Chandler, Arizona
+
+--
+Digerati Experts · [BUSINESS_POSTAL_ADDRESS]
+Unsubscribe: [Unsubscribe link: added by the sending tool]
 ```
 
 ### C — Registrants (Thu 29 Oct)
@@ -106,6 +114,10 @@ Add it to your calendar: https://digeratiexperts.com/events/cyber-insurance-rene
 
 [Sender name]
 Digerati Experts · Chandler, Arizona
+
+--
+Digerati Experts · [BUSINESS_POSTAL_ADDRESS]
+Unsubscribe: [Unsubscribe link: added by the sending tool]
 ```
 
 ### D — Registrants (Wed 4 Nov)
@@ -126,6 +138,10 @@ Coffee recommended. Cameras optional. Questionnaire encouraged.
 
 [Sender name]
 Digerati Experts · Chandler, Arizona
+
+--
+Digerati Experts · [BUSINESS_POSTAL_ADDRESS]
+Unsubscribe: [Unsubscribe link: added by the sending tool]
 ```
 
 ### E — Registrants and attendees (Mon 9 Nov)
@@ -147,6 +163,10 @@ See the renewal readiness review: https://digeratiexperts.com/go/cyber-insurance
 
 [Sender name]
 Digerati Experts · Chandler, Arizona
+
+--
+Digerati Experts · [BUSINESS_POSTAL_ADDRESS]
+Unsubscribe: [Unsubscribe link: added by the sending tool]
 ```
 
 ## 3. LinkedIn
