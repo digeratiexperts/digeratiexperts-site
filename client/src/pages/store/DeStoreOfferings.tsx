@@ -5,20 +5,26 @@ import { refurbishedGradeTitle } from "@shared/deStoreLegalCopy";
 import { DeStoreShell } from "@/components/store/DeStoreShell";
 import { loadDeStoreCatalog, type DeStoreCatalogItem, type DeStoreStatus } from "@/lib/deStoreApi";
 
+const OFFERING_ACCENT = {
+  proactive_ecosystem: "magenta",
+  refurbished_kits: "electric",
+  standalone_services: "cyan",
+} as const;
+
 function CatalogGrid({ items }: { items: DeStoreCatalogItem[] }) {
   if (!items.length) {
     return (
-      <p className="mt-8 max-w-2xl text-lg leading-relaxed text-zinc-300">
+      <p className="mt-10 max-w-2xl text-lg leading-relaxed text-zinc-300">
         Listings will appear here once they are published. Kit listings stay hidden until required software disclosures are complete. No prices are shown until Joseph confirms them.
       </p>
     );
   }
   return (
-    <ul className="mt-8 grid gap-6 sm:grid-cols-2">
+    <ul className="mt-10 grid gap-6 sm:grid-cols-2">
       {items.map((item) => (
-        <li key={item.sku} className="rounded-2xl border border-white/15 bg-de-surface p-6">
-          <p className="text-sm uppercase tracking-[0.18em] text-de-magenta">
-            {item.previewOnly ? "Preview listing — not for sale" : "Published"}
+        <li key={item.sku} className="rounded-3xl border border-white/15 bg-black/55 p-7 backdrop-blur-sm">
+          <p className="text-sm uppercase tracking-[0.18em] text-[rgb(var(--de-accent-ink-rgb))]">
+            {item.previewOnly ? "Preview listing - not for sale" : "Published"}
           </p>
           <h3 className="mt-3 text-2xl font-semibold text-white">{item.name}</h3>
           {item.refurbishedGrade && (
@@ -48,45 +54,64 @@ function OfferingsBody({ status }: { status: DeStoreStatus }) {
 
   return (
     <div>
-      <p className="text-sm uppercase tracking-[0.22em] text-de-magenta">Digerati Experts Store</p>
-      <h1 className="mt-4 max-w-3xl text-4xl font-semibold tracking-tight text-white sm:text-5xl">
+      <p className="text-sm uppercase tracking-[0.22em] text-[rgb(var(--de-accent-ink-rgb))]">Digerati Experts Store</p>
+      <h1 className="mt-4 max-w-4xl text-4xl font-semibold tracking-tight text-white sm:text-6xl">
         {selected ? selected.label : "Three ways to buy"}
       </h1>
-      <p className="mt-5 max-w-3xl text-lg leading-relaxed text-zinc-300">
+      <p className="mt-6 max-w-3xl text-lg leading-relaxed text-zinc-300 sm:text-xl">
         {selected
           ? selected.summary
           : "Order the ProActive Ecosystem, refurbished preconfigured kits, or standalone services and dashboards for IT departments. Agreements are accepted before anything is released."}
       </p>
-      <p className="mt-4 max-w-3xl text-base leading-relaxed text-zinc-400">{status.whereWeSellShort}</p>
+      <p className="mt-5 max-w-3xl text-base leading-relaxed text-zinc-400">{status.whereWeSellShort}</p>
       <p className="mt-4 max-w-3xl text-base leading-relaxed text-zinc-400">{status.shippingPromise}</p>
 
       {!selected && (
-        <ul className="mt-12 grid gap-6 lg:grid-cols-3">
-          {status.offerings.map((offering) => (
-            <li key={offering.id}>
-              <Link
-                href={`/store/offerings/${offering.id}`}
-                className="block h-full rounded-2xl border border-white/15 bg-de-surface p-6 transition hover:border-de-magenta focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-de-magenta"
-              >
-                <h2 className="text-2xl font-semibold text-white">{offering.label}</h2>
-                <p className="mt-3 text-base leading-relaxed text-zinc-300">{offering.summary}</p>
-                <span className="mt-6 inline-block text-sm font-medium text-de-magenta">View this offering</span>
-              </Link>
-            </li>
-          ))}
+        <ul className="mt-14 grid gap-6 lg:grid-cols-3">
+          {status.offerings.map((offering, index) => {
+            const accent = OFFERING_ACCENT[offering.id as keyof typeof OFFERING_ACCENT] ?? "electric";
+            return (
+              <li key={offering.id}>
+                <Link
+                  href={`/store/offerings/${offering.id}`}
+                  data-accent={accent}
+                  data-testid={`store-offering-${offering.id}`}
+                  className="group relative block h-full overflow-hidden rounded-3xl border border-white/12 bg-black/60 p-8 transition hover:border-[rgb(var(--de-accent-ink-rgb))] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[rgb(var(--de-accent-ink-rgb))]"
+                >
+                  <div
+                    className="pointer-events-none absolute inset-0 opacity-80"
+                    style={{
+                      background:
+                        "radial-gradient(ellipse 80% 60% at 0% 0%, rgba(var(--de-accent-rgb), 0.22) 0%, transparent 62%)",
+                    }}
+                  />
+                  <div className="relative">
+                    <p className="font-mono text-sm uppercase tracking-[0.22em] text-[rgb(var(--de-accent-ink-rgb))]">
+                      {String(index + 1).padStart(2, "0")}
+                    </p>
+                    <h2 className="mt-5 text-3xl font-semibold leading-tight text-white">{offering.label}</h2>
+                    <p className="mt-4 text-base leading-relaxed text-zinc-300">{offering.summary}</p>
+                    <span className="mt-8 inline-flex items-center text-sm font-semibold text-[rgb(var(--de-accent-ink-rgb))]">
+                      View this offering
+                    </span>
+                  </div>
+                </Link>
+              </li>
+            );
+          })}
         </ul>
       )}
 
       {selected && (
-        <div className="mt-10">
-          <Link href="/store/offerings" className="text-sm text-de-magenta underline underline-offset-4">
+        <div className="mt-12">
+          <Link href="/store/offerings" className="text-sm font-medium text-[rgb(var(--de-accent-ink-rgb))] underline underline-offset-4">
             All offerings
           </Link>
           <CatalogGrid items={items} />
-          <p className="mt-10">
+          <p className="mt-12">
             <Link
               href="/store/order"
-              className="inline-flex items-center rounded-full bg-de-magenta px-6 py-3 text-base font-semibold text-black hover:bg-de-magenta-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
+              className="inline-flex items-center rounded-full bg-de-magenta px-7 py-3.5 text-base font-semibold text-black hover:bg-de-magenta-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
             >
               Continue to checkout
             </Link>

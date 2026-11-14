@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { MegaMenu } from "@/components/MegaMenu";
+import { StorePageAtmosphere } from "@/components/store/StorePageAtmosphere";
 import { DigeratiEnhancedFooterSection } from "@/pages/sections/DigeratiEnhancedFooterSection";
 import { useSEO } from "@/hooks/useSEO";
 import NotFound from "@/pages/not-found";
@@ -35,9 +36,10 @@ export function DeStoreShell({
 
   if (status === undefined) {
     return (
-      <div className="min-h-screen bg-black text-white">
+      <div className="relative min-h-screen bg-black text-white" data-accent="electric">
+        <StorePageAtmosphere intensity={0.28} />
         <MegaMenu />
-        <main className="mx-auto max-w-5xl px-6 py-24">
+        <main className="relative mx-auto max-w-7xl px-5 pb-24 pt-[calc(var(--de-nav-offset)+1.5rem)] sm:px-8">
           <p className="text-de-muted">Loading the Digerati Experts store.</p>
         </main>
       </div>
@@ -47,9 +49,12 @@ export function DeStoreShell({
   if (!status) return <NotFound />;
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="relative min-h-screen bg-black text-white" data-accent="electric">
+      <StorePageAtmosphere intensity={0.32} />
       <MegaMenu />
-      <main className="mx-auto max-w-6xl px-6 pb-24 pt-32 sm:px-8 sm:pt-36">{children(status)}</main>
+      <main className="relative mx-auto max-w-7xl px-5 pb-32 pt-[calc(var(--de-nav-offset)+1.5rem)] sm:px-8 lg:pb-24">
+        {children(status)}
+      </main>
       <DigeratiEnhancedFooterSection />
     </div>
   );
