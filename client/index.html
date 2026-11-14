@@ -4,13 +4,6 @@
     <meta charset="UTF-8" >
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5, viewport-fit=cover" >
     
-    <!-- DNS Prefetch for faster resource loading -->
-    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
-    <link rel="dns-prefetch" href="https://fonts.gstatic.com">
-    
-    <!-- Preconnect to critical domains (avoid unused font preload warnings from mismatched subset URLs) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="alternate" type="text/plain" href="https://digeratiexperts.com/llms.txt" title="llms.txt">
     
     <!-- Primary Meta Tags -->
@@ -86,16 +79,7 @@
     
     <!-- Preload the self-hosted brand faces so first paint uses them, not a system fallback. -->
     <link rel="preload" href="/fonts/space-grotesk-latin.woff2" as="font" type="font/woff2" crossorigin>
-    <!--
-      Brand fonts are SELF-HOSTED (client/src/styles/brand-fonts.css → /fonts/*.woff2);
-      the site always renders correctly without this CDN link. The link below is
-      PROGRESSIVE ENHANCEMENT only: it adds extra weights/subsets when reachable,
-      loads async (media=print → all on load), and is safe to remove entirely.
-    -->
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
-    <noscript>
-      <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-    </noscript>
+
     
     <!-- Google Consent Mode v2 — must run before GA4 loads -->
     <script data-cfasync="false">
