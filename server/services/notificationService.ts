@@ -25,6 +25,23 @@ export function solutionFallbackRecipients(): string[] {
   return Array.from(new Set([ADMIN_EMAIL, sales].map((address) => address.trim().toLowerCase()).filter(Boolean)));
 }
 
+/**
+ * What a message is for. ZeptoMail is a transactional service: an account
+ * caught sending promotional or bulk mail can be suspended, and every
+ * receipt, reset, verification, invite and ticket email shares this one
+ * token. So sendEmail carries transactional mail and the single welcome note
+ * sent in reply to a signup, and refuses every other kind. Newsletters,
+ * campaigns and promotions go through the marketing sender in
+ * server/marketingEmail.ts.
+ */
+export type EmailPurpose = "transactional" | "signup-welcome" | "newsletter" | "campaign" | "promotion";
+
+const TRANSACTIONAL_SENDER_PURPOSES: ReadonlySet<EmailPurpose> = new Set(["transactional", "signup-welcome"]);
+
+export function transactionalSenderAccepts(purpose: EmailPurpose): boolean {
+  return TRANSACTIONAL_SENDER_PURPOSES.has(purpose);
+}
+
 export interface EmailOptions {
   to: string | string[];
   subject: string;
@@ -32,6 +49,8 @@ export interface EmailOptions {
   replyTo?: { address: string; name?: string };
   htmlBody: string;
   textBody?: string;
+  /** Defaults to "transactional". Anything but that and "signup-welcome" is refused. */
+  purpose?: EmailPurpose;
   /**
    * Marketing email only: one-click unsubscribe URL for the RFC 8058
    * List-Unsubscribe headers. Send marketing through server/marketingEmail.ts,
@@ -47,6 +66,12 @@ interface ZeptoMailResponse {
 }
 
 export async function sendEmail(options: EmailOptions): Promise<boolean> {
+  const purpose = options.purpose ?? "transactional";
+  if (!transactionalSenderAccepts(purpose)) {
+    logger.warn(`[EMAIL] refused ${purpose} mail on the transactional sender`, { subject: options.subject });
+    return false;
+  }
+
   // Review instances must never mail real leads/clients.
   if (shouldBlockMutation(`outbound email: ${options.subject}`)) {
     return false;

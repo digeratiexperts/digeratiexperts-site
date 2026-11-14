@@ -5677,7 +5677,7 @@ export async function registerRoutes(app: Express) {
   });
 
   // One-click unsubscribe for marketing email (RFC 8058).
-  registerMarketingUnsubscribeRoutes(app);
+  registerMarketingUnsubscribeRoutes(app, { adminGuards: [authMiddleware as any, requireAdmin as any] });
 
   // ===== NEWSLETTER SUBSCRIPTION =====
   app.post("/api/newsletter", [leadQuoteRateLimiter, validateInput], async (req: AuthenticatedRequest, res: Response) => {

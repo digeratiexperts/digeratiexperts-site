@@ -3,16 +3,18 @@ import { createServer, type Server } from "http";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { logger } from "./logger";
 import { sendMarketingEmail, unsubscribeToken, type OptOutStore } from "./marketingEmail";
-import { registerMarketingUnsubscribeRoutes, UNSUBSCRIBE_PATH } from "./marketingUnsubscribeRoutes";
+import { OPT_OUT_EXPORT_PATH, registerMarketingUnsubscribeRoutes, UNSUBSCRIBE_PATH } from "./marketingUnsubscribeRoutes";
 
 const ENV = {
   MARKETING_EMAIL_ENABLED: "true",
   BUSINESS_POSTAL_ADDRESS: "PO Box 0000, Example City, ZZ 00000",
   MARKETING_UNSUBSCRIBE_SECRET: "route-secret",
+  MARKETING_UNSUBSCRIBE_SECRET_PREVIOUS: "retired-secret",
 };
 
 const rows = new Map<string, string>();
 let failWrites = false;
+let failReads = false;
 const store: OptOutStore = {
   async has(email) {
     return rows.has(email);
@@ -21,7 +23,15 @@ const store: OptOutStore = {
     if (failWrites) throw new Error("db down");
     rows.set(email, source);
   },
+  async list() {
+    if (failReads) throw new Error("db down");
+    return [...rows].map(([email, source]) => ({ email, source, optedOutAt: "2026-11-01T00:00:00.000Z" }));
+  },
 };
+
+/** Stand-in for the portal admin guards: the x-test-role header decides. */
+const adminOnly = (req: express.Request, res: express.Response, next: express.NextFunction) =>
+  req.headers["x-test-role"] === "admin" ? next() : res.status(403).json({ error: "forbidden" });
 
 describe("marketing unsubscribe endpoint", () => {
   let server: Server;
@@ -34,7 +44,7 @@ describe("marketing unsubscribe endpoint", () => {
     const app = express();
     app.use(express.json());
     app.use(express.urlencoded({ extended: false }));
-    registerMarketingUnsubscribeRoutes(app, { store, env: ENV });
+    registerMarketingUnsubscribeRoutes(app, { store, env: ENV, adminGuards: [adminOnly] });
     server = createServer(app);
     await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
     const address = server.address();
@@ -50,6 +60,7 @@ describe("marketing unsubscribe endpoint", () => {
   beforeEach(() => {
     rows.clear();
     failWrites = false;
+    failReads = false;
   });
 
   const url = (email: string, secret = ENV.MARKETING_UNSUBSCRIBE_SECRET) =>
@@ -86,6 +97,12 @@ describe("marketing unsubscribe endpoint", () => {
     expect(rows.get("reader@example.com")).toBe("unsubscribe-page");
   });
 
+  it("a link signed with the previous key still unsubscribes", async () => {
+    const res = await oneClick(url("reader@example.com", ENV.MARKETING_UNSUBSCRIBE_SECRET_PREVIOUS));
+    expect(res.status).toBe(200);
+    expect(rows.get("reader@example.com")).toBe("one-click");
+  });
+
   it("a token signed with another key opts out nobody", async () => {
     const res = await oneClick(url("reader@example.com", "wrong"));
     expect(res.status).toBe(400);
@@ -101,10 +118,32 @@ describe("marketing unsubscribe endpoint", () => {
     await oneClick(url("Reader@Example.com"));
     const send = vi.fn(async () => true);
     const result = await sendMarketingEmail(
-      { kind: "test", to: "READER@example.com", subject: "s", title: "t", contentHtml: "<p>x</p>", contentText: "x" },
+      { purpose: "signup-welcome", to: "READER@example.com", subject: "s", title: "t", contentHtml: "<p>x</p>", contentText: "x" },
       { env: ENV, store, send },
     );
     expect(result).toEqual({ sent: false, reason: "recipient opted out" });
     expect(send).not.toHaveBeenCalled();
+  });
+
+  it("exports the opt-out list to admins only, as JSON or CSV", async () => {
+    await oneClick(url("reader@example.com"));
+    expect((await fetch(base + OPT_OUT_EXPORT_PATH)).status).toBe(403);
+
+    const json = await fetch(base + OPT_OUT_EXPORT_PATH, { headers: { "x-test-role": "admin" } });
+    expect(json.status).toBe(200);
+    expect(json.headers.get("cache-control")).toBe("no-store");
+    expect(await json.json()).toEqual({
+      count: 1,
+      records: [{ email: "reader@example.com", source: "one-click", optedOutAt: "2026-11-01T00:00:00.000Z" }],
+    });
+
+    const csv = await fetch(`${base}${OPT_OUT_EXPORT_PATH}?format=csv`, { headers: { "x-test-role": "admin" } });
+    expect(csv.headers.get("content-type")).toMatch(/text\/csv/);
+    expect(await csv.text()).toBe("email,source,opted_out_at\nreader@example.com,one-click,2026-11-01T00:00:00.000Z\n");
+  });
+
+  it("export answers 503 when the list cannot be read", async () => {
+    failReads = true;
+    expect((await fetch(base + OPT_OUT_EXPORT_PATH, { headers: { "x-test-role": "admin" } })).status).toBe(503);
   });
 });

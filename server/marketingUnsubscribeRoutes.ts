@@ -1,8 +1,8 @@
-import type { Express, Request, Response } from "express";
+import type { Express, Request, RequestHandler, Response } from "express";
 import rateLimit from "express-rate-limit";
 import type { EmailEnv } from "@shared/marketingEmail";
 import { logger } from "./logger";
-import { dbOptOutStore, verifyUnsubscribeTokenFromEnv, type OptOutStore } from "./marketingEmail";
+import { dbOptOutStore, exportSuppressions, suppressionsCsv, verifyUnsubscribeTokenFromEnv, type OptOutStore } from "./marketingEmail";
 
 /**
  * Marketing email unsubscribe.
@@ -16,12 +16,20 @@ import { dbOptOutStore, verifyUnsubscribeTokenFromEnv, type OptOutStore } from "
  * because link scanners and previewers fetch URLs in mail on their own.
  * The token is an HMAC over the address (see marketingEmail.ts), so a link
  * only ever opts out the address it was sent to.
+ *
+ *   GET  /api/portal/admin/marketing/opt-outs[?format=csv]
+ *
+ * DE admins only: the whole opt-out list, for loading into the bulk
+ * sender's suppression list before a campaign goes out.
  */
 
 export const UNSUBSCRIBE_PATH = "/api/email/unsubscribe";
+export const OPT_OUT_EXPORT_PATH = "/api/portal/admin/marketing/opt-outs";
 const HELP_ADDRESS = "admin@digeratiexperts.com";
 
 export interface UnsubscribeRouteDeps {
+  /** Guards for the export; must admit DE admins only. */
+  adminGuards: RequestHandler[];
   store?: OptOutStore;
   env?: EmailEnv;
 }
@@ -58,7 +66,8 @@ const invalidLink = (res: Response) =>
     `<p>The link may have been cut off. Use the full link from the email, or write to <a href="mailto:${HELP_ADDRESS}">${HELP_ADDRESS}</a> and we will remove you by hand.</p>`,
   );
 
-export function registerMarketingUnsubscribeRoutes(app: Express, deps: UnsubscribeRouteDeps = {}): void {
+export function registerMarketingUnsubscribeRoutes(app: Express, deps: UnsubscribeRouteDeps): void {
+  if (!deps.adminGuards?.length) throw new Error("opt-out export needs admin guards");
   const store = deps.store ?? dbOptOutStore;
   const env = () => deps.env ?? process.env;
   const limiter = rateLimit({ windowMs: 60_000, max: 30, standardHeaders: true, legacyHeaders: false });
@@ -92,5 +101,24 @@ export function registerMarketingUnsubscribeRoutes(app: Express, deps: Unsubscri
     }
     logger.info(`[MARKETING_EMAIL] opt-out recorded (${oneClick ? "one-click" : "unsubscribe page"})`);
     page(res, 200, "You are unsubscribed", "<p>You will not get any more marketing email from Digerati Experts at this address.</p>");
+  });
+
+  app.get(OPT_OUT_EXPORT_PATH, ...deps.adminGuards, async (req: Request, res: Response) => {
+    res.set("Cache-Control", "no-store");
+    let exported;
+    try {
+      exported = await exportSuppressions(store);
+    } catch (error: any) {
+      logger.error("[MARKETING_EMAIL] opt-out export failed", error);
+      return res.status(503).json({ error: "The opt-out list could not be read. Do not send until it can." });
+    }
+    logger.info(`[MARKETING_EMAIL] opt-out list exported (${exported.count} addresses)`);
+    if (req.query.format === "csv") {
+      return res
+        .type("text/csv")
+        .set("Content-Disposition", 'attachment; filename="marketing-opt-outs.csv"')
+        .send(suppressionsCsv(exported.records));
+    }
+    res.json(exported);
   });
 }
