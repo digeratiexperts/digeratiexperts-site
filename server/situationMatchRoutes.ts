@@ -8,11 +8,28 @@
  *        never ids from the browser. Off (404) until HUB_PROFILE_DRAFTS_ENABLED=1.
  */
 import type { Express, NextFunction, Request, RequestHandler, Response } from "express";
+import rateLimit from "express-rate-limit";
 import { verifyTurnstile } from "./middleware/security";
 import { createProfileDraft, profileDraftsEnabled } from "./integrations/hubProfileDraft";
 import { PROFILE_DRAFT_CONSENT_VERSION, itPlan, type SituationMatch } from "@shared/situationMatch";
 
 export const SITUATION_BODY_MAX_BYTES = 4 * 1024;
+
+const defaultMatchRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many chat messages. Please try again shortly." },
+});
+
+const defaultDraftRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many requests. Please try again shortly." },
+});
 
 /** Rejects a body over 4 KB (the text itself is capped at 1,000 characters). */
 export function situationBodyCap(req: Request, res: Response, next: NextFunction) {
@@ -26,11 +43,13 @@ export function situationBodyCap(req: Request, res: Response, next: NextFunction
 
 export function registerSituationMatchRoutes(
   app: Express,
-  opts: { rateLimiter: RequestHandler; draftRateLimiter: RequestHandler; turnstile?: RequestHandler },
+  opts: { rateLimiter?: RequestHandler; draftRateLimiter?: RequestHandler; turnstile?: RequestHandler } = {},
 ): void {
   const turnstile = opts.turnstile || verifyTurnstile;
+  const extraMatchLimiters = opts.rateLimiter ? [opts.rateLimiter] : [];
+  const extraDraftLimiters = opts.draftRateLimiter ? [opts.draftRateLimiter] : [];
 
-  app.post("/api/public/advisor/situation-match", [opts.rateLimiter, situationBodyCap, turnstile], async (req: Request, res: Response) => {
+  app.post("/api/public/advisor/situation-match", [defaultMatchRateLimiter, ...extraMatchLimiters, situationBodyCap, turnstile], async (req: Request, res: Response) => {
     try {
       const { handleSituationMatch } = await import("./services/msp-advisor/situation-match");
       const { text, sessionId } = req.body || {};
@@ -56,7 +75,7 @@ export function registerSituationMatchRoutes(
     }
   });
 
-  app.post("/api/public/advisor/situation-draft", [opts.draftRateLimiter, situationBodyCap, turnstile], async (req: Request, res: Response) => {
+  app.post("/api/public/advisor/situation-draft", [defaultDraftRateLimiter, ...extraDraftLimiters, situationBodyCap, turnstile], async (req: Request, res: Response) => {
     if (!profileDraftsEnabled()) return res.status(404).json({ error: "Not available" });
     try {
       const { getSession } = await import("./services/msp-advisor");
