@@ -8,7 +8,8 @@ import {
   isDeStorePreviewCatalogEnabled,
   readSiteStateListConfig,
 } from "./config/deStore";
-import { csrfOriginGuard } from "./deStoreCsrf";
+import { csrfOriginGuard } from "./autoRenewRoutes";
+import { isAutoRenewContractEnabled } from "./config/autoRenewContract";
 import { requestIp, requestUserAgent } from "./deStoreClickwrap";
 import { placeStoreOrder, quoteStoreOrder, type StoreCheckoutCommand } from "./deStoreCheckout";
 import { getStoreFulfillmentRecord, recordHubFulfillmentEvent } from "./deStoreFulfillment";
@@ -34,6 +35,7 @@ export interface DeStoreRouteDeps {
     email: string;
     paymentConfirmation?: string;
   }) => Promise<PaymentCaptureResult>;
+  autoRenewContractEnabled: () => boolean;
   now?: () => Date;
 }
 
@@ -50,6 +52,7 @@ export const defaultDeStoreRouteDeps: DeStoreRouteDeps = {
   stateList: () => readSiteStateListConfig(),
   hub: hubStoreClient,
   capturePayment: defaultDeStoreCapturePayment,
+  autoRenewContractEnabled: () => isAutoRenewContractEnabled(),
 };
 
 function notFound(_req: Request, res: Response) {
@@ -188,6 +191,7 @@ export function registerDeStoreRoutes(app: Express, deps: DeStoreRouteDeps = def
       addresses: { billTo, shipTo, serviceAddress },
       lines: Array.isArray(req.body?.lines) ? (req.body.lines as OrderLineInput[]) : [],
       clickwrap: req.body?.clickwrap ?? {},
+      autoRenewConsent: req.body?.consent ?? req.body?.autoRenewConsent ?? null,
       paymentConfirmation: typeof req.body?.paymentConfirmation === "string" ? req.body.paymentConfirmation : undefined,
       idempotencyKey: typeof req.body?.idempotencyKey === "string" ? req.body.idempotencyKey : undefined,
     };
@@ -197,6 +201,7 @@ export function registerDeStoreRoutes(app: Express, deps: DeStoreRouteDeps = def
       userAgent: requestUserAgent(req),
       stateList: deps.stateList(),
       consumerCheckout: deps.consumerCheckout(),
+      autoRenewContractEnabled: deps.autoRenewContractEnabled(),
       hub: deps.hub,
       capturePayment: deps.capturePayment,
     });

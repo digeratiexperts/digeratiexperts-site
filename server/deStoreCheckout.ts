@@ -10,11 +10,20 @@ import {
 } from "@shared/deStoreContract";
 import { evaluateSiteStateList, type StateListConfig } from "@shared/deStoreStateList";
 import {
+  autoRenewConsentRequiredSkus,
+  frequencyFromGatedSku,
+  isAutoRenewGatedSku,
+  termMonthsForFrequency,
+  type AutoRenewClientConsent,
+  type AutoRenewFrequency,
+} from "@shared/autoRenewContract";
+import {
   recordClickwrapAcceptances,
   type ClickwrapClientInput,
   type ClickwrapFailure,
 } from "./deStoreClickwrap";
 import type { HubStoreClient, HubStoreResult } from "./integrations/hubStoreClient";
+import { AutoRenewConsentError, assertValidAutoRenewConsent } from "./integrations/hubSubscriptionsContract";
 
 export interface StoreCheckoutAddresses {
   billTo: PostalAddress;
@@ -42,6 +51,7 @@ export interface StoreCheckoutCommand {
   addresses: StoreCheckoutAddresses;
   lines: OrderLineInput[];
   clickwrap: ClickwrapClientInput;
+  autoRenewConsent?: Partial<AutoRenewClientConsent> | null;
   paymentConfirmation?: string;
   idempotencyKey?: string;
 }
@@ -52,6 +62,7 @@ export interface StoreCheckoutDeps {
   userAgent: string;
   stateList: StateListConfig;
   consumerCheckout: boolean;
+  autoRenewContractEnabled: boolean;
   hub: HubStoreClient;
   capturePayment: (input: PaymentCaptureInput) => Promise<PaymentCaptureResult>;
   newSiteOrderId?: () => string;
@@ -81,6 +92,104 @@ export type StoreCheckoutSuccess = {
 export type StoreQuoteResult =
   | { ok: true; status: 200; quote: TaxQuoteResponse; paymentAttempted: false }
   | StoreCheckoutFailure;
+
+const AUTORENEW_DISABLED_ERROR =
+  "Subscription checkout is not available. Request a quote for these items.";
+const AUTORENEW_MIXED_CART_ERROR =
+  "Auto-renew checkout can only include Phishing Simulation Starter or Security Awareness Training. Remove other items or request a quote.";
+
+export function autoRenewPlanFromStoreLines(lines: OrderLineInput[]):
+  | { required: false }
+  | { required: true; error: string }
+  | {
+      required: true;
+      skuIds: string[];
+      priceCents: number;
+      frequency: AutoRenewFrequency;
+      termMonths: number;
+    } {
+  if (autoRenewConsentRequiredSkus(lines).length === 0) return { required: false };
+  if (lines.some((line) => !isAutoRenewGatedSku(line.sku))) {
+    return { required: true, error: AUTORENEW_MIXED_CART_ERROR };
+  }
+  const frequencies = new Set<AutoRenewFrequency>();
+  for (const line of lines) {
+    const frequency = frequencyFromGatedSku(line.sku);
+    if (!frequency) return { required: true, error: `Cannot determine billing frequency for ${line.sku}` };
+    frequencies.add(frequency);
+  }
+  if (frequencies.size !== 1) {
+    return {
+      required: true,
+      error: "Items in this cart renew on different schedules. Request a quote or check out each plan separately.",
+    };
+  }
+  const frequency = [...frequencies][0]!;
+  const priceCents = lines.reduce((sum, line) => sum + line.unitAmountCents * line.quantity, 0);
+  if (!Number.isInteger(priceCents) || priceCents <= 0) {
+    return { required: true, error: "Subscription price is invalid" };
+  }
+  return {
+    required: true,
+    skuIds: lines.map((line) => line.sku),
+    priceCents,
+    frequency,
+    termMonths: termMonthsForFrequency(frequency),
+  };
+}
+
+function refuseGatedOneTimePayment(
+  code: string,
+  error: string,
+  status: number,
+  extra?: Partial<StoreCheckoutFailure>,
+): StoreCheckoutFailure {
+  return {
+    ok: false,
+    status,
+    code,
+    error,
+    paymentAttempted: false,
+    ...extra,
+  };
+}
+
+export function enforceAutoRenewBeforePayment(
+  command: Pick<StoreCheckoutCommand, "lines" | "autoRenewConsent">,
+  deps: Pick<StoreCheckoutDeps, "autoRenewContractEnabled" | "now">,
+): StoreCheckoutFailure | null {
+  const plan = autoRenewPlanFromStoreLines(command.lines);
+  if (!plan.required) return null;
+  if (!deps.autoRenewContractEnabled) {
+    return refuseGatedOneTimePayment("AUTORENEW_CONTRACT_DISABLED", AUTORENEW_DISABLED_ERROR, 404);
+  }
+  if ("error" in plan) {
+    return refuseGatedOneTimePayment("AUTORENEW_CART_INVALID", plan.error, 409);
+  }
+  try {
+    assertValidAutoRenewConsent({
+      priceCents: plan.priceCents,
+      currency: "USD",
+      frequency: plan.frequency,
+      termMonths: plan.termMonths,
+      consent: {
+        ...command.autoRenewConsent,
+        autoRenewConsentAt: deps.now().toISOString(),
+      },
+    });
+  } catch (error) {
+    if (error instanceof AutoRenewConsentError) {
+      return refuseGatedOneTimePayment(error.code, error.message, 400, { missing: error.fields });
+    }
+    throw error;
+  }
+  return refuseGatedOneTimePayment(
+    "AUTORENEW_SUBSCRIPTION_REQUIRED",
+    "These items are billed as an auto-renewing subscription and cannot be charged as a one-time payment.",
+    409,
+  );
+}
+
 
 
 function isCompleteAddress(address: PostalAddress | null | undefined): address is PostalAddress {
@@ -277,7 +386,7 @@ export function resolveServiceAddress(addresses: StoreCheckoutAddresses): Postal
 
 export async function quoteStoreOrder(
   command: Pick<StoreCheckoutCommand, "email" | "buyerRole" | "accountId" | "currency" | "addresses" | "lines" | "idempotencyKey">,
-  deps: Omit<StoreCheckoutDeps, "capturePayment" | "consumerCheckout">,
+  deps: Omit<StoreCheckoutDeps, "capturePayment" | "consumerCheckout" | "autoRenewContractEnabled">,
 ): Promise<StoreQuoteResult> {
   if (!isUsableEmail(command.email)) {
     return {
@@ -366,6 +475,9 @@ export async function placeStoreOrder(
     now: deps.now().toISOString(),
   });
   if (!clickwrap.ok) return clickwrapFailure(clickwrap);
+
+  const autoRenewBlock = enforceAutoRenewBeforePayment(command, deps);
+  if (autoRenewBlock) return autoRenewBlock;
 
   const quoted = await quoteStoreOrder(command, deps);
   if (!quoted.ok) return quoted;

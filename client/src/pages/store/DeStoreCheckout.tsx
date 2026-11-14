@@ -1,9 +1,18 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { BuyerRole, PostalAddress, TaxQuoteResponse } from "@shared/deStoreContract";
 import { formatUsdFromCents } from "@shared/deStoreContract";
+import { AutoRenewTerms } from "@/components/store/AutoRenewTerms";
 import { DeStoreClickwrap, PLACE_ORDER_BUTTON_LABEL, type DeStoreClickwrapValue } from "@/components/store/DeStoreClickwrap";
 import { DeStoreShell } from "@/components/store/DeStoreShell";
+import { loadAutoRenewContractEnabled } from "@/lib/autoRenewCapabilities";
 import { deStoreFetch, type DeStoreStatus } from "@/lib/deStoreApi";
+import {
+  autoRenewConsentRequiredSkus,
+  frequencyFromGatedSku,
+  termMonthsForFrequency,
+  type AutoRenewClientConsent,
+  type AutoRenewFrequency,
+} from "@shared/autoRenewContract";
 
 const emptyAddress: PostalAddress = {
   name: "",
@@ -139,10 +148,38 @@ function CheckoutBody({ status }: { status: DeStoreStatus }) {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [confirmation, setConfirmation] = useState<string | null>(null);
+  const [autoRenewEnabled, setAutoRenewEnabled] = useState(false);
+  const [autoRenewConsentChecked, setAutoRenewConsentChecked] = useState(false);
+  const [autoRenewConsent, setAutoRenewConsent] = useState<AutoRenewClientConsent | null>(null);
 
   const shippingAddress = shipSameAsBilling ? billTo : shipTo;
   const readyForQuote = Boolean(email && billTo.street1 && billTo.city && billTo.region && billTo.postalCode && shippingAddress.street1);
-  const acknowledgementsReady = clickwrap.box1Accepted && clickwrap.box2Accepted && clickwrap.businessName.trim().length > 0;
+  // Cart lines stay empty until published catalog prices exist. Do not invent a cart or a price.
+  const lines: Array<{ sku: string; unitAmountCents: number; quantity: number }> = [];
+  const autoRenewSkus = autoRenewConsentRequiredSkus(lines);
+  const autoRenewFrequency: AutoRenewFrequency | null = autoRenewSkus.length
+    ? autoRenewSkus.reduce<AutoRenewFrequency | null>((found, sku) => {
+        const next = frequencyFromGatedSku(sku);
+        if (!found) return next;
+        return found === next ? found : null;
+      }, null)
+    : null;
+  const autoRenewPriceCents = lines
+    .filter((line) => autoRenewSkus.includes(line.sku))
+    .reduce((sum, line) => sum + line.unitAmountCents * line.quantity, 0);
+  const autoRenewRequired = autoRenewSkus.length > 0;
+  const autoRenewReady =
+    !autoRenewRequired || (autoRenewEnabled && autoRenewConsentChecked && autoRenewConsent !== null && autoRenewPriceCents > 0);
+  const acknowledgementsReady =
+    clickwrap.box1Accepted && clickwrap.box2Accepted && clickwrap.businessName.trim().length > 0 && autoRenewReady;
+
+  useEffect(() => {
+    const controller = new AbortController();
+    loadAutoRenewContractEnabled(controller.signal).then((enabled) => {
+      if (!controller.signal.aborted) setAutoRenewEnabled(enabled);
+    });
+    return () => controller.abort();
+  }, []);
 
   const payload = useMemo(
     () => ({
@@ -151,13 +188,14 @@ function CheckoutBody({ status }: { status: DeStoreStatus }) {
       billTo,
       shipTo: shippingAddress,
       serviceAddress: billTo,
-      lines: [] as Array<never>,
+      lines,
       clickwrap: {
         ...clickwrap,
         buttonText: PLACE_ORDER_BUTTON_LABEL,
       },
+      consent: autoRenewConsent,
     }),
-    [email, role, billTo, shippingAddress, clickwrap],
+    [email, role, billTo, shippingAddress, clickwrap, autoRenewConsent],
   );
 
   async function requestQuote() {
@@ -297,9 +335,29 @@ function CheckoutBody({ status }: { status: DeStoreStatus }) {
         disabled={busy}
       />
 
+      {autoRenewRequired && autoRenewEnabled && autoRenewFrequency && autoRenewPriceCents > 0 && (
+        <AutoRenewTerms
+          priceCents={autoRenewPriceCents}
+          frequency={autoRenewFrequency}
+          termMonths={termMonthsForFrequency(autoRenewFrequency)}
+          checked={autoRenewConsentChecked}
+          onCheckedChange={(next, consent) => {
+            setAutoRenewConsentChecked(next);
+            setAutoRenewConsent(consent);
+          }}
+          disabled={busy}
+        />
+      )}
+
+      {autoRenewRequired && !autoRenewEnabled && (
+        <p className="text-base leading-relaxed text-zinc-300" data-testid="text-autorenew-quote-only">
+          Subscription checkout is not available. Request a quote for these items.
+        </p>
+      )}
+
       <button
         type="button"
-        disabled={!quote || !acknowledgementsReady || busy}
+        disabled={!quote || !acknowledgementsReady || busy || (autoRenewRequired && !autoRenewReady)}
         onClick={placeOrder}
         className="rounded-full bg-de-magenta px-8 py-4 text-lg font-semibold text-black disabled:cursor-not-allowed disabled:opacity-40"
       >

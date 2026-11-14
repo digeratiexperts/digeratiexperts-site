@@ -2,6 +2,12 @@ import { describe, expect, it, vi } from "vitest";
 import type { OrderLineInput, PostalAddress, TaxQuoteResponse } from "@shared/deStoreContract";
 import { DE_STORE_PLACE_ORDER_BUTTON } from "@shared/deStoreContract";
 import { blockedStateMessage } from "@shared/deStoreLegalCopy";
+import {
+  AUTO_RENEW_CANCEL_POLICY_TEXT,
+  AUTO_RENEW_CHECKBOX_LABEL_TEXT,
+  AUTORENEW_TERMS_VERSION,
+  buildAutoRenewTermsText,
+} from "@shared/autoRenewContract";
 import { placeStoreOrder, quoteStoreOrder, type StoreCheckoutDeps } from "./deStoreCheckout";
 import type { HubStoreClient } from "./integrations/hubStoreClient";
 
@@ -137,6 +143,7 @@ function deps(overrides: Partial<StoreCheckoutDeps> & { hub?: HubStoreClient } =
       userAgent: "DE-Store-Test",
       stateList: { enabled: false, mode: "deny" as const, regions: [] },
       consumerCheckout: false,
+      autoRenewContractEnabled: false,
       hub: overrides.hub ?? stub!.hub,
       capturePayment,
       newSiteOrderId: () => "siteord_test1",
@@ -397,5 +404,113 @@ describe("placeStoreOrder", () => {
     expect(stub?.commit).toHaveBeenCalledOnce();
     expect(stub?.submit).toHaveBeenCalledOnce();
     expect(result.siteOrderId).toBe("siteord_test1");
+  });
+});
+
+const gatedLine: OrderLineInput = {
+  lineId: "line-phish",
+  sku: "DE-DIG-ASMT-PHISH-MO",
+  description: "Phishing simulation (test fixture, not a live listing)",
+  taxCategory: "saas",
+  quantity: 1,
+  unitAmountCents: 10000,
+};
+
+function autoRenewConsent(priceCents = 10000) {
+  return {
+    autoRenewConsentAt: "2026-11-13T18:00:00Z",
+    termsVersion: AUTORENEW_TERMS_VERSION,
+    termsTextSnapshot: buildAutoRenewTermsText({
+      priceCents,
+      currency: "USD",
+      frequency: "month" as const,
+      termMonths: 1,
+    }),
+    cancelPolicyText: AUTO_RENEW_CANCEL_POLICY_TEXT,
+    checkboxLabelText: AUTO_RENEW_CHECKBOX_LABEL_TEXT,
+    pageUrl: "https://www.digeratiexperts.com/store/order",
+  };
+}
+
+describe("auto-renew gated store checkout", () => {
+  it("does not capture payment when the auto-renew contract is off", async () => {
+    const { deps: checkoutDeps, capturePayment, stub } = deps();
+    const result = await placeStoreOrder(
+      {
+        email: "buyer@example.com",
+        buyerRole: "self_managed",
+        addresses: { billTo, shipTo },
+        lines: [gatedLine],
+        clickwrap,
+      },
+      checkoutDeps,
+    );
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.code).toBe("AUTORENEW_CONTRACT_DISABLED");
+    expect(result.paymentAttempted).toBe(false);
+    expect(capturePayment).not.toHaveBeenCalled();
+    expect(stub?.quote).not.toHaveBeenCalled();
+  });
+
+  it("does not capture payment when auto-renew consent is missing", async () => {
+    const { deps: checkoutDeps, capturePayment, stub } = deps({ autoRenewContractEnabled: true });
+    const result = await placeStoreOrder(
+      {
+        email: "buyer@example.com",
+        buyerRole: "self_managed",
+        addresses: { billTo, shipTo },
+        lines: [gatedLine],
+        clickwrap,
+      },
+      checkoutDeps,
+    );
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.code).toBe("AUTORENEW_CONSENT_INVALID");
+    expect(result.paymentAttempted).toBe(false);
+    expect(capturePayment).not.toHaveBeenCalled();
+    expect(stub?.quote).not.toHaveBeenCalled();
+  });
+
+  it("does not capture a one-time payment for auto-renew gated SKUs after valid consent", async () => {
+    const { deps: checkoutDeps, capturePayment, stub } = deps({ autoRenewContractEnabled: true });
+    const result = await placeStoreOrder(
+      {
+        email: "buyer@example.com",
+        buyerRole: "self_managed",
+        addresses: { billTo, shipTo },
+        lines: [gatedLine],
+        clickwrap,
+        autoRenewConsent: autoRenewConsent(),
+      },
+      checkoutDeps,
+    );
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.code).toBe("AUTORENEW_SUBSCRIPTION_REQUIRED");
+    expect(result.paymentAttempted).toBe(false);
+    expect(capturePayment).not.toHaveBeenCalled();
+    expect(stub?.quote).not.toHaveBeenCalled();
+  });
+
+  it("does not capture payment for a mixed cart of gated and one-time items", async () => {
+    const { deps: checkoutDeps, capturePayment } = deps({ autoRenewContractEnabled: true });
+    const result = await placeStoreOrder(
+      {
+        email: "buyer@example.com",
+        buyerRole: "self_managed",
+        addresses: { billTo, shipTo },
+        lines: [gatedLine, serviceLine],
+        clickwrap,
+        autoRenewConsent: autoRenewConsent(),
+      },
+      checkoutDeps,
+    );
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.code).toBe("AUTORENEW_CART_INVALID");
+    expect(result.paymentAttempted).toBe(false);
+    expect(capturePayment).not.toHaveBeenCalled();
   });
 });

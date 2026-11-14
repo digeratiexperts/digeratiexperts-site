@@ -92,6 +92,7 @@ describe("de store routes", () => {
       stateList: () => ({ enabled: false, mode: "deny", regions: [] }),
       hub,
       capturePayment,
+      autoRenewContractEnabled: () => false,
       now: () => new Date("2026-11-13T18:00:10Z"),
       ...overrides,
     });
