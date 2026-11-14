@@ -1,3 +1,4 @@
+import { publicPhoneMarkup } from "../lib/public-phone.mjs";
 // Concept A — Editorial clarity.
 // Hypothesis: a security buyer trusts a document that reads like a considered
 // publication. Warm paper, a serif display voice, one text column with a
@@ -110,7 +111,7 @@ ${c.ladder
 
 <div class="close">
   <div><h2>${esc(c.cta.label)}</h2><p>${esc(c.cta.detail)}</p></div>
-  <p class="contact"><a href="${c.cta.url}">${esc(c.cta.urlLabel)}</a><br><a href="${c.cta.phoneHref}">${esc(c.cta.phone)}</a><br><a href="mailto:${c.cta.email}">${esc(c.cta.email)}</a></p>
+  <p class="contact"><a href="${c.cta.url}">${esc(c.cta.urlLabel)}</a><br>${publicPhoneMarkup(c.cta)}<br><a href="mailto:${c.cta.email}">${esc(c.cta.email)}</a></p>
 </div>
 <p class="note">${esc(c.scopeNote)}</p>
 ${foot(c, 2, 2)}

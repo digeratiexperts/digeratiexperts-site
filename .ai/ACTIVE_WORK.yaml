@@ -30,6 +30,28 @@
 
 version: 2
 claims:
+  - id: public-phone-pdf-completion-20261114
+    owner: chatgpt
+    subsystem: public-contact-artifacts
+    branch: chatgpt/public-phone-pdf-completion-20261114
+    base_sha: 5d8baf37cd30471f8cca476ffcbed6d4bc8f93b8
+    started: 2026-11-14
+    status: implemented
+    files:
+      - client/public/assets/**/*.pdf
+      - document_templates/**/*.pdf
+      - artifacts/design-concepts/resource-pdfs/concepts/*.mjs
+      - artifacts/design-concepts/resource-pdfs/lib/public-phone.mjs
+      - scripts/public-phone-artifacts*
+      - scripts/public-phone-pdf-manifest.json
+      - docs/handoffs/public-phone-pdf-source.patch
+      - docs/work-ledger/2026-11-14-public-phone-pdf-completion.md
+      - artifacts/visual-qa/public-phone-pdf-completion/**
+    note: >-
+      Held companion, not full phone cleanup. Relay Hub 886 comment 6885360392.
+      Depends on site 1031 source snapshot 29ef5642; source patch is proposed
+      for its owner rather than applied to overlapping generators. No owner
+      branch writes, merges or deploys. Static marker work in 1028 preserved.
   - id: c15-portal-audit-repairs-20261109
     issue: 544
     owner: cursor
