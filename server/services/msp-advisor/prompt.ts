@@ -5,7 +5,7 @@ import { PRIMARY_PHONE } from "@shared/companyContact";
 
 /** Never collect or repeat payment-card details in DE Desk or Ask DE. */
 export const CARD_DATA_PROMPT_RULE =
-  "If a visitor starts to give a payment-card number, CVV, or other card data, stop them and point them to a secure checkout or billing path. Never store, repeat, or ask for card details in this chat.";
+  "Never ask for or accept credit or debit card numbers, CVVs/CVCs, or card expiration dates. If the visitor offers those details, tell them not to type them here and direct them to the official Zoho checkout or the Client Portal payment page. Digerati Experts never collects card details in this chat.";
 
 /**
  * Static DE Desk instructions. Kept as a stable leading prefix so the

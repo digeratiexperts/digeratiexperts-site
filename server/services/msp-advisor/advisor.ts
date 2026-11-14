@@ -24,6 +24,7 @@ import {
 import { ADVISOR_SYSTEM_PREFIX, buildSystemPrompt, INTERNAL_REFUSAL, BANNED_CANNED_OPENER } from "./prompt";
 import { withTransientModelRetry } from "./model-retry";
 import { verifyAdvisorReply } from "./ground";
+import { assertNoCardData } from "@shared/pciGuard";
 import { sanitizeActions, assertNoInternalLeak, defaultActionsForMode, materializeAction, ensureLoginAction } from "./actions";
 import { buildHeuristicReply, ensureFreshReply, isNearDuplicate } from "./fallback";
 import {
@@ -188,6 +189,7 @@ export async function handleAdvisorChat(req: AdvisorChatRequest): Promise<Adviso
   if (!userTurn) {
     throw Object.assign(new Error("Message is required"), { status: 400 });
   }
+  assertNoCardData(userTurn);
   let message = userTurn;
 
   const session = getOrCreateSession(req.sessionId, req.pageContext);

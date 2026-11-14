@@ -1,6 +1,8 @@
 import { Request, Response, NextFunction } from "express";
 import validator from "validator";
 import crypto from "crypto";
+import { isPaymentPagePath } from "@shared/paymentPage";
+import { buildContentSecurityPolicy, reportingEndpointsHeader } from "./cspBuilder";
 
 /**
  * COMPREHENSIVE SECURITY MIDDLEWARE FOR SPAM & MITM PREVENTION
@@ -386,21 +388,17 @@ export function setSecurityHeaders(req: Request, res: Response, next: NextFuncti
   res.setHeader("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload");
 
   // Content Security Policy — marketing pixels (Meta, LinkedIn, Bing, Clarity, GA) + Zoho
-  const cspDirectives = [
-    "default-src 'self'",
-    `script-src 'self' 'unsafe-inline'${isProduction ? "" : " 'unsafe-eval'"} https://challenges.cloudflare.com https://static.cloudflareinsights.com https://salesiq.zoho.com https://*.clarity.ms https://www.googletagmanager.com https://www.google-analytics.com https://connect.facebook.net https://snap.licdn.com https://bat.bing.com`,
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "font-src 'self' https://fonts.gstatic.com",
-    "img-src 'self' data: https: blob:",
-    "frame-src https://challenges.cloudflare.com https://meet.digerati-experts.com https://*.zoho.com https://payments.zoho.com https://www.facebook.com https://td.doubleclick.net https://www.youtube-nocookie.com https://player.vimeo.com https://www.loom.com",
-    "connect-src 'self' https://*.zoho.com https://payments.zoho.com https://cloudflareinsights.com https://*.cloudflareinsights.com https://*.clarity.ms https://www.google-analytics.com https://analytics.google.com https://region1.google-analytics.com https://www.google.com https://www.googletagmanager.com https://connect.facebook.net https://www.facebook.com https://bat.bing.com https://px.ads.linkedin.com https://www.linkedin.com" + (isProduction ? "" : " wss://*.replit.dev ws://localhost:*"),
-    "object-src 'none'",
-    "base-uri 'self'",
-    "form-action 'self' https://payments.zoho.com",
-    "frame-ancestors 'self'",
-    "upgrade-insecure-requests"
-  ];
-  res.setHeader("Content-Security-Policy", cspDirectives.join("; "));
+  const isPaymentPage = isPaymentPagePath(req.path || "");
+  const cspNonce = isPaymentPage && isProduction ? crypto.randomBytes(16).toString("base64url") : null;
+  if (cspNonce) {
+    const current = ((res as Response & { locals?: Record<string, unknown> }).locals || {});
+    (res as Response & { locals: Record<string, unknown> }).locals = { ...current, cspNonce };
+  }
+  res.setHeader(
+    "Content-Security-Policy",
+    buildContentSecurityPolicy({ isProduction, isPaymentPage, nonce: cspNonce }),
+  );
+  res.setHeader("Reporting-Endpoints", reportingEndpointsHeader());
 
   // Portal, transactional store, and internal commercial tools must not rank
   const p = req.path || "";
