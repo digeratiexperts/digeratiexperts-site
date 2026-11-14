@@ -8,6 +8,7 @@ vi.mock("./openaiService", () => ({
 
 import { generateChatResponse } from "./openaiService";
 import { registerPublicSupportChat, sanitizeConversationHistory } from "./publicSupportChat";
+import { DESK_TOPIC_REDIRECT_FOLLOWUP, DESK_TOPIC_REDIRECT_REPLY } from "@shared/deskTopicScope";
 
 describe("sanitizeConversationHistory", () => {
   it("keeps only valid user and assistant messages", () => {
@@ -109,5 +110,68 @@ describe("public support chat routes", () => {
     });
 
     expect(response.status).toBe(400);
+  });
+});
+
+describe("public support chat topic scope", () => {
+  let server: Server;
+  let baseUrl = "";
+
+  beforeAll(async () => {
+    const app = express();
+    app.use(express.json());
+    registerPublicSupportChat(app);
+    server = createServer(app);
+    await new Promise<void>((resolve) => {
+      server.listen(0, "127.0.0.1", resolve);
+    });
+    const address = server.address();
+    if (!address || typeof address === "string") {
+      throw new Error("Could not resolve test server address");
+    }
+    baseUrl = `http://127.0.0.1:${address.port}`;
+  });
+
+  afterAll(async () => {
+    await new Promise<void>((resolve, reject) => {
+      server.close((error) => (error ? reject(error) : resolve()));
+    });
+  });
+
+  it("returns the fixed redirect and does not call the model", async () => {
+    vi.mocked(generateChatResponse).mockClear();
+    const response = await fetch(`${baseUrl}/api/portal/zoho/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: "Tell me a joke" }),
+    });
+    expect(response.status).toBe(200);
+    const data = (await response.json()) as { message: { content: string } };
+    expect(data.message.content).toBe(DESK_TOPIC_REDIRECT_REPLY);
+    expect(vi.mocked(generateChatResponse)).not.toHaveBeenCalled();
+  });
+
+  it("uses the shorter follow-up when the last assistant reply was already the redirect", async () => {
+    const response = await fetch(`${baseUrl}/api/portal/zoho/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: "What's the capital of France?",
+        conversationHistory: [{ role: "assistant", content: DESK_TOPIC_REDIRECT_REPLY }],
+      }),
+    });
+    const data = (await response.json()) as { message: { content: string } };
+    expect(data.message.content).toBe(DESK_TOPIC_REDIRECT_FOLLOWUP);
+  });
+
+  it("still sends legitimate IT questions to the assistant", async () => {
+    vi.mocked(generateChatResponse).mockClear();
+    const response = await fetch(`${baseUrl}/api/portal/zoho/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: "My Outlook is not sending email" }),
+    });
+    expect(response.status).toBe(200);
+    expect(vi.mocked(generateChatResponse)).toHaveBeenCalledWith("My Outlook is not sending email", []);
   });
 });
