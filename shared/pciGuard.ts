@@ -2,9 +2,10 @@
  * Shared PCI guard: catch cardholder data before it is stored, sent to a
  * model, written to a ticket, or kept in sessionStorage.
  *
- * Detects Luhn-valid PANs (13-19 digits, spaces or hyphens allowed) and
- * explicit CVV / card-expiry patterns. Ordinary phone numbers, ZIP codes and
- * ticket or invoice IDs are left alone.
+ * Detects Luhn-valid PANs (13-19 digits, including numbers split by spaces,
+ * dots, dashes, slashes or line breaks) and explicit CVV / card-expiry
+ * patterns. Ordinary phone numbers, ZIP codes and ticket or invoice IDs are
+ * left alone.
  */
 
 export const CARD_DATA_REJECTED_CODE = "card_data_rejected" as const;
@@ -43,21 +44,74 @@ export function luhnValid(digits: string): boolean {
   return sum % 10 === 0;
 }
 
-const PAN_CANDIDATE = /(?<!\d)(?:\d[ \-]?){13,19}(?!\d)/g;
+function isPanSeparator(ch: string): boolean {
+  if (!ch) return false;
+  if (ch === "." || ch === "-" || ch === "/") return true;
+  const code = ch.charCodeAt(0);
+  return (
+    ch === " " ||
+    ch === "\t" ||
+    ch === "\n" ||
+    ch === "\r" ||
+    ch === "\v" ||
+    ch === "\f" ||
+    code === 0x00a0 ||
+    code === 0x2007 ||
+    code === 0x202f ||
+    (code >= 0x2000 && code <= 0x200a) ||
+    code === 0x2028 ||
+    code === 0x2029 ||
+    code === 0x205f ||
+    code === 0x3000
+  );
+}
 
-export function containsPan(text: string): boolean {
-  const source = String(text || "");
-  if (!source) return false;
-  PAN_CANDIDATE.lastIndex = 0;
-  let match: RegExpExecArray | null;
-  while ((match = PAN_CANDIDATE.exec(source))) {
-    const digits = match[0].replace(/[ \-]/g, "");
-    if (digits.length >= 13 && digits.length <= 19 && isPlausibleIin(digits) && luhnValid(digits)) {
-      return true;
+function isDigitChar(ch: string): boolean {
+  return ch >= "0" && ch <= "9";
+}
+
+function runHasLuhnPan(digits: string): boolean {
+  if (digits.length < 13) return false;
+  const max = Math.min(19, digits.length);
+  for (let len = max; len >= 13; len -= 1) {
+    for (let start = 0; start + len <= digits.length; start += 1) {
+      const slice = digits.slice(start, start + len);
+      if (isPlausibleIin(slice) && luhnValid(slice)) return true;
     }
   }
   return false;
 }
+
+export function containsPan(text: string): boolean {
+  const source = String(text || "");
+  if (!source) return false;
+  let i = 0;
+  while (i < source.length) {
+    if (!isDigitChar(source[i]!)) {
+      i += 1;
+      continue;
+    }
+    let digits = "";
+    let j = i;
+    while (j < source.length) {
+      const ch = source[j]!;
+      if (isDigitChar(ch)) {
+        digits += ch;
+        j += 1;
+        continue;
+      }
+      if (isPanSeparator(ch)) {
+        j += 1;
+        continue;
+      }
+      break;
+    }
+    if (runHasLuhnPan(digits)) return true;
+    i = j > i ? j : i + 1;
+  }
+  return false;
+}
+
 
 const CVV_PATTERN =
   /\b(?:cvv2?|cvc2?|cid|cav2|csc|security\s+code|card\s+security\s+code|card\s+code|card\s+verification(?:\s+(?:value|code))?)(?:\s*(?:=|:|->)\s*|\s+(?:(?:is|was)\s+)?)["'`]?(\d{3,4})\b/i;

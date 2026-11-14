@@ -78,9 +78,36 @@ describe("containsPan / looksLikeCardData", () => {
     "I forgot my password",
     "",
     "   ",
+    "2026-11-13",
+    "11/13/2026",
+    "12.31.2026",
+    "2026 11 13",
   ])("lets a non-PAN line through: %s", (line) => {
     expect(containsPan(line)).toBe(false);
     expect(looksLikeCardData(line)).toBe(false);
+  });
+
+  it.each([
+    ["dots", `${TEST_VISA.slice(0, 4)}.${TEST_VISA.slice(4, 8)}.${TEST_VISA.slice(8, 12)}.${TEST_VISA.slice(12)}`],
+    ["double spaces", `${TEST_VISA.slice(0, 4)}  ${TEST_VISA.slice(4, 8)}  ${TEST_VISA.slice(8, 12)}  ${TEST_VISA.slice(12)}`],
+    ["non-breaking spaces", `${TEST_VISA.slice(0, 4)} ${TEST_VISA.slice(4, 8)} ${TEST_VISA.slice(8, 12)} ${TEST_VISA.slice(12)}`],
+    ["figure space", `${TEST_VISA.slice(0, 4)} ${TEST_VISA.slice(4)}`],
+    ["narrow no-break spaces", `${TEST_VISA.slice(0, 4)} ${TEST_VISA.slice(4)}`],
+    ["newlines", `${TEST_VISA.slice(0, 4)}
+${TEST_VISA.slice(4, 8)}
+${TEST_VISA.slice(8, 12)}
+${TEST_VISA.slice(12)}`],
+    ["slashes", `${TEST_VISA.slice(0, 4)}/${TEST_VISA.slice(4, 8)}/${TEST_VISA.slice(8, 12)}/${TEST_VISA.slice(12)}`],
+    ["dashes", `${TEST_VISA.slice(0, 4)}-${TEST_VISA.slice(4, 8)}-${TEST_VISA.slice(8, 12)}-${TEST_VISA.slice(12)}`],
+  ])("catches a PAN split by %s", (_kind, line) => {
+    expect(containsPan(line)).toBe(true);
+    expect(looksLikeCardData(line)).toBe(true);
+  });
+
+  it("catches a PAN with letters or punctuation touching the digits", () => {
+    expect(containsPan(`card#${TEST_VISA}exp`)).toBe(true);
+    expect(looksLikeCardData(`card#${TEST_VISA}exp`)).toBe(true);
+    expect(containsPan(`visa${TEST_VISA}please`)).toBe(true);
   });
 });
 
@@ -92,6 +119,9 @@ describe("CVV and card expiry", () => {
     "security code: 456",
     "card verification value 789",
     "cid 1234",
+    "my cvv is 123",
+    "CVC: 4567",
+    "security code 123",
   ])("catches an explicit CVV: %s", (line) => {
     expect(containsCvvOrCardExpiry(line)).toBe(true);
     expect(looksLikeCardData(line)).toBe(true);
@@ -114,6 +144,7 @@ describe("CVV and card expiry", () => {
     "extension 1234",
     "PIN 1234",
     "suite 456",
+    "order 123",
   ])("does not treat ordinary numbers or dates as CVV/expiry: %s", (line) => {
     expect(containsCvvOrCardExpiry(line)).toBe(false);
     expect(looksLikeCardData(line)).toBe(false);
