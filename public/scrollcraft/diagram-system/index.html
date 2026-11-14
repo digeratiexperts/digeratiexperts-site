@@ -281,7 +281,7 @@
     const pos = o.layout === "wide" ? ENV_WIDE : ENV_NARROW;
     const nodes = ENV_NODES.map((n) => nodeSvg({ ...n, at: 0 }, pos[n.id])).join("");
     const edges = ENV_EDGES.map(([a, b]) => edgeSvg(pos[a], pos[b], 1)).join("");
-    const frame = o.layout === "wide" ? boundarySvg(24, 44, 552, 348, "SECURITY OPERATIONS \xB7 24/7", 2) : boundarySvg(16, 18, 328, 384, "SECURITY OPERATIONS \xB7 24/7", 2);
+    const frame = o.layout === "wide" ? boundarySvg(24, 44, 552, 348, "SECURITY OPERATIONS \xB7 MONITORING", 2) : boundarySvg(16, 18, 328, 384, "SECURITY OPERATIONS \xB7 MONITORING", 2);
     const gates = o.layout === "wide" ? gateSvg({ x: 366, y: 76 }, "MFA", 2) + gateSvg({ x: 366, y: 324 }, "RESTORE DRILL", 2) : gateSvg({ x: 326, y: 40 }, "MFA", 2) + gateSvg({ x: 246, y: 340 }, "RESTORE DRILL", 2);
     const vb = o.layout === "wide" ? "0 0 600 420" : "0 0 360 420";
     return wrap(ENVIRONMENT_META, frame + edges + nodes + gates, vb, o);
@@ -407,7 +407,7 @@
     { id: "assess", code: "01", label: "Discovery & assessment", sub: "risk & gap" },
     { id: "model", code: "02", label: "Fit-based operating model", sub: "IT \xB7 Office \xB7 Business \xB7 Enterprise" },
     { id: "harden", code: "03", label: "Hardening & integration", sub: "baseline & runbooks" },
-    { id: "manage", code: "04", label: "Continuous management", sub: "24/7 \xB7 vCIO", emphasis: true }
+    { id: "manage", code: "04", label: "Continuous management", sub: "MONITORING \xB7 vCIO", emphasis: true }
   ];
   var LOOP = ["monitor", "review", "patch", "drill"];
   var LIFECYCLE_META = {

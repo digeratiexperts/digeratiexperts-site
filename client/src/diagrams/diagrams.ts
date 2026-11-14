@@ -224,8 +224,8 @@ function renderEnvironment(o: Required<RenderOptions>): string {
   const nodes = ENV_NODES.map((n) => nodeSvg({ ...n, at: 0 }, pos[n.id], w)).join("");
   const edges = ENV_EDGES.map(([a, b]) => edgeSvg(pos[a], pos[b], 1, false, w)).join("");
   const frame = o.layout === "wide"
-    ? boundarySvg(24, 44, 552, 348, "DETECTION & RESPONSE · 24/7", 2)
-    : boundarySvg(16, 18, 328, 384, "DETECTION & RESPONSE · 24/7", 2);
+    ? boundarySvg(24, 44, 552, 348, "DETECTION & RESPONSE · MONITORING", 2)
+    : boundarySvg(16, 18, 328, 384, "DETECTION & RESPONSE · MONITORING", 2);
   const gates = o.layout === "wide"
     ? gateSvg({ x: 366, y: 76 }, "MFA", 2) + gateSvg({ x: 366, y: 324 }, "RESTORE DRILL", 2)
     // narrow: the drill gate sits on the perimeter under the backup node, label to its left, so nothing crosses the frame
@@ -459,7 +459,7 @@ const STAGES: Node[] = [
   { id: "assess", code: "01", label: "Discovery & assessment", sub: "risk & gap" },
   { id: "model", code: "02", label: "Fit-based operating model", sub: "four models" },
   { id: "harden", code: "03", label: "Hardening & integration", sub: "baseline & runbooks" },
-  { id: "manage", code: "04", label: "Continuous management", sub: "24/7 · vCIO", emphasis: true },
+  { id: "manage", code: "04", label: "Continuous management", sub: "MONITORING · vCIO", emphasis: true },
 ];
 const LOOP = ["monitor", "review", "patch", "drill"];
 const LIFECYCLE_META: DiagramMeta = {

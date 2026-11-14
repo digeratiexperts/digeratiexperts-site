@@ -99,7 +99,7 @@ export const DigeratiHeroSection = (): JSX.Element => {
               <span className="text-white">Protect Your Business Now.</span>
             </h1>
             <p className="text-lg md:text-xl text-gray-100 mb-8">
-              Get 24/7 protection, cut cyber liability, and pass compliance checks — all without hiring in-house IT.
+              Get automated alert monitoring, cut cyber liability, and pass compliance checks — all without hiring in-house IT.
             </p>
             
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
@@ -109,7 +109,7 @@ export const DigeratiHeroSection = (): JSX.Element => {
               </div>
               <div className="bg-de-raised border border-de-hairline rounded-lg p-3">
                 <Shield className="h-5 w-5 text-de-accent-ink mb-1" />
-                <p className="text-xs text-white/80">24/7 Human-Led<br/>Monitoring</p>
+                <p className="text-xs text-white/80">Automated<br/>Alert Monitoring</p>
               </div>
               <div className="bg-de-raised border border-de-hairline rounded-lg p-3">
                 <Building className="h-5 w-5 text-de-accent-ink mb-1" />

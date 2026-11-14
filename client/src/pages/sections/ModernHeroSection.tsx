@@ -17,7 +17,7 @@ export const ModernHeroSection = (): JSX.Element => {
 
   const features = [
     { icon: FileCheck, text: "Insurance & Compliance-Ready" },
-    { icon: Shield, text: "24/7 Human-Led Monitoring" },
+    { icon: Shield, text: "Automated Alert Monitoring" },
     { icon: Building, text: "Built for Small Businesses" },
     { icon: CheckCircle, text: "Easy-to-Read Risk Reports" },
   ];
@@ -89,7 +89,7 @@ export const ModernHeroSection = (): JSX.Element => {
               <h1 className="text-[clamp(1.7rem,3.2vw,3.55rem)] font-bold leading-[1.12] tracking-[-0.03em] text-white">
                 <span className="whitespace-nowrap">Your Arizona business,</span>
                 <br />
-                <span className="text-[#D3126A]">protected 24/7.</span>
+                <span className="text-[#D3126A]">with alert monitoring.</span>
               </h1>
 
               <div className="relative w-fit max-w-[36.5rem] -mx-2 -my-2 p-2.5 sm:-mx-3 sm:p-3.5">

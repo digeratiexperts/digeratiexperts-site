@@ -151,7 +151,7 @@ export const DigeratiThreatsInsightsSection = (): JSX.Element => {
         >
           <Badge className="mb-3 md:mb-4 bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 text-base">
             <Zap className="w-3 h-3 mr-1" />
-            24/7 Security Response Team
+            Alert Monitoring
           </Badge>
           <h2 className="mb-3 px-2 text-2xl font-bold text-white sm:text-3xl md:mb-4 md:text-4xl lg:text-5xl">
             Recent Threats & Insights
