@@ -130,8 +130,8 @@ export default function Team() {
         facts={[
           {
             icon: Activity,
-            title: "24/7 monitoring",
-            text: "On ProActive Business and Enterprise, as documented in our SLA.",
+            title: "Alert monitoring",
+            text: "24/7 alert monitoring through our contracted security operations partner, on plans that include it.",
           },
           {
             icon: Clock,

@@ -218,7 +218,7 @@
   },
   "/locations/chandler-az": {
     "title": "Managed IT Services & Cybersecurity in Chandler, AZ | Digerati Experts",
-    "description": "Chandler-based managed IT and cybersecurity for healthcare, law, accounting and growing Arizona businesses, with a published SLA: 15-minute response for critical incidents.",
+    "description": "Chandler-based managed IT and cybersecurity for healthcare, law, accounting and growing Arizona businesses.",
     "canonical": "/locations/chandler-az",
     "robots": "index, follow",
     "ogImage": "https://digeratiexperts.com/og-image.png"
@@ -239,7 +239,7 @@
   },
   "/locations/phoenix-az": {
     "title": "Managed IT Services & Cybersecurity in Phoenix, AZ | Digerati Experts",
-    "description": "Managed IT services, IT support and cybersecurity for Phoenix businesses from a Chandler-based team, with a published SLA and 24/7/365 incident response.",
+    "description": "Managed IT services, IT support and cybersecurity for Phoenix businesses from a Chandler-based team.",
     "canonical": "/locations/phoenix-az",
     "robots": "index, follow",
     "ogImage": "https://digeratiexperts.com/og-image.png"
@@ -624,7 +624,7 @@
   },
   "/solutions/managed-it-support": {
     "title": "Managed IT Support for Small Businesses | Digerati Experts",
-    "description": "Managed IT support for small businesses: service desk, remote troubleshooting, onboarding and device support, with a 15-minute SLA for critical incidents.",
+    "description": "Managed IT support for small businesses: service desk, remote troubleshooting, onboarding and device support. Service levels are set in your signed agreement.",
     "canonical": "/solutions/managed-it-support",
     "robots": "index, follow",
     "ogImage": "https://digeratiexperts.com/og-image.png"

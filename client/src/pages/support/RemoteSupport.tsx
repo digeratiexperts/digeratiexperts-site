@@ -67,8 +67,8 @@ export default function RemoteSupport() {
         label="Remote support at a glance"
         facts={[
           { title: "2 mins", text: "Typical connection time" },
-          { title: "15 min", text: "Critical response (SLA)" },
-          { title: "24/7", text: "Availability" },
+          { title: "Signed terms", text: "Service levels are set in your signed agreement" },
+          { title: "Emergency", text: "Incident response on plans that include it" },
           { title: "Encrypted", text: "Zoho Assist sessions" },
         ]}
       />
