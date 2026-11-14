@@ -91,8 +91,10 @@ function officeText(buf: Buffer): string {
     const start = local + 30 + buf.readUInt16LE(local + 26) + buf.readUInt16LE(local + 28);
     const raw = buf.subarray(start, start + size);
     const data = method === 8 ? inflateRawSync(raw) : raw;
-    // Drop tags so a number split across Word runs still reads as one string.
-    out.push(data.toString("utf8").replace(/<[^>]+>/g, ""));
+    // Join the text between tags so a number split across Word runs still reads
+    // as one string. This only reads text for the scan; nothing is rendered.
+    const xml = data.toString("utf8");
+    out.push(Array.from(xml.matchAll(/>([^<]*)</g), (m) => m[1]).join(""));
   }
   return out.join("\n");
 }
