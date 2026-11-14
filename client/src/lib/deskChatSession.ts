@@ -8,6 +8,7 @@
  * are ignored: the Desk simply starts fresh.
  */
 
+import { looksLikeCardData } from "@shared/pciGuard";
 import { sanitizeDeskActions, type DeskAction } from "./deskActions";
 
 export type DeskStoredRole = "user" | "assistant" | "agent";
@@ -69,7 +70,7 @@ export function readDeskChat(now = Date.now()): DeskStoredChat | null {
       const actions = sanitizeDeskActions((m as { actions?: unknown }).actions);
       const { actions: _dropped, ...rest } = m as DeskStoredMessage;
       return actions.length ? { ...rest, actions } : rest;
-    });
+    }).filter((m) => !looksLikeCardData(m.content));
     // Nothing worth restoring unless the visitor actually said something.
     if (!messages.some((m) => m.role === "user")) return null;
     return {
@@ -87,7 +88,9 @@ export function writeDeskChat(sessionId: string | null, messages: DeskStoredMess
   const store = storage();
   if (!store) return;
   if (!messages.some((m) => m.role === "user")) return;
-  const kept = messages.slice(-DESK_CHAT_MAX_MESSAGES).map(({ id, role, content, senderName, createdAt, actions }) => ({
+  const withoutCards = messages.filter((m) => !looksLikeCardData(m.content));
+  if (!withoutCards.some((m) => m.role === "user")) return;
+  const kept = withoutCards.slice(-DESK_CHAT_MAX_MESSAGES).map(({ id, role, content, senderName, createdAt, actions }) => ({
     id,
     role,
     content,
@@ -120,7 +123,7 @@ export function ticketDraftFromChat(messages: DeskStoredMessage[]): { subject: s
   const said = messages
     .filter((m) => m.role === "user")
     .map((m) => m.content.replace(/\s+/g, " ").trim())
-    .filter(Boolean);
+    .filter((line) => line && !looksLikeCardData(line));
   if (!said.length) return null;
   const first = said[0];
   const subject = first.length > 80 ? `${first.slice(0, 77).trimEnd()}…` : first;

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { CARD_DATA_REJECTED_MESSAGE } from "@shared/pciGuard";
 import {
   DE_SECURE_REQUEST_TEMPLATE,
   DE_SECURE_REQUEST_TEMPLATE_WEBSITE,
@@ -13,6 +14,8 @@ import {
   secureFieldProblem,
   secureFieldSummary,
 } from "./deskSecureField";
+
+const TEST_VISA = "4111111111111111";
 
 const FAKE = "fake-placeholder-Zx9";
 
@@ -64,6 +67,16 @@ describe("DE Desk secure field helpers (#1179)", () => {
     "",
   ])("lets an ordinary support line through: %s", (line) => {
     expect(looksLikeSecret(line)).toBe(false);
+  });
+
+  it("rejects a PAN in any secure-field kind, including other and pin", () => {
+    for (const _kind of ["password", "wifi", "license_key", "pin", "api_key", "other"]) {
+      const problem = secureFieldProblem({ label: "Office login", secretValue: TEST_VISA });
+      expect(problem).toBe(CARD_DATA_REJECTED_MESSAGE);
+      expect(problem).not.toContain(TEST_VISA);
+    }
+    expect(secureFieldProblem({ label: `Card ${TEST_VISA}`, secretValue: "office-wifi" })).toBe(CARD_DATA_REJECTED_MESSAGE);
+    expect(looksLikeSecret(`please charge ${TEST_VISA}`)).toBe(true);
   });
 
   it("says Digerati Experts or DE, never Digerati alone", () => {

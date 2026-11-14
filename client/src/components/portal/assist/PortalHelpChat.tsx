@@ -4,6 +4,7 @@ import { ArrowUp, CheckCircle2, Loader2, Sparkles, X } from "lucide-react";
 import { AskDeGlyph } from "@/components/icons/AskDeGlyph";
 import { usePortalSession } from "@/components/portal/shell/portalSession";
 import { portalFetch, portalPost } from "@/lib/portalApi";
+import { CARD_DATA_REJECTED_MESSAGE, looksLikeCardData } from "@shared/pciGuard";
 import { srApi } from "@/lib/serviceRequestsApi";
 import { cn } from "@/lib/utils";
 import {
@@ -208,6 +209,10 @@ export function PortalHelpChat({ page, form }: { page: Page; form?: FormBridge }
   const send = async (text: string) => {
     const message = text.trim();
     if (!message || sending) return;
+    if (looksLikeCardData(message)) {
+      setMessages((prev) => [...prev, { id: nid(), role: "system", content: CARD_DATA_REJECTED_MESSAGE }]);
+      return;
+    }
     setInput("");
     setGreeted(true);
     setMessages((prev) => [...prev, { id: nid(), role: "user", content: message }]);

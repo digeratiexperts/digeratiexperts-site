@@ -155,6 +155,40 @@ export async function refreshPublicStoredKnowledgeSnapshot(): Promise<void> {
 // the database initializes.
 void refreshPublicStoredKnowledgeSnapshot();
 
+/**
+ * Merge hits from several public queries, keeping the best score per record.
+ * Used by DE Desk so a sales or support question can search the visitor's
+ * wording and a mode expansion without leaking non-public scopes.
+ */
+export function mergeKnowledgeHits(
+  hitSets: KnowledgeRetrievalHit[][],
+  limit = 6,
+): KnowledgeRetrievalHit[] {
+  const cap = Math.max(1, Math.min(limit, 12));
+  const best = new Map<string, KnowledgeRetrievalHit>();
+  for (const hits of hitSets) {
+    for (const hit of hits) {
+      const prev = best.get(hit.record.id);
+      if (!prev || hit.score > prev.score) {
+        const reasons = Array.from(
+          new Set([...(prev?.reasons || []), ...hit.reasons]),
+        );
+        best.set(hit.record.id, { ...hit, reasons });
+      } else if (prev) {
+        prev.reasons = Array.from(new Set([...prev.reasons, ...hit.reasons]));
+      }
+    }
+  }
+  return Array.from(best.values())
+    .sort(
+      (a, b) =>
+        b.score - a.score ||
+        b.record.authority - a.record.authority ||
+        a.record.id.localeCompare(b.record.id),
+    )
+    .slice(0, cap);
+}
+
 export function formatKnowledgeForPrompt(hits: KnowledgeRetrievalHit[]): string {
   if (!hits.length) return "No governed DE knowledge matched this turn. Do not invent DE-specific facts; ask one clarifying question or route to support.";
 
