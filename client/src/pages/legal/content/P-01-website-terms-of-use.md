@@ -68,4 +68,4 @@ We may update these Terms by posting a new version with a new "Last updated" dat
 
 ## 13. Contact
 
-Digerati Experts, LLC · Chandler, Arizona · admin@digeratiexperts.com · {{PUBLIC_PHONE}}
+Digerati Experts, LLC · Chandler, Arizona · admin@digeratiexperts.com · [DE_PUBLIC_PHONE]

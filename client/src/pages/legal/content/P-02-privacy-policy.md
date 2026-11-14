@@ -4,7 +4,7 @@
 
 Digerati Experts, LLC ("Digerati Experts," "DE," "we," "us") is an Arizona limited liability company based in Chandler, Arizona. We provide managed IT, cybersecurity, compliance support, voice and related services to businesses, and sell refurbished technology kits through the DE Store.
 
-Contact for privacy questions and requests: **admin@digeratiexperts.com** · {{PUBLIC_PHONE}} · Mail: Digerati Experts, LLC, {{MAILING_ADDRESS}}.
+Contact for privacy questions and requests: **admin@digeratiexperts.com** · [DE_PUBLIC_PHONE] · Mail: Digerati Experts, LLC, {{MAILING_ADDRESS}}.
 
 ## 2. What this policy covers
 
@@ -102,7 +102,7 @@ If a security incident affects personal information we own or license, we will i
 
 Wherever you live, you may ask us to: **access** or receive a copy of personal information we hold about you; **correct** it; **delete** it; **opt out** of marketing, of advertising cookies ("sharing"/targeted advertising) and of call recording; and **appeal** our decision on your request. We do not sell personal information or use it for profiling with legal effects, so there is nothing to opt out of there.
 
-- **How:** email admin@digeratiexperts.com with "Privacy request" in the subject, or call {{PUBLIC_PHONE}}.
+- **How:** email admin@digeratiexperts.com with "Privacy request" in the subject, or call [DE_PUBLIC_PHONE].
 - **Verification:** we confirm your identity by matching information we already have (for example, a code sent to your email). We never ask for your password.
 - **Agents:** an authorized agent may submit a request with your signed permission; we may still verify you.
 - **Timing:** we respond within 45 days, and may extend once by 45 days if needed, with notice.

@@ -8,6 +8,6 @@ Digerati Experts wants everyone, including people with disabilities, to be able 
 
 **Known limitations.** {{KNOWN_LIMITATIONS — for example: some older blog images lack detailed descriptions; some third-party pages we link to (payment, scheduling) are controlled by those vendors; interactive diagrams on the ecosystem pages have text alternatives in progress}}.
 
-**Other ways to reach us.** If any part of the Site is hard to use, you can get the same information or service by email at {{ACCESSIBILITY_EMAIL}} or by phone at {{PUBLIC_PHONE}} (Monday–Friday, Arizona time). We do not charge extra for an accessible alternative.
+**Other ways to reach us.** If any part of the Site is hard to use, you can get the same information or service by email at {{ACCESSIBILITY_EMAIL}} or by phone at [DE_PUBLIC_PHONE] (Monday–Friday, Arizona time). We do not charge extra for an accessible alternative.
 
 **Feedback.** Tell us the page and the problem. We acknowledge within 2 business days and aim to fix or provide an alternative within 10 business days.

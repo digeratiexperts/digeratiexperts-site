@@ -29,7 +29,7 @@ describe("published legal wording", () => {
     const placeholders = [
       "{{PUBLISH_DATE}}",
       "{{DMCA_AGENT_NAME_AND_ADDRESS}}",
-      "{{PUBLIC_PHONE}}",
+      "[DE_PUBLIC_PHONE]",
       "{{MAILING_ADDRESS}}",
       "{{AI_PROVIDER_NAMING}}",
       "{{CHAT_RETENTION}}",
