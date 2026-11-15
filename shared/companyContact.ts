@@ -52,6 +52,9 @@ export const COMPANY = {
  * 2026-10-07 check: facebook.com/digeratiexperts shows "content isn't available"
  * and x.com/digerati_experts is "profile not found"; both stay out until DE
  * confirms the real URLs.
+ * 2026-11-11 check: the LinkedIn company URL returns 404 and the Instagram handle has
+ * no account, so both left PUBLIC_SOCIAL_LINKS (footer + schema sameAs). x.com/DigeratiExperts
+ * is DE's live profile. Re-add a network only after its URL loads for a logged-out visitor.
  */
 export const COMPANY_SOCIAL = {
   linkedin: {
@@ -70,12 +73,15 @@ export const COMPANY_SOCIAL = {
     name: "Instagram",
     href: "https://www.instagram.com/digerati.experts",
   },
+  x: {
+    name: "X",
+    href: "https://x.com/DigeratiExperts",
+  },
 } as const;
 
 /** The social profiles that are live and published (site links + schema sameAs). */
 export const PUBLIC_SOCIAL_LINKS = [
-  { key: "linkedin", ...COMPANY_SOCIAL.linkedin },
-  { key: "instagram", ...COMPANY_SOCIAL.instagram },
+  { key: "x", ...COMPANY_SOCIAL.x },
 ] as const;
 
 /** Official public NAP — sales / business / click-to-call. */

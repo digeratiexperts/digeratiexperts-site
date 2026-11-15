@@ -1,0 +1,22 @@
+--- a/scripts/de-documents/system/components.mts
++++ b/scripts/de-documents/system/components.mts
+@@ -186,7 +186,7 @@
+   const c = doc.cta;
+   return `<aside class="rec" aria-label="Next step"><div class="bar" aria-hidden="true"></div><div class="in">
+ <p class="eyebrow">Next step</p><h2>${esc(c.label)}</h2><p>${md(c.detail)}</p>
+-<p class="ct"><a class="link" href="${esc(c.href)}">${esc(c.hrefLabel)}</a>${CONTACT.telHref ? `<a class="link" href="${CONTACT.telHref}">${CONTACT.phone}</a>` : ""}<a class="link" href="mailto:${CONTACT.email}">${CONTACT.email}</a></p>
++<p class="ct"><a class="link" href="${esc(c.href)}">${esc(c.hrefLabel)}</a>${CONTACT.telHref ? `<a class="link" href="${CONTACT.telHref}">${CONTACT.phone}</a>` : `<span>${esc(CONTACT.phone)}</span>`}<a class="link" href="mailto:${CONTACT.email}">${CONTACT.email}</a></p>
+ ${scopeNote(doc)}</div></aside>`;
+ }
+ export const scopeNote = (doc: DocLike) => (doc.scopeNote ? `<p class="scope-note">${md(doc.scopeNote)}</p>` : "");
+--- a/artifacts/design-concepts/resource-pdfs/content/proactive-it.json
++++ b/artifacts/design-concepts/resource-pdfs/content/proactive-it.json
+@@ -62,7 +62,7 @@
+     "url": "https://digeratiexperts.com/book",
+     "urlLabel": "digeratiexperts.com/book",
+     "phone": "[DE_PUBLIC_PHONE]",
+-    "phoneHref": "tel:[DE_PUBLIC_PHONE]",
++    "phoneHref": "",
+     "email": "info@digeratiexperts.com"
+   },
+   "scopeNote": "Published rates are starting points, not quotes. Final pricing depends on users, endpoints, locations, infrastructure, backup requirements and security and compliance scope; your Cyber Risk Assessment confirms final scope. This datasheet names no customers and makes no vendor-specific claims.",
