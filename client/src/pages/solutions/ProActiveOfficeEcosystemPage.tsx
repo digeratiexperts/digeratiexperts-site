@@ -59,7 +59,7 @@ const config: TierPageConfig = {
     "ProActive Office clients receive a monthly operational report and an annual combined technology + cyber review. Semi-annual reviews are part of ProActive Business; quarterly executive reviews are part of Enterprise.",
   pricingNote:
     `ProActive Office Ecosystem starts at ${formatUserPrice("office")} with a ${formatPrice(pricing.office.monthlyMin)}/mo minimum. Final pricing is confirmed after a short assessment of your environment, user count, and add-on selections.`,
-  ctaPrimary: { label: "View Pricing & Matrix", href: "/proactive-ecosystem-pricing" },
+  ctaPrimary: { label: "View Pricing & Matrix", href: "/pricing" },
 };
 
 export default function ProActiveOfficeEcosystemPage() {
