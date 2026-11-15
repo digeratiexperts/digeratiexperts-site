@@ -30,6 +30,21 @@
 
 version: 2
 claims:
+  - id: session-test-bootstrap-20261114
+    issue: 1038
+    owner: codex
+    subsystem: session-revocation-test-fixture
+    branch: codex/fix-session-test-bootstrap-20261114
+    base_sha: bf4ffdd616ab5f4a767a80be4f234a1d12b0f56c
+    started: 2026-11-14
+    status: in-review
+    files:
+      - server/portalSessionRevocation.test.ts
+      - docs/work-ledger/2026-11-14-session-test-bootstrap.md
+    note: >-
+      Test-only preload of server routes before the behavioral test budget.
+      Existing assertions and five-second test timeout are preserved.
+      Isolated branch; PR and full CI verification only, no merge or deploy.
   - id: public-phone-pdf-completion-20261114
     owner: chatgpt
     subsystem: public-contact-artifacts
