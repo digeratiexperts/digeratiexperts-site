@@ -28,13 +28,17 @@ export interface CompanyPhone {
 
 export const COMPANY = {
   legalName: "Digerati Experts",
-  email: "info@digeratiexperts.com",
+  /** Public general inbox. Client-facing addresses use digeratexperts.com, not the hyphenated domain. */
+  email: "admin@digeratiexperts.com",
   supportEmail: "support@digeratiexperts.com",
   /** Public sales inbox. Client-facing addresses use digeratiexperts.com; the hyphenated domain is internal only. */
   salesEmail: "sales@digeratiexperts.com",
   /** Invoice questions when card checkout is not connected. Already used by the portal pay route. */
   billingEmail: "billing@digeratiexperts.com",
   privacyEmail: "privacy@digeratiexperts.com",
+  legalEmail: "legal@digeratiexperts.com",
+  securityEmail: "security@digeratiexperts.com",
+  accessibilityEmail: "accessibility@digeratiexperts.com",
   website: "https://digeratiexperts.com",
   bookingUrl: "https://meet.digerati-experts.com/",
   /** Public NAP is city only (Joe, 2026-10-07): no street or ZIP anywhere on the site. */
@@ -132,7 +136,7 @@ export function hasPublicPhone(): boolean {
 
 /**
  * Sentence fragment for "how to reach us" copy: "call us at 480-555-0100"
- * when a number is set, otherwise "email us at info@digeratiexperts.com".
+ * when a number is set, otherwise "email us at admin@digeratiexperts.com".
  */
 export function reachUsPhrase(): string {
   return hasPublicPhone() ? `call us at ${PRIMARY_PHONE.display}` : `email us at ${COMPANY.email}`;

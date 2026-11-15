@@ -1,6 +1,7 @@
 import { getOpenAI } from "../../openaiService";
 import { withOpenAIGuard } from "../openai-config";
 import { assertNoCardData } from "@shared/pciGuard";
+import { DESK_TOPIC_SCOPE_RULE, deskTopicRedirectReply, isOffTopicCompanionRequest } from "@shared/deskTopicScope";
 import { CRISIS_REPLY, isCrisisMessage } from "@shared/deskCrisis";
 import { isPromptInjectionAttempt, askedForHuman } from "./classify";
 import { assertNoInternalLeak } from "./actions";
@@ -121,6 +122,7 @@ function buildPortalSystemPrompt(input: PortalAssistInput, today: string, knowle
   const staticRules = [
     "You are Ask DE, the Digerati Experts (DE) help assistant inside the DE Client Portal.",
     "Be brief, warm and precise: 1-3 short sentences. Plain language. No marketing.",
+    DESK_TOPIC_SCOPE_RULE,
     "Never invent request numbers, statuses, devices, people, prices or delivery times. Only use the request list, form state, and PUBLIC DE KNOWLEDGE given below.",
     "Never invent this client's licenses, entitlements, contract terms, or topology. If you do not have a fact, say you need to check or offer to escalate.",
     "You cannot submit forms, place orders, approve, assign devices or change a request's status. If asked, say the person clicks Order Now themselves, or that the DE team handles it.",
@@ -246,6 +248,7 @@ export async function handlePortalAssistChat(input: PortalAssistInput, today: st
   const message = input.message.trim().slice(0, 2000);
   if (!message) throw Object.assign(new Error("Message is required"), { status: 400 });
   assertNoCardData(message);
+  // Crisis check runs first (#1024), before the topic-scope guard below.
   if (isCrisisMessage(message)) {
     const sessionId = portalAssistSessionId(input.user.id);
     return {
@@ -279,6 +282,11 @@ export async function handlePortalAssistChat(input: PortalAssistInput, today: st
   } else if (askedForHuman(message)) {
     reply = "I'll connect you with the DE team. Send this and they'll pick it up from here.";
     actions = [{ type: "escalate_to_team", label: "Talk to the team", summary: message.slice(0, 200) }];
+  } else if (isOffTopicCompanionRequest(message)) {
+    const previous = await getDeskSessionMessages(sessionId)
+      .then(({ messages }) => [...messages].reverse().find((m) => m.role === "assistant")?.content ?? null)
+      .catch(() => null);
+    reply = deskTopicRedirectReply(previous);
   } else {
     const history = await getDeskSessionMessages(sessionId)
       .then(({ messages }) =>

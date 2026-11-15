@@ -26,6 +26,8 @@ const CRISIS_PATTERNS: RegExp[] = [
   /\bsuicid(al|e)\b(?!\s+squeeze)/i,
   /\bself[-\s]?harm(?:ing)?\b/i,
   /\b(i\s+(just\s+)?want\s+to\s+die|i\s+wanna\s+die|want\s+to\s+be\s+dead)\b/i,
+  // The wish without a leading "I", e.g. "I'm lonely and want to die".
+  /\b(want(s|ed|ing)?\s+to|wanna)\s+die\b/i,
   /\b(wish\s+i\s+(was|were)\s+dead|better\s+off\s+dead|don't\s+want\s+to\s+(be\s+alive|live))\b/i,
   /\b(can't|cannot|can\s+not)\s+(go\s+on|keep\s+(on\s+)?(going|living)|do\s+this\s+anymore)\b/i,
   /\bno\s+reason\s+to\s+live\b/i,

@@ -60,6 +60,6 @@ integrations = ["javascript_database:1.0.0", "stripe:2.0.0", "javascript_openai_
 # must be set as Replit Secrets, never committed here. Previously committed
 # values are compromised and must be rotated.
 [userenv.shared]
-ADMIN_EMAIL = "info@digeratiexperts.com"
+ADMIN_EMAIL = "admin@digeratiexperts.com"
 VITE_TURNSTILE_SITE_KEY = "0x4AAAAAACVFaZbvIxse5DMd"
 VITE_CLARITY_ID = "fwts8lj42i"
