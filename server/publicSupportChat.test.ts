@@ -9,6 +9,7 @@ vi.mock("./openaiService", () => ({
 import { generateChatResponse } from "./openaiService";
 import { registerPublicSupportChat, sanitizeConversationHistory } from "./publicSupportChat";
 import { DESK_TOPIC_REDIRECT_FOLLOWUP, DESK_TOPIC_REDIRECT_REPLY } from "@shared/deskTopicScope";
+import { CRISIS_REPLY } from "@shared/deskCrisis";
 
 describe("sanitizeConversationHistory", () => {
   it("keeps only valid user and assistant messages", () => {
@@ -162,6 +163,19 @@ describe("public support chat topic scope", () => {
     });
     const data = (await response.json()) as { message: { content: string } };
     expect(data.message.content).toBe(DESK_TOPIC_REDIRECT_FOLLOWUP);
+  });
+
+  it("gives the crisis reply, not the redirect, for lonely-and-crisis wording", async () => {
+    vi.mocked(generateChatResponse).mockClear();
+    const response = await fetch(`${baseUrl}/api/portal/zoho/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: "I'm lonely and want to die" }),
+    });
+    expect(response.status).toBe(200);
+    const data = (await response.json()) as { message: { content: string } };
+    expect(data.message.content).toBe(CRISIS_REPLY);
+    expect(vi.mocked(generateChatResponse)).not.toHaveBeenCalled();
   });
 
   it("still sends legitimate IT questions to the assistant", async () => {

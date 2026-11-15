@@ -4,7 +4,7 @@
 **Date:** 2026-08-29  
 **Inspected `origin/main`:** `9b2ffdc` (Merge PR #93). **MERGED ≠ LIVE.** This packet describes current *code*, not production verification.  
 **Governing spec:** Three public doors + Client Marketplace + DE Digital Warehouse (supersedes earlier kitchen-sink and three-door implementation instructions).  
-**Company:** Digerati Experts / DE. Portal login: `https://portal.digeratiexperts.com/portal/login`. Phone: **325-480-9870** (do not change). Store electric lock remains.
+**Company:** Digerati Experts / DE. Portal login: `https://portal.digeratiexperts.com/portal/login`. Phone: **[DE_PUBLIC_PHONE]** (do not change). Store electric lock remains.
 
 **Phase 0 actions already taken**
 

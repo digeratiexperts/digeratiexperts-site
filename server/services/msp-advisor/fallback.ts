@@ -1,6 +1,7 @@
 import { DE_COMPANY } from "./knowledge";
 import { OFF_TOPIC_FALLBACK, INCIDENT_FALLBACK, AI_UNAVAILABLE_FALLBACK } from "./prompt";
 import type { AdvisorMode, ConversationProfile, ModelAdvisorOutput } from "./types";
+import { hasPublicPhone } from "@shared/companyContact";
 
 export function normalizeReply(text: string): string {
   return text.toLowerCase().replace(/\s+/g, " ").trim();
@@ -148,8 +149,8 @@ export function buildHeuristicReply(input: HeuristicInput): ModelAdvisorOutput {
   if (input.humanRequested) {
     const reply = pick(
       [
-        `Noted. Leave a message or request a callback below and the desk gets it with this chat. Anything urgent: ${DE_COMPANY.phoneDisplay}.`,
-        `Got it. The message and callback buttons below send this to the desk with the chat. For anything urgent, call ${DE_COMPANY.phoneDisplay}.`,
+        `Noted. Leave a message or request a callback below and the desk gets it with this chat.${hasPublicPhone() ? ` Anything urgent: ${DE_COMPANY.phoneDisplay}.` : ""}`,
+        `Got it. The message and callback buttons below send this to the desk with the chat.${hasPublicPhone() ? ` For anything urgent, call ${DE_COMPANY.phoneDisplay}.` : ""}`,
       ],
       input.fallbackVariant,
       input.lastAssistantReply,
@@ -165,7 +166,7 @@ export function buildHeuristicReply(input: HeuristicInput): ModelAdvisorOutput {
   if (input.askedForHuman) {
     const reply = address(
       input.profile,
-      `${prefix}A human on the DE team: ${DE_COMPANY.phoneDisplay}. You can also book ${DE_COMPANY.bookingUrl} or keep going here.`,
+      `${prefix}${hasPublicPhone() ? `A human on the DE team: ${DE_COMPANY.phoneDisplay}. You can also book` : "To reach a human on the DE team, request a callback below or book"} ${DE_COMPANY.bookingUrl} or keep going here.`,
     );
     return {
       reply,

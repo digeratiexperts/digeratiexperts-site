@@ -8,12 +8,14 @@ import {
   HeroActions,
   HeroFacts,
   IndexedList,
+  FaqChapter,
 } from "@/components/site/chapters";
+import { ACCOUNTING_FAQS } from "@/data/localFaqs";
 import { ServiceBlocks } from "@/components/site/IndustriesServiceBlocks";
 import { Shield, Lock, FileText, DollarSign, Activity } from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
 import { CTA } from "@/lib/ctaCopy";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PRIMARY_PHONE, phoneAction } from "@/data/companyContact";
 
 export default function Accounting() {
   useSEO({
@@ -88,7 +90,7 @@ export default function Accounting() {
         <div className="flex flex-col gap-3 sm:flex-row">
           <HeroActions
             primary={{ label: CTA.primary, href: "/book", testId: "button-hero-accounting" }}
-            secondary={{ label: `Call ${PRIMARY_PHONE.display}`, href: PRIMARY_PHONE.telHref }}
+            secondary={phoneAction(`Call ${PRIMARY_PHONE.display}`)}
           />
         </div>
       }
@@ -157,6 +159,10 @@ export default function Accounting() {
           <IndexedList tone="well" items={honest} />
         </Container>
       </Chapter>
+
+      <div data-testid="section-faq">
+        <FaqChapter faqs={ACCOUNTING_FAQS} title="Questions firm partners ask" />
+      </div>
 
       <div data-testid="section-final-cta">
         <ClosingCta

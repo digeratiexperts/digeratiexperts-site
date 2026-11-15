@@ -3,6 +3,7 @@ import type { Express } from "express";
 import rateLimit from "express-rate-limit";
 import { generateChatResponse } from "./openaiService";
 import { deskTopicRedirectReply, isOffTopicCompanionRequest } from "@shared/deskTopicScope";
+import { CRISIS_REPLY, isCrisisMessage } from "@shared/deskCrisis";
 import { DE_KNOWLEDGE_CATALOG } from "./services/de-intelligence/catalog";
 
 export type PublicChatHistoryEntry = {
@@ -82,10 +83,18 @@ export function registerPublicSupportChat(app: Express): void {
       }
 
       const conversationHistory = sanitizeConversationHistory(req.body?.conversationHistory);
-      // Crisis checks run first, before topic scope. When #1024 lands, call
-      // isCrisisMessage(rawMessage) here and return the fixed crisis reply
-      // before the topic-scope guard or the model. Do not move the
-      // topic-scope guard above that check.
+      // Crisis check runs first (#1024), before the topic-scope guard below.
+      if (isCrisisMessage(rawMessage)) {
+        return res.json({
+          success: true,
+          message: {
+            id: `support-${Date.now()}-crisis`,
+            content: CRISIS_REPLY,
+            respondedBy: "system",
+            timestamp: new Date().toISOString(),
+          },
+        });
+      }
       if (isOffTopicCompanionRequest(rawMessage)) {
         const previous = [...conversationHistory].reverse().find((entry) => entry.role === "assistant")?.content ?? null;
         return res.json({

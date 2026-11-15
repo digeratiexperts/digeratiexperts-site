@@ -21,8 +21,9 @@ import {
 import { isTransientModelError, withTransientModelRetry, TRANSIENT_MODEL_BACKOFF_MS } from "./model-retry";
 import { sanitizeActions, sanitizePath, assertNoInternalLeak, isAllowedActionType, ensureLoginAction } from "./actions";
 import { handleAdvisorChat } from "./advisor";
-import { _resetSessionsForTests } from "./session";
-import { PRIMARY_PHONE } from "@shared/companyContact";
+import { _resetSessionsForTests, getSession } from "./session";
+import { CRISIS_HISTORY_PLACEHOLDER, CRISIS_REPLY } from "@shared/deskCrisis";
+import { PRIMARY_PHONE, hasPublicPhone } from "@shared/companyContact";
 
 beforeEach(() => {
   _resetSessionsForTests();
@@ -360,7 +361,7 @@ describe("handleAdvisorChat acceptance (heuristic / no LLM required)", () => {
       message: "Active ransomware — files encrypting now",
     });
     assert.equal(res.mode, "security_incident");
-    assert.match(res.reply, /urgent|isolate|325-480-9870|contain/i);
+    assert.match(res.reply, /urgent|isolate|contain/i);
   });
 
   it("blocks prompt injection from revealing instructions", async () => {
@@ -490,7 +491,8 @@ describe("asking for a person (Joe transcript 2026-10-07)", () => {
   it("hands 'I need Joe' to a person at once, and never gates it on name and company", async () => {
     const first = await handleAdvisorChat({ message: "I need Joe" });
     assert.match(first.reply, /Joe/);
-    assert.ok(first.reply.includes(PRIMARY_PHONE.display));
+    if (hasPublicPhone()) assert.ok(first.reply.includes(PRIMARY_PHONE.display));
+    else assert.doesNotMatch(first.reply, /\[DE_PUBLIC_PHONE\]|fastest way is a call/);
     assert.doesNotMatch(first.reply, /what'?s your name|what company/i);
     const types = first.actions.map((a) => a.type);
     assert.ok(types.includes("request_callback"));
@@ -696,5 +698,31 @@ describe("DE Desk topic-scope guard", () => {
     });
     assert.notEqual(back.reply, DESK_TOPIC_REDIRECT_REPLY);
     assert.notEqual(back.reply, DESK_TOPIC_REDIRECT_FOLLOWUP);
+  });
+});
+
+describe("crisis turn history", () => {
+  it("stores a placeholder, not the crisis text, in session history", async () => {
+    const crisisText = "I want to kill myself tonight";
+    const res = await handleAdvisorChat({ message: crisisText });
+    assert.equal(res.reply, CRISIS_REPLY);
+    const session = getSession(res.sessionId);
+    assert.ok(session, "session exists");
+    const userTurns = session!.messages.filter((m) => m.role === "user");
+    assert.equal(userTurns.length, 1);
+    assert.equal(userTurns[0].content, CRISIS_HISTORY_PLACEHOLDER);
+    for (const m of session!.messages) {
+      assert.ok(!m.content.includes(crisisText), "crisis text must not be kept in history");
+      assert.ok(!/kill myself/i.test(m.content), "crisis wording must not be kept in history");
+    }
+  });
+});
+
+describe("crisis check runs before the topic-scope guard", () => {
+  it("gives the crisis reply, not the off-topic redirect, for lonely-and-crisis wording", async () => {
+    const res = await handleAdvisorChat({ message: "I'm lonely and want to die" });
+    assert.equal(res.reply, CRISIS_REPLY);
+    assert.notEqual(res.reply, DESK_TOPIC_REDIRECT_REPLY);
+    assert.ok(!res.analyticsEvents.includes("off_topic_redirected"));
   });
 });

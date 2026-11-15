@@ -80,9 +80,7 @@ try {
     try {
       for(const screen of ['infrastructure','create']) {
         await visit(screen);
-        const phone=page.getByRole('link',{name:'Call 325-480-9870',exact:true});
-        assert.equal(await phone.getAttribute('href'),'tel:+13254809870');
-        assert.equal(await phone.evaluate(el=>getComputedStyle(el).whiteSpace),'nowrap');
+        assert.equal(await page.locator('a[href^="tel:"]').count(),0,`${screen}: no call link while the public number is unset`);
         if(screen==='create'){assert.equal((await page.getByTestId('select-priority').innerText()).trim(),'Medium');assert.equal(await page.getByText('Soon; response within 4 hours',{exact:true}).count(),1);}
         if(width===390)assert(await page.getByTestId('admin-mode-client').evaluate(el=>el.clientWidth>=250),'Mobile client selector has a full row');
         await capture(screen);

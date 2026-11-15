@@ -273,7 +273,7 @@ export default function ProActiveEcosystemPricing() {
     title: "ProActive Ecosystem Pricing — Managed IT & Cybersecurity Packages",
     description:
       "Estimate your ProActive Ecosystem starting point across IT, Office, Business, and Enterprise packages. Final pricing is confirmed after assessment.",
-    canonical: "/proactive-ecosystem-pricing",
+    canonical: "/pricing",
   });
 
   const effectiveUsers = typeof userCount === "number" ? Math.max(userCount, 1) : 1;

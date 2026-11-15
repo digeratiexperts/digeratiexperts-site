@@ -2,6 +2,7 @@ import { getOpenAI } from "../../openaiService";
 import { withOpenAIGuard } from "../openai-config";
 import { assertNoCardData } from "@shared/pciGuard";
 import { DESK_TOPIC_SCOPE_RULE, deskTopicRedirectReply, isOffTopicCompanionRequest } from "@shared/deskTopicScope";
+import { CRISIS_REPLY, isCrisisMessage } from "@shared/deskCrisis";
 import { isPromptInjectionAttempt, askedForHuman } from "./classify";
 import { assertNoInternalLeak } from "./actions";
 import { INTERNAL_REFUSAL } from "./prompt";
@@ -247,9 +248,17 @@ export async function handlePortalAssistChat(input: PortalAssistInput, today: st
   const message = input.message.trim().slice(0, 2000);
   if (!message) throw Object.assign(new Error("Message is required"), { status: 400 });
   assertNoCardData(message);
-  // Crisis checks run first, before topic scope. When #1024 lands, call
-  // isCrisisMessage(message) here and return the fixed crisis reply
-  // before anything below. Do not move the topic-scope guard above that check.
+  // Crisis check runs first (#1024), before the topic-scope guard below.
+  if (isCrisisMessage(message)) {
+    const sessionId = portalAssistSessionId(input.user.id);
+    return {
+      sessionId,
+      reply: CRISIS_REPLY,
+      actions: [],
+      agentLive: false,
+      agentName: null,
+    };
+  }
   const sessionId = portalAssistSessionId(input.user.id);
   const meta = {
     email: input.user.email || null,
