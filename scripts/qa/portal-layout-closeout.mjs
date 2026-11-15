@@ -53,6 +53,9 @@ try {
     const page=await context.newPage();page.setDefaultTimeout(20000);
     const errors=[],writes=[];
     let enabled=false,statusFailure=false,companyName='EXAMPLE Client';
+    // The control confirms the full safe state receipt on reads and writes.
+    // These are synthetic settings only; no credential or provider is used.
+    const openAIResponse=()=>({success:true,status:{enabled,configured:true,persistence:'process',restartEnabled:false},message:'EXAMPLE runtime state'});
     page.on('pageerror',e=>errors.push(e.message));
     await page.route('**/api/**',async route=>{
       const req=route.request(),p=new URL(req.url()).pathname;
@@ -62,7 +65,7 @@ try {
         if(req.method()==='POST' && p==='/api/portal/admin/openai/enable')enabled=true;
         else if(req.method()==='POST' && p==='/api/portal/admin/openai/disable')enabled=false;
         else return route.fulfill({status:409,contentType:'application/json',body:'{"error":"Unexpected fixture write"}'});
-        body={success:true};
+        body=openAIResponse();
       } else if(p==='/api/portal/me')body={user};
       else if(p==='/api/portal/admin/tenants')body={tenants:[],mspCount:0,clientCount:0};
       else if(p==='/api/portal/agreements')body={mode:'off',exempt:true,status:{complete:true}};
@@ -70,7 +73,7 @@ try {
       else if(p==='/api/portal/invoices')body={invoices:[],zohoConnected:true};
       else if(p==='/api/portal/my-files')body={files:[],companyName};
       else if(p==='/api/portal/roadmap'){const item=(id,status,extra={})=>({id,clientId:'example-company',title:`EXAMPLE ${id}`,rationale:'EXAMPLE reason',category:'security',priority:'high',targetQuarter:'2027-Q1',estimateLow:2500,estimateHigh:4000,costBasis:'one_time',status,decisionNote:'',decidedByName:null,decidedAt:null,comments:[],createdByName:'EXAMPLE DE',createdAt:'2026-10-01T00:00:00.000Z',updatedAt:'2026-10-01T00:00:00.000Z',...extra});body={success:true,company:{id:'example-company',name:'EXAMPLE Client'},canDecide:true,items:[item('proposal','proposed'),item('approved','approved',{targetQuarter:'2027-Q2'})],summary:{counts:{proposed:1,approved:1,in_progress:0,done:0,declined:0},committed:{oneTimeLow:2500,oneTimeHigh:4000,yearlyLow:0,yearlyHigh:0}}};}
-      else if(p==='/api/portal/admin/openai/status'){status=statusFailure?503:200;body=statusFailure?{message:'EXAMPLE unavailable'}:{status:{enabled,apiKey:'Configured (EXAMPLE)',baseUrl:'https://example.invalid'},message:'EXAMPLE status'};}
+      else if(p==='/api/portal/admin/openai/status'){status=statusFailure?503:200;body=statusFailure?{message:'EXAMPLE unavailable'}:openAIResponse();}
       else if(p==='/api/portal/admin/data-sources')body={success:true,areas:[],companies:[],qaLogin:{emailEnv:'EXAMPLE_EMAIL',passwordEnv:'EXAMPLE_PASSWORD',emailSet:false,passwordSet:false},envExample:'deploy/vps/env.production.example'};
       await route.fulfill({status,contentType:'application/json',body:JSON.stringify(body)});
     });
