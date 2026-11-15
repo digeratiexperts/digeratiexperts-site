@@ -83,9 +83,31 @@ function skipClarity(): boolean {
   return skipClarityFor(window.location.hostname, window.location.pathname, deskIsOpen());
 }
 
+/**
+ * Load Clarity once, only with analytics consent and only on a page Clarity
+ * may record. Called at init and again on SPA navigation, so a visitor who
+ * landed on an excluded page still gets Clarity on the next allowed page.
+ */
+function loadClarityIfAllowed(consent: ConsentConfig = getConsent()) {
+  const clarityId = import.meta.env.VITE_CLARITY_ID;
+  if (!clarityId || !consent.analytics || skipMarketingPixels() || skipClarity() || (window as any).__CLARITY_ID__) return;
+  const w = window as any;
+  w.clarity = w.clarity || function () { (w.clarity.q = w.clarity.q || []).push(arguments); };
+  const t = document.createElement("script") as HTMLScriptElement;
+  t.async = true;
+  t.src = "https://www.clarity.ms/tag/" + clarityId;
+  const y = document.getElementsByTagName?.("script")?.[0];
+  if (y?.parentNode) y.parentNode.insertBefore(t, y);
+  else document.head.appendChild(t);
+  w.__CLARITY_ID__ = clarityId;
+}
+
 function syncClarityRecording() {
   try {
-    if (!(window as any).clarity) return;
+    if (!(window as any).clarity) {
+      loadClarityIfAllowed();
+      return;
+    }
     if (skipClarity()) (window as any).clarity("stop");
     else (window as any).clarity("start");
   } catch {}
@@ -271,20 +293,7 @@ export function initAnalytics() {
   initGoogleAnalytics(consent);
 
   // Microsoft Clarity (analytics-gated). Strict masking is set in the Clarity dashboard.
-  const clarityId = import.meta.env.VITE_CLARITY_ID;
-  if (clarityId && consent.analytics && !skipClarity() && !(window as any).__CLARITY_ID__) {
-    const w = window as any;
-    w.clarity = w.clarity || function () { (w.clarity.q = w.clarity.q || []).push(arguments); };
-    (function (c: any, l: any, a: any, r: any, i: any) {
-      c[a] = c[a] || function () { (c[a].q = c[a].q || []).push(arguments); };
-      const t = l.createElement(r);
-      t.async = 1;
-      t.src = "https://www.clarity.ms/tag/" + i;
-      const y = l.getElementsByTagName(r)[0];
-      y.parentNode.insertBefore(t, y);
-      c.__CLARITY_ID__ = i;
-    })(window, document, "clarity", "script", clarityId);
-  }
+  loadClarityIfAllowed(consent);
 
   // LinkedIn Insight Tag (marketing-gated)
   const linkedinId = import.meta.env.VITE_LINKEDIN_PARTNER_ID;
