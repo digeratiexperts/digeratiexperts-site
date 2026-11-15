@@ -1,5 +1,4 @@
 import { Mail } from "lucide-react";
-import { PRIMARY_PHONE } from "@/data/companyContact";
 
 const HEADING = "How Digerati Experts' email domains work";
 const BODY_BEFORE =
@@ -35,11 +34,10 @@ export function EmailDomainNotice({ className = "" }: { className?: string }) {
             <p className="mt-3 text-base leading-relaxed text-white/75">
               {BODY_BEFORE}
               <a
-                href={PRIMARY_PHONE.telHref}
+                href="/contact"
                 className="font-semibold text-white underline decoration-[#D3126A]/80 underline-offset-4 transition-colors hover:text-[#f0187a] hover:decoration-[#f0187a] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A] focus-visible:ring-offset-2 focus-visible:ring-offset-de-raised rounded-sm"
-                aria-label={`Call us at ${PRIMARY_PHONE.display}`}
               >
-                call us
+                contact us
               </a>
               {BODY_AFTER}
             </p>

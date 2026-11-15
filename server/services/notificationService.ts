@@ -7,6 +7,7 @@ import { escapeEmailHtml } from "./emailEscape";
 import { logger } from "../logger";
 import { shouldBlockMutation } from "../stagingReviewGuard";
 import { COMPANY } from "@shared/companyContact";
+import { renderAutoRenewTermsEmailSection, type AutoRenewEmailTerms } from "./autoRenewEmail";
 
 const ZEPTOMAIL_API_URL = "https://api.zeptomail.com/v1.1/email";
 const FROM_EMAIL = "noreply@digeratiexperts.com";
@@ -337,6 +338,7 @@ export const notificationService = {
     orderId: string;
     items: { name: string; price: number; quantity: number }[];
     total: number;
+    autoRenew?: AutoRenewEmailTerms;
   }): Promise<boolean> {
     const itemsHtml = data.items
       .map(item => `<tr><td style="padding: 8px;">${escapeEmailHtml(item.name)}</td><td style="padding: 8px; text-align: center;">${escapeEmailHtml(item.quantity)}</td><td style="padding: 8px; text-align: right;">$${(item.price * item.quantity).toFixed(2)}</td></tr>`)
@@ -352,6 +354,7 @@ export const notificationService = {
         ${itemsHtml}
         <tr style="border-top: 2px solid #8b5cf6;"><td colspan="2" style="padding: 12px;"><strong>Total</strong></td><td style="padding: 12px; text-align: right;"><strong class="highlight">$${data.total.toFixed(2)}</strong></td></tr>
       </table>
+      ${data.autoRenew ? renderAutoRenewTermsEmailSection(data.autoRenew) : ""}
       <a href="https://portal.digeratiexperts.com/portal/orders" class="button">Track Order</a>
     `;
 
@@ -359,6 +362,58 @@ export const notificationService = {
       to: data.email,
       subject: `Order Confirmed - ${data.orderId}`,
       htmlBody: baseEmailTemplate(content, "Order Confirmation"),
+    });
+  },
+
+  async sendSubscriptionConfirmation(data: {
+    email: string;
+    name: string;
+    subscriptionId: string;
+    status: string;
+    renewsAt?: string | null;
+    items: { name: string; sku?: string; price: number; quantity: number }[];
+    totalCents: number;
+    currency: string;
+    frequency: AutoRenewEmailTerms["frequency"];
+    termMonths: number;
+    termsVersion: string;
+    termsText: string;
+    cancelPolicyText: string;
+    confirmationUrl?: string;
+  }): Promise<boolean> {
+    const itemsHtml = data.items
+      .map((item) => `<tr><td style="padding: 8px;">${escapeEmailHtml(item.name)}</td><td style="padding: 8px; text-align: center;">${escapeEmailHtml(item.quantity)}</td><td style="padding: 8px; text-align: right;">$${(item.price * item.quantity).toFixed(2)}</td></tr>`)
+      .join("");
+    const termsHtml = renderAutoRenewTermsEmailSection({
+      termsVersion: data.termsVersion,
+      termsText: data.termsText,
+      cancelPolicyText: data.cancelPolicyText,
+      frequency: data.frequency,
+      termMonths: data.termMonths,
+      totalCents: data.totalCents,
+      currency: data.currency,
+      renewsAt: data.renewsAt,
+    });
+    const confirmLink = data.confirmationUrl
+      ? `<a href="${escapeEmailHtml(data.confirmationUrl)}" class="button">View confirmation</a>`
+      : `<a href="https://portal.digeratiexperts.com/portal/billing" class="button">View billing in the Client Portal</a>`;
+    const content = `
+      <h2>Subscription confirmed</h2>
+      <p>Hi ${escapeEmailHtml(data.name)},</p>
+      <p>Your Digerati Experts subscription is on file. Keep this email for your records, including the automatic renewal and cancellation terms below.</p>
+      <p><strong>Subscription ID:</strong> <span class="highlight">${escapeEmailHtml(data.subscriptionId)}</span></p>
+      <p><strong>Status:</strong> ${escapeEmailHtml(data.status)}</p>
+      <table style="width: 100%; margin: 20px 0; border-collapse: collapse;">
+        <tr style="background: #1a1a2e;"><th style="padding: 12px; text-align: left;">Item</th><th style="padding: 12px; text-align: center;">Qty</th><th style="padding: 12px; text-align: right;">Price</th></tr>
+        ${itemsHtml}
+      </table>
+      ${termsHtml}
+      ${confirmLink}
+    `;
+    return sendEmail({
+      to: data.email,
+      subject: `Subscription confirmed - ${data.subscriptionId}`,
+      htmlBody: baseEmailTemplate(content, "Subscription Confirmation"),
     });
   },
 

@@ -9,6 +9,7 @@ import { isZohoOAuthError } from "./zoho/zohoOAuthErrors";
 import { isZohoAuthUnavailableError, type ZohoConnectionState } from "./zoho/oauth";
 import { PRIMARY_PHONE } from "@shared/companyContact";
 import { deskTicketSchema } from "@shared/deskTicket";
+import { sendCardDataRejected } from "./pciGuard";
 import { fallbackTicket, saveTicketOutsideDesk, type DeskFallbackOutcome, type FallbackTicket } from "./deskTicketFallback";
 import { getClient as portalAuthGetClient } from "./portalAuthStore";
 import { createHubTicketClient, type HubTicketClient } from "./integrations/hubTicketClient";
@@ -289,6 +290,7 @@ export function registerWidgetTicketRoute(app: Express, options: WidgetTicketRou
         return res.status(400).json({ success: false, error: "Enter a valid email, a subject (up to 200 characters), details (up to 5000 characters), and a valid urgency." });
       }
       const { email, subject, description, priority, sessionId: advisorSessionId, name } = parsed.data;
+      if (sendCardDataRejected(res, subject, description, name)) return;
 
       const priorityValue = priority || "Medium";
       const priorityLower = String(priorityValue).toLowerCase();

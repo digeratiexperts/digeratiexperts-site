@@ -2,6 +2,7 @@ import type { Express, Request, RequestHandler, Response } from "express";
 import { listServiceRequestsForUser } from "./serviceRequestStore";
 import { effectiveClientId, type DirectoryClient, type DirectoryUser, type ServiceRequestUser } from "./serviceRequestRoutes";
 import { BASKET_STATUS, todayIso } from "@shared/serviceRequests";
+import { sendCardDataRejected, sendCardDataRejectedError } from "./pciGuard";
 
 /**
  * Ask DE in the Client Portal (bottom-right help chat). Signed-in only; the
@@ -23,6 +24,7 @@ export function registerPortalAssistRoutes(
   app.post("/api/portal/assist/chat", ...deps.guards, async (req: AuthedRequest, res: Response) => {
     const message = typeof req.body?.message === "string" ? req.body.message : "";
     if (!message.trim()) return res.status(400).json({ error: "Message is required" });
+    if (sendCardDataRejected(res, message)) return;
     const advisor = await import("./services/msp-advisor");
     const user = req.user!;
     const clientId = effectiveClientId(user);
@@ -64,6 +66,7 @@ export function registerPortalAssistRoutes(
       );
       res.json({ success: true, ...out });
     } catch (error: any) {
+      if (sendCardDataRejectedError(res, error)) return;
       res.status(error?.status === 400 ? 400 : 500).json({ error: error?.status === 400 ? error.message : "Ask DE is unavailable right now" });
     }
   });

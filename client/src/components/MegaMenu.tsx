@@ -287,6 +287,8 @@ export function MegaMenu() {
             { title: 'ProActive Ecosystem', description: 'Cybersecurity-first operating model: IT, Office, Business, or Enterprise', icon: <Layers className="h-5 w-5" />, url: '/solutions/proactive-ecosystem' },
             { title: 'Co-Managed IT', description: 'Extend your internal IT team without replacing it', icon: <Users className="h-5 w-5" />, url: '/solutions/co-managed-it' },
             { title: 'Standalone Services', description: 'A specific gap — backup, phone and meeting systems, awareness, or a project', icon: <Server className="h-5 w-5" />, url: '/solutions/standalone-services' },
+            { title: 'Help Desk', description: 'Paid support without a managed plan, or beyond it', icon: <HeadphonesIcon className="h-5 w-5" />, url: '/help-desk' },
+            { title: 'Switching IT Providers', description: 'What to get back first, and how a switch works', icon: <Users className="h-5 w-5" />, url: '/solutions/switching-it-providers' },
             { title: 'Solve a Business Need', description: 'Curated DE solutions organized around the outcome you need', icon: <ClipboardCheck className="h-5 w-5" />, url: '/store' },
             { title: 'Efficiency Before AI', description: 'A working foundation and team first, AI second', icon: <Gauge className="h-5 w-5" />, url: '/solutions/efficiency-before-ai' },
             { title: 'Virtual CIO', description: 'Executive technology and security guidance', icon: <BarChart3 className="h-5 w-5" />, url: '/solutions/vcio-strategy' },
@@ -296,7 +298,7 @@ export function MegaMenu() {
           title: 'ProActive Ecosystem',
           viewAllUrl: '/solutions/proactive-ecosystem',
           items: [
-            { title: 'Compare All Packages', description: 'Capabilities and operating depth — not a ranking', icon: <LayoutGrid className="h-5 w-5" />, url: '/proactive-ecosystem-pricing' },
+            { title: 'Compare All Packages', description: 'Capabilities and operating depth — not a ranking', icon: <LayoutGrid className="h-5 w-5" />, url: '/pricing' },
             { title: 'Find Your Plan', description: 'Six questions, matched to IT, Office, Business or Enterprise', icon: <CheckCircle className="h-5 w-5" />, url: '/quote-wizard' },
           ]
         },
@@ -374,7 +376,7 @@ export function MegaMenu() {
     },
     {
       name: 'Pricing',
-      href: '/proactive-ecosystem-pricing',
+      href: '/pricing',
       isSimple: true
     },
     {

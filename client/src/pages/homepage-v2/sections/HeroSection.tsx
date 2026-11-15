@@ -1,14 +1,9 @@
 import type { CSSProperties } from "react";
 import heroImage from "@assets/de-hero-arizona-dusk-1600.webp";
 import { DexMark } from "@/components/mascots/Mascots";
-import { CheckIcon, PhoneIcon, SoundIcon } from "../icons";
+import { CheckIcon, PhoneIcon } from "../icons";
 import { PHONE_DISPLAY, PHONE_HREF, objectIcon } from "../content";
 import { HOME_CTA } from "../cta";
-
-/** See client/public/audio/README.md for how the file was made and how to replace it. */
-const PRONUNCIATION_AUDIO = "/audio/digerati-pronunciation.wav";
-/** Second voice, tried when the main file cannot play (client/public/audio/README.md). */
-const PRONUNCIATION_BACKUP = "/audio/digerati-pronunciation-backup.mp3";
 
 const READINESS_BARS = [
   { label: "Identity", value: 68 },
@@ -25,38 +20,15 @@ const ASSESSED_AREAS = [
   { icon: "backup", label: "Backups & recovery" },
 ];
 
+/**
+ * The card previews a SAMPLE report (example values, not a client's score) and links to
+ * the full sample, so the numbers read as "this is what you get", not as a claim.
+ * The pronunciation widget moved to About (/about/mission-values) to keep the hero on task.
+ */
+const SAMPLE_REPORT_HREF = "/resources/reports/cyber-risk-assessment-sample";
+
 /** Dex sits on the assessment card only; the hero carries no founder photo. */
 export function HeroSection(): JSX.Element {
-  // Plays the fixed pronunciation asset so the name sounds the same on every
-  // device; the backup voice is tried next, and browser synthesis only if
-  // neither file can play.
-  const speakName = () => {
-    let fellBack = false;
-    const synth = () => {
-      if (fellBack) return;
-      fellBack = true;
-      try {
-        const utterance = new SpeechSynthesisUtterance("dij uh RAH tee");
-        utterance.rate = 0.8;
-        speechSynthesis.cancel();
-        speechSynthesis.speak(utterance);
-      } catch {
-        // Speech synthesis is optional; the phonetic spelling is printed beside the button.
-      }
-    };
-    let triedBackup = false;
-    const backup = () => {
-      if (triedBackup) return;
-      triedBackup = true;
-      const second = new Audio(PRONUNCIATION_BACKUP);
-      second.onerror = synth;
-      void second.play().catch(synth);
-    };
-    const audio = new Audio(PRONUNCIATION_AUDIO);
-    audio.onerror = backup;
-    void audio.play().catch(backup);
-  };
-
   return (
     <header
       className="hero band on-photo t-sonoran"
@@ -76,17 +48,16 @@ export function HeroSection(): JSX.Element {
             <span><CheckIcon />Response within one business day</span>
             <span><PhoneIcon /><a href={PHONE_HREF}>{PHONE_DISPLAY}</a></span>
           </div>
-          <div className="word" data-testid="digerati-pronunciation-card">
-            <b>DIG·ER·A·TI</b>
-            <span>\ ˌdi-jə-ˈrä-tē \</span>
-            <span className="say">dij-uh-RAH-tee</span>
-            <button type="button" onClick={speakName} data-testid="button-play-digerati-pronunciation"><SoundIcon />Hear it</button>
-          </div>
         </div>
 
-        <div className="card deep assess" aria-label="Illustrative Cyber Risk Assessment preview">
+        <a
+          className="card deep assess"
+          href={SAMPLE_REPORT_HREF}
+          aria-label="See a sample report: Cyber Risk Assessment overview"
+          data-testid="link-hero-sample-report"
+        >
           <DexMark size={66} className="dex-perch" title="Dex" />
-          <div className="assess-top"><span>Cyber Risk Assessment overview</span><span className="chip">Illustrative</span></div>
+          <div className="assess-top"><span>Cyber Risk Assessment overview</span><span className="chip">Sample report</span></div>
           <h3>What the assessment reviews</h3>
           <p className="muted small">Identity, endpoints, email, backups, and foundational security controls.</p>
           <div className="areas">
@@ -102,7 +73,8 @@ export function HeroSection(): JSX.Element {
               <span>{bar.value}</span>
             </div>
           ))}
-        </div>
+          <span className="link assess-link">See a sample report</span>
+        </a>
       </div>
     </header>
   );

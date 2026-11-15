@@ -71,7 +71,7 @@ describe("de-sync contract parity: Hub secure fields", () => {
     expect([...HUB_SECURE_FIELD_STATUSES]).toEqual(read.statuses);
     expect(read.ttlHours).toEqual({ default: HUB_SECURE_FIELD_DEFAULT_TTL_HOURS, max: HUB_SECURE_FIELD_MAX_TTL_HOURS });
     expect(read.valueField).toBe(HUB_SECURE_FIELD_VALUE_KEY);
-    expect(Object.keys(read.errors).sort()).toEqual(["400", "401", "404", "409", "503"]);
+    expect(Object.keys(read.errors).sort()).toEqual(["400", "401", "404", "409", "422", "503"]);
   });
 
   it("never returns a value and has no reveal on the bridge", () => {

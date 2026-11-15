@@ -56,6 +56,7 @@ import {
   SECRET_IN_CHAT_WARNING,
   looksLikeSecret,
 } from "@/lib/deskSecureField";
+import { CARD_DATA_REJECTED_MESSAGE, CARD_DATA_REJECTED_TITLE, looksLikeCardData } from "@shared/pciGuard";
 
 interface ChatMessage {
   id: string;
@@ -657,6 +658,10 @@ export default function PortalChat() {
     ]
       .filter((line): line is string => line !== null)
       .join("\n");
+    if (looksLikeCardData(subject) || looksLikeCardData(description)) {
+      toast({ title: CARD_DATA_REJECTED_TITLE, description: CARD_DATA_REJECTED_MESSAGE, variant: "destructive" });
+      return;
+    }
     sessionStorage.setItem(
       DESK_TICKET_DRAFT_KEY,
       JSON.stringify({ subject, description, priority: "medium" }),
@@ -712,6 +717,10 @@ export default function PortalChat() {
     e?.preventDefault();
     if (!selectedDesk || !deskReply.trim() || deskSending || !token) return;
     const content = deskReply.trim();
+    if (looksLikeCardData(content)) {
+      toast({ title: CARD_DATA_REJECTED_TITLE, description: CARD_DATA_REJECTED_MESSAGE, variant: "destructive" });
+      return;
+    }
     // The website visitor's transcript keeps every reply; a secret goes on the ticket instead (#1179).
     if (looksLikeSecret(content)) {
       toast({ title: "Not sent", description: SECRET_IN_AGENT_REPLY_WARNING, variant: "destructive" });
@@ -783,6 +792,10 @@ export default function PortalChat() {
     async (e?: React.FormEvent) => {
       e?.preventDefault();
       if (!messageText.trim() || sending || !chatAllowed) return;
+      if (looksLikeCardData(messageText)) {
+        toast({ title: CARD_DATA_REJECTED_TITLE, description: CARD_DATA_REJECTED_MESSAGE, variant: "destructive" });
+        return;
+      }
       // Keep a password out of the transcript; offer the secure field instead (#1179).
       if (looksLikeSecret(messageText)) {
         toast({ title: "Not sent: that looks like a password", description: SECRET_IN_CHAT_WARNING, variant: "destructive" });

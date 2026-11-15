@@ -10,7 +10,9 @@ import {
   HeroFacts,
   IndexedList,
   cardDark,
+  FaqChapter,
 } from "@/components/site/chapters";
+import { REAL_ESTATE_FAQS } from "@/data/localFaqs";
 import { ServiceBlocks } from "@/components/site/IndustriesServiceBlocks";
 import { CheckCircle, AlertCircle, Shield, Lock, DollarSign, TrendingDown } from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
@@ -171,6 +173,10 @@ export default function RealEstate() {
           <IndexedList tone="well" items={promises} />
         </Container>
       </Chapter>
+
+      <div data-testid="section-faq">
+        <FaqChapter faqs={REAL_ESTATE_FAQS} title="Questions brokers ask" />
+      </div>
 
       <div data-testid="section-final-cta">
         <ClosingCta

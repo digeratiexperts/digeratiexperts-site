@@ -11,6 +11,7 @@ import {
   type SecureFieldKind,
   type SecureFieldMeta,
 } from "@/lib/deskSecureField";
+import { CARD_DATA_REJECTED_CODE, CARD_DATA_REJECTED_MESSAGE } from "@shared/pciGuard";
 
 /**
  * The DE Desk secure field (Intelligence-Hub #1179): a masked input that hands
@@ -192,6 +193,9 @@ export async function postSecureField(url: string, body: Record<string, unknown>
     credentials: init.credentials ?? "include",
   });
   const data = await response.json().catch(() => null);
+  if (data?.code === CARD_DATA_REJECTED_CODE) {
+    throw new Error(CARD_DATA_REJECTED_MESSAGE);
+  }
   if (!response.ok || !data?.secureField) {
     throw new Error(typeof data?.error === "string" && data.error ? data.error : "That couldn't be stored. Nothing was saved; please try again.");
   }

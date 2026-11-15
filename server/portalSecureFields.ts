@@ -3,6 +3,7 @@ import type { Express, Request, RequestHandler, Response } from "express";
 import rateLimit from "express-rate-limit";
 import { z } from "zod";
 import type { HubTenant, HubTicketClient, HubTicketFailure } from "./integrations/hubTicketClient";
+import { CARD_DATA_REJECTED_CODE, CARD_DATA_REJECTED_MESSAGE, CARD_DATA_REJECTED_STATUS, rejectCardData } from "@shared/pciGuard";
 import {
   HUB_SECURE_FIELD_KINDS,
   HUB_SECURE_FIELD_MAX_TTL_HOURS,
@@ -72,6 +73,10 @@ function noStore(res: Response): void {
 export function sendHubFailure(res: Response, failure: HubTicketFailure): void {
   if (failure.reason === "refused" && (failure.status === 404 || failure.status === 409)) {
     res.status(404).json({ error: "Ticket not found" });
+    return;
+  }
+  if (failure.reason === "refused" && failure.status === CARD_DATA_REJECTED_STATUS && failure.code === CARD_DATA_REJECTED_CODE) {
+    res.status(CARD_DATA_REJECTED_STATUS).json({ code: CARD_DATA_REJECTED_CODE, error: CARD_DATA_REJECTED_MESSAGE });
     return;
   }
   if (failure.reason === "refused" && failure.status === 400) {
@@ -145,6 +150,10 @@ export function registerPortalSecureFieldRoutes(app: Express, options: PortalSec
     const parsed = secureFieldInputSchema.safeParse(req.body ?? {});
     if (!parsed.success) {
       return res.status(400).json({ error: "Add a short description and the value.", code: "invalid_secure_field", details: inputProblems(parsed.error) });
+    }
+    const cardRefusal = rejectCardData(parsed.data.label, parsed.data.secretValue);
+    if (cardRefusal) {
+      return res.status(CARD_DATA_REJECTED_STATUS).json(cardRefusal);
     }
     try {
       const target = await resolveTarget(req, res, String(req.params.id));
@@ -237,6 +246,10 @@ export function registerWidgetSecureFieldRoute(app: Express, options: WidgetSecu
     const parsed = widgetInputSchema.safeParse(req.body ?? {});
     if (!parsed.success) {
       return res.status(400).json({ error: "Add a short description and the value.", code: "invalid_secure_field", details: inputProblems(parsed.error) });
+    }
+    const cardRefusal = rejectCardData(parsed.data.label, parsed.data.secretValue);
+    if (cardRefusal) {
+      return res.status(CARD_DATA_REJECTED_STATUS).json(cardRefusal);
     }
     let secret: string;
     try {

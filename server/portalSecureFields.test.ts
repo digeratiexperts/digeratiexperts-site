@@ -287,3 +287,28 @@ describe("website DE Desk secure field (anonymous visitor)", () => {
     expect(token).not.toContain(TOKEN_SECRET);
   });
 });
+
+describe("secure fields reject card data", () => {
+  const pan = "4111111111111111";
+
+  it("rejects a PAN on the portal route without calling the Hub or logging the value", async () => {
+    const hub = mockedHub(created());
+    const { app } = portalApp(hub.client, clientTarget);
+    const res = await request(app).post(path).send({ label: "Office Wi-Fi", kind: "other", secretValue: pan });
+    expect(res.status).toBe(422);
+    expect(res.body.code).toBe("card_data_rejected");
+    expect(JSON.stringify(res.body)).not.toContain(pan);
+    expect(hub.calls).toHaveLength(0);
+    expect(logged.join("\n")).not.toContain(pan);
+  });
+
+  it("treats a Hub 422 card_data_rejected as a hard reject and does not retry", async () => {
+    const hub = mockedHub({ status: 422, body: { code: "card_data_rejected", error: "ignored" } });
+    const { app } = portalApp(hub.client, clientTarget);
+    const res = await request(app).post(path).send({ label: "Office Wi-Fi", kind: "pin", secretValue: "not-a-card-value-99" });
+    expect(res.status).toBe(422);
+    expect(res.body.code).toBe("card_data_rejected");
+    expect(hub.calls).toHaveLength(1);
+  });
+});
+

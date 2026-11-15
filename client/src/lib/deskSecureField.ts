@@ -1,3 +1,5 @@
+import { CARD_DATA_REJECTED_MESSAGE, looksLikeCardData } from "@shared/pciGuard";
+
 /**
  * DE Desk secure field (Intelligence-Hub #1179): the pure half of the masked
  * "share it securely" control used in the website DE Desk, the portal ticket
@@ -52,6 +54,9 @@ export function secureFieldProblem(input: { label: string; secretValue: string }
   if (label.length > SECURE_FIELD_LABEL_MAX) return `Keep the description under ${SECURE_FIELD_LABEL_MAX} characters.`;
   if (!input.secretValue) return "Enter the value to share.";
   if (input.secretValue.length > SECURE_FIELD_MAX_VALUE_LENGTH) return "That value is too long to store.";
+  if (looksLikeCardData(input.secretValue) || looksLikeCardData(input.label)) {
+    return CARD_DATA_REJECTED_MESSAGE;
+  }
   if (input.secretValue.length >= 4 && label.includes(input.secretValue)) {
     return "The description contains the secret itself. Put the value only in the masked field.";
   }
@@ -98,6 +103,7 @@ export function looksLikeSecret(text: string): boolean {
   if (/\b(?:sk|pk|rk)_(?:live|test)_[A-Za-z0-9]{16,}\b/.test(t)) return true;
   if (/\bAKIA[0-9A-Z]{16}\b/.test(t)) return true;
   if (/\bgh[pousr]_[A-Za-z0-9]{30,}\b/.test(t)) return true;
+  if (looksLikeCardData(t)) return true;
   return false;
 }
 

@@ -8,6 +8,7 @@ import {
 import { PORTAL_LOGIN, PORTAL_HOME } from "../../../client/src/lib/portalUrls";
 import {
   formatKnowledgeForPrompt,
+  mergeKnowledgeHits,
   retrievePublicKnowledge,
   retrievePublicKnowledgeStorageBacked,
 } from "../de-intelligence/retrieve";
@@ -87,6 +88,49 @@ export function isKnownServiceMention(text: string): boolean {
   return listKnownServiceNames().some((n) => lower.includes(n.toLowerCase()));
 }
 
+export const ADVISOR_MODE_RETRIEVAL_TERMS: Record<AdvisorMode, string> = {
+  pricing: "ProActive pricing floors IT Office Business Enterprise monthly minimum",
+  msp_discovery: "ProActive managed IT Office Business Enterprise Cyber Risk Assessment",
+  assessment: "Cyber Risk Assessment ProActive managed IT discovery",
+  it_support: "Get Support support routing Client Portal ticket",
+  existing_client: "Get Support Client Portal ticket",
+  security_incident: "security incident containment ransomware escalation",
+  cybersecurity: "identity email security endpoint EDR awareness monitoring",
+  compliance: "audit readiness evidence framework mapping HIPAA SOC 2 CMMC",
+  cloud_m365: "Microsoft 365 Outlook Teams MFA sign-in",
+  off_topic: "Digerati Experts business IT cybersecurity",
+};
+
+export function buildAdvisorRetrievalQueries(params: {
+  mode: AdvisorMode;
+  userMessage: string;
+  originalIntent?: string;
+}): string[] {
+  const queries: string[] = [];
+  const user = (params.userMessage || "").trim();
+  const original = (params.originalIntent || "").trim();
+  if (user) queries.push(user);
+  if (original && original !== user) queries.push(original);
+  const terms = ADVISOR_MODE_RETRIEVAL_TERMS[params.mode];
+  if (terms) queries.push(terms);
+  return queries;
+}
+
+export function buildAdvisorQueryHint(userTurn: string, originalIntent?: string): string {
+  return [userTurn, originalIntent && originalIntent !== userTurn ? originalIntent : ""]
+    .map((part) => (part || "").trim())
+    .filter(Boolean)
+    .join(" ")
+    .slice(0, 500);
+}
+
+function asQueryList(queryHint?: string | string[]): string[] {
+  if (!queryHint) return [];
+  return (Array.isArray(queryHint) ? queryHint : [queryHint])
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
+
 function retrievalQuery(mode: AdvisorMode, page?: PageContext, queryHint?: string): string {
   return [
     queryHint || "",
@@ -98,6 +142,44 @@ function retrievalQuery(mode: AdvisorMode, page?: PageContext, queryHint?: strin
   ]
     .filter(Boolean)
     .join(" ");
+}
+
+function publicHitsForQueries(
+  mode: AdvisorMode,
+  page: PageContext | undefined,
+  queries: string[],
+  limit: number,
+) {
+  return mergeKnowledgeHits(
+    queries.map((query) =>
+      retrievePublicKnowledge({
+        query,
+        mode,
+        pageType: page?.pageType,
+        limit,
+      }),
+    ),
+    limit,
+  );
+}
+
+async function publicHitsForQueriesStorageBacked(
+  mode: AdvisorMode,
+  page: PageContext | undefined,
+  queries: string[],
+  limit: number,
+) {
+  const sets = await Promise.all(
+    queries.map((query) =>
+      retrievePublicKnowledgeStorageBacked({
+        query,
+        mode,
+        pageType: page?.pageType,
+        limit,
+      }),
+    ),
+  );
+  return mergeKnowledgeHits(sets, limit);
 }
 
 function buildKnowledgeSlice(
@@ -175,15 +257,17 @@ function buildKnowledgeSlice(
 export function selectKnowledgeSlice(
   mode: AdvisorMode,
   page?: PageContext,
-  queryHint?: string,
+  queryHint?: string | string[],
 ): string {
-  const query = retrievalQuery(mode, page, queryHint);
-  const governedHits = retrievePublicKnowledge({
-    query,
-    mode,
-    pageType: page?.pageType,
-    limit: 6,
-  });
+  const queries = asQueryList(queryHint);
+  const governedHits = queries.length
+    ? publicHitsForQueries(mode, page, queries, 6)
+    : retrievePublicKnowledge({
+        query: retrievalQuery(mode, page),
+        mode,
+        pageType: page?.pageType,
+        limit: 6,
+      });
   return buildKnowledgeSlice(mode, page, governedHits);
 }
 
@@ -194,16 +278,51 @@ export function selectKnowledgeSlice(
 export async function selectKnowledgeSliceStorageBacked(
   mode: AdvisorMode,
   page?: PageContext,
-  queryHint?: string,
+  queryHint?: string | string[],
 ): Promise<string> {
-  const query = retrievalQuery(mode, page, queryHint);
+  const queries = asQueryList(queryHint);
+  const governedHits = queries.length
+    ? await publicHitsForQueriesStorageBacked(mode, page, queries, 6)
+    : await retrievePublicKnowledgeStorageBacked({
+        query: retrievalQuery(mode, page),
+        mode,
+        pageType: page?.pageType,
+        limit: 6,
+      });
+  return buildKnowledgeSlice(mode, page, governedHits);
+}
+
+
+export async function selectPublicPortalKnowledge(queryHint: string): Promise<string> {
+  const query = (queryHint || "").trim().slice(0, 500);
   const governedHits = await retrievePublicKnowledgeStorageBacked({
     query,
-    mode,
-    pageType: page?.pageType,
-    limit: 6,
+    mode: "existing_client",
+    pageType: "support",
+    limit: 4,
   });
-  return buildKnowledgeSlice(mode, page, governedHits);
+  return [
+    "PUBLIC DE KNOWLEDGE ONLY. Use these facts for general DE policy and safe orientation.",
+    "Never invent this client's licenses, devices, entitlements, contract terms, topologies, or delivery dates.",
+    "If a fact is not in this knowledge, the request list, or the form state the person already provided, say you need to check or offer to escalate.",
+    formatKnowledgeForPrompt(governedHits),
+  ].join("\n\n");
+}
+
+export function selectPublicPortalKnowledgeSync(queryHint: string): string {
+  const query = (queryHint || "").trim().slice(0, 500);
+  const governedHits = retrievePublicKnowledge({
+    query,
+    mode: "existing_client",
+    pageType: "support",
+    limit: 4,
+  });
+  return [
+    "PUBLIC DE KNOWLEDGE ONLY. Use these facts for general DE policy and safe orientation.",
+    "Never invent this client's licenses, devices, entitlements, contract terms, topologies, or delivery dates.",
+    "If a fact is not in this knowledge, the request list, or the form state the person already provided, say you need to check or offer to escalate.",
+    formatKnowledgeForPrompt(governedHits),
+  ].join("\n\n");
 }
 
 export function inferPageType(pathname: string): PageContext["pageType"] {
