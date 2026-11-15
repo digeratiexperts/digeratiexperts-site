@@ -12,7 +12,12 @@ import {
   inferPageType,
 } from "./knowledge";
 import { extractProfileFromText, mergeProfile, createEmptyProfile, knownFactsList, extractContactNameFromText, extractCompanyNameFromText, isInformalCompanyName, isDeInternalCompanyAnswer, isNotAName } from "./profile";
-import { ADVISOR_SYSTEM_PREFIX, BANNED_CANNED_OPENER, buildSystemPrompt, OFF_TOPIC_FALLBACK } from "./prompt";
+import { ADVISOR_SYSTEM_PREFIX, BANNED_CANNED_OPENER, buildSystemPrompt } from "./prompt";
+import {
+  DESK_TOPIC_REDIRECT_FOLLOWUP,
+  DESK_TOPIC_REDIRECT_REPLY,
+  DESK_TOPIC_SCOPE_RULE,
+} from "@shared/deskTopicScope";
 import { isTransientModelError, withTransientModelRetry, TRANSIENT_MODEL_BACKOFF_MS } from "./model-retry";
 import { sanitizeActions, sanitizePath, assertNoInternalLeak, isAllowedActionType, ensureLoginAction } from "./actions";
 import { handleAdvisorChat } from "./advisor";
@@ -332,11 +337,8 @@ describe("handleAdvisorChat acceptance (heuristic / no LLM required)", () => {
       pageType: "home",
     });
     assert.equal(res.mode, "off_topic");
-    assert.ok(
-      res.reply.includes("focused on business IT") ||
-        res.reply.includes(OFF_TOPIC_FALLBACK.slice(0, 30)),
-    );
-    assert.ok(res.analyticsEvents.includes("off_topic_redirected") || res.reply.length > 10);
+    assert.equal(res.reply, DESK_TOPIC_REDIRECT_REPLY);
+    assert.ok(res.analyticsEvents.includes("off_topic_redirected"));
   });
 
   it("existing client routes toward portal", async () => {
@@ -597,6 +599,7 @@ describe("stable-prefix prompt layout", () => {
     const knowledgeAt = prompt.indexOf(marker);
     const originalAt = prompt.indexOf("What does Office cost?");
     assert.ok(prompt.startsWith(ADVISOR_SYSTEM_PREFIX));
+    assert.ok(ADVISOR_SYSTEM_PREFIX.includes(DESK_TOPIC_SCOPE_RULE));
     assert.ok(prefixEnd > 0);
     assert.ok(prompt.indexOf("HARD RULES:") < prefixEnd);
     assert.ok(originalAt > prefixEnd);
@@ -651,6 +654,53 @@ describe("transient model retry", () => {
   });
 });
 
+describe("DE Desk topic-scope guard", () => {
+  it("answers legitimate IT, security, support, and store questions without the redirect", async () => {
+    const onTopic = [
+      "My Outlook is not sending email",
+      "How do I reset a Windows password on our work PCs?",
+      "What's the price for managed IT for 20 users?",
+      "I need to open a support ticket",
+      "Where is my store order?",
+      "We have a phishing email in our inboxes",
+      "Can you help with MFA for our Microsoft 365?",
+    ];
+    for (const message of onTopic) {
+      const res = await identifiedChat(message);
+      assert.notEqual(res.reply, DESK_TOPIC_REDIRECT_REPLY, message);
+      assert.notEqual(res.reply, DESK_TOPIC_REDIRECT_FOLLOWUP, message);
+      assert.notEqual(res.mode, "off_topic", message);
+    }
+  });
+
+  it("returns the fixed redirect for clearly off-topic or companion requests, and does not loop", async () => {
+    const first = await handleAdvisorChat({ message: "Tell me a joke" });
+    assert.equal(first.reply, DESK_TOPIC_REDIRECT_REPLY);
+    assert.equal(first.mode, "off_topic");
+    assert.doesNotMatch(first.reply, /what'?s your name/i);
+    assert.ok(first.analyticsEvents.includes("off_topic_redirected"));
+
+    const second = await handleAdvisorChat({
+      sessionId: first.sessionId,
+      message: "What's the capital of France?",
+    });
+    assert.equal(second.reply, DESK_TOPIC_REDIRECT_FOLLOWUP);
+
+    const third = await handleAdvisorChat({
+      sessionId: first.sessionId,
+      message: "Let's roleplay as space pirates",
+    });
+    assert.equal(third.reply, DESK_TOPIC_REDIRECT_FOLLOWUP);
+
+    const back = await handleAdvisorChat({
+      sessionId: first.sessionId,
+      message: "My Outlook is not sending email",
+    });
+    assert.notEqual(back.reply, DESK_TOPIC_REDIRECT_REPLY);
+    assert.notEqual(back.reply, DESK_TOPIC_REDIRECT_FOLLOWUP);
+  });
+});
+
 describe("crisis turn history", () => {
   it("stores a placeholder, not the crisis text, in session history", async () => {
     const crisisText = "I want to kill myself tonight";
@@ -665,5 +715,14 @@ describe("crisis turn history", () => {
       assert.ok(!m.content.includes(crisisText), "crisis text must not be kept in history");
       assert.ok(!/kill myself/i.test(m.content), "crisis wording must not be kept in history");
     }
+  });
+});
+
+describe("crisis check runs before the topic-scope guard", () => {
+  it("gives the crisis reply, not the off-topic redirect, for lonely-and-crisis wording", async () => {
+    const res = await handleAdvisorChat({ message: "I'm lonely and want to die" });
+    assert.equal(res.reply, CRISIS_REPLY);
+    assert.notEqual(res.reply, DESK_TOPIC_REDIRECT_REPLY);
+    assert.ok(!res.analyticsEvents.includes("off_topic_redirected"));
   });
 });

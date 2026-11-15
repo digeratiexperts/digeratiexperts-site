@@ -2,6 +2,7 @@ import { randomBytes } from "crypto";
 import type { Express } from "express";
 import rateLimit from "express-rate-limit";
 import { generateChatResponse } from "./openaiService";
+import { deskTopicRedirectReply, isOffTopicCompanionRequest } from "@shared/deskTopicScope";
 import { CRISIS_REPLY, isCrisisMessage } from "@shared/deskCrisis";
 import { DE_KNOWLEDGE_CATALOG } from "./services/de-intelligence/catalog";
 
@@ -82,6 +83,7 @@ export function registerPublicSupportChat(app: Express): void {
       }
 
       const conversationHistory = sanitizeConversationHistory(req.body?.conversationHistory);
+      // Crisis check runs first (#1024), before the topic-scope guard below.
       if (isCrisisMessage(rawMessage)) {
         return res.json({
           success: true,
@@ -89,6 +91,18 @@ export function registerPublicSupportChat(app: Express): void {
             id: `support-${Date.now()}-crisis`,
             content: CRISIS_REPLY,
             respondedBy: "system",
+            timestamp: new Date().toISOString(),
+          },
+        });
+      }
+      if (isOffTopicCompanionRequest(rawMessage)) {
+        const previous = [...conversationHistory].reverse().find((entry) => entry.role === "assistant")?.content ?? null;
+        return res.json({
+          success: true,
+          message: {
+            id: `support-${Date.now()}-topic`,
+            content: deskTopicRedirectReply(previous),
+            respondedBy: "ai",
             timestamp: new Date().toISOString(),
           },
         });

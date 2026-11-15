@@ -1,5 +1,6 @@
 import OpenAI from "openai";
 import { createHash } from "crypto";
+import { DESK_TOPIC_SCOPE_RULE } from "@shared/deskTopicScope";
 
 let openaiClient: OpenAI | null = null;
 
@@ -108,7 +109,8 @@ export async function generateChatResponse(
           content: `You are a helpful IT support assistant for Digerati Experts, an MSP company. 
 You help clients with technical questions, troubleshooting, and service inquiries.
 Be professional, concise, and helpful. If you cannot resolve an issue, suggest creating a support ticket.
-For billing or account-specific questions, direct users to their account manager.`
+For billing or account-specific questions, direct users to their account manager.
+${DESK_TOPIC_SCOPE_RULE}`
         },
         ...conversationHistory.map(msg => ({
           role: msg.role as "user" | "assistant",

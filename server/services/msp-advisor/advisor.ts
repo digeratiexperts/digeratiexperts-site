@@ -35,6 +35,7 @@ import {
 } from "./session";
 import { appendDeskMessage, isDeskAgentLive } from "./persist";
 import { PRIMARY_PHONE, hasPublicPhone } from "@shared/companyContact";
+import { deskTopicRedirectReply, isOffTopicCompanionRequest } from "@shared/deskTopicScope";
 import type {
   AdvisorAction,
   AdvisorChatRequest,
@@ -195,6 +196,7 @@ export async function handleAdvisorChat(req: AdvisorChatRequest): Promise<Adviso
     throw Object.assign(new Error("Message is required"), { status: 400 });
   }
   assertNoCardData(userTurn);
+  // Crisis check runs first (#1024), before the topic-scope guard below.
   if (isCrisisMessage(userTurn)) {
     const session = getOrCreateSession(req.sessionId, req.pageContext);
     const page = req.pageContext || session.pageContext;
@@ -309,6 +311,27 @@ export async function handleAdvisorChat(req: AdvisorChatRequest): Promise<Adviso
       profile,
       actions: defaultActionsForMode(session.lastMode),
       analyticsEvents: ["qualified_question"],
+      knownFacts: knownFactsList(profile),
+      ...persisted,
+    };
+  }
+
+  // After any crisis check, and after prompt-injection handling. Before the
+  // name gate, so an off-topic turn is not asked for a name first.
+  if (mode !== "security_incident" && isOffTopicCompanionRequest(message)) {
+    const reply = deskTopicRedirectReply(session.lastAssistantReply);
+    appendMessage(session, "user", message);
+    appendMessage(session, "assistant", reply);
+    session.lastAssistantReply = reply;
+    session.lastMode = "off_topic";
+    const persisted = await persistTurn(session.id, message, reply, profile, page?.pathname);
+    return {
+      sessionId: session.id,
+      reply,
+      mode: "off_topic",
+      profile,
+      actions: [],
+      analyticsEvents: ["off_topic_redirected"],
       knownFacts: knownFactsList(profile),
       ...persisted,
     };
