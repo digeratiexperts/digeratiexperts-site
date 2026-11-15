@@ -8,6 +8,13 @@ export const CRISIS_REPLY =
   "If you are in crisis, please use these resources now. In the U.S., call or text 988 to reach the 988 Suicide & Crisis Lifeline, or text HOME to 741741 (Crisis Text Line). If you are in immediate danger, call 911.";
 
 /**
+ * What a crisis turn is stored as in conversation history and persisted
+ * transcripts. The visitor's own words are never kept, so they are never
+ * replayed to a model as history on a later turn.
+ */
+export const CRISIS_HISTORY_PLACEHOLDER = "[crisis resource shown]";
+
+/**
  * Phrase patterns that indicate self-harm or suicide crisis language.
  * Intentionally narrow so ordinary IT language (kill a process, want this gone)
  * does not trip the check.

@@ -25,7 +25,7 @@ import { ADVISOR_SYSTEM_PREFIX, buildSystemPrompt, INTERNAL_REFUSAL, BANNED_CANN
 import { withTransientModelRetry } from "./model-retry";
 import { verifyAdvisorReply } from "./ground";
 import { assertNoCardData } from "@shared/pciGuard";
-import { CRISIS_REPLY, isCrisisMessage } from "@shared/deskCrisis";
+import { CRISIS_HISTORY_PLACEHOLDER, CRISIS_REPLY, isCrisisMessage } from "@shared/deskCrisis";
 import { sanitizeActions, assertNoInternalLeak, defaultActionsForMode, materializeAction, ensureLoginAction } from "./actions";
 import { buildHeuristicReply, ensureFreshReply, isNearDuplicate } from "./fallback";
 import {
@@ -195,12 +195,14 @@ export async function handleAdvisorChat(req: AdvisorChatRequest): Promise<Adviso
     const session = getOrCreateSession(req.sessionId, req.pageContext);
     const page = req.pageContext || session.pageContext;
     const reply = CRISIS_REPLY;
-    appendMessage(session, "user", userTurn);
+    // Store a placeholder, never the crisis text: session.messages is sent to
+    // the model as history on later turns.
+    appendMessage(session, "user", CRISIS_HISTORY_PLACEHOLDER);
     appendMessage(session, "assistant", reply);
     session.lastAssistantReply = reply;
     const persisted = await persistTurn(
       session.id,
-      "[crisis resource shown]",
+      CRISIS_HISTORY_PLACEHOLDER,
       reply,
       session.profile,
       page?.pathname,
