@@ -75,7 +75,7 @@ export const DigeratiHomepage = ({ structuredData = true }: { structuredData?: b
         <SiteBottomBar />
 
         {/* One main landmark for the page content; nav and the Ask DE bar stay outside it. */}
-        <main id="home-main" className="contents">
+        <main id="main-content" className="contents" tabIndex={-1}>
         {/* Home — reference-style presentation, existing legacy hero remains preserved in source. */}
         <ScrollSectionAuto id="hero" chapter>
           <ReferenceHeroSection />

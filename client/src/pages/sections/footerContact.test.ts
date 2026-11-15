@@ -45,3 +45,12 @@ describe("store footer legal list", () => {
     expect(source).toContain('{ name: "SLA", href: "/legal/sla" }');
   });
 });
+
+describe("footer cookie preferences", () => {
+  it("reopens the consent panel from a Cookie preferences control", () => {
+    const source = read(footers.shared);
+    expect(source).toContain("Cookie preferences");
+    expect(source).toContain('data-testid="footer-cookie-preferences"');
+    expect(source).toContain('de-open-cookie-preferences');
+  });
+});

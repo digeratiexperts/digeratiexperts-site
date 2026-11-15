@@ -33,7 +33,7 @@ describe("account managers", () => {
 
   it("pairs the manager with the sales department", () => {
     const team = accountTeamFor(undefined);
-    expect(team.sales.email).toBe("sales@digerati-experts.com");
+    expect(team.sales.email).toBe("sales@digeratiexperts.com");
     expect(team.manager.name).toBe("Joseph Petro");
   });
 });

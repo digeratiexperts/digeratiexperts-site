@@ -16,7 +16,8 @@ import { ADVISOR_SYSTEM_PREFIX, BANNED_CANNED_OPENER, buildSystemPrompt, OFF_TOP
 import { isTransientModelError, withTransientModelRetry, TRANSIENT_MODEL_BACKOFF_MS } from "./model-retry";
 import { sanitizeActions, sanitizePath, assertNoInternalLeak, isAllowedActionType, ensureLoginAction } from "./actions";
 import { handleAdvisorChat } from "./advisor";
-import { _resetSessionsForTests } from "./session";
+import { _resetSessionsForTests, getSession } from "./session";
+import { CRISIS_HISTORY_PLACEHOLDER, CRISIS_REPLY } from "@shared/deskCrisis";
 import { PRIMARY_PHONE, hasPublicPhone } from "@shared/companyContact";
 
 beforeEach(() => {
@@ -647,5 +648,22 @@ describe("transient model retry", () => {
       /bad request/,
     );
     assert.equal(calls, 1);
+  });
+});
+
+describe("crisis turn history", () => {
+  it("stores a placeholder, not the crisis text, in session history", async () => {
+    const crisisText = "I want to kill myself tonight";
+    const res = await handleAdvisorChat({ message: crisisText });
+    assert.equal(res.reply, CRISIS_REPLY);
+    const session = getSession(res.sessionId);
+    assert.ok(session, "session exists");
+    const userTurns = session!.messages.filter((m) => m.role === "user");
+    assert.equal(userTurns.length, 1);
+    assert.equal(userTurns[0].content, CRISIS_HISTORY_PLACEHOLDER);
+    for (const m of session!.messages) {
+      assert.ok(!m.content.includes(crisisText), "crisis text must not be kept in history");
+      assert.ok(!/kill myself/i.test(m.content), "crisis wording must not be kept in history");
+    }
   });
 });

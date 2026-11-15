@@ -69,7 +69,7 @@ export default function HomepageV7(): JSX.Element {
       <div className="v7 min-h-screen bg-[#050312]" ref={rootRef}>
         <MegaMenu />
         <SiteBottomBar autohide />
-        <main id="home-main" className="contents">
+        <main id="main-content" tabIndex={-1} className="contents">
           <ScrollSectionAuto id="hero" chapter>
             <div className="v7s-01"><V7Hero /></div>
             <div className="v7s-02"><V7WhyWeExist /></div>

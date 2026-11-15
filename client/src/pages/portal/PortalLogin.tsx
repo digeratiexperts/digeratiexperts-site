@@ -72,6 +72,30 @@ export default function PortalLogin() {
       setError(message || "Sign-in failed. Please try again.");
     }
 
+    const pendingMfaToken = readQueryParam("mfaToken");
+    const pendingMfaMethod = readQueryParam("mfaMethod");
+    if (
+      pendingMfaToken &&
+      (pendingMfaMethod === "totp" || pendingMfaMethod === "email" || pendingMfaMethod === "passkey")
+    ) {
+      setMfaToken(pendingMfaToken);
+      setMfaMethod(pendingMfaMethod);
+      setPasskeyAvailable(readQueryParam("passkey") === "1" && passkeysSupported());
+      setMfaMessage(
+        pendingMfaMethod === "email"
+          ? "A verification code has been sent to your email."
+          : pendingMfaMethod === "passkey"
+            ? "Confirm it's you with your passkey, or enter a backup code."
+            : "Enter the code from your authenticator app.",
+      );
+      setStep("mfa");
+      const keep = new URLSearchParams();
+      const pendingReturnTo = readQueryParam("returnTo");
+      if (pendingReturnTo) keep.set("returnTo", pendingReturnTo);
+      const rest = keep.toString();
+      window.history.replaceState({}, "", rest ? `/portal/login?${rest}` : "/portal/login");
+    }
+
     if (zohoSso === "1" && token) {
       (async () => {
         // Persist token first — JWT decode must never block session handoff
@@ -196,7 +220,7 @@ export default function PortalLogin() {
       localStorage.setItem("portalUser", JSON.stringify(data.user));
       localStorage.setItem("portalToken", data.token);
       localStorage.setItem("portalUserId", data.user?.id || "portal-user");
-      localStorage.setItem("userEmail", email);
+      localStorage.setItem("userEmail", data.user?.email || email);
       navigate(marketplaceReturnTo(readQueryParam("returnTo")));
     } catch (err) {
       setError("Connection error. Please try again.");
@@ -229,7 +253,7 @@ export default function PortalLogin() {
       localStorage.setItem("portalUser", JSON.stringify(data.user));
       localStorage.setItem("portalToken", data.token);
       localStorage.setItem("portalUserId", data.user?.id || "portal-user");
-      localStorage.setItem("userEmail", email);
+      localStorage.setItem("userEmail", data.user?.email || email);
       navigate(marketplaceReturnTo(readQueryParam("returnTo")));
     } catch (err) {
       setError("Connection error. Please try again.");
@@ -274,7 +298,7 @@ export default function PortalLogin() {
       localStorage.setItem("portalUser", JSON.stringify(data.user));
       localStorage.setItem("portalToken", data.token);
       localStorage.setItem("portalUserId", data.user?.id || "portal-user");
-      localStorage.setItem("userEmail", email);
+      localStorage.setItem("userEmail", data.user?.email || email);
       navigate(marketplaceReturnTo(readQueryParam("returnTo")));
     } catch (err) {
       setError("Connection error. Please try again.");
