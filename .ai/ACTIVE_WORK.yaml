@@ -30,6 +30,66 @@
 
 version: 2
 claims:
+  - id: site-gaps-20261111
+    issue: 886
+    owner: grok
+    subsystem: marketing-site-seo-homepage
+    branch: grok/site-quick-wins-20261111
+    base_sha: db78962a
+    started: 2026-11-11
+    status: active
+    files:
+      - docs/plans/SITE-GAPS-ROADMAP-20261111.md (plan, PR and file ownership table)
+      - "PR1 quick wins: client/src/data/caseStudies.ts, client/src/pages/resources/CaseStudies.tsx, CaseStudyDetail.tsx, server/marketingRedirects.ts, shared/organizationSchema.ts, server/routeMeta.ts (applyOrganizationSchema), client/index.html (JSON-LD block), shared/companyContact.ts (PUBLIC_SOCIAL_LINKS), homepage-v2 HeroSection/FaqSection/SiteFooter, MissionValues.tsx"
+      - "PR2 prerender: scripts/prerender/**, server/prerender.ts, client/src/prerenderSwap.ts, client/src/main.tsx, package.json (postbuild)"
+      - "PR3 new pages: client/src/pages/support/HelpDesk.tsx, client/src/pages/solutions/SwitchingProviders.tsx"
+      - "PR4 reviews: client/src/lib/publicReviews.ts, homepage-v2/sections/Reviews.tsx, docs/marketing/REVIEWS-AND-REFERRALS-PLAYBOOK.md"
+      - "PR5 homepage restructure (draft): client/src/pages/homepage-v2/** (HomepageV2.tsx, cta.ts, sections), SolutionsIndex.tsx, CyberFacts.tsx"
+    note: >-
+      Grok Bot on Joe's laptop. Joe approved 2026-11-11 ("do it, approved ...
+      fix all the GAPS"). Stacked PRs off origin/main; Joe merges. Other agents:
+      please avoid homepage-v2/**, server/routeMeta.ts sendShell, and the files
+      above until these PRs land or are closed. No deploy, VPS, migrations,
+      secrets or vendor config.
+  - id: session-test-bootstrap-20261114
+    issue: 1038
+    owner: codex
+    subsystem: session-revocation-test-fixture
+    branch: codex/fix-session-test-bootstrap-20261114
+    base_sha: bf4ffdd616ab5f4a767a80be4f234a1d12b0f56c
+    started: 2026-11-14
+    status: in-review
+    files:
+      - server/portalSessionRevocation.test.ts
+      - docs/work-ledger/2026-11-14-session-test-bootstrap.md
+    note: >-
+      Test-only preload of server routes before the behavioral test budget.
+      Existing assertions and five-second test timeout are preserved.
+      Isolated branch; PR and full CI verification only, no merge or deploy.
+  - id: public-phone-pdf-completion-20261114
+    owner: chatgpt
+    subsystem: public-contact-artifacts
+    branch: chatgpt/public-phone-pdf-completion-20261114
+    base_sha: 5d8baf37cd30471f8cca476ffcbed6d4bc8f93b8
+    started: 2026-11-14
+    status: implemented
+    pr: "1036"
+    files:
+      - client/public/assets/**/*.pdf
+      - document_templates/**/*.pdf
+      - artifacts/design-concepts/resource-pdfs/concepts/*.mjs
+      - artifacts/design-concepts/resource-pdfs/lib/public-phone.mjs
+      - scripts/public-phone-artifacts*
+      - scripts/public-phone-pdf-manifest.json
+      - .github/workflows/public-phone-artifacts.yml
+      - docs/handoffs/public-phone-pdf-source.patch
+      - docs/work-ledger/2026-11-14-public-phone-pdf-completion.md
+      - artifacts/visual-qa/public-phone-pdf-completion/**
+    note: >-
+      Held companion, not full phone cleanup. Relay Hub 886 comment 6885360392.
+      Depends on site 1031 source snapshot 29ef5642; source patch is proposed
+      for its owner rather than applied to overlapping generators. No owner
+      branch writes, merges or deploys. Static marker work in 1028 preserved.
   - id: c15-portal-audit-repairs-20261109
     issue: 544
     owner: cursor

@@ -37,28 +37,41 @@ export default function CaseStudies() {
     <PageTemplate
       title="Case Studies"
       eyebrow="Client stories"
-      subtitle="Real Arizona engagements — challenge, approach, and outcome."
+      subtitle="Real Arizona engagements, published only with the client’s sign-off."
       breadcrumbs={[{ label: "Resources", href: "/resources" }, { label: "Case Studies" }]}
       layout="chapters"
       actions={<HeroActions primary={{ label: CTA.primary, href: "/book" }} />}
     >
-      <FactStrip facts={focusAreas} label="Industries covered" />
+      {hasPublished && <FactStrip facts={focusAreas} label="Industries covered" />}
 
       <Chapter tone="well" seam={false}>
         <Container>
           {!hasPublished && (
-            <div className="mb-10 flex gap-4 border-y border-[var(--de-hairline)] py-6 md:mb-12">
+            <div className="flex gap-4 border-y border-[var(--de-hairline)] py-8" data-testid="case-studies-empty">
               <Info className="mt-1 h-5 w-5 shrink-0 text-de-accent-ink" aria-hidden="true" />
               <div>
-                <p className="font-heading text-lg font-semibold text-white">Client stories in progress</p>
-                <p className="mt-1 max-w-2xl text-base leading-relaxed text-white/70">
-                  We publish case studies with client permission. Browse the frameworks below, or talk with us about
-                  an engagement that matches your industry.
+                <h2 className="font-heading text-xl font-semibold text-white">No published case studies yet.</h2>
+                <p className="mt-2 max-w-2xl text-base leading-relaxed text-white/70">
+                  We only publish a client story with that client&rsquo;s written sign-off, so this page stays empty
+                  until one is approved. In the meantime, see how we work in your industry, or read the commitments we
+                  put in writing.
                 </p>
+                <div className="mt-5 flex flex-wrap gap-x-8 gap-y-3">
+                  <Link href="/industries" className="inline-flex min-h-11 items-center gap-2 font-semibold text-de-magenta-ink hover:underline">
+                    Industries we serve <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                  </Link>
+                  <Link href="/about/client-bill-of-rights" className="inline-flex min-h-11 items-center gap-2 font-semibold text-de-magenta-ink hover:underline">
+                    Client Bill of Rights <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                  </Link>
+                  <Link href="/resources/reports/cyber-risk-assessment-sample" className="inline-flex min-h-11 items-center gap-2 font-semibold text-de-magenta-ink hover:underline">
+                    See a sample assessment report <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                  </Link>
+                </div>
               </div>
             </div>
           )}
 
+          {hasPublished && (
           <div className="border-t border-[var(--de-hairline)]">
             {caseStudies.map((study) => (
               <article
@@ -80,7 +93,7 @@ export default function CaseStudies() {
                     className="group mt-4 inline-flex min-h-11 items-center gap-2 text-base font-semibold text-de-magenta-ink hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ec4899] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--de-bg)]"
                     data-testid={`link-case-study-${study.slug}`}
                   >
-                    View structure
+                    Read the story
                     <ArrowRight
                       className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5"
                       aria-hidden="true"
@@ -119,6 +132,7 @@ export default function CaseStudies() {
               </article>
             ))}
           </div>
+          )}
         </Container>
       </Chapter>
 
