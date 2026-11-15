@@ -18,7 +18,7 @@ import { sanitizeActions, sanitizePath, assertNoInternalLeak, isAllowedActionTyp
 import { handleAdvisorChat } from "./advisor";
 import { _resetSessionsForTests, getSession } from "./session";
 import { CRISIS_HISTORY_PLACEHOLDER, CRISIS_REPLY } from "@shared/deskCrisis";
-import { PRIMARY_PHONE } from "@shared/companyContact";
+import { PRIMARY_PHONE, hasPublicPhone } from "@shared/companyContact";
 
 beforeEach(() => {
   _resetSessionsForTests();
@@ -359,7 +359,7 @@ describe("handleAdvisorChat acceptance (heuristic / no LLM required)", () => {
       message: "Active ransomware — files encrypting now",
     });
     assert.equal(res.mode, "security_incident");
-    assert.match(res.reply, /urgent|isolate|325-480-9870|contain/i);
+    assert.match(res.reply, /urgent|isolate|contain/i);
   });
 
   it("blocks prompt injection from revealing instructions", async () => {
@@ -489,7 +489,8 @@ describe("asking for a person (Joe transcript 2026-10-07)", () => {
   it("hands 'I need Joe' to a person at once, and never gates it on name and company", async () => {
     const first = await handleAdvisorChat({ message: "I need Joe" });
     assert.match(first.reply, /Joe/);
-    assert.ok(first.reply.includes(PRIMARY_PHONE.display));
+    if (hasPublicPhone()) assert.ok(first.reply.includes(PRIMARY_PHONE.display));
+    else assert.doesNotMatch(first.reply, /\[DE_PUBLIC_PHONE\]|fastest way is a call/);
     assert.doesNotMatch(first.reply, /what'?s your name|what company/i);
     const types = first.actions.map((a) => a.type);
     assert.ok(types.includes("request_callback"));

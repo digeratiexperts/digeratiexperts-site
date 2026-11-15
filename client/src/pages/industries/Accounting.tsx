@@ -15,7 +15,7 @@ import { ServiceBlocks } from "@/components/site/IndustriesServiceBlocks";
 import { Shield, Lock, FileText, DollarSign, Activity } from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
 import { CTA } from "@/lib/ctaCopy";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PRIMARY_PHONE, phoneAction } from "@/data/companyContact";
 
 export default function Accounting() {
   useSEO({
@@ -90,7 +90,7 @@ export default function Accounting() {
         <div className="flex flex-col gap-3 sm:flex-row">
           <HeroActions
             primary={{ label: CTA.primary, href: "/book", testId: "button-hero-accounting" }}
-            secondary={{ label: `Call ${PRIMARY_PHONE.display}`, href: PRIMARY_PHONE.telHref }}
+            secondary={phoneAction(`Call ${PRIMARY_PHONE.display}`)}
           />
         </div>
       }

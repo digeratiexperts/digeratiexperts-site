@@ -4,7 +4,7 @@ import { useLocation } from "wouter";
 import { motion, useReducedMotion } from "framer-motion";
 import { AlertCircle, CheckCircle2, Clock, ExternalLink, FileText, LogOut, PlayCircle, Sparkles } from "lucide-react";
 import type { AgreementGateItem, AgreementGateStatus, WelcomeVideo } from "@shared/portalAgreements";
-import { COMPANY, PRIMARY_PHONE } from "@shared/companyContact";
+import { COMPANY, PRIMARY_PHONE, hasPublicPhone } from "@shared/companyContact";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -18,6 +18,7 @@ import { DE_LOGO_PRIMARY, DE_LOGO_REVERSE } from "@/lib/brandAssets";
 import { useSEO } from "@/hooks/useSEO";
 import { cn } from "@/lib/utils";
 import "@/styles/portal.css";
+import { PhoneLink } from "@/components/PhoneLink";
 
 /**
  * Onboarding mode: the welcome video, then each agreement this person still
@@ -78,7 +79,12 @@ export default function PortalAgreementGate() {
           <a className="pt-link underline-offset-2 hover:underline" href={`mailto:${COMPANY.supportEmail}`}>
             Support Team
           </a>{" "}
-          at <a className="pt-link pt-num underline-offset-2 hover:underline" href={PRIMARY_PHONE.telHref}>{PRIMARY_PHONE.display}</a> or your account representative.
+          {hasPublicPhone() && (
+            <>
+              at <PhoneLink className="pt-link pt-num underline-offset-2 hover:underline">{PRIMARY_PHONE.display}</PhoneLink>{" "}
+            </>
+          )}
+          or your account representative.
         </p>
       </main>
     </div>

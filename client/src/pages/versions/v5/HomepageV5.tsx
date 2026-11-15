@@ -2,9 +2,10 @@ import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { useSEO } from "@/hooks/useSEO";
 import { DE_LOGO_PRIMARY, DE_MARK } from "@/lib/brandAssets";
-import { COMPANY, COMPANY_SOCIAL, PRIMARY_PHONE, formatAddressOneLine } from "@/data/companyContact";
+import { COMPANY, COMPANY_SOCIAL, PRIMARY_PHONE, formatAddressOneLine, hasPublicPhone } from "@/data/companyContact";
 import { pricingTiers, pricing, formatPrice, NO_BLACK_BOX_TAGLINE, PRICING_SCOPE_NOTE } from "@/data/pricing";
 import "./v5.css";
+import { PhoneLink } from "@/components/PhoneLink";
 
 /**
  * Digerati Experts homepage, Version 5: the practical one.
@@ -224,9 +225,9 @@ export default function HomepageV5(): JSX.Element {
             </ul>
           </nav>
           <div className="v5-header-actions">
-            <a className="v5-phone" href={PRIMARY_PHONE.telHref} aria-label={`Call ${PRIMARY_PHONE.display}`}>
+            <PhoneLink className="v5-phone" aria-label={`Call ${PRIMARY_PHONE.display}`}>
               {PRIMARY_PHONE.display}
-            </a>
+            </PhoneLink>
             <PrimaryAction className="v5-header-cta" />
             <details className="v5-menu">
               <summary aria-label="Open menu">Menu</summary>
@@ -236,7 +237,7 @@ export default function HomepageV5(): JSX.Element {
                     {item.label}
                   </Link>
                 ))}
-                <a href={PRIMARY_PHONE.telHref}>Call {PRIMARY_PHONE.display}</a>
+                <PhoneLink>Call {PRIMARY_PHONE.display}</PhoneLink>
                 <PrimaryAction className="v5-menu-cta" />
               </div>
             </details>
@@ -258,9 +259,9 @@ export default function HomepageV5(): JSX.Element {
               </p>
               <div className="v5-actions">
                 <PrimaryAction />
-                <a className="v5-btn v5-btn-secondary" href={PRIMARY_PHONE.telHref}>
+                <PhoneLink className="v5-btn v5-btn-secondary">
                   Call {PRIMARY_PHONE.display}
-                </a>
+                </PhoneLink>
               </div>
             </div>
             <figure className="v5-hero-figure">
@@ -503,10 +504,14 @@ export default function HomepageV5(): JSX.Element {
             </div>
             <dl>
               <div>
-                <dt>Phone</dt>
-                <dd>
-                  <a href={PRIMARY_PHONE.telHref}>{PRIMARY_PHONE.display}</a>
-                </dd>
+                {hasPublicPhone() && (
+                  <>
+                    <dt>Phone</dt>
+                    <dd>
+                      <PhoneLink>{PRIMARY_PHONE.display}</PhoneLink>
+                    </dd>
+                  </>
+                )}
               </div>
               <div>
                 <dt>Email</dt>

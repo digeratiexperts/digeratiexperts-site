@@ -30,6 +30,7 @@ import {
   markDeskNudgeShown,
   prefersReducedMotion,
 } from "@/lib/deskAskDeMotion";
+import { PhoneLink } from "@/components/PhoneLink";
 
 /** Original used 0.28s easeOut layout + 300ms grid. Keep that pacing without transform. */
 const EXPAND_S = 0.4;
@@ -376,13 +377,12 @@ function AskDELauncherButton({ compact = false }: { compact?: boolean }) {
 
             <div className="mt-5 border-t border-white/10 pt-4 text-sm text-[#b4b4ba]">
               <p className="font-medium text-[#f5f5f4]">We&apos;re here to help!</p>
-              <a
-                href={PRIMARY_PHONE.telHref}
+              <PhoneLink
                 className="mt-1 inline-flex font-medium text-[#f5f5f4] underline decoration-white/25 underline-offset-4 hover:decoration-white/60"
                 data-testid="ask-de-choice-phone"
               >
                 Call {PRIMARY_PHONE.display}
-              </a>
+              </PhoneLink>
             </div>
             {/* Last in the DOM, pinned top-right on screen: keyboard focus lands on
                 the first choice when the chooser opens, not on Close. */}

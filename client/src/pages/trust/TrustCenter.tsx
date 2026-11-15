@@ -1,7 +1,7 @@
 import { PageTemplate } from "@/components/PageTemplate";
 import { Shield, Lock, FileCheck, Award, Eye, Server } from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PRIMARY_PHONE, phoneAction } from "@/data/companyContact";
 import { EvidenceFrame } from "@/components/evidence/EvidenceFrame";
 import {
   Chapter,
@@ -203,7 +203,7 @@ export default function TrustCenter() {
           href: "mailto:security@digeratiexperts.com?subject=Security Documentation Request",
           testId: "button-request-docs",
         }}
-        secondary={{ label: `Call ${PRIMARY_PHONE.display}`, href: PRIMARY_PHONE.telHref, testId: "button-call-trust" }}
+        secondary={phoneAction(`Call ${PRIMARY_PHONE.display}`, "button-call-trust")}
       />
     </PageTemplate>
   );
