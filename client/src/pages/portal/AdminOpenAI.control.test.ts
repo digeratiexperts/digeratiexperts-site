@@ -84,8 +84,9 @@ describe("OpenAI admin control with synthetic HTTP only", () => {
     const held = new Promise<void>(r => { release=r; });
     change = async route => { await held; await route.fulfill({ status:500, json:{ error:'Synthetic private backend details' } }); };
     await open(); await page.getByRole('button', { name:'Disable OpenAI', exact:true }).click();
-    expect(await page.getByTestId('button-set-openai').isDisabled()).toBe(true);
-    expect(await page.getByTestId('button-refresh-openai-status').isDisabled()).toBe(true);
+    // The click resolves before React commits the pending state; poll instead of reading once.
+    await expect.poll(() => page.getByTestId('button-set-openai').isDisabled()).toBe(true);
+    await expect.poll(() => page.getByTestId('button-refresh-openai-status').isDisabled()).toBe(true);
     release(); await page.getByText(/could not confirm|couldn't confirm/i).waitFor();
     expect(await page.getByText('Synthetic private backend details', { exact:false }).count()).toBe(0);
     expect(posts).toHaveLength(1);
