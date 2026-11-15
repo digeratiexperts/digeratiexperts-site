@@ -23,7 +23,7 @@ export const DigeratiPricingSection = (): JSX.Element => {
           eyebrow="ProActive Ecosystem"
           title="Four operating models. One matched to your environment."
           lede="We do not start with a package and pile on add-ons. If Office would need heavy modification, Business is the correct fit for that environment — not universally “better.” User count is a signal, never the sole criterion."
-          link={{ label: "See detailed plans", href: "/proactive-ecosystem-pricing" }}
+          link={{ label: "See detailed plans", href: "/pricing" }}
         />
 
         <motion.div
@@ -49,11 +49,11 @@ export const DigeratiPricingSection = (): JSX.Element => {
               <p className="mt-3 text-sm leading-relaxed text-white/55">{PRICING_SCOPE_NOTE}</p>
             </div>
             <div className="flex shrink-0 flex-col gap-3 sm:flex-row">
-              <Link href="/proactive-ecosystem-pricing" className={buttonPrimary("well")} data-testid="button-compare-everything">
+              <Link href="/pricing" className={buttonPrimary("well")} data-testid="button-compare-everything">
                 Compare Everything
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </Link>
-              <Link href="/proactive-ecosystem-pricing#pricing-tools" className={buttonSecondary("well")} data-testid="button-pricing-tools">
+              <Link href="/pricing#pricing-tools" className={buttonSecondary("well")} data-testid="button-pricing-tools">
                 Pricing tools
               </Link>
             </div>

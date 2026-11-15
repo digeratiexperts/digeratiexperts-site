@@ -105,13 +105,16 @@ export const sampleCaseStudyShells: CaseStudy[] = [
   },
 ];
 
+/**
+ * Public listing: approved stories only. The sample shells above stay in the file as the
+ * authoring template, but are never rendered publicly (2026-11-11: the public page showed
+ * "[Pending client permission]" text, which reads as unfinished).
+ */
 export function allCaseStudiesForListing(): CaseStudy[] {
-  return [...publishedCaseStudies, ...sampleCaseStudyShells];
+  return [...publishedCaseStudies];
 }
 
+/** Detail lookup: approved stories only, so a sample slug resolves to the honest not-found state. */
 export function caseStudyBySlug(slug: string): CaseStudy | undefined {
-  return (
-    publishedCaseStudies.find((c) => c.slug === slug) ||
-    sampleCaseStudyShells.find((c) => c.slug === slug)
-  );
+  return publishedCaseStudies.find((c) => c.slug === slug);
 }
