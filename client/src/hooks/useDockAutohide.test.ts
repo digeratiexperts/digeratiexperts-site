@@ -22,14 +22,16 @@ describe("bottom bar autohide (opt-in)", () => {
     expect(read("client/src/pages/DigeratiHomepage.tsx")).not.toMatch(/autohide/);
   });
 
-  it("is switched on by the homepage (v2) and /version-7, which own their bar", () => {
+  it("is switched on by the homepage (B3), Homepage v2 and /version-7, which own their bar", () => {
+    expect(read("client/src/pages/homepage-b3/HomepageB3.tsx")).toMatch(/<SiteBottomBar autohide \/>/);
     expect(read("client/src/pages/versions/v7/HomepageV7.tsx")).toMatch(/<SiteBottomBar autohide \/>/);
     expect(read("client/src/pages/homepage-v2/HomepageV2.tsx")).toMatch(/<SiteBottomBar autohide \/>/);
     const owns = read("client/src/App.tsx").match(/const ownsBottomBar = ([^;]+);/)?.[1] ?? "";
     expect(owns).toMatch(/^isHome \|\| /);
     expect(owns).toContain('location === "/version-7"');
-    // / renders Homepage v2 (Joe, 2026-10-22); /version-8 only redirects there.
-    expect(read("client/src/App.tsx")).toMatch(/<Route path="\/" component=\{\(\) => \(\s*<Suspense fallback=\{<PageLoadingSkeleton \/>\}>\s*<HomepageV2 \/>/);
+    // / renders Homepage B3 (Joe, 2026-11-13); /version-8 only redirects there.
+    expect(read("client/src/App.tsx")).toMatch(/<Route path="\/" component=\{\(\) => \(\s*<Suspense fallback=\{<PageLoadingSkeleton \/>\}>\s*<HomepageB3 \/>/);
+    expect(owns).toContain('location === "/concepts/home-v2"');
     expect(owns).not.toContain('location === "/version-8"');
     // /version-0 is the previous homepage component, which never opts in.
     expect(owns).toContain('location === "/version-0"');

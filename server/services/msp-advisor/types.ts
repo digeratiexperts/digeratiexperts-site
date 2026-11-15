@@ -81,6 +81,19 @@ export interface ChatMessage {
   at: number;
 }
 
+
+/** Allow-listed situation-match fields kept on the advisor session. Raw visitor text is for drafts only and is never injected into DE Desk chat. */
+export interface SessionSituation {
+  text: string;
+  at: number;
+  scenarioIds: string[];
+  familyIds: string[];
+  serviceIds: string[];
+  pageServiceIds: string[];
+  intentIds: string[];
+  summary: string;
+}
+
 export interface AdvisorSession {
   id: string;
   createdAt: number;
@@ -90,6 +103,9 @@ export interface AdvisorSession {
   lastMode: AdvisorMode;
   analyticsFlags: Record<string, boolean>;
   pageContext?: PageContext;
+  situation?: SessionSituation;
+  /** Notice version and server timestamp from a granted situation-match consent. */
+  situationMatchConsent?: { version: string; at: number };
   /** Substantive first question held until name + company are collected. */
   heldUserMessage?: string;
   /** First real ask — kept after identity so later turns do not forget it. */
@@ -106,6 +122,9 @@ export interface AdvisorChatRequest {
   sessionId?: string;
   message: string;
   pageContext?: PageContext;
+  situation?: SessionSituation;
+  /** Notice version and server timestamp from a granted situation-match consent. */
+  situationMatchConsent?: { version: string; at: number };
 }
 
 export interface AdvisorChatResponse {
@@ -157,3 +176,4 @@ export function emptyProfile(): ConversationProfile {
     prospectOrClient: "unknown",
   };
 }
+

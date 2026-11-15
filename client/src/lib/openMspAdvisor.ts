@@ -7,6 +7,8 @@ export type OpenMspAdvisorDetail = {
   context?: "store" | "home" | "other";
   /** Deep-link straight to a Desk tab instead of always opening on Ask DE chat. */
   tab?: "chat" | "ticket" | "resources";
+  /** DE Desk advisor session to continue, usually the Describe Your Situation match. */
+  sessionId?: string;
 };
 
 /**

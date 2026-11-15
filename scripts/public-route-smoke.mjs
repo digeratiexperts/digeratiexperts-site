@@ -110,7 +110,7 @@ for (const path of routes) {
   const widths = [390, 768, 1440];
   const screenshotDir = "tmp/public-visual-smoke";
   await mkdir(screenshotDir, { recursive: true });
-  const browser = await chromium.launch({ headless: true });
+  const browser = await chromium.launch({ headless: true, executablePath: process.env.CHROME || undefined });
 
   try {
     for (const width of widths) {
@@ -128,16 +128,14 @@ for (const path of routes) {
         const h1 = page.locator("h1").first();
         await h1.waitFor({ state: "visible", timeout: 10_000 });
         const headline = ((await h1.textContent()) || "").replace(/\s+/g, " ").trim();
-        // Homepage v2 headline (approved 2026-10-22, design/reference/homepage-v2).
-        if (!headline.includes("Cybersecurity-first IT that powers your business")) {
-          fails.push(`homepage ${width}px → unexpected H1: ${headline}`);
+        // Homepage B3 headline (approved 2026-11-13).
+        if (!headline.includes("Arizona IT that's locked down, looked after, and priced in the open.")) {
+          fails.push(`homepage ${width}px -> unexpected H1: ${headline}`);
         }
 
         for (const testId of [
           "button-hero-schedule",
           "button-hero-pricing",
-          "digerati-pronunciation-card",
-          "button-play-digerati-pronunciation",
           "button-open-asap-widget",
         ]) {
           await page.locator(`[data-testid="${testId}"]`).waitFor({ state: "visible", timeout: 10_000 });
@@ -183,6 +181,12 @@ for (const path of routes) {
         const resourcesOverflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
         if (resourcesOverflow > 2) fails.push(`resources flipbook ${width}px → horizontal overflow ${resourcesOverflow}px`);
         await page.screenshot({ path: `${screenshotDir}/resources-flipbook-${width}.png`, fullPage: false });
+
+        await page.goto(`${BASE}/concepts/home-v2`, { waitUntil: "domcontentloaded", timeout: 30_000 });
+        await page.waitForLoadState("networkidle", { timeout: 15_000 }).catch(() => {});
+        for (const testId of ["digerati-pronunciation-card", "button-play-digerati-pronunciation"]) {
+          await page.locator(`[data-testid="${testId}"]`).waitFor({ state: "visible", timeout: 10_000 });
+        }
 
         if (pageErrors.length) fails.push(`public UI ${width}px → page errors: ${pageErrors.join(" | ")}`);
       } catch (err) {

@@ -53,6 +53,7 @@ import { readPortalUser, type PortalUserSession } from "@/lib/portalRoles";
 import DeskLoginCard from "@/components/DeskLoginCard";
 import { acquireBodyScrollLock } from "@/lib/bodyScrollLock";
 import type { OpenMspAdvisorDetail } from "@/lib/openMspAdvisor";
+import { resolveDeskAdvisorSessionId } from "@/lib/situationDeskSession";
 import { clearPendingMspAdvisorOpen, takePendingMspAdvisorOpen } from "@/lib/openMspAdvisor";
 import { deskOpenSeed } from "@/lib/deskOpenSeed";
 import { analytics } from "@/lib/analytics";
@@ -734,6 +735,9 @@ export const ZohoASAPWidget = ({
       ignoreDismissUntilRef.current = Date.now() + 400;
       setIsOpen(true);
       setActiveTab(detail.tab ?? "chat");
+      setAdvisorSessionId((current) =>
+        resolveDeskAdvisorSessionId({ requestedSessionId: detail.sessionId, currentSessionId: current }) ?? current,
+      );
       const seed = deskOpenSeed(detail, typeof window !== "undefined" ? window.location.pathname : "");
       if (seed) setPendingSeed(seed);
     };

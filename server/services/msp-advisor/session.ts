@@ -1,8 +1,9 @@
 import { randomBytes } from "crypto";
 import type { AdvisorSession, ChatMessage, ConversationProfile, PageContext } from "./types";
 import { createEmptyProfile } from "./profile";
+import { ADVISOR_SESSION_IDLE_TTL_MS } from "@shared/advisorSessionTtl";
 
-const TTL_MS = 2 * 60 * 60 * 1000; // 2 hours
+const TTL_MS = ADVISOR_SESSION_IDLE_TTL_MS;
 const MAX_MESSAGES = 24;
 
 const sessions = new Map<string, AdvisorSession>();

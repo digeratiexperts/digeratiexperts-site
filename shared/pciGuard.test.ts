@@ -99,6 +99,8 @@ ${TEST_VISA.slice(8, 12)}
 ${TEST_VISA.slice(12)}`],
     ["slashes", `${TEST_VISA.slice(0, 4)}/${TEST_VISA.slice(4, 8)}/${TEST_VISA.slice(8, 12)}/${TEST_VISA.slice(12)}`],
     ["dashes", `${TEST_VISA.slice(0, 4)}-${TEST_VISA.slice(4, 8)}-${TEST_VISA.slice(8, 12)}-${TEST_VISA.slice(12)}`],
+    ["tabs", `${TEST_VISA.slice(0, 4)}\t${TEST_VISA.slice(4, 8)}\t${TEST_VISA.slice(8, 12)}\t${TEST_VISA.slice(12)}`],
+    ["thin spaces", `${TEST_VISA.slice(0, 4)}\u2009${TEST_VISA.slice(4, 8)}\u2009${TEST_VISA.slice(8, 12)}\u2009${TEST_VISA.slice(12)}`],
   ])("catches a PAN split by %s", (_kind, line) => {
     expect(containsPan(line)).toBe(true);
     expect(looksLikeCardData(line)).toBe(true);
