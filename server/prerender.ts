@@ -24,14 +24,23 @@ let cache: { dir: string; mtimeMs: number; manifest: Manifest } | undefined;
 
 function loadManifest(dir: string): Manifest | undefined {
   const file = path.join(dir, "manifest.json");
+  let fd: number | undefined;
   try {
-    const stat = fs.statSync(file);
+    // Stat and read through one descriptor so the checked file is the file read.
+    fd = fs.openSync(file, "r");
+    const stat = fs.fstatSync(fd);
     if (!cache || cache.dir !== dir || cache.mtimeMs !== stat.mtimeMs) {
-      cache = { dir, mtimeMs: stat.mtimeMs, manifest: JSON.parse(fs.readFileSync(file, "utf8")) as Manifest };
+      cache = { dir, mtimeMs: stat.mtimeMs, manifest: JSON.parse(fs.readFileSync(fd, "utf8")) as Manifest };
     }
     return cache.manifest;
   } catch {
     return undefined;
+  } finally {
+    if (fd !== undefined) {
+      try {
+        fs.closeSync(fd);
+      } catch {}
+    }
   }
 }
 
