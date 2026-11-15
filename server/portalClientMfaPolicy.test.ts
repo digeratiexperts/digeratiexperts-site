@@ -3,6 +3,7 @@ import {
   clientMfaRequired,
   clientSignInStep,
   enrollDeadline,
+  hasRegisteredPasskey,
   secondFactorFor,
   usesEnrollmentFallback,
   zohoCallbackSignInStep,
@@ -169,5 +170,57 @@ describe("Zoho sign-in callback", () => {
   it("leaves staff sign-in through Zoho unchanged", () => {
     expect(zohoCallbackSignInStep({ role: "admin", mfaEnabled: false }, dated("2027-01-15"), atDeadline)).toEqual({ kind: "none" });
     expect(zohoCallbackSignInStep({ role: "admin", mfaEnabled: true, mfaMethod: "passkey" }, dated("2027-01-15"), atDeadline)).toEqual({ kind: "none" });
+  });
+});
+describe("registered passkeys count as enrollment", () => {
+  const dated = (v: string) => ({ ...on, PORTAL_CLIENT_MFA_ENROLL_BY: v }) as NodeJS.ProcessEnv;
+  const after = new Date("2027-01-17T00:00:00Z");
+  const before = new Date("2027-01-10T00:00:00Z");
+  const emailWithPasskey = {
+    role: "client",
+    mfaEnabled: true,
+    mfaMethod: "email",
+    mfaPasskeys: [{ rpId: "portal.digeratiexperts.com", credentialId: "x" }],
+  };
+
+  it("does not block an email-MFA client who later added a passkey", () => {
+    expect(clientSignInStep(emailWithPasskey, dated("2027-01-15"), after, "portal.digeratiexperts.com")).toEqual({
+      kind: "challenge",
+      method: "passkey",
+      enrollmentFallback: false,
+    });
+    expect(zohoCallbackSignInStep(emailWithPasskey, dated("2027-01-15"), after, "portal.digeratiexperts.com")).toEqual({
+      kind: "challenge",
+      method: "passkey",
+      enrollmentFallback: false,
+    });
+    expect(clientSignInStep(emailWithPasskey, dated("not-a-date"), after, "portal.digeratiexperts.com").kind).toBe("challenge");
+  });
+
+  it("keeps the client's email method before the deadline", () => {
+    expect(clientSignInStep(emailWithPasskey, dated("2027-01-15"), before, "portal.digeratiexperts.com")).toEqual({
+      kind: "challenge",
+      method: "email",
+      enrollmentFallback: false,
+    });
+  });
+
+  it("treats an unenrolled client with a passkey as enrolled", () => {
+    const user = { role: "client", mfaEnabled: false, mfaPasskeys: [{ rpId: "portal.digeratiexperts.com" }] };
+    expect(clientSignInStep(user, dated("2027-01-15"), after).kind).toBe("challenge");
+    expect(secondFactorFor(user, dated("2027-01-15"), after)).toBe("passkey");
+  });
+
+  it("ignores a passkey registered for another host", () => {
+    expect(hasRegisteredPasskey(emailWithPasskey, "other.example")).toBe(false);
+    expect(clientSignInStep(emailWithPasskey, dated("2027-01-15"), after, "other.example")).toEqual({
+      kind: "must_enroll",
+      reason: "deadline_passed",
+    });
+  });
+
+  it("still requires enrollment with no passkeys", () => {
+    const user = { role: "client", mfaEnabled: true, mfaMethod: "email", mfaPasskeys: [] };
+    expect(clientSignInStep(user, dated("2027-01-15"), after, "portal.digeratiexperts.com").kind).toBe("must_enroll");
   });
 });

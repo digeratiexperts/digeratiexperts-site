@@ -3145,7 +3145,7 @@ export async function registerRoutes(app: Express) {
         return res.redirect(portalLoginErrorRedirect("zoho_disabled", "This portal account is disabled."));
       }
 
-      const signInStep = zohoCallbackSignInStep(user);
+      const signInStep = zohoCallbackSignInStep(user, process.env, new Date(), resolveRpId(req.hostname));
       if (signInStep.kind === "must_enroll") {
         logSecurityEvent("MFA_ENROLL_REQUIRED", req, { email: user.email, reason: signInStep.reason, method: "zoho_sso" });
         return res.redirect(portalLoginErrorRedirect(MFA_ENROLL_REQUIRED_CODE, MFA_ENROLL_REQUIRED_MESSAGE));
@@ -3358,7 +3358,7 @@ export async function registerRoutes(app: Express) {
         });
       }
 
-      const signInStep = clientSignInStep(user);
+      const signInStep = clientSignInStep(user, process.env, new Date(), resolveRpId(req.hostname));
       if (signInStep.kind === "must_enroll") {
         logSecurityEvent("MFA_ENROLL_REQUIRED", req, { email, reason: signInStep.reason });
         return res.status(403).json({ message: MFA_ENROLL_REQUIRED_MESSAGE, code: MFA_ENROLL_REQUIRED_CODE });

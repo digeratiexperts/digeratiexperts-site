@@ -20,7 +20,18 @@ type MfaSubject = {
   role?: string | null;
   mfaEnabled?: boolean | null;
   mfaMethod?: string | null;
+  /** Registered passkeys. A client who added one counts as enrolled even if mfaMethod still says email. */
+  mfaPasskeys?: ReadonlyArray<{ rpId?: unknown } | Record<string, unknown>> | null;
 };
+
+/**
+ * True when the user has a registered passkey. With rpId, only a passkey for
+ * that relying party counts, since only it can be used on this host.
+ */
+export function hasRegisteredPasskey(user: MfaSubject, rpId?: string): boolean {
+  const passkeys = Array.isArray(user.mfaPasskeys) ? user.mfaPasskeys : [];
+  return passkeys.some((p) => p && (rpId === undefined || (p as { rpId?: unknown }).rpId === rpId));
+}
 
 const ENROLL_BY_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
 // America/Phoenix does not observe daylight saving time.
@@ -73,6 +84,7 @@ export function clientSignInStep(
   user: MfaSubject,
   env: NodeJS.ProcessEnv = process.env,
   now: Date = new Date(),
+  rpId?: string,
 ): ClientSignInStep {
   const enrolled = enrolledMethod(user);
   if (user.role === "admin" || !clientMfaRequired(env)) {
@@ -83,10 +95,18 @@ export function clientSignInStep(
     return { kind: "challenge", method: enrolled, enrollmentFallback: false };
   }
 
+  // A registered passkey is enrollment, even when mfaMethod was never switched
+  // from email (a client who started on email codes and later added one).
+  const passkeyChallenge: ClientSignInStep = { kind: "challenge", method: "passkey", enrollmentFallback: false };
+  const hasPasskey = hasRegisteredPasskey(user, rpId);
+  if (enrolled === null && hasPasskey) return passkeyChallenge;
+
   const deadline = enrollDeadline(env);
-  if (deadline.state === "invalid") return { kind: "must_enroll", reason: "deadline_invalid" };
+  if (deadline.state === "invalid") {
+    return hasPasskey ? passkeyChallenge : { kind: "must_enroll", reason: "deadline_invalid" };
+  }
   if (deadline.state === "set" && now.getTime() >= deadline.endsAt.getTime()) {
-    return { kind: "must_enroll", reason: "deadline_passed" };
+    return hasPasskey ? passkeyChallenge : { kind: "must_enroll", reason: "deadline_passed" };
   }
   return { kind: "challenge", method: "email", enrollmentFallback: enrolled === null };
 }
@@ -124,9 +144,10 @@ export function zohoCallbackSignInStep(
   user: MfaSubject,
   env: NodeJS.ProcessEnv = process.env,
   now: Date = new Date(),
+  rpId?: string,
 ): ClientSignInStep {
   if (user.role === "admin" || !clientMfaRequired(env)) return { kind: "none" };
-  return clientSignInStep(user, env, now);
+  return clientSignInStep(user, env, now, rpId);
 }
 
 export const MFA_ENROLL_REQUIRED_CODE = "MFA_ENROLL_REQUIRED";
