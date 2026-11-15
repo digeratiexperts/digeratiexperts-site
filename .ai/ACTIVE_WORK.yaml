@@ -5289,3 +5289,15 @@ claims:
       Released 2026-11-06: PR 980 merged as c58ca527 (Hub PR 909 merged
       before it). Files released. Runtime unchanged (TICKETS_SOURCE=desk);
       switch-on order in docs/TICKETS-SOURCE-SWITCH.md.
+  - id: desk-crisis-browser-privacy-20261115
+    issue: https://github.com/digeratiexperts/Intelligence-Hub/issues/886#issuecomment-6892642434
+    owner: chatgpt-codex
+    subsystem: de-desk-browser-history-privacy
+    branch: chatgpt/desk-crisis-browser-privacy-20261115
+    base_sha: f1fba01eee4af6432ee36e71f7ba2a58360b5637
+    files:
+      - client/src/lib/deskChatSession.ts
+      - client/src/lib/deskChatSession.test.ts
+      - docs/work-ledger/2026-11-15-desk-crisis-browser-privacy.md
+    status: handed-off
+    started: 2026-11-15
