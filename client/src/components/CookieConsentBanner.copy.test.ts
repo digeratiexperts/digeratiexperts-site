@@ -28,4 +28,12 @@ describe("cookie consent banner copy", () => {
     expect(src).toContain('data-testid="button-accept-all-cookies"');
     expect(src).toContain('data-testid="button-manage-cookie-preferences"');
   });
+
+  it("labels the advertising category and honors Global Privacy Control in the preferences panel", () => {
+    expect(src).toContain("Sharing / targeted advertising");
+    expect(src).toContain("clientSignalsGpc");
+    expect(src).toContain("gpc ? false : parsed?.marketing === true");
+    expect(src).toContain("Your browser sent a Global Privacy Control signal, so advertising technologies stay off.");
+    expect(src).toContain('data-testid="cookie-gpc-notice"');
+  });
 });

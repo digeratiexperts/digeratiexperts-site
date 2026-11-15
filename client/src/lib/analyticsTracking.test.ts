@@ -184,6 +184,28 @@ describe("GA4 consent and pageview ownership", () => {
     api.initAnalytics(); expect(scripts).toHaveLength(0); expect(commands).toHaveLength(0);
   });
 
+  it("loads Clarity after SPA navigation from an excluded page to an allowed page", () => {
+    vi.stubEnv("VITE_CLARITY_ID", "qa-clarity");
+    consent(); location.pathname = "/contact";
+    api.initAnalytics();
+    const clarityScripts = () => scripts.filter(s => String(s.src || "").includes("clarity.ms"));
+    expect(clarityScripts()).toHaveLength(0);
+    api.beginPageVisit(); location.pathname = "/solutions";
+    api.analytics.pageView("/solutions", "Solutions");
+    expect(clarityScripts()).toHaveLength(1);
+    expect(clarityScripts()[0].src).toBe("https://www.clarity.ms/tag/qa-clarity");
+    api.beginPageVisit(); location.pathname = "/services";
+    api.analytics.pageView("/services", "Services");
+    expect(clarityScripts()).toHaveLength(1);
+  });
+
+  it("does not load Clarity on navigation without analytics consent", () => {
+    vi.stubEnv("VITE_CLARITY_ID", "qa-clarity");
+    location.pathname = "/contact"; api.initAnalytics();
+    location.pathname = "/solutions"; api.analytics.pageView("/solutions", "Solutions");
+    expect(scripts.filter(s => String(s.src || "").includes("clarity.ms"))).toHaveLength(0);
+  });
+
   it("loads GA only after page readiness and retains consented events from that visit", async () => {
     consent(); api.initAnalytics(); api.analytics.pricingViewed("IT");
     expect(scripts).toHaveLength(0); expect(commands.some(a=>a[1]==="view_item")).toBe(false);
