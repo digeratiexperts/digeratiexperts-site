@@ -2,6 +2,8 @@
 export async function readDeskTicketResponse(response: Response): Promise<{
   ticketNumber: string;
   message: string;
+  /** Present on the Hub path: lets the visitor hand DE a password through the secure field (#1179). */
+  secureFieldToken?: string;
 }> {
   const data = await response.json().catch(() => null);
   const deskId = typeof data?.zohoTicketId === "string" && data.zohoTicketId.trim() ? data.zohoTicketId : null;
@@ -10,14 +12,20 @@ export async function readDeskTicketResponse(response: Response): Promise<{
   const queuedReference = data?.queued === true && typeof data.ticketNumber === "string" && data.ticketNumber.trim()
     ? data.ticketNumber
     : null;
-  if (!response.ok || data?.success !== true || (!deskId && !queuedReference)) {
+  // TICKETS_SOURCE=hub (server/widgetTicketRoute.ts): the Hub ticket engine took it.
+  const hubReference = Number.isInteger(data?.hubTicketId) && data.hubTicketId > 0 && typeof data.ticketNumber === "string" && data.ticketNumber.trim()
+    ? data.ticketNumber
+    : null;
+  if (!response.ok || data?.success !== true || (!deskId && !queuedReference && !hubReference)) {
     const fallback = response.status === 429
       ? "Too many support requests. Please wait a few minutes before trying again. Your details are still here."
       : "We couldn't confirm your ticket. Your details are still here. Please try again or call us for help.";
     throw new Error(typeof data?.error === "string" && data.error.trim() ? data.error : fallback);
   }
+  const secureFieldToken = hubReference && typeof data.secureFieldToken === "string" && data.secureFieldToken ? data.secureFieldToken : null;
   return {
-    ticketNumber: queuedReference ?? (typeof data.ticketNumber === "string" && data.ticketNumber.trim() ? data.ticketNumber : deskId!),
+    ticketNumber: queuedReference ?? hubReference ?? (typeof data.ticketNumber === "string" && data.ticketNumber.trim() ? data.ticketNumber : deskId!),
     message: "Your support request has been received.",
+    ...(secureFieldToken ? { secureFieldToken } : {}),
   };
 }

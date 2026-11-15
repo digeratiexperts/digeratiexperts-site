@@ -3,6 +3,7 @@ import { ArrowRight, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CTA } from "@/lib/ctaCopy";
 import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PhoneLink } from "@/components/PhoneLink";
 
 type ConversionPathBarProps = {
   kicker?: string;
@@ -67,10 +68,10 @@ export function ConversionPathBar({
             variant="outline"
             className="h-12 border-white/70 bg-transparent px-8 font-semibold text-white hover:bg-white/10 hover:text-white"
           >
-            <a href={PRIMARY_PHONE.telHref} data-testid="button-conversion-call">
+            <PhoneLink data-testid="button-conversion-call">
               <Phone className="mr-1 h-5 w-5" aria-hidden="true" />
               Call {PRIMARY_PHONE.display}
-            </a>
+            </PhoneLink>
           </Button>
         ) : null}
         {extraAction}

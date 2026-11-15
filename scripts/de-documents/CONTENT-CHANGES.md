@@ -23,7 +23,7 @@ Every material difference between the May 2026 PDFs and the 2026-10 edition. Joe
 |---|---|---|
 | G-01 | Removed the footers "Draft resource content for site publication — final scope and pricing determined after assessment" (8 files) and "Prepared as sample/educational resource content. Customize before client-specific use." (5 files). | Internal production notes on public files. The qualification they carried is kept in each document's scope note ("Published rates are starting points, not quotes… your Cyber Risk Assessment confirms final scope"). |
 | G-02 | Removed "Note: This draft is written for Digerati Experts public resource use." | Same. Its substance (no customer names or vendor claims; scope depends on assessment, users, endpoints, sites, compliance, backup, add-ons) is kept as the scope note. |
-| G-03 | Every call to action is now live: `digeratiexperts.com/book` (canonical; `/assessment` redirects to it), `325-480-9870`, `info@digeratiexperts.com`. | No document had a working link. |
+| G-03 | Every call to action is now live: `digeratiexperts.com/book` (canonical; `/assessment` redirects to it), `[DE_PUBLIC_PHONE]`, `info@digeratiexperts.com`. | No document had a working link. |
 | G-04 | Added document ID (`DE-DS-…`, `DE-CL-…`, `DE-RP-…`), edition `2026.10`, running header and "Page N of M". | Identification and navigation. |
 | G-05 | Table header labels now visible; tables rebuilt with header cells. | The old header text was drawn dark-on-dark. |
 | G-06 | Headings no longer strand at page ends: "Recommended Next Step" (both checklists), "Best Fit" (Managed Workplace) and "Common Add-On Areas" (Overview). | Layout defect. |

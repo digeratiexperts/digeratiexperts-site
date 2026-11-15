@@ -5,6 +5,7 @@ import { Link } from "wouter";
 import { PRIMARY_PHONE } from "@/data/companyContact";
 import { revealInitial, revealInView, revealTransition, revealViewport } from "@/lib/animations";
 import "./02-why-we-exist.css";
+import { PhoneLink } from "@/components/PhoneLink";
 
 /**
  * 02 · Why we exist, ported from
@@ -92,13 +93,12 @@ export function V7WhyWeExist(): JSX.Element {
             <a className="v7-btn v7-btn--primary" href="/book" data-testid="button-schedule-consultation-banner">
               Schedule Consultation <ArrowRight {...ICON} />
             </a>
-            <a
+            <PhoneLink
               className="v7-btn v7-btn--outline-paper"
-              href={PRIMARY_PHONE.telHref}
               data-testid="button-call-banner"
             >
               <Phone {...ICON} /> Call {PRIMARY_PHONE.display}
-            </a>
+            </PhoneLink>
           </div>
         </motion.div>
       </div>

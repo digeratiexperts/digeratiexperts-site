@@ -10,7 +10,7 @@ import {
   namesJoe,
   wantsPerson,
 } from "./classify";
-import { selectKnowledgeSlice } from "./knowledge";
+import { buildAdvisorRetrievalQueries, selectKnowledgeSliceStorageBacked } from "./knowledge";
 import {
   extractProfileFromText,
   mergeProfile,
@@ -21,7 +21,10 @@ import {
   isInformalCompanyName,
   isDeInternalCompanyAnswer,
 } from "./profile";
-import { buildSystemPrompt, INTERNAL_REFUSAL, BANNED_CANNED_OPENER } from "./prompt";
+import { ADVISOR_SYSTEM_PREFIX, buildSystemPrompt, INTERNAL_REFUSAL, BANNED_CANNED_OPENER } from "./prompt";
+import { withTransientModelRetry } from "./model-retry";
+import { verifyAdvisorReply } from "./ground";
+import { assertNoCardData } from "@shared/pciGuard";
 import { sanitizeActions, assertNoInternalLeak, defaultActionsForMode, materializeAction, ensureLoginAction } from "./actions";
 import { buildHeuristicReply, ensureFreshReply, isNearDuplicate } from "./fallback";
 import {
@@ -30,7 +33,7 @@ import {
   updateProfile,
 } from "./session";
 import { appendDeskMessage, isDeskAgentLive } from "./persist";
-import { PRIMARY_PHONE } from "@shared/companyContact";
+import { PRIMARY_PHONE, hasPublicPhone } from "@shared/companyContact";
 import type {
   AdvisorAction,
   AdvisorChatRequest,
@@ -94,26 +97,33 @@ function applyCompanyGuess(profile: ConversationProfile, raw: string): Conversat
 }
 
 async function callModel(system: string, history: Array<{ role: "user" | "assistant"; content: string }>, userMessage: string): Promise<string | null> {
-  return withOpenAIGuard(async () => {
-    const client = getOpenAI();
-    if (!client) return null;
+  return withTransientModelRetry(() =>
+    withOpenAIGuard(async () => {
+      const client = getOpenAI();
+      if (!client) return null;
 
-    const result = await client.chat.completions.create({
-      // Stronger default tier (Joe 2026-08-31: "improve the intelligence").
-      // Env-overridable so cost can be tuned without a deploy.
-      model: process.env.MSP_ADVISOR_MODEL || "gpt-4o",
-      temperature: 0.4,
-      max_tokens: 550,
-      response_format: { type: "json_object" },
-      messages: [
-        { role: "system", content: system },
-        ...history.slice(-10),
-        { role: "user", content: userMessage },
-      ],
-    });
+      const result = await client.chat.completions.create({
+        // Stronger default tier (Joe 2026-08-31: "improve the intelligence").
+        // Env-overridable so cost can be tuned without a deploy.
+        model: process.env.MSP_ADVISOR_MODEL || "gpt-4o",
+        temperature: 0.4,
+        max_tokens: 550,
+        response_format: { type: "json_object" },
+        messages: [
+          { role: "system", content: ADVISOR_SYSTEM_PREFIX },
+          ...history.slice(-10),
+          {
+            role: "user",
+            content: system.startsWith(ADVISOR_SYSTEM_PREFIX)
+              ? `${system.slice(ADVISOR_SYSTEM_PREFIX.length).trim()}\n\n${userMessage}`
+              : userMessage,
+          },
+        ],
+      });
 
-    return result.choices[0]?.message?.content?.trim() || null;
-  });
+      return result.choices[0]?.message?.content?.trim() || null;
+    }),
+  );
 }
 
 function identityNamePrompt(): string {
@@ -129,9 +139,13 @@ function identityNamePrompt(): string {
  */
 function personHandoff(message: string): { reply: string; actions: AdvisorAction[] } {
   const joe = namesJoe(message);
-  const reply = joe
-    ? `I can get this to Joe. The fastest way is a call: ${PRIMARY_PHONE.display}. If he's tied up, request a callback or leave him a message below, and it reaches the desk with this chat. What's it about?`
-    : `You'll get a person. The fastest way is a call: ${PRIMARY_PHONE.display}. Or request a callback or leave a message below, and it reaches the desk with this chat. What's it about?`;
+  const reply = !hasPublicPhone()
+    ? joe
+      ? "I can get this to Joe. Request a callback or leave him a message below, and it reaches the desk with this chat. What's it about?"
+      : "You'll get a person. Request a callback or leave a message below, and it reaches the desk with this chat. What's it about?"
+    : joe
+      ? `I can get this to Joe. The fastest way is a call: ${PRIMARY_PHONE.display}. If he's tied up, request a callback or leave him a message below, and it reaches the desk with this chat. What's it about?`
+      : `You'll get a person. The fastest way is a call: ${PRIMARY_PHONE.display}. Or request a callback or leave a message below, and it reaches the desk with this chat. What's it about?`;
   const actions = [
     materializeAction("contact_sales", `Call ${PRIMARY_PHONE.display}`),
     materializeAction("request_callback", "Request a callback"),
@@ -179,6 +193,7 @@ export async function handleAdvisorChat(req: AdvisorChatRequest): Promise<Adviso
   if (!userTurn) {
     throw Object.assign(new Error("Message is required"), { status: 400 });
   }
+  assertNoCardData(userTurn);
   let message = userTurn;
 
   const session = getOrCreateSession(req.sessionId, req.pageContext);
@@ -436,7 +451,15 @@ export async function handleAdvisorChat(req: AdvisorChatRequest): Promise<Adviso
     mode = classifyMode(userTurn, page);
   }
 
-  const knowledge = selectKnowledgeSlice(mode, page);
+  const knowledge = await selectKnowledgeSliceStorageBacked(
+    mode,
+    page,
+    buildAdvisorRetrievalQueries({
+      mode,
+      userMessage: userTurn,
+      originalIntent: session.originalIntent,
+    }),
+  );
   const system = buildSystemPrompt({
     mode,
     knowledge,
@@ -461,7 +484,7 @@ export async function handleAdvisorChat(req: AdvisorChatRequest): Promise<Adviso
       ? "Company was given informally — treat as a walk-in. Do not moralize or dump a sales pitch."
       : "",
     session.humanRequested
-      ? `Visitor asked to reach a person (Joe or a human). They already have the call (${PRIMARY_PHONE.display}), callback and message options. Answer what they say next briefly; do not run discovery or ask for their company.`
+      ? `Visitor asked to reach a person (Joe or a human). They already have the ${hasPublicPhone() ? `call (${PRIMARY_PHONE.display}), ` : ""}callback and message options. Answer what they say next briefly; do not run discovery or ask for their company.`
       : "",
     session.nameDeclined
       ? "Visitor chose not to give a name. Do not ask for their name or company again, and do not address them by name."
@@ -540,6 +563,20 @@ export async function handleAdvisorChat(req: AdvisorChatRequest): Promise<Adviso
       fallbackVariant: session.fallbackVariant,
     }).reply;
   }
+
+  const grounded = verifyAdvisorReply(modelOut.reply, {
+    knowledge,
+    userMessage: userTurn,
+    fallbackReply: buildHeuristicReply({
+      ...heuristicInput,
+      mode,
+      fallbackVariant: session.fallbackVariant || 0,
+    }).reply,
+  });
+  if (grounded.fellBack) {
+    session.fallbackVariant = (session.fallbackVariant || 0) + 1;
+  }
+  modelOut.reply = grounded.reply;
 
   profile = mergeProfile(profile, modelOut.profilePatch);
   profile = mergeProfile(profile, extractProfileFromText(userTurn));

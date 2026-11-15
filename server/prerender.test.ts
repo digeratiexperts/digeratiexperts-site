@@ -4,6 +4,7 @@ import path from "path";
 import { afterAll, describe, expect, it } from "vitest";
 import { applyPrerender, prerenderFor } from "./prerender";
 import { prerenderRoutes, snapshotFileName } from "../scripts/prerender/routes.mjs";
+import { isPaymentPagePath } from "@shared/paymentPage";
 
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), "de-prerender-"));
 afterAll(() => fs.rmSync(dir, { recursive: true, force: true }));
@@ -58,6 +59,16 @@ describe("prerender routes", () => {
     expect(routes.some((r) => r.startsWith("/locations/"))).toBe(true);
     expect(routes.some((r) => r.startsWith("/industries/"))).toBe(true);
     expect(routes.some((r) => r.startsWith("/portal") || r.startsWith("/store"))).toBe(false);
+  });
+
+  it("never prerenders a payment page, which keeps its own security nonce handling", () => {
+    const routes: string[] = prerenderRoutes();
+    expect(routes.filter((r) => isPaymentPagePath(r))).toEqual([]);
+    const src = fs.readFileSync(path.resolve(__dirname, "index.ts"), "utf8");
+    const shell = src.slice(src.indexOf("const sendShell"), src.indexOf("// A submitted solution's confirmation page"));
+    expect(shell).toContain("preparePaymentPageHtml(html, nonce)");
+    expect(shell).toContain("applyPrerender(html, prerenderFor(prerenderDir, req.path))");
+    expect(shell.indexOf("isPaymentPagePath(req.path)")).toBeLessThan(shell.indexOf("applyPrerender("));
   });
 
   it("maps routes to flat, safe file names", () => {

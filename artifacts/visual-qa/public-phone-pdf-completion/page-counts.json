@@ -1,0 +1,194 @@
+[
+  {
+    "path": "client/public/assets/legal/portal/client-portal-acceptable-use-policy.pdf",
+    "pagesBefore": 2,
+    "pagesAfter": 2,
+    "contactPageAfter": 2
+  },
+  {
+    "path": "client/public/assets/legal/portal/client-portal-guide.pdf",
+    "pagesBefore": 2,
+    "pagesAfter": 2,
+    "contactPageAfter": 2
+  },
+  {
+    "path": "client/public/assets/legal/portal/client-portal-terms-and-rules-of-engagement.pdf",
+    "pagesBefore": 3,
+    "pagesAfter": 3,
+    "contactPageAfter": 3
+  },
+  {
+    "path": "client/public/assets/resources/checklists/backup-bcdr-checklist.pdf",
+    "pagesBefore": 3,
+    "pagesAfter": 3,
+    "contactPageAfter": 3
+  },
+  {
+    "path": "client/public/assets/resources/checklists/security-readiness-checklist.pdf",
+    "pagesBefore": 3,
+    "pagesAfter": 3,
+    "contactPageAfter": 3
+  },
+  {
+    "path": "client/public/assets/resources/datasheets/co-managed-it-datasheet.pdf",
+    "pagesBefore": 2,
+    "pagesAfter": 2,
+    "contactPageAfter": 2
+  },
+  {
+    "path": "client/public/assets/resources/datasheets/managed-workplace-overview.pdf",
+    "pagesBefore": 2,
+    "pagesAfter": 2,
+    "contactPageAfter": 2
+  },
+  {
+    "path": "client/public/assets/resources/datasheets/proactive-business-ecosystem-datasheet.pdf",
+    "pagesBefore": 2,
+    "pagesAfter": 2,
+    "contactPageAfter": 2
+  },
+  {
+    "path": "client/public/assets/resources/datasheets/proactive-ecosystem-overview.pdf",
+    "pagesBefore": 2,
+    "pagesAfter": 2,
+    "contactPageAfter": 2
+  },
+  {
+    "path": "client/public/assets/resources/datasheets/proactive-enterprise-ecosystem-datasheet.pdf",
+    "pagesBefore": 2,
+    "pagesAfter": 2,
+    "contactPageAfter": 2
+  },
+  {
+    "path": "client/public/assets/resources/datasheets/proactive-it-ecosystem-datasheet.pdf",
+    "pagesBefore": 2,
+    "pagesAfter": 2,
+    "contactPageAfter": 2
+  },
+  {
+    "path": "client/public/assets/resources/datasheets/proactive-office-ecosystem-datasheet.pdf",
+    "pagesBefore": 2,
+    "pagesAfter": 2,
+    "contactPageAfter": 2
+  },
+  {
+    "path": "client/public/assets/resources/datasheets/ucaas-voice-meetings-datasheet.pdf",
+    "pagesBefore": 2,
+    "pagesAfter": 2,
+    "contactPageAfter": 2
+  },
+  {
+    "path": "client/public/assets/resources/reports/compliance-risk-reports-overview.pdf",
+    "pagesBefore": 3,
+    "pagesAfter": 3,
+    "contactPageAfter": 3
+  },
+  {
+    "path": "client/public/assets/resources/reports/cyber-risk-assessment-sample.pdf",
+    "pagesBefore": 3,
+    "pagesAfter": 3,
+    "contactPageAfter": 3
+  },
+  {
+    "path": "client/public/assets/resources/reports/sample-quarterly-business-review.pdf",
+    "pagesBefore": 3,
+    "pagesAfter": 3,
+    "contactPageAfter": 3
+  },
+  {
+    "path": "document_templates/original/MSA-Digerati-Experts-2026-v2026.6.pdf",
+    "pagesBefore": 13,
+    "pagesAfter": 13,
+    "contactPageAfter": 1
+  },
+  {
+    "path": "document_templates/original/Order Form - Service Selection and Pricing-v2026.6.pdf",
+    "pagesBefore": 3,
+    "pagesAfter": 4,
+    "contactPageAfter": 1
+  },
+  {
+    "path": "document_templates/original/SOW-DE-Backup-Disaster-Recovery-and-Continuity-2026-v2026.6.pdf",
+    "pagesBefore": 4,
+    "pagesAfter": 4,
+    "contactPageAfter": 1
+  },
+  {
+    "path": "document_templates/original/SOW-DE-Core-IT-Infrastructure-and-Support-2026-v2026.6.pdf",
+    "pagesBefore": 4,
+    "pagesAfter": 4,
+    "contactPageAfter": 1
+  },
+  {
+    "path": "document_templates/original/SOW-DE-Network-Integration-and-Advanced-Networking-2026-v2026.6.pdf",
+    "pagesBefore": 3,
+    "pagesAfter": 4,
+    "contactPageAfter": 1
+  },
+  {
+    "path": "document_templates/original/SOW-DE-Security-Stack-and-Operations-2026-v2026.6.pdf",
+    "pagesBefore": 4,
+    "pagesAfter": 4,
+    "contactPageAfter": 1
+  },
+  {
+    "path": "document_templates/original/SOW-DE-UCaaS-VoIP-2026-v2026.6.pdf",
+    "pagesBefore": 3,
+    "pagesAfter": 4,
+    "contactPageAfter": 1
+  },
+  {
+    "path": "document_templates/original/SOW-DE-vCIO-Services-2026-v2026.6.pdf",
+    "pagesBefore": 3,
+    "pagesAfter": 4,
+    "contactPageAfter": 1
+  },
+  {
+    "path": "document_templates/templates/pdf/msa-digerati-experts-2026-v2026.6.pdf",
+    "pagesBefore": 13,
+    "pagesAfter": 13,
+    "contactPageAfter": 1
+  },
+  {
+    "path": "document_templates/templates/pdf/order-form-service-selection-and-pricing-v2026.6.pdf",
+    "pagesBefore": 4,
+    "pagesAfter": 4,
+    "contactPageAfter": 1
+  },
+  {
+    "path": "document_templates/templates/pdf/sow-de-backup-disaster-recovery-and-continuity-2026-v2026.6.pdf",
+    "pagesBefore": 4,
+    "pagesAfter": 4,
+    "contactPageAfter": 1
+  },
+  {
+    "path": "document_templates/templates/pdf/sow-de-core-it-infrastructure-and-support-2026-v2026.6.pdf",
+    "pagesBefore": 4,
+    "pagesAfter": 4,
+    "contactPageAfter": 1
+  },
+  {
+    "path": "document_templates/templates/pdf/sow-de-network-integration-and-advanced-networking-2026-v2026.6.pdf",
+    "pagesBefore": 4,
+    "pagesAfter": 4,
+    "contactPageAfter": 1
+  },
+  {
+    "path": "document_templates/templates/pdf/sow-de-security-stack-and-operations-2026-v2026.6.pdf",
+    "pagesBefore": 4,
+    "pagesAfter": 4,
+    "contactPageAfter": 1
+  },
+  {
+    "path": "document_templates/templates/pdf/sow-de-ucaas-voip-2026-v2026.6.pdf",
+    "pagesBefore": 4,
+    "pagesAfter": 4,
+    "contactPageAfter": 1
+  },
+  {
+    "path": "document_templates/templates/pdf/sow-de-vcio-services-2026-v2026.6.pdf",
+    "pagesBefore": 4,
+    "pagesAfter": 4,
+    "contactPageAfter": 1
+  }
+]

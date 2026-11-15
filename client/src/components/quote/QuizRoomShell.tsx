@@ -3,6 +3,7 @@ import { Phone, X } from "lucide-react";
 import { DE_LOGO_PRIMARY } from "@/lib/brandAssets";
 import { PRIMARY_PHONE } from "@/data/companyContact";
 import { cn } from "@/lib/utils";
+import { PhoneLink } from "@/components/PhoneLink";
 
 export interface QuizStage {
   label: string;
@@ -66,10 +67,10 @@ export function QuizRoomShell({
             <img src={DE_LOGO_PRIMARY} alt="Digerati Experts" width={300} height={72} className="h-8 w-auto md:h-9" />
           </a>
           <nav aria-label="Quiz" className="flex items-center gap-1 md:gap-3">
-            <a href={PRIMARY_PHONE.telHref} className={chromeLink} aria-label={`Call ${PRIMARY_PHONE.display}`}>
+            <PhoneLink className={chromeLink} aria-label={`Call ${PRIMARY_PHONE.display}`}>
               <Phone className="h-4 w-4" aria-hidden="true" />
               <span className="hidden sm:inline">{PRIMARY_PHONE.display}</span>
-            </a>
+            </PhoneLink>
             <a href={exitHref} className={chromeLink} data-testid="quiz-exit">
               <X className="h-4 w-4" aria-hidden="true" />
               Exit

@@ -14,6 +14,7 @@ import {
   HeroFacts,
   StepRail,
 } from "@/components/site/chapters";
+import { PhoneLink } from "@/components/PhoneLink";
 
 export default function RemoteSupport() {
   useSEO({
@@ -111,14 +112,13 @@ export default function RemoteSupport() {
       />
       <Chapter tone="well" compact seam={false}>
         <Container>
-          <a
-            href={PRIMARY_PHONE.telHref}
+          <PhoneLink
             className="inline-flex min-h-11 items-center gap-2 font-semibold text-white underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ec4899]"
             data-testid="button-call-remote"
           >
             <Phone className="h-5 w-5" aria-hidden="true" />
             Call Support
-          </a>
+          </PhoneLink>
         </Container>
       </Chapter>
     </PageTemplate>

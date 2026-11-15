@@ -1,4 +1,5 @@
 import type { Express, Request, RequestHandler, Response } from "express";
+import { sendCardDataRejected, sendCardDataRejectedError } from "./pciGuard";
 
 /**
  * DE Desk live-handoff actions: a DE agent replying into the public website
@@ -55,6 +56,7 @@ export function registerPortalDeskAgentRoutes(
       const content = String(req.body?.content || "").trim();
       if (!content) return res.status(400).json({ error: "content is required" });
       if (content.length > MAX_REPLY_LENGTH) return res.status(400).json({ error: "Message too long" });
+      if (sendCardDataRejected(res, content)) return;
 
       const { session } = await getDeskSessionMessages(sessionId);
       if (!session) return res.status(404).json({ error: "Conversation not found" });
@@ -64,6 +66,7 @@ export function registerPortalDeskAgentRoutes(
       const message = await appendDeskMessage({ sessionId, role: "agent", content, senderName: agentName });
       res.json({ success: true, message, agentLive: true, agentName });
     } catch (error: any) {
+      if (sendCardDataRejectedError(res, error)) return;
       res.status(500).json({ error: error.message || "Failed to send reply" });
     }
   });
