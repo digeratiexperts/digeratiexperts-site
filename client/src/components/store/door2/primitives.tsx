@@ -4,6 +4,7 @@ import { ArrowRight, Check, Copy, MessageCircle, Phone } from "lucide-react";
 import { PRIMARY_PHONE } from "@shared/companyContact";
 import { openMspAdvisor } from "@/lib/openMspAdvisor";
 import { useAnnouncer } from "@/components/AccessibleAnnouncer";
+import { PhoneLink } from "@/components/PhoneLink";
 
 /*
  * The Store's vocabulary (docs/STORE-EXPERIENCE-SOURCE-OF-TRUTH.md §8): V4's
@@ -339,15 +340,14 @@ export function HelpRow({
         <MessageCircle className="h-4 w-4" aria-hidden="true" />
         {askLabel}
       </button>
-      <a
-        href={PRIMARY_PHONE.telHref}
+      <PhoneLink
         className="d2-action d2-action--quiet"
         aria-label={`Call ${PRIMARY_PHONE.display} (${PRIMARY_PHONE.label})`}
         data-testid="call-de"
       >
         <Phone className="h-4 w-4" aria-hidden="true" />
         Call {PRIMARY_PHONE.display}
-      </a>
+      </PhoneLink>
     </div>
   );
 }

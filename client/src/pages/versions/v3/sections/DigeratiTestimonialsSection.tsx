@@ -18,7 +18,7 @@ import {
   type PublicReviewItem,
   type ReviewSourceId,
 } from "@/data/reviewsCatalog";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PRIMARY_PHONE, hasPublicPhone } from "@/data/companyContact";
 import { EvidenceFrame } from "@/components/evidence/EvidenceFrame";
 
 type PublicReviewsResponse = {
@@ -379,7 +379,7 @@ export const DigeratiTestimonialsSection = (): JSX.Element => {
         </div>
         <p className="mt-4 text-center text-base text-white/55">
           Serving professional services, healthcare, construction, nonprofit, and regulated
-          organizations across Greater Phoenix · {PRIMARY_PHONE.display}
+          organizations across Greater Phoenix{hasPublicPhone() && <> · {PRIMARY_PHONE.display}</>}
         </p>
       </div>
     </section>

@@ -89,7 +89,7 @@ Results for the 13 published files (2026-10-03):
 - All pass.
 - 2 or 3 pages each, 52–107 KB.
 - Only CID TrueType subset fonts, with zero untagged content.
-- Live links to `digeratiexperts.com/book`, `tel:+13254809870` and `mailto:info@digeratiexperts.com`.
+- Live links to `digeratiexperts.com/book`, the public phone number (`tel:` link, omitted while it is unset) and `mailto:info@digeratiexperts.com`.
 - Reports have clickable contents.
 - Diagrams and the logo are Figures with alt text.
 

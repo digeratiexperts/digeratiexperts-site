@@ -4,9 +4,10 @@ import { describe, expect, it } from "vitest";
 import { COMPANY, PRIMARY_PHONE } from "@shared/companyContact";
 
 /**
- * Joe, 2026-10-14: the footer shows the phone (tap-to-call) and the email
- * (mailto) on every page. Both live footers read them from companyContact,
- * so a number change cannot miss the footer. City only, no street (PR 532).
+ * The footer shows the phone (tap-to-call) and the email (mailto) on every
+ * page. Both live footers read them from companyContact, so a number change
+ * cannot miss the footer, and the phone stays hidden until a public number is
+ * set. City only, no street (PR 532).
  */
 const footers = {
   shared: "client/src/pages/sections/DigeratiEnhancedFooterSection.tsx",
@@ -19,8 +20,8 @@ describe("footer phone and email", () => {
     it(`${name} footer links the phone and email from the NAP source`, () => {
       const source = read(relative);
       const footer = source.slice(source.lastIndexOf("<footer"));
-      // A raw <a> (homepage) or the shared FooterLink, which takes testId.
-      expect(footer).toMatch(/href=\{PRIMARY_PHONE\.telHref\} (data-testid|testId)="footer-phone"/);
+      // PhoneLink (homepage) or the shared FooterLink behind hasPublicPhone(), which takes testId.
+      expect(footer).toMatch(/<PhoneLink (data-testid|testId)="footer-phone"|hasPublicPhone\(\) && \(\s*<p>\s*<FooterLink href=\{PRIMARY_PHONE\.telHref\} testId="footer-phone"/);
       expect(footer).toMatch(/href=\{`mailto:\$\{COMPANY\.email\}`\} (data-testid|testId)="footer-email"/);
       expect(footer).toContain("{PRIMARY_PHONE.display}");
       expect(footer).toContain("{COMPANY.email}");

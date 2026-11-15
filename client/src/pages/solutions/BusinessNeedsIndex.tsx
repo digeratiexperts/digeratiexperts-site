@@ -55,7 +55,7 @@ import {
   type SolutionEnvironment,
 } from "@/lib/solutionDraft";
 import { portalMarketplaceLoginUrl } from "@/lib/portalUrls";
-import { PRIMARY_PHONE } from "@shared/companyContact";
+import { PRIMARY_PHONE, hasPublicPhone } from "@shared/companyContact";
 import { ParallaxLayer } from "@/components/site/Atmosphere";
 import heroTilesAvif from "@/assets/flagship/hero-tile-field.jpg?w=800;1400;2200&format=avif&as=srcset";
 import heroTilesWebp from "@/assets/flagship/hero-tile-field.jpg?w=800;1400;2200&format=webp&as=srcset";
@@ -67,6 +67,7 @@ import waysWebp from "@/assets/flagship/ways-backdrop.jpg?w=2400&format=webp";
 import closeAvif from "@/assets/flagship/close-white.jpg?w=800;1400;2200&format=avif&as=srcset";
 import closeWebp from "@/assets/flagship/close-white.jpg?w=800;1400;2200&format=webp&as=srcset";
 import closeJpg from "@/assets/flagship/close-white.jpg?w=1400&format=jpg";
+import { PhoneLink } from "@/components/PhoneLink";
 
 /*
  * /store — Enter (docs/STORE-EXPERIENCE-SOURCE-OF-TRUTH.md §5.1).
@@ -129,7 +130,9 @@ const WHY_DE: ReadonlyArray<{ icon: LucideIcon; title: string; line: string; fea
   { icon: Layers, title: "Standalone or co-managed.", line: "Every family comes both ways: on its own, or beside your IT team." },
   { icon: ClipboardCheck, title: "Sized from what you have.", line: "Your profile sizes every package. Recommendations start from your counts." },
   { icon: FileText, title: "Everything gets written down.", line: "Documented environments, so nothing walks out the door with one person." },
-  { icon: PhoneCall, title: "A person when you need one.", line: `Call ${PRIMARY_PHONE.display}. Happening right now? Say so first.` },
+  { icon: PhoneCall, title: "A person when you need one.", line: hasPublicPhone()
+        ? `Call ${PRIMARY_PHONE.display}. Happening right now? Say so first.`
+        : "Ask DE Desk or send us a message. Happening right now? Say so first." },
 ];
 
 /**
@@ -661,9 +664,9 @@ export default function BusinessNeedsIndex() {
                     scenario.group === "now" ? (
                       <>
                         Happening right now?{" "}
-                        <a href={PRIMARY_PHONE.telHref} aria-label={`Call ${PRIMARY_PHONE.display} (${PRIMARY_PHONE.label})`}>
+                        <PhoneLink aria-label={`Call ${PRIMARY_PHONE.display} (${PRIMARY_PHONE.label})`}>
                           Call {PRIMARY_PHONE.display}
-                        </a>
+                        </PhoneLink>
                       </>
                     ) : undefined
                   }
@@ -910,9 +913,9 @@ export default function BusinessNeedsIndex() {
               <a href="#situations" className="d2-flag-pill">
                 Start from a situation
               </a>
-              <a href={PRIMARY_PHONE.telHref} className="d2-flag-more" aria-label={`Talk to DE: call ${PRIMARY_PHONE.display} (${PRIMARY_PHONE.label})`}>
+              <PhoneLink className="d2-flag-more" aria-label={`Talk to DE: call ${PRIMARY_PHONE.display} (${PRIMARY_PHONE.label})`}>
                 Talk to DE · {PRIMARY_PHONE.display}
-              </a>
+              </PhoneLink>
             </div>
             <Plate avif={closeAvif} webp={closeWebp} jpg={closeJpg} width={1400} height={781} sizes="(min-width: 1180px) 1100px, 100vw" className="d2-flag-close__plate" />
           </div>
