@@ -27,6 +27,7 @@ import { registerPublicSupportChat } from "./publicSupportChat";
 import { isKnownSpaPath } from "./spaKnownPaths";
 import { applyOrganizationSchema, applyRouteMeta, readIndexShell, routeMetaFor } from "./routeMeta";
 import { marketingRedirectFor } from "./marketingRedirects";
+import { applyPrerender, prerenderFor } from "./prerender";
 import { cacheControlFor } from "./staticCacheControl";
 import { deskTicketSpoolDir, quoteSpoolDir, spoolDir, spoolPendingCount, spoolWritable } from "./publicSolutionSpool";
 import { registerCampaignAliasRedirects } from "./campaignAliasRedirects";
@@ -657,6 +658,8 @@ function listEndpoints(): Array<{ method: string; path: string }> {
   } else {
     const distPath = path.resolve(process.cwd(), "dist/public");
     const indexPath = path.join(distPath, "index.html");
+    // Written by scripts/prerender/prerender.mjs after the build; outside dist/public so it is never served raw.
+    const prerenderDir = path.resolve(process.cwd(), "dist/prerender");
     
     app.use(express.static(distPath, {
       // "/" must reach the catch-all below like every other route, so it gets its own head tags (server/routeMeta.ts).
@@ -677,12 +680,16 @@ function listEndpoints(): Array<{ method: string; path: string }> {
       // The shell is HTML: never stored (staticCacheControl), revalidated against the build's mtime.
       res.setHeader("Cache-Control", cacheControlFor("index.html"));
       res.setHeader("Last-Modified", shell.lastModified);
-        let html = found ? applyOrganizationSchema(applyRouteMeta(shell.html, routeMetaFor(req.path))) : shell.html;
-        if (isPaymentPagePath(req.path)) {
-          const nonce = (res as express.Response & { locals?: { cspNonce?: string } }).locals?.cspNonce;
-          html = preparePaymentPageHtml(html, nonce);
-        }
-        res.type("html").send(html);
+      let html = found ? applyOrganizationSchema(applyRouteMeta(shell.html, routeMetaFor(req.path))) : shell.html;
+      if (isPaymentPagePath(req.path)) {
+        // Payment pages keep the security nonce treatment and are never prerendered.
+        const nonce = (res as express.Response & { locals?: { cspNonce?: string } }).locals?.cspNonce;
+        html = preparePaymentPageHtml(html, nonce);
+      } else if (found) {
+        // Found public pages also carry their build-time prerendered body (server/prerender.ts).
+        html = applyPrerender(html, prerenderFor(prerenderDir, req.path));
+      }
+      res.type("html").send(html);
     };
 
     // A submitted solution's confirmation page (§5.5): an unknown or expired reference is a real 404.
