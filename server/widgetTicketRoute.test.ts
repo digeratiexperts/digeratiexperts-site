@@ -1,7 +1,7 @@
 import express from "express";
 import { createServer, type Server } from "http";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { PRIMARY_PHONE } from "@shared/companyContact";
+import { reachUsPhrase } from "@shared/companyContact";
 import { ZohoOAuthError } from "./zoho/zohoOAuthErrors";
 import { ZohoAuthUnavailableError } from "./zoho/oauth";
 
@@ -188,13 +188,14 @@ describe("DE Desk widget ticket route", () => {
     expect(fallback.mock.calls[0][0].description).toMatch(/DE Desk session: desk-session-42$/);
   });
 
-  it("only when every fallback layer failed does the visitor get the retry message, with the phone number", async () => {
+  it("only when every fallback layer failed does the visitor get the retry message, with another way to reach DE", async () => {
     createTicket.mockRejectedValueOnce(new Error("Failed to refresh Zoho Desk access token"));
     fallback.mockResolvedValueOnce({ accepted: false, spooled: false, deskEmailed: false, clientAcknowledged: false });
     const { status, body } = await post(validTicket);
     expect(status).toBe(503);
     expect(body).toMatchObject({ success: false, code: "desk_unavailable", retryable: true });
-    expect(String(body.error)).toContain(PRIMARY_PHONE.display);
+    expect(String(body.error)).toContain(reachUsPhrase());
+    expect(String(body.error)).not.toContain("[DE_PUBLIC_PHONE]");
   });
 
   it("a fallback that throws is treated as nothing held: retry message, no false success", async () => {

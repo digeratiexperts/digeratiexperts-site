@@ -1,7 +1,7 @@
 import { esc } from "./base.mjs";
 
 const PLACEHOLDER = "[DE_PUBLIC_PHONE]";
-const retired = new Set(["4805195892", "8555349832", "3254809870"]);
+const retired = new Set(["4805195892", "8555349832", "3254809870", "6232629913"]);
 
 /** Public DE contact only. Never build a callable URI from a pending token. */
 export function publicPhoneMarkup(cta) {

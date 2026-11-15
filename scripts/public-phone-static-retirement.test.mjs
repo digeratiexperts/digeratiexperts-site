@@ -17,7 +17,7 @@ const paths = [
   "public/scrollcraft/situation-gallery/index.html",
   "zoho/help-center/footer.html"
 ];
-const retired = /(?:\+?1[\s().-]*)?(?:480[\s().-]*519[\s().-]*5892|855[\s().-]*534[\s().-]*9832|325[\s().-]*480[\s().-]*9870)/;
+const retired = /(?:\+?1[\s().-]*)?(?:480[\s().-]*519[\s().-]*5892|855[\s().-]*534[\s().-]*9832|325[\s().-]*480[\s().-]*9870|623[\s().-]*262[\s().-]*9913)/;
 for (const path of paths) {
   test(path + ": retired public phone stays non-dialable", () => {
     const content = readFileSync(new URL("../" + path, import.meta.url), "utf8");

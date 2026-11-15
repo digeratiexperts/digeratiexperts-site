@@ -6,7 +6,7 @@ import test from "node:test";
 const root = new URL("../", import.meta.url);
 const marker = "[DE_PUBLIC_PHONE]";
 const separator = String.raw`[\s().\[\]\-\u2010-\u2015\u2212\u00ad]*`;
-const retiredParts = [["480", "519", "5892"], ["855", "534", "9832"], ["325", "480", "9870"]];
+const retiredParts = [["480", "519", "5892"], ["855", "534", "9832"], ["325", "480", "9870"], ["623", "262", "9913"]];
 const retired = new RegExp(retiredParts.map((parts) => `(?<!\\d)(?:\\+?1${separator})?${parts.join(separator)}(?!\\d)`).join("|"));
 const inspected = JSON.parse(execFileSync(process.env.PYTHON || "python3", ["scripts/public-phone-artifacts.py"], { cwd: root, encoding: "utf8", maxBuffer: 10_000_000 }));
 const required = JSON.parse(readFileSync(new URL("public-phone-pdf-manifest.json", import.meta.url), "utf8")).pdfs;

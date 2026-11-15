@@ -2,13 +2,13 @@ import { MegaMenu } from "@/components/MegaMenu";
 import { DigeratiContactSection } from "@/pages/sections/DigeratiContactSection";
 import { DigeratiEnhancedFooterSection } from "@/pages/sections/DigeratiEnhancedFooterSection";
 import { useSEO } from "@/hooks/useSEO";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PRIMARY_PHONE, hasPublicPhone } from "@/data/companyContact";
 
 export default function Contact() {
   useSEO({
     title: "Contact",
     description:
-      `Contact Digerati Experts in Chandler, Arizona. Call ${PRIMARY_PHONE.display} or send a message for a Cyber Risk Assessment.`,
+      `Contact Digerati Experts in Chandler, Arizona. ${hasPublicPhone() ? `Call ${PRIMARY_PHONE.display} or send` : "Send"} a message for a Cyber Risk Assessment.`,
     canonical: "/contact",
   });
 

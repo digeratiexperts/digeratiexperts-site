@@ -5,6 +5,7 @@ import { useOptionalFullPageScroll } from "@/components/FullPageScroll";
 import { useBooking } from "@/contexts/BookingContext";
 import { PRIMARY_PHONE } from "@/data/companyContact";
 import { CTA } from "@/lib/ctaCopy";
+import { PhoneLink } from "@/components/PhoneLink";
 
 /** Homepage chapters in the thin top table of contents. */
 const TOP_CHAPTERS = new Set([
@@ -339,15 +340,14 @@ export function HomepageDockActions() {
 
   return (
     <div className="flex items-center gap-1.5" data-testid="homepage-dock-actions">
-      <a
-        href={PRIMARY_PHONE.telHref}
+      <PhoneLink
         className="flex h-10 shrink-0 items-center gap-1.5 rounded-full px-2.5 text-base font-medium text-white/90 transition-colors hover:bg-white/10 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-de-magenta-ink"
         data-testid="nav-phone"
         aria-label={`Call ${PRIMARY_PHONE.display}`}
       >
         <Phone className="h-4 w-4 text-de-magenta-ink" aria-hidden="true" />
         <span className="hidden xl:inline">{PRIMARY_PHONE.display}</span>
-      </a>
+      </PhoneLink>
 
       <button
         type="button"

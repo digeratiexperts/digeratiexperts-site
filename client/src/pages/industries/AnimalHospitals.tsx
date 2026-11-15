@@ -17,7 +17,7 @@ import { VETERINARY_FAQS } from "@/data/localFaqs";
 import { Shield, Lock, Activity, Database, Users } from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
 import { CTA } from "@/lib/ctaCopy";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PRIMARY_PHONE, phoneAction } from "@/data/companyContact";
 
 export default function AnimalHospitals() {
   useSEO({
@@ -76,7 +76,7 @@ export default function AnimalHospitals() {
         <div className="flex flex-col gap-3 sm:flex-row">
           <HeroActions
             primary={{ label: CTA.primary, href: "/book", testId: "button-hero-vet" }}
-            secondary={{ label: `Call ${PRIMARY_PHONE.display}`, href: PRIMARY_PHONE.telHref }}
+            secondary={phoneAction(`Call ${PRIMARY_PHONE.display}`)}
           />
         </div>
       }

@@ -34,6 +34,7 @@ import { V8LeadForm } from "../versions/v8/sections/13-lead-form";
 import { V8Faq } from "../versions/v8/sections/14-faq";
 import { V8NextStep } from "../versions/v8/sections/15-next-step";
 import { V8ContactFooter } from "../versions/v8/sections/16-contact-footer";
+import { PhoneLink } from "@/components/PhoneLink";
 
 // Same section order and ids as HomepageV8, so every section is present.
 const chapters = [
@@ -136,7 +137,7 @@ export function HomeChapters(): JSX.Element {
               <p className="hc-poster__sub">Managed IT, security and compliance for Arizona businesses that can&rsquo;t afford downtime.</p>
               <div className="hc-poster__actions">
                 <Link href="/book" className="hc-poster__btn">Get a Cyber Risk Assessment <ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
-                <a href={PRIMARY_PHONE.telHref} className="hc-poster__call">Call {PRIMARY_PHONE.display}</a>
+                <PhoneLink className="hc-poster__call">Call {PRIMARY_PHONE.display}</PhoneLink>
               </div>
             </div>
             <figure className="hc-poster__figure">

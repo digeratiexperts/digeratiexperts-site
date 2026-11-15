@@ -7,13 +7,14 @@ import { DE_LOGO_REVERSE } from "@/lib/brandAssets";
 import { CTA } from "@/lib/ctaCopy";
 import { DashboardMockup } from "@/components/graphics/DashboardMockup";
 import { PronunciationCard } from "@/components/PronunciationCard";
-import { COMPANY, COMPANY_SOCIAL, PRIMARY_PHONE, formatAddressOneLine } from "@/data/companyContact";
+import { COMPANY, COMPANY_SOCIAL, PRIMARY_PHONE, formatAddressOneLine, reachUsPhrase, hasPublicPhone } from "@/data/companyContact";
 import { pricingTiers, formatPrice, PRICING_SCOPE_NOTE } from "@/data/pricing";
 import { getHomepageCyberFacts } from "@/data/cyberAwarenessFacts";
 import { ProtectionCommandDeck } from "@/components/visual/ProtectionCommandDeck";
 import { useThreatFeed } from "@/hooks/useThreatFeed";
 import { THREAT_ATTRIBUTION } from "@shared/threatFeed";
 import "./v6.css";
+import { PhoneLink } from "@/components/PhoneLink";
 
 /**
  * Digerati Experts homepage, Version 6: live homepage cleaned in the current
@@ -252,7 +253,7 @@ function PrimaryAction({ className = "" }: { className?: string }) {
 
 function Status({ state, sent }: { state: SendState; sent: string }) {
   if (state === "sent") return <p className="v6-status v6-status-ok" role="status">{sent}</p>;
-  if (state === "error") return <p className="v6-status v6-status-err" role="alert">Something went wrong. Please try again, or call {PRIMARY_PHONE.display}.</p>;
+  if (state === "error") return <p className="v6-status v6-status-err" role="alert">Something went wrong. Please try again, or {reachUsPhrase()}.</p>;
   if (state === "sending") return <p className="v6-status" role="status">Sending.</p>;
   return null;
 }
@@ -439,9 +440,9 @@ export default function HomepageV6(): JSX.Element {
             </ul>
           </nav>
           <div className="v6-header-actions">
-            <a className="v6-phone" href={PRIMARY_PHONE.telHref} aria-label={`Call ${PRIMARY_PHONE.display}`}>
+            <PhoneLink className="v6-phone" aria-label={`Call ${PRIMARY_PHONE.display}`}>
               {PRIMARY_PHONE.display}
-            </a>
+            </PhoneLink>
             <PrimaryAction className="v6-header-cta" />
             <details className="v6-menu">
               <summary aria-label="Open menu">Menu</summary>
@@ -451,7 +452,7 @@ export default function HomepageV6(): JSX.Element {
                     {item.label}
                   </Link>
                 ))}
-                <a href={PRIMARY_PHONE.telHref}>Call {PRIMARY_PHONE.display}</a>
+                <PhoneLink>Call {PRIMARY_PHONE.display}</PhoneLink>
                 <PrimaryAction className="v6-menu-cta" />
               </div>
             </details>
@@ -482,7 +483,7 @@ export default function HomepageV6(): JSX.Element {
                 <li>No obligation</li>
                 <li>Response within one business day</li>
                 <li>
-                  <a href={PRIMARY_PHONE.telHref}>Call {PRIMARY_PHONE.display}</a>
+                  <PhoneLink>Call {PRIMARY_PHONE.display}</PhoneLink>
                 </li>
               </ul>
               <PronunciationCard variant="compact" />
@@ -954,9 +955,9 @@ export default function HomepageV6(): JSX.Element {
               </ul>
               <div className="v6-actions" style={{ marginTop: 28 }}>
                 <PrimaryAction />
-                <a className="v6-phone" href={PRIMARY_PHONE.telHref}>
+                <PhoneLink className="v6-phone">
                   or call {PRIMARY_PHONE.display}
-                </a>
+                </PhoneLink>
               </div>
             </div>
             <AssessmentForm />
@@ -1019,9 +1020,9 @@ export default function HomepageV6(): JSX.Element {
             </ul>
             <div className="v6-actions" style={{ marginTop: 32 }}>
               <PrimaryAction />
-              <a className="v6-btn v6-btn-secondary" href={PRIMARY_PHONE.telHref}>
+              <PhoneLink className="v6-btn v6-btn-secondary">
                 Call {PRIMARY_PHONE.display}
-              </a>
+              </PhoneLink>
             </div>
           </div>
         </section>
@@ -1037,10 +1038,14 @@ export default function HomepageV6(): JSX.Element {
               </div>
               <dl>
                 <div>
-                  <dt>Phone</dt>
-                  <dd>
-                    <a href={PRIMARY_PHONE.telHref}>{PRIMARY_PHONE.display}</a>
-                  </dd>
+                  {hasPublicPhone() && (
+                    <>
+                      <dt>Phone</dt>
+                      <dd>
+                        <PhoneLink>{PRIMARY_PHONE.display}</PhoneLink>
+                      </dd>
+                    </>
+                  )}
                 </div>
                 <div>
                   <dt>Email</dt>
@@ -1098,9 +1103,9 @@ export default function HomepageV6(): JSX.Element {
                 Cybersecurity-first managed IT for Arizona businesses. {COMPANY.addressLocality}, {region}.
               </p>
               <p style={{ marginTop: 10 }}>
-                <a href={PRIMARY_PHONE.telHref}>
+                <PhoneLink>
                   <b>{PRIMARY_PHONE.display}</b>
-                </a>{" "}
+                </PhoneLink>{" "}
                 · <a href={`mailto:${COMPANY.email}`}>{COMPANY.email}</a>
               </p>
             </div>
