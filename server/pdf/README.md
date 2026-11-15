@@ -31,7 +31,7 @@ All in `dePdfBrand.ts`: `coverBlock`, `specStrip`, `section`, `closeBlock`, `doc
 - **Tokens and font list:** `shared/deDocumentTokens.ts`, shared with `scripts/de-documents/system/styles.mts`.
 - **Fonts:** static TTF instances from `scripts/de-documents/fonts/` (OFL), base64-embedded. They are static because Chromium embeds variable fonts as Type 3, which breaks text extraction.
 - **Logo:** `brand/digerati-logo-reverse.svg`, with `deLogoWhiteDataUri.ts` as the PNG fallback.
-- **Phone and emails:** `shared/companyContact.ts`. The quote's `sales@digerati-experts.com` is pre-existing and still needs DE confirmation (see #339).
+- **Phone and emails:** `shared/companyContact.ts`. The quote uses `COMPANY.salesEmail` from this file's source of truth (`sales@digeratiexperts.com`).
 
 ## Colour rules
 
