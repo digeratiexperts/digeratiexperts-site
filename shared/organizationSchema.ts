@@ -1,4 +1,4 @@
-import { COMPANY, PRIMARY_PHONE, PUBLIC_SOCIAL_LINKS } from "./companyContact";
+import { COMPANY, PUBLIC_SOCIAL_LINKS } from "./companyContact";
 
 /**
  * The one schema.org entity for Digerati Experts.
@@ -17,7 +17,7 @@ export const ORGANIZATION_REF = { "@id": ORGANIZATION_ID } as const;
 const CITIES = ["Phoenix", "Scottsdale", "Chandler", "Mesa", "Tempe", "Gilbert"] as const;
 
 export function buildOrganizationSchema(): Record<string, unknown> {
-  const telephone = PRIMARY_PHONE.schemaTelephone || PRIMARY_PHONE.e164;
+  // Public phone publication is paused until an approved business line is configured.
   return {
     "@context": "https://schema.org",
     "@type": ["ITService", "ProfessionalService"],
@@ -27,7 +27,6 @@ export function buildOrganizationSchema(): Record<string, unknown> {
     description:
       "Cybersecurity-first managed IT for Arizona businesses. Partner-backed monitoring, identity/endpoint protection, and accountable day-to-day IT in one operating model.",
     url: COMPANY.website,
-    telephone,
     email: COMPANY.email,
     logo: `${COMPANY.website}/favicon-512x512.png`,
     image: `${COMPANY.website}/og-image.png`,
@@ -65,7 +64,6 @@ export function buildOrganizationSchema(): Record<string, unknown> {
     sameAs: PUBLIC_SOCIAL_LINKS.map((s) => s.href),
     contactPoint: {
       "@type": "ContactPoint",
-      telephone,
       contactType: "sales",
       email: COMPANY.email,
       areaServed: "US",

@@ -76,6 +76,8 @@ const Insurance = lazy(() => import("@/pages/about/Insurance"));
 const ComplianceCertifications = lazy(() => import("@/pages/about/ComplianceCertifications"));
 const ClientBillOfRights = lazy(() => import("@/pages/about/ClientBillOfRights"));
 const Guarantee = lazy(() => import("@/pages/about/Guarantee"));
+const HelpDesk = lazy(() => import("@/pages/support/HelpDesk"));
+const SwitchingProviders = lazy(() => import("@/pages/solutions/SwitchingProviders"));
 const TwentyOneQuestions = lazy(() => import("@/pages/about/TwentyOneQuestions"));
 const Press = lazy(() => import("@/pages/about/Press"));
 const PrivacyPolicy = lazy(() => import("@/pages/legal/PrivacyPolicy"));
@@ -654,6 +656,16 @@ function Router() {
       <Route path="/support/knowledge-base" component={() => (
         <Suspense fallback={<PageLoadingSkeleton />}>
           <KnowledgeBase />
+        </Suspense>
+      )} />
+      <Route path="/help-desk" component={() => (
+        <Suspense fallback={<PageLoadingSkeleton />}>
+          <HelpDesk />
+        </Suspense>
+      )} />
+      <Route path="/solutions/switching-it-providers" component={() => (
+        <Suspense fallback={<PageLoadingSkeleton />}>
+          <SwitchingProviders />
         </Suspense>
       )} />
       <Route path="/support/remote-support" component={() => (
