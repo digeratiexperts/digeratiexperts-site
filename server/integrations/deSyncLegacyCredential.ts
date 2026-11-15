@@ -11,6 +11,11 @@
  * endpoint can show "legacy secret used N times in the last 7 days" per
  * direction and the count survives restarts and deploys.
  *
+ * Since the fallback was removed (retirement PR 2) nothing records new uses:
+ * the legacy secret is refused everywhere. The table, the recorder and the
+ * health read stay so the endpoint keeps the historic 7-day count and still
+ * reports whether the old env vars are set (names only).
+ *
  * Best-effort: never throws, never blocks the request, and stores only
  * direction, route path and X-DE-Source. Never a secret or a header value
  * that could carry one.

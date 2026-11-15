@@ -1,0 +1,101 @@
+[
+  {
+    "concept": "a",
+    "width": 390,
+    "markerRect": {
+      "x": 544,
+      "y": 1898.1875,
+      "width": 115.625,
+      "height": 14
+    },
+    "plainMarker": true
+  },
+  {
+    "concept": "a",
+    "width": 768,
+    "markerRect": {
+      "x": 544,
+      "y": 1898.1875,
+      "width": 115.625,
+      "height": 14
+    },
+    "plainMarker": true
+  },
+  {
+    "concept": "a",
+    "width": 1440,
+    "markerRect": {
+      "x": 544,
+      "y": 1898.1875,
+      "width": 115.625,
+      "height": 14
+    },
+    "plainMarker": true
+  },
+  {
+    "concept": "b",
+    "width": 390,
+    "markerRect": {
+      "x": 562.671875,
+      "y": 1870.53125,
+      "width": 105.984375,
+      "height": 14
+    },
+    "plainMarker": true
+  },
+  {
+    "concept": "b",
+    "width": 768,
+    "markerRect": {
+      "x": 562.671875,
+      "y": 1870.53125,
+      "width": 105.984375,
+      "height": 14
+    },
+    "plainMarker": true
+  },
+  {
+    "concept": "b",
+    "width": 1440,
+    "markerRect": {
+      "x": 562.671875,
+      "y": 1870.53125,
+      "width": 105.984375,
+      "height": 14
+    },
+    "plainMarker": true
+  },
+  {
+    "concept": "c",
+    "width": 390,
+    "markerRect": {
+      "x": 259.828125,
+      "y": 1953.109375,
+      "width": 122.203125,
+      "height": 15
+    },
+    "plainMarker": true
+  },
+  {
+    "concept": "c",
+    "width": 768,
+    "markerRect": {
+      "x": 259.828125,
+      "y": 1953.109375,
+      "width": 122.203125,
+      "height": 15
+    },
+    "plainMarker": true
+  },
+  {
+    "concept": "c",
+    "width": 1440,
+    "markerRect": {
+      "x": 259.828125,
+      "y": 1953.109375,
+      "width": 122.203125,
+      "height": 15
+    },
+    "plainMarker": true
+  }
+]

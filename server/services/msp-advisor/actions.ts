@@ -1,6 +1,6 @@
 import { DE_COMPANY } from "./knowledge";
 import type { AdvisorAction, AdvisorActionType } from "./types";
-import { PRIMARY_PHONE } from "@shared/companyContact";
+import { PRIMARY_PHONE, hasPublicPhone } from "@shared/companyContact";
 
 const ALLOWED_TYPES: AdvisorActionType[] = [
   "schedule_consultation",
@@ -27,7 +27,6 @@ const ALLOWED_PATHS = new Set([
   "/solutions/proactive-business-ecosystem",
   "/solutions/proactive-enterprise-ecosystem",
   "/pricing",
-  "/proactive-ecosystem-pricing",
   "/store",
   "/about/compliance",
   "/about/compliance-certifications",
@@ -132,6 +131,7 @@ export function materializeAction(
     case "request_assessment":
       return { type, label: lbl };
     case "contact_sales":
+      if (!hasPublicPhone()) return null;
       return { type, label: lbl, href: `tel:${DE_COMPANY.phoneE164}` };
     case "create_lead":
       return { type, label: lbl };
@@ -156,7 +156,7 @@ export function defaultActionsForMode(mode?: string): AdvisorAction[] {
   if (mode === "security_incident") {
     return [
       materializeAction("request_callback", "Emergency callback")!,
-      materializeAction("contact_sales", `Call ${PRIMARY_PHONE.display}`)!,
+      ...(hasPublicPhone() ? [materializeAction("contact_sales", `Call ${PRIMARY_PHONE.display}`)!] : []),
     ];
   }
   if (mode === "existing_client") {

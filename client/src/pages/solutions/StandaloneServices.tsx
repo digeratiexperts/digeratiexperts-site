@@ -92,7 +92,7 @@ export default function StandaloneServices() {
         <HeroFacts
           title="Standalone at a glance"
           rows={comparisons.map(([dimension, standalone]) => ({ label: dimension, value: standalone }))}
-          footnote="Use the Business Solution Builder to configure the services your organization needs."
+          footnote="Use Solve a Business Need to configure the services your organization needs."
         />
       }
     >
@@ -119,7 +119,7 @@ export default function StandaloneServices() {
             eyebrow="Same Store engine"
             title="One buying flow, not another mini-store"
             titleId="standalone-flow"
-            lede="Configure your package, quantities, and fulfillment in the Business Solution Builder, then submit it for review."
+            lede="Configure your package, quantities, and fulfillment in Solve a Business Need, then submit it for review."
           />
           <ol className="relative grid gap-8 md:grid-cols-2 lg:grid-cols-5 lg:gap-6">
             <span aria-hidden="true" className="absolute left-0 right-0 top-5 hidden h-px bg-[var(--de-paper-hairline)] lg:block" />

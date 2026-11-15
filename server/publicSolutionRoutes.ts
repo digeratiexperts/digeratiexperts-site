@@ -63,7 +63,7 @@ const submitRateLimiter = rateLimit({
 });
 
 /** Reference lookups are cheap and reveal no contact data, but a scan of the 32^6 space is still not welcome. */
-const referenceLookupRateLimiter = rateLimit({
+export const referenceLookupRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 120,
   standardHeaders: true,

@@ -14,6 +14,7 @@ import { PORTAL_LOGIN } from '@/lib/portalUrls';
 import { CTA } from '@/lib/ctaCopy';
 import { PRIMARY_PHONE } from '@/data/companyContact';
 import { isDoor2Path } from '@/lib/isDoor2Path';
+import { PhoneLink } from '@/components/PhoneLink';
 
 const NoiseTexture = ({ id }: { id: string }) => (
   <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-[0.025]" aria-hidden="true">
@@ -273,6 +274,8 @@ export function MegaMenu() {
             { title: 'ProActive Ecosystem', description: 'Cybersecurity-first operating model: IT → Office → Business → Enterprise', icon: <Layers className="h-5 w-5" />, url: '/solutions/proactive-ecosystem' },
             { title: 'Co-Managed IT', description: 'Extend your internal IT team without replacing it', icon: <Users className="h-5 w-5" />, url: '/solutions/co-managed-it' },
             { title: 'Standalone Services', description: 'A specific gap — backup, UCaaS, awareness, or a project', icon: <Server className="h-5 w-5" />, url: '/solutions/standalone-services' },
+            { title: 'Help Desk', description: 'Paid support without a managed plan, or beyond it', icon: <HeadphonesIcon className="h-5 w-5" />, url: '/help-desk' },
+            { title: 'Switching IT Providers', description: 'What to get back first, and how a switch works', icon: <Users className="h-5 w-5" />, url: '/solutions/switching-it-providers' },
             { title: 'Solve a Business Need', description: 'Curated DE solutions organized around the outcome you need', icon: <ClipboardCheck className="h-5 w-5" />, url: '/store' },
             { title: 'Cyber Risk Assessment', description: 'Match the operating model to your environment', icon: <ClipboardCheck className="h-5 w-5" />, url: '/book' },
             { title: 'Efficiency Before AI', description: 'A working foundation and team first, AI second', icon: <Gauge className="h-5 w-5" />, url: '/solutions/efficiency-before-ai' },
@@ -280,13 +283,13 @@ export function MegaMenu() {
         },
         {
           title: 'ProActive Ecosystem',
-          viewAllUrl: '/proactive-ecosystem-pricing',
+          viewAllUrl: '/pricing',
           items: [
             { title: 'IT', description: pricing.it.idealBuyer, icon: <Monitor className="h-5 w-5" />, url: pricing.it.learnMoreUrl, price: `From $${pricing.it.user}/user` },
             { title: 'Office', description: pricing.office.idealBuyer, icon: <Building className="h-5 w-5" />, url: pricing.office.learnMoreUrl, price: `From $${pricing.office.user}/user` },
             { title: 'Business', description: pricing.business.idealBuyer, icon: <BarChart3 className="h-5 w-5" />, url: pricing.business.learnMoreUrl, price: `From $${pricing.business.user}/user` },
             { title: 'Enterprise', description: pricing.enterprise.idealBuyer, icon: <Award className="h-5 w-5" />, url: pricing.enterprise.learnMoreUrl, price: `From $${pricing.enterprise.user}/user` },
-            { title: 'Compare All Packages', description: 'Capabilities and operating depth — not a ranking', icon: <LayoutGrid className="h-5 w-5" />, url: '/proactive-ecosystem-pricing' },
+            { title: 'Compare All Packages', description: 'Capabilities and operating depth — not a ranking', icon: <LayoutGrid className="h-5 w-5" />, url: '/pricing' },
             { title: 'Find Your Plan', description: 'Six questions, matched to IT, Office, Business or Enterprise', icon: <CheckCircle className="h-5 w-5" />, url: '/quote-wizard' },
           ]
         },
@@ -374,7 +377,7 @@ export function MegaMenu() {
     },
     {
       name: 'Pricing',
-      href: '/proactive-ecosystem-pricing',
+      href: '/pricing',
       isSimple: true
     },
     {
@@ -735,15 +738,14 @@ export function MegaMenu() {
         )}
         <div className="max-w-[var(--de-canvas)] mx-auto px-3 lg:px-5 flex flex-col md:flex-row items-center justify-end py-1.5 relative z-10 w-full">
           <div className="flex items-center flex-wrap gap-x-5 gap-y-1.5 md:gap-x-7 justify-center md:justify-end">
-            <a
-              href={PRIMARY_PHONE.telHref}
+            <PhoneLink
               className="flex items-center text-white/95 hover:text-de-magenta-ink text-base font-semibold leading-none tracking-wide transition-colors"
               data-testid="utility-phone"
             >
               <Phone className="h-4 w-4 mr-1.5 text-de-magenta-ink shrink-0" />
               <span className="hidden sm:inline">{PRIMARY_PHONE.display}</span>
               <span className="sm:hidden">Call</span>
-            </a>
+            </PhoneLink>
 
             {/* Restored from 61f25fc / live release 20260810193831 — Assist near Portal */}
             <a
@@ -1344,8 +1346,7 @@ export function MegaMenu() {
                   transform: mobileMenuOpen ? 'translateX(0)' : 'translateX(20px)'
                 }}
               >
-                <a
-                  href={PRIMARY_PHONE.telHref}
+                <PhoneLink
                   className="flex items-center gap-3 px-4 py-3 rounded-xl border border-de-hairline bg-de-raised hover:border-white/25 transition-all group"
                   data-testid="mobile-call"
                   aria-label={`Call us at ${PRIMARY_PHONE.display}`}
@@ -1357,7 +1358,7 @@ export function MegaMenu() {
                     <div className="text-base text-white/55">Call Us</div>
                     <div className="font-semibold text-white group-hover:text-[#D3126A] transition-colors">{PRIMARY_PHONE.display}</div>
                   </div>
-                </a>
+                </PhoneLink>
 
                 <a
                   href="https://assist.zoho.com/"

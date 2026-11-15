@@ -76,6 +76,8 @@ const Insurance = lazy(() => import("@/pages/about/Insurance"));
 const ComplianceCertifications = lazy(() => import("@/pages/about/ComplianceCertifications"));
 const ClientBillOfRights = lazy(() => import("@/pages/about/ClientBillOfRights"));
 const Guarantee = lazy(() => import("@/pages/about/Guarantee"));
+const HelpDesk = lazy(() => import("@/pages/support/HelpDesk"));
+const SwitchingProviders = lazy(() => import("@/pages/solutions/SwitchingProviders"));
 const TwentyOneQuestions = lazy(() => import("@/pages/about/TwentyOneQuestions"));
 const Press = lazy(() => import("@/pages/about/Press"));
 const PrivacyPolicy = lazy(() => import("@/pages/legal/PrivacyPolicy"));
@@ -404,13 +406,7 @@ function Router() {
           <EfficiencyBeforeAI />
         </Suspense>
       )} />
-      {/* The Store's old public home: one address now (the server 301s these too). */}
-      <Route path="/solutions/business-needs/:family">
-        {(params) => <Redirect to={`/store/solutions/${params.family}`} replace />}
-      </Route>
-      <Route path="/solutions/business-needs">
-        <Redirect to="/store" replace />
-      </Route>
+      {/* /solutions/business-needs and its families 301 to /store on the server (server/warehouseRoutes.ts); no client twin. */}
       <Route path="/store/solution/submitted/:reference" component={() => (
         <Suspense fallback={<PageLoadingSkeleton />}>
           <SolutionSubmitted />
@@ -660,6 +656,16 @@ function Router() {
       <Route path="/support/knowledge-base" component={() => (
         <Suspense fallback={<PageLoadingSkeleton />}>
           <KnowledgeBase />
+        </Suspense>
+      )} />
+      <Route path="/help-desk" component={() => (
+        <Suspense fallback={<PageLoadingSkeleton />}>
+          <HelpDesk />
+        </Suspense>
+      )} />
+      <Route path="/solutions/switching-it-providers" component={() => (
+        <Suspense fallback={<PageLoadingSkeleton />}>
+          <SwitchingProviders />
         </Suspense>
       )} />
       <Route path="/support/remote-support" component={() => (
@@ -1170,11 +1176,8 @@ function Router() {
       )} />
       
       {/* ProActive Ecosystem Pricing */}
-      <Route path="/proactive-ecosystem-pricing" component={() => (
-        <Suspense fallback={<PageLoadingSkeleton />}>
-          <ProActiveEcosystemPricing />
-        </Suspense>
-      )} />
+      {/* /pricing is canonical; the server 301s /proactive-ecosystem-pricing (server/marketingRedirects.ts). */}
+      <Route path="/proactive-ecosystem-pricing">{() => <Redirect to="/pricing" />}</Route>
       <Route path="/pricing" component={() => (
         <Suspense fallback={<PageLoadingSkeleton />}>
           <ProActiveEcosystemPricing />
@@ -1213,6 +1216,9 @@ function Router() {
         </Suspense>
       )} />
       <Route path="/case-studies">{() => <Redirect to="/resources/case-studies" />}</Route>
+      {/* Guessed URLs: the server 301s these (server/marketingRedirects.ts); the SPA mirrors it for in-app links. */}
+      <Route path="/about">{() => <Redirect to="/about/mission-values" />}</Route>
+      <Route path="/services">{() => <Redirect to="/solutions" />}</Route>
       <Route path="/solutions/endpoint-management">{() => <Redirect to="/solutions/threat-detection" />}</Route>
       <Route path="/solutions/identity-management">{() => <Redirect to="/solutions/unified-security" />}</Route>
       <Route path="/solutions/email-security">{() => <Redirect to="/solutions/security-operations" />}</Route>

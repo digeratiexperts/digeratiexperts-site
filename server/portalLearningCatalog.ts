@@ -685,6 +685,12 @@ export const ROLE_LABELS: Record<LearningAudience, string> = {
 };
 
 /** Hub library docs that are educational (not pure legal). */
+export {
+  learningResourceTitle,
+  naiveLearningResourceTitle,
+  presentLearningResourceTitle,
+} from "@shared/learningResourceTitle";
+
 export const LEARNING_HUB_DOC_SLUGS = new Set([
   "onboarding-checklist",
   "proactive-ecosystem-overview",

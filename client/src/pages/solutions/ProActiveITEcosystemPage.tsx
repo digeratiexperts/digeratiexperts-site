@@ -65,7 +65,7 @@ const config: TierPageConfig = {
     "ProActive IT clients receive a monthly operational report and an annual technology check-in. Strategic vCIO planning, QBRs, and security posture reviews are part of ProActive Business and Enterprise.",
   pricingNote:
     `ProActive IT Ecosystem starts at ${formatUserPrice("it")} with a ${formatPrice(pricing.it.monthlyMin)}/mo minimum. Final pricing is confirmed after a short assessment of your environment, user count, and add-on selections.`,
-  ctaPrimary: { label: "View Pricing & Matrix", href: "/proactive-ecosystem-pricing" },
+  ctaPrimary: { label: "View Pricing & Matrix", href: "/pricing" },
 };
 
 export default function ProActiveITEcosystemPage() {

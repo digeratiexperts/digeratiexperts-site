@@ -12,8 +12,9 @@ import {
 } from "@/components/site/chapters";
 import { Heart, MapPin, Target, Users, Shield, Clock, Award, Star, Layers, Building2 } from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
+import { PronunciationCard } from "@/components/PronunciationCard";
 import { CTA } from "@/lib/ctaCopy";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PRIMARY_PHONE, phoneAction } from "@/data/companyContact";
 // 37KB WebP sized for the ~448px frame (was a 2.1MB PNG) — review finding F2.
 import officeEveningImg from "@assets/de-arizona-office-evening-960.webp";
 
@@ -92,7 +93,7 @@ export default function MissionValues() {
         <div className="flex flex-col gap-3 sm:flex-row">
           <HeroActions
             primary={{ label: CTA.primary, href: "/book" }}
-            secondary={{ label: `Call ${PRIMARY_PHONE.display}`, href: PRIMARY_PHONE.telHref }}
+            secondary={phoneAction(`Call ${PRIMARY_PHONE.display}`)}
           />
         </div>
       }
@@ -134,6 +135,28 @@ export default function MissionValues() {
               To empower small and medium-sized businesses in Arizona with enterprise-grade IT security and support,
               making advanced cybersecurity accessible and affordable for organizations of all sizes.
             </p>
+          </div>
+        </Container>
+      </Chapter>
+
+      {/* Moved from the homepage hero (2026-11-11) so the hero stays on the buyer's task. */}
+      <Chapter tone="well" id="say-it">
+        <Container>
+          <div className="grid gap-8 lg:grid-cols-12 lg:gap-14">
+            <div className="lg:col-span-4">
+              <Eyebrow tone="well" className="mb-4">
+                The name
+              </Eyebrow>
+              <h2 className="font-heading text-3xl font-semibold leading-tight tracking-[-0.02em] text-white md:text-4xl">
+                Say it like we do
+              </h2>
+              <p className="mt-4 max-w-[36ch] text-base leading-relaxed text-white/70">
+                Four syllables, stress on the third. Tap any syllable to hear it.
+              </p>
+            </div>
+            <div className="lg:col-span-8">
+              <PronunciationCard />
+            </div>
           </div>
         </Container>
       </Chapter>

@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { isKnownSpaPath, normalizeSpaPath } from "./spaKnownPaths";
+import { MARKETING_REDIRECTS } from "./marketingRedirects";
 import { CAMPAIGN_SLUGS } from "@/data/campaigns";
 import { EXECUTIVE_BRIEFS } from "@/data/executiveBriefs";
 import { DE_EVENT_SESSIONS, isPublic } from "@/data/deEvents";
@@ -28,6 +29,19 @@ describe("spaKnownPaths", () => {
       expect(isKnownSpaPath(`/version-${n}`)).toBe(true);
     }
     expect(isKnownSpaPath("/versions")).toBe(true);
+  });
+
+  it("answers 200 only for a published store family, and 404 for an unknown slug (§5.2)", () => {
+    expect(isKnownSpaPath("/store/solutions/identity-access")).toBe(true);
+    expect(isKnownSpaPath("/store/solutions/Identity-Access/")).toBe(true);
+    expect(isKnownSpaPath("/store/solutions/no-such-family")).toBe(false);
+    expect(isKnownSpaPath("/store/solutions/")).toBe(false);
+    expect(isKnownSpaPath("/store/solutions")).toBe(false);
+  });
+
+  it("leaves the submitted-reference decision to its own route (§5.5)", () => {
+    // The static shell route answers 200 for a submitted reference and 404 otherwise.
+    expect(isKnownSpaPath("/store/solution/submitted/DE-4K7Q2M")).toBe(false);
   });
 
   it("knows every data-driven solution page, so none of them answers 404", () => {
@@ -118,7 +132,7 @@ describe("spaKnownPaths", () => {
     // Retired routes the server 301s before the SPA catch-all ever runs. They
     // must NOT be known SPA paths — a redirect that returns the shell instead
     // would strand the visitor on a page that no longer exists.
-    const REDIRECTED = new Set(["/solutions/business-needs"]);
+    const REDIRECTED = new Set(["/solutions/business-needs", ...Object.keys(MARKETING_REDIRECTS)]);
 
     expect(staticRoutes.length).toBeGreaterThan(100);
     const unreachable = staticRoutes.filter(

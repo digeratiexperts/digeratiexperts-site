@@ -1,6 +1,6 @@
 # Store information-architecture policy check
 
-- **Status:** Verify, then close or reopen
+- **Status:** Open, needs Joe: policy not satisfied; gap audit needs Joe's scope (checked 2026-11-09)
 - **Repo:** digeratiexperts-site
 - **Relay issue:** none yet — create one from this file before you start (see the README)
 - **Written:** 2026-11-07 from Claude chats; anything not marked "checked" may be stale
@@ -22,6 +22,11 @@ Gap list filed, or the policy marked satisfied.
 
 ## Needs Joe (stop gates)
 None.
+
+## Checked 2026-11-09
+- Live `/store` returns 200, titled "Solve a Business Need", and renders at 390, 768 and 1440 px with no horizontal overflow (read-only screenshots).
+- The policy is not marked satisfied. `docs/STORE-EXPERIENCE-SOURCE-OF-TRUTH.md` gates every REPLACE and removal on Joe's approval (§16). No boxes are ticked, so there is nothing to mark satisfied.
+- A gap list needs Joe to choose the scope first: a full pass against this policy is a large judgement task. No relay issues filed yet.
 
 ## Source
 - Original chat (only Joe can open it): https://claude.ai/chat/9285c8be-112a-43f4-9fd9-f69c91bae3fe

@@ -55,7 +55,7 @@ import {
   type SolutionEnvironment,
 } from "@/lib/solutionDraft";
 import { portalMarketplaceLoginUrl } from "@/lib/portalUrls";
-import { PRIMARY_PHONE } from "@shared/companyContact";
+import { PRIMARY_PHONE, hasPublicPhone } from "@shared/companyContact";
 import { ParallaxLayer } from "@/components/site/Atmosphere";
 import heroTilesAvif from "@/assets/flagship/hero-tile-field.jpg?w=800;1400;2200&format=avif&as=srcset";
 import heroTilesWebp from "@/assets/flagship/hero-tile-field.jpg?w=800;1400;2200&format=webp&as=srcset";
@@ -67,6 +67,7 @@ import waysWebp from "@/assets/flagship/ways-backdrop.jpg?w=2400&format=webp";
 import closeAvif from "@/assets/flagship/close-white.jpg?w=800;1400;2200&format=avif&as=srcset";
 import closeWebp from "@/assets/flagship/close-white.jpg?w=800;1400;2200&format=webp&as=srcset";
 import closeJpg from "@/assets/flagship/close-white.jpg?w=1400&format=jpg";
+import { PhoneLink } from "@/components/PhoneLink";
 
 /*
  * /store — Enter (docs/STORE-EXPERIENCE-SOURCE-OF-TRUTH.md §5.1).
@@ -129,7 +130,9 @@ const WHY_DE: ReadonlyArray<{ icon: LucideIcon; title: string; line: string; fea
   { icon: Layers, title: "Standalone or co-managed.", line: "Every family comes both ways: on its own, or beside your IT team." },
   { icon: ClipboardCheck, title: "Sized from what you have.", line: "Your profile sizes every package. Recommendations start from your counts." },
   { icon: FileText, title: "Everything gets written down.", line: "Documented environments, so nothing walks out the door with one person." },
-  { icon: PhoneCall, title: "A person when you need one.", line: `Call ${PRIMARY_PHONE.display}. Happening right now? Say so first.` },
+  { icon: PhoneCall, title: "A person when you need one.", line: hasPublicPhone()
+        ? `Call ${PRIMARY_PHONE.display}. Happening right now? Say so first.`
+        : "Ask DE Desk or send us a message. Happening right now? Say so first." },
 ];
 
 /**
@@ -505,21 +508,6 @@ export default function BusinessNeedsIndex() {
     return () => window.clearTimeout(timer);
   }, [announce, countText, query, searching, total]);
 
-  const helpCard = (
-    <li className="d2-fcard d2-fcard--help" data-d2-reveal={lineupSwitched ? "in" : ""}>
-      <span className="d2-glyph d2-glyph--magenta d2-fcard__glyph" aria-hidden="true">
-        <PhoneCall strokeWidth={1.5} />
-      </span>
-      <h3 className="d2-fcard__title">Not sure which one?</h3>
-      <p className="d2-fcard__detail">Tell us what is going on and DE points you at the right families.</p>
-      <div className="d2-fcard__acts">
-        <a href={PRIMARY_PHONE.telHref} className="d2-fcard__add" aria-label={`Call ${PRIMARY_PHONE.display} (${PRIMARY_PHONE.label})`}>
-          Call {PRIMARY_PHONE.display}
-        </a>
-      </div>
-    </li>
-  );
-
   const showAll = () => {
     setQuery("");
     setGoalFilter("all");
@@ -675,10 +663,10 @@ export default function BusinessNeedsIndex() {
                   footer={
                     scenario.group === "now" ? (
                       <>
-                        Happening now?{" "}
-                        <a href={PRIMARY_PHONE.telHref} aria-label={`Call ${PRIMARY_PHONE.display} (${PRIMARY_PHONE.label})`}>
+                        Happening right now?{" "}
+                        <PhoneLink aria-label={`Call ${PRIMARY_PHONE.display} (${PRIMARY_PHONE.label})`}>
                           Call {PRIMARY_PHONE.display}
-                        </a>
+                        </PhoneLink>
                       </>
                     ) : undefined
                   }
@@ -794,7 +782,6 @@ export default function BusinessNeedsIndex() {
                       revealed={lineupSwitched}
                     />
                   ))}
-                  {helpCard}
                 </ul>
               ) : (
                 <div className="d2-goalstack" data-testid="families-by-goal">
@@ -825,9 +812,6 @@ export default function BusinessNeedsIndex() {
                       </section>
                     );
                   })}
-                  <ul className="d2-lineup">
-                    {helpCard}
-                  </ul>
                 </div>
               )}
               <SolutionRail {...chrome} />
@@ -929,9 +913,9 @@ export default function BusinessNeedsIndex() {
               <a href="#situations" className="d2-flag-pill">
                 Start from a situation
               </a>
-              <a href={PRIMARY_PHONE.telHref} className="d2-flag-more" aria-label={`Talk to DE: call ${PRIMARY_PHONE.display} (${PRIMARY_PHONE.label})`}>
+              <PhoneLink className="d2-flag-more" aria-label={`Talk to DE: call ${PRIMARY_PHONE.display} (${PRIMARY_PHONE.label})`}>
                 Talk to DE · {PRIMARY_PHONE.display}
-              </a>
+              </PhoneLink>
             </div>
             <Plate avif={closeAvif} webp={closeWebp} jpg={closeJpg} width={1400} height={781} sizes="(min-width: 1180px) 1100px, 100vw" className="d2-flag-close__plate" />
           </div>

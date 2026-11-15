@@ -10,9 +10,9 @@ merges follow the lead-integrator rule in `AGENTS.md`.
 
 | Status | Work | Relay |
 |---|---|---|
-| Verify, then close or reopen | [Homepage refinement: confirm it's live](homepage-live-verify.md) | — |
-| Verify, then close or reopen | [In-chat auth patches (passkey/OAuth/email code)](in-chat-auth-patches.md) | — |
-| Verify, then close or reopen | [Store information-architecture policy check](store-ia-policy-check.md) | — |
-| Verify, then close or reopen | [Website tickets not reaching Zoho Desk](zoho-desk-ticket-sync.md) | — |
+| Open, needs Joe: MERGED yes, LIVE not evidenced (checked 2026-11-09) | [Homepage refinement: confirm it's live](homepage-live-verify.md) | — |
+| Closed: superseded (checked 2026-11-09) | [In-chat auth patches (passkey/OAuth/email code)](in-chat-auth-patches.md) | — |
+| Open, needs Joe: policy not satisfied (checked 2026-11-09) | [Store information-architecture policy check](store-ia-policy-check.md) | — |
+| Open, needs Joe: code and live status healthy, Desk ticket unproven (checked 2026-11-09) | [Website tickets not reaching Zoho Desk](zoho-desk-ticket-sync.md) | — |
 | Waits on Joe first | [Blog "Listen" button: static MP3 narration](blog-narration-static.md) | — |
 | Waits on Joe first | [Store PCI scope](store-pci-scope.md) | — |

@@ -10,7 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { useSEO } from "@/hooks/useSEO";
 import { Loader2 } from "lucide-react";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PRIMARY_PHONE, phoneAction, COMPANY, hasPublicPhone } from "@/data/companyContact";
+import { PhoneLink } from "@/components/PhoneLink";
 
 const fieldClass =
   "h-11 border-[var(--de-paper-hairline)] bg-white text-[#1A1228] placeholder:text-black/55 focus-visible:border-[#D3126A] focus-visible:ring-2 focus-visible:ring-[#D3126A]/40";
@@ -106,7 +107,7 @@ export default function SubmitTicket() {
       actions={
         <div className="flex flex-col gap-3 sm:flex-row">
           <HeroActions
-            primary={{ label: `Call ${PRIMARY_PHONE.display}`, href: PRIMARY_PHONE.telHref }}
+            primary={phoneAction(`Call ${PRIMARY_PHONE.display}`) ?? { label: "Email support", href: `mailto:${COMPANY.supportEmail}` }}
             secondary={{ label: "Remote Support", href: "/support/remote-support" }}
           />
         </div>
@@ -255,16 +256,17 @@ export default function SubmitTicket() {
                 </p>
               </section>
 
-              <section>
-                <h2 className="font-heading text-lg font-semibold text-[#1A1228]">Need Immediate Help?</h2>
-                <p className="mb-2 mt-2 text-[#3A3448]">For urgent issues, call us directly:</p>
-                <a
-                  href={PRIMARY_PHONE.telHref}
-                  className="inline-flex min-h-11 items-center text-2xl font-semibold text-de-magenta-paper-ink underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ec4899]"
-                >
-                  {PRIMARY_PHONE.display}
-                </a>
-              </section>
+              {hasPublicPhone() && (
+                <section>
+                  <h2 className="font-heading text-lg font-semibold text-[#1A1228]">Need Immediate Help?</h2>
+                  <p className="mb-2 mt-2 text-[#3A3448]">For urgent issues, call us directly:</p>
+                  <PhoneLink
+                    className="inline-flex min-h-11 items-center text-2xl font-semibold text-de-magenta-paper-ink underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ec4899]"
+                  >
+                    {PRIMARY_PHONE.display}
+                  </PhoneLink>
+                </section>
+              )}
 
               <section className="border-t border-[var(--de-paper-hairline)] pt-8">
                 <h2 className="font-heading text-lg font-semibold text-[#1A1228]">Emergency Contact</h2>

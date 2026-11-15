@@ -7,11 +7,14 @@ import { storage } from "./storage";
 import { splitVisitorName, zohoClient, zohoDeskService } from "./zoho";
 import { isZohoOAuthError } from "./zoho/zohoOAuthErrors";
 import { isZohoAuthUnavailableError, type ZohoConnectionState } from "./zoho/oauth";
-import { PRIMARY_PHONE } from "@shared/companyContact";
+import { PRIMARY_PHONE, reachUsPhrase } from "@shared/companyContact";
 import { deskTicketSchema } from "@shared/deskTicket";
+import { sendCardDataRejected } from "./pciGuard";
 import { fallbackTicket, saveTicketOutsideDesk, type DeskFallbackOutcome, type FallbackTicket } from "./deskTicketFallback";
 import { getClient as portalAuthGetClient } from "./portalAuthStore";
 import { createHubTicketClient, type HubTicketClient } from "./integrations/hubTicketClient";
+import { resolveJwtSecret } from "./config/authSecrets";
+import { issueWidgetSecureFieldToken, registerWidgetSecureFieldRoute } from "./portalSecureFields";
 import { hubPriorityFromPortal } from "./integrations/hubTicketsContract";
 import {
   hubAssignedTo,
@@ -47,7 +50,7 @@ export const DESK_STATUS_PATH = "/api/zoho/desk/status";
 // The number comes from the canonical contact module: shared/publicPhone.test.ts
 // fails the build if it is spelled out anywhere else.
 export const DESK_UNAVAILABLE_MESSAGE =
-  `Our support desk is temporarily unavailable. Your message is still here — please try again in a few minutes, or call ${PRIMARY_PHONE.display}.`;
+  `Our support desk is temporarily unavailable. Your message is still here — please try again in a few minutes, or ${reachUsPhrase()}.`;
 export const TICKET_REJECTED_MESSAGE = "We couldn't open the ticket right now. Please try again.";
 
 export type DeskFailureKind = "unavailable" | "rejected";
@@ -232,6 +235,10 @@ export interface WidgetTicketRouteOptions {
   hubTickets?: HubTicketClient;
   /** Where reconciliation notes go; tests capture them. */
   reconciliation?: ReconciliationDeps;
+  /** Signs the DE Desk secure-field token (#1179); production derives it from the portal JWT secret. */
+  secureFieldTokenSecret?: () => string;
+  /** Rate limiter for the widget secure-field route; tests pass a stand-in. */
+  secureFieldRateLimiter?: RequestHandler;
 }
 
 export function registerWidgetTicketRoute(app: Express, options: WidgetTicketRouteOptions = {}): void {
@@ -241,6 +248,10 @@ export function registerWidgetTicketRoute(app: Express, options: WidgetTicketRou
   const probeDeadlineMs = options.probeDeadlineMs ?? DESK_PROBE_DEADLINE_MS;
   const sourceOf = options.ticketsSource ?? (() => ticketsSource());
   const hubTickets = options.hubTickets ?? createHubTicketClient();
+  const secureFieldTokenSecret = options.secureFieldTokenSecret ?? (() => resolveJwtSecret());
+  // DE Desk secure field (#1179): the visitor can hand DE a password for the
+  // Hub ticket they just made, without it entering the chat or the ticket text.
+  registerWidgetSecureFieldRoute(app, { hubTickets, tokenSecret: secureFieldTokenSecret, rateLimiter: options.secureFieldRateLimiter });
 
   app.get(DESK_STATUS_PATH, statusLimiter, async (_req: Request, res: Response) => {
     res.set("Cache-Control", "no-store");
@@ -279,6 +290,7 @@ export function registerWidgetTicketRoute(app: Express, options: WidgetTicketRou
         return res.status(400).json({ success: false, error: "Enter a valid email, a subject (up to 200 characters), details (up to 5000 characters), and a valid urgency." });
       }
       const { email, subject, description, priority, sessionId: advisorSessionId, name } = parsed.data;
+      if (sendCardDataRejected(res, subject, description, name)) return;
 
       const priorityValue = priority || "Medium";
       const priorityLower = String(priorityValue).toLowerCase();
@@ -364,10 +376,25 @@ export function registerWidgetTicketRoute(app: Express, options: WidgetTicketRou
             }
           }
           logSecurityEvent("WIDGET_TICKET_CREATED", req, { email, ticketNumber: hubTicket.number, hubTicketId: hubTicket.id });
+          let secureFieldToken: string | undefined;
+          try {
+            secureFieldToken = issueWidgetSecureFieldToken(
+              {
+                hubTicketId: hubTicket.id,
+                accountId: hubAccountId ? String(hubAccountId) : null,
+                portalClientId: hubAccountId ? portalUser?.clientId ?? null : null,
+                name: visitorName,
+              },
+              secureFieldTokenSecret(),
+            );
+          } catch {
+            // No signing key: the ticket stands; the visitor just gets no secure field.
+          }
           return res.json({
             success: true,
             ticketNumber: hubTicket.number,
             hubTicketId: hubTicket.id,
+            ...(secureFieldToken ? { secureFieldToken } : {}),
             message: "Your support request has been received.",
           });
         }

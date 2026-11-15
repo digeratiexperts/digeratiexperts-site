@@ -73,8 +73,8 @@ Optional; DE Sync is off without them.
 | `TECHSALES_HUB_URL` | config | `server/integrations/deSyncRoutes.ts`, `server/integrations/techSalesClient.ts` | Hub base URL. |
 | `TECHSALES_BASE_URL` | config | `server/integrations/techSalesClient.ts` | Legacy alias of the Hub URL. |
 | `TECHSALES_SYNC_URL` | config | `server/routes.ts`, `server/integrations/deSyncRoutes.ts` | Hub sync endpoint. |
-| `TECHSALES_SYNC_TOKEN` | secret | `server/integrations/deSyncAuth.ts` | Bearer token for the sync. |
-| `WEBSITE_LEAD_WEBHOOK_SECRET` | secret | `server/integrations/deSyncAuth.ts` | Signs website lead webhooks to the Hub. |
+| `TECHSALES_SYNC_TOKEN` | secret | (none on DE-Sync) | Retired as the DE-Sync fallback; no direction accepts or signs with it. Keep until the Hub's `/api/webhooks/website-lead` is retired. |
+| `WEBSITE_LEAD_WEBHOOK_SECRET` | secret | (none on DE-Sync) | Same as above: retired as the DE-Sync fallback; the Hub's website-lead route still checks it. |
 | `WEBSITE_TO_HUB_SECRET` | secret | `server/integrations/deSyncAuth.ts` | Website → Hub signing secret. |
 | `PORTAL_TO_HUB_SECRET` | secret | `server/serviceRequestHubSync.ts`, `server/integrations/deSyncAuth.ts`, `server/integrations/techSalesClient.ts` | Portal → Hub signing secret. The Hub licence read (`fetchHubLicenses`) uses only this; the legacy secret is refused there. |
 | `HUB_TO_WEBSITE_SECRET` | secret | `server/integrations/deSyncAuth.ts` | Verifies Hub → website calls. |
@@ -215,6 +215,7 @@ Safe defaults; set only to override.
 | `DESK_TICKET_SPOOL_DIR` | config | `server/publicSolutionSpool.ts` | Desk ticket failover spool. |
 | `THREAT_FEED_PATH` | config | `server/services/threat-intel/ingest.ts` | Threat feed file. |
 | `THREAT_FEED_STARTUP_DELAY_MS` | config | `server/services/threat-intel/ingest.ts` | Delay before the first feed refresh. |
+| `AUTORENEW_CONTRACT_ENABLED` | config | `server/config/autoRenewContract.ts`, `server/autoRenewRoutes.ts` | Default off. `true`/`1`/`yes`/`on` enables the site side of the Hub auto-renew subscription contract (store consent checkout, confirmation terms, portal list and one-click cancel). Disabled by default behind AUTORENEW_CONTRACT_ENABLED. |
 | `ENABLE_DEV_PORTAL_BOOTSTRAP` | config | `server/portalAuthStore.ts` | Development only: seed a portal admin. Never set in production. |
 | `DEV_PORTAL_ADMIN_PASSWORD_HASH` | secret | `server/portalAuthStore.ts` | Development only: the seeded admin's hash. |
 | `DE_SMOKE_ALLOW_MEMORY_ONLY` | config | `server/healthProbe.ts`, `server/production.config.ts`, `server/middleware/security.ts` | CI smoke only: allow no `DATABASE_URL`. With no `DATABASE_URL` it also skips Turnstile when no secret is set; with a database it does not. |

@@ -31,7 +31,8 @@ import { SituationContinuityStrip } from "@/components/SituationContinuityStrip"
 import { situationSubmitPayload, useAnonymousSituation } from "@/lib/anonymousSituation";
 import { getCyberFact, formatFactSource } from "@/data/cyberAwarenessFacts";
 import { CTA } from "@/lib/ctaCopy";
-import { COMPANY, PRIMARY_PHONE, PUBLIC_SOCIAL_LINKS, formatAddressOneLine } from "@/data/companyContact";
+import { cityFaqs } from "@/data/localFaqs";
+import { COMPANY, PRIMARY_PHONE, formatAddressOneLine } from "@/data/companyContact";
 import { GREATER_PHOENIX_CITIES, cityPageSlug } from "@/data/greaterPhoenixCities";
 import { credentialsOfKind } from "@/data/credentials";
 import { IconWell } from "@/components/visual/IconWell";
@@ -45,8 +46,10 @@ import {
   FeatureGrid,
   IndexedList,
   PageHero,
+  FaqChapter,
   buttonSecondary,
 } from "@/components/site/chapters";
+import { PhoneLink } from "@/components/PhoneLink";
 
 const assessmentFormSchema = z.object({
   fullName: z.string().min(2, "Name must be at least 2 characters").max(50),
@@ -109,25 +112,17 @@ export function LocationServicePage(props: LocationPageProps) {
     const existingSchema = document.querySelector('script[data-schema="local-business"]');
     if (existingSchema) existingSchema.remove();
 
+    // One business entity sitewide (`/#organization`, injected by the server); a city page
+    // describes the service in that city and points at it, instead of repeating the business
+    // as a second LocalBusiness with its own address, hours and sameAs.
     const schema = {
       "@context": "https://schema.org",
-      "@type": "LocalBusiness",
-      name: COMPANY.legalName,
+      "@type": "Service",
+      name: props.title,
+      serviceType: "Managed IT services and cybersecurity",
       description: props.description,
       url: `${COMPANY.website}/locations/${currentSlug}`,
-      telephone: PRIMARY_PHONE.schemaTelephone ?? PRIMARY_PHONE.display,
-      email: COMPANY.email,
-      address: {
-        "@type": "PostalAddress",
-        addressLocality: COMPANY.addressLocality,
-        addressRegion: COMPANY.addressRegion,
-        addressCountry: COMPANY.addressCountry,
-      },
-      geo: {
-        "@type": "GeoCoordinates",
-        latitude: COMPANY.geo.latitude,
-        longitude: COMPANY.geo.longitude,
-      },
+      provider: { "@id": `${COMPANY.website}/#organization` },
       areaServed: {
         "@type": "City",
         name: props.city,
@@ -136,17 +131,6 @@ export function LocationServicePage(props: LocationPageProps) {
           name: "Arizona",
         },
       },
-      openingHoursSpecification: [
-        {
-          "@type": "OpeningHoursSpecification",
-          dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
-          opens: "07:00",
-          closes: "18:00",
-        },
-      ],
-      priceRange: "$$",
-      image: "https://digeratiexperts.com/og-image.png",
-      sameAs: PUBLIC_SOCIAL_LINKS.map((s) => s.href),
       hasOfferCatalog: {
         "@type": "OfferCatalog",
         name: "IT Services",
@@ -252,10 +236,10 @@ export function LocationServicePage(props: LocationPageProps) {
               <Link href={CTA.secondaryHref} className={buttonSecondary("well")}>
                 {CTA.secondary}
               </Link>
-              <a href={PRIMARY_PHONE.telHref} className={buttonSecondary("well")}>
+              <PhoneLink className={buttonSecondary("well")}>
                 <Phone className="h-4 w-4" aria-hidden="true" />
                 Or call <span className="whitespace-nowrap">{PRIMARY_PHONE.display}</span>
-              </a>
+              </PhoneLink>
             </div>
           }
           note={`Built for regulated environments: ${regulatedBadges.join(" · ")}.${partnerBadges.length ? ` ${partnerBadges.join(" · ")}.` : ""}`}
@@ -278,20 +262,18 @@ export function LocationServicePage(props: LocationPageProps) {
                         <SituationContinuityStrip situation={situation} door="assessment" tone="paper" className="mb-4" />
                       ) : null}
     
-                      <div className="mb-6 grid grid-cols-1 gap-2 rounded-xl border border-[var(--de-paper-hairline)] bg-white px-4 py-3 sm:grid-cols-3">
-                        <div className="flex items-baseline gap-2 text-xs font-semibold text-[#1A1228]">
-                          <span className="mt-[0.55em] h-px w-2.5 shrink-0 bg-[#D3126A]" aria-hidden="true" />
-                          <span>On-site {props.city} support</span>
-                        </div>
-                        <div className="flex items-baseline gap-2 text-xs font-semibold text-[#1A1228]">
-                          <span className="mt-[0.55em] h-px w-2.5 shrink-0 bg-[#D3126A]" aria-hidden="true" />
-                          <span>No switch required</span>
-                        </div>
-                        <div className="flex items-baseline gap-2 text-xs font-semibold text-[#1A1228]">
-                          <span className="mt-[0.55em] h-px w-2.5 shrink-0 bg-[#D3126A]" aria-hidden="true" />
-                          <span>Arizona-based team</span>
-                        </div>
-                      </div>
+                      <ul
+                        aria-label="What this request includes"
+                        data-testid="location-request-points"
+                        className="mb-6 grid grid-cols-1 gap-2 rounded-xl border border-[var(--de-paper-hairline)] bg-white px-4 py-3 sm:grid-cols-3"
+                      >
+                        {[`On-site ${props.city} support`, "No switch required", "Arizona-based team"].map((point) => (
+                          <li key={point} className="flex min-w-0 items-baseline gap-2 text-xs font-semibold text-[#1A1228]">
+                            <span className="mt-[0.55em] h-px w-2.5 shrink-0 bg-[#D3126A]" aria-hidden="true" />
+                            <span>{point}</span>
+                          </li>
+                        ))}
+                      </ul>
     
                       <Form {...form}>
                         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
@@ -383,7 +365,7 @@ export function LocationServicePage(props: LocationPageProps) {
                               variant="brand"
                               data-testid={`button-${props.city.toLowerCase()}-submit`}
                               disabled={isSubmitting}
-                              className="h-12 text-base font-semibold sm:flex-1"
+                              className="h-auto min-h-12 w-full whitespace-normal py-3 text-center text-base font-semibold leading-snug sm:flex-1"
                             >
                               {isSubmitting ? (
                                 <>
@@ -402,12 +384,12 @@ export function LocationServicePage(props: LocationPageProps) {
                               type="button"
                               variant="outline"
                               size="lg"
-                              className="h-12 w-full border-[var(--de-paper-hairline)] bg-white px-6 text-base font-semibold text-[#1A1228] hover:border-[#D3126A] hover:bg-[#D3126A]/5 sm:w-auto"
+                              className="h-auto min-h-12 w-full whitespace-normal border-[var(--de-paper-hairline)] bg-white px-6 py-3 text-center text-base font-semibold leading-snug text-[#1A1228] hover:border-[#D3126A] hover:bg-[#D3126A]/5 sm:w-auto"
                             >
-                              <a href={PRIMARY_PHONE.telHref} className="sm:flex-shrink-0">
+                              <PhoneLink className="sm:flex-shrink-0">
                                 <Phone className="mr-2 h-5 w-5" aria-hidden="true" />
                                 {PRIMARY_PHONE.display}
-                              </a>
+                              </PhoneLink>
                             </Button>
                           </div>
                         </form>
@@ -466,9 +448,9 @@ export function LocationServicePage(props: LocationPageProps) {
                   {stats.map((stat) => (
                     <div key={stat.label} className="flex items-center gap-4 py-4">
                       <IconWell icon={stat.icon} size="sm" surface="light" />
-                      <div>
-                        <dd className="font-mono text-lg font-semibold text-[#1A1228]">{stat.value}</dd>
-                        <dt className="text-sm text-[#3A3448]">{stat.label}</dt>
+                      <div className="flex min-w-0 flex-col">
+                        <dt className="order-2 text-sm text-[#3A3448]">{stat.label}</dt>
+                        <dd className="order-1 font-mono text-lg font-semibold text-[#1A1228]">{stat.value}</dd>
                       </div>
                     </div>
                   ))}
@@ -551,27 +533,30 @@ export function LocationServicePage(props: LocationPageProps) {
                     :
                   </span>
                 </h2>
-                <div className="mt-8 grid grid-cols-2 content-stretch gap-3 sm:grid-cols-3">
-                  {GREATER_PHOENIX_CITIES.map((location) => {
-                    const isCurrent = location.slug === currentSlug;
-                    return (
-                      <Link
-                        key={location.slug}
-                        href={location.href}
-                        aria-current={isCurrent ? "page" : undefined}
-                        className={`${cityChipClass} ${
-                          isCurrent
-                            ? "border-[#D3126A] text-[#A30E52] shadow-[inset_0_0_0_1px_#D3126A]"
-                            : "border-[var(--de-paper-hairline)]"
-                        }`}
-                        data-city={location.name.toLowerCase()}
-                        data-testid={`location-switcher-${location.name.toLowerCase()}`}
-                      >
-                        {location.name}
-                      </Link>
-                    );
-                  })}
-                </div>
+                <nav aria-label="Greater Phoenix cities" data-testid="location-city-list">
+                  <ul className="mt-8 grid grid-cols-2 content-stretch gap-3 sm:grid-cols-3">
+                    {GREATER_PHOENIX_CITIES.map((location) => {
+                      const isCurrent = location.slug === currentSlug;
+                      return (
+                        <li key={location.slug} className="min-w-0">
+                          <Link
+                            href={location.href}
+                            aria-current={isCurrent ? "page" : undefined}
+                            className={`${cityChipClass} ${
+                              isCurrent
+                                ? "border-[#D3126A] text-[#A30E52] shadow-[inset_0_0_0_1px_#D3126A]"
+                                : "border-[var(--de-paper-hairline)]"
+                            }`}
+                            data-city={location.name.toLowerCase()}
+                            data-testid={`location-switcher-${location.name.toLowerCase()}`}
+                          >
+                            {location.name}
+                          </Link>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </nav>
               </div>
               <div className="lg:col-span-5">
                 <div className="de-paper-lift rounded-xl p-6" data-testid="location-office">
@@ -583,18 +568,21 @@ export function LocationServicePage(props: LocationPageProps) {
                   <p className="mt-3 text-sm leading-relaxed text-[#3A3448]">
                     {props.city} clients are served from our Chandler office and by remote support.
                   </p>
-                  <a
-                    href={PRIMARY_PHONE.telHref}
+                  <PhoneLink
                     className="mt-3 inline-flex min-h-11 items-center gap-2 font-semibold text-de-magenta-paper-ink underline-offset-4 hover:underline"
                   >
                     <Phone className="h-4 w-4" aria-hidden="true" />
                     <span className="whitespace-nowrap">{PRIMARY_PHONE.display}</span>
-                  </a>
+                  </PhoneLink>
                 </div>
               </div>
             </div>
           </Container>
         </Chapter>
+
+        <div data-testid="section-location-faq">
+          <FaqChapter faqs={cityFaqs(props.city, props.localNote)} title={`Questions ${props.city} businesses ask`} />
+        </div>
 
         <ClosingCta
           eyebrow="Cyber risk assessment & support"

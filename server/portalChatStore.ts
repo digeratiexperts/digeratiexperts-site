@@ -6,6 +6,7 @@
 import { sql } from "drizzle-orm";
 import { db, dbReady, initPromise } from "./db";
 import { randomBytes } from "crypto";
+import { assertNoCardData } from "@shared/pciGuard";
 import {
   continuesSession,
   groupIntoSessions,
@@ -234,6 +235,7 @@ export async function appendMessage(input: {
    *  nobody was going to continue. */
   sessionId?: string;
 }): Promise<LiveChatMessage> {
+  assertNoCardData(input.content);
   await ensureSchema();
   const sessionId = input.sessionId ?? (await currentSessionId(input.conversationId));
   const message: LiveChatMessage = {

@@ -1,3 +1,4 @@
+import { publicPhoneMarkup } from "../lib/public-phone.mjs";
 // Concept C — Executive briefing.
 // Hypothesis: the reader is an owner or executive deciding, not studying. Lead
 // with the decision and three takeaways, show fit as a side-by-side check,
@@ -125,7 +126,7 @@ ${foot(c, 1)}
 <div class="rec"><div class="bar" aria-hidden="true"></div><div class="in">
 <p class="bl">Recommendation</p><h2>${esc(c.cta.label)}</h2><p>${esc(c.cta.detail)}</p>
 
-<p class="ct"><a href="${c.cta.url}">${esc(c.cta.urlLabel)}</a><a href="${c.cta.phoneHref}">${esc(c.cta.phone)}</a><a href="mailto:${c.cta.email}">${esc(c.cta.email)}</a></p>
+<p class="ct"><a href="${c.cta.url}">${esc(c.cta.urlLabel)}</a>${publicPhoneMarkup(c.cta)}<a href="mailto:${c.cta.email}">${esc(c.cta.email)}</a></p>
 </div></div>
 <p class="note">${esc(c.scopeNote)}</p>
 </div>

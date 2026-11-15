@@ -8,17 +8,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { PortalLayout } from "./PortalLayout";
 import { queryClient } from "@/lib/queryClient";
 import { portalFetch } from "@/lib/portalApi";
+import { CARD_DATA_REJECTED_MESSAGE, looksLikeCardData } from "@shared/pciGuard";
 import {
   PORTAL_TICKET_ACCEPT,
   PORTAL_TICKET_MAX_FILES,
   uploadPortalTicketAttachment,
   validatePortalTicketFile,
 } from "@/lib/portalTicketAttach";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PRIMARY_PHONE, hasPublicPhone } from "@/data/companyContact";
 import { isDeAdmin, readImpersonatingCompany, readPortalUser } from "@/lib/portalRoles";
 import { RESPONSE_TARGETS, formatResponseTargets } from "@shared/responseTargets";
 import { INTERNAL_COMPANY_NAME, NO_CLIENT_TICKET_ERROR, ticketCompanyName } from "@shared/portalTicketOrg";
 import { Callout, Field, Panel } from "@/components/portal/ui";
+import { PhoneLink } from "@/components/PhoneLink";
 
 const DESK_TICKET_DRAFT_KEY = "de-portal-desk-ticket-draft";
 
@@ -64,6 +66,9 @@ export default function PortalCreateTicket() {
       if (!raw) return;
       const draft = JSON.parse(raw) as { subject?: string; description?: string; priority?: string };
       sessionStorage.removeItem(DESK_TICKET_DRAFT_KEY);
+      if (looksLikeCardData(String(draft.subject || "")) || looksLikeCardData(String(draft.description || ""))) {
+        return;
+      }
       setFormData((prev) => ({
         ...prev,
         subject: typeof draft.subject === "string" ? draft.subject.slice(0, 200) : prev.subject,
@@ -103,6 +108,10 @@ export default function PortalCreateTicket() {
     e.preventDefault();
     if (missingClient) {
       setError(NO_CLIENT_TICKET_ERROR);
+      return;
+    }
+    if (looksLikeCardData(formData.subject) || looksLikeCardData(formData.description)) {
+      setError(CARD_DATA_REJECTED_MESSAGE);
       return;
     }
     setSubmitting(true);
@@ -190,7 +199,7 @@ export default function PortalCreateTicket() {
           </Callout>
         )}
 
-        <Callout tone="warn" title={<>Something down right now? <a href={PRIMARY_PHONE.telHref} className="inline-block whitespace-nowrap underline underline-offset-2">Call {PRIMARY_PHONE.display}</a>.</>}>
+        <Callout tone="warn" title={<>Something down right now?{hasPublicPhone() && <> <PhoneLink className="inline-block whitespace-nowrap underline underline-offset-2">Call {PRIMARY_PHONE.display}</PhoneLink>.</>}</>}>
           <span className="inline-flex items-center gap-1.5">
             <Phone className="h-3.5 w-3.5" aria-hidden="true" />
             Response targets: {formatResponseTargets()}.

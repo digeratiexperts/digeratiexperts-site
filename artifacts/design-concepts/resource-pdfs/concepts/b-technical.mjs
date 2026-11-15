@@ -1,3 +1,4 @@
+import { publicPhoneMarkup } from "../lib/public-phone.mjs";
 // Concept B — Technical precision.
 // Hypothesis: a cybersecurity buyer trusts precision they can audit. White
 // ground, graphite ink, numbered sections, a spec grid, a scope matrix that
@@ -154,7 +155,7 @@ ${c.moveUp.map((m) => `<tr><td class="cap">${esc(m.to)}</td><td>${esc(m.when)}</
 <ol class="flow">${c.engagement.map((e, i) => `<li><span class="n">STEP ${String(i + 1).padStart(2, "0")}</span><b>${esc(e.step)}</b><span>${esc(e.detail)}</span></li>`).join("")}</ol></section>
 <div class="cta"><div class="bar" aria-hidden="true"></div>
 <div class="l"><p class="lbl">Next action</p><h2>${esc(c.cta.label)}</h2><p>${esc(c.cta.detail)}</p></div>
-<p class="r"><a href="${c.cta.url}">${esc(c.cta.urlLabel)}</a><br><a href="${c.cta.phoneHref}">${esc(c.cta.phone)}</a><br><a href="mailto:${c.cta.email}">${esc(c.cta.email)}</a></p></div>
+<p class="r"><a href="${c.cta.url}">${esc(c.cta.urlLabel)}</a><br>${publicPhoneMarkup(c.cta)}<br><a href="mailto:${c.cta.email}">${esc(c.cta.email)}</a></p></div>
 <p class="note">${esc(c.scopeNote)}</p>
 ${foot(c, 2)}
 </section>`;

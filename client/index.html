@@ -55,34 +55,7 @@
     <link rel="manifest" href="/site.webmanifest">
     <meta name="theme-color" content="#050312">
     
-    <!-- Structured Data for Local Business -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "ProfessionalService",
-      "name": "Digerati Experts",
-      "description": "Cybersecurity-first managed IT for Arizona businesses — assessment-led recommendations and partner-backed monitoring.",
-      "url": "https://digeratiexperts.com",
-      "telephone": "+1-325-480-9870",
-      "address": {
-        "@type": "PostalAddress",
-        "addressLocality": "Chandler",
-        "addressRegion": "AZ",
-        "addressCountry": "US"
-      },
-      "email": "info@digeratiexperts.com",
-      "sameAs": [
-        "https://www.linkedin.com/company/digerati-experts",
-        "https://www.instagram.com/digerati.experts"
-      ],
-      "areaServed": {
-        "@type": "State",
-        "name": "Arizona"
-      },
-      "serviceType": ["Managed Security Services", "IT Support", "Cybersecurity", "Compliance Consulting"],
-      "priceRange": "$$"
-    }
-    </script>
+    <!-- Organization JSON-LD is written into every page by the server from shared/organizationSchema.ts. -->
     
     <!-- Preload the self-hosted brand faces so first paint uses them, not a system fallback. -->
     <link rel="preload" href="/fonts/space-grotesk-latin.woff2" as="font" type="font/woff2" crossorigin>
@@ -98,7 +71,7 @@
     </noscript>
     
     <!-- Google Consent Mode v2 — must run before GA4 loads -->
-    <script>
+    <script data-cfasync="false">
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       // Default: deny all until user consents via cookie banner
@@ -115,6 +88,6 @@
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <script type="module" data-cfasync="false" src="/src/main.tsx"></script>
   </body>
 </html>
