@@ -5,6 +5,11 @@ import { EMAIL_ADDRESS, PHONE_DISPLAY, PHONE_HREF } from "../content";
 
 /** Same icons as the V8 footer, so the social row looks the same on both. */
 const SOCIAL_ICONS: Record<string, JSX.Element> = {
+  x: (
+    <svg width={18} height={18} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+    </svg>
+  ),
   linkedin: (
     <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M16 8a6 6 0 0 1 6 6v8h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v8h-4v-7a6 6 0 0 1 6-6z" />
@@ -22,8 +27,8 @@ const SOCIAL_ICONS: Record<string, JSX.Element> = {
 };
 
 const COLUMNS = [
-  { title: "Client", links: [["Client Portal", "/portal/login"], ["Submit Ticket", "/support/submit-ticket"], ["Remote Support", "/support/remote-support"], ["Pay Invoice", "/support/pay-invoice"]] },
-  { title: "Services", links: [["Managed IT", "/solutions/managed-it-support"], ["Cybersecurity", "/solutions"], ["Compliance & Risk", "/about/compliance"], ["Backup & Disaster Recovery", "/solutions/backup-disaster-recovery"]] },
+  { title: "Client", links: [["Client Portal", "/portal/login"], ["Submit Ticket", "/support/submit-ticket"], ["Remote Support", "/support/remote-support"], ["Help Desk", "/help-desk"], ["Pay Invoice", "/support/pay-invoice"]] },
+  { title: "Services", links: [["Managed IT", "/solutions/managed-it-support"], ["Cybersecurity", "/solutions"], ["Compliance & Risk", "/about/compliance"], ["Backup & Disaster Recovery", "/solutions/backup-disaster-recovery"], ["Switching IT Providers", "/solutions/switching-it-providers"]] },
   { title: "Resources", links: [["Digerati Journal", "/resources/blog"], ["Cyber Facts", "/resources/cyber-facts"], ["Knowledge Base", "/support/knowledge-base"], ["Contact", "#contact"]] },
 ];
 

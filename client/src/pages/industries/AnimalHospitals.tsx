@@ -11,7 +11,9 @@ import {
   HeroFacts,
   Prose,
   cardDark,
+  FaqChapter,
 } from "@/components/site/chapters";
+import { VETERINARY_FAQS } from "@/data/localFaqs";
 import { Shield, Lock, Activity, Database, Users } from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
 import { CTA } from "@/lib/ctaCopy";
@@ -154,6 +156,10 @@ export default function AnimalHospitals() {
           </div>
         </Container>
       </Chapter>
+
+      <div data-testid="section-faq">
+        <FaqChapter faqs={VETERINARY_FAQS} title="Questions practice owners ask" />
+      </div>
 
       <div data-testid="section-final-cta">
         <ClosingCta

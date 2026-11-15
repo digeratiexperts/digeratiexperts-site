@@ -1,4 +1,5 @@
 import { portalCompanyProfile } from "./portalCompanyProfile";
+import { secondFactorFor, usesEnrollmentFallback } from "./portalClientMfaPolicy";
 import express, { type Express, type Request, type Response, NextFunction } from "express";
 import { storage } from "./storage";
 import {
@@ -3295,13 +3296,15 @@ export async function registerRoutes(app: Express) {
         });
       }
 
-      // Check if user has MFA enabled
-      if (user.mfaEnabled && user.mfaMethod) {
+      // Enrolled users get their own method. With PORTAL_CLIENT_MFA_REQUIRED
+      // on, a client who has not enrolled gets an email code instead.
+      const mfaMethod = secondFactorFor(user);
+      if (mfaMethod) {
         const challengeToken = randomId();
         const TEN_MINUTES = 10 * 60 * 1000;
         const now = Date.now();
 
-        if (user.mfaMethod === 'email') {
+        if (mfaMethod === 'email') {
           const code = String(randomInt(100000, 1000000));
           mfaChallenges.set(challengeToken, {
             userId: user.id,
@@ -3321,7 +3324,7 @@ export async function registerRoutes(app: Express) {
           mfaChallenges.set(challengeToken, {
             userId: user.id,
             email: user.email,
-            method: user.mfaMethod === 'passkey' ? 'passkey' : 'totp',
+            method: mfaMethod === 'passkey' ? 'passkey' : 'totp',
             createdAt: now,
             expiresAt: now + TEN_MINUTES,
             attempts: 0,
@@ -3329,17 +3332,17 @@ export async function registerRoutes(app: Express) {
         }
 
         const passkeyAvailable = (user.mfaPasskeys || []).some((p) => p.rpId === resolveRpId(req.hostname));
-        logSecurityEvent("MFA_CHALLENGE_ISSUED", req, { email, method: user.mfaMethod });
+        logSecurityEvent("MFA_CHALLENGE_ISSUED", req, { email, method: mfaMethod, enrollmentFallback: usesEnrollmentFallback(user) });
 
         return res.json({
           success: false,
           mfaRequired: true,
-          mfaMethod: user.mfaMethod,
+          mfaMethod: mfaMethod,
           mfaToken: challengeToken,
           passkeyAvailable,
-          message: user.mfaMethod === 'email'
+          message: mfaMethod === 'email'
             ? "A verification code has been sent to your email."
-            : user.mfaMethod === 'passkey'
+            : mfaMethod === 'passkey'
               ? "Confirm it's you with your passkey, or enter a backup code."
               : "Enter the code from your authenticator app.",
         });

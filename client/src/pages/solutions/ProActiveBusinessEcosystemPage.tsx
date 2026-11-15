@@ -66,7 +66,7 @@ const config: TierPageConfig = {
     "ProActive Business clients receive a monthly health and security report, plus a semi-annual technology + security review with leadership covering risk posture, incidents, roadmap, and budget. Quarterly executive reviews are standard at the Enterprise level.",
   pricingNote:
     `ProActive Business Ecosystem starts at ${formatUserPrice("business")} with a ${formatPrice(pricing.business.monthlyMin)}/mo minimum. Final pricing is confirmed after a Cyber Risk Assessment that scopes user count, environment complexity, compliance exposure, and any required accelerators.`,
-  ctaPrimary: { label: "View Pricing & Matrix", href: "/proactive-ecosystem-pricing" },
+  ctaPrimary: { label: "View Pricing & Matrix", href: "/pricing" },
 };
 
 export default function ProActiveBusinessEcosystemPage() {
