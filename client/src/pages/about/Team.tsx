@@ -21,7 +21,7 @@ import {
 import { useSEO } from "@/hooks/useSEO";
 import { photography } from "@/lib/visualAssets";
 import { CTA } from "@/lib/ctaCopy";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PRIMARY_PHONE, phoneAction } from "@/data/companyContact";
 import { TEAM_OWNER } from "@/data/teamProfile";
 
 // What each discipline does. Credentials are not typed here: they come from
@@ -72,10 +72,7 @@ export default function Team() {
         <div className="flex flex-col gap-3 sm:flex-row">
           <HeroActions
             primary={{ label: CTA.primary, href: "/book" }}
-            secondary={{
-              label: `Call ${PRIMARY_PHONE.display}`,
-              href: PRIMARY_PHONE.telHref,
-            }}
+            secondary={phoneAction(`Call ${PRIMARY_PHONE.display}`)}
           />
         </div>
       }

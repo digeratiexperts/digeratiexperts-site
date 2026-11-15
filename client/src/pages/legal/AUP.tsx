@@ -1,7 +1,7 @@
 import { LegalDocumentLayout } from "@/components/LegalDocumentLayout";
 import { ShieldAlert, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PRIMARY_PHONE, hasPublicPhone } from "@/data/companyContact";
 
 export default function AUP() {
   return (
@@ -61,15 +61,17 @@ export default function AUP() {
           <Mail className="mr-2 h-5 w-5" />
           Request AUP via Email
         </Button>
-        <Button
-          variant="outline"
-          className="border-black/25 text-[#1A1228] hover:bg-black/5"
-          onClick={() => {
-            window.location.href = PRIMARY_PHONE.telHref;
-          }}
-        >
-          Call {PRIMARY_PHONE.display}
-        </Button>
+        {hasPublicPhone() && (
+            <Button
+            variant="outline"
+            className="border-black/25 text-[#1A1228] hover:bg-black/5"
+            onClick={() => {
+              window.location.href = PRIMARY_PHONE.telHref;
+            }}
+          >
+            Call {PRIMARY_PHONE.display}
+          </Button>
+        )}
       </div>
     </LegalDocumentLayout>
   );

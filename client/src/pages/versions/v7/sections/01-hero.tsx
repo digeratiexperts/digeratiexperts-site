@@ -25,6 +25,7 @@ import { PRIMARY_PHONE } from "@/data/companyContact";
 import heroCityLights from "@assets/de-hero-arizona-dusk-1600.webp";
 import { TipTag } from "./TipTag";
 import "./01-hero.css";
+import { PhoneLink } from "@/components/PhoneLink";
 
 /**
  * 01 · Hero + attached trust strip, ported from
@@ -422,9 +423,9 @@ export function V7Hero(): JSX.Element {
                 Response within one business day
               </li>
               <li>
-                <a className="v7-link--quiet" href={PRIMARY_PHONE.telHref} data-testid="link-hero-phone">
+                <PhoneLink className="v7-link--quiet" data-testid="link-hero-phone">
                   Call {PRIMARY_PHONE.display}
-                </a>
+                </PhoneLink>
               </li>
             </ul>
 

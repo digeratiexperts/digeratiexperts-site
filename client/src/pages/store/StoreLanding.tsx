@@ -60,6 +60,7 @@ import { StorePageAtmosphere } from "@/components/store/StorePageAtmosphere";
 import { StoreClientBar } from "@/components/store/StoreClientBar";
 import { CTA } from "@/lib/ctaCopy";
 import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PhoneLink } from "@/components/PhoneLink";
 
 const categoryIcons: Record<ProductCategory, typeof Shield> = {
   contract_services: Building,
@@ -630,10 +631,10 @@ const StoreLanding = () => {
                 className="h-12 border-2 border-white/30 bg-transparent px-6 text-white hover:bg-white/10"
                 data-testid="button-call-us"
               >
-                <a href={PRIMARY_PHONE.telHref}>
+                <PhoneLink>
                   <Phone className="mr-2 h-4 w-4" />
                   {PRIMARY_PHONE.display}
-                </a>
+                </PhoneLink>
               </Button>
             </div>
           </motion.section>

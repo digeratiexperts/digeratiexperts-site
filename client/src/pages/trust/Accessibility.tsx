@@ -1,7 +1,7 @@
 import { PageTemplate } from "@/components/PageTemplate";
 import { Eye, Mail, Phone, MapPin, Monitor, Ear, Hand, Brain } from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
-import { PRIMARY_PHONE, formatAddressOneLine } from "@/data/companyContact";
+import { PRIMARY_PHONE, formatAddressOneLine, hasPublicPhone } from "@/data/companyContact";
 import {
   Chapter,
   Container,
@@ -13,6 +13,7 @@ import {
   HeroFacts,
   Eyebrow,
 } from "@/components/site/chapters";
+import { PhoneLink } from "@/components/PhoneLink";
 
 const accessibilityFeatures = [
   "Keyboard navigation support",
@@ -172,12 +173,14 @@ export default function Accessibility() {
                     accessibility@digeratiexperts.com
                   </a>
                 </div>
-                <div className={contactCard}>
-                  <Phone className="mt-3 h-5 w-5 shrink-0 text-de-magenta-paper-ink" aria-hidden="true" />
-                  <a href={PRIMARY_PHONE.telHref} className={contactLink}>
-                    {PRIMARY_PHONE.display}
-                  </a>
-                </div>
+                {hasPublicPhone() && (
+                  <div className={contactCard}>
+                    <Phone className="mt-3 h-5 w-5 shrink-0 text-de-magenta-paper-ink" aria-hidden="true" />
+                    <PhoneLink className={contactLink}>
+                      {PRIMARY_PHONE.display}
+                    </PhoneLink>
+                  </div>
+                )}
                 <div className={`${contactCard} sm:col-span-2`}>
                   <MapPin className="mt-0.5 h-5 w-5 shrink-0 text-de-magenta-paper-ink" aria-hidden="true" />
                   <span className="text-sm leading-relaxed text-[#3A3448]">{formatAddressOneLine()}</span>

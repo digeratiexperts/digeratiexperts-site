@@ -1,6 +1,6 @@
 import { LegalDocumentLayout } from "@/components/LegalDocumentLayout";
 import { Shield, Lock, Database, FileText, AlertTriangle } from "lucide-react";
-import { PRIMARY_PHONE, formatAddressOneLine } from "@/data/companyContact";
+import { PRIMARY_PHONE, formatAddressOneLine, hasPublicPhone } from "@/data/companyContact";
 
 export default function PrivacyPolicy() {
   const lastUpdated = "November 6, 2025";
@@ -274,7 +274,7 @@ export default function PrivacyPolicy() {
               </ul>
 
               <p className="text-[#3A3448] mb-4">
-                To exercise these rights, contact us at <strong className="text-[#1A1228]">privacy@digeratiexperts.com</strong> or call <strong className="text-[#1A1228]">{PRIMARY_PHONE.display}</strong>.
+                To exercise these rights, contact us at <strong className="text-[#1A1228]">privacy@digeratiexperts.com</strong>{hasPublicPhone() && <> or call <strong className="text-[#1A1228]">{PRIMARY_PHONE.display}</strong></>}.
               </p>
 
               <p className="text-[#3A3448]">
@@ -354,7 +354,7 @@ export default function PrivacyPolicy() {
               <div className="border border-[var(--de-paper-hairline)] bg-white p-4 rounded-lg">
                 <p className="text-[#1A1228] font-semibold mb-2">Digerati Experts - Privacy Team</p>
                 <p className="text-[#3A3448]"><strong className="text-[#1A1228]">Email:</strong> privacy@digeratiexperts.com</p>
-                <p className="text-[#3A3448]"><strong className="text-[#1A1228]">Phone:</strong> {PRIMARY_PHONE.display}</p>
+                {hasPublicPhone() && <p className="text-[#3A3448]"><strong className="text-[#1A1228]">Phone:</strong> {PRIMARY_PHONE.display}</p>}
                 <p className="text-[#3A3448]"><strong className="text-[#1A1228]">Address:</strong> {formatAddressOneLine()}</p>
                 <p className="text-[#3A3448] mt-3"><strong className="text-[#1A1228]">Office Hours:</strong> Monday-Friday 7:00 AM - 6:00 PM MST</p>
                 <p className="text-[#3A3448]"><strong className="text-[#1A1228]">Emergency Contact:</strong> Available 24/7 for active clients</p>

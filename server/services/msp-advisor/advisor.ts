@@ -33,7 +33,7 @@ import {
   updateProfile,
 } from "./session";
 import { appendDeskMessage, isDeskAgentLive } from "./persist";
-import { PRIMARY_PHONE } from "@shared/companyContact";
+import { PRIMARY_PHONE, hasPublicPhone } from "@shared/companyContact";
 import type {
   AdvisorAction,
   AdvisorChatRequest,
@@ -139,9 +139,13 @@ function identityNamePrompt(): string {
  */
 function personHandoff(message: string): { reply: string; actions: AdvisorAction[] } {
   const joe = namesJoe(message);
-  const reply = joe
-    ? `I can get this to Joe. The fastest way is a call: ${PRIMARY_PHONE.display}. If he's tied up, request a callback or leave him a message below, and it reaches the desk with this chat. What's it about?`
-    : `You'll get a person. The fastest way is a call: ${PRIMARY_PHONE.display}. Or request a callback or leave a message below, and it reaches the desk with this chat. What's it about?`;
+  const reply = !hasPublicPhone()
+    ? joe
+      ? "I can get this to Joe. Request a callback or leave him a message below, and it reaches the desk with this chat. What's it about?"
+      : "You'll get a person. Request a callback or leave a message below, and it reaches the desk with this chat. What's it about?"
+    : joe
+      ? `I can get this to Joe. The fastest way is a call: ${PRIMARY_PHONE.display}. If he's tied up, request a callback or leave him a message below, and it reaches the desk with this chat. What's it about?`
+      : `You'll get a person. The fastest way is a call: ${PRIMARY_PHONE.display}. Or request a callback or leave a message below, and it reaches the desk with this chat. What's it about?`;
   const actions = [
     materializeAction("contact_sales", `Call ${PRIMARY_PHONE.display}`),
     materializeAction("request_callback", "Request a callback"),
@@ -480,7 +484,7 @@ export async function handleAdvisorChat(req: AdvisorChatRequest): Promise<Adviso
       ? "Company was given informally — treat as a walk-in. Do not moralize or dump a sales pitch."
       : "",
     session.humanRequested
-      ? `Visitor asked to reach a person (Joe or a human). They already have the call (${PRIMARY_PHONE.display}), callback and message options. Answer what they say next briefly; do not run discovery or ask for their company.`
+      ? `Visitor asked to reach a person (Joe or a human). They already have the ${hasPublicPhone() ? `call (${PRIMARY_PHONE.display}), ` : ""}callback and message options. Answer what they say next briefly; do not run discovery or ask for their company.`
       : "",
     session.nameDeclined
       ? "Visitor chose not to give a name. Do not ask for their name or company again, and do not address them by name."
