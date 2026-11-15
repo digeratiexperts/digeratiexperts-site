@@ -11,7 +11,8 @@ import {
 } from "@/components/site/chapters";
 import { useSEO } from "@/hooks/useSEO";
 import { CTA } from "@/lib/ctaCopy";
-import { COMPANY, PRIMARY_PHONE } from "@/data/companyContact";
+import { COMPANY, PRIMARY_PHONE, hasPublicPhone } from "@/data/companyContact";
+import { PhoneLink } from "@/components/PhoneLink";
 
 const calendars = [
   { href: "https://calendar.google.com", label: "Google Calendar", testId: "button-google-calendar", icon: "google" },
@@ -68,12 +69,14 @@ export default function ThankYouSuccess() {
                 <h3 className="font-heading text-xl font-semibold text-[#1A1228]">Schedule Your Consultation</h3>
                 <p className="mt-2 text-sm leading-relaxed text-[#3A3448]">
                   Thank you for your interest. Click below to book a time that works for you.
-                  <br />
-                  Call our office at{" "}
-                  <a href={PRIMARY_PHONE.telHref} className="font-medium text-de-magenta-paper-ink underline underline-offset-4">
-                    {PRIMARY_PHONE.display}
-                  </a>{" "}
-                  if you have any questions.
+                  {hasPublicPhone() && (
+                    <>
+                      <br />
+                      Call our office at{" "}
+                      <PhoneLink className="font-medium text-de-magenta-paper-ink underline underline-offset-4">{PRIMARY_PHONE.display}</PhoneLink>{" "}
+                      if you have any questions.
+                    </>
+                  )}
                 </p>
 
                 <ul className="my-6 space-y-3 border-y border-[var(--de-paper-hairline)] py-5 text-sm text-[#1A1228]">

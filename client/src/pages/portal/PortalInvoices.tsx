@@ -81,21 +81,27 @@ export default function PortalInvoices() {
       cell: (invoice) => (
         <div className="flex items-center justify-end gap-1">
           <Button
+            asChild
             variant="ghost"
             size="sm"
             className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
-            aria-label={`View invoice ${invoice.invoiceNumber}`}
-            title="View"
-            data-testid={`button-view-${invoice.id}`}
+            title="View invoice"
           >
-            <Eye aria-hidden="true" />
+            <Link
+              href={`/portal/invoices/${invoice.id}/pay`}
+              aria-label={`View invoice ${invoice.invoiceNumber}`}
+              data-testid={`button-view-${invoice.id}`}
+            >
+              <Eye aria-hidden="true" />
+            </Link>
           </Button>
           <Button
             variant="ghost"
             size="sm"
             className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
-            aria-label={`Download invoice ${invoice.invoiceNumber}`}
-            title="Download"
+            aria-label={`Download invoice ${invoice.invoiceNumber} is not available yet`}
+            title="Invoice PDF download is not available in the Client Portal yet. Open the invoice to view the amount due."
+            disabled
             data-testid={`button-download-${invoice.id}`}
           >
             <Download aria-hidden="true" />

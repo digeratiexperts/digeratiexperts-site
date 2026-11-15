@@ -1,3 +1,5 @@
+import { isPaymentPagePath } from "@shared/paymentPage";
+
 declare function gtag(...args: any[]): void;
 
 const CONSENT_KEY = "de_cookie_consent_v2";
@@ -27,7 +29,7 @@ export function disableAnalytics() {
 
 /** SEO hooks/Helmet signal completion, never the early route-change effect. */
 export function reportPageReady(path: string, title: string) {
-  if (inPortal() || path !== window.location.pathname || !title.trim()) return;
+  if (skipMarketingPixels() || path !== window.location.pathname || !title.trim()) return;
   readyPage = { path, title };
   const currentVisit = visit;
   // Coalesce child/parent SEO effects in the same commit; parent metadata wins.
@@ -35,7 +37,7 @@ export function reportPageReady(path: string, title: string) {
 }
 
 function flushReadyPage(currentVisit: number) {
-  if (visit !== currentVisit || !readyPage || readyPage.path !== window.location.pathname || inPortal()) return;
+  if (visit !== currentVisit || !readyPage || readyPage.path !== window.location.pathname || skipMarketingPixels()) return;
   if (document.querySelector?.("[data-page-loading]")) {
     // Helmet can commit its title during concurrent rendering, before React
     // reveals the lazy page. Resume on the actual Suspense reveal, not a timer.
@@ -59,16 +61,17 @@ function publicReferrer(value: string): string {
   } catch { return ""; }
 }
 
-function inPortal(): boolean {
-  return typeof window !== "undefined" &&
-    isPortalContext(window.location.hostname, window.location.pathname);
+function skipMarketingPixels(): boolean {
+  if (typeof window === "undefined") return false;
+  return isPortalContext(window.location.hostname, window.location.pathname) ||
+    isPaymentPagePath(window.location.pathname);
 }
 
 /** Basic consent mode: no Google tag request before analytics consent. */
 function initGoogleAnalytics(consent: ConsentConfig, page?: { page_location: string; page_referrer: string; page_title: string }): boolean {
   const w = window as any;
-  w[`ga-disable-${GA_ID}`] = inPortal() || !consent.analytics;
-  if (inPortal() || !consent.analytics || w.__DE_GA_INIT__ || !page) return false;
+  w[`ga-disable-${GA_ID}`] = skipMarketingPixels() || !consent.analytics;
+  if (skipMarketingPixels() || !consent.analytics || w.__DE_GA_INIT__ || !page) return false;
   // index.html supplies a denied-by-default dataLayer/gtag queue.
   if (typeof gtag === "undefined") return false;
   gtag("js", new Date());
@@ -180,10 +183,10 @@ export function saveConsent(config: ConsentConfig) {
   } catch {}
   // Disable collection before the consent update; denying storage alone can
   // still permit cookieless pings from a previously loaded Google tag.
-  (window as any)[`ga-disable-${GA_ID}`] = inPortal() || !config.analytics;
+  (window as any)[`ga-disable-${GA_ID}`] = skipMarketingPixels() || !config.analytics;
   if (!config.analytics) { lastGaPagePath = undefined; pendingGaEvents = []; }
   if (!config.marketing) lastMarketingPagePath = undefined;
-  if (inPortal()) return;
+  if (skipMarketingPixels()) return;
   updateGtagConsent(config);
   updateClarityConsent(config);
   updateMetaConsent(config);
@@ -222,7 +225,7 @@ export function isPortalContext(hostname: string, pathname: string): boolean {
 
 export function initAnalytics() {
   injectSearchVerificationTags();
-  if (inPortal()) {
+  if (skipMarketingPixels()) {
     (window as any)[`ga-disable-${GA_ID}`] = true;
     return;
   }
@@ -314,7 +317,7 @@ export function initAnalytics() {
 }
 
 function fireGtag(event: string, params?: Record<string, any>) {
-  if (inPortal() || !getConsent().analytics) return;
+  if (skipMarketingPixels() || !getConsent().analytics) return;
   if (!readyPage || readyPage.path !== window.location.pathname || !(window as any).__DE_GA_INIT__) {
     // Preserve consented events from the current commit until its metadata is
     // ready. Navigation/revocation discards this buffer; denied events never enter.
@@ -328,7 +331,7 @@ function fireGtag(event: string, params?: Record<string, any>) {
 }
 
 function fireMetaPixel(event: string, params?: Record<string, any>) {
-  if (inPortal()) return;
+  if (skipMarketingPixels()) return;
   try {
     const f = window as any;
     if (!f.fbq) return;
@@ -337,7 +340,7 @@ function fireMetaPixel(event: string, params?: Record<string, any>) {
 }
 
 function fireBing(event: string, params?: Record<string, any>) {
-  if (inPortal()) return;
+  if (skipMarketingPixels()) return;
   try {
     const w = window as any;
     if (!w.uetq) return;
@@ -421,7 +424,7 @@ export const analytics = {
   },
 
   pageView(path: string, title: string) {
-    if (inPortal() || isPortalContext(window.location.hostname, path.split(/[?#]/)[0])) {
+    if (skipMarketingPixels() || isPortalContext(window.location.hostname, path.split(/[?#]/)[0])) {
       (window as any)[`ga-disable-${GA_ID}`] = true;
       lastGaPagePath = undefined;
       return;

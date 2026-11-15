@@ -64,7 +64,7 @@
   },
   "/contact": {
     "title": "Contact | Digerati Experts",
-    "description": "Contact Digerati Experts in Chandler, Arizona. Call 325-480-9870 or send a message for a Cyber Risk Assessment.",
+    "description": "Contact Digerati Experts in Chandler, Arizona. Send a message for a Cyber Risk Assessment.",
     "canonical": "/contact",
     "robots": "index, follow",
     "ogImage": "https://digeratiexperts.com/og-image.png"
@@ -157,6 +157,13 @@
     "title": "Ransomware Readiness and Backup for Arizona Businesses | Digerati Experts",
     "description": "Assess whether ransomware would encrypt your backups and whether Arizona operations can restore. Digerati Experts connects backup, identity, and response.",
     "canonical": "/go/ransomware-readiness",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/help-desk": {
+    "title": "IT Help Desk for Arizona Businesses | Digerati Experts",
+    "description": "Paid, on-request IT support from Digerati Experts for businesses without a managed plan and for work a plan doesn't cover. Open a ticket, join a secure remote session, get it fixed.",
+    "canonical": "/help-desk",
     "robots": "index, follow",
     "ogImage": "https://digeratiexperts.com/og-image.png"
   },
@@ -689,6 +696,13 @@
     "title": "Standalone IT & Cybersecurity Solutions | Digerati Experts",
     "description": "Buy a preconfigured Digerati Experts technology or cybersecurity solution without enrolling in a traditional managed IT program. Choose self-install, remote implementation help, or on-site support where available.",
     "canonical": "/solutions/standalone-services",
+    "robots": "index, follow",
+    "ogImage": "https://digeratiexperts.com/og-image.png"
+  },
+  "/solutions/switching-it-providers": {
+    "title": "Switching IT Providers in Arizona | Digerati Experts",
+    "description": "Thinking about leaving your current IT provider? What to get back first, how a switch to Digerati Experts works, and the guarantees we put in writing.",
+    "canonical": "/solutions/switching-it-providers",
     "robots": "index, follow",
     "ogImage": "https://digeratiexperts.com/og-image.png"
   },

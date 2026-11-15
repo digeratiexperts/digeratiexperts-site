@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { CTA } from "@/lib/ctaCopy";
 import { PRIMARY_PHONE } from "@/data/companyContact";
 import { useBooking } from "@/contexts/BookingContext";
+import { PhoneLink } from "@/components/PhoneLink";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -81,13 +82,12 @@ export const DigeratiCTASectionChallenger = (): JSX.Element => {
                 >
                   Talk to DE
                 </button>
-                <a
-                  href={PRIMARY_PHONE.telHref}
+                <PhoneLink
                   className="inline-flex items-center gap-1.5 font-medium text-white/60 transition-colors hover:text-white"
                 >
                   <Phone className="h-3.5 w-3.5" aria-hidden="true" />
                   {PRIMARY_PHONE.display}
-                </a>
+                </PhoneLink>
                 <a
                   href="#contact"
                   className="font-medium text-white/60 underline-offset-4 transition-colors hover:text-white hover:underline"

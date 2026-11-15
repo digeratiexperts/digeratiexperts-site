@@ -3,7 +3,7 @@ import { PageTemplate } from "@/components/PageTemplate";
 import { Chapter, Container, ClosingCta, HeroActions } from "@/components/site/chapters";
 import { useSEO } from "@/hooks/useSEO";
 import { CTA } from "@/lib/ctaCopy";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PRIMARY_PHONE, phoneAction, hasPublicPhone } from "@/data/companyContact";
 
 const questions = [
   "Do they answer calls live and provide multiple ways to reach support with clear escalation?",
@@ -50,7 +50,7 @@ export default function TwentyOneQuestions() {
         <div className="flex flex-col gap-3 sm:flex-row">
           <HeroActions
             primary={{ label: CTA.primary, href: "/book" }}
-            secondary={{ label: `Call ${PRIMARY_PHONE.display}`, href: PRIMARY_PHONE.telHref }}
+            secondary={phoneAction(`Call ${PRIMARY_PHONE.display}`)}
           />
         </div>
       }
@@ -129,7 +129,7 @@ export default function TwentyOneQuestions() {
             </>
           }
           primary={{ label: CTA.primary, href: "/book", testId: "button-schedule" }}
-          secondary={{ label: PRIMARY_PHONE.display, href: PRIMARY_PHONE.telHref, testId: "link-phone" }}
+          secondary={phoneAction(PRIMARY_PHONE.display, "link-phone")}
         />
       </div>
 
@@ -137,7 +137,7 @@ export default function TwentyOneQuestions() {
         <Container>
           <div className="text-center">
             <p className="font-semibold text-white">
-              DIGERATI EXPERTS | {PRIMARY_PHONE.display} | info@digeratiexperts.com
+              DIGERATI EXPERTS | {hasPublicPhone() && <>{PRIMARY_PHONE.display} | </>}info@digeratiexperts.com
             </p>
             <p className="mt-1 text-sm text-white/60">
               Serving Phoenix Metro Area | Chandler, Arizona | www.digeratiexperts.com

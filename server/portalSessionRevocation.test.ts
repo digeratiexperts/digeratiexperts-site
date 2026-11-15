@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import jwt from "jsonwebtoken";
 
 /**
@@ -90,6 +90,17 @@ async function call(token: string) {
 }
 
 describe("portal session revocation (#242)", () => {
+  beforeAll(async () => {
+    // Loading the server routes is fixture setup, not part of the five-second
+    // behavior budget. Finish its async mock factories before tests can time
+    // out and leave a pending import racing with the next test.
+    await import("./routes");
+    const { getUser } = await import("./portalAuthStore");
+    const { findUserById } = await import("./portalOrg");
+    expect(vi.isMockFunction(getUser)).toBe(true);
+    expect(vi.isMockFunction(findUserById)).toBe(true);
+  }, 30_000);
+
   beforeEach(async () => {
     dbRows.length = 0;
     failWrites = false;

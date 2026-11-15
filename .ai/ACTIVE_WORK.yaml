@@ -51,6 +51,45 @@ claims:
       please avoid homepage-v2/**, server/routeMeta.ts sendShell, and the files
       above until these PRs land or are closed. No deploy, VPS, migrations,
       secrets or vendor config.
+  - id: session-test-bootstrap-20261114
+    issue: 1038
+    owner: codex
+    subsystem: session-revocation-test-fixture
+    branch: codex/fix-session-test-bootstrap-20261114
+    base_sha: bf4ffdd616ab5f4a767a80be4f234a1d12b0f56c
+    started: 2026-11-14
+    status: in-review
+    files:
+      - server/portalSessionRevocation.test.ts
+      - docs/work-ledger/2026-11-14-session-test-bootstrap.md
+    note: >-
+      Test-only preload of server routes before the behavioral test budget.
+      Existing assertions and five-second test timeout are preserved.
+      Isolated branch; PR and full CI verification only, no merge or deploy.
+  - id: public-phone-pdf-completion-20261114
+    owner: chatgpt
+    subsystem: public-contact-artifacts
+    branch: chatgpt/public-phone-pdf-completion-20261114
+    base_sha: 5d8baf37cd30471f8cca476ffcbed6d4bc8f93b8
+    started: 2026-11-14
+    status: implemented
+    pr: "1036"
+    files:
+      - client/public/assets/**/*.pdf
+      - document_templates/**/*.pdf
+      - artifacts/design-concepts/resource-pdfs/concepts/*.mjs
+      - artifacts/design-concepts/resource-pdfs/lib/public-phone.mjs
+      - scripts/public-phone-artifacts*
+      - scripts/public-phone-pdf-manifest.json
+      - .github/workflows/public-phone-artifacts.yml
+      - docs/handoffs/public-phone-pdf-source.patch
+      - docs/work-ledger/2026-11-14-public-phone-pdf-completion.md
+      - artifacts/visual-qa/public-phone-pdf-completion/**
+    note: >-
+      Held companion, not full phone cleanup. Relay Hub 886 comment 6885360392.
+      Depends on site 1031 source snapshot 29ef5642; source patch is proposed
+      for its owner rather than applied to overlapping generators. No owner
+      branch writes, merges or deploys. Static marker work in 1028 preserved.
   - id: c15-portal-audit-repairs-20261109
     issue: 544
     owner: cursor

@@ -5,6 +5,8 @@ import { CheckIcon, PhoneIcon } from "../icons";
 import { PHONE_DISPLAY, PHONE_HREF, objectIcon } from "../content";
 import { HOME_CTA } from "../cta";
 import { ReviewChip } from "./Reviews";
+import { PhoneLink } from "@/components/PhoneLink";
+import { hasPublicPhone } from "@shared/companyContact";
 
 const READINESS_BARS = [
   { label: "Identity", value: 68 },
@@ -48,7 +50,7 @@ export function HeroSection(): JSX.Element {
             <ReviewChip />
             <span><CheckIcon />No obligation</span>
             <span><CheckIcon />Response within one business day</span>
-            <span><PhoneIcon /><a href={PHONE_HREF}>{PHONE_DISPLAY}</a></span>
+            {hasPublicPhone() && <span><PhoneIcon /><PhoneLink>{PHONE_DISPLAY}</PhoneLink></span>}
           </div>
         </div>
 

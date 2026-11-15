@@ -5,6 +5,7 @@
 import { sql } from "drizzle-orm";
 import { db, dbReady, initPromise } from "../../db";
 import { randomBytes } from "crypto";
+import { assertNoCardData } from "@shared/pciGuard";
 
 export type DeskChatRole = "user" | "assistant" | "agent";
 
@@ -322,6 +323,7 @@ export async function appendDeskMessage(input: {
   companyName?: string | null;
   pagePath?: string | null;
 }): Promise<DeskChatMessage> {
+  assertNoCardData(input.content);
   await upsertDeskSession({
     sessionId: input.sessionId,
     email: input.email,

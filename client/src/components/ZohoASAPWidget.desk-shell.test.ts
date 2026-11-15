@@ -100,7 +100,9 @@ describe("DE Desk shell positioning", () => {
     expect(src).not.toMatch(/Direct Desk:/);
     expect(src).not.toMatch(/resource-link-phone-support/);
     expect(src).not.toMatch(/className="de-desk-foot"/);
-    expect(src).toMatch(/href=\{PRIMARY_PHONE\.telHref\}/);
+    // The call link only renders once a public number is configured.
+    expect(src).toMatch(/<PhoneLink\b/);
+    expect(src).not.toMatch(/href=\{PRIMARY_PHONE\.telHref\}/);
     expect(src).toMatch(/href=\{PORTAL_LOGIN\}/);
     expect(src).not.toMatch(/\/\/login/);
   });

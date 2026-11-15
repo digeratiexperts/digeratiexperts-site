@@ -5,7 +5,7 @@ import { ArrowRight, ArrowUpRight, Scale, ShieldCheck, type LucideIcon } from "l
 import { revealInitial, revealInView, revealTransition, revealViewport } from "@/lib/animations";
 import { useBooking } from "@/contexts/BookingContext";
 import { CTA } from "@/lib/ctaCopy";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PRIMARY_PHONE, hasPublicPhone } from "@/data/companyContact";
 import { ReviewsCarousel, ReviewSourceChips } from "@/components/ReviewsCarousel";
 import {
   catalogEntriesToPublic,
@@ -20,6 +20,7 @@ import {
   type ReviewSourceId,
 } from "@/data/reviewsCatalog";
 import "./07-client-proof.css";
+import { PhoneLink } from "@/components/PhoneLink";
 
 /**
  * 07 · Client proof + Built for accountability (mock: sections/07-client-proof.html).
@@ -381,12 +382,14 @@ export function V10ClientProof(): JSX.Element {
           <div className="proof-foot">
             <p className="v10-small">
               Serving professional services, healthcare, construction, nonprofit, and regulated organizations across
-              Greater Phoenix<span className="proof-foot__sep"> · </span>
+              Greater Phoenix{hasPublicPhone() && (
+<><span className="proof-foot__sep"> · </span>
               <span className="proof-foot__phonewrap">
-                <a className="proof-foot__phone" href={PRIMARY_PHONE.telHref}>
+                <PhoneLink className="proof-foot__phone">
                   {PRIMARY_PHONE.display}
-                </a>
-              </span>
+                </PhoneLink>
+              </span></>
+)}
             </p>
             <nav className="proof-foot__links" aria-label="More trust pages">
               <Link className="v10-link--quiet" href="/about/guarantee" data-testid="link-proof-guarantee">

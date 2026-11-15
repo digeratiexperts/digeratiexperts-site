@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { COMPANY, PRIMARY_PHONE, PUBLIC_SOCIAL_LINKS } from "@/data/companyContact";
+import { COMPANY, PRIMARY_PHONE, PUBLIC_SOCIAL_LINKS, schemaTelephoneProps } from "@/data/companyContact";
 import { ORGANIZATION_ID, ORGANIZATION_REF, buildOrganizationSchema } from "@shared/organizationSchema";
 
 const SITE_URL = COMPANY.website;
@@ -38,7 +38,7 @@ const ORGANIZATION = {
   "sameAs": PUBLIC_SOCIAL_LINKS.map((s) => s.href),
   "contactPoint": {
     "@type": "ContactPoint",
-    "telephone": PRIMARY_PHONE.schemaTelephone || PRIMARY_PHONE.e164,
+    ...schemaTelephoneProps(),
     "contactType": "sales",
     "email": COMPANY.email,
     "areaServed": "US",
