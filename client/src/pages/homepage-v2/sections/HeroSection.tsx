@@ -4,6 +4,7 @@ import { DexMark } from "@/components/mascots/Mascots";
 import { CheckIcon, PhoneIcon } from "../icons";
 import { PHONE_DISPLAY, PHONE_HREF, objectIcon } from "../content";
 import { HOME_CTA } from "../cta";
+import { ReviewChip } from "./Reviews";
 import { PhoneLink } from "@/components/PhoneLink";
 import { hasPublicPhone } from "@shared/companyContact";
 
@@ -46,6 +47,7 @@ export function HeroSection(): JSX.Element {
             <a href="/pricing" className="btn btn-line" data-testid="button-hero-pricing">See Plans &amp; Pricing</a>
           </div>
           <div className="facts">
+            <ReviewChip />
             <span><CheckIcon />No obligation</span>
             <span><CheckIcon />Response within one business day</span>
             {hasPublicPhone() && <span><PhoneIcon /><PhoneLink>{PHONE_DISPLAY}</PhoneLink></span>}
