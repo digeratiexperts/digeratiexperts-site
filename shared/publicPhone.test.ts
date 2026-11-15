@@ -133,7 +133,7 @@ describe("public phone", () => {
       expect(PRIMARY_PHONE.e164).toBe("");
       expect(schemaTelephoneProps()).toEqual({});
       expect(phoneAction("Call")).toBeUndefined();
-      expect(reachUsPhrase()).toBe("email us at info@digeratiexperts.com");
+      expect(reachUsPhrase()).toBe("email us at admin@digeratiexperts.com");
     } else {
       expect(hasPublicPhone()).toBe(true);
       expect(PRIMARY_PHONE.telHref).toMatch(/^tel:\+1\d{10}$/);

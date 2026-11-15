@@ -3,7 +3,7 @@ import { PageTemplate } from "@/components/PageTemplate";
 import { Chapter, Container, ClosingCta, HeroActions } from "@/components/site/chapters";
 import { useSEO } from "@/hooks/useSEO";
 import { CTA } from "@/lib/ctaCopy";
-import { PRIMARY_PHONE, phoneAction, hasPublicPhone } from "@/data/companyContact";
+import { COMPANY, PRIMARY_PHONE, phoneAction, hasPublicPhone } from "@/data/companyContact";
 
 const questions = [
   "Do they answer calls live and provide multiple ways to reach support with clear escalation?",
@@ -137,7 +137,7 @@ export default function TwentyOneQuestions() {
         <Container>
           <div className="text-center">
             <p className="font-semibold text-white">
-              DIGERATI EXPERTS | {hasPublicPhone() && <>{PRIMARY_PHONE.display} | </>}info@digeratiexperts.com
+              DIGERATI EXPERTS | {hasPublicPhone() && <>{PRIMARY_PHONE.display} | </>}{COMPANY.email}
             </p>
             <p className="mt-1 text-sm text-white/60">
               Serving Phoenix Metro Area | Chandler, Arizona | www.digeratiexperts.com

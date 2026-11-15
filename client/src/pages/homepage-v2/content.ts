@@ -1,4 +1,4 @@
-import { PRIMARY_PHONE } from "@shared/companyContact";
+import { COMPANY, PRIMARY_PHONE } from "@shared/companyContact";
 
 /**
  * Homepage v2 shared content. The approved reference (design/reference/homepage-v2) is the
@@ -13,7 +13,7 @@ export { THIRD_LANE_NAME };
 /** The phone number comes from the canonical company contact module, never a literal here. */
 export const PHONE_DISPLAY = PRIMARY_PHONE.display;
 export const PHONE_HREF = PRIMARY_PHONE.telHref;
-export const EMAIL_ADDRESS = "info@digeratiexperts.com";
+export const EMAIL_ADDRESS = COMPANY.email;
 
 /** Public concept objects (client/public/concepts/objects). */
 export function objectIcon(name: string): string {

@@ -31,7 +31,7 @@ VITE_LINKEDIN_PARTNER_ID=           # LinkedIn Campaign Manager Insight Tag
 VITE_GOOGLE_SITE_VERIFICATION=      # Search Console HTML tag content=
 VITE_BING_SITE_VERIFICATION=        # Bing Webmaster msvalidate.01 content=
 ZEPTOMAIL_API_TOKEN=                # transactional + confirmations (already used)
-ADMIN_EMAIL=info@digeratiexperts.com
+ADMIN_EMAIL=admin@digeratiexperts.com
 ```
 
 ---
