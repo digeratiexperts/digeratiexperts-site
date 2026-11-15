@@ -25,6 +25,7 @@ import { ADVISOR_SYSTEM_PREFIX, buildSystemPrompt, INTERNAL_REFUSAL, BANNED_CANN
 import { withTransientModelRetry } from "./model-retry";
 import { verifyAdvisorReply } from "./ground";
 import { assertNoCardData } from "@shared/pciGuard";
+import { CRISIS_HISTORY_PLACEHOLDER, CRISIS_REPLY, isCrisisMessage } from "@shared/deskCrisis";
 import { sanitizeActions, assertNoInternalLeak, defaultActionsForMode, materializeAction, ensureLoginAction } from "./actions";
 import { buildHeuristicReply, ensureFreshReply, isNearDuplicate } from "./fallback";
 import {
@@ -194,6 +195,33 @@ export async function handleAdvisorChat(req: AdvisorChatRequest): Promise<Adviso
     throw Object.assign(new Error("Message is required"), { status: 400 });
   }
   assertNoCardData(userTurn);
+  if (isCrisisMessage(userTurn)) {
+    const session = getOrCreateSession(req.sessionId, req.pageContext);
+    const page = req.pageContext || session.pageContext;
+    const reply = CRISIS_REPLY;
+    // Store a placeholder, never the crisis text: session.messages is sent to
+    // the model as history on later turns.
+    appendMessage(session, "user", CRISIS_HISTORY_PLACEHOLDER);
+    appendMessage(session, "assistant", reply);
+    session.lastAssistantReply = reply;
+    const persisted = await persistTurn(
+      session.id,
+      CRISIS_HISTORY_PLACEHOLDER,
+      reply,
+      session.profile,
+      page?.pathname,
+    );
+    return {
+      sessionId: session.id,
+      reply,
+      mode: "off_topic",
+      profile: session.profile,
+      actions: [],
+      analyticsEvents: [],
+      knownFacts: knownFactsList(session.profile),
+      ...persisted,
+    };
+  }
   let message = userTurn;
 
   const session = getOrCreateSession(req.sessionId, req.pageContext);

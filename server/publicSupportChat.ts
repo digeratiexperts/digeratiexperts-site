@@ -2,6 +2,7 @@ import { randomBytes } from "crypto";
 import type { Express } from "express";
 import rateLimit from "express-rate-limit";
 import { generateChatResponse } from "./openaiService";
+import { CRISIS_REPLY, isCrisisMessage } from "@shared/deskCrisis";
 import { DE_KNOWLEDGE_CATALOG } from "./services/de-intelligence/catalog";
 
 export type PublicChatHistoryEntry = {
@@ -81,6 +82,17 @@ export function registerPublicSupportChat(app: Express): void {
       }
 
       const conversationHistory = sanitizeConversationHistory(req.body?.conversationHistory);
+      if (isCrisisMessage(rawMessage)) {
+        return res.json({
+          success: true,
+          message: {
+            id: `support-${Date.now()}-crisis`,
+            content: CRISIS_REPLY,
+            respondedBy: "system",
+            timestamp: new Date().toISOString(),
+          },
+        });
+      }
       const content = await generateChatResponse(rawMessage, conversationHistory);
 
       return res.json({
