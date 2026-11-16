@@ -1,4 +1,12 @@
 import { portalCompanyProfile } from "./portalCompanyProfile";
+import { registerPortalOpenAIRoutes } from "./portalOpenAIRoutes";
+import {
+  clientSignInStep,
+  zohoCallbackSignInStep,
+  type PortalMfaMethod,
+  MFA_ENROLL_REQUIRED_CODE,
+  MFA_ENROLL_REQUIRED_MESSAGE,
+} from "./portalClientMfaPolicy";
 import express, { type Express, type Request, type Response, NextFunction } from "express";
 import { storage } from "./storage";
 import {
@@ -58,6 +66,7 @@ import {
   isEmailAllowedForPortalOAuth,
   isMasterPortalEmail,
   portalLoginErrorRedirect,
+  portalMfaChallengeRedirect,
   readZohoPkceCookie,
   marketplaceReturnTo,
   setZohoPkceCookie,
@@ -245,7 +254,7 @@ import {
 } from "@shared/permissions";
 import { getEntitlements, hasSharedFiles } from "./portalAccessStore";
 import { enqueueOutbox } from "./integrations/deSyncStore";
-import { COMPANY, PRIMARY_PHONE } from "@shared/companyContact";
+import { COMPANY, PRIMARY_PHONE, hasPublicPhone } from "@shared/companyContact";
 import {
   ACCOUNT_MANAGERS,
   DEFAULT_ACCOUNT_MANAGER_ID,
@@ -1859,30 +1868,9 @@ export async function registerRoutes(app: Express) {
   });
 
   // ===== ADMIN OPENAI CONTROL =====
-  app.get("/api/portal/admin/openai/status", [authMiddleware, requireAdmin], async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      res.json({
-        success: true,
-        enabled: process.env.ENABLE_OPENAI_INTEGRATION === "true",
-        status: "configured",
-      });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  app.post("/api/portal/admin/openai/toggle", [authMiddleware, requireAdmin, validateInput], async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const currentState = process.env.ENABLE_OPENAI_INTEGRATION === "true";
-      res.json({
-        success: true,
-        enabled: !currentState,
-        message: "OpenAI integration toggled",
-      });
-      logSecurityEvent("OPENAI_TOGGLED", req, { state: !currentState });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
+  registerPortalOpenAIRoutes(app, {
+    guards: [authMiddleware, requireAdmin],
+    audit: (req, enabled) => logSecurityEvent("OPENAI_STATE_SET", req, { enabled }),
   });
 
   // ===== TTS (blog listen / read-aloud) — public with rate limit =====
@@ -2966,6 +2954,40 @@ export async function registerRoutes(app: Express) {
     });
   }
 
+  function issueMfaChallenge(user: any, mfaMethod: PortalMfaMethod): string {
+    const challengeToken = randomId();
+    const TEN_MINUTES = 10 * 60 * 1000;
+    const now = Date.now();
+
+    if (mfaMethod === 'email') {
+      const code = String(randomInt(100000, 1000000));
+      mfaChallenges.set(challengeToken, {
+        userId: user.id,
+        email: user.email,
+        method: 'email',
+        emailCode: code,
+        createdAt: now,
+        expiresAt: now + TEN_MINUTES,
+        attempts: 0,
+      });
+      notificationService.sendMfaCode({
+        email: user.email,
+        name: user.fullName,
+        code,
+      }).catch(err => logger.warn("Failed to send MFA email code", err));
+    } else {
+      mfaChallenges.set(challengeToken, {
+        userId: user.id,
+        email: user.email,
+        method: mfaMethod === 'passkey' ? 'passkey' : 'totp',
+        createdAt: now,
+        expiresAt: now + TEN_MINUTES,
+        attempts: 0,
+      });
+    }
+    return challengeToken;
+  }
+
   function completeLoginRedirect(user: any, req: AuthenticatedRequest, res: Response, returnTo: string) {
     const sessionId = randomId();
     const now = Date.now();
@@ -3101,6 +3123,27 @@ export async function registerRoutes(app: Express) {
 
       if (user.isActive === false) {
         return res.redirect(portalLoginErrorRedirect("zoho_disabled", "This portal account is disabled."));
+      }
+
+      const signInStep = zohoCallbackSignInStep(user, process.env, new Date(), resolveRpId(req.hostname));
+      if (signInStep.kind === "must_enroll") {
+        logSecurityEvent("MFA_ENROLL_REQUIRED", req, { email: user.email, reason: signInStep.reason, method: "zoho_sso" });
+        return res.redirect(portalLoginErrorRedirect(MFA_ENROLL_REQUIRED_CODE, MFA_ENROLL_REQUIRED_MESSAGE));
+      }
+      if (signInStep.kind === "challenge") {
+        const challengeToken = issueMfaChallenge(user, signInStep.method);
+        logSecurityEvent("MFA_CHALLENGE_ISSUED", req, {
+          email: user.email,
+          method: signInStep.method,
+          enrollmentFallback: signInStep.enrollmentFallback,
+          via: "zoho_sso",
+        });
+        return res.redirect(portalMfaChallengeRedirect({
+          mfaToken: challengeToken,
+          mfaMethod: signInStep.method,
+          passkeyAvailable: (user.mfaPasskeys || []).some((p: any) => p.rpId === resolveRpId(req.hostname)),
+          returnTo: verified.returnTo,
+        }));
       }
 
       return completeLoginRedirect(user, req, res, verified.returnTo);
@@ -3295,51 +3338,26 @@ export async function registerRoutes(app: Express) {
         });
       }
 
-      // Check if user has MFA enabled
-      if (user.mfaEnabled && user.mfaMethod) {
-        const challengeToken = randomId();
-        const TEN_MINUTES = 10 * 60 * 1000;
-        const now = Date.now();
-
-        if (user.mfaMethod === 'email') {
-          const code = String(randomInt(100000, 1000000));
-          mfaChallenges.set(challengeToken, {
-            userId: user.id,
-            email: user.email,
-            method: 'email',
-            emailCode: code,
-            createdAt: now,
-            expiresAt: now + TEN_MINUTES,
-            attempts: 0,
-          });
-          notificationService.sendMfaCode({
-            email: user.email,
-            name: user.fullName,
-            code,
-          }).catch(err => logger.warn("Failed to send MFA email code", err));
-        } else {
-          mfaChallenges.set(challengeToken, {
-            userId: user.id,
-            email: user.email,
-            method: user.mfaMethod === 'passkey' ? 'passkey' : 'totp',
-            createdAt: now,
-            expiresAt: now + TEN_MINUTES,
-            attempts: 0,
-          });
-        }
-
+      const signInStep = clientSignInStep(user, process.env, new Date(), resolveRpId(req.hostname));
+      if (signInStep.kind === "must_enroll") {
+        logSecurityEvent("MFA_ENROLL_REQUIRED", req, { email, reason: signInStep.reason });
+        return res.status(403).json({ message: MFA_ENROLL_REQUIRED_MESSAGE, code: MFA_ENROLL_REQUIRED_CODE });
+      }
+      if (signInStep.kind === "challenge") {
+        const mfaMethod = signInStep.method;
+        const challengeToken = issueMfaChallenge(user, mfaMethod);
         const passkeyAvailable = (user.mfaPasskeys || []).some((p) => p.rpId === resolveRpId(req.hostname));
-        logSecurityEvent("MFA_CHALLENGE_ISSUED", req, { email, method: user.mfaMethod });
+        logSecurityEvent("MFA_CHALLENGE_ISSUED", req, { email, method: mfaMethod, enrollmentFallback: signInStep.enrollmentFallback });
 
         return res.json({
           success: false,
           mfaRequired: true,
-          mfaMethod: user.mfaMethod,
+          mfaMethod: mfaMethod,
           mfaToken: challengeToken,
           passkeyAvailable,
-          message: user.mfaMethod === 'email'
+          message: mfaMethod === 'email'
             ? "A verification code has been sent to your email."
-            : user.mfaMethod === 'passkey'
+            : mfaMethod === 'passkey'
               ? "Confirm it's you with your passkey, or enter a backup code."
               : "Enter the code from your authenticator app.",
         });
@@ -5488,7 +5506,7 @@ export async function registerRoutes(app: Express) {
         success: true,
         leadId,
         zohoLeadId,
-        phone: DE_COMPANY.phoneDisplay,
+        ...(hasPublicPhone() ? { phone: DE_COMPANY.phoneDisplay } : {}),
         bookingUrl: DE_COMPANY.bookingUrl,
         message: "Thanks — our team will follow up with this conversation context.",
       });

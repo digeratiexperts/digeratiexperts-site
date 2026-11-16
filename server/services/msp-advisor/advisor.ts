@@ -25,6 +25,7 @@ import { ADVISOR_SYSTEM_PREFIX, buildSystemPrompt, INTERNAL_REFUSAL, BANNED_CANN
 import { withTransientModelRetry } from "./model-retry";
 import { verifyAdvisorReply } from "./ground";
 import { assertNoCardData } from "@shared/pciGuard";
+import { CRISIS_HISTORY_PLACEHOLDER, CRISIS_REPLY, isCrisisMessage } from "@shared/deskCrisis";
 import { sanitizeActions, assertNoInternalLeak, defaultActionsForMode, materializeAction, ensureLoginAction } from "./actions";
 import { buildHeuristicReply, ensureFreshReply, isNearDuplicate } from "./fallback";
 import {
@@ -33,7 +34,8 @@ import {
   updateProfile,
 } from "./session";
 import { appendDeskMessage, isDeskAgentLive } from "./persist";
-import { PRIMARY_PHONE } from "@shared/companyContact";
+import { PRIMARY_PHONE, hasPublicPhone } from "@shared/companyContact";
+import { deskTopicRedirectReply, isOffTopicCompanionRequest } from "@shared/deskTopicScope";
 import type {
   AdvisorAction,
   AdvisorChatRequest,
@@ -139,9 +141,13 @@ function identityNamePrompt(): string {
  */
 function personHandoff(message: string): { reply: string; actions: AdvisorAction[] } {
   const joe = namesJoe(message);
-  const reply = joe
-    ? `I can get this to Joe. The fastest way is a call: ${PRIMARY_PHONE.display}. If he's tied up, request a callback or leave him a message below, and it reaches the desk with this chat. What's it about?`
-    : `You'll get a person. The fastest way is a call: ${PRIMARY_PHONE.display}. Or request a callback or leave a message below, and it reaches the desk with this chat. What's it about?`;
+  const reply = !hasPublicPhone()
+    ? joe
+      ? "I can get this to Joe. Request a callback or leave him a message below, and it reaches the desk with this chat. What's it about?"
+      : "You'll get a person. Request a callback or leave a message below, and it reaches the desk with this chat. What's it about?"
+    : joe
+      ? `I can get this to Joe. The fastest way is a call: ${PRIMARY_PHONE.display}. If he's tied up, request a callback or leave him a message below, and it reaches the desk with this chat. What's it about?`
+      : `You'll get a person. The fastest way is a call: ${PRIMARY_PHONE.display}. Or request a callback or leave a message below, and it reaches the desk with this chat. What's it about?`;
   const actions = [
     materializeAction("contact_sales", `Call ${PRIMARY_PHONE.display}`),
     materializeAction("request_callback", "Request a callback"),
@@ -190,6 +196,34 @@ export async function handleAdvisorChat(req: AdvisorChatRequest): Promise<Adviso
     throw Object.assign(new Error("Message is required"), { status: 400 });
   }
   assertNoCardData(userTurn);
+  // Crisis check runs first (#1024), before the topic-scope guard below.
+  if (isCrisisMessage(userTurn)) {
+    const session = getOrCreateSession(req.sessionId, req.pageContext);
+    const page = req.pageContext || session.pageContext;
+    const reply = CRISIS_REPLY;
+    // Store a placeholder, never the crisis text: session.messages is sent to
+    // the model as history on later turns.
+    appendMessage(session, "user", CRISIS_HISTORY_PLACEHOLDER);
+    appendMessage(session, "assistant", reply);
+    session.lastAssistantReply = reply;
+    const persisted = await persistTurn(
+      session.id,
+      CRISIS_HISTORY_PLACEHOLDER,
+      reply,
+      session.profile,
+      page?.pathname,
+    );
+    return {
+      sessionId: session.id,
+      reply,
+      mode: "off_topic",
+      profile: session.profile,
+      actions: [],
+      analyticsEvents: [],
+      knownFacts: knownFactsList(session.profile),
+      ...persisted,
+    };
+  }
   let message = userTurn;
 
   const session = getOrCreateSession(req.sessionId, req.pageContext);
@@ -277,6 +311,27 @@ export async function handleAdvisorChat(req: AdvisorChatRequest): Promise<Adviso
       profile,
       actions: defaultActionsForMode(session.lastMode),
       analyticsEvents: ["qualified_question"],
+      knownFacts: knownFactsList(profile),
+      ...persisted,
+    };
+  }
+
+  // After any crisis check, and after prompt-injection handling. Before the
+  // name gate, so an off-topic turn is not asked for a name first.
+  if (mode !== "security_incident" && isOffTopicCompanionRequest(message)) {
+    const reply = deskTopicRedirectReply(session.lastAssistantReply);
+    appendMessage(session, "user", message);
+    appendMessage(session, "assistant", reply);
+    session.lastAssistantReply = reply;
+    session.lastMode = "off_topic";
+    const persisted = await persistTurn(session.id, message, reply, profile, page?.pathname);
+    return {
+      sessionId: session.id,
+      reply,
+      mode: "off_topic",
+      profile,
+      actions: [],
+      analyticsEvents: ["off_topic_redirected"],
       knownFacts: knownFactsList(profile),
       ...persisted,
     };
@@ -480,7 +535,7 @@ export async function handleAdvisorChat(req: AdvisorChatRequest): Promise<Adviso
       ? "Company was given informally — treat as a walk-in. Do not moralize or dump a sales pitch."
       : "",
     session.humanRequested
-      ? `Visitor asked to reach a person (Joe or a human). They already have the call (${PRIMARY_PHONE.display}), callback and message options. Answer what they say next briefly; do not run discovery or ask for their company.`
+      ? `Visitor asked to reach a person (Joe or a human). They already have the ${hasPublicPhone() ? `call (${PRIMARY_PHONE.display}), ` : ""}callback and message options. Answer what they say next briefly; do not run discovery or ask for their company.`
       : "",
     session.nameDeclined
       ? "Visitor chose not to give a name. Do not ask for their name or company again, and do not address them by name."

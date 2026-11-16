@@ -72,6 +72,8 @@ scrollcraft/builds/*/out/
 
 # Claude Code session worktrees (local working copies, never repository content)
 .claude/worktrees/
+# Local Claude data (SQLite caches, never repository content)
+.claude/data/
 
 # diagram-system review gallery build output
 scrollcraft/diagrams/lab/

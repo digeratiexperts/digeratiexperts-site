@@ -21,6 +21,7 @@ import {
   COMPANY_SOCIAL,
   PRIMARY_PHONE,
   formatAddressOneLine,
+  hasPublicPhone,
 } from "@/data/companyContact";
 // Closing bookend (Joe 2026-08-31): the hero's Phoenix city-lights plate
 // returns behind the contact chapter, fainter still, so the page ends where
@@ -39,6 +40,7 @@ import {
   titleClass,
   textLinkClass,
 } from "@/components/home/HomeChapter";
+import { PhoneLink } from "@/components/PhoneLink";
 
 const contactFormSchema = z.object({
   name: z.string()
@@ -67,14 +69,18 @@ const directoryItems = [
     testId: "contact-email",
     external: false,
   },
-  {
-    icon: Phone,
-    label: "Phone",
-    value: PRIMARY_PHONE.display,
-    href: PRIMARY_PHONE.telHref,
-    testId: "contact-phone",
-    external: false,
-  },
+  ...(hasPublicPhone()
+    ? [
+      {
+        icon: Phone,
+        label: "Phone",
+        value: PRIMARY_PHONE.display,
+        href: PRIMARY_PHONE.telHref,
+        testId: "contact-phone",
+        external: false,
+      },
+      ]
+    : []),
   {
     icon: MapPin,
     label: "Office",
@@ -225,9 +231,9 @@ export const DigeratiContactSection = ({
                 {CTA.primary}
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </a>
-              <a href={PRIMARY_PHONE.telHref} className={buttonSecondary("well")} data-testid="contact-cta-call">
+              <PhoneLink className={buttonSecondary("well")} data-testid="contact-cta-call">
                 Call {PRIMARY_PHONE.display}
-              </a>
+              </PhoneLink>
             </div>
 
             <div className="grid border-t border-[var(--de-hairline)] md:grid-cols-2">

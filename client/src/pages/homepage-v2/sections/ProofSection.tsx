@@ -1,5 +1,6 @@
 import { GOOGLE_MAPS_CID_URL, GOOGLE_REVIEW_QR_SRC, GOOGLE_REVIEW_URL } from "@/data/reviewsCatalog";
 import { objectIcon } from "../content";
+import { ReviewsList } from "./Reviews";
 
 const OUTCOMES = [
   { icon: "network", title: "Fewer vendors to manage", text: "One accountable team for IT support and security operations." },
@@ -21,6 +22,7 @@ export function ProofSection(): JSX.Element {
             <a className="link" href="/resources/case-studies">View case studies</a>
           </div>
         </div>
+        <ReviewsList />
         <div className="grid g3">
           {OUTCOMES.map((outcome) => (
             <div className="card" key={outcome.title}>

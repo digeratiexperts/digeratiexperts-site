@@ -1,4 +1,11 @@
 import { isPaymentPagePath } from "@shared/paymentPage";
+import { clientSignalsGpc, marketingAllowedByConsent } from "@shared/gpc";
+import {
+  isPortalContext as portalContextOf,
+  skipClarity as skipClarityFor,
+  skipMarketingPixels as skipMarketingPixelsFor,
+} from "@shared/trackingExclusions";
+
 
 declare function gtag(...args: any[]): void;
 
@@ -63,8 +70,55 @@ function publicReferrer(value: string): string {
 
 function skipMarketingPixels(): boolean {
   if (typeof window === "undefined") return false;
-  return isPortalContext(window.location.hostname, window.location.pathname) ||
-    isPaymentPagePath(window.location.pathname);
+  return skipMarketingPixelsFor(window.location.hostname, window.location.pathname);
+}
+
+function deskIsOpen(): boolean {
+  if (typeof window === "undefined") return false;
+  return !!(window as any).__DE_DESK_OPEN__;
+}
+
+function skipClarity(): boolean {
+  if (typeof window === "undefined") return true;
+  return skipClarityFor(window.location.hostname, window.location.pathname, deskIsOpen());
+}
+
+/**
+ * Load Clarity once, only with analytics consent and only on a page Clarity
+ * may record. Called at init and again on SPA navigation, so a visitor who
+ * landed on an excluded page still gets Clarity on the next allowed page.
+ */
+function loadClarityIfAllowed(consent: ConsentConfig = getConsent()) {
+  const clarityId = import.meta.env.VITE_CLARITY_ID;
+  if (!clarityId || !consent.analytics || skipMarketingPixels() || skipClarity() || (window as any).__CLARITY_ID__) return;
+  const w = window as any;
+  w.clarity = w.clarity || function () { (w.clarity.q = w.clarity.q || []).push(arguments); };
+  const t = document.createElement("script") as HTMLScriptElement;
+  t.async = true;
+  t.src = "https://www.clarity.ms/tag/" + clarityId;
+  const y = document.getElementsByTagName?.("script")?.[0];
+  if (y?.parentNode) y.parentNode.insertBefore(t, y);
+  else document.head.appendChild(t);
+  w.__CLARITY_ID__ = clarityId;
+}
+
+function syncClarityRecording() {
+  try {
+    if (!(window as any).clarity) {
+      loadClarityIfAllowed();
+      return;
+    }
+    if (skipClarity()) (window as any).clarity("stop");
+    else (window as any).clarity("start");
+  } catch {}
+}
+
+function readGpc(): boolean {
+  try {
+    return clientSignalsGpc((navigator as any).globalPrivacyControl, document.cookie);
+  } catch {
+    return false;
+  }
 }
 
 /** Basic consent mode: no Google tag request before analytics consent. */
@@ -99,13 +153,20 @@ function getConsent(): ConsentConfig {
     const stored = localStorage.getItem(CONSENT_KEY);
     if (stored) {
       const parsed = JSON.parse(stored);
-      return { analytics: parsed?.analytics === true, marketing: parsed?.marketing === true };
+      return applyGpc({ analytics: parsed?.analytics === true, marketing: parsed?.marketing === true });
     }
     const legacy = localStorage.getItem("de_cookie_consent");
-    if (legacy === "accepted") return { analytics: true, marketing: true };
-    if (legacy === "rejected") return { analytics: false, marketing: false };
+    if (legacy === "accepted") return applyGpc({ analytics: true, marketing: true });
+    if (legacy === "rejected") return applyGpc({ analytics: false, marketing: false });
   } catch {}
-  return { analytics: false, marketing: false };
+  return applyGpc({ analytics: false, marketing: false });
+}
+
+function applyGpc(config: ConsentConfig): ConsentConfig {
+  return {
+    ...config,
+    marketing: marketingAllowedByConsent(config.marketing, readGpc()),
+  };
 }
 
 function updateGtagConsent(config: ConsentConfig) {
@@ -186,6 +247,9 @@ export function saveConsent(config: ConsentConfig) {
   (window as any)[`ga-disable-${GA_ID}`] = skipMarketingPixels() || !config.analytics;
   if (!config.analytics) { lastGaPagePath = undefined; pendingGaEvents = []; }
   if (!config.marketing) lastMarketingPagePath = undefined;
+  if (skipClarity()) {
+    try { if ((window as any).clarity) (window as any).clarity("stop"); } catch {}
+  }
   if (skipMarketingPixels()) return;
   updateGtagConsent(config);
   updateClarityConsent(config);
@@ -214,14 +278,9 @@ export function saveConsent(config: ConsentConfig) {
  * staff-only internal routes and the standalone challenger preview are also excluded.
  */
 export function isPortalContext(hostname: string, pathname: string): boolean {
-  const host = hostname.toLowerCase();
-  if (host === "portal.digeratiexperts.com" || host.startsWith("portal.")) return true;
-  const path = pathname.split(/[?#]/)[0].replace(/\/+$/, "").toLowerCase() || "/";
-  return path === "/portal" || path.startsWith("/portal/") ||
-    path === "/login" || path === "/signup" || path === "/agreement-gate" ||
-    path === "/internal" || path.startsWith("/internal/") ||
-    path === "/official-network-planner" || path === "/homepage-challenger";
+  return portalContextOf(hostname, pathname);
 }
+
 
 export function initAnalytics() {
   injectSearchVerificationTags();
@@ -233,19 +292,8 @@ export function initAnalytics() {
   updateGtagConsent(consent);
   initGoogleAnalytics(consent);
 
-  // Microsoft Clarity (analytics-gated)
-  const clarityId = import.meta.env.VITE_CLARITY_ID;
-  if (clarityId && consent.analytics && !(window as any).__CLARITY_ID__) {
-    (function (c: any, l: any, a: any, r: any, i: any) {
-      c[a] = c[a] || function () { (c[a].q = c[a].q || []).push(arguments); };
-      const t = l.createElement(r);
-      t.async = 1;
-      t.src = "https://www.clarity.ms/tag/" + i;
-      const y = l.getElementsByTagName(r)[0];
-      y.parentNode.insertBefore(t, y);
-      c.__CLARITY_ID__ = i;
-    })(window, document, "clarity", "script", clarityId);
-  }
+  // Microsoft Clarity (analytics-gated). Strict masking is set in the Clarity dashboard.
+  loadClarityIfAllowed(consent);
 
   // LinkedIn Insight Tag (marketing-gated)
   const linkedinId = import.meta.env.VITE_LINKEDIN_PARTNER_ID;
@@ -424,6 +472,7 @@ export const analytics = {
   },
 
   pageView(path: string, title: string) {
+    syncClarityRecording();
     if (skipMarketingPixels() || isPortalContext(window.location.hostname, path.split(/[?#]/)[0])) {
       (window as any)[`ga-disable-${GA_ID}`] = true;
       lastGaPagePath = undefined;
@@ -556,3 +605,15 @@ export const analytics = {
     track("off_topic_redirected", { event_category: "advisor_chat" });
   },
 };
+
+
+// DE Desk is a widget on marketing pages. Pause Clarity while it is open so
+// session replay is not captured inside the chat. Path checks in skipClarity
+// also cover checkout, store orders, and form pages.
+if (typeof window !== "undefined" && typeof window.addEventListener === "function") {
+  window.addEventListener("de-desk-open-change", ((event: Event) => {
+    const open = !!(event as CustomEvent<{ open?: boolean }>).detail?.open;
+    (window as any).__DE_DESK_OPEN__ = open;
+    syncClarityRecording();
+  }) as EventListener);
+}

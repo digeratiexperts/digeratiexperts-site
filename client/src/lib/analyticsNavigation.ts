@@ -1,10 +1,12 @@
-import { beginPageVisit, disableAnalytics, isPortalContext } from "./analytics";
-import { isPaymentPagePath } from "@shared/paymentPage";
+import { beginPageVisit, disableAnalytics } from "./analytics";
+import { skipMarketingPixels } from "@shared/trackingExclusions";
 
 let documentPortalContext: boolean | undefined;
 
+// One shared exclusion list (portal, payment pages, store): crossing it in
+// either direction needs a fresh document so SDKs never run on excluded pages.
 function isRestrictedMarketingContext(hostname: string, pathname: string): boolean {
-  return isPortalContext(hostname, pathname) || isPaymentPagePath(pathname);
+  return skipMarketingPixels(hostname, pathname);
 }
 
 /** Never render a new privacy context in a document with the old SDKs. */

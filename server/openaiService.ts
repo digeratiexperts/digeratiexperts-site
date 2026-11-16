@@ -1,9 +1,12 @@
 import OpenAI from "openai";
 import { createHash } from "crypto";
+import { assertOpenAIEnabled, guardedOpenAIFetch, openaiConfig } from "./services/openai-config";
+import { DESK_TOPIC_SCOPE_RULE } from "@shared/deskTopicScope";
 
 let openaiClient: OpenAI | null = null;
 
 export function initOpenAI(): OpenAI | null {
+  if (!openaiConfig.isEnabled()) return null;
   if (openaiClient) return openaiClient;
 
   // Prefer AI Integrations proxy when both base URL + key are set; else standard OpenAI.
@@ -20,19 +23,19 @@ export function initOpenAI(): OpenAI | null {
   try {
     openaiClient = new OpenAI(
       integrationsBase && integrationsKey
-        ? { baseURL: integrationsBase, apiKey: integrationsKey }
-        : { apiKey },
+        ? { baseURL: integrationsBase, apiKey: integrationsKey, fetch: guardedOpenAIFetch }
+        : { apiKey, fetch: guardedOpenAIFetch },
     );
     console.log("✅ OpenAI client initialized");
     return openaiClient;
   } catch (error) {
-    console.error("Failed to initialize OpenAI:", error);
+    console.error("Failed to initialize OpenAI");
     return null;
   }
 }
 
 export function getOpenAI(): OpenAI | null {
-  return openaiClient || initOpenAI();
+  return openaiConfig.isEnabled() ? openaiClient || initOpenAI() : null;
 }
 
 export async function classifyTicket(title: string, description: string): Promise<{
@@ -80,7 +83,7 @@ Respond only with valid JSON.`
     
     return JSON.parse(content);
   } catch (error) {
-    console.error("AI classification failed:", error);
+    console.error("AI classification failed");
     return {
       category: "General",
       priority: "medium",
@@ -108,7 +111,8 @@ export async function generateChatResponse(
           content: `You are a helpful IT support assistant for Digerati Experts, an MSP company. 
 You help clients with technical questions, troubleshooting, and service inquiries.
 Be professional, concise, and helpful. If you cannot resolve an issue, suggest creating a support ticket.
-For billing or account-specific questions, direct users to their account manager.`
+For billing or account-specific questions, direct users to their account manager.
+${DESK_TOPIC_SCOPE_RULE}`
         },
         ...conversationHistory.map(msg => ({
           role: msg.role as "user" | "assistant",
@@ -121,7 +125,7 @@ For billing or account-specific questions, direct users to their account manager
     
     return response.choices[0]?.message?.content || "I apologize, but I couldn't generate a response. Please try again.";
   } catch (error) {
-    console.error("AI chat failed:", error);
+    console.error("AI chat failed");
     return "I'm experiencing technical difficulties. Please try again or contact support directly.";
   }
 }
@@ -150,7 +154,7 @@ export async function summarizeTicket(
     
     return response.choices[0]?.message?.content || "Unable to generate summary.";
   } catch (error) {
-    console.error("AI summary failed:", error);
+    console.error("AI summary failed");
     return "Summary generation failed.";
   }
 }
@@ -200,11 +204,12 @@ export async function generateSpeech(
   text: string,
   voice: OpenAIVoice = "nova"
 ): Promise<Buffer> {
+  assertOpenAIEnabled();
   // Prefer a direct OpenAI key for audio.speech; some AI gateway proxies
   // only support chat completions.
   const directKey = process.env.OPENAI_API_KEY || process.env.OPENAI_API;
   const client = directKey
-    ? new OpenAI({ apiKey: directKey })
+    ? new OpenAI({ apiKey: directKey, fetch: guardedOpenAIFetch })
     : getOpenAI();
   if (!client) {
     throw new Error("OpenAI not configured");

@@ -33,6 +33,21 @@ it.each(["pushState", "replaceState"])("%s crosses to portal through a fresh doc
   expect(fullNavigation).toHaveBeenCalledWith("https://digeratiexperts.com/portal/tickets?test=1");
 });
 
+it.each(["/store", "/store/products/m365"])("public to excluded store route %s needs a fresh document", async path => {
+  const {installAnalyticsNavigationBoundary} = await import("./analyticsNavigation");
+  const original = w.history.pushState; installAnalyticsNavigationBoundary(w);
+  w.history.pushState({}, "", path);
+  expect(original).not.toHaveBeenCalled(); expect(disable).toHaveBeenCalledOnce();
+  expect(w.location.assign).toHaveBeenCalledWith("https://digeratiexperts.com" + path);
+});
+
+it("store to public also requires a new document", async () => {
+  w.location.pathname = "/store";
+  const {installAnalyticsNavigationBoundary} = await import("./analyticsNavigation");
+  installAnalyticsNavigationBoundary(w); w.history.pushState({}, "", "/solutions");
+  expect(w.location.assign).toHaveBeenCalledWith("https://digeratiexperts.com/solutions");
+});
+
 it("keeps public navigation in the SPA and starts a fresh visit for pathname changes only", async () => {
   const {installAnalyticsNavigationBoundary} = await import("./analyticsNavigation");
   installAnalyticsNavigationBoundary(w);

@@ -8,12 +8,13 @@ import { useToast } from "@/hooks/use-toast";
 import { analytics } from "@/lib/analytics";
 import { CTA } from "@/lib/ctaCopy";
 import { DE_LOGO_REVERSE } from "@/lib/brandAssets";
-import { COMPANY, COMPANY_SOCIAL, PRIMARY_PHONE, formatAddressOneLine } from "@/data/companyContact";
+import { COMPANY, COMPANY_SOCIAL, PRIMARY_PHONE, formatAddressOneLine, hasPublicPhone } from "@/data/companyContact";
 // Closing bookend (Joe 2026-08-31): the hero's Phoenix city-lights plate returns behind the contact chapter.
 import contactBgImage from "@assets/de-hero-arizona-dusk-1600.webp";
 import { CopyButton } from "./CopyButton";
 import { FieldOk, SubmitFace, submitPhase, useSentFlash } from "./SubmitFace";
 import "./16-contact-footer.css";
+import { PhoneLink } from "@/components/PhoneLink";
 
 /**
  * Section 16 (mock: artifacts/design-concepts/homepage-sections-2026-10/sections/16-contact-footer.html).
@@ -484,9 +485,9 @@ export function V7ContactFooter(): JSX.Element {
                   <path d="m12 5 7 7-7 7" />
                 </svg>
               </a>
-              <a className="v7-btn v7-btn--outline" href={PRIMARY_PHONE.telHref} data-testid="contact-cta-call">
+              <PhoneLink className="v7-btn v7-btn--outline" data-testid="contact-cta-call">
                 Call {PRIMARY_PHONE.display}
-              </a>
+              </PhoneLink>
             </div>
 
             <ul className="dir">
@@ -505,20 +506,22 @@ export function V7ContactFooter(): JSX.Element {
                   <CopyButton value={COMPANY.email} what="email address" testId="contact-email-copy" />
                 </span>
               </li>
-              <li>
-                <span className="v7-iconwell">
-                  <svg {...svgProps}>
-                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
-                  </svg>
-                </span>
-                <span className="v7-meta">Phone</span>
-                <span className="dir__copyrow">
-                  <a className="dir__value" href={PRIMARY_PHONE.telHref} data-testid="contact-phone">
-                    {PRIMARY_PHONE.display}
-                  </a>
-                  <CopyButton value={PRIMARY_PHONE.display} what="phone number" testId="contact-phone-copy" />
-                </span>
-              </li>
+              {hasPublicPhone() && (
+                <li>
+                  <span className="v7-iconwell">
+                    <svg {...svgProps}>
+                      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                    </svg>
+                  </span>
+                  <span className="v7-meta">Phone</span>
+                  <span className="dir__copyrow">
+                    <PhoneLink className="dir__value" data-testid="contact-phone">
+                      {PRIMARY_PHONE.display}
+                    </PhoneLink>
+                    <CopyButton value={PRIMARY_PHONE.display} what="phone number" testId="contact-phone-copy" />
+                  </span>
+                </li>
+              )}
               <li>
                 <span className="v7-iconwell">
                   <svg {...svgProps}>

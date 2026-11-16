@@ -9,6 +9,8 @@ import {
   sanitizePageInput,
 } from "./services/msp-advisor/portal-assist";
 import { isCardDataRejection } from "@shared/pciGuard";
+import { DESK_TOPIC_REDIRECT_REPLY, DESK_TOPIC_SCOPE_RULE } from "@shared/deskTopicScope";
+import { CRISIS_REPLY } from "@shared/deskCrisis";
 
 /**
  * The portal help chat may only propose whitelisted fields, only show the
@@ -92,3 +94,25 @@ describe("portal assist PCI card guard", () => {
   });
 });
 
+describe("portal assist topic scope", () => {
+  it("keeps the scope rule in the static prefix", () => {
+    expect(DESK_TOPIC_SCOPE_RULE).toMatch(/Digerati Experts/);
+  });
+
+  it("returns the fixed redirect for companion-style chat and still answers IT questions", async () => {
+    const off = await handlePortalAssistChat({ ...input, message: "Tell me a joke" }, TODAY);
+    expect(off.reply).toBe(DESK_TOPIC_REDIRECT_REPLY);
+    expect(off.actions).toEqual([]);
+
+    const on = await handlePortalAssistChat({ ...input, message: "Can you help with MFA for our Microsoft 365?" }, TODAY);
+    expect(on.reply).not.toBe(DESK_TOPIC_REDIRECT_REPLY);
+  });
+});
+
+describe("portal assist crisis before topic scope", () => {
+  it("gives the crisis reply for lonely-and-crisis wording", async () => {
+    const res = await handlePortalAssistChat({ ...input, message: "I'm lonely and want to die" }, TODAY);
+    expect(res.reply).toBe(CRISIS_REPLY);
+    expect(res.reply).not.toBe(DESK_TOPIC_REDIRECT_REPLY);
+  });
+});

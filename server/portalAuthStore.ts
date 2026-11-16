@@ -12,7 +12,7 @@ import {
   externalIntegrationMappings,
 } from "@shared/schema";
 import { selectBackfillUpdates } from "./integrations/backfillHubIdentity";
-import { PRIMARY_PHONE } from "@shared/companyContact";
+import { PRIMARY_PHONE, hasPublicPhone } from "@shared/companyContact";
 import { decryptTotpSecret, encryptTotpSecret, prepareBackupCodesForStorage } from "./portalMfaCrypto";
 import type { StoredPasskey } from "./portalPasskeys";
 
@@ -405,7 +405,7 @@ function seedDemoIfNotProduction() {
     id: "msp-digerati",
     companyName: "Digerati Experts (Internal)",
     contactEmail: "admin@digeratiexperts.com",
-    contactPhone: PRIMARY_PHONE.display,
+    contactPhone: hasPublicPhone() ? PRIMARY_PHONE.display : "",
     industry: "MSP/MSSP",
     primaryContact: "Digerati Admin",
     status: "active",
@@ -653,7 +653,7 @@ export function ensureInternalMspClient(): PortalAuthClient {
     id: INTERNAL_MSP_ID,
     companyName: "Digerati Experts",
     contactEmail: "admin@digeratiexperts.com",
-    contactPhone: PRIMARY_PHONE.display,
+    contactPhone: hasPublicPhone() ? PRIMARY_PHONE.display : "",
     industry: "MSP/MSSP",
     primaryContact: "Digerati Admin",
     status: "active",

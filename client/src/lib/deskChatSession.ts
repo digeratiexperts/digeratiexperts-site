@@ -8,6 +8,7 @@
  * are ignored: the Desk simply starts fresh.
  */
 
+import { CRISIS_HISTORY_PLACEHOLDER, isCrisisMessage } from "@shared/deskCrisis";
 import { looksLikeCardData } from "@shared/pciGuard";
 import { sanitizeDeskActions, type DeskAction } from "./deskActions";
 
@@ -54,6 +55,12 @@ function isMessage(value: unknown): value is DeskStoredMessage {
   );
 }
 
+function redactCrisisMessage(message: DeskStoredMessage): DeskStoredMessage {
+  return message.role === "user" && isCrisisMessage(message.content)
+    ? { ...message, content: CRISIS_HISTORY_PLACEHOLDER }
+    : message;
+}
+
 /** The stored conversation, or null when there is none, it expired, or it does not parse. */
 export function readDeskChat(now = Date.now()): DeskStoredChat | null {
   const store = storage();
@@ -66,18 +73,27 @@ export function readDeskChat(now = Date.now()): DeskStoredChat | null {
       store.removeItem(DESK_CHAT_STORAGE_KEY);
       return null;
     }
-    const messages = (Array.isArray(parsed.messages) ? parsed.messages.filter(isMessage) : []).map((m) => {
+    const validMessages = Array.isArray(parsed.messages) ? parsed.messages.filter(isMessage) : [];
+    const containsCrisis = validMessages.some((m) => m.role === "user" && isCrisisMessage(m.content));
+    const messages = validMessages.map(redactCrisisMessage).map((m) => {
       const actions = sanitizeDeskActions((m as { actions?: unknown }).actions);
       const { actions: _dropped, ...rest } = m as DeskStoredMessage;
       return actions.length ? { ...rest, actions } : rest;
     }).filter((m) => !looksLikeCardData(m.content));
     // Nothing worth restoring unless the visitor actually said something.
     if (!messages.some((m) => m.role === "user")) return null;
-    return {
+    const chat: DeskStoredChat = {
       sessionId: typeof parsed.sessionId === "string" && parsed.sessionId ? parsed.sessionId : null,
       messages,
       savedAt: parsed.savedAt,
     };
+    if (containsCrisis) {
+      // Remove first so quota/write failures cannot leave the legacy text behind.
+      // Keep savedAt: restoring a tab must not extend the conversation's TTL.
+      store.removeItem(DESK_CHAT_STORAGE_KEY);
+      store.setItem(DESK_CHAT_STORAGE_KEY, JSON.stringify(chat));
+    }
+    return chat;
   } catch {
     return null;
   }
@@ -90,7 +106,7 @@ export function writeDeskChat(sessionId: string | null, messages: DeskStoredMess
   if (!messages.some((m) => m.role === "user")) return;
   const withoutCards = messages.filter((m) => !looksLikeCardData(m.content));
   if (!withoutCards.some((m) => m.role === "user")) return;
-  const kept = withoutCards.slice(-DESK_CHAT_MAX_MESSAGES).map(({ id, role, content, senderName, createdAt, actions }) => ({
+  const kept = withoutCards.slice(-DESK_CHAT_MAX_MESSAGES).map(redactCrisisMessage).map(({ id, role, content, senderName, createdAt, actions }) => ({
     id,
     role,
     content,
@@ -123,7 +139,7 @@ export function ticketDraftFromChat(messages: DeskStoredMessage[]): { subject: s
   const said = messages
     .filter((m) => m.role === "user")
     .map((m) => m.content.replace(/\s+/g, " ").trim())
-    .filter((line) => line && !looksLikeCardData(line));
+    .filter((line) => line && !looksLikeCardData(line) && !isCrisisMessage(line) && line !== CRISIS_HISTORY_PLACEHOLDER);
   if (!said.length) return null;
   const first = said[0];
   const subject = first.length > 80 ? `${first.slice(0, 77).trimEnd()}…` : first;

@@ -4,6 +4,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { saveConsent } from "@/lib/analytics";
 import { isStorePath } from "@/lib/storeChromeGestures";
 import { cn } from "@/lib/utils";
+import { clientSignalsGpc } from "@shared/gpc";
 
 const LEGACY_KEY = "de_cookie_consent";
 const CONSENT_KEY = "de_cookie_consent_v2";
@@ -37,6 +38,15 @@ export function CookieConsentBanner() {
   const [showPreferences, setShowPreferences] = useState(false);
   const [analyticsEnabled, setAnalyticsEnabled] = useState(true);
   const [marketingEnabled, setMarketingEnabled] = useState(true);
+  const [gpcOptOut, setGpcOptOut] = useState(false);
+
+  useEffect(() => {
+    try {
+      const on = clientSignalsGpc((navigator as any).globalPrivacyControl, document.cookie);
+      setGpcOptOut(on);
+      if (on) setMarketingEnabled(false);
+    } catch {}
+  }, []);
   const [deskOpen, setDeskOpen] = useState(false);
   const bannerRef = useRef<HTMLDivElement>(null);
 
@@ -50,11 +60,15 @@ export function CookieConsentBanner() {
   useEffect(() => {
     const openPreferences = () => {
       try {
+        const gpc = clientSignalsGpc((navigator as any).globalPrivacyControl, document.cookie);
+        setGpcOptOut(gpc);
         const stored = localStorage.getItem(CONSENT_KEY);
         if (stored) {
           const parsed = JSON.parse(stored);
           setAnalyticsEnabled(parsed?.analytics === true);
-          setMarketingEnabled(parsed?.marketing === true);
+          setMarketingEnabled(gpc ? false : parsed?.marketing === true);
+        } else if (gpc) {
+          setMarketingEnabled(false);
         }
       } catch {}
       setVisible(true);
@@ -100,7 +114,7 @@ export function CookieConsentBanner() {
   };
 
   const accept = () => {
-    saveConsent({ analytics: true, marketing: true });
+    saveConsent({ analytics: true, marketing: gpcOptOut ? false : true });
     finishConsent();
   };
 
@@ -110,7 +124,7 @@ export function CookieConsentBanner() {
   };
 
   const savePreferences = () => {
-    saveConsent({ analytics: analyticsEnabled, marketing: marketingEnabled });
+    saveConsent({ analytics: analyticsEnabled, marketing: gpcOptOut ? false : marketingEnabled });
     finishConsent();
   };
 
@@ -160,6 +174,11 @@ export function CookieConsentBanner() {
               <p className={cn("mb-5 text-base leading-relaxed", light ? "text-slate-600" : "text-gray-300")}>
                 Choose which cookies you allow. Strictly necessary cookies are always enabled.
               </p>
+              {gpcOptOut && (
+                <p className={cn("mb-5 text-sm leading-relaxed", light ? "text-slate-600" : "text-gray-300")} data-testid="cookie-gpc-banner-notice">
+                  Your browser sent a Global Privacy Control signal, so advertising technologies stay off.
+                </p>
+              )}
 
               <div className="space-y-4">
                 <div
@@ -221,22 +240,28 @@ export function CookieConsentBanner() {
                 >
                   <div>
                     <p className={cn("text-base font-medium", light ? "text-slate-900" : "text-white")}>
-                      Marketing Cookies
+                      Sharing / targeted advertising
                     </p>
                     <p className={cn("mt-0.5 text-base", light ? "text-slate-500" : "text-gray-400")}>
-                      Used to deliver relevant ads and track campaign effectiveness.
+                      Used for sharing or targeted advertising, including Meta, LinkedIn, and Bing.
                     </p>
+                    {gpcOptOut && (
+                      <p className={cn("mt-2 text-sm", light ? "text-slate-600" : "text-gray-300")} data-testid="cookie-gpc-notice">
+                        Your browser sent a Global Privacy Control signal, so advertising technologies stay off.
+                      </p>
+                    )}
                   </div>
                   <div
                     role="switch"
-                    aria-checked={marketingEnabled}
-                    onClick={() => setMarketingEnabled(v => !v)}
-                    className={`relative mt-1 h-5 w-10 flex-shrink-0 cursor-pointer rounded-full transition-colors ${
-                      marketingEnabled ? "bg-[#D3126A]" : light ? "bg-slate-300" : "bg-white/20"
-                    }`}
+                    aria-checked={marketingEnabled && !gpcOptOut}
+                    aria-disabled={gpcOptOut || undefined}
+                    onClick={() => { if (!gpcOptOut) setMarketingEnabled(v => !v); }}
+                    className={`relative mt-1 h-5 w-10 flex-shrink-0 rounded-full transition-colors ${
+                      gpcOptOut ? "cursor-not-allowed opacity-60 " : "cursor-pointer "
+                    }${marketingEnabled && !gpcOptOut ? "bg-[#D3126A]" : light ? "bg-slate-300" : "bg-white/20"}`}
                     data-testid="toggle-marketing"
                   >
-                    <span className={`absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white transition-transform ${marketingEnabled ? "translate-x-5" : "translate-x-0"}`} />
+                    <span className={`absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white transition-transform ${marketingEnabled && !gpcOptOut ? "translate-x-5" : "translate-x-0"}`} />
                   </div>
                 </label>
               </div>
@@ -271,7 +296,7 @@ export function CookieConsentBanner() {
             animate={{ y: 0 }}
             exit={reduceMotion ? { opacity: 0 } : { y: "100%" }}
             transition={{ duration: reduceMotion ? 0 : 0.4, ease: "easeOut" }}
-            className={`fixed z-[9991] de-fixed-in-canvas bottom-0${
+            className={`de-cookie-banner fixed z-[9991] de-fixed-in-canvas bottom-0${
               deskOpen ? " invisible pointer-events-none" : ""
             }`}
             data-testid="cookie-consent-banner"

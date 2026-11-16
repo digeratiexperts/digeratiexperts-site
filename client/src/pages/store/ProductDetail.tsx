@@ -54,6 +54,7 @@ import { getSolutionChips, recommendationWhy } from "@/lib/storeSolutionIntellig
 import { computeSolutionSnapshot } from "@shared/storeCommerce";
 import { formatSnapshotMoney } from "@/lib/solutionSnapshotView";
 import { cn } from "@/lib/utils";
+import { PhoneLink } from "@/components/PhoneLink";
 
 const ProductDetail = () => {
   const { sku } = useParams<{ sku: string }>();
@@ -405,14 +406,13 @@ const ProductDetail = () => {
                       <ExternalLink className="ml-2 h-4 w-4" />
                   </a>
                 </Button>
-                  <a
-                    href={PRIMARY_PHONE.telHref}
+                  <PhoneLink
                     className="flex h-12 w-full items-center justify-center gap-2 rounded-md border border-white/15 text-white/80 transition-colors hover:bg-white/5 hover:text-white"
                     data-testid="button-call-product"
                   >
                     <Phone className="h-5 w-5" />
                     Call {PRIMARY_PHONE.display}
-                  </a>
+                  </PhoneLink>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -517,14 +517,13 @@ const ProductDetail = () => {
                   )}
 
                   <div className="grid gap-2 sm:grid-cols-2">
-                    <a
-                      href={PRIMARY_PHONE.telHref}
+                    <PhoneLink
                       className="flex h-11 items-center justify-center gap-2 rounded-md border border-white/15 text-sm text-white/75 transition-colors hover:bg-white/5 hover:text-white"
                       data-testid="button-call-product"
                     >
                       <Phone className="h-4 w-4" />
                       {PRIMARY_PHONE.display}
-                    </a>
+                    </PhoneLink>
                     <a
                       href="/book"
                       target="_blank"
