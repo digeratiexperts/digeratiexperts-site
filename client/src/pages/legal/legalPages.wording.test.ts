@@ -70,4 +70,10 @@ describe("published legal wording", () => {
     expect(plain).toContain("{{CHAT_RETENTION}}");
     expect(plain).toContain("We honor Global Privacy Control (GPC) browser signals");
   });
+
+  it("sends Acceptable Use Policy abuse reports to security@", () => {
+    const aup = load("P-07-acceptable-use-policy.md");
+    expect(aup).toMatch(/Report abuse of DE services to security@digeratiexperts.com/);
+    expect(aup).not.toMatch(/Report abuse of DE services to admin@/);
+  });
 });
