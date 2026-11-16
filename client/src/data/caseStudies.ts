@@ -56,7 +56,7 @@ export const sampleCaseStudyShells: CaseStudy[] = [
       "[Pending] Incident response, immutable backups, EDR, privileged access, and awareness training.",
     outcome:
       "[Pending] Publish restore-time and continuity outcomes only with written client approval.",
-    stack: ["EDR", "Immutable backup", "SOC monitoring", "Privileged access"],
+    stack: ["EDR", "Immutable backup", "Security alert monitoring", "Privileged access"],
   },
   {
     slug: "accounting-insurance-controls",
