@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { OrderLineInput, PostalAddress, TaxQuoteResponse } from "@shared/deStoreContract";
 import { DE_STORE_PLACE_ORDER_BUTTON } from "@shared/deStoreContract";
 import { blockedStateMessage } from "@shared/deStoreLegalCopy";
@@ -433,6 +433,16 @@ function autoRenewConsent(priceCents = 10000) {
 }
 
 describe("auto-renew gated store checkout", () => {
+  const frozenNow = Date.parse("2026-11-13T18:00:10Z");
+
+  beforeEach(() => {
+    vi.spyOn(Date, "now").mockReturnValue(frozenNow);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it("does not capture payment when the auto-renew contract is off", async () => {
     const { deps: checkoutDeps, capturePayment, stub } = deps();
     const result = await placeStoreOrder(
