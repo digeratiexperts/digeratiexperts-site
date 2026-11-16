@@ -2277,3 +2277,24 @@ button, [role="button"], a {
     height: clamp(170px, 52vw, 260px);
   }
 }
+
+/* Scratch-card offer */
+.de-scratch-sheen {
+  background: linear-gradient(115deg, transparent 35%, rgba(255, 255, 255, 0.55) 48%, transparent 60%);
+  background-size: 250% 100%;
+  mix-blend-mode: soft-light;
+  animation: de-scratch-sheen 3.2s ease-in-out infinite;
+}
+@keyframes de-scratch-sheen {
+  0% { background-position: 120% 0; }
+  60%, 100% { background-position: -120% 0; }
+}
+.de-scratch-float { animation: de-scratch-float 4.5s ease-in-out infinite; }
+.de-scratch-float-late { animation-delay: -2.2s; }
+@keyframes de-scratch-float {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .de-scratch-sheen, .de-scratch-float { animation: none; }
+}
