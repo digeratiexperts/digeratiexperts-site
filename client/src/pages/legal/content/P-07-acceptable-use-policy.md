@@ -36,4 +36,4 @@ If you violate this AUP, DE may remove content, block traffic, suspend the affec
 
 ## 6. Reporting abuse
 
-Report abuse of DE services to admin@digeratiexperts.com with "Abuse" in the subject. Report security vulnerabilities in DE's own systems under our Vulnerability Disclosure Policy.
+Report abuse of DE services to security@digeratiexperts.com with "Abuse" in the subject. Report security vulnerabilities in DE's own systems under our Vulnerability Disclosure Policy.
