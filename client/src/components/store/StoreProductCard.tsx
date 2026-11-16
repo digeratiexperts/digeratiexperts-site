@@ -19,6 +19,7 @@ import {
   isConfigurableProduct,
 } from "@/data/storeMerchandising";
 import { getProductVisual } from "@/data/productImages";
+import { isGcchStoreItem } from "@shared/gcchPricingHold";
 import { ProductMedia } from "@/components/store/ProductMedia";
 import { useCart } from "@/contexts/CartContext";
 import { getSolutionChips } from "@/lib/storeSolutionIntelligence";
@@ -84,7 +85,7 @@ export function StoreProductCard({
 }: StoreProductCardProps) {
   const accent = categoryAccent[product.category];
   const includedHint = getIncludedInHint(product.sku);
-  const isContract = product.isContractOnly || !product.isCheckoutEnabled;
+  const isContract = isGcchStoreItem(product) || product.isContractOnly || !product.isCheckoutEnabled;
   const configurable = isConfigurableProduct(product) && !!onConfigure;
   const tags = getProductTags(product);
   const relationships = getProductRelationships(product.sku);

@@ -11,6 +11,7 @@ import {
 import { paymentRateLimiter } from "./middleware/rateLimiter";
 import type { TaxableLine } from "./services/salesTax";
 import { autoRenewConsentRequiredSkus } from "@shared/autoRenewContract";
+import { GCCH_CHECKOUT_BLOCKED_MESSAGE, isGcchStoreItem } from "@shared/gcchPricingHold";
 import { isAutoRenewContractEnabled } from "./config/autoRenewContract";
 
 type StoreRole = "public" | "prospect" | "managed" | "comanaged" | "admin";
@@ -176,12 +177,18 @@ export function canonicalizeCheckoutLineItems(
     if (!productId || !sku) {
       throw new Error("Every line item must include productId and sku");
     }
+    if (isGcchStoreItem({ sku, name: stringValue(item.name, 200), id: productId })) {
+      throw new Error(GCCH_CHECKOUT_BLOCKED_MESSAGE);
+    }
 
     const product = storeProducts.find((candidate) => candidate.id === productId);
     if (!product || product.sku !== sku) {
       throw new Error(`Unknown or mismatched store product: ${sku || productId}`);
     }
-    if (!isPurchasableForRole(product, role)) {
+    if (isGcchStoreItem(product) || !isPurchasableForRole(product, role)) {
+      if (isGcchStoreItem(product)) {
+        throw new Error(GCCH_CHECKOUT_BLOCKED_MESSAGE);
+      }
       throw new Error(`Product is not eligible for online checkout: ${product.sku}`);
     }
 

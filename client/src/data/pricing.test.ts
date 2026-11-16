@@ -8,6 +8,7 @@ import {
   formatUserPrice,
   getPricingFooterText,
 } from "./pricing";
+import { isGcchOfferingText } from "@shared/gcchPricingHold";
 
 describe("canonical ProActive pricing (TechSales-aligned)", () => {
   it("matches Intelligence-Hub CANONICAL_TIERS public floors", () => {
@@ -27,6 +28,14 @@ describe("canonical ProActive pricing (TechSales-aligned)", () => {
       "business",
       "enterprise",
     ]);
+  });
+
+  it("does not publish a dollar price for GCC High offerings", () => {
+    for (const tier of [...pricingTiers, ...Object.values(pricing)]) {
+      const text = [tier.id, tier.name, tier.label, tier.fullName].join(" ");
+      if (!isGcchOfferingText(text)) continue;
+      throw new Error(`GCC High pricing is on hold and must not appear in pricing.ts: ${text}`);
+    }
   });
 
   it("does not rank packages with a recommended flag", () => {

@@ -23,6 +23,16 @@ describe("public Store catalog", () => {
     );
   });
 
+  it("does not offer GCC High SKUs for checkout", () => {
+    const gcch = storeCatalogProducts.filter((product) =>
+      /gcch|gcc[-_\s]?high/i.test(`${product.sku} ${product.name} ${product.id}`),
+    );
+    for (const product of gcch) {
+      expect(product.isCheckoutEnabled).toBe(false);
+      expect(product.isContractOnly).toBe(true);
+    }
+  });
+
   it("keeps managed tiers contract-only and non-checkout", () => {
     const proactive = storeCatalogProducts.filter((product) =>
       product.name.startsWith("ProActive Ecosystem"),

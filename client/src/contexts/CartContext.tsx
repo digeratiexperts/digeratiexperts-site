@@ -11,6 +11,7 @@ import {
 import type { StoreProduct, PricingType } from "@/data/storeProducts";
 import { storeProducts } from "@/data/storeProducts";
 import { computeSolutionSnapshot, type SolutionSnapshot, type SolutionTotals } from "@shared/storeCommerce";
+import { isGcchStoreItem } from "@shared/gcchPricingHold";
 import { analytics } from "@/lib/analytics";
 
 export interface CartItem {
@@ -357,7 +358,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   );
 
   const addToCart = useCallback((product: StoreProduct, quantity: number = 1, clientPrice?: number) => {
-    if (product.isContractOnly || !product.isCheckoutEnabled) return;
+    if (isGcchStoreItem(product) || product.isContractOnly || !product.isCheckoutEnabled) return;
 
     const pricing = clientPricingMap.get(product.id);
     const effectiveClientPrice = clientPrice ?? pricing?.customPrice;
