@@ -25,7 +25,9 @@ import { registerWarehouseGates } from "./warehouseRoutes";
 import { registerPortalMarketplaceRoutes } from "./portalMarketplaceRoutes";
 import { registerPublicSupportChat } from "./publicSupportChat";
 import { isKnownSpaPath } from "./spaKnownPaths";
-import { applyRouteMeta, readIndexShell, routeMetaFor } from "./routeMeta";
+import { applyOrganizationSchema, applyRouteMeta, readIndexShell, routeMetaFor } from "./routeMeta";
+import { marketingRedirectFor } from "./marketingRedirects";
+import { applyPrerender, prerenderFor } from "./prerender";
 import { cacheControlFor } from "./staticCacheControl";
 import { deskTicketSpoolDir, quoteSpoolDir, spoolDir, spoolPendingCount, spoolWritable } from "./publicSolutionSpool";
 import { registerCampaignAliasRedirects } from "./campaignAliasRedirects";
@@ -46,6 +48,7 @@ import { setupCrossServiceHandlers } from "./crossServiceHandler";
 import { eventBus, EventTypes } from "./eventBus";
 import { revocationLoadState } from "./portalSessionRevocation";
 import { requestTelemetry } from "./requestTelemetry";
+import { GPC_COOKIE, GPC_HEADER, headerSignalsGpc } from "@shared/gpc";
 import { releaseIdentity } from "./releaseIdentity";
 
 process.on('unhandledRejection', (reason, promise) => {
@@ -435,9 +438,22 @@ app.use("/api/portal", (_req, res, next) => {
   next();
 });
 app.use(express.json());
+
+app.use((_req, res, next) => {
+  res.set("Supports-GPC", "1");
+  next();
+});
 app.use(express.urlencoded({ extended: false }));
 registerCspReportRoute(app);
 app.use(cookieParser());
+app.use((req, res, next) => {
+  if (headerSignalsGpc(req.get(GPC_HEADER))) {
+    res.cookie(GPC_COOKIE, "1", { sameSite: "lax", path: "/", httpOnly: false });
+  } else if (req.cookies?.[GPC_COOKIE]) {
+    res.clearCookie(GPC_COOKIE, { path: "/" });
+  }
+  next();
+});
 
 registerWarehouseGates(app);
 registerSecureZohoStoreCheckout(app, authMiddleware as any, requireRole as any);
@@ -452,6 +468,11 @@ app.use((req, res, next) => {
   }
   if (req.path === "/about/mission") {
     return res.redirect(301, "/about/mission-values");
+  }
+  const marketingTarget = marketingRedirectFor(req.path);
+  if (marketingTarget) {
+    const q = req.originalUrl.indexOf("?");
+    return res.redirect(301, q === -1 ? marketingTarget : marketingTarget + req.originalUrl.slice(q));
   }
   // Version 8 became the homepage (Joe, 2026-10-03); its preview URL folds into /.
   if (req.path === "/version-8" || req.path === "/version-8/") {
@@ -637,6 +658,8 @@ function listEndpoints(): Array<{ method: string; path: string }> {
   } else {
     const distPath = path.resolve(process.cwd(), "dist/public");
     const indexPath = path.join(distPath, "index.html");
+    // Written by scripts/prerender/prerender.mjs after the build; outside dist/public so it is never served raw.
+    const prerenderDir = path.resolve(process.cwd(), "dist/prerender");
     
     app.use(express.static(distPath, {
       // "/" must reach the catch-all below like every other route, so it gets its own head tags (server/routeMeta.ts).
@@ -657,10 +680,14 @@ function listEndpoints(): Array<{ method: string; path: string }> {
       // The shell is HTML: never stored (staticCacheControl), revalidated against the build's mtime.
       res.setHeader("Cache-Control", cacheControlFor("index.html"));
       res.setHeader("Last-Modified", shell.lastModified);
-      let html = found ? applyRouteMeta(shell.html, routeMetaFor(req.path)) : shell.html;
+      let html = found ? applyOrganizationSchema(applyRouteMeta(shell.html, routeMetaFor(req.path))) : shell.html;
       if (isPaymentPagePath(req.path)) {
+        // Payment pages keep the security nonce treatment and are never prerendered.
         const nonce = (res as express.Response & { locals?: { cspNonce?: string } }).locals?.cspNonce;
         html = preparePaymentPageHtml(html, nonce);
+      } else if (found) {
+        // Found public pages also carry their build-time prerendered body (server/prerender.ts).
+        html = applyPrerender(html, prerenderFor(prerenderDir, req.path));
       }
       res.type("html").send(html);
     };

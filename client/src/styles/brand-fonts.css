@@ -3,10 +3,7 @@
  *
  * Self-host is the PRIMARY source: the site renders in the correct brand
  * typefaces with zero third-party dependency, so it never falls back to a
- * system serif in a locked-down network, a blocked region (GDPR), CI, or a
- * server-side PDF/OG renderer. The Google Fonts <link> in index.html stays as
- * PROGRESSIVE ENHANCEMENT only — it adds extra weights/subsets when reachable,
- * loads async, and is never required for a correct first paint.
+ * system serif in a locked-down network, a blocked region (GDPR), or CI.
  *
  * Files: client/public/fonts/*.woff2 (latin variable subsets), served at
  * /fonts/. The same files back the PDF renderer so documents match the site.

@@ -143,7 +143,7 @@ export function HomeMesh(): JSX.Element {
       <WebSiteJsonLd />
       <MegaMenu />
       <SiteBottomBar autohide />
-      <main id="home-main" className="contents">
+      <main id="main-content" tabIndex={-1} className="contents">
         {/* The pill reads the concept's tokens from this wrapper; display: contents keeps it out of layout. */}
         <div className="hc v8 hm-chrome" data-theme={theme}>
           <nav className={`hc-nav${closing ? " is-closing" : ""}`} aria-label="Sections">

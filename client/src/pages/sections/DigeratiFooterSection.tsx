@@ -1,4 +1,5 @@
 import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PhoneLink } from "@/components/PhoneLink";
 export const DigeratiFooterSection = (): JSX.Element => {
   return (
     <footer className="bg-de-bg text-white py-12">
@@ -41,7 +42,7 @@ export const DigeratiFooterSection = (): JSX.Element => {
           <div>
             <h4 className="text-lg font-semibold mb-4">Resources</h4>
             <ul className="space-y-2">
-              <li><a href="/resources/blog" className="text-gray-400 hover:text-white transition-colors">Digerati Journal</a></li>
+              <li><a href="/resources/blog" className="text-gray-400 hover:text-white transition-colors">DE Journal</a></li>
               <li><a href="/resources/security-updates" className="text-gray-400 hover:text-white transition-colors">Threat Intelligence</a></li>
               <li><a href="/resources/case-studies" className="text-gray-400 hover:text-white transition-colors">Case Studies</a></li>
               <li><a href="/legal/privacy-policy" className="text-gray-400 hover:text-white transition-colors">Privacy Policy</a></li>
@@ -57,9 +58,9 @@ export const DigeratiFooterSection = (): JSX.Element => {
             </p>
             <div className="mt-4 md:mt-0 flex items-center space-x-4">
               <span className="text-gray-400">24/7 Emergency:</span>
-              <a href={PRIMARY_PHONE.telHref} className="text-de-accent-ink font-semibold hover:text-white">
+              <PhoneLink className="text-de-accent-ink font-semibold hover:text-white">
                 {PRIMARY_PHONE.display}
-              </a>
+              </PhoneLink>
             </div>
           </div>
         </div>

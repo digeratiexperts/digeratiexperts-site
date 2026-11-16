@@ -145,6 +145,22 @@ export function portalLoginErrorRedirect(code: string, message?: string): string
   return `/portal/login?${params.toString()}`;
 }
 
+/** Sends a Zoho sign-in that still owes a second factor to the portal's code step. */
+export function portalMfaChallengeRedirect(opts: {
+  mfaToken: string;
+  mfaMethod: string;
+  passkeyAvailable: boolean;
+  returnTo?: string | null;
+}): string {
+  const params = new URLSearchParams({
+    mfaToken: opts.mfaToken,
+    mfaMethod: opts.mfaMethod,
+  });
+  if (opts.passkeyAvailable) params.set("passkey", "1");
+  if (opts.returnTo) params.set("returnTo", opts.returnTo);
+  return `/portal/login?${params.toString()}`;
+}
+
 export function buildZohoAuthorizeUrl(opts: {
   state: string;
   codeChallenge: string;

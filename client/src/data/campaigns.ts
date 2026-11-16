@@ -194,7 +194,7 @@ export const CAMPAIGNS: CampaignPage[] = [
       "Published floors from the canonical ProActive catalog. Scope is confirmed after assessment.",
     relatedAssetSlug: "proactive-ecosystem-overview",
     relatedBriefSlug: "proactive-operating-brief",
-    deeperHref: "/proactive-ecosystem-pricing",
+    deeperHref: "/pricing",
     deeperLabel: "See Plans & Pricing",
   },
   {

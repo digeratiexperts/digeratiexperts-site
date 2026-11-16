@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { PRIMARY_PHONE } from "@/data/companyContact";
 import { revealInitial, revealInView, revealTransition, revealViewport } from "@/lib/animations";
 import { Link } from "wouter";
+import { PhoneLink } from "@/components/PhoneLink";
 
 const features = [
   {
@@ -115,10 +116,10 @@ export const DigeratiAlertBanner = (): JSX.Element => {
                   className="h-12 rounded-lg border border-[var(--de-paper-hairline)] bg-white px-7 text-base font-semibold text-[#1A1228] shadow-none hover:border-[#D3126A] hover:bg-white hover:text-[#A30E52]"
                   data-testid="button-call-banner"
                 >
-                  <a href={PRIMARY_PHONE.telHref}>
+                  <PhoneLink>
                     <Phone className="mr-2 h-5 w-5" />
                     Call {PRIMARY_PHONE.display}
-                  </a>
+                  </PhoneLink>
                 </Button>
               </div>
             </motion.div>

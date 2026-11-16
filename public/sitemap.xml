@@ -37,6 +37,8 @@
   <url><loc>https://digeratiexperts.com/locations/gilbert-az</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
   <url><loc>https://digeratiexperts.com/locations/tempe-az</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
   <url><loc>https://digeratiexperts.com/locations/scottsdale-az</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://digeratiexperts.com/help-desk</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://digeratiexperts.com/solutions/switching-it-providers</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
   <url><loc>https://digeratiexperts.com/resources/case-studies</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
   <url><loc>https://digeratiexperts.com/resources/blog</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
   <url><loc>https://digeratiexperts.com/resources/cyber-facts</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>

@@ -83,7 +83,7 @@ export default function HomepageV10(): JSX.Element {
       <div className="v10 min-h-screen bg-[#050312]" ref={rootRef}>
         <MegaMenu />
         <SiteBottomBar autohide />
-        <main id="home-main" className="contents">
+        <main id="main-content" tabIndex={-1} className="contents">
           <ScrollSectionAuto id="hero" chapter>
             <div className="v10s-01"><V10Hero /></div>
             <div className="v10s-02"><V10WhyWeExist /></div>

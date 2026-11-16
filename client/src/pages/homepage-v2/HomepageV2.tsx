@@ -44,7 +44,7 @@ export default function HomepageV2(): JSX.Element {
       <MegaMenu />
       <SiteBottomBar autohide />
       <div className="hv2">
-        <main id="home-main">
+        <main id="main-content" tabIndex={-1}>
           <HeroSection />
           <PillarsStrip />
           <WhySection />

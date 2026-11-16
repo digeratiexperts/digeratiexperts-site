@@ -2,7 +2,7 @@ import { Linkedin, Instagram, CheckCircle, Send, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
-import { COMPANY, COMPANY_SOCIAL, PRIMARY_PHONE } from "@/data/companyContact";
+import { COMPANY, COMPANY_SOCIAL, PRIMARY_PHONE, hasPublicPhone } from "@/data/companyContact";
 import { CTA } from "@/lib/ctaCopy";
 import { BookingLink } from "@/components/BookingButton";
 import { DE_LOGO_REVERSE } from '@/lib/brandAssets';
@@ -36,7 +36,7 @@ const serviceLinks = [
 ];
 
 const resourceLinks = [
-  { name: "Digerati Journal", href: "/resources/blog" },
+  { name: "DE Journal", href: "/resources/blog" },
   { name: "Cyber Facts", href: "/resources/cyber-facts" },
   { name: "Knowledge Base", href: "/support/knowledge-base" },
   { name: "Contact", href: "/contact" },
@@ -154,12 +154,14 @@ export const DigeratiEnhancedFooterSection = ({
             {/* Phone and email on every page's footer (Joe, 2026-10-14), read from the one
                 NAP source so a number change never misses the footer. City only, no street (PR 532). */}
             <address className="mt-3 space-y-2 not-italic">
-              <p>
-                <FooterLink href={PRIMARY_PHONE.telHref} testId="footer-phone">
-                  <span className="sr-only">Call </span>
-                  {PRIMARY_PHONE.display}
-                </FooterLink>
-              </p>
+              {hasPublicPhone() && (
+                <p>
+                  <FooterLink href={PRIMARY_PHONE.telHref} testId="footer-phone">
+                    <span className="sr-only">Call </span>
+                    {PRIMARY_PHONE.display}
+                  </FooterLink>
+                </p>
+              )}
               <p>
                 <FooterLink href={`mailto:${COMPANY.email}`} testId="footer-email">
                   <span className="sr-only">Email </span>
@@ -295,6 +297,15 @@ export const DigeratiEnhancedFooterSection = ({
             >
               Security
             </a>
+            <span aria-hidden="true"> · </span>
+            <button
+              type="button"
+              className="transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--de-bg)]"
+              data-testid="footer-cookie-preferences"
+              onClick={() => window.dispatchEvent(new CustomEvent("de-open-cookie-preferences"))}
+            >
+              Cookie preferences
+            </button>
           </p>
         </div>
       </div>
