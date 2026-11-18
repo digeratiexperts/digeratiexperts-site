@@ -136,7 +136,7 @@
         "Visible focus ring is part of the variant; do not remove it."
       ],
       "adoption": {
-        "files": 146,
+        "files": 147,
         "sample": [
           "client/src/components/BlogAudioPlayer.tsx",
           "client/src/components/ConversionPathBar.tsx",
@@ -166,13 +166,13 @@
         "Do not rely on colour alone to carry meaning; the text must say it."
       ],
       "adoption": {
-        "files": 17,
+        "files": 18,
         "sample": [
+          "client/src/pages/DesignSystem.tsx",
           "client/src/pages/EcosystemMatrixOfficial.tsx",
           "client/src/pages/resources/Blog.tsx",
           "client/src/pages/resources/BlogPost.tsx",
-          "client/src/pages/resources/CaseStudies.tsx",
-          "client/src/pages/resources/CaseStudyDetail.tsx"
+          "client/src/pages/resources/CaseStudies.tsx"
         ]
       }
     },
@@ -224,13 +224,13 @@
         "Decorative by default; give the adjacent text the meaning."
       ],
       "adoption": {
-        "files": 40,
+        "files": 41,
         "sample": [
           "client/src/components/quote/QuizTile.tsx",
           "client/src/components/site/IndustriesServiceBlocks.tsx",
           "client/src/components/site/chapters.tsx",
-          "client/src/pages/about/ClientBillOfRights.tsx",
-          "client/src/pages/about/ComplianceCertifications.tsx"
+          "client/src/pages/DesignSystem.tsx",
+          "client/src/pages/about/ClientBillOfRights.tsx"
         ]
       }
     },
@@ -253,10 +253,11 @@
         "The label text carries the state; the dot is decoration."
       ],
       "adoption": {
-        "files": 2,
+        "files": 3,
         "sample": [
           "client/src/components/evidence/DiagramPrimitives.tsx",
-          "client/src/components/evidence/EvidenceFrame.tsx"
+          "client/src/components/evidence/EvidenceFrame.tsx",
+          "client/src/pages/DesignSystem.tsx"
         ]
       }
     },

@@ -21,13 +21,15 @@ const CSS = join(ROOT, "client/src/index.css");
 const OUT_MANIFEST = join(ROOT, "design/design-system.json");
 const OUT_CLIENT = join(ROOT, "client/src/design-system/manifest.generated.json");
 
+const escapeRegExp = (value: string): string => value.replace(/[\\^$.*+?()[\]{}|-]/g, "\\$&");
+
 function readTokens() {
   const css = readFileSync(CSS, "utf8");
   return TOKEN_GROUPS.map((group) => ({
     id: group.id,
     label: group.label,
     tokens: group.names.map((name) => {
-      const match = css.match(new RegExp(`(^|[\\s;{])${name.replace(/[-]/g, "\\-")}\\s*:\\s*([^;]+);`, "m"));
+      const match = css.match(new RegExp(`(^|[\\s;{])${escapeRegExp(name)}\\s*:\\s*([^;]+);`, "m"));
       return { name, value: match ? match[2].trim() : null };
     }),
   }));
