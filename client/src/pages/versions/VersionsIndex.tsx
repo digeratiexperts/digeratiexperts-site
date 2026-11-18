@@ -83,6 +83,13 @@ export default function VersionsIndex(): JSX.Element {
           pages carry a ribbon so a screenshot can never be mistaken for production.
         </p>
         <p className="mt-4 text-sm text-white/55">
+          Tokens, components, guidance and adoption for the current design system:{" "}
+          <Link href="/design-system" className="text-white underline underline-offset-4" data-testid="link-design-system">
+            /design-system
+          </Link>
+          .
+        </p>
+        <p className="mt-4 text-sm text-white/55">
           Reviews, the diagram gallery and the plans behind these versions are at{" "}
           <a href="/scrollcraft/" className="text-white underline underline-offset-4" data-testid="link-scrollcraft-lab">
             /scrollcraft/

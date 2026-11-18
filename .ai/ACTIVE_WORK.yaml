@@ -5301,3 +5301,18 @@ claims:
       - docs/work-ledger/2026-11-15-desk-crisis-browser-privacy.md
     status: handed-off
     started: 2026-11-15
+  - id: design-system-layers-20261118
+    owner: claude
+    subsystem: design-system-docs
+    branch: ccr-f4c7e77e-6ypnqa
+    base_sha: 3e67f5d
+    started: 2026-11-18
+    status: active
+    files:
+      - client/src/design-system/**
+      - client/src/pages/DesignSystem.tsx
+      - scripts/design-system/build.mts
+      - design/design-system.json
+      - design/DESIGN-SYSTEM-LAYERS.md
+      - "App.tsx route /design-system, server/spaKnownPaths.ts, server/versionPreviewRobots.ts, VersionsIndex link"
+    note: Additive styleguide, manifest, changelog and adoption layers. No tokens, components or pages restyled.

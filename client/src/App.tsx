@@ -189,6 +189,7 @@ const DigeratiHomepage = lazy(() => import("@/pages/DigeratiHomepage").then((m) 
 
 // Homepage versions: a frozen, reachable copy of every homepage the site has
 // had or is considering (client/src/pages/versions/README.md). Reference only.
+const DesignSystem = lazy(() => import("@/pages/DesignSystem"));
 const VersionsIndex = lazy(() => import("@/pages/versions/VersionsIndex"));
 const VersionTwoForward = lazy(() => import("@/pages/versions/VersionTwoForward"));
 const HomepageV1 = lazy(() => import("@/pages/versions/v1/DigeratiHomepage").then((m) => ({ default: m.DigeratiHomepage })));
@@ -257,6 +258,13 @@ function Router() {
       <Route path="/experience" component={() => (
         <Suspense fallback={<PageLoadingSkeleton />}>
           <ExperienceInSite />
+        </Suspense>
+      )} />
+
+      {/* Living styleguide: generated from code, reference only, noindex, not in navigation */}
+      <Route path="/design-system" component={() => (
+        <Suspense fallback={<PageLoadingSkeleton />}>
+          <DesignSystem />
         </Suspense>
       )} />
 

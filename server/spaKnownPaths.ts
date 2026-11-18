@@ -9,6 +9,7 @@ const EXACT = new Set([
   "/",
   "/experience",
   "/versions",
+  "/design-system",
   "/version-0",
   "/version-1",
   "/version-2",

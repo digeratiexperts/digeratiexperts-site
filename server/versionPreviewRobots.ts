@@ -24,7 +24,7 @@ export const VERSION_PREVIEW_ROBOTS_TAG = "noindex, nofollow";
  * `/versions`, `/version-4`, `/version-4/` and their case variants, and
  * nothing else. Marketing routes must not pick the header up.
  */
-const VERSION_PREVIEW_PATH = /^\/versions?(?:-\d+)?\/?$/i;
+const VERSION_PREVIEW_PATH = /^\/(?:versions?(?:-\d+)?|design-system)\/?$/i;
 
 export function isVersionPreviewPath(pathname: string): boolean {
   return VERSION_PREVIEW_PATH.test(pathname);

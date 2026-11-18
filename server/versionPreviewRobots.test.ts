@@ -35,6 +35,14 @@ describe("version preview robots header", () => {
     await new Promise<void>((resolve) => server.close(() => resolve()));
   });
 
+  it("/design-system is noindex at the header level", async () => {
+    const response = await fetch(`${baseUrl}/design-system`);
+    expect(response.status).toBe(200);
+    expect(response.headers.get("x-robots-tag")).toBe("noindex, nofollow");
+    expect(isVersionPreviewPath("/design-system/")).toBe(true);
+    expect(isVersionPreviewPath("/design-systems")).toBe(false);
+  });
+
   for (const n of [1, 2, 3, 4]) {
     it(`/version-${n} returns 200 and is noindex at the header level`, async () => {
       const response = await fetch(`${baseUrl}/version-${n}`);
