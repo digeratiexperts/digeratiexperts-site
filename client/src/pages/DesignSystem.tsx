@@ -21,16 +21,16 @@ function LivePreview({ kind }: { kind: Preview }): JSX.Element {
     case "button":
       return (
         <div className="flex flex-wrap gap-3">
-          <Button variant="brand">Brand</Button>
-          <Button variant="outline">Outline</Button>
-          <Button variant="default">Default</Button>
+          <Button variant="brand" className="min-h-11">Brand</Button>
+          <Button variant="outline" className="min-h-11 text-white">Outline</Button>
+          <Button variant="default" className="min-h-11">Default</Button>
         </div>
       );
     case "badge":
       return (
         <div className="flex flex-wrap gap-2">
           <Badge>Default</Badge>
-          <Badge variant="outline">Outline</Badge>
+          <Badge variant="outline" className="border-white/35 text-white">Outline</Badge>
         </div>
       );
     case "status-token":
@@ -95,7 +95,7 @@ export default function DesignSystem(): JSX.Element {
         </p>
         <h1 className="font-heading text-3xl font-semibold tracking-[-0.02em] sm:text-4xl">Design system</h1>
         <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/70">
-          Generated from the code, so it stays true. Machine-readable copy for coding agents:{" "}
+          Tokens, adoption counts and the version list are generated from the code. Component guidance and the changelog are written by hand and reviewed. Machine-readable copy for coding agents:{" "}
           <code className="rounded bg-white/10 px-1.5 py-0.5 text-sm">design/design-system.json</code>
           . Authority rules: design/DESIGN-AUTHORITY.md.
         </p>
@@ -115,11 +115,18 @@ export default function DesignSystem(): JSX.Element {
                 <ul className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   {group.tokens.map((t) => (
                     <li key={t.name} className="flex items-center gap-3 rounded-lg border border-white/10 bg-[#0a0a0a] p-3">
-                      <span
-                        aria-hidden="true"
-                        className="h-10 w-10 shrink-0 rounded-md border border-white/15"
-                        style={group.id === "layout" ? undefined : { background: `var(${t.name})` }}
-                      />
+                      {group.id === "layout" ? null : (
+                        <span
+                          aria-hidden="true"
+                          className="h-10 w-10 shrink-0 rounded-md border border-white/15"
+                          style={
+                            t.name.includes("paper-hairline")
+                              ? // a dark hairline is invisible on the dark card, so sit it on its own paper field
+                                { backgroundColor: "var(--de-paper)", backgroundImage: `linear-gradient(var(${t.name}), var(${t.name}))` }
+                              : { background: `var(${t.name})` }
+                          }
+                        />
+                      )}
                       <span className="min-w-0">
                         <code className="block truncate text-sm">{t.name}</code>
                         <span className="block truncate font-mono text-xs text-white/60">{t.value}</span>
@@ -174,17 +181,17 @@ export default function DesignSystem(): JSX.Element {
 
         <Section id="versions" title="Homepage versions">
           <p className="max-w-2xl text-sm text-white/70">
-            Every frozen homepage, side by side. Open one to compare it against the live design system. Full archive:{" "}
-            <Link href="/versions" className="underline underline-offset-4">/versions</Link>.
+            Every homepage the site has had or is considering. Snapshots (react) never change; build versions are work in progress. Full archive:{" "}
+            <Link href="/versions" className="inline-flex min-h-11 items-center underline underline-offset-4">/versions</Link>.
           </p>
           <div className="mt-4 overflow-x-auto">
-            <table className="w-full min-w-[34rem] border-collapse text-left text-sm">
+            <table className="w-full border-collapse text-left text-sm">
               <caption className="sr-only">Homepage versions</caption>
               <thead>
                 <tr className="border-b border-white/15 font-mono text-xs uppercase tracking-[0.12em] text-white/60">
                   <th scope="col" className="py-2 pr-4">Version</th>
-                  <th scope="col" className="py-2 pr-4">Date</th>
-                  <th scope="col" className="py-2 pr-4">Kind</th>
+                  <th scope="col" className="hidden py-2 pr-4 sm:table-cell">Date</th>
+                  <th scope="col" className="hidden py-2 pr-4 sm:table-cell">Kind</th>
                   <th scope="col" className="py-2">Title</th>
                 </tr>
               </thead>
@@ -192,10 +199,15 @@ export default function DesignSystem(): JSX.Element {
                 {manifest.versions.map((v) => (
                   <tr key={v.n} className="border-b border-white/10 align-top">
                     <th scope="row" className="py-2 pr-4 font-mono text-[#F04C97]">V{v.n}</th>
-                    <td className="py-2 pr-4 text-white/70">{v.date}</td>
-                    <td className="py-2 pr-4 text-white/70">{v.kind}</td>
+                    <td className="hidden py-2 pr-4 text-white/70 sm:table-cell">{v.date}</td>
+                    <td className="hidden py-2 pr-4 text-white/70 sm:table-cell">{v.kind}</td>
                     <td className="py-2">
-                      {v.kind === "planned" ? <span className="text-white/65">{v.title}</span> : <a href={v.path} className="underline underline-offset-4">{v.title}</a>}
+                      {v.kind === "planned" ? (
+                        <span className="text-white/65">{v.title}</span>
+                      ) : (
+                        <a href={v.path} className="inline-flex min-h-11 items-center underline underline-offset-4">{v.title}</a>
+                      )}
+                      <span className="block font-mono text-[11px] text-white/55 sm:hidden">{v.date} · {v.kind}</span>
                     </td>
                   </tr>
                 ))}

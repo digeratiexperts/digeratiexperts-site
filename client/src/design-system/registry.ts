@@ -48,7 +48,10 @@ export const COMPONENTS: ComponentGuidance[] = [
       "Do not style a link as a button by hand; use asChild with the router Link.",
       "Do not put two brand buttons in the same viewport.",
     ],
-    accessibility: ["Minimum 44px target on touch sizes.", "Visible focus ring is part of the variant; do not remove it."],
+    accessibility: [
+      "Sizes today are default 36px, sm 32px, lg 40px, icon 36px: below the ~44px touch target in design/DESIGN-AUTHORITY.md Tier 0. Add min-h-11 on touch-critical buttons until the sizes are reviewed.",
+      "Visible focus ring is part of the variant; do not remove it.",
+    ],
     preview: "button",
   },
   {
@@ -160,15 +163,23 @@ export const CHANGELOG: ChangelogEntry[] = [
   },
   {
     date: "2026-10-22",
-    versions: [8],
-    title: "Homepage v2 approved as the live homepage",
-    detail: "The previous homepage is kept at /concepts/home-classic (noindex). See client/src/pages/versions/README.md.",
+    title: "Homepage v2 (homepage-v2) approved as the live homepage",
+    detail:
+      "Per the note in client/src/App.tsx. The previous homepage is kept at /concepts/home-classic (noindex). homepage-v2 is not one of the numbered /version-N snapshots.",
     joeDecided: true,
   },
   {
     date: "2026-10-19",
     title: "Premium web design pass",
     detail: "Masterclass rules approved 2026-10-18/19; encoded in the premium-web-design skill.",
+    joeDecided: true,
+  },
+  {
+    date: "2026-10-03",
+    versions: [8],
+    title: "Version 8 approved as the homepage at /",
+    detail:
+      "Version 7 with Joe's section-by-section notes. Joe: \"its approved. do it.\" /version-8 now redirects to /; the previous homepage stays at /version-0 and Version 7 at /version-7 (versions/registry.ts).",
     joeDecided: true,
   },
   {
