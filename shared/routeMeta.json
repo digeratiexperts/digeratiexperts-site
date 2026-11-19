@@ -73,7 +73,7 @@
     "title": "Live Sessions and Webinars | Digerati Experts",
     "description": "Free live sessions from Digerati Experts on cyber insurance readiness, invoice fraud, ransomware recovery and co-managed IT. All times Arizona.",
     "canonical": "/events",
-    "robots": "index, follow",
+    "robots": "noindex, nofollow",
     "ogImage": "https://digeratiexperts.com/og-image.png"
   },
   "/events/cyber-insurance-renewal-readiness": {
