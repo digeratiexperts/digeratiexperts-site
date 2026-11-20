@@ -88,7 +88,7 @@ export default function DesignSystem(): JSX.Element {
   });
 
   return (
-    <main className="min-h-screen bg-[#050312] px-4 py-16 text-white sm:px-6 lg:px-8" data-testid="design-system-page">
+    <main className="min-h-screen bg-[#050312] px-4 pt-16 pb-[calc(var(--de-fab-h)+var(--de-chrome-inset)+4rem)] text-white sm:px-6 lg:px-8" data-testid="design-system-page">
       <div className="mx-auto max-w-5xl">
         <p className="mb-3 font-mono text-xs font-semibold uppercase tracking-[0.2em] text-[#F04C97]">
           Reference · not indexed
@@ -237,7 +237,7 @@ export default function DesignSystem(): JSX.Element {
 
         <Section id="adoption" title="Adoption">
           <p className="max-w-2xl text-sm text-white/70">
-            How many source files import each component today, counted from the code on every build. A registered
+            How many source files import each component, as of the last run of <code className="rounded bg-white/10 px-1.5 py-0.5">npm run design-system:build</code> (a snapshot, not recomputed on deploy). A registered
             component with no imports is a candidate to adopt or retire, not a failure.
           </p>
           <div className="mt-4 overflow-x-auto">
