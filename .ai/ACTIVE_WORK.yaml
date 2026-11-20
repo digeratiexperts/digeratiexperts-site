@@ -5344,7 +5344,7 @@ claims:
     branch: ccr-f4c7e77e-6ypnqa
     base_sha: 010f527
     started: 2026-11-20
-    status: active
+    status: merged
     files:
       - client/src/components/SiteBottomBar.tsx
       - client/src/index.css
@@ -5353,3 +5353,16 @@ claims:
       - design/approved/launcher-hides-while-scrolling-2026-11-20.md
       - client/src/design-system/registry.ts
     note: Site-wide. The bottom launcher (Ask DE, back-to-top, chapter menu) steps aside while the page scrolls, requested in chat. Held while hovered, focused or Desk open. Draft PR, not merged without the user's word.
+  - id: launcher-slow-scroll-20261120
+    owner: claude
+    subsystem: site-chrome
+    branch: ccr-f4c7e77e-6ypnqa
+    base_sha: 16de787
+    started: 2026-11-20
+    status: active
+    files:
+      - client/src/components/SiteBottomBar.tsx
+      - client/src/lib/launcherScrollHide.ts
+      - client/src/lib/launcherScrollHide.test.ts
+      - .ai/ACTIVE_WORK.yaml
+    note: Follow-up to PR 1050 (merged 16de787), Codex P2. Slow scrolls under 6px per frame now count by measuring from an anchor instead of frame to frame.
