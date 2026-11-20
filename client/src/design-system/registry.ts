@@ -156,6 +156,12 @@ export interface ChangelogEntry {
 /** Newest first. Entries are never deleted, only marked superseded in `detail`. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    date: "2026-11-20",
+    title: "Bottom launcher steps aside while scrolling",
+    detail:
+      "Requested in chat. The Ask DE / back-to-top / chapter-menu capsule fades out while the page is moving and returns 700ms after it stops. It stays put while the pointer is on it, keyboard focus is inside it, or the Desk is open. Opacity and visibility only, so layout does not shift. Record: design/approved/launcher-hides-while-scrolling-2026-11-20.md.",
+  },
+  {
     date: "2026-11-18",
     title: "Design-system layers added",
     detail:

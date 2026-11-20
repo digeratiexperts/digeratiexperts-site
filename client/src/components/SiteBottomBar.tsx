@@ -31,6 +31,12 @@ import {
   prefersReducedMotion,
 } from "@/lib/deskAskDeMotion";
 import { PhoneLink } from "@/components/PhoneLink";
+import {
+  LAUNCHER_SCROLLING_ATTR,
+  LAUNCHER_SCROLL_IDLE_MS,
+  isRealScroll,
+  launcherHoldsAttention,
+} from "@/lib/launcherScrollHide";
 
 /** Original used 0.28s easeOut layout + 300ms grid. Keep that pacing without transform. */
 const EXPAND_S = 0.4;
@@ -618,6 +624,56 @@ export function SiteBottomBar({ autohide = false }: { autohide?: boolean } = {})
       root.style.setProperty("--de-section-dock-h", "0px");
     };
   }, [showBar, expanded, showAskDE, showScrollTop, typing]);
+
+  // The launcher steps aside while the page is moving and returns once it has
+  // been still for LAUNCHER_SCROLL_IDLE_MS (see lib/launcherScrollHide). It is
+  // left alone while the pointer is on it, focus is inside it, or the Desk is
+  // open, so it never vanishes under someone using it. index.css reads the
+  // attribute; layout is untouched (opacity/visibility only), so
+  // --de-unified-bar-h stays correct and nothing shifts when it returns.
+  useEffect(() => {
+    if (!showBar) return;
+    const root = document.documentElement;
+    let idle = 0;
+    let lastY = window.scrollY;
+    let ticking = false;
+
+    const settle = () => {
+      delete root.dataset[LAUNCHER_SCROLLING_ATTR];
+    };
+    const frame = () => {
+      ticking = false;
+      const y = window.scrollY;
+      const moved = y - lastY;
+      lastY = y;
+      if (!isRealScroll(moved)) return;
+      const track = trackRef.current;
+      if (
+        launcherHoldsAttention({
+          pointerInside: !!track && track.matches(":hover"),
+          focusInside: !!track && track.contains(document.activeElement),
+          deskOpen,
+        })
+      ) {
+        return;
+      }
+      root.dataset[LAUNCHER_SCROLLING_ATTR] = "true";
+      window.clearTimeout(idle);
+      idle = window.setTimeout(settle, LAUNCHER_SCROLL_IDLE_MS);
+    };
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      window.requestAnimationFrame(frame);
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.clearTimeout(idle);
+      settle();
+    };
+  }, [showBar, deskOpen]);
 
   const scrollToTop = () => {
     window.scrollTo({
