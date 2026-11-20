@@ -48,6 +48,14 @@ export function VersionFrame({ n, children }: { n: number; children: ReactNode }
         >
           all versions
         </Link>
+        <span className="hidden text-white/40 group-focus-within:inline group-hover:inline">·</span>
+        <Link
+          href="/design-system"
+          className="sr-only text-white underline decoration-white/30 underline-offset-4 group-hover:not-sr-only focus:not-sr-only hover:decoration-white"
+          data-testid="homepage-version-ribbon-design-system"
+        >
+          design system
+        </Link>
       </div>
     </>
   );
