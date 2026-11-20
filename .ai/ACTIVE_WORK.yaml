@@ -5322,8 +5322,19 @@ claims:
     branch: ccr-f4c7e77e-6ypnqa
     base_sha: f6060c2
     started: 2026-11-20
-    status: active
+    status: merged
     files:
       - client/src/pages/DesignSystem.tsx
       - .ai/ACTIVE_WORK.yaml
     note: Follow-up to PR 1047 (merged f6060c2). Bottom padding so the styleguide end is not trapped behind the fixed launcher, and describes adoption counts as a snapshot. The mid-scroll launcher overlap is site-wide chrome and is not changed here.
+  - id: design-system-cookie-padding-20261120
+    owner: claude
+    subsystem: design-system-docs
+    branch: ccr-f4c7e77e-6ypnqa
+    base_sha: 602ae29
+    started: 2026-11-20
+    status: active
+    files:
+      - client/src/pages/DesignSystem.tsx
+      - .ai/ACTIVE_WORK.yaml
+    note: Follow-up to PR 1048 (merged 602ae29), Codex P2. The styleguide bottom padding now includes the consent banner height (--de-cookie-h).

@@ -88,7 +88,7 @@ export default function DesignSystem(): JSX.Element {
   });
 
   return (
-    <main className="min-h-screen bg-[#050312] px-4 pt-16 pb-[calc(var(--de-fab-h)+var(--de-chrome-inset)+4rem)] text-white sm:px-6 lg:px-8" data-testid="design-system-page">
+    <main className="min-h-screen bg-[#050312] px-4 pt-16 pb-[calc(var(--de-fab-h)+var(--de-chrome-inset)+var(--de-cookie-h)+4rem)] text-white sm:px-6 lg:px-8" data-testid="design-system-page">
       <div className="mx-auto max-w-5xl">
         <p className="mb-3 font-mono text-xs font-semibold uppercase tracking-[0.2em] text-[#F04C97]">
           Reference · not indexed
