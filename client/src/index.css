@@ -464,6 +464,27 @@ html[data-sticky-cta-scrolling="true"] .de-bottom-bar {
   pointer-events: none;
 }
 
+/*
+ * The launcher (Ask DE, back-to-top, chapter menu) steps aside while the page is
+ * scrolling and returns when it settles (SiteBottomBar, lib/launcherScrollHide).
+ * Opacity and visibility only, never display or transform: layout is unchanged,
+ * so --de-unified-bar-h stays right and nothing jumps when it comes back. Out
+ * instantly, in with a short fade (none under reduced motion). :focus-within is
+ * excluded because visibility:hidden removes an element from the tab order, so a
+ * keyboard user scrolling with Space or the arrow keys would lose their place.
+ */
+html[data-de-launcher-scrolling="true"] .de-unified-bar:not(:focus-within) {
+  opacity: 0 !important;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .de-unified-bar {
+    transition: opacity 160ms ease-out;
+  }
+}
+
 .de-fab-rail {
   position: fixed;
   z-index: 55;
