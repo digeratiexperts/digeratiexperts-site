@@ -32,6 +32,13 @@ export function isAutoRenewGatedSku(sku: string | null | undefined): sku is Auto
   return !!sku && AUTORENEW_GATED_SKU_SET.has(sku);
 }
 
+export function frequencyFromGatedSku(sku: string | null | undefined): AutoRenewFrequency | null {
+  if (!isAutoRenewGatedSku(sku)) return null;
+  if (sku.endsWith("-YR")) return "year";
+  if (sku.endsWith("-MO")) return "month";
+  return null;
+}
+
 export function autoRenewConsentRequiredSkus(items: Array<{ sku: string }>): string[] {
   return items.filter((item) => isAutoRenewGatedSku(item.sku)).map((item) => item.sku);
 }

@@ -49,6 +49,9 @@ export function classifyLegacyStorePath(pathname: string): LegacyStoreClassifica
     path === "/store" ||
     path === "/store/checkout" ||
     path === "/store/solution" ||
+    path === "/store/offerings" ||
+    path.startsWith("/store/offerings/") ||
+    path === "/store/order" ||
     path.startsWith("/store/solutions/") ||
     path.startsWith("/store/solution/submitted/")
   ) {

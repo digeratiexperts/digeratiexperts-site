@@ -2,6 +2,11 @@ import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { isQuizRoomPath } from "@/lib/quizRoom";
 
+function isPublicDeStorePath(path: string): boolean {
+  const pathname = path.split("?")[0];
+  return pathname === "/store/order" || pathname === "/store/offerings" || pathname.startsWith("/store/offerings/");
+}
+
 export function ScrollProgress() {
   const [location] = useLocation();
   const [progress, setProgress] = useState(0);
@@ -32,7 +37,8 @@ export function ScrollProgress() {
   }, []);
 
   // The quiz room has its own stage progress; a second bar would compete with it (issue 449).
-  if (!isVisible || isQuizRoomPath(location)) return null;
+  // The public store hides it too so the 3px hairline cannot paint through checkout copy.
+  if (!isVisible || isQuizRoomPath(location) || isPublicDeStorePath(location)) return null;
 
   return (
     <div 
