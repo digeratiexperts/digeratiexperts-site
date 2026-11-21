@@ -3,6 +3,7 @@ name: CI
 on:
   pull_request:
     branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
   push:
     branches: [main]
   workflow_dispatch:
@@ -19,6 +20,7 @@ concurrency:
 jobs:
   check-test-build:
     name: Typecheck, test, build, audit, and smoke
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     runs-on: ${{ fromJSON(vars.SITE_CI_RUNS_ON || '"ubuntu-latest"') }}
     timeout-minutes: 30
 
@@ -282,6 +284,7 @@ jobs:
   # most exposed part of this repository.
   security-regression:
     name: Security regression suite (item 328)
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     runs-on: ${{ fromJSON(vars.SITE_CI_RUNS_ON || '"ubuntu-latest"') }}
     timeout-minutes: 15
 
