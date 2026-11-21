@@ -41,3 +41,18 @@ export function launcherHoldsAttention(input: LauncherAttention): boolean {
 export function isRealScroll(deltaPx: number): boolean {
   return Math.abs(deltaPx) >= LAUNCHER_SCROLL_MIN_DELTA_PX;
 }
+
+/**
+ * Judge a scroll position against an anchor. Movement is measured from the last
+ * position that counted, not from the previous frame, so a slow scroll that
+ * moves only a pixel or two per frame still adds up to a real scroll within a
+ * few frames, while back-and-forth jitter that never travels 6px from the
+ * anchor never counts. The anchor only advances when the movement counts.
+ */
+export function advanceScrollAnchor(
+  anchorY: number,
+  y: number,
+): { counted: boolean; anchorY: number } {
+  if (!isRealScroll(y - anchorY)) return { counted: false, anchorY };
+  return { counted: true, anchorY: y };
+}

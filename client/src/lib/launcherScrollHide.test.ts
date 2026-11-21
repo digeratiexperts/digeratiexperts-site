@@ -6,6 +6,7 @@ import {
   LAUNCHER_SCROLLING_ATTR,
   LAUNCHER_SCROLL_IDLE_MS,
   LAUNCHER_SCROLL_MIN_DELTA_PX,
+  advanceScrollAnchor,
   isRealScroll,
   launcherHoldsAttention,
 } from "./launcherScrollHide";
@@ -29,6 +30,38 @@ describe("launcher scroll-hide rules", () => {
     expect(isRealScroll(LAUNCHER_SCROLL_MIN_DELTA_PX)).toBe(true);
     expect(isRealScroll(-LAUNCHER_SCROLL_MIN_DELTA_PX)).toBe(true);
     expect(isRealScroll(-300)).toBe(true);
+  });
+
+  it("counts a slow scroll that moves only a pixel or two per frame", () => {
+    // 2px per frame never reaches 6px in one frame, but must add up
+    let anchor = 0;
+    let y = 0;
+    let counted = 0;
+    for (let frame = 0; frame < 30; frame++) {
+      y += 2;
+      const step = advanceScrollAnchor(anchor, y);
+      anchor = step.anchorY;
+      if (step.counted) counted++;
+    }
+    expect(counted).toBe(10); // one count every third frame, 60px travelled
+  });
+
+  it("does not count back-and-forth jitter that never travels far", () => {
+    let anchor = 100;
+    let counted = 0;
+    for (const y of [102, 99, 103, 98, 101, 104, 100, 103]) {
+      const step = advanceScrollAnchor(anchor, y);
+      anchor = step.anchorY;
+      if (step.counted) counted++;
+    }
+    expect(counted).toBe(0);
+    expect(anchor).toBe(100);
+  });
+
+  it("only advances the anchor when the movement counts", () => {
+    expect(advanceScrollAnchor(50, 53)).toEqual({ counted: false, anchorY: 50 });
+    expect(advanceScrollAnchor(50, 56)).toEqual({ counted: true, anchorY: 56 });
+    expect(advanceScrollAnchor(50, 40)).toEqual({ counted: true, anchorY: 40 });
   });
 
   it("brings the launcher back quickly once the page is still", () => {
@@ -63,6 +96,11 @@ describe("launcher scroll-hide wiring", () => {
     // cleanup must clear it, so unmounting mid-scroll never leaves chrome hidden
     const effect = barSrc.match(/window\.addEventListener\("scroll", onScroll, \{ passive: true \}\);\s*return \(\) => \{[\s\S]*?settle\(\);/);
     expect(effect?.[0]).toMatch(/removeEventListener\("scroll", onScroll\)/);
+  });
+
+  it("measures scroll from an anchor, not frame to frame", () => {
+    expect(barSrc).toMatch(/advanceScrollAnchor\(anchorY, window\.scrollY\)/);
+    expect(barSrc).not.toMatch(/lastY = y;\s*\n\s*if \(!isRealScroll/);
   });
 
   it("fades back in only when motion is allowed", () => {

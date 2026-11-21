@@ -34,7 +34,7 @@ import { PhoneLink } from "@/components/PhoneLink";
 import {
   LAUNCHER_SCROLLING_ATTR,
   LAUNCHER_SCROLL_IDLE_MS,
-  isRealScroll,
+  advanceScrollAnchor,
   launcherHoldsAttention,
 } from "@/lib/launcherScrollHide";
 
@@ -635,7 +635,7 @@ export function SiteBottomBar({ autohide = false }: { autohide?: boolean } = {})
     if (!showBar) return;
     const root = document.documentElement;
     let idle = 0;
-    let lastY = window.scrollY;
+    let anchorY = window.scrollY;
     let ticking = false;
 
     const settle = () => {
@@ -643,10 +643,9 @@ export function SiteBottomBar({ autohide = false }: { autohide?: boolean } = {})
     };
     const frame = () => {
       ticking = false;
-      const y = window.scrollY;
-      const moved = y - lastY;
-      lastY = y;
-      if (!isRealScroll(moved)) return;
+      const step = advanceScrollAnchor(anchorY, window.scrollY);
+      if (!step.counted) return;
+      anchorY = step.anchorY;
       const track = trackRef.current;
       if (
         launcherHoldsAttention({
