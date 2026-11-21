@@ -6,6 +6,7 @@ import {
   type StoreProduct,
 } from "./storeProducts";
 import { pricingTiers, type ProActiveTierKey } from "./pricing";
+import { isGcchStoreItem } from "@shared/gcchPricingHold";
 
 const PROACTIVE_SKUS: Record<ProActiveTierKey, { id: string; sku: string }> = {
   it: { id: "prod-000", sku: "DE-SVC-MGD-IT-MO" },
@@ -14,7 +15,7 @@ const PROACTIVE_SKUS: Record<ProActiveTierKey, { id: string; sku: string }> = {
   enterprise: { id: "prod-003", sku: "DE-SVC-MGD-ENTERPRISE-MO" },
 };
 
-const proactiveProducts: StoreProduct[] = pricingTiers.map((tier, index) => ({
+const proactiveProducts: StoreProduct[] = pricingTiers.map((tier, index) => holdGcchCheckout({
   id: PROACTIVE_SKUS[tier.id].id,
   sku: PROACTIVE_SKUS[tier.id].sku,
   name: `ProActive Ecosystem - ${tier.name}`,
@@ -33,6 +34,15 @@ const proactiveProducts: StoreProduct[] = pricingTiers.map((tier, index) => ({
   sortOrder: index,
 }));
 
+function holdGcchCheckout(product: StoreProduct): StoreProduct {
+  if (!isGcchStoreItem(product)) return product;
+  return {
+    ...product,
+    isCheckoutEnabled: false,
+    isContractOnly: true,
+  };
+}
+
 function sanitizePublicPromises(product: StoreProduct): StoreProduct {
   if (product.sku !== "DE-SVC-MGD-BCDR-MO") return product;
 
@@ -48,7 +58,8 @@ function sanitizePublicPromises(product: StoreProduct): StoreProduct {
 
 const nonProactiveProducts = rawStoreProducts
   .filter((product) => !product.name.startsWith("ProActive Ecosystem"))
-  .map(sanitizePublicPromises);
+  .map(sanitizePublicPromises)
+  .map(holdGcchCheckout);
 
 /**
  * Public Store catalog view.

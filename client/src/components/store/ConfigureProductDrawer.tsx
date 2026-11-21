@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { formatPrice, type StoreProduct } from "@/data/storeProducts";
+import { isGcchStoreItem } from "@shared/gcchPricingHold";
 import {
   configUnitLabel,
   getIncludedInHint,
@@ -90,7 +91,7 @@ export function ConfigureProductDrawer({
     for (const sku of skus) {
       const p = getProductBySku(sku);
       if (!p || seen.has(p.id) || p.id === product.id) continue;
-      if (!p.isCheckoutEnabled || p.isContractOnly) continue;
+      if (isGcchStoreItem(p) || !p.isCheckoutEnabled || p.isContractOnly) continue;
       seen.add(p.id);
       out.push(p);
       if (out.length >= 4) break;

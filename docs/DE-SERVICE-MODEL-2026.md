@@ -55,15 +55,20 @@ risk can move an engagement to a different design.
 | ProActive Business | Integrated managed operations | 26–75 users | $245/user | $5,400 |
 | ProActive Enterprise | Advanced governance + customization | 76+ / complex | $345/user | $9,000 |
 
-Regulated path, separate from the ladder:
+Regulated path, separate from the ladder. These GCC High figures are
+internal planning numbers only. Do not publish them on the site or in
+sales material until eligibility review and the government-cloud
+channel are settled. Public copy uses "Pricing after eligibility review"
+and a link to /contact.
 
 | Path | Rate | Floor | Positioning |
 |---|---|---|---|
 | Business GCCH | $425/user | $7,500 | GCC High-aligned Business design |
 | Enterprise GCCH | $575/user | $12,500 | Advanced regulated / custom governance |
 
-These match `client/src/data/pricing.ts` exactly, which cites TechSales
-`CANONICAL_TIERS`. The site and the sales material agree.
+The four commercial tiers match `client/src/data/pricing.ts`, which cites
+TechSales `CANONICAL_TIERS`. The GCC High rows above are not in the
+public pricing module and must stay unpublished.
 
 ## Twelve capability lanes
 

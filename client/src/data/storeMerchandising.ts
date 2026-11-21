@@ -3,6 +3,7 @@
  * outcomes, rails, and soft "included in" hints. Does not invent products.
  */
 import { CANONICAL_CSRA_ONE_TIME, CANONICAL_CSRA_STORE_SKU } from "@shared/canonicalCsra";
+import { isGcchStoreItem } from "@shared/gcchPricingHold";
 import { getStoreProductBySku } from "./storeCatalog";
 import {
   storeProducts,
@@ -509,13 +510,14 @@ export function productMatchesPurchasePath(
   pathId: StorePurchasePathId
 ): boolean {
   const isQuoteFirst =
+    isGcchStoreItem(product) ||
     product.isContractOnly ||
     product.basePrice === 0 ||
     !product.isCheckoutEnabled ||
     product.category === "professional_services" ||
     product.category === "contract_services";
   if (pathId === "quote") return isQuoteFirst;
-  return product.isCheckoutEnabled && !product.isContractOnly && product.basePrice > 0;
+  return !isGcchStoreItem(product) && product.isCheckoutEnabled && !product.isContractOnly && product.basePrice > 0;
 }
 
 export function getProductBySku(sku: string): StoreProduct | undefined {
@@ -1003,7 +1005,7 @@ const CONFIGURABLE_PRICING: PricingType[] = [
 
 /** Qty/unit configurable before blind Add — unit-priced catalog SKUs. */
 export function isConfigurableProduct(product: StoreProduct): boolean {
-  if (product.isContractOnly || !product.isCheckoutEnabled) return false;
+  if (isGcchStoreItem(product) || product.isContractOnly || !product.isCheckoutEnabled) return false;
   return CONFIGURABLE_PRICING.includes(product.pricingType) || !!product.pricingUnit;
 }
 
@@ -1159,7 +1161,7 @@ export function getCartComplements(
   const push = (sku: string) => {
     if (out.length >= limit || inCart.has(sku) || seen.has(sku)) return;
     const p = getProductBySku(sku);
-    if (!p || p.isContractOnly || !p.isCheckoutEnabled) return;
+    if (!p || isGcchStoreItem(p) || p.isContractOnly || !p.isCheckoutEnabled) return;
     seen.add(sku);
     out.push(p);
   };
@@ -1478,11 +1480,11 @@ export function buildGuidedRecommendation(answers: GuidedBuyingAnswers): GuidedR
 
   const addonProducts = Array.from(new Set(addonSkusForGuidance(answers)))
     .map((sku) => resolveCanonicalProduct(sku))
-    .filter((p): p is StoreProduct => !!p && p.isCheckoutEnabled && !p.isContractOnly)
+    .filter((p): p is StoreProduct => !!p && !isGcchStoreItem(p) && p.isCheckoutEnabled && !p.isContractOnly)
     .filter((p) => p.sku !== CANONICAL_CSRA_STORE_SKU)
     .slice(0, GUIDED_ADDON_LIMIT);
 
-  const products = csra && csra.isCheckoutEnabled && !csra.isContractOnly
+  const products = csra && !isGcchStoreItem(csra) && csra.isCheckoutEnabled && !csra.isContractOnly
     ? [csra, ...addonProducts]
     : addonProducts;
 

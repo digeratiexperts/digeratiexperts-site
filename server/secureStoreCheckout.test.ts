@@ -5,6 +5,7 @@ import {
   canonicalCheckoutTotal,
   canonicalizeCheckoutLineItems,
 } from "./secureStoreCheckout";
+import { GCCH_CHECKOUT_BLOCKED_MESSAGE } from "@shared/gcchPricingHold";
 
 describe("secure store checkout canonicalization", () => {
   it("uses trusted catalog price even when the browser supplies a cheaper price", () => {
@@ -84,6 +85,16 @@ describe("secure store checkout canonicalization", () => {
       "comanaged",
     );
     expect(items[0].unitPrice).toBe(39);
+  });
+
+  it("rejects GCC High SKUs from online checkout", () => {
+    expect(() => canonicalizeCheckoutLineItems([
+      {
+        productId: "prod-gcch-business",
+        sku: "DE-SVC-MGD-BUSINESS-GCCH-MO",
+        quantity: 1,
+      },
+    ], "admin")).toThrow(GCCH_CHECKOUT_BLOCKED_MESSAGE);
   });
 
   it("rejects invalid quantities", () => {
