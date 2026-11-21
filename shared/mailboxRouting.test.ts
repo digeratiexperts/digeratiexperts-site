@@ -34,11 +34,19 @@ describe("public mailbox routing", () => {
   });
 
   it("sends AUP abuse reports to security@ and document requests to legal@", () => {
-    const aup = readFileSync(join(ROOT, "client/src/pages/legal/AUP.tsx"), "utf8");
-    expect(aup).toContain("Reporting Abuse");
-    expect(aup).toContain("mailto:${COMPANY.securityEmail}?subject=Abuse");
-    expect(aup).toContain("mailto:${COMPANY.legalEmail}?subject=AUP Request");
+    const aupPage = readFileSync(join(ROOT, "client/src/pages/legal/AUP.tsx"), "utf8");
+    const aup = readFileSync(join(ROOT, "client/src/pages/legal/content/P-07-acceptable-use-policy.md"), "utf8");
+    const dpa = readFileSync(join(ROOT, "client/src/pages/legal/DPA.tsx"), "utf8");
+    const msa = readFileSync(join(ROOT, "client/src/pages/legal/MSA.tsx"), "utf8");
+    expect(aupPage).toContain("P-07-acceptable-use-policy.md");
+    expect(aup).toContain("## 6. Reporting abuse");
+    expect(aup).toContain(`Report abuse of DE services to ${COMPANY.securityEmail} with "Abuse" in the subject.`);
+    expect(aup).not.toMatch(/Report abuse of DE services to admin@/);
     expect(aup).not.toContain(INFO_MAILBOX);
+    expect(dpa).toContain(`mailto:${COMPANY.legalEmail}?subject=DPA Request`);
+    expect(msa).toContain(`mailto:${COMPANY.legalEmail}?subject=MSA Request`);
+    expect(dpa).not.toContain(INFO_MAILBOX);
+    expect(msa).not.toContain(INFO_MAILBOX);
   });
 
   it("does not serve info@ in public site files", () => {

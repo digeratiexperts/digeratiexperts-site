@@ -1,6 +1,7 @@
 /**
- * Ticket response targets, as the public SLA page (client/src/pages/legal/SLA.tsx)
- * states them. The portal reads these so it never promises a different time.
+ * Ticket response targets for clients under a signed agreement.
+ * The public /legal/sla page no longer publishes these times; the portal
+ * still reads this module so it does not invent a different set of numbers.
  */
 export const RESPONSE_TARGETS = {
   critical: "15 minutes",

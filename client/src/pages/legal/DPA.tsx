@@ -7,14 +7,14 @@ export default function DPA() {
   return (
     <LegalDocumentLayout
       title="Data Processing Agreement"
-      subtitle="Version 2025.1 | Effective January 1, 2025"
-      description="Digerati Experts Data Processing Agreement (DPA) covers how client data is processed and protected, including HIPAA BAA, GDPR, CCPA, and PCI DSS provisions."
+      subtitle="Version v2026.10"
+      description="Digerati Experts Data Processing Agreement (DPA) covers how client data is processed and protected, including HIPAA BAA, CCPA, and PCI DSS provisions."
       canonical="/legal/dpa"
       icon={<Database className="h-5 w-5" />}
     >
       <p className="mb-6 text-lg text-[#3A3448]">
         Our Data Processing Agreement (DPA) governs how Digerati Experts processes and protects
-        client data, including provisions for GDPR compliance, HIPAA Business Associate requirements,
+        client data, including HIPAA Business Associate requirements,
         and other data protection regulations.
       </p>
 
@@ -38,9 +38,6 @@ export default function DPA() {
         <ul className="list-disc space-y-2 pl-6 text-[#3A3448]">
           <li>
             <strong className="text-[#1A1228]">HIPAA:</strong> Business Associate Agreement provisions for Protected Health Information
-          </li>
-          <li>
-            <strong className="text-[#1A1228]">GDPR:</strong> Standard Contractual Clauses for EU data transfers
           </li>
           <li>
             <strong className="text-[#1A1228]">CCPA:</strong> Service provider obligations for California residents
