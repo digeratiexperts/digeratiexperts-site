@@ -99,6 +99,8 @@ import {
 } from "./portalAuthStore";
 import { annotateTicketOrg, resolveTicketCreateTarget } from "./portalTicketCreate";
 import { sendCardDataRejected, sendCardDataRejectedError } from "./pciGuard";
+import { isScratchOfferClaim, parseScratchClaim, scratchClaimNote, scratchOfferServerEnabled, type ScratchClaim } from "./scratchOfferIntake";
+import { SCRATCH_OFFER_TAG } from "@shared/scratchOffer";
 import {
   initPortalChatStore,
   conversationIdForUser,
@@ -5519,7 +5521,21 @@ export async function registerRoutes(app: Express) {
   // ===== ASSESSMENT / LEAD CAPTURE FORM =====
   app.post("/api/assessment", [leadQuoteRateLimiter, validateInput], async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { fullName, email, phone, company, source } = req.body;
+      let claim: ScratchClaim | null = null;
+      if (isScratchOfferClaim(req.body)) {
+        const parsed = parseScratchClaim(req.body, { enabled: scratchOfferServerEnabled() });
+        if (!parsed.ok) {
+          return res.status(parsed.status).json({ error: parsed.error, code: parsed.code, fields: parsed.fields });
+        }
+        if (sendCardDataRejected(res, parsed.claim.email, parsed.claim.company)) return;
+        claim = parsed.claim;
+      }
+
+      const { phone } = req.body;
+      const fullName = claim ? claim.company : req.body.fullName;
+      const email = claim ? claim.email : req.body.email;
+      const company = claim ? claim.company : req.body.company;
+      const source = claim ? SCRATCH_OFFER_TAG : req.body.source;
       const situation = parseAnonymousSituation(req.body?.situation);
 
       if (!fullName || !email) {
@@ -5536,6 +5552,7 @@ export async function registerRoutes(app: Express) {
       const interest = typeof req.body?.interest === "string" ? req.body.interest.trim().slice(0, 120) : "";
       const visitorMessage = typeof req.body?.message === "string" ? req.body.message.trim().slice(0, 2000) : "";
       const visitorDetails = [
+        claim ? scratchClaimNote(claim) : "",
         interest ? `Interested in: ${interest}` : "",
         visitorMessage ? `Message: ${visitorMessage}` : "",
       ].filter(Boolean).join("\n");
@@ -5589,6 +5606,7 @@ export async function registerRoutes(app: Express) {
         success: true,
         leadId,
         zohoLeadId,
+        ...(claim ? { claimCode: claim.claimCode } : {}),
         message: "Assessment request received successfully",
       });
     } catch (error: any) {

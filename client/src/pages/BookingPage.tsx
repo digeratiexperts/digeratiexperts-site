@@ -7,6 +7,7 @@ import { PRIMARY_PHONE, phoneAction, hasPublicPhone } from "@/data/companyContac
 import { Chapter, Container, Eyebrow, HeroActions } from "@/components/site/chapters";
 import { CANONICAL_CSRA_ONE_TIME } from "@shared/canonicalCsra";
 import { normalizeSolutionReference } from "@shared/solutionReference";
+import { normalizeClaimCode } from "@shared/scratchOffer";
 import { SituationContinuityStrip } from "@/components/SituationContinuityStrip";
 import { useAnonymousSituation } from "@/lib/anonymousSituation";
 import { PhoneLink } from "@/components/PhoneLink";
@@ -24,7 +25,9 @@ const expectations = [
 
 export default function BookingPage() {
   // A buyer arriving from the Store's confirmation carries their reference (`/book?ref=DE-XXXXXX`).
-  const reference = normalizeSolutionReference(new URLSearchParams(useSearch()).get("ref") ?? "");
+  const params = new URLSearchParams(useSearch());
+  const reference = normalizeSolutionReference(params.get("ref") ?? "");
+  const claimCode = normalizeClaimCode(params.get("claim"));
   const situation = useAnonymousSituation();
   useSEO({
     title: "Get My Cyber Risk Assessment",
@@ -63,6 +66,16 @@ export default function BookingPage() {
                 >
                   Reference <span className="font-mono font-semibold tracking-wide text-[#1A1228]">{reference}</span>. Mention it when
                   you book.
+                </p>
+              ) : null}
+              {claimCode ? (
+                <p
+                  className="mb-4 rounded-xl border border-[var(--de-paper-hairline)] bg-white px-5 py-4 text-base text-[#3A3448]"
+                  data-testid="booking-claim-code"
+                >
+                  Free Security Snapshot claim code{" "}
+                  <span className="font-mono font-semibold tracking-wide text-[#1A1228]">{claimCode}</span>. Add it to your
+                  booking notes or mention it on the call.
                 </p>
               ) : null}
               <ZohoBookingWidget
