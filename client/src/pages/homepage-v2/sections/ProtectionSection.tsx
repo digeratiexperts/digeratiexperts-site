@@ -36,7 +36,7 @@ const BLOCKS = [
     key: "Detection & response",
     answers: "Answers persistence",
     detail: "Watch the environment continuously and act on what matters: detection, triage, containment, and escalation through a documented path.",
-    questions: ["Who is watching, and around the clock?", "What is the containment authority and the escalation path?", "Are detections tuned to this environment or generic?"],
+    questions: ["Who is watching for threats, and who responds?", "What is the containment authority and the escalation path?", "Are detections tuned to this environment or generic?"],
   },
   {
     key: "Human risk",

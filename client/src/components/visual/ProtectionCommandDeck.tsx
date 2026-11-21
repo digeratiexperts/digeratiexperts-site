@@ -187,7 +187,7 @@ export const protectionDomains: ProtectionDomain[] = [
     icon: Activity,
     answers: "persistence",
     purpose: "Watch the environment continuously and act on what matters: detection, triage, containment, and escalation through a documented path.",
-    commonQuestions: ["Who is watching, and around the clock?", "What is the containment authority and the escalation path?", "Are detections tuned to this environment or generic?"],
+    commonQuestions: ["Who is watching for threats, and who responds?", "What is the containment authority and the escalation path?", "Are detections tuned to this environment or generic?"],
     architecture: {
       boundaryName: "Monitoring boundary",
       nodes: [
