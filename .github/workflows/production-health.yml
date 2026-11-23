@@ -19,13 +19,21 @@
 # ~720 billed minutes a month (it was every 30 minutes, ~1,440, until
 # 2026-10-14). Halve the interval and you double that; change the cron below
 # if the trade-off should be different.
+#
+# Every 3 hours since 2026-11-23 (was hourly from 2026-10-14). Joe, 2026-11-22:
+# "don't let it get high on GitHub anymore. Ever." The Hub repository shares the
+# account's free 2,000 minutes, so this check drops to ~240 billed minutes a month
+# if billed. Note: this repository is public, and GitHub does not bill standard
+# hosted runners for public repositories, so the minute figures above apply only
+# while it is private. The trade-off is detection time: a dropped database or dead
+# Desk token now opens its issue within about 3 hours instead of 1.
 name: Production health
 
 on:
   schedule:
-    # Hourly, at minute 17 (off the top of the hour, when scheduled runs queue).
-    # See the cost note above before making this tighter.
-    - cron: "17 * * * *"
+    # Every 3 hours, at minute 17 (off the top of the hour, when scheduled runs queue).
+    # Hourly ("17 * * * *") until 2026-11-23. See the cost note above before making this tighter.
+    - cron: "17 */3 * * *"
   workflow_dispatch:
 
 permissions:
@@ -39,6 +47,7 @@ jobs:
   probe:
     name: Probe production runtime health
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: read
       issues: write
