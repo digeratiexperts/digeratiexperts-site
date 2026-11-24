@@ -55,6 +55,7 @@ import { acquireBodyScrollLock } from "@/lib/bodyScrollLock";
 import type { OpenMspAdvisorDetail } from "@/lib/openMspAdvisor";
 import { clearPendingMspAdvisorOpen, takePendingMspAdvisorOpen } from "@/lib/openMspAdvisor";
 import { deskOpenSeed } from "@/lib/deskOpenSeed";
+import { readBrowserDeskGoalContext } from "@/lib/goalPicker";
 import { analytics } from "@/lib/analytics";
 import { clearDeskChat, readDeskChat, ticketDraftFromChat, writeDeskChat } from "@/lib/deskChatSession";
 import { deskActionLabel, planDeskAction, sanitizeDeskActions, type DeskAction, type DeskActionType } from "@/lib/deskActions";
@@ -953,6 +954,7 @@ export const ZohoASAPWidget = ({
             pathname: location,
             pageTitle: typeof document !== "undefined" ? document.title : undefined,
             pageType: inferDeskPageType(location),
+            ...readBrowserDeskGoalContext(),
           },
         }),
       });

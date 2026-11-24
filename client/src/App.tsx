@@ -9,6 +9,7 @@ import { lazy, Suspense, useEffect } from "react";
 import { isAnalyticsDocumentContextCurrent } from "@/lib/analyticsNavigation";
 import { ScrollProgress } from "@/components/ScrollProgress";
 import { ExitIntentPopup } from "@/components/ExitIntentPopup";
+import { GoalPicker } from "@/components/goal/GoalPicker";
 import { StickyCTABar } from "@/components/StickyCTABar";
 import { SiteBottomBar } from "@/components/SiteBottomBar";
 import { MarketingChrome } from "@/components/MarketingChrome";
@@ -1290,6 +1291,7 @@ function AppContent() {
       {!ownsBottomBar && !hideDoor2HelpDock && !hideWarehouseChrome && <SiteBottomBar />}
       <StickyCTABar />
       <ExitIntentPopup delay={5000} />
+      <GoalPicker />
       <CookieConsentBanner />
       <StagingReviewBadge />
     </AnnouncerProvider>
