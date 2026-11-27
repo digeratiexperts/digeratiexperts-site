@@ -69,7 +69,7 @@ export function registerWarehouseGates(app: Express): void {
     },
     authMiddleware, canonicalWarehouseStaff,
   ];
-  app.get("/api/internal/warehouse/session", staffSessionGuards, (req: AuthedRequest, res) => {
+  app.get("/api/internal/warehouse/session", staffSessionGuards, (req: AuthedRequest, res: Response) => {
     if (!issuePortalSubmission(req, res, req.user)) return;
     res.json({ ok: true });
   });
@@ -148,7 +148,7 @@ export function registerWarehouseGates(app: Express): void {
   });
 
   for (const kind of ["receive", "pick", "ship"] as const satisfies readonly StockMovementKind[]) {
-    app.post(`/api/internal/warehouse/stock/${kind}`, staffSessionGuards, (req, res) => {
+    app.post(`/api/internal/warehouse/stock/${kind}`, staffSessionGuards, (req: Request, res: Response) => {
       const body = req.body && typeof req.body === "object" ? (req.body as Record<string, unknown>) : {};
       void recordWarehouseMovement({
         sku: typeof body.sku === "string" ? body.sku : "",
