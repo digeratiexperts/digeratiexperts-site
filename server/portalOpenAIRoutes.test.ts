@@ -30,6 +30,7 @@ beforeAll(async () => {
   rev.resetRevocationsForTests({ loadState: "ready" });
   const { authMiddleware, requireAdmin } = await import("./routes");
   const app = express(); app.use(express.json()); app.use(cookieParser());
+  app.get("/api/portal/me", authMiddleware, (_req, res) => res.json({ ok: true }));
   registerPortalOpenAIRoutes(app, { guards: [authMiddleware as any, requireAdmin as any], audit });
   server = createServer(app); await new Promise<void>(r => server.listen(0, "127.0.0.1", r));
   base = `http://127.0.0.1:${(server.address() as any).port}`;
@@ -76,9 +77,16 @@ describe("OpenAI control HTTP with actual auth/admin guards", () => {
     expect(openaiConfig.isEnabled()).toBe(true); expect(audit).not.toHaveBeenCalled();
   });
   it("cookie sessions use the same auth and CSRF requirements", async () => {
-    expect((await call("disable","POST",{authorization:"",cookie:`portalAuth=${token()}`})).code).toBe(200);
+    const cookie = `portalAuth=${token()}`;
+    const current = await fetch(`${base}/api/portal/me`, { headers: { cookie, "X-DE-CSRF-Request": "1" } });
+    const proof = current.headers.get("X-DE-CSRF-Token");
+    expect(proof).toMatch(/^[0-9a-f]{64}$/);
+    const headers = { authorization: "", cookie, "X-CSRF-Token": proof! };
+    expect((await call("disable", "POST", { authorization: "", cookie })).body.code).toBe("CSRF_TOKEN_MISMATCH");
+    expect(openaiConfig.isEnabled()).toBe(true);
+    expect((await call("disable", "POST", headers)).code).toBe(200);
     openaiConfig.enable();
-    expect((await call("disable","POST",{authorization:"",cookie:`portalAuth=${token()}`,origin:"https://attacker.invalid"})).code).toBe(403);
+    expect((await call("disable", "POST", { ...headers, origin: "https://elsewhere.invalid" })).code).toBe(403);
     expect(openaiConfig.isEnabled()).toBe(true);
   });
   it.each([

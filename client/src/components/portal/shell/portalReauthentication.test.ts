@@ -1,19 +1,31 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-const portalGet = vi.hoisted(() => vi.fn());
-vi.mock("@/lib/portalApi", () => ({ portalGet }));
+
+const { readPortalSessionForRecovery, resumeVerifiedPortalSubmission } = vi.hoisted(() => ({
+  readPortalSessionForRecovery: vi.fn(), resumeVerifiedPortalSubmission: vi.fn(),
+}));
+vi.mock("@/lib/portalSubmission", () => ({ readPortalSessionForRecovery, resumeVerifiedPortalSubmission }));
 import { verifyPortalReauthentication } from "./portalReauthentication";
+
 beforeEach(() => vi.clearAllMocks());
+
 describe("reauthentication preserves draft ownership", () => {
-  it("allows only the same authenticated identity", async () => {
-    portalGet.mockResolvedValue({ user: { id: "owner-a" } });
-    await expect(verifyPortalReauthentication("owner-a")).resolves.toBeUndefined();
-    await expect(verifyPortalReauthentication("owner-b")).rejects.toThrow("same account");
-    await expect(verifyPortalReauthentication("")).rejects.toThrow("same account");
+  it("accepts the proof from the very response that verified the expected user", async () => {
+    const response = Response.json({ user: { id: "owner-a" } });
+    readPortalSessionForRecovery.mockResolvedValue(response);
+    await verifyPortalReauthentication("owner-a");
+    expect(resumeVerifiedPortalSubmission).toHaveBeenCalledWith(response);
   });
-  it("does not accept missing users or an expired session", async () => {
-    portalGet.mockResolvedValue({});
-    await expect(verifyPortalReauthentication("owner-a")).rejects.toThrow();
-    portalGet.mockRejectedValue(new Error("401: Unauthorized"));
-    await expect(verifyPortalReauthentication("owner-a")).rejects.toThrow("401");
+
+  it("rejects a different user, an unknown owner, a missing user and an expired session", async () => {
+    for (const [owner, response] of [
+      ["owner-b", Response.json({ user: { id: "owner-a" } })],
+      ["", Response.json({ user: { id: "owner-a" } })],
+      ["owner-a", Response.json({})],
+      ["owner-a", Response.json({}, { status: 401 })],
+    ] as const) {
+      readPortalSessionForRecovery.mockResolvedValueOnce(response);
+      await expect(verifyPortalReauthentication(owner)).rejects.toThrow();
+    }
+    expect(resumeVerifiedPortalSubmission).not.toHaveBeenCalled();
   });
 });

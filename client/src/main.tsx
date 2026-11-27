@@ -6,7 +6,9 @@ import "./index.css";
 import { initAnalytics } from "./lib/analytics";
 import { installAnalyticsNavigationBoundary } from "./lib/analyticsNavigation";
 import { installPrerenderSwap } from "./prerenderSwap";
+import { installPortalSubmissions } from "./lib/portalSubmission";
 
+installPortalSubmissions();
 installAnalyticsNavigationBoundary();
 
 const HomepageChallengerApp = lazy(() => import("./pages/HomepageChallengerApp"));
