@@ -1,4 +1,8 @@
-import type { Express, Request, Response } from "express";
+import type { Express, NextFunction, Request, Response } from "express";
+import { can } from "@shared/permissions";
+import { authMiddleware } from "./routes";
+import type { AuthedRequest } from "./portalAccess";
+import { issuePortalSubmission } from "./portalSubmissionToken";
 import {
   applyPrivateCacheHeaders,
   isWarehouseCatalogApiPath,
@@ -52,12 +56,21 @@ function queryWithoutToggle(req: Request): string {
 }
 
 export function registerWarehouseGates(app: Express): void {
-  app.get("/api/internal/warehouse/session", (req: Request, res: Response) => {
-    applyPrivateCacheHeaders(res);
-    if (!resolveWarehouseStaff(req)) {
-      sendGenericNotFound(req, res);
-      return;
-    }
+  // The concealment gate and Portal auth historically prefer different credentials
+  // on a mixed request. Authorize the actor that passed canonical Portal auth.
+  function canonicalWarehouseStaff(req: AuthedRequest, res: Response, next: NextFunction) {
+    if (!can(req.user, "warehouse.access")) return sendGenericNotFound(req, res);
+    next();
+  }
+  const staffSessionGuards = [
+    (req: Request, res: Response, next: NextFunction) => {
+      applyPrivateCacheHeaders(res);
+      requireWarehouseStaffApi(req, res, next);
+    },
+    authMiddleware, canonicalWarehouseStaff,
+  ];
+  app.get("/api/internal/warehouse/session", staffSessionGuards, (req: AuthedRequest, res) => {
+    if (!issuePortalSubmission(req, res, req.user)) return;
     res.json({ ok: true });
   });
 
@@ -135,22 +148,20 @@ export function registerWarehouseGates(app: Express): void {
   });
 
   for (const kind of ["receive", "pick", "ship"] as const satisfies readonly StockMovementKind[]) {
-    app.post(`/api/internal/warehouse/stock/${kind}`, (req, res) => {
-      requireWarehouseStaffApi(req, res, () => {
-        const body = req.body && typeof req.body === "object" ? (req.body as Record<string, unknown>) : {};
-        void recordWarehouseMovement({
-          sku: typeof body.sku === "string" ? body.sku : "",
-          kind,
-          quantity: Number(body.quantity),
-          carrier: typeof body.carrier === "string" ? body.carrier : undefined,
-          trackingNumber: typeof body.trackingNumber === "string" ? body.trackingNumber : undefined,
-        })
-          .then((book) => res.json(book))
-          .catch((error: unknown) => {
-            const message = error instanceof Error ? error.message : "Stock movement refused.";
-            res.status(400).json({ error: message });
-          });
-      });
+    app.post(`/api/internal/warehouse/stock/${kind}`, staffSessionGuards, (req, res) => {
+      const body = req.body && typeof req.body === "object" ? (req.body as Record<string, unknown>) : {};
+      void recordWarehouseMovement({
+        sku: typeof body.sku === "string" ? body.sku : "",
+        kind,
+        quantity: Number(body.quantity),
+        carrier: typeof body.carrier === "string" ? body.carrier : undefined,
+        trackingNumber: typeof body.trackingNumber === "string" ? body.trackingNumber : undefined,
+      })
+        .then((book) => res.json(book))
+        .catch((error: unknown) => {
+          const message = error instanceof Error ? error.message : "Stock movement refused.";
+          res.status(400).json({ error: message });
+        });
     });
   }
 

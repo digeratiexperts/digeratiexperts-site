@@ -9,6 +9,7 @@ import {
 import { writeAudit } from "./portalAccessStore";
 import { sendEmail } from "./services/notificationService";
 import { logger } from "./logger";
+import { verifyPortalSubmission } from "./portalSubmissionToken";
 
 /**
  * Lane A (Wave 1): route guards on top of the one permission helper
@@ -109,8 +110,11 @@ function auditedAction(req: AuthedRequest): string | null {
  * account — it is logged loudly, alerted, and the action proceeds. A fail-closed
  * rule is Joe's to make (see "Waiting on Joe").
  */
-export async function auditMutation(req: AuthedRequest, _res: Response): Promise<boolean> {
+export async function auditMutation(req: AuthedRequest, res: Response): Promise<boolean> {
   const user = req.user;
+  // This hook runs for every authenticated actor. Reject a stale submission
+  // before either the staff action audit or the underlying handler runs.
+  if (user && !verifyPortalSubmission(req, res, user)) return false;
   if (!user || !isDeStaff(user)) return true; // client actions are not in this audit
   const action = auditedAction(req);
   if (!action) return true;

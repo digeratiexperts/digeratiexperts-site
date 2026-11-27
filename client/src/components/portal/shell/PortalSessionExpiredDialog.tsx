@@ -31,10 +31,11 @@ export function PortalSessionExpiredDialog({ userId }: { userId: string }) {
     <AlertDialogContent data-testid="portal-session-expired-dialog">
       <AlertDialogHeader>
         <AlertDialogTitle>Sign in again to continue</AlertDialogTitle>
-        <AlertDialogDescription>Your session ended. Keep this page open to preserve unsaved work. Sign in with the same account in a new tab, then return here.</AlertDialogDescription>
+        <AlertDialogDescription>Your sign-in or access changed. Keep this page open to preserve your work. Sign in with the same account and company in a new tab, then verify here.</AlertDialogDescription>
       </AlertDialogHeader>
       {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
       <AlertDialogFooter>
+        <Button variant="ghost" onClick={() => setOpen(false)}>Back to draft</Button>
         <Button variant="outline" asChild><a href={portalLoginWithReturn("/portal")} target="_blank" rel="noopener noreferrer">Sign in in a new tab</a></Button>
         <Button onClick={() => void resume()} disabled={checking}>{checking ? "Checking…" : "I've signed in"}</Button>
       </AlertDialogFooter>
