@@ -77,9 +77,14 @@ export class PortalSubmissions {
     // Authorization follows the identity read that opened the view. A write
     // must never fetch a fresh identity after another tab changed the cookie.
     if (!this.binding && this.pending) await this.pending.catch(() => undefined);
-    const active = this.recovering ? undefined : this.binding;
-    if (active) headers.set("X-CSRF-Token", active.token);
-    const response = active
+    const cookieSession = !!this.binding || this.recovering;
+    if (cookieSession) {
+      // A missing cookie must not change an open document into a bearer client.
+      headers.set("X-DE-CSRF-Session", "cookie");
+      if (this.binding && !this.recovering) headers.set("X-CSRF-Token", this.binding.token);
+      else headers.delete("X-CSRF-Token");
+    }
+    const response = cookieSession
       ? await this.send(target, { ...init, headers, mode: "same-origin", redirect: "error" })
       : await this.send(target, init);
     if (response.status === 403 && response.headers.get("X-DE-CSRF-Status") === "mismatch") {

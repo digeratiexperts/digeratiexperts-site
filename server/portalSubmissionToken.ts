@@ -17,6 +17,10 @@ type PortalPrincipal = {
 
 const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
 
+function isSubmissionProof(value: unknown): value is string {
+  return typeof value === "string" && value.length === 64 && /^[0-9a-f]+$/i.test(value);
+}
+
 function digest(domain: string, values: unknown[]): string {
   return createHmac("sha256", resolveJwtSecret())
     .update(JSON.stringify(["de.portal.submission.v1", domain, ...values]))
@@ -77,14 +81,19 @@ export function issuePortalSubmission(req: Request, res: Response, actor: Portal
 /** Runs after cookie/JWT validation and live account lookup, before audit and side effects. */
 export function verifyPortalSubmission(req: Request, res: Response, actor: PortalPrincipal): boolean {
   const credential = req.cookies?.portalAuth;
-  if (typeof credential !== "string" || !credential) return true; // explicit bearer-only API client
   if (SAFE_METHODS.has(req.method)) {
     const path = (req.originalUrl || req.url || "").split("?")[0];
     return !/^\/api\/portal\/me\/?$/i.test(path) || issuePortalSubmission(req, res, actor);
   }
+  const submitted = req.headers?.["x-csrf-token"];
+  if (typeof credential !== "string" || !credential) {
+    // A bound tab may still supply a legacy bearer after its cookie disappears.
+    // Its pending edit must never inherit that bearer's authority.
+    if (req.headers?.["x-de-csrf-session"] !== undefined || isSubmissionProof(submitted)) return reject(res, false);
+    return true;
+  }
   if (!sameOrigin(req)) return reject(res, true);
-  const submitted = req.get("X-CSRF-Token");
-  if (!submitted || submitted.length !== 64 || !/^[0-9a-f]{64}$/.test(submitted)) return reject(res, false);
+  if (!isSubmissionProof(submitted)) return reject(res, false);
   if (!timingSafeEqual(Buffer.from(binding(req, actor).proof), Buffer.from(submitted))) return reject(res, false);
   return true;
 }

@@ -113,6 +113,27 @@ describe("Portal session-bound browser submissions", () => {
     expect((await request(ticket, { cookie: session, Authorization: `Bearer ${token()}` }, "POST")).status).toBe(403);
     expect(mutate).not.toHaveBeenCalled();
   });
+  it("refuses a cookie-bound edit after cookie loss even if another valid bearer credential remains", async () => {
+    const session = cookie(token(), "customer-session");
+    const { proof } = await issue(session);
+    const staffToken = jwt.sign({ email: staff.email, userId: staff.id }, secret, { expiresIn: "1h" });
+    const bearer = { Authorization: `Bearer ${staffToken}` };
+    const path = "/api/future-feature";
+    for (const headers of [
+      { ...bearer, "X-CSRF-Token": proof },
+      { ...bearer, "X-DE-CSRF-Session": "cookie" },
+      { ...bearer, "X-DE-CSRF-Session": "cookie", "X-CSRF-Token": "1" },
+    ]) {
+      const response = await request(path, headers, "POST");
+      expect(response.status).toBe(403);
+      expect(response.headers.get("X-DE-CSRF-Status")).toBe("mismatch");
+    }
+    expect(mutate).not.toHaveBeenCalled();
+    expect(audit).not.toHaveBeenCalled();
+    // Explicit bearer clients without browser-session intent preserve their original API contract.
+    expect((await request(path, { ...bearer, "X-CSRF-Token": "1" }, "POST")).status).toBe(204);
+    expect(mutate).toHaveBeenCalledOnce();
+  });
   it("keeps multiple tabs usable, supports legacy sessions, and binds proof to the current credential and tenant", async () => {
     const credential = token();
     const current = cookie(credential);

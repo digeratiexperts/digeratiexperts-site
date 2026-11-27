@@ -111,6 +111,19 @@ describe("Portal browser submissions", () => {
     await session.fetch(me);
     await session.fetch(ticket, { method: "POST" });
     expect(header(3)).toBeNull();
+    expect(header(3, "X-DE-CSRF-Session")).toBe("cookie");
+  });
+
+  it("retains cookie intent through recovery even if a legacy caller sends a bearer credential", async () => {
+    const { session, send, header } = fixture();
+    const legacyWrite = { method: "POST", headers: { Authorization: "Bearer example", "X-CSRF-Token": token } };
+    send.mockResolvedValueOnce(proof()).mockResolvedValueOnce(refused()).mockResolvedValueOnce(refused());
+    await session.fetch(me);
+    await session.fetch(ticket, legacyWrite);
+    await session.fetch(ticket, legacyWrite);
+    for (const i of [1, 2]) expect(header(i, "X-DE-CSRF-Session")).toBe("cookie");
+    expect(header(1)).toBe(token);
+    expect(header(2)).toBeNull();
   });
 
   it("pins the warehouse entry session even when the cookie changes before its first stock write", async () => {
